@@ -278,7 +278,7 @@
 <section id="plans">
   <h2>12 · What is on in the default plans</h2>
   <table>
-    <tr><th>mechanism</th><th>bug arena<br><code>v3h</code></th><th>memory tasks<br><code>memoryK</code></th><th>sequence<br><code>predictK</code></th><th>text, three-phase clock<br><code>predictK3</code> (2 regions)</th><th>bandit / cue, random mapping<br><code>rewardK</code> / <code>rewardMemK</code></th></tr>
+    <tr><th>mechanism</th><th>bug arena<br><code>v3h</code></th><th>memory tasks<br><code>memoryK</code></th><th>sequence<br><code>predictK</code></th><th>text, three-phase clock<br><code>predictK3</code> (2 regions)</th><th>bandit / cue, random mapping<br><code>rewardE</code> (evolved rewardMemK)</th></tr>
     <tr><td>genome / gene network, morphogens, division, fate</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td></tr>
     <tr><td>tags and guidance, midline rule, collaterals</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td></tr>
     <tr><td>topographic columns (input-instructed)</td><td class="off">–</td><td class="on">on</td><td class="on">on</td><td class="on">on (60×60 tissue)</td><td class="on">on (+ action columns under every output)</td></tr>
@@ -303,7 +303,7 @@
     <tr><td>action selection: competing columns + efference copy of the choice (v20)</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td></tr>
   </table>
   <p style="color:var(--dim);font-size:13px">"memory tasks" = cue and recall arenas; memoryK holds a symbol in slow self-exciting columns; it has no plastic synapses (evolution tunes it).
-    rewardK / rewardMemK (v20) learn from reward alone, within one lifetime: state columns (relays, or working memory reset by GO) → plastic parallel fibres → competing action columns, like the basal ganglia; the critic is like the striatal value neurons that drive dopamine.
+    rewardK / rewardMemK (v20) learn from reward alone (the default, rewardE, is rewardMemK with gene values tuned by evolution), within one lifetime: state columns (relays, or working memory reset by GO) → plastic parallel fibres → competing action columns, like the basal ganglia; the critic is like the striatal value neurons that drive dopamine.
     Details and measurements: README.md and RESULTS.md.</p>
   <p>To see all of this happen step by step for any plan, open the <a href="viewer.html">growth viewer</a>: scrub the timeline, toggle each morphogen, follow growth cones, and click a cell to see its genes, tags, partners and lineage.</p>
 </section>

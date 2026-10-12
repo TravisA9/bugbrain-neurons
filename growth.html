@@ -178,8 +178,14 @@
     <li><b>Hunger</b> (gene, used by plan v3h): an output with too few inputs, or a sensor with too few targets, builds up a "need". Needy outputs emit an
       attractant that pulls growing excitatory axons, and tag matching is relaxed in proportion to the need, so no output stays orphaned.</li>
     <li><b>Request</b> (optional): spontaneous sensor activity during growth marks the cells it reaches; a little later the paired outputs call for them.</li>
+    <li><b>Connection demand</b> (v27, default in <code>predictK3</code> and <code>rewardE</code>): an output with fewer than 3 excitatory inputs releases an
+      attractant in proportion to how many it is still missing. It spreads and fades with distance, so nearby growing excitatory axons turn towards it.
+      It only attracts: tag matching is not relaxed, so an axon still needs the right partner tag. A sensor still short of targets, or an axon that has found
+      no partner while some output is still in demand, grows one stretch further. The signal switches off by itself once the output is satisfied.
+      Demand is kept apart from the other signals: spontaneous activity during growth (request), prediction errors (teacher plateau), reward (dopamine)
+      and activity balance (homeostasis). In R28, demand raised output coverage with 6 bandit arms from 72% to 94% and left no orphan outputs. No task got worse.</li>
   </ul>
-  <p class="bio">Biology: neurotrophins (NGF, BDNF) from targets keep innervating neurons alive; target-derived attractants.</p>
+  <p class="bio">Biology: neurotrophins (NGF, BDNF) from targets keep innervating neurons alive; target-derived attractants (netrin-like chemoattraction by uninnervated targets, which stops once innervation is complete).</p>
 </section>
 
 <section id="tune">
@@ -288,6 +294,7 @@
     <tr><td>multi-region growth + tracts; context cascade (symbol two back; v21)</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td><td class="off">–</td></tr>
     <tr><td>trophic competition</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td></tr>
     <tr><td>hunger</td><td class="on">on</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="off">–</td></tr>
+    <tr><td>connection demand (attractant from under-connected outputs; v27)</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td><td class="on">on</td></tr>
     <tr><td>afferent-dependent survival</td><td class="off">–</td><td class="off">–</td><td class="on">on</td><td class="on">on</td><td class="on">on</td></tr>
     <tr><td>synaptic scaling (normE / normI)</td><td class="off">–</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td></tr>
     <tr><td>juvenile homeostatic thresholds</td><td class="on">on</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="off">–</td></tr>
