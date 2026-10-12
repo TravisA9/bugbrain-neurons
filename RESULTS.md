@@ -1919,3 +1919,42 @@ Reproduce: `SEEDOFF=2000 EXTRA='{"demandRelax":0}' bun results_v27/demand_exp.js
 - test_core ALL OK. The new v27 check: demand is on in the defaults, 6-arm coverage goes 0.67 → 0.88, and switching demand off is bit-identical.
 - seq_test OK; run selftest ALL OK.
 - browser_test ALL OK on the second run. The first runs failed A (the 150 s lifetime timer ran out at 919 rows) and H (fast-panel alignment). Both are timing-dependent on a busy box: H also failed once on the unchanged v26 HEAD, and growth/tick speed is the same (3.3 s per predictK3 growth, about 2980 ticks/s, in both).
+
+
+## R29 [neuro] (code v28-experimental, defaults unchanged: v27 / DEFAULTS_VERSION 22): learning-driven growth ("need-growth"), not adopted
+
+**Design (js/core/net.js planNeed/initNeed/needEvent; genes in PL_DEFAULTS, `ng` 0 = off, bit-identical).** An adult-neurogenesis analogue, with its own signal kept apart from connection demand (growth), dopamine (outcome) and homeostasis (activity).
+- Learning layer L = cells with plastic excitatory outputs (mixing cells in predictK3; actor columns in rewardE). Receivers = their targets. Sources = their excitatory inputs.
+- Error per event:
+  - prediction receivers: mismatch at each teacher onset, = 1 − the share of recent receiver activity that was on the taught column;
+  - reward receivers: negative outcome RPE, clipped to [0, 1].
+- The area keeps a slow average E (ngTau 20 events). When E stays above ngThr 0.3 + ngCost 0.3 × (new cells / layer size) for ngHold 20 events (with at least ngRef 5 events since the last recruit), ngBatch 8 quiescent reserve cells mature (reserve ngRes 256).
+- Each new cell's dendrites take a claw (the layer's median size) of sources drawn by error tags, i.e. sources active just before errors. Its axon forms weak plastic synapses on the receivers.
+- New cells get the layer's feedforward inhibition and an intrinsic homeostatic threshold. Without it they fired 13× more than the layer and hurt text (6.08 vs 6.41).
+- Trophic test after ngTrial 60 events: a new cell whose outgoing synapses gained less than ngKeep 0.3 × the layer's mean gain goes back to quiescence (pruned).
+- `ngReduce` (experiment only): removes a fraction of L at birth (the reduced start).
+- Need-growth genes are evolvable (NG_RANGES), but only in genomes with ng on, so other genomes draw no extra random numbers. The runner's `startPl` sets pl genes in the start genomes.
+
+**Comparison** (results_v28/ng_exp.js, 16 held-out growths, SEEDOFF 2000, deterministic seeds). Conditions: a = default; b = reduced (half of L removed), need-growth off; c = reduced + need-growth; d = default + need-growth. Each cell reads score ± sd / new cells alive at the end (added, pruned) / final hidden size ± sd.
+
+| task | a default | b reduced | c reduced + NG | d default + NG |
+|---|---|---|---|---|
+| text | 7.25±0.10 / 0 / 2373±16 | 6.20±0.35 / 0 / 1954±17 | **6.46±0.24** / +250 (267, 17) / 2204±22 | 7.19±0.11 / +256 (309, 53) / 2629±16 |
+| order3 K8 | 8.42±0.47 / 0 / 2384±22 | 7.82±0.47 / 0 / 1964±22 | 7.79±0.43 / +1 (18, 18) / 1965±22 | 8.42±0.47 / +0 (16, 16) / 2384±22 |
+| order3 K4 | 9.81±0.01 / 0 / 2317 | 9.81±0.01 / 0 / 1898 | 9.81±0.01 / 0 / 1898 | 9.81±0.01 / 0 / 2317 |
+| fables | 2.92±0.18 / 0 / 2369±14 | 2.19±0.20 / 0 / 1949±14 | **2.33±0.16** / +256 (262, 6) / 2205±14 | 2.95±0.15 / +256 (269, 13) / 2625±14 |
+| bandit | 6.37±0.62 / 0 / 287±8 | 4.00±0.52 / 0 / 236±8 | 3.84±0.80 / 0 / 236±8 | 6.37±0.62 / 0 / 287±8 |
+| cueR | 10.33±0.88 / 0 / 278±5 | −1.25±1.70 / 0 / 227±5 | −1.05±2.82 / 0 / 227±5 | 10.33±0.88 / 0 / 278±5 |
+
+**Findings**
+- The mismatch signal behaves: it falls as learning proceeds (order3 0.54 → 0.33 by quarter; text 0.64 → 0.49).
+- In reduced brains, need-growth recovers about 25% of the text gap and 19% of the fables gap.
+- It does nothing on order3: 200 events per lifetime is too short, and the trial cells were all pruned (the trophic test works).
+- On text and fables the default brain keeps recruiting up to the reserve cap: 256 extra cells for no gain (text −0.06, fables +0.03).
+- **Negative RPE is the wrong "keeps failing" signal.** Once the critic expects failure, δ ≈ 0, so the failing reduced cue brain (score −1.25) has E ≈ 0.1 and never grows. A persistent-failure signal for reward areas needs the raw outcome rate (or a slower critic baseline).
+- New cells drawn from random tagged claws are not as good as the grown, structured mixing cells (one context column + C pattern each). Matching the hand-built brains would need new cells that copy the layer's input structure, i.e. growth rules, not random claws.
+- No runaway growth: the cost term plus the cap bound the size (+10% at most), with sd ≈ 0 at the cap.
+
+**Not adopted** (d does not beat a, and c does not match a). Code kept, off by default; no version bump, no UI control.
+Reproduce: `SEEDOFF=2000 bun results_v28/ng_exp.js <text|order3|fables|bandit|cueR> <a|b|c|d> 16 [K]` (env RED, EXTRA for pl overrides).
+Evolution: experiments/needgrowth.json (multitask balanced, startPl { ng: 1 }, start from the default plans, 3 h).

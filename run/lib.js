@@ -40,7 +40,9 @@ function startGenome(id, cfg) {
   if (/^free:/.test(id)) { const base = id.slice(5); const opts = FREE.defaults(base); return { g: FREE.make(SA, base, opts), free: { base, opts } }; }
   if (id === 'random') return { g: SA.createRandomCellGenome(Math.random) };
   if (!SA.PLANS[id]) throw new Error('unknown plan ' + id + ' (known: ' + Object.keys(SA.PLANS).join(', ') + ')');
-  return { g: SA.PLANS[id].make() };
+  const g = SA.PLANS[id].make();
+  if (cfg && cfg.startPl) for (const c of g.kind === 'regions' ? g.regions.map(R => R.g) : [g]) c.pl = Object.assign({}, SA.PL_DEFAULTS, c.pl, cfg.startPl);   // v28: e.g. { ng: 1 } = start with need-growth on
+  return { g };
 }
 function mutate(x, r, cfg) {
   if (x.free) return FREE.mutate(SA, x, r, (cfg.free && cfg.free.pStruct) != null ? cfg.free.pStruct : 0.25);

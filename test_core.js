@@ -196,4 +196,11 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const g0 = S.cloneCell(off), w1 = S.growCell(off, { seed: 3, spec: B.spec }).W; S.params.cellDemand = false; const w2 = S.growCell(E, { seed: 3, spec: B.spec }).W; S.params.cellDemand = true;
   assert.ok(w1.length === w2.length && w1.every((v, i) => v === w2[i]), 'demand 0 == demand switched off (no side effects)');
   console.log(`v27 demand: 6-arm output coverage ${cOff.toFixed(2)} -> ${cOn.toFixed(2)}, off-switch bit-identical: ok`); }
+// v28 (round 29, experimental, off by default): need-growth recruits reserve cells only where errors persist, capped by the reserve
+{ const S = require('./js/node_load.js')(), Sq = S.setEnv('seq', { source: 'text', nSyms: 300 }), d = S.PLANS.predictK3.make();
+  assert.ok(d.regions.every(r => !(r.g.pl.ng > 0)), 'need-growth off in the default plans');
+  const b = S.growCell(d, { seed: 4, spec: Sq.spec }); b.pl = Object.assign({}, S.PL_DEFAULTS, b.pl, { ng: 1, ngReduce: 0.5, ngRes: 64 });
+  const a = new S.Agent(d, 4, b, Sq); while (!a.done) a.tick(); const st = a.net.needStats();
+  assert.ok(st.mode === 'mismatch' && st.added > 0 && st.alive <= 64 && st.dead > 0, 'need-growth recruits in a reduced brain: ' + JSON.stringify(st).slice(0, 200));
+  console.log(`v28 need-growth (reduced text brain): ${st.dead} layer cells removed, ${st.added} recruited, ${st.pruned} pruned, ${st.alive} alive (cap 64), error ${st.E}: ok`); }
 console.log('ALL OK');

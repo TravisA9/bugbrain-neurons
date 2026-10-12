@@ -21,24 +21,23 @@
  * 3c. Each synapse can count pre->post coincidences (net.use); the juvenile
  *   phase of cellular development uses them for activity refinement.        */
 class SpikingNet {
-  constructor(g) {
+  constructor(g, opts) {
     g = phenotype(g);
-    this.g = g; const N = this.N = g.N;
-    this.v = new Float32Array(N).fill(V_REST);
-    this.syn = new Float32Array(N);      // synaptic input arriving next step
-    this.ext = new Float32Array(N);      // external (sensory) current
-    this.spiked = new Uint8Array(N); this.spk = new Int32Array(N); this.nSpk = 0;
-    this.trace = new Float32Array(N);    // exponentially smoothed spike train (motor read-out)
-    this.spikeCount = 0;
+    this.g = g; this.nSpk = 0; this.spikeCount = 0;   // (v, syn = input arriving next step, ext = sensory current, spiked/spk, trace = smoothed spike train: sized below)
     // Build CSR adjacency from dense W
-    const start = new Int32Array(N + 1), posts = [], pres = [], ws = [], plast = [], chs = [];
-    const nCh = Math.max(1, g.nCh || 1);
+    const nCh = Math.max(1, g.nCh || 1), p0 = Object.assign({}, PL_DEFAULTS, g.pl);
+    const NG = p0.ng > 0 && g.nHid > 0 && !(opts && opts.noNeed) ? this.planNeed(g, p0) : null;   // v28 need-growth: reserve cells appended after the grown cells (dormant)
+    const N = this.N = g.N + (NG ? NG.R : 0);
+    this.v = new Float32Array(N).fill(V_REST); this.syn = new Float32Array(N); this.ext = new Float32Array(N);
+    this.spiked = new Uint8Array(N); this.spk = new Int32Array(N); this.trace = new Float32Array(N);
+    const start = new Int32Array(N + 1), posts = [], pres = [], ws = [], plast = [], chs = [], N0 = g.N;
     for (let pre = 0; pre < N; pre++) {
       start[pre] = posts.length;
-      for (let post = 0; post < N; post++) {
-        const i = pre * N + post, w = g.W[i];
-        if (w !== 0) { posts.push(post); pres.push(pre); ws.push(w); plast.push(g.P ? g.P[i] : 1); chs.push(g.C ? g.C[i] % nCh : 0); }
+      if (pre < N0) for (let post = 0; post < N0; post++) {
+        const i = pre * N0 + post, w = g.W[i];
+        if (w !== 0 && !(NG && (NG.dead[pre] || NG.dead[post]))) { posts.push(post); pres.push(pre); ws.push(w); plast.push(g.P ? g.P[i] : 1); chs.push(g.C ? g.C[i] % nCh : 0); }
       }
+      if (NG) { const ex = NG.extra[pre]; if (ex) for (const [post, pl] of ex) { posts.push(post); pres.push(pre); ws.push(pl ? 1e-6 : 0); plast.push(pl); chs.push(0); } }
     }
     start[N] = posts.length;
     const E = posts.length;
@@ -66,6 +65,7 @@ class SpikingNet {
     this.mod = 0;                            // channel 0 (kept for older code / display)
     this.dwSum = 0;                          // |dw| summed this tick
     this.setPlasticityConsts();
+    if (NG) { this.thr = Float32Array.from({ length: N }, (_, i) => i < N0 ? (NG.dead[i] ? 1e9 : g.thresh[i]) : 1e9); this.ngPlan = NG; for (let k = 0; k < E; k++) if (pres[k] >= N0 && plast[k]) this.ws[k] = 0; }
     if (this.p.teach > 0 || this.p.uni > 0) this.initTeach();   // v22: the unified rule detects instructive events too
     if (this.p.rcvDiv > 0 || this.p.rcvInh > 0 || this.p.rcvNoise > 0) this.initRcv();
     if (this.p.mixInh > 0 && g.mix) {   // v14 feedforward inhibition of mixing cells: their presynaptic cells and the mixing cells
@@ -77,7 +77,90 @@ class SpikingNet {
     if (this.p.actNoise > 0 || this.p.actFb > 0 || this.p.outInh > 0) this.initActNoise();
     if (this.p.rcvHomeo > 0) { if (!this.thr) this.thr = Float32Array.from(g.thresh); const r = new Uint8Array(N); for (const k of this.plastic) if (this.w0[k] > 0) r[this.posts[k]] = 1;
       const L = []; for (let i = 0; i < N; i++) if (r[i]) L.push(i); this.rhList = Int32Array.from(L); }
+    if (NG) this.initNeed();
   }
+  /* v28 (R29) NEED-GROWTH: learning-driven recruitment of new cells during the lifetime (adult-neurogenesis analogue).
+   * Its own signal, separate from connection demand (growth), dopamine (outcome) and homeostasis (activity):
+   * the LEARNING LAYER L = cells with plastic excitatory outputs (mixing / conjunctive cells; the actor columns of reward plans),
+   * its RECEIVERS = the targets of those plastic synapses, its SOURCES = the excitatory inputs of L.
+   * Error per event: prediction receivers (instructive input) -> mismatch at each teacher onset = 1 - share of the recent
+   * receiver activity that was on the taught cell; reward receivers -> negative outcome RPE (clipped to [0, 1]).
+   * The area keeps a slow average E of its error (ngTau events). E above ngThr + ngCost x (new cells alive) for ngHold events
+   * (and ngRef events after the last recruit) -> one quiescent reserve cell matures: its dendrites take a claw of sources
+   * chosen by their error tags (sources active just before errors), its axon forms weak plastic synapses on the receivers
+   * (the existing learning rules do the rest). Trophic test after ngTrial events: a new cell whose outgoing synapses gained
+   * less than ngKeep x the layer's mean gain in that window returns to quiescence (pruned). Cap: the reserve size ngRes. */
+  planNeed(g, p) {
+    const N0 = g.N, nIn = g.nIn, h1 = g.nIn + g.nHid, W = g.W, P = g.P, isL = new Uint8Array(N0), isRc = new Uint8Array(N0);
+    for (let a = nIn; a < h1; a++) for (let b = 0; b < N0; b++) { const q = a * N0 + b; if (W[q] > 0 && (!P || P[q])) { isL[a] = 1; isRc[b] = 1; } }
+    let L = []; for (let i = 0; i < N0; i++) if (isL[i]) L.push(i);
+    if (!L.length) return null;
+    const dead = new Uint8Array(N0), red = p.ngReduce || 0;
+    if (red > 0) { const r = mulberry32((0x6e6721 ^ N0 * 2654435761 ^ L.length) >>> 0), sh = L.slice();
+      for (let k = sh.length - 1; k > 0; k--) { const j = (r() * (k + 1)) | 0; [sh[k], sh[j]] = [sh[j], sh[k]]; }
+      for (let k = 0; k < Math.floor(red * sh.length); k++) dead[sh[k]] = 1; }
+    const isS = new Uint8Array(N0), cnt = [], tot = [], th = [];
+    for (const l of L) { if (dead[l]) continue; let c = 0, t = 0; for (let a = 0; a < N0; a++) { const w = W[a * N0 + l]; if (w > 0 && !isL[a] && !dead[a]) { isS[a] = 1; c++; t += w; } } if (c) { cnt.push(c); tot.push(t); } th.push(g.thresh[l]); }
+    const med = x => { const y = x.slice().sort((a, b) => a - b); return y.length ? y[y.length >> 1] : 0; };
+    const S = []; for (let i = 0; i < N0; i++) if (isS[i]) S.push(i);
+    const Rc = []; for (let i = 0; i < N0; i++) if (isRc[i] && !dead[i]) Rc.push(i);
+    const wOut = Rc.map(b => { let s = 0, n = 0; for (const l of L) { if (dead[l]) continue; const w = W[l * N0 + b]; if (w > 0) { s += w; n++; } } return n ? s / n : 0; });
+    const R = Math.max(0, Math.round(p.ngRes)), extra = new Array(N0 + R), k = Math.max(1, p.ngClaw > 0 ? Math.round(p.ngClaw) : med(cnt));
+    if (!S.length || !Rc.length) return null;
+    for (const s of S) extra[s] = Array.from({ length: R }, (_, j) => [N0 + j, 0]);
+    for (let j = 0; j < R; j++) extra[N0 + j] = Rc.map(b => [b, 1]);
+    return { R, N0, dead, L: L.filter(l => !dead[l]), S, Rc, wOut, k, wIn: med(tot) / k, thr0: med(th), extra, nDead: dead.reduce((a, b) => a + b, 0) };
+  }
+  initNeed() {
+    const P = this.ngPlan, N = this.N, p = this.p, ng = this.ng = { on: [], act: [], E: 0, above: 0, since: 1e9, ev: 0, added: 0, pruned: 0, alive: 0, log: [], birth: new Float64Array(P.R).fill(-1), base: new Float64Array(P.R), baseL: new Float64Array(P.R), mature: new Uint8Array(P.R) };
+    const sIdx = new Int32Array(N).fill(-1); P.S.forEach((s, q) => { sIdx[s] = q; }); ng.sIdx = sIdx; ng.sTr = new Float32Array(P.S.length); ng.tag = new Float32Array(P.S.length);
+    const rcv = new Uint8Array(N); for (const b of P.Rc) rcv[b] = 1; ng.rcv = rcv; ng.tro = new Float64Array(N);
+    let nInstr = 0; if (this.instrCell) for (const b of P.Rc) nInstr += this.instrCell[b];
+    ng.pred = !!this.teachTr && nInstr * 2 > P.Rc.length; ng.dTr = ng.pred ? this.dPre : this.dElig;
+    ng.instr = ng.pred ? P.Rc.filter(b => this.instrCell[b]) : [];
+    ng.rng = mulberry32((0xbeef17 ^ N * 7919) >>> 0);
+    // edge indices of each reserve cell: incoming (source -> r) and outgoing (r -> receivers)
+    ng.inK = Array.from({ length: P.R }, () => []); ng.outK = Array.from({ length: P.R }, () => []);
+    for (let k = 0; k < this.posts.length; k++) { const a = this.pres[k], b = this.posts[k]; if (b >= P.N0) ng.inK[b - P.N0].push(k); else if (a >= P.N0) ng.outK[a - P.N0].push(k); }
+  }
+  needTrace(spk, nSpk) {                       // source activity traces (the context active before an error)
+    const ng = this.ng, t = ng.sTr, d = ng.dTr; for (let q = 0; q < t.length; q++) t[q] *= d;
+    for (let s = 0; s < nSpk; s++) { const q = ng.sIdx[spk[s]]; if (q >= 0) t[q] += 1; }
+  }
+  needMiss() {                                // teacher onset (a column of receivers): mismatch = 1 - share of the recent receiver activity on the taught cells
+    const tr = this.trace, I = this.ng.instr, on = this.ng.on; let sum = 0.05, hit = 0;
+    for (let q = 0; q < I.length; q++) sum += tr[I[q]]; for (const i of on) hit += tr[i]; on.length = 0;
+    this.needEvent(Math.max(0, 1 - hit / sum));
+  }
+  needEvent(err) {
+    const ng = this.ng, p = this.p, P = this.ngPlan, tag = ng.tag, t = ng.sTr, a = 1 / Math.max(1, p.ngTau);
+    ng.ev++; ng.since++; ng.E += a * (err - ng.E);
+    for (let q = 0; q < tag.length; q++) tag[q] = tag[q] * (1 - a) + err * t[q];
+    if (!params.plasticity) return;
+    // trophic test of new cells at the end of their trial
+    let Lm = 0; for (const l of P.L) Lm += ng.tro[l]; Lm /= Math.max(1, P.L.length);
+    for (let j = 0; j < P.R; j++) if (ng.birth[j] >= 0 && !ng.mature[j] && ng.ev - ng.birth[j] >= p.ngTrial) {
+      const gain = ng.tro[P.N0 + j] - ng.base[j], ref = Lm - ng.baseL[j];
+      if (gain < p.ngKeep * ref) this.needPrune(j); else ng.mature[j] = 1; }
+    ng.above = ng.E > p.ngThr + p.ngCost * ng.alive / Math.max(1, P.L.length) ? ng.above + 1 : 0;   // metabolic cost: the threshold rises with the new cells alive (relative to the layer)
+    if (ng.above >= p.ngHold && ng.since >= p.ngRef) for (let n = 0; n < Math.max(1, p.ngBatch); n++) { const j = ng.birth.findIndex(b => b < 0); if (j < 0) break; this.needRecruit(j, Lm); }
+  }
+  needRecruit(j, Lm) {
+    const ng = this.ng, P = this.ngPlan, r = P.N0 + j, tag = ng.tag, ws = this.ws, k = Math.min(P.k, P.S.length);
+    const inK = ng.inK[j], w = Array.from(tag, x => x + 1e-6), chosen = [];
+    for (let n = 0; n < k; n++) { let s = 0; for (const x of w) s += x; let u = ng.rng() * s, q = 0; for (; q < w.length - 1; q++) { u -= w[q]; if (u <= 0) break; } chosen.push(q); w[q] = 0; }
+    for (const q of chosen) { ws[inK[q]] = P.wIn; this.w0[inK[q]] = P.wIn; tag[q] *= 0.5; }   // (source q's edge to r: extra lists were built in source order)
+    const outK = ng.outK[j]; for (let q = 0; q < outK.length; q++) { ws[outK[q]] = P.wOut[q] * this.p.ngW; }
+    if (this.p.preNorm > 0 && this.npStart) this.normPre(r);
+    this.thr[r] = P.thr0; ng.birth[j] = ng.ev; ng.mature[j] = 0; ng.base[j] = ng.tro[r]; ng.baseL[j] = Lm; ng.since = 0; ng.above = 0;
+    ng.added++; ng.alive++; ng.act.push(r); ng.log.push([ng.ev, 1, j, chosen.length]);
+  }
+  needPrune(j) {
+    const ng = this.ng, P = this.ngPlan, r = P.N0 + j, ws = this.ws;
+    for (const k of ng.inK[j]) { ws[k] = 0; this.w0[k] = 0; } for (const k of ng.outK[j]) { ws[k] = 0; this.elig[k] = 0; }
+    this.thr[r] = 1e9; this.v[r] = V_REST; ng.birth[j] = -1; ng.act.splice(ng.act.indexOf(r), 1); ng.alive--; ng.pruned++; ng.log.push([ng.ev, -1, j]);
+  }
+  needStats() { const ng = this.ng; if (!ng) return null; return { mode: ng.pred ? 'mismatch' : 'negRPE', E: +ng.E.toFixed(3), events: ng.ev, added: ng.added, pruned: ng.pruned, alive: ng.alive, reserve: this.ngPlan.R, layer: this.ngPlan.L.length, dead: this.ngPlan.nDead, log: ng.log }; }
   // v20 action-channel noise: channel of a cell = the output it projects to most strongly (an output without such cells: itself)
   initActNoise() {
     const N = this.N, g = this.g, o0 = g.nIn + g.nHid, nO = g.nOut, ch = new Int16Array(N).fill(-1), best = new Float32Array(N), recv = new Uint8Array(N);
@@ -86,7 +169,7 @@ class SpikingNet {
     for (let m = 0; m < nO; m++) if (!ch.some(c => c === m)) ch[o0 + m] = m;   // an output without an action column gets the noise itself
     const L = [], C = []; for (let i = 0; i < N; i++) if (ch[i] >= 0) { L.push(i); C.push(ch[i]); }
     this.anList = Int32Array.from(L); this.anCh = Int16Array.from(C); this.anVal = new Float32Array(nO);
-    this.anA = Math.exp(-1 / Math.max(1, this.p.actNoiseTau)); this.anRng = mulberry32(0x9e3779b1 ^ N);
+    this.anA = Math.exp(-1 / Math.max(1, this.p.actNoiseTau)); this.anRng = mulberry32(0x9e3779b1 ^ g.N);
     const Lr = [], Cr = []; for (let i = 0; i < o0; i++) if (ch[i] >= 0) { Lr.push(i); Cr.push(ch[i]); } this.acList = Int32Array.from(Lr); this.acCh = Int16Array.from(Cr);   // the columns (without outputs)
   }
   actLoop(sp) {                               // output spikes -> own column +actFb, other columns -actFb, other outputs -outInh
@@ -135,7 +218,7 @@ class SpikingNet {
     const st = new Int32Array(N + 1), idx = []; for (let j = 0; j < N; j++) { st[j] = idx.length; for (const k of inL[j]) idx.push(k); } st[N] = idx.length;
     this.mxStart = st; this.mxIdx = Int32Array.from(idx); this.mxTot = new Float32Array(N); this.mxCnt = new Float32Array(N);
     for (let j = 0; j < N; j++) for (let q = st[j]; q < st[j + 1]; q++) this.mxTot[j] += this.ws[idx[q]];
-    if (this.p.mixHomeo > 0) { this.thr = Float32Array.from(g.thresh); const ml = []; for (let i = 0; i < N; i++) if (g.mix[i]) ml.push(i); this.mxList = Int32Array.from(ml); }
+    if (this.p.mixHomeo > 0) { if (!this.thr) this.thr = Float32Array.from(g.thresh); const ml = []; for (let i = 0; i < N; i++) if (g.mix[i]) ml.push(i); this.mxList = Int32Array.from(ml); }
   }
   mixLearn(i) {                               // mixing cell i spiked: instar step toward its input traces
     const p = this.p, st = this.mxStart, idx = this.mxIdx, ws = this.ws, pres = this.pres, x = this.xPre, a = st[i], e = st[i + 1]; if (e === a) return;
@@ -207,7 +290,7 @@ class SpikingNet {
     const N = this.N, isR = new Uint8Array(N); for (let k = 0; k < this.posts.length; k++) if (this.isPlastic[k] && this.w0[k] > 0) isR[this.posts[k]] = 1;
     const list = []; for (let i = 0; i < N; i++) if (isR[i]) list.push(i);
     this.rcv = Int32Array.from(list); this.isRcv = isR; this.synP = new Float32Array(N); this.poolTr = 0;
-    this.rcvRng = mulberry32(0x5eed1 ^ N); this.dPool = this.p.rcvInhTau > 0 ? Math.exp(-1 / this.p.rcvInhTau) : 0;
+    this.rcvRng = mulberry32(0x5eed1 ^ this.g.N); this.dPool = this.p.rcvInhTau > 0 ? Math.exp(-1 / this.p.rcvInhTau) : 0;
   }
   propagateRcv(spk, nSpk) {
     const start = this.start, posts = this.posts, ws = this.ws, syn = this.syn, isP = this.isPlastic, isR = this.isRcv, sP = this.synP, R = this.rcv, p = this.p;
@@ -252,16 +335,21 @@ class SpikingNet {
     if (this.rhList && params.plasticity) { const L = this.rhList, h = this.p.rcvHomeo, r0 = this.p.rcvRate, thr = this.thr; for (let q = 0; q < L.length; q++) { const i = L[q]; thr[i] += h * (sp[i] - r0); } }
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp); }   // v20 exploration noise of the action channels
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];   // v14: feedforward inhibition of mixing cells
-      if (n) { const d = this.p.mixInh * n, ml = this.mixList; for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d; } }
+      if (n) { const d = this.p.mixInh * n, ml = this.mixList; for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d;
+        if (this.ng) { const A = this.ng.act; for (let q = 0; q < A.length; q++) syn[A[q]] -= d; } } }   // v28: new cells join the layer's feedforward inhibition
+    if (this.ng && this.ng.act.length && params.plasticity) { const A = this.ng.act, h = this.p.mixHomeo > 0 ? this.p.mixHomeo : 0.5, r0 = this.p.mixRate || 0.008, thr = this.thr;   // v28: intrinsic homeostasis of new cells
+      for (let q = 0; q < A.length; q++) { const i = A[q]; thr[i] += h * (sp[i] - r0); } }
     if (this.mxStart && params.plasticity) {   // v15 learned mixing (unsupervised competitive rule + homeostatic threshold)
       const mx = this.g.mix; if (this.p.mixLr > 0) for (let s = 0; s < nSpk; s++) if (mx[spk[s]]) this.mixLearn(spk[s]);
       if (this.thr) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr; for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); } } }
+    if (this.ng) this.needTrace(spk, nSpk);   // v28 need-growth source traces
     if (this.teachTr) {                     // teacher events: smoothed drive from sensory (input) neurons
       const drv = this.drv, nIn = this.g.nIn, tT = this.teachTr, thr = this.p.teachThr;
       drv.fill(0); for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (i >= nIn) break; if (this.instrIn && !this.instrIn[i]) continue; for (let k = start[i], e = start[i + 1]; k < e; k++) if (ws[k] > 0) drv[posts[k]] += ws[k]; }
       for (let i = nIn; i < N; i++) { tT[i] = tT[i] * 0.7 + drv[i]; if (this.plat[i] > 0) this.plat[i]--;
-        if (tT[i] >= thr && this.armed[i]) { this.plat[i] = this.p.plateau; this.armed[i] = 0; if (this.trust && this.trustT < 0 && this.trustRecv[i]) this.trustT = this.p.trustDelay; }
+        if (tT[i] >= thr && this.armed[i]) { this.plat[i] = this.p.plateau; this.armed[i] = 0; if (this.ng && this.ng.pred && this.ng.rcv[i]) this.ng.on.push(i); if (this.trust && this.trustT < 0 && this.trustRecv[i]) this.trustT = this.p.trustDelay; }
         else if (tT[i] < thr / 2) { if (this.ahp && !this.armed[i] && this.ahpRecv[i]) this.ahp[i] = this.p.teachAHPDur; this.armed[i] = 1; } }
+      if (this.ng && this.ng.on.length) this.needMiss();
       if (this.ahp) { const ah = this.ahp, d = this.p.teachAHP; for (let i = nIn; i < N; i++) if (ah[i] > 0) { syn[i] -= d; ah[i]--; } }   // v16 post-teacher afterhyperpolarisation
       if (this.trust && this.trustT >= 0 && this.trustT-- === 0) this.updateTrust();
     }
@@ -279,11 +367,12 @@ class SpikingNet {
     const start = this.start, posts = this.posts, pres = this.pres, isP = this.isPlastic,
           inS = this.inStart, inE = this.inEdges, aM = this.p.aMinus;
     if (learn && this.teachTr) {             // teacher-gated rule: a spike during a teacher plateau potentiates
-      const lr = this.p.lr * (this.uni ? this.p.uniI : 1), ws = this.ws, wMax = params.wMax, dirty = this.dirtyList, nd = this.normDirty, xT = this.xLag || xPre, mE = this.metaE, mN = this.p.metaN;
+      const lr = this.p.lr * (this.uni ? this.p.uniI : 1), ws = this.ws, wMax = params.wMax, dirty = this.dirtyList, nd = this.normDirty, xT = this.xLag || xPre, mE = this.metaE, mN = this.p.metaN, tro = this.ng ? this.ng.tro : null;
       for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (this.plat[i] <= 0) continue;
         for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]]; if (x < 0.01) continue;
           if (mE) { const j = pres[k], d = lr * x; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; }
           else ws[k] = Math.min(wMax, ws[k] + lr * x);
+          if (tro) tro[pres[k]] += lr * x;
           if (!nd[pres[k]]) { nd[pres[k]] = 1; dirty.push(pres[k]); } } }
       if (this.p.preNorm > 0) for (const i of dirty) this.normPre(i);
       for (const i of dirty) nd[i] = 0; dirty.length = 0;
@@ -307,7 +396,8 @@ class SpikingNet {
   modulate(food, poison, bump, outcome) {
     const mods = this.mods;
     if (this.crit) {                         // v20: dopamine = reward prediction error (one global signal)
-      const ch = this.chs[0], d = this.p.rpeGain * this.criticStep(ch.gFood * food - ch.gPoison * poison - ch.gWall * bump, outcome);
+      const ch = this.chs[0], rw = ch.gFood * food - ch.gPoison * poison - ch.gWall * bump, d = this.p.rpeGain * this.criticStep(rw, outcome);
+      if (this.ng && !this.ng.pred && (rw !== 0 || outcome)) this.needEvent(Math.min(1, Math.max(0, -this.delta)));   // v28 need-growth: negative outcome RPE
       for (let c = 0; c < this.nCh; c++) { mods[c] = mods[c] * this.dMods[c] + d; this.chSpikes[c] = 0; }
     } else
     for (let c = 0; c < this.nCh; c++) {
@@ -319,7 +409,7 @@ class SpikingNet {
     if (this.use && this.tickNo === this.pruning.tick) this.prune();
     if (!this.learning || (this.teachTr && !(this.uni && this.eOn))) return;   // (teacher rule: the eligibility traces stay 0, so w += lr*M*0 changes nothing)
     const lr = this.p.lr, pl = this.uni ? this.eList : this.plastic, el = this.elig, ws = this.ws, w0 = this.w0, wMax = params.wMax, sc = this.synCh;
-    const eT = this.eT, eS = this.eSub, eP = this.ePow;
+    const eT = this.eT, eS = this.eSub, eP = this.ePow, tro = this.ng ? this.ng.tro : null;
     let s = 0;
     for (let q = 0; q < pl.length; q++) {
       const k = pl[q], m = mods[sc[k]]; if (m === 0) continue;
@@ -330,6 +420,7 @@ class SpikingNet {
       if (w0[k] > 0) w = w < 0 ? 0 : w > wMax ? wMax : w;    // sign preserved
       else w = w > 0 ? 0 : w < -wMax ? -wMax : w;
       ws[k] = w; s += Math.abs(w - old);
+      if (tro && w0[k] > 0 && w > old) tro[this.pres[k]] += w - old;
     }
     if (this.p.preNorm > 0 && s > 0) { if (!this.npStart) this.buildNp(); for (let i = 0; i < this.N; i++) if (this.npStart[i + 1] > this.npStart[i]) this.normPre(i); }   // v20: competition between targets
     this.dwSum = s;
