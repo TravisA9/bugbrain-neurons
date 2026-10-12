@@ -228,7 +228,7 @@ function networkStats(g) {
 // v20 (round 21, reward learning): no existing default changed (new env bandit -> rewardK; new option mapping 'random' -> rewardMemK) -> DEFAULTS_VERSION stays 18.
 // v21 (round 22, context cascade + regions): text/fables/order3 recommend the three-phase clock -> default plan predictK3 -> DEFAULTS_VERSION 19.
 // v22 (round 23): the default plans predictK3 / rewardK / rewardMemK learn with ONE rule set (UNIFIED_PL) -> DEFAULTS_VERSION 20.
-const APP_VERSION = 'v25', DEFAULTS_VERSION = 20;   // v25 (round 26): headless runner + dashboard; v24 (round 25): UI-only (fast mode); v23 (round 24): no default changed
+const APP_VERSION = 'v26', DEFAULTS_VERSION = 21;   // v26 (round 27): evolved plan rewardE is the default for bandit + random-mapping cue/recall; v25 (round 26): headless runner + dashboard; v24 (round 25): UI-only (fast mode); v23 (round 24): no default changed
 const PARAM_DEFAULTS = Object.freeze(Object.assign({}, params));   // the recommended engine settings (snapshot before any UI change)
 Object.assign(SpikingArena, { APP_VERSION, DEFAULTS_VERSION, PARAM_DEFAULTS });
 Object.assign(SpikingArena, { UNIFIED_PL, mulberry32, gauss, clamp, hashSeed, V_REST, V_THRESH, V_FLOOR, params, PL_DEFAULTS, PL_RANGES, CH_DEFAULTS, CH_RANGES,

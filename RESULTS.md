@@ -1849,3 +1849,73 @@ v25 in `legacy/v25/`. multitask.json now starts from predictK3 / rewardE / rewar
 
 **Tests.** test_core ALL OK (new: rewardE default, bandit last quarter 1.00 vs rewardK 0.72, cue random 1.00), browser_test ALL OK
 (F: bandit and cue-random default plan rewardE), seq_test OK, run selftest ALL OK (new balanced-fitness check).
+
+
+## R28 [neuro] (v27, DEFAULTS_VERSION 22): local connection demand, kept separate from the other signals; on by default
+
+**Audit (js/core/develop.js).** Five signals need separate state. Before this round, two were tangled:
+- *Hunger* (v8) is a need that builds up over time: +hungerRate per step while an output has fewer than hungerTarget inputs. It mixes the deficit with how long the deficit has lasted, and it always relaxes tag matching.
+- *Request* (v8) is meant to be the activity channel: spontaneous sensor events mark the cells they reach, which get eligibility, then outputs call for them. But without `juvenile.pairs`, a request went only to outputs below `hungerTarget`. That put connection demand inside the activity signal.
+- The other three were already separate:
+  - prediction mismatch: the teacher plateau in net.js;
+  - outcome: dopamine RPE (critic);
+  - homeostasis: homeoTarget/homeoRate, synaptic scaling normE/normI, and mixHomeo.
+- In the default plans, hunger is 0 in both predictK3 and rewardE. Request is 0 in predictK3 and 0.15 in rewardE. **The activity channel is inert for text, order3 and bandit** (those envs have no spontaneous growth waves); it only acts on cue.
+
+**New gene `demand`** (default 0, so old genomes grow bit-identically; genes demandTarget 3, demandRelax, demandLam 0.4, demandStart).
+- Deficit = 1 − inputs/target, recomputed from the current count with no build-up over time.
+- Each under-connected output emits an attractant with the steady-state diffusion profile exp(−d/λ) × deficit. Excitatory cones climb its gradient. The attractant vanishes once the target is satisfied.
+- A sensor still short of targets, or an axon with no partner while demand remains, grows one extra stretch.
+- With demand on, request no longer falls back to the `hungerTarget` test (untangled).
+- New devStats fields: outCov (fraction of outputs with at least 3 inputs), outInMean, demandSyn, synapses.
+- `params.cellDemand` gives an ablation switch; there is no UI control.
+
+**Controls** (results_v27/demand_exp.js, 16 growths per cell, deterministic seeds, one held-out episode per growth). Conditions:
+- neither: demand 0, request 0;
+- activity only: request 0.15;
+- demand only;
+- activity + demand.
+
+For "demand only", activity during growth is silenced: spontaneous events reach growth only through request. Output count varies with bandit K 2/3/6 and order3 K 4/8/16. Each cell reads **score ± sd / output coverage / orphan outputs / synapses**.
+
+*Seed set A, first version (demand 1, relaxed matching 0.8):*
+
+| task (outputs) | neither | activity only | demand only | activity + demand |
+|---|---|---|---|---|
+| text (19) | 7.20±0.14 / 100% / 0.0% / 183447 | 7.20±0.14 / 100% / 0.0% / 183447 | 7.23±0.11 / 100% / 0.0% / 183523 | 7.24±0.11 / 100% / 0.0% / 183456 |
+| order3 K4 (4) | 9.81±0.01 / 100% / 0.0% / 190185 | 9.81±0.01 / 100% / 0.0% / 190185 | 9.80±0.01 / 100% / 0.0% / 190919 | 9.80±0.01 / 100% / 0.0% / 190917 |
+| order3 K8 (8) | 8.65±0.47 / 100% / 0.0% / 198435 | 8.65±0.47 / 100% / 0.0% / 198435 | 8.69±0.37 / 100% / 0.0% / 198415 | 8.73±0.34 / 100% / 0.0% / 198415 |
+| order3 K16 (16) | 9.05±0.06 / 100% / 0.0% / 186402 | 9.05±0.06 / 100% / 0.0% / 186402 | 9.07±0.08 / 100% / 0.0% / 186601 | 9.07±0.08 / 100% / 0.0% / 186570 |
+| bandit K2 (2) | 5.63±0.74 / 100% / 0.0% / 8000 | 5.63±0.74 / 100% / 0.0% / 8000 | 5.82±0.70 / 100% / 0.0% / 8146 | 5.82±0.70 / 100% / 0.0% / 8146 |
+| bandit K3 (3) | 6.60±0.69 / 100% / 0.0% / 8521 | 6.60±0.69 / 100% / 0.0% / 8521 | 5.32±1.35 / 100% / 0.0% / 8914 | 5.32±1.35 / 100% / 0.0% / 8914 |
+| bandit K6 (6) | 3.52±0.82 / 66% / 1.0% / 6944 | 3.52±0.82 / 66% / 1.0% / 6944 | 3.12±0.63 / 87% / 0.0% / 7750 | 3.12±0.63 / 87% / 0.0% / 7750 |
+| cueR (2) | 9.65±2.40 / 100% / 0.0% / 7957 | 9.18±3.04 / 100% / 0.0% / 8122 | 10.45±1.38 / 100% / 0.0% / 8205 | 10.08±1.07 / 100% / 0.0% / 8362 |
+
+Relaxed matching is a shortcut. It wires actor outputs early to partners with the wrong tag: about 15 demand synapses per growth even where coverage was already 100%. Bandit K3 dropped 6.60 → 5.32. Late onset (demandStart 0.7/0.85) did nothing at all: by then every output was satisfied, and the K6 orphans were not reached. **Attraction only (demandRelax 0)** kept the coverage gain and lost no score. This variant was then checked on fresh seeds.
+
+*Seed set B, held out (SEEDOFF=2000, never used for tuning), attraction only (demand 1, demandRelax 0):*
+
+| task (outputs) | neither | activity only | demand only | activity + demand |
+|---|---|---|---|---|
+| text (19) | 7.28±0.10 / 100% / 0.0% / 183833 | 7.28±0.10 / 100% / 0.0% / 183833 | 7.29±0.11 / 100% / 0.0% / 183708 | – |
+| order3 K4 (4) | 9.81±0.02 / 100% / 0.0% / 188226 | 9.81±0.02 / 100% / 0.0% / 188226 | 9.81±0.01 / 100% / 0.0% / 189009 | – |
+| order3 K8 (8) | 8.60±0.48 / 100% / 0.0% / 199040 | 8.60±0.48 / 100% / 0.0% / 199040 | 8.73±0.42 / 100% / 0.0% / 198772 | – |
+| order3 K16 (16) | 9.02±0.05 / 100% / 0.0% / 186776 | 9.02±0.05 / 100% / 0.0% / 186776 | 9.06±0.04 / 100% / 0.0% / 186797 | – |
+| bandit K2 (2) | 6.19±1.13 / 100% / 0.0% / 8363 | 6.19±1.13 / 100% / 0.0% / 8363 | 6.52±0.87 / 100% / 0.0% / 8385 | 6.52±0.87 / 100% / 0.0% / 8385 |
+| bandit K3 (3) | 7.02±0.51 / 100% / 0.0% / 8799 | 7.02±0.51 / 100% / 0.0% / 8799 | 7.27±0.41 / 100% / 0.0% / 9157 | 7.27±0.41 / 100% / 0.0% / 9157 |
+| bandit K6 (6) | 3.00±1.36 / 72% / 1.0% / 7129 | 3.00±1.36 / 72% / 1.0% / 7129 | 2.93±1.11 / 94% / 0.0% / 8030 | 2.93±1.11 / 94% / 0.0% / 8030 |
+| cueR (2) | 8.92±2.07 / 100% / 0.0% / 8165 | 10.10±1.14 / 100% / 0.0% / 8326 | 10.23±0.94 / 100% / 0.0% / 8412 | 10.16±1.45 / 100% / 0.0% / 8604 |
+
+(For text and order3 the activity channel is inert, so "activity only" equals "neither" and "activity + demand" equals "demand only".) Results in set B:
+- Demand lifts 6-arm coverage from 72% to 94% and removes the orphan outputs.
+- No task got worse beyond noise; the largest drop is bandit K6, −0.06 with sd ≈ 1.2.
+- Gains within noise on bandit K2/K3 (+0.25…0.33), order3 K8 (+0.13) and cue (+1.3 against neither; equal to activity).
+- Synapses grow 0–13%, and only where outputs were under-connected (K6 +13%). No runaway growth.
+
+**Adopted.** `DEMAND_SC = { demand: 1, demandRelax: 0 }` is applied to predictK3 (both regions) and rewardE. v26 is kept in legacy/v26/. growth.html section 7 and the plan table are updated.
+Reproduce: `SEEDOFF=2000 EXTRA='{"demandRelax":0}' bun results_v27/demand_exp.js <text|order3|bandit|cueR> <neither|activity|demand|both> 16 [K]`.
+
+**Tests.**
+- test_core ALL OK. The new v27 check: demand is on in the defaults, 6-arm coverage goes 0.67 → 0.88, and switching demand off is bit-identical.
+- seq_test OK; run selftest ALL OK.
+- browser_test ALL OK on the second run. The first runs failed A (the 150 s lifetime timer ran out at 919 rows) and H (fast-panel alignment). Both are timing-dependent on a busy box: H also failed once on the unchanged v26 HEAD, and growth/tick speed is the same (3.3 s per predictK3 growth, about 2980 ticks/s, in both).

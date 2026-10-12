@@ -181,10 +181,19 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
 // v22 (round 23): ONE learning rule (UNIFIED_PL) in the default teacher and reward plans
 { const S22 = require('./js/node_load.js')(), U = S22.UNIFIED_PL, same = pl => Object.keys(U).every(k => pl[k] === U[k]);
   const k3 = S22.PLANS.predictK3.make(), rk = S22.PLANS.rewardK.make(), rm = S22.PLANS.rewardMemK.make();
-  assert.ok(same(k3.regions[0].g.pl) && same(rk.pl) && same(rm.pl) && S22.DEFAULTS_VERSION === 21, 'predictK3, rewardK, rewardMemK share the unified rule set');
+  assert.ok(same(k3.regions[0].g.pl) && same(rk.pl) && same(rm.pl) && S22.DEFAULTS_VERSION >= 21, 'predictK3, rewardK, rewardMemK share the unified rule set');
   const E = S22.setEnv('seq', { source: 'order3', K: 8, nSyms: 300, clock2: true, clock3: true }), g = S22.growCell(k3, { seed: 40, spec: E.spec }), a = S22.runEpisode(k3, 1040, g, E);
   assert.ok(a.net.uni && !a.net.eOn && a.task.stats().lastQuarter > 0.8, `seq: every receiver has an instructive input (teacher), no dopamine traces needed (last quarter ${a.task.stats().lastQuarter.toFixed(2)})`);
   const B = S22.setEnv('bandit', { switchEvery: 0, nTrials: 120 }), b = S22.runEpisode(rk, 1001, S22.growCell(rk, { seed: 1, spec: B.spec }), B);
   assert.ok(b.net.uni && b.net.eOn && b.net.eList.length === b.net.plastic.length && b.net.crit, 'bandit: no instructive input, every receiver learns from the dopamine RPE');
   console.log(`v22 unified rule: seq order3 last quarter ${a.task.stats().lastQuarter.toFixed(2)} (instructive), bandit last quarter ${b.task.stats().lastQuarter.toFixed(2)} (RPE): ok`); }
+// v27 (round 28): local connection demand, default on in predictK3 / rewardE; off (bit-identical) when the gene is 0
+{ const S = require('./js/node_load.js')(), E = S.PLANS.rewardE.make(), K3 = S.PLANS.predictK3.make();
+  assert.ok(E.sc.demand === 1 && E.sc.demandRelax === 0 && K3.regions.every(r => r.g.sc.demand === 1) && S.DEFAULTS_VERSION === 22, 'demand on in the default plans');
+  const B = S.setEnv('bandit', { K: 6 }); let cOn = 0, cOff = 0; const off = S.cloneCell(E); off.sc.demand = 0;
+  for (const sd of [11, 12, 13, 14]) { cOn += S.growCell(E, { seed: sd, spec: B.spec }).devStats.outCov / 4; cOff += S.growCell(off, { seed: sd, spec: B.spec }).devStats.outCov / 4; }
+  assert.ok(cOn > cOff, `demand raises output coverage (6 arms: ${cOff.toFixed(2)} -> ${cOn.toFixed(2)})`);
+  const g0 = S.cloneCell(off), w1 = S.growCell(off, { seed: 3, spec: B.spec }).W; S.params.cellDemand = false; const w2 = S.growCell(E, { seed: 3, spec: B.spec }).W; S.params.cellDemand = true;
+  assert.ok(w1.length === w2.length && w1.every((v, i) => v === w2[i]), 'demand 0 == demand switched off (no side effects)');
+  console.log(`v27 demand: 6-arm output coverage ${cOff.toFixed(2)} -> ${cOn.toFixed(2)}, off-switch bit-identical: ok`); }
 console.log('ALL OK');

@@ -93,6 +93,15 @@ const CELL_SC = { wIn: [16, 0, 30], wHid: [10, 0, 30], theta: [0.3, 0.05, 2], pD
   //   sensor (spec.juvenile.pairs; without pairs: all needy outputs) emit a decaying 'request'. Axons of eligible
   //   cells are pulled towards requesting outputs, and their tag matching is relaxed (gain 'request').
   request: [0, 0, 3], reqDelay: [2, 0, 8], reqDecay: [0.6, 0, 0.95],
+  // v27 DEMAND (pure local connection demand; 0 = off, older genomes unchanged). Kept separate from activity (request),
+  //   prediction mismatch (teacher plateau), outcome (dopamine) and homeostasis. An output with fewer than demandTarget
+  //   excitatory inputs emits an attractant proportional to its CURRENT deficit (1 - inputs/target; no time build-up),
+  //   with steady-state diffusion profile exp(-d/demandLam). Excitatory axons are pulled up the gradient (gain 'demand'),
+  //   tag matching is relaxed by demandRelax x deficit, and the signal vanishes once the target is satisfied.
+  //   A sensor with a target deficit, or an axon with no partner yet while demand remains, keeps exploring (one extension).
+  //   With demand on, request no longer falls back to 'outputs below hungerTarget' (that mixed need into the activity signal).
+  // DEMAND_SC (v27 default, R28): demand 1 with demandRelax 0 = attraction only (relaxed matching admitted wrong partners early).
+  demand: [0, 0, 3], demandStart: [0, 0, 1], demandTarget: [3, 1, 20], demandRelax: [0, 0, 1], demandLam: [0.4, 0.1, 2],
   // v9 (all off by default = older genomes grow exactly as before):
   //  grid: tissue resolution (grid cells per side; 24 before v9). A larger grid gives room for more columns.
   //  plastRecv > 0.5: only synapses from PLAST cells onto RECV cells are plastic (gene RECV), and they are not
@@ -275,6 +284,10 @@ function growCell(d, opts) {
   const rgReq = mulberry32(((opts.seed != null ? opts.seed : d.seed) ^ 0x3c6ef372) >>> 0);
   const reqInputs = spec.juvenile ? [].concat(...spec.juvenile.waves) : [];
   let hungerSyn = 0;
+  const demOn = sc.demand > 0 && params.cellDemand !== false, dT = Math.max(1, sc.demandTarget || 3);
+  let demLive = false;   // v27: demand switches on at tf >= demandStart (after tag-guided wiring had its chance)
+  const defOut = m => demOn && demLive ? Math.max(0, 1 - outIn[m] / dT) : 0;
+  let demandSyn = 0, defLeft = () => { for (let m = 0; m < nOut; m++) if (outIn[m] < dT) return true; return false; };
   const pullOf = (cn, m) => (hungOn ? sc.hunger * Math.min(2, needOut[m]) : 0) + (reqOn && !cn.sensor ? sc.request * (elig.get(cn.pre) || 0) * req[m] : 0);
   const motBox = [Math.min(...motors.map(p => p[0])), Math.max(...motors.map(p => p[0])), Math.min(...motors.map(p => p[1])), Math.max(...motors.map(p => p[1]))];
   const masks = new Map(), reachMask = (rad, rr) => { let m = masks.get(rad); if (m) return m;   // v11: offsets that can be within rad
@@ -289,7 +302,7 @@ function growCell(d, opts) {
     const rad2hi = cn.rad * cn.rad * (1 + 1e-9), rad2lo = cn.rad * cn.rad * (1 - 1e-9);
     const make = (postKey, score, postCell, needy) => {
       const key = (cn.pre + nIn) * 65536 + (typeof postKey === 'number' ? postKey : 65000 + +postKey.slice(1)); if (synSet.has(key)) return; synSet.add(key);   // numeric key (v11; was 'pre:post')
-      if (needy) { score = Math.max(score, sc.theta); hungerSyn++; }    // admitted through relaxed matching: normal strength
+      if (needy) { score = Math.max(score, sc.theta); if (needy === 'd') demandSyn++; else hungerSyn++; }    // admitted through relaxed matching: normal strength
       let w, plastic;
       if (cn.sensor) { w = (sc.wDiffuse > 0 && IN[-1 - cn.pre].diffuse ? sc.wDiffuse : sc.wIn) * score;   // v20 plan constant wDiffuse (absent = wIn): weight of broadcast (diffuse) inputs
         plastic = postCell && !recvOn ? postCell.o[CO.PLAST] > 0.5 : false; }
@@ -314,6 +327,7 @@ function growCell(d, opts) {
         if (S[CO.S8] > 0.05) score += S[CO.S8] * co[CO.T8]; }
       if (topoOn && c.o[CO.TOPO] > 0.5 && ((cn.sensor && !IN[-1 - cn.pre].diffuse) || topoPre) && !(recvOn && !cn.sensor && S[CO.PLAST] > 0.5 && c.o[CO.RECV] > 0.5) && !(cn.fibre && c.o[CO.CLAW] > 0.5)) score *= topoMatch(cn.sensor ? sLab : preCell.topo, c.topo);   // both sides carry labels
       if (score > sc.theta) make(id, score, c);
+      else if (cn.sensor && demOn && demLive && cn.nsyn < dT && score > sc.theta * (1 - Math.min(1, (sc.demandRelax || 0) * (1 - cn.nsyn / dT)))) make(id, score, c, 'd');
       else if (cn.sensor && hungOn && needIn[-1 - cn.pre] > 0 && score > sc.theta * (1 - Math.min(1, sc.hungerRelax * needIn[-1 - cn.pre]))) make(id, score, c, true);
     } }
     const Rm = Math.max(cn.rad, 0.2) * (1 + 1e-9);   // v11: skip the output scan when every output is certainly out of reach
@@ -324,8 +338,9 @@ function growCell(d, opts) {
       const score = S[CO.S + OUT[m].tag] * (topoPre ? topoMatch(preCell.topo, outLabel[m]) : 1); if (score > sc.theta) { make('m' + m, score, null); continue; }
       if ((hungOn || reqOn) && S[CO.INH] <= 0.5) {                  // needy / requesting output: relaxed matching (excitatory axons only)
         const relax = Math.min(1, (hungOn ? sc.hungerRelax * needOut[m] : 0) + (reqOn ? Math.min(1, sc.request * (elig.get(cn.pre) || 0) * req[m]) : 0));
-        if (relax > 0 && score > sc.theta * (1 - relax)) make('m' + m, score, null, true);
+        if (relax > 0 && score > sc.theta * (1 - relax)) { make('m' + m, score, null, true); continue; }
       }
+      if (demOn && S[CO.INH] <= 0.5) { const dr = Math.min(1, (sc.demandRelax || 0) * defOut(m)); if (dr > 0 && score > sc.theta * (1 - dr)) make('m' + m, score, null, 'd'); }
     }
   };
   const growCone = (cn, t, nx, ny) => {
@@ -348,6 +363,11 @@ function growCell(d, opts) {
         const ex = motors[m][0] - cn.x, ey = motors[m][1] - cn.y, dd = Math.hypot(ex, ey) || 1e-6, f = a * Math.exp(-dd / sc.hungerLam) / dd;
         dx += f * ex; dy += f * ey; }
     }
+    if (demOn && !cn.sensor && !cn.coll && cells[cn.pre].o[CO.INH] <= 0.5) {   // v27: climb the demand attractant of under-connected outputs
+      for (let m = 0; m < nOut; m++) { const a = sc.demand * defOut(m); if (a <= 0) continue;
+        const ex = motors[m][0] - cn.x, ey = motors[m][1] - cn.y, dd = Math.hypot(ex, ey) || 1e-6, f = a * Math.exp(-dd / (sc.demandLam || 0.4)) / dd;
+        dx += f * ex; dy += f * ey; }
+    }
     const n = Math.hypot(dx, dy) || 1; cn.dx = dx / n; cn.dy = dy / n;
     const L = cn.sensor ? h : 1.5 * h;
     cn.x = clamp(cn.x + cn.dx * L, -1 + h / 2, 1 - h / 2); cn.y = clamp(cn.y + cn.dy * L, -1 + h / 2, 1 - h / 2);
@@ -357,6 +377,7 @@ function growCell(d, opts) {
     if (cn.nsyn >= cn.maxSyn) cn.done = true;
     else if (cn.len >= cn.maxLen) {
       if (!cn.sensor && cn.nsyn === 0 && sc.satisfy >= 1 && !cn.extended) { cn.extended = true; cn.maxLen = Math.round(cn.maxLen * sc.satisfy); if (cn.len >= cn.maxLen) cn.done = true; }
+      else if (demOn && !cn.extended && !cn.coll && demLive && (cn.sensor ? cn.nsyn < dT : cn.nsyn === 0 && defLeft())) { cn.extended = true; cn.maxLen += Math.round(cn.maxLen * Math.min(1, sc.demand)); }   // v27: unpartnered source keeps exploring while demand remains
       else if (cn.sensor && hungOn && cn.nsyn < sc.hungerTarget && !cn.extended) { cn.extended = true; cn.maxLen += Math.round(cn.maxLen * Math.min(1, sc.hunger)); }   // under-used sensor keeps growing
       else cn.done = true;
     }
@@ -447,9 +468,10 @@ function growCell(d, opts) {
         }
         while (reqQueue.length && reqQueue[0][0] <= t) { const [, i] = reqQueue.shift();
           if (pairs) { for (const [a, m] of pairs) if (a === i) req[m] += 1; }
-          else for (let m = 0; m < nOut; m++) if (outIn[m] < sc.hungerTarget) req[m] += 1; }
+          else for (let m = 0; m < nOut; m++) if (demOn || outIn[m] < sc.hungerTarget) req[m] += 1; }
       }
     }
+    demLive = tf >= (sc.demandStart || 0);
     if (tf >= sc.axonStart) for (let cs = 0; cs < coneSpeed; cs++) for (const cn of cones) {
       if (mirror && cn.isTwin) continue;                         // grown together with its left partner
       const rr_ = cn.rng || r, nx = cn.midline ? 0 : gauss(rr_) * 0.12, ny = gauss(rr_) * 0.12;
@@ -585,7 +607,7 @@ function growCell(d, opts) {
   let orphanOut = 0, silentIn = 0, nInUsed = 0;
   for (let m = 0; m < nOut; m++) { const b = g.nIn + g.nHid + m; let k = 0; for (let a = 0; a < g.nIn + g.nHid; a++) if (g.W[a * N + b] > 0) { k = 1; break; } if (!k) orphanOut++; }
   for (let i = 0; i < nIn; i++) { if (IN[i].tonic) continue; nInUsed++; let k = 0; for (let b = 0; b < N; b++) if (g.W[i * N + b] !== 0) { k = 1; break; } if (!k) silentIn++; }
-  g.devStats = { cells: cells.length, orphanOut, nOut, silentIn, nInUsed, hungerSyn, neurons: cells.filter(c => c.neuron).length, apoptosis, trophicDeaths, survivors: g.nHid, cones: cst,
+  g.devStats = { cells: cells.length, orphanOut, nOut, silentIn, nInUsed, hungerSyn, demandSyn, synapses: syns.length, outInMean: nOut ? Array.from(outIn).reduce((a, b) => a + b, 0) / nOut : 0, outCov: nOut ? Array.from(outIn).filter(v => v >= dT).length / nOut : 0, neurons: cells.filter(c => c.neuron).length, apoptosis, trophicDeaths, survivors: g.nHid, cones: cst,
                  synapses: countSynapses(g), refinePruned: juv.pruned, ms: nowMs() - t0 };
   if (rec) {
     rec.cones = cones.filter(c => c.path).map(c => ({ pre: c.pre, sensor: c.sensor, coll: !!c.coll, fibre: !!(c.fibre || c.bif), tag: c.tag, nsyn: c.nsyn,

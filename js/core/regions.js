@@ -91,7 +91,7 @@ function growRegions(d, opts) {
   G.tracts = tractStats;
   const sum = k => parts.reduce((s, p) => s + (p.g.devStats[k] || 0), 0);
   G.devStats = { cells: sum('cells'), neurons: sum('neurons'), apoptosis: sum('apoptosis'), trophicDeaths: sum('trophicDeaths'), survivors: nHid, orphanOut: outPart.g.devStats.orphanOut, nOut,
-                 silentIn: outPart.g.devStats.silentIn, nInUsed: outPart.g.devStats.nInUsed, hungerSyn: 0, cones: outPart.g.devStats.cones, synapses: countSynapses(G), refinePruned: sum('refinePruned'),
+                 silentIn: outPart.g.devStats.silentIn, nInUsed: outPart.g.devStats.nInUsed, hungerSyn: 0, demandSyn: outPart.g.devStats.demandSyn || 0, outCov: outPart.g.devStats.outCov, outInMean: outPart.g.devStats.outInMean, cones: outPart.g.devStats.cones, synapses: countSynapses(G), refinePruned: sum('refinePruned'),
                  regions: parts.length, tracts: tractStats, ms: nowMs() - t0 };
   // the viewer: every region's own grown brain + local spec (+ its growth recording with record: true); not enumerable (never saved)
   Object.defineProperty(G, 'regionParts', { value: parts.map((p, k) => ({ name: G.regions[k].name, color: G.regions[k].color, off: p.off, outputs: p === outPart, brain: p.g, spec: p.spec, map: p.map })), enumerable: false });

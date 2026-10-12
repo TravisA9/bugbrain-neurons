@@ -158,10 +158,13 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const B = { switchEvery: 0, nTrials: 120 }, b = run('bandit', B, 'rewardK', 0), bf = run('bandit', B, 'rewardK', 1);
   assert.ok(b > 0.6 && b > bf + 0.25, `bandit: rewardK learns the best arm from reward alone (last quarter ${b.toFixed(2)}, frozen ${bf.toFixed(2)})`);
   const C = { mapping: 'random', wrongCost: 0, nTrials: 80 }, Ec = S20.setEnv('cue', C);
-  assert.ok(S20.defaultPlanId(Ec) === 'rewardMemK' && Ec.spec.inputs.length === 12 && S20.defaultPlanId(S20.setEnv('cue', { mapping: 'same', wrongCost: 1, nTrials: 60 })) === 'memoryK', 'cue: random mapping -> rewardMemK + broadcast GO; same mapping -> memoryK');
+  assert.ok(S20.defaultPlanId(Ec) === 'rewardE' && Ec.spec.inputs.length === 12 && S20.defaultPlanId(S20.setEnv('cue', { mapping: 'same', wrongCost: 1, nTrials: 60 })) === 'memoryK', 'cue: random mapping -> rewardE (v26) + broadcast GO; same mapping -> memoryK');
   const c = run('cue', C, 'rewardMemK', 0), cf = run('cue', C, 'rewardMemK', 1);
   assert.ok(c > 0.6 && c > cf + 0.25, `cue random mapping, reward only: rewardMemK learns (last quarter ${c.toFixed(2)}, frozen ${cf.toFixed(2)})`);
   const n0 = new S20.Agent(S20.PLANS.v3h.make(), 1).net; assert.ok(!n0.crit && !n0.anList, 'new genes off: no critic, no action noise in old plans');
+  { const be = run('bandit', B, 'rewardE', 0), ce = run('cue', { mapping: 'random', wrongCost: 1, nTrials: 80 }, 'rewardE', 0);   // default wrongCost (1): rewardE was evolved with punishment; with wrongCost 0 it is weaker than rewardMemK (R27)
+    assert.ok(be > 0.6 && ce > 0.6 && S20.defaultPlanId(S20.setEnv('bandit', B)) === 'rewardE', `v26 rewardE (default): bandit last quarter ${be.toFixed(2)} (rewardK ${b.toFixed(2)}), cue random ${ce.toFixed(2)} (rewardMemK ${c.toFixed(2)})`);
+    console.log(`rewardE (v26): bandit ${be.toFixed(2)}, cue random ${ce.toFixed(2)}: ok`); }
   console.log(`reward learning (v20): bandit last quarter ${b.toFixed(2)} (frozen ${bf.toFixed(2)}), cue random mapping ${c.toFixed(2)} (frozen ${cf.toFixed(2)}): ok`); }
 // v21 (round 22): context cascade (predictK3: cortex + context region on the three-phase clock) and multi-region brains
 { const S21 = require('./js/node_load.js')();
@@ -178,7 +181,7 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
 // v22 (round 23): ONE learning rule (UNIFIED_PL) in the default teacher and reward plans
 { const S22 = require('./js/node_load.js')(), U = S22.UNIFIED_PL, same = pl => Object.keys(U).every(k => pl[k] === U[k]);
   const k3 = S22.PLANS.predictK3.make(), rk = S22.PLANS.rewardK.make(), rm = S22.PLANS.rewardMemK.make();
-  assert.ok(same(k3.regions[0].g.pl) && same(rk.pl) && same(rm.pl) && S22.DEFAULTS_VERSION === 20, 'predictK3, rewardK, rewardMemK share the unified rule set');
+  assert.ok(same(k3.regions[0].g.pl) && same(rk.pl) && same(rm.pl) && S22.DEFAULTS_VERSION === 21, 'predictK3, rewardK, rewardMemK share the unified rule set');
   const E = S22.setEnv('seq', { source: 'order3', K: 8, nSyms: 300, clock2: true, clock3: true }), g = S22.growCell(k3, { seed: 40, spec: E.spec }), a = S22.runEpisode(k3, 1040, g, E);
   assert.ok(a.net.uni && !a.net.eOn && a.task.stats().lastQuarter > 0.8, `seq: every receiver has an instructive input (teacher), no dopamine traces needed (last quarter ${a.task.stats().lastQuarter.toFixed(2)})`);
   const B = S22.setEnv('bandit', { switchEvery: 0, nTrials: 120 }), b = S22.runEpisode(rk, 1001, S22.growCell(rk, { seed: 1, spec: B.spec }), B);

@@ -463,7 +463,7 @@ function createPredict3Plan(tune) {
     tracts: [{ name: 'M2 -> context', from: { region: 0, cls: 2 }, map: 'topo', to: { region: 1, tract: 'prev' }, gain: T.gain },
              { name: 'M3 -> mixing', from: { region: 1, cls: 2 }, map: 'claw', to: { region: 0, mix: true, w: T.w3 } }] };
 }
-registerPlan('predictK3', 'third-order plan: cortex + context region (needs the three-phase clock)', () => createPredict3Plan(),
+registerPlan('predictK3', 'third-order plan: cortex + context region (needs the three-phase clock)', () => { const d = createPredict3Plan(); for (const r of d.regions) Object.assign(r.g.sc, SpikingArena.DEMAND_SC); return d; },   // v27: + local connection demand
   'predictK2XO plus a context region grown by the same gene program: a shift register holding the symbol two steps back, projecting to the mixing cells');
 Object.assign(SpikingArena, { SeqTask, createPredictPlan, createPredict3Plan, PREDICT3_CTX: CTX3, createPredict2Plan, seqIO, PREDICT_LARGE: LARGE, PREDICT2_LARGE: LARGE2, PREDICT2_XL: XL2, PREDICT2_XT: XT2, PREDICT2_XN: XN2, PREDICT2_XM: XM2, PREDICT2_XS: XS2, PREDICT2_XG: XG2, PREDICT2_XO: XO2 });
 })();
