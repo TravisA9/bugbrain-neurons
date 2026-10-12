@@ -1,0 +1,235 @@
+/* =====================================================================
+ * SPIKING ARENA ENGINE — base.js (no DOM, no task knowledge)
+ * Utilities, engine parameters, the network container ("direct genome")
+ * and plasticity genes. All engine files are plain classic scripts that
+ * share one global scope (browser <script src> or js/node_load.js in Node),
+ * and publish their public names on the SpikingArena object.
+ * Load order: base, io, develop, net, files, agent, evolve, then js/envs/*.
+ * ===================================================================== */
+'use strict';
+var SpikingArena = (typeof globalThis !== 'undefined' ? globalThis : window).SpikingArena || {};
+(typeof globalThis !== 'undefined' ? globalThis : window).SpikingArena = SpikingArena;
+
+/* ---------------- Utilities ---------------- */
+function mulberry32(a) {           // small fast seeded RNG -> [0,1)
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function gauss(r) {                // standard normal via Box-Muller
+  let u = 0; while (u === 0) u = r();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r());
+}
+const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
+function hashSeed(a, b) { let h = (Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x632be5ab, 0xc2b2ae35)) >>> 0; h ^= h >>> 15; return Math.imul(h, 0x27d4eb2d) >>> 0; }
+const nowMs = () => (typeof performance !== 'undefined' ? performance : Date).now();
+
+/* ---------------- Engine constants / tunable parameters ----------------
+ * Only task-independent settings live here. Every environment has its own
+ * parameter object (see io.js: envParams). */
+const V_REST = -70, V_THRESH = -55, V_FLOOR = -90;  // mV
+const params = {
+  env: 'cue',          // id of the current environment (see js/envs/)
+  popSize: 50,
+  mutRate: 0.05,       // per-gene mutation probability (plasticity genes)
+  leak: 0.95,          // leak factor of every normal neuron (per substep)
+  substeps: 4,         // neural sub-steps per environment tick
+  episodes: 1,         // episodes per GROWTH per generation
+  growths: 3,          // ROBUST FITNESS: each genome is grown this many times (fresh developmental-noise
+                       //   seeds every generation); 1 = grown once with its own seed
+  robustW: 0.5,        // fitness = mean over growths - robustW x std over growths ...
+  worstW: 0,           // ... blended with the WORST growth: (1 - worstW) x (mean - robustW x std) + worstW x min (v8)
+  valGrowths: 10,      // champion validation: regrow with this many fixed held-out noise seeds (v4-v7: 5) ...
+  valArenas: 10,       // ... on this many fixed held-out episodes in total (split over the growths)
+  valTopK: 3,          // how many of each generation's best get validated
+  eliteFrac: 0.1,
+  crossoverRate: 0.3,
+  traceDecay: 0.9,     // output spike-rate smoothing (per substep)
+  plasticity: true,    // lifetime learning (reward-modulated STDP); false = frozen genome weights
+  cellStart: 'env',    // a new population starts from mutants of this body plan ('env' = the environment's default)
+  cellMut: 0.02,       // chance per genome number to mutate
+  cellTrophic: true,   // development: neurotrophic competition (neurons without useful outputs die)
+  cellRefine: true,    // development: juvenile spontaneous activity + Hebbian refinement/pruning
+  cellHomeo: true,     // development: homeostatic thresholds / synaptic scaling
+  cellHunger: true,    // development: allow need-based attraction (genes hunger*; off in old genomes)
+  cellRequest: true,   // development: allow activity-timed requests (genes request/req*; off in old genomes)
+  cellMirror: false,   // development: impose bilateral symmetry
+  wMax: 30,            // |weight| cap (mV) for plastic synapses
+};
+
+/* ---------------- Networks, plasticity genes ----------------
+ * A grown brain is an ordinary network: N = nIn sensors + nHid hidden + nOut outputs,
+ * dense weight matrix W[pre*N+post] (0 = no synapse), plastic flags P, channel C
+ * (always 0: one global dopamine signal), threshold and leak per neuron.        */
+const PL_DEFAULTS = { lr: 0.03, tauPre: 10, tauPost: 10, aMinus: 0.3, tauElig: 50,
+  // v9 TEACHER-GATED rule (teach > 0; default 0 = reward-modulated STDP as before). Not mutated by evolution.
+  //   teachThr: sensory drive (mV, smoothed) that marks a TEACHER event at a cell (instructive input, like a
+  //   climbing fibre); plateau: substeps after the event's onset during which the cell's spikes potentiate its
+  //   plastic inputs by lr x pre-trace; preNorm: every presynaptic cell keeps the sum of its plastic outgoing
+  //   weights at preNorm (heterosynaptic competition), so its weights track how often each target followed it.
+  //   preLag (v10, 0 = off): the teacher rule uses a pre-trace of spikes at least preLag substeps old, so the
+  //   context active BEFORE the teacher event is credited, not the one the event itself (re)creates.
+  //   v12 (all 0 = off): metaN: metaplasticity, the teacher-rule step of a presynaptic cell shrinks as
+  //   metaN / (metaN + E), E = the potentiation that cell has already received (lr x pre-trace summed), so its
+  //   normalised weights become running averages (counts) instead of a fixed-rate recency average.
+  //   confPow: confidence gain, the cell's preNorm budget is scaled by min(confMax, (n S2 / confRef)^confPow),
+  //   S2 = sum(w^2) / sum(w)^2 over its n plastic weights (n S2 = 1 when flat, n when all on one target), so cells whose
+  //   outputs are sharp (a reliable context) dominate the summed prediction and flat ones back off.
+  //   trustPow: learned per-cell trust. At every teacher event (trustDelay substeps after its onset), each cell with
+  //   a recent pre-trace measures the share of its plastic output weight that lands on cells now in a teacher plateau
+  //   (= the probability it gave the event that happened) and keeps a running mean of it (pre-trace weighted, window
+  //   up to trustN events). Its preNorm budget is scaled by min(trustMax, (trust / trustRef)^trustPow), so reliable
+  //   (context-specific) cells dominate the prediction and unreliable ones back off. Local: pre-cell + its synapses.
+  teach: 0, teachThr: 20, plateau: 4, preNorm: 0, preLag: 0, metaN: 0, confPow: 0, confRef: 1, confMax: 1,
+  trustPow: 0, trustRef: 0.5, trustMax: 4, trustN: 200, trustDelay: 2, trust0: -1,
+  //   v13 RECEIVER POOL (cells that receive plastic synapses, e.g. prediction cells; all 0 = off):
+  //   rcvDiv: divisive normalisation (gain control) of their plastic input: each one's plastic input is multiplied by
+  //   rcvDiv * nReceivers / (rcvSig + total plastic input to the pool), so the pool's total drive is ~constant and the
+  //   relative differences decide who fires. rcvInh: shared inhibitory pool, every receiver spike inhibits all receivers
+  //   by rcvInh mV (rcvInhTau > 0: through a pool trace with that time constant in substeps): soft winner-take-all.
+  //   rcvNoise: Gaussian membrane noise (sd, mV per substep) in the receivers, so weak inputs give graded rates.
+  rcvDiv: 0, rcvSig: 1, rcvInh: 0, rcvInhTau: 0, rcvNoise: 0,
+  //   v14 mixInh (0 = off): FEEDFORWARD INHIBITION of mixing cells (gene MIX; like the APL / Golgi cell): every spike of a
+  //   cell that projects onto mixing cells inhibits all mixing cells by mixInh mV, so they need a combination of
+  //   inputs that stands out from the overall input activity (keeps the layer sparse).
+  mixInh: 0,
+  //   v15 LEARNED MIXING (all 0 = off): the excitatory hidden inputs of mixing cells learn by a local, unsupervised
+  //   competitive (instar) rule. When a mixing cell spikes, each input weight moves toward the cell's budget times
+  //   that input's share of the presynaptic traces: w += eta (Wtot x / sum x - w), so the total input stays Wtot
+  //   (heterosynaptic normalisation) and the cell becomes selective for the combination that drives it.
+  //   mixLr = eta, mixN = consolidation (eta * mixN / (mixN + n spikes so far); 0 = constant), mixPrune = an input
+  //   whose weight falls below mixPrune x the mean is removed for good (structural pruning).
+  //   mixHomeo / mixRate: intrinsic homeostatic threshold, thr += mixHomeo (spike - mixRate) every substep, so each
+  //   mixing cell fires on average mixRate spikes per substep (sparse, lifetime-balanced).
+  //   mixGate > 0: dopamine / teacher gating (mushroom-body like): the step is scaled by 1 - mixGate + mixGate x r / 2,
+  //   r = the cell's plastic output weight on cells now in a teacher plateau relative to their number (capped at 2;
+  //   0 without a teacher), so inputs are reinforced when the cell's output already points at the taught symbol.
+  mixLr: 0, mixN: 0, mixPrune: 0, mixHomeo: 0, mixRate: 0.002, mixGate: 0,
+  //   v16 teachAHP (0 = off): POST-TEACHER AFTERHYPERPOLARISATION. When a receiver's teacher drive ends (its teacher trace
+  //   falls below half the threshold after a plateau), it gets -teachAHP mV per substep for teachAHPDur substeps (like
+  //   the pause after a Purkinje cell's climbing-fibre complex spike), so the just-taught column stops echoing the
+  //   current symbol into the prediction window.
+  teachAHP: 0, teachAHPDur: 12,
+  //   v20 (round 21) REWARD-PREDICTION-ERROR DOPAMINE (rpe 0 = off: dopamine = the raw reward events as before).
+  //   rpe 1: a CRITIC (value cell: graded, like a mushroom-body output neuron or a striatal cell summing its input) reads the
+  //   STATE CELLS (rpeSrc 0: the cells with plastic outgoing synapses, i.e. what the actor learns from; 1: mixing cells
+  //   (gene MIX) when the brain has them; 2: all hidden cells) through its own plastic synapses u:  V = sum_i u_i x_i,
+  //   x_i = the cell's smoothed rate. Every tick the dopamine cells compute the TD error
+  //   delta = r + rpeGamma V(now) - V(previous tick), r = the reward events weighted by the channel gains, and broadcast
+  //   rpeGain x delta instead of r (it drives the same three-factor rule of the actor: w += lr M e).
+  //   The critic learns with the same signal (TD(lambda)): z = rpeGamma rpeLambda z + x(previous), u += rpeLr delta z / (rpeEps + z.z)
+  //   (normalised: the value of the traced states moves by at most rpeLr x delta, whatever the number of active cells).
+  //   (rpeGamma 0: delta = r - V(previous), the simple reward-minus-expectation form.)
+  //   rpeMode 1: OUTCOME-ONLY critic (Rescorla-Wagner): dopamine = r - V(now) at outcome events (reward, or a trial end the task marks
+  //   with ev.outcome: an omitted reward is an outcome too) and 0 between them; V learns
+  //   only at outcomes (no TD ramps when the state representation fades before the outcome, no discount drift).
+  //   actNoise (sd, mV per substep; 0 = off): EXPLORATION NOISE OF ACTION CHANNELS. Every output has one slow noise source
+  //   (Ornstein-Uhlenbeck, correlation time actNoiseTau substeps) that drives the output and all cells with plastic inputs that
+  //   project to it (its action column), so a whole column fluctuates together and choices are sampled, not averaged away.
+  //   actNoiseV (0 = off): VALUE-DEPENDENT EXPLORATION: the noise amplitude is divided by (1 + actNoiseV x V), V = the critic's
+  //   value of the present state (rpe on): explore where little reward is expected, exploit where much is.
+  //   With preNorm > 0 and the reward rule (teach 0), every presynaptic cell keeps the sum of its plastic weights (competition
+  //   between actions: potentiating one target depresses the others).
+  actNoise: 0, actNoiseTau: 20,
+  //   rcvHomeo (0 = off): intrinsic homeostatic thresholds of the cells with plastic inputs (action columns), as mixHomeo for
+  //   mixing cells: thr += rcvHomeo (spike - rcvRate) every substep, so no column dominates just because it grew bigger.
+  rcvHomeo: 0, rcvRate: 0.02,
+  //   actFb / outInh (mV; 0 = off): ACTION-SELECTION LOOP (basal ganglia - thalamus - cortex like). Every output spike excites
+  //   its own action column by actFb and inhibits the other columns by actFb (efference copy of the selected action, so the
+  //   column that drove the choice is the one that stays active and becomes eligible), and inhibits the other outputs by
+  //   outInh (competition between actions, winner-take-all).
+  actFb: 0, outInh: 0,
+  rpe: 0, rpeGamma: 0.9, rpeLambda: 0.5, rpeLr: 0.3, rpeGain: 1, rpeSrc: 0, rpeEps: 1, rpeMode: 0, actNoiseV: 0,
+  // v22 (round 23) UNIFIED THREE-FACTOR RULE (uni 1; 0 = off): every plastic synapse keeps its eligibility trace (STDP), and
+  //   dw = lr * M_post * e, with ONE modulator per target cell M_post = uniI * I_post + D:
+  //   I_post = local INSTRUCTIVE signal (climbing-fibre-like plateau: strong topographic sensory drive to that cell, teachThr /
+  //   plateau; diffuse inputs such as GO broadcasts do not count); it is brief, so it acts on the fresh eligibility (the
+  //   pre-trace at the cell's own spikes during the plateau); D = global dopamine (reward prediction error with the critic),
+  //   which acts on the slow trace (tauElig). Teacher tasks get instructive signals and an RPE from right / wrong predictions;
+  //   reward tasks get only the RPE.
+  uni: 0, uniI: 0.4 };   // trust0: starting trust (-1 = trustRef)
+// v22 (round 23): the ONE learning-rule set of the default plans predictK3, rewardK, rewardMemK (and the region plans):
+// unified three-factor rule, instructive gain, eligibility, critic (outcome RPE), synaptic scaling setpoint (RESULTS R23)
+const UNIFIED_PL = { uni: 1, lr: 0.05, uniI: 0.4, tauElig: 100, aMinus: 0.3, rpe: 1, rpeMode: 1, rpeLr: 0.3, preNorm: 45, teachThr: 20, plateau: 4 };
+const PL_RANGES = { lr: [1e-4, 0.3, true], tauPre: [2, 50, true], tauPost: [2, 50, true], aMinus: [0, 2, false], tauElig: [10, 2000, true] };
+// gFood / gPoison / gWall = gains of the three reward events every environment reports
+// (positive reward, negative reward, small "pain" such as wall contact).
+const CH_DEFAULTS = { gFood: 1, gPoison: 1, gWall: 0.05, tauMod: 5, src: -1, gSpike: 0 };
+const CH_RANGES = { gFood: [-3, 3, false], gPoison: [-3, 3, false], gWall: [-1, 1, false], tauMod: [1, 200, true], gSpike: [-1, 1, false] };
+function defaultPlasticity() { return Object.assign({}, PL_DEFAULTS); }
+function defaultChannel() { return Object.assign({}, CH_DEFAULTS); }
+function channelsFromLegacy(pl) {
+  const c = defaultChannel();
+  if (pl) for (const k of ['gFood', 'gPoison', 'gWall', 'tauMod']) if (pl[k] != null) c[k] = +pl[k];
+  return [c];
+}
+function cleanPl(pl) { const p = defaultPlasticity(); if (pl) for (const k in PL_DEFAULTS) if (pl[k] != null) p[k] = +pl[k]; return p; }
+// Empty network with nIn sensors, nHid hidden neurons, nOut outputs.
+function createNetGenome(nIn, nHid, nOut) {
+  const N = nIn + nHid + nOut;
+  return { kind: 'direct', nIn, nHid, nOut, N, W: new Float32Array(N * N), P: new Uint8Array(N * N), C: new Uint8Array(N * N),
+           thresh: new Float32Array(N).fill(V_THRESH), leak: new Float32Array(N).fill(params.leak), pl: defaultPlasticity(), nCh: 1, ch: [defaultChannel()],
+           locked: false, labels: null, ids: null, fitness: null };
+}
+function isInput(g, i) { return i < g.nIn; }
+function isOutput(g, i) { return i >= g.nIn + g.nHid; }
+function outputIndex(g, m) { return g.nIn + g.nHid + m; }
+function countSynapses(g) { g = phenotype(g); let c = 0; for (let i = 0; i < g.W.length; i++) if (g.W[i] !== 0) c++; return c; }
+function genomeParamCount(g) { return g.kind === 'cell' || g.kind === 'regions' ? cellParamCount(g) : countSynapses(g) * 3 + g.N * 2; }
+// Learning-rule genes + the gains of the single global dopamine channel.
+function mutatePlasticityGenes(g, r, m) {
+  for (const k in PL_RANGES) {
+    if (r() > Math.max(0.1, m * 3)) continue;
+    const [lo, hi, lg] = PL_RANGES[k];
+    g.pl[k] = lg ? clamp(g.pl[k] * Math.exp(gauss(r) * 0.3), lo, hi) : clamp(g.pl[k] + gauss(r) * (hi - lo) * 0.05, lo, hi);
+  }
+  g.nCh = 1; g.ch.length = 1; const c = g.ch[0]; c.src = -1;
+  for (const k in CH_RANGES) {
+    if (k === 'gSpike' || r() > Math.max(0.1, m * 3)) continue;
+    const [lo, hi, lg] = CH_RANGES[k];
+    c[k] = lg ? clamp(c[k] * Math.exp(gauss(r) * 0.3), lo, hi) : clamp(c[k] + gauss(r) * (hi - lo) * 0.05, lo, hi);
+  }
+}
+
+// Count edges by pathway (UI / ablation reports)
+function synapseStats(g) {
+  g = phenotype(g); const N = g.N, h0 = g.nIn, h1 = g.nIn + g.nHid; let direct = 0, toHidden = 0, recurrent = 0, toMotor = 0;
+  for (let a = 0; a < N; a++) for (let b = 0; b < N; b++) {
+    if (!g.W[a * N + b]) continue;
+    if (a < h0 && b >= h1) direct++; else if (a < h0) toHidden++; else if (a < h1 && b < h1) recurrent++; else toMotor++;
+  }
+  return { total: direct + toHidden + recurrent + toMotor, direct, toHidden, recurrent, hiddenToMotor: toMotor };
+}
+// Wiring statistics of a (grown) network: hidden->hidden synapses, recurrence, depth.
+function networkStats(g) {
+  g = phenotype(g); const N = g.N, h0 = g.nIn, h1 = g.nIn + g.nHid, out = Array.from({ length: N }, () => []);
+  let hh = 0, total = 0, hhInh = 0;
+  for (let a = 0; a < N; a++) for (let b = 0; b < N; b++) { const w = g.W[a * N + b]; if (!w) continue; total++; out[a].push(b);
+    if (a >= h0 && a < h1 && b >= h0 && b < h1) { hh++; if (w < 0) hhInh++; } }
+  const dist = new Int32Array(N).fill(-1), q = [];
+  for (let i = 0; i < h0; i++) { dist[i] = 0; q.push(i); }
+  for (let k = 0; k < q.length; k++) for (const b of out[q[k]]) if (dist[b] < 0) { dist[b] = dist[q[k]] + 1; q.push(b); }
+  let motorDepth = 0, maxDepth = 0; for (let i = h0; i < N; i++) { if (dist[i] > maxDepth) maxDepth = dist[i]; if (i >= h1 && dist[i] > motorDepth) motorDepth = dist[i]; }
+  let index = 0; const idx = new Int32Array(N).fill(-1), low = new Int32Array(N), on = new Uint8Array(N), st = []; let inLoops = 0;
+  const strong = v => { idx[v] = low[v] = index++; st.push(v); on[v] = 1;
+    for (const w of out[v]) { if (w < h0 || w >= h1) continue; if (idx[w] < 0) { strong(w); low[v] = Math.min(low[v], low[w]); } else if (on[w]) low[v] = Math.min(low[v], idx[w]); }
+    if (low[v] === idx[v]) { let n = 0, w; do { w = st.pop(); on[w] = 0; n++; } while (w !== v); if (n > 1) inLoops += n; } };
+  for (let v = h0; v < h1; v++) if (idx[v] < 0) strong(v);
+  let slow = 0; if (g.slow) for (let i = h0; i < h1; i++) slow += g.slow[i];
+  return { hidden: g.nHid, synapses: total, hh, hhInh, recFrac: total ? hh / total : 0, motorDepth, maxDepth, inLoops, slow };
+}
+
+// v17 (round 18): version stamps written into every saved session. A save made with an older DEFAULTS_VERSION
+// is NOT restored silently on load (its settings / population predate the current recommended defaults).
+// v18 (round 19, growth viewer) changed no default. v19 (round 20): the text default plan is predictK2XO -> DEFAULTS_VERSION 18.
+// v20 (round 21, reward learning): no existing default changed (new env bandit -> rewardK; new option mapping 'random' -> rewardMemK) -> DEFAULTS_VERSION stays 18.
+// v21 (round 22, context cascade + regions): text/fables/order3 recommend the three-phase clock -> default plan predictK3 -> DEFAULTS_VERSION 19.
+// v22 (round 23): the default plans predictK3 / rewardK / rewardMemK learn with ONE rule set (UNIFIED_PL) -> DEFAULTS_VERSION 20.
+const APP_VERSION = 'v25', DEFAULTS_VERSION = 20;   // v25 (round 26): headless runner + dashboard; v24 (round 25): UI-only (fast mode); v23 (round 24): no default changed
+const PARAM_DEFAULTS = Object.freeze(Object.assign({}, params));   // the recommended engine settings (snapshot before any UI change)
+Object.assign(SpikingArena, { APP_VERSION, DEFAULTS_VERSION, PARAM_DEFAULTS });
+Object.assign(SpikingArena, { UNIFIED_PL, mulberry32, gauss, clamp, hashSeed, V_REST, V_THRESH, V_FLOOR, params, PL_DEFAULTS, PL_RANGES, CH_DEFAULTS, CH_RANGES,
+  defaultPlasticity, defaultChannel, cleanPl, createNetGenome, isInput, isOutput, outputIndex, countSynapses, genomeParamCount, synapseStats, networkStats });

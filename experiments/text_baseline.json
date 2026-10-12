@@ -1,0 +1,15 @@
+{
+  "name": "text_baseline",
+  "description": "(a) Single-task baseline: evolve the third-order plan predictK3 on next-character prediction of the text corpus (1000-character lifetimes), with the app's robust fitness (3 growths, mean - 0.5 sd) and validation on held-out growths.",
+  "mode": "standard",
+  "seed": 1,
+  "workers": "auto",
+  "population": 32,
+  "generations": 0,
+  "hours": 10,
+  "start": ["predictK3"],
+  "engine": { "growths": 3, "episodes": 1, "robustW": 0.5, "valGrowths": 5, "valArenas": 5, "valTopK": 3, "cellMut": 0.02, "eliteFrac": 0.1, "crossoverRate": 0.3 },
+  "tasks": [ { "name": "text", "env": "seq", "params": { "source": "text" }, "weight": 1, "ref": "auto" } ],
+  "championEvery": 5,
+  "smoke": { "text": { "nSyms": 100 } }
+}

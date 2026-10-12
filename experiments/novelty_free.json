@@ -1,0 +1,20 @@
+{
+  "name": "novelty_free",
+  "description": "(c) Open-ended: 'free' actor-critic genomes whose structural plan constants (column seed counts, tissue size, band positions, wiring weights, memory on/off, 1 or 2 regions, tract density) are bounded evolvable genes. Selection = 0.5 x fitness + 0.5 x novelty of the behaviour (bandit best-arm rate, cue pass rate, log synapse count) against an archive.",
+  "mode": "novelty",
+  "seed": 1,
+  "workers": "auto",
+  "population": 40,
+  "generations": 0,
+  "hours": 8,
+  "start": ["free:reward"],
+  "free": { "pStruct": 0.3 },
+  "engine": { "growths": 2, "episodes": 1, "robustW": 0.5, "valGrowths": 4, "valArenas": 4, "valTopK": 3, "cellMut": 0.02, "eliteFrac": 0.1, "crossoverRate": 0.2 },
+  "tasks": [
+    { "name": "bandit", "env": "bandit", "params": {}, "weight": 1, "ref": "auto" },
+    { "name": "cueR", "env": "cue", "params": { "mapping": "random" }, "weight": 1, "ref": "auto" }
+  ],
+  "novelty": { "weight": 0.5, "k": 10, "archiveAdd": 3, "archiveMax": 2000, "descriptors": ["bandit.optimal", "cueR.pass", "brain.logSynapses"] },
+  "championEvery": 10,
+  "smoke": { "bandit": { "nTrials": 40 }, "cueR": { "nTrials": 6 } }
+}

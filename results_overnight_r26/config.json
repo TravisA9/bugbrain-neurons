@@ -1,0 +1,79 @@
+{
+  "name": "multitask",
+  "description": "(b) Generalist: one genome must do text prediction, third-order sequences (8 symbols), a contextual bandit and reward-only cue-then-turn (random mapping). Each task is normalised against its default plan (= 1.0) and the four are averaged. The population starts from the unified-rule plans (predictK3, rewardMemK, rewardK).",
+  "mode": "standard",
+  "seed": 1,
+  "workers": 7,
+  "population": 32,
+  "generations": 0,
+  "hours": 8,
+  "start": [
+    "predictK3",
+    "rewardMemK",
+    "rewardK"
+  ],
+  "engine": {
+    "growths": 2,
+    "episodes": 1,
+    "robustW": 0.5,
+    "worstW": 0,
+    "valGrowths": 4,
+    "valArenas": 4,
+    "valTopK": 3,
+    "eliteFrac": 0.1,
+    "crossoverRate": 0.3,
+    "cellMut": 0.02
+  },
+  "tasks": [
+    {
+      "name": "text",
+      "env": "seq",
+      "params": {
+        "source": "text"
+      },
+      "weight": 1,
+      "ref": "auto"
+    },
+    {
+      "name": "order3",
+      "env": "seq",
+      "params": {
+        "source": "order3",
+        "K": 8
+      },
+      "weight": 1,
+      "ref": "auto"
+    },
+    {
+      "name": "bandit",
+      "env": "bandit",
+      "params": {},
+      "weight": 1,
+      "ref": "auto"
+    },
+    {
+      "name": "cueR",
+      "env": "cue",
+      "params": {
+        "mapping": "random"
+      },
+      "weight": 1,
+      "ref": "auto"
+    }
+  ],
+  "championEvery": 5,
+  "smoke": {
+    "text": {
+      "nSyms": 100
+    },
+    "order3": {
+      "nSyms": 60
+    },
+    "bandit": {
+      "nTrials": 40
+    },
+    "cueR": {
+      "nTrials": 6
+    }
+  }
+}

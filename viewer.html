@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spiking Arena: growth viewer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg:#14161a; --panel:#1d2026; --fg:#dde1e7; --dim:#8a919c; --acc:#5fb3ff; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--fg); font: 13px/1.35 system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden; }
+  header { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 6px 10px; border-bottom: 1px solid #2a2e36; flex: none; }
+  header h1 { font-size: 15px; margin: 0 6px 0 0; white-space: nowrap; }
+  header a { color: var(--acc); font-size: 12px; text-decoration: none; }
+  button, select, input[type=number] { background: #2a2f38; color: var(--fg); border: 1px solid #3a404b; border-radius: 5px; padding: 3px 8px; font: inherit; font-size: 12px; cursor: pointer; }
+  button:hover { border-color: var(--acc); } button.on { background: #24425f; border-color: var(--acc); }
+  input[type=number] { width: 90px; }
+  #info { color: var(--dim); font-size: 12px; flex: 1 1 200px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  main { flex: 1; min-height: 0; display: flex; gap: 8px; padding: 8px 10px 0; }
+  #stage { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; position: relative; }
+  #viewTabs { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+  #canvasBox { flex: 1; min-height: 0; position: relative; border-radius: 6px; overflow: hidden; background: #0d1014; }
+  #canvasBox canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+  #canvasBox canvas:active { cursor: grabbing; }
+  #tip { position: absolute; pointer-events: none; background: rgba(20,22,26,.95); border: 1px solid #3a404b; border-radius: 5px; padding: 4px 7px; font-size: 12px; max-width: 420px; display: none; z-index: 5; }
+  #busy { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(13,16,20,.7); font-size: 15px; z-index: 6; }
+  aside { flex: 0 0 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 8px; }
+  .panel { background: var(--panel); border-radius: 8px; padding: 8px 10px; }
+  .panel h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); margin: 0 0 6px; font-weight: 600; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; }
+  label.chk { display: flex; gap: 5px; align-items: center; font-size: 12px; white-space: nowrap; cursor: pointer; }
+  .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 11.5px; }
+  .legend span.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  .legend span.sq { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; }
+  #inspector h3 { font-size: 13.5px; margin: 0 0 6px; }
+  #inspector .kv { font-size: 12px; margin: 0 0 6px; }
+  #inspector .sub { font-size: 11px; color: var(--dim); margin: 8px 0 3px; text-transform: uppercase; letter-spacing: .04em; }
+  #inspector a.ins-link { color: var(--acc); text-decoration: none; } #inspector a.ins-link:hover { text-decoration: underline; }
+  .dim { color: var(--dim); }
+  .ins-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 10px; }
+  .ins-bar { display: grid; grid-template-columns: 54px 1fr 32px; gap: 4px; align-items: center; font-size: 10.5px; }
+  .ins-bar .lb { color: var(--dim); overflow: hidden; white-space: nowrap; }
+  .ins-bar .tr { position: relative; height: 7px; background: #2a2f38; border-radius: 2px; }
+  .ins-bar .tr i { position: absolute; top: 0; bottom: 0; border-radius: 2px; }
+  .ins-bar .vv { text-align: right; color: var(--dim); }
+  canvas.ins-heat { width: 100%; image-rendering: pixelated; border-radius: 3px; }
+  footer { flex: none; padding: 6px 10px 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-top: 1px solid #2a2e36; margin-top: 8px; }
+  #tl { flex: 1 1 400px; display: flex; flex-direction: column; min-width: 300px; }
+  #tlSlider { width: 100%; margin: 0; }
+  #tlMarks { position: relative; height: 24px; font-size: 10px; color: var(--dim); }
+  #tlMarks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  #tlMarks span::before { content: ''; position: absolute; left: 50%; top: -3px; height: 4px; border-left: 1px solid #555; }
+  #stageLbl { font-size: 12px; color: #c9d1d9; min-width: 260px; }
+  #help { display: none; position: absolute; right: 12px; top: 40px; width: 460px; z-index: 8; background: #1d2026; border: 1px solid #3a404b; border-radius: 8px; padding: 10px 14px; font-size: 12.5px; box-shadow: 0 6px 30px rgba(0,0,0,.5); }
+  #help h3 { margin: 4px 0 6px; font-size: 14px; } #help ul { margin: 4px 0; padding-left: 18px; } #help li { margin: 2px 0; }
+  #runInfo { font-size: 11.5px; color: var(--dim); font-family: ui-monospace, monospace; max-width: 520px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🌱 Growth viewer</h1>
+  <label class="chk">brain <select id="selSrc"></select></label>
+  <label class="chk">plan <select id="selPlan"></select></label>
+  <label class="chk" title="Developmental noise seed (default: the genome's own)">seed <input type="number" id="inSeed"></label>
+  <button id="btnRegrow" title="Grow again with this seed">Regrow</button>
+  <button id="btnFile" title="Load a brain file (.json) or a session file (its champion)">Load file…</button><input type="file" id="fileIn" accept=".json" hidden>
+  <span id="info"></span>
+  <a href="index.html">← Arena</a> <a href="growth.html" target="_blank">How the brain grows</a>
+  <button id="btnHelp">? Help</button>
+</header>
+<main>
+  <div id="stage">
+    <div id="viewTabs">
+      <button id="tabTissue" class="on" title="Tissue: the growing sheet over time (W)">Tissue (development)</button>
+      <button id="tabWiring" title="Wiring diagram of the final brain: populations and their connections (W)">Wiring diagram</button>
+      <label class="chk" id="regionBox" style="display:none" title="Multi-region brain: each region grows on its own tissue; the wiring diagram shows all regions (ring colour = region)">region <select id="selRegion"></select></label>
+      <span style="flex:1"></span>
+      <button id="btnFit" title="Fit to view (F, or double-click)">⤢ Fit</button><button id="btnZin">＋</button><button id="btnZout">－</button>
+      <label class="chk" id="minSynBox" style="display:none">min synapses per link <input type="range" id="minSyn" min="1" max="200" value="1" style="width:110px"><span id="minSynV">1</span></label>
+    </div>
+    <div id="canvasBox"><canvas id="cvTissue"></canvas><canvas id="cvWiring" style="display:none"></canvas><div id="tip"></div><div id="busy">growing…</div></div>
+    <div id="help">
+      <h3>Growth viewer: what you see</h3>
+      <ul>
+        <li>The brain is <b>grown</b> in a sheet of tissue from one genome: the cells divide, migrate, choose a fate, become neurons, and send out axons. The axons follow chemical gradients and make synapses where address tags match. Afterwards, neurons without useful output die and spontaneous activity refines the wiring. See <a href="growth.html" target="_blank" style="color:#5fb3ff">How the brain grows</a>.</li>
+        <li>Orientation: <b>front</b> (sensors) is on the left, <b>back</b> (outputs) on the right, and the body midline runs horizontally.</li>
+        <li><b>Timeline</b> (bottom): 40 development steps, then the stages after growth (selection, trophic competition, 4 juvenile activity blocks, Hebbian pruning). Drag the slider or press Space to play or pause; ← → step through it.</li>
+        <li><b>Zoom</b> with the mouse wheel, <b>pan</b> by dragging; double-click or <b>F</b> fits the view. <b>Hover</b> for a summary, and <b>click</b> a cell, sensor or output to inspect it. Its synapses are drawn: outgoing in orange, incoming in cyan, inhibitory in red. Its lineage is shown dashed.</li>
+        <li><b>Layers</b> (right): a morphogen heat map, cells (coloured by tag, fate or population), axons, growth cones, synapses (white = excitatory, red = inhibitory, yellow = plastic), pruned synapses (magenta), deaths (✕ red = programmed, orange = lost trophic competition / afferents) and labels.</li>
+        <li><b>Wiring diagram</b> (W): populations of the final brain are nodes, with sensors on the left and outputs on the right. Columns show the synaptic distance from the sensors. Edge width = number of synapses; green = excitatory, red = inhibitory, dashed yellow = mostly plastic. Click a node to highlight its links.</li>
+        <li><b>▶ Run brain</b> lives a lifetime in the environment and overlays the activity: cells flash when they spike, and population nodes glow with their firing rate.</li>
+      </ul>
+      <div style="text-align:right"><button id="btnHelpClose">Close</button></div>
+    </div>
+  </div>
+  <aside>
+    <div class="panel"><h2>Layers</h2>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+        <label class="chk">morphogen <select id="selChem"></select></label>
+        <label class="chk">colour by <select id="selColor"><option value="tag">address tag</option><option value="fate">fate</option><option value="pop">population</option></select></label>
+      </div>
+      <div class="grid2" id="layerBox"></div>
+    </div>
+    <div class="panel"><h2>Legend</h2><div class="legend" id="legend"></div></div>
+    <div class="panel" id="inspector"><h2>Inspector</h2><div id="insBody"></div></div>
+  </aside>
+</main>
+<footer>
+  <button id="btnPlay" title="Play / pause (Space)">▶ Play</button>
+  <button id="btnBack" title="Step back (←)">◀</button><button id="btnFwd" title="Step forward (→)">▶|</button>
+  <label class="chk">speed <select id="selSpeed"><option value="1">1 step/s</option><option value="3">3 steps/s</option><option value="8" selected>8 steps/s</option><option value="20">20 steps/s</option></select></label>
+  <div id="tl"><input type="range" id="tlSlider" min="0" max="46" step="0.01" value="0"><div id="tlMarks"></div></div>
+  <span id="stageLbl"></span>
+  <button id="btnRun" title="Live a lifetime in the environment and show the activity">▶ Run brain</button>
+  <span id="runInfo"></span>
+</footer>
+<script src="js/core/base.js"></script>
+<script src="js/core/io.js"></script>
+<script src="js/core/develop.js"></script>
+<script src="js/core/regions.js"></script>
+<script src="js/core/plans.js"></script>
+<script src="js/core/net.js"></script>
+<script src="js/core/files.js"></script>
+<script src="js/core/agent.js"></script>
+<script src="js/core/evolve.js"></script>
+<script src="js/envs/bug.js"></script>
+<script src="js/envs/memory.js"></script>
+<script src="js/envs/text.js"></script>
+<script src="js/envs/sequence.js"></script>
+<script src="js/envs/bandit.js"></script>
+<script src="js/envs/reward_evolved.js"></script>
+<script src="js/ui/devview.js"></script>
+<script src="js/ui/viewer.js"></script>
+</body>
+</html>

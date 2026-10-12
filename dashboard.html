@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spiking Arena · experiment dashboard</title>
+<style>
+  :root { --bg: #111317; --panel: #1a1d22; --fg: #e6e6e6; --dim: #8a919c; --acc: #5fb3ff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 13px system-ui, sans-serif; }
+  header { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #2a2e36; }
+  h1 { font-size: 15px; margin: 0; }
+  a { color: var(--acc); }
+  button, .filebtn { background: #2a2e36; color: var(--fg); border: 1px solid #3a3f48; border-radius: 4px; padding: 4px 10px; cursor: pointer; font: inherit; }
+  button:hover, .filebtn:hover { background: #353b45; }
+  .note { color: var(--dim); font-size: 12px; }
+  main { padding: 10px 12px; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 12px; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #2a2e36; vertical-align: top; white-space: nowrap; }
+  th { color: var(--dim); font-weight: 600; }
+  td.champs button { margin: 0 4px 2px 0; padding: 2px 6px; font-size: 12px; }
+  .sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; }
+  #charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 10px; }
+  .chart { background: var(--panel); border-radius: 6px; padding: 6px 8px; }
+  .chart h3 { margin: 0 0 4px; font-size: 12.5px; font-weight: 600; }
+  .chart canvas { width: 100%; height: 190px; display: block; }
+  #msg { color: #ffd34d; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Experiment dashboard</h1>
+  <label class="filebtn" title="Pick a results folder (one run, or the whole results folder with many runs)">📁 Open results folder<input type="file" id="inDir" webkitdirectory directory multiple hidden></label>
+  <label class="filebtn" title="Pick files of one or more runs: generations.csv, summary.json, config.json, champions/*.json">📄 Open files<input type="file" id="inFiles" multiple accept=".csv,.json" hidden></label>
+  <button id="btnClear" title="Forget all loaded runs">Clear</button>
+  <span class="note">Runs written by <code>run/runner.js</code> (results/&lt;date&gt;_&lt;name&gt;/). Everything stays in this browser; nothing is uploaded.</span>
+  <span id="msg"></span>
+</header>
+<main>
+  <table id="runs"><thead></thead><tbody></tbody></table>
+  <div id="charts"></div>
+</main>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const COLORS = ['#5fb3ff', '#4cd964', '#ffd34d', '#ff6b6b', '#c88cff', '#ff9f43', '#4dd2ff', '#f7f06d', '#ff6bd6', '#8dff6b'];
+const runs = new Map();   // key -> { key, name, rows, cols, summary, config, version, champions: [{ name, text }], show, color }
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/), cols = lines[0].split(',');
+  const rows = lines.slice(1).filter(Boolean).map(l => { const v = l.split(','), o = {}; cols.forEach((c, i) => { o[c] = v[i] === '' || v[i] == null ? null : isNaN(+v[i]) ? v[i] : +v[i]; }); return o; });
+  return { cols, rows };
+}
+function runOf(key) { if (!runs.has(key)) runs.set(key, { key, name: key, rows: [], cols: [], champions: [], show: true, color: COLORS[runs.size % COLORS.length] }); return runs.get(key); }
+async function loadFiles(files, fromDir) {
+  let n = 0, errs = [];
+  const list = [...files].filter(f => /\.(csv|json)$/i.test(f.name) && !/checkpoint\.json$/i.test(f.name));
+  const csvs = list.filter(f => /generations\.csv$/i.test(f.name));
+  for (const f of list) {
+    const parts = (f.webkitRelativePath || '').split('/');
+    let key, champ = false;
+    if (parts.length >= 2) { const i = parts.lastIndexOf('champions'); champ = i >= 0; key = parts.slice(0, champ ? i : parts.length - 1).join('/'); }
+    else key = csvs.length > 1 && /generations\.csv$/i.test(f.name) ? f.name + ':' + n : 'selected files';
+    if (/\.json$/i.test(f.name) && !champ && parts.length < 2 && /^(gen_\d+|champion_final)\.json$/i.test(f.name)) champ = true;
+    try {
+      const text = await f.text(), r = runOf(key);
+      if (/generations\.csv$/i.test(f.name)) { const p = parseCSV(text); r.rows = p.rows; r.cols = p.cols; n++; }
+      else if (/summary\.json$/i.test(f.name)) { r.summary = JSON.parse(text); r.name = r.summary.dir || r.summary.name || r.name; }
+      else if (/config\.json$/i.test(f.name)) { r.config = JSON.parse(text); if (!r.summary) r.name = r.config.name || r.name; }
+      else if (/version\.json$/i.test(f.name)) r.version = JSON.parse(text);
+      else if (champ) { JSON.parse(text); r.champions.push({ name: f.name, text }); }
+      else if (/index\.csv$/i.test(f.name)) {}
+    } catch (e) { errs.push(f.name + ': ' + e.message); }
+  }
+  for (const [k, r] of [...runs]) if (!r.rows.length && !r.summary) runs.delete(k);   // folders that are not runs (e.g. the results root)
+  for (const r of runs.values()) r.champions.sort((a, b) => a.name.localeCompare(b.name));
+  $('msg').textContent = errs.length ? 'Some files could not be read: ' + errs.join('; ') : `${runs.size} run(s) loaded.`;
+  render();
+}
+$('inDir').onchange = e => { loadFiles(e.target.files, true); e.target.value = ''; };
+$('inFiles').onchange = e => { loadFiles(e.target.files, false); e.target.value = ''; };
+$('btnClear').onclick = () => { runs.clear(); render(); $('msg').textContent = ''; };
+// hand a champion brain file to the growth viewer (same handoff as index.html's 'Open growth viewer') or to the arena
+function openChampion(text, where) {
+  const o = JSON.parse(text);
+  if (!o.developmental_genome) return alert('Not a brain file with a developmental genome.');
+  if (where === 'viewer') {
+    localStorage.setItem('spikingArena.viewer', JSON.stringify({ format: 'spiking-arena-viewer/v1', genome: o.developmental_genome, env: o.environment, envParams: o.envParams || {},
+      label: o.meta && o.meta.run ? `champion of ${o.meta.run} (gen ${o.meta.generation})` : 'champion', savedAt: new Date().toISOString() }));
+    window.open('viewer.html#arena', '_blank');
+  } else { localStorage.setItem('spikingArena.load', text); window.open('index.html#load', '_blank'); }
+}
+window.__dash = { runs, openChampion, loadFiles };
+const fmt = x => x == null ? '–' : typeof x === 'number' ? (Math.abs(x) >= 100 ? x.toFixed(0) : +x.toFixed(3)) : x;
+function render() {
+  const R = [...runs.values()];
+  $('runs').tHead.innerHTML = R.length ? '<tr><th>show</th><th>run</th><th>mode</th><th>status</th><th>gens</th><th>hours</th><th>champion</th><th>per task (raw, champion)</th><th>runtime</th><th>champions</th></tr>' : '';
+  const tb = $('runs').tBodies[0]; tb.innerHTML = '';
+  R.forEach((r, ri) => {
+    const s = r.summary || {}, c = s.champion || {}, last = r.rows[r.rows.length - 1] || {}, tasks = s.tasks || (r.config ? r.config.tasks.map(t => t.name) : []);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><input type="checkbox" ${r.show ? 'checked' : ''} title="Show this run in the charts"> <span class="sw" style="background:${r.color}"></span></td>` +
+      `<td title="${(r.config && r.config.description || '').replace(/"/g, '&quot;')}">${r.name}</td><td>${s.mode || (r.config && r.config.mode) || '–'}</td><td>${s.status || '–'}</td>` +
+      `<td>${s.generations != null ? s.generations : r.rows.length}</td><td>${fmt(s.hours != null ? s.hours : last.elapsed_s / 3600)}</td><td>${fmt(c.val != null ? c.val : last.champion_val)}</td>` +
+      `<td>${tasks.map((t, i) => `${t} ${fmt(c.raw ? c.raw[i] : last[t + '_champion'])}`).join(' · ')}</td><td>${s.runtime ? s.runtime + ' ×' + s.workers : '–'}</td><td class="champs"></td>`;
+    tr.querySelector('input').onchange = e => { r.show = e.target.checked; drawCharts(); };
+    const cell = tr.querySelector('.champs');
+    const pick = r.champions.filter(x => /final/.test(x.name)).concat(r.champions.filter(x => !/final/.test(x.name)).slice(-3));
+    if (!pick.length) cell.innerHTML = '<span class="note">none loaded</span>';
+    for (const ch of pick) { const lab = ch.name.replace(/\.json$/, '').replace('champion_', '').replace('gen_', 'gen ');
+      for (const [where, txt, tip] of [['viewer', '🌱', 'Open this champion in the growth viewer (viewer.html)'], ['arena', '▶', 'Watch this champion live in the arena (index.html)']]) {
+        const b = document.createElement('button'); b.textContent = `${txt} ${lab}`; b.title = tip; b.dataset.where = where; b.onclick = () => openChampion(ch.text, where); cell.append(b); } }
+    tb.append(tr);
+  });
+  drawCharts();
+}
+function chartList() {
+  const cols = new Set(); for (const r of runs.values()) for (const c of r.cols) cols.add(c);
+  const out = [['champion_val', 'Champion (validated, normalised: 1 = reference plan)'], ['best', 'Best of generation (normalised)'], ['mean', 'Population mean (normalised)']];
+  for (const c of cols) { const m = /^(.*)_champion$/.exec(c); if (m) out.push([c, `${m[1]}: champion raw fitness`]); }
+  for (const c of cols) { const m = /^(.*)_mean$/.exec(c); if (m && cols.has(m[1] + '_best')) out.push([m[1] + '_best', `${m[1]}: best raw fitness of generation`]); }
+  for (const [c, t] of [['novelty_mean', 'Novelty (population mean)'], ['archive', 'Novelty archive size'], ['coverage', 'MAP-Elites coverage'], ['qd_score', 'MAP-Elites QD score'], ['ticks_per_s', 'Throughput (ticks/s)']])
+    if (cols.has(c) && [...runs.values()].some(r => r.rows.some(x => x[c] != null))) out.push([c, t]);
+  return out;
+}
+function drawCharts() {
+  const host = $('charts'); host.innerHTML = '';
+  const R = [...runs.values()].filter(r => r.show && r.rows.length);
+  if (!R.length) { host.innerHTML = runs.size ? '<div class="note">No generations to plot yet.</div>' : '<div class="note">Open a results folder (or files) to see the runs.</div>'; return; }
+  for (const [col, title] of chartList()) {
+    const series = R.map(r => ({ r, pts: r.rows.filter(x => typeof x[col] === 'number').map(x => [x.gen, x[col]]) })).filter(s => s.pts.length);
+    if (!series.length) continue;
+    const box = document.createElement('div'); box.className = 'chart'; box.innerHTML = `<h3>${title}</h3>`; const cv = document.createElement('canvas'); box.append(cv); host.append(box);
+    const dpr = window.devicePixelRatio || 1, W = cv.clientWidth || 440, H = 190; cv.width = W * dpr; cv.height = H * dpr; const c = cv.getContext('2d'); c.scale(dpr, dpr);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const s of series) for (const [x, y] of s.pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    if (x1 === x0) x1 = x0 + 1; if (y1 === y0) { y1 += 0.5; y0 -= 0.5; }
+    const pl = 44, pr = 8, pt = 6, pb = 18, X = x => pl + (x - x0) / (x1 - x0) * (W - pl - pr), Y = y => pt + (1 - (y - y0) / (y1 - y0)) * (H - pt - pb);
+    c.fillStyle = '#8a919c'; c.font = '10px system-ui'; c.strokeStyle = '#2a2e36';
+    for (let k = 0; k <= 4; k++) { const y = y0 + (y1 - y0) * k / 4; c.beginPath(); c.moveTo(pl, Y(y)); c.lineTo(W - pr, Y(y)); c.stroke(); c.fillText(fmt(y), 2, Y(y) + 3); }
+    c.fillText('gen ' + x0, pl, H - 4); c.textAlign = 'right'; c.fillText('gen ' + x1, W - pr, H - 4); c.textAlign = 'left';
+    for (const s of series) { c.strokeStyle = s.r.color; c.lineWidth = 1.6; c.beginPath(); s.pts.forEach(([x, y], i) => i ? c.lineTo(X(x), Y(y)) : c.moveTo(X(x), Y(y))); c.stroke();
+      if (s.pts.length === 1) { c.fillStyle = s.r.color; c.beginPath(); c.arc(X(s.pts[0][0]), Y(s.pts[0][1]), 3, 0, 7); c.fill(); } }
+  }
+}
+window.addEventListener('resize', drawCharts);
+render();
+</script>
+</body>
+</html>

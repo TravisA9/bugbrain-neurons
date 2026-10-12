@@ -1,0 +1,20 @@
+{
+  "name": "mapelites_free",
+  "description": "(d) Quality-diversity: MAP-Elites over brain size (log10 synapses) x cue pass rate with 'free' actor-critic genomes; every generation 40 children of random elites are evaluated.",
+  "mode": "map-elites",
+  "seed": 1,
+  "workers": "auto",
+  "population": 40,
+  "generations": 0,
+  "hours": 8,
+  "start": ["free:reward"],
+  "free": { "pStruct": 0.3 },
+  "engine": { "growths": 2, "episodes": 1, "robustW": 0.5, "valGrowths": 4, "valArenas": 4, "valTopK": 3, "cellMut": 0.02, "crossoverRate": 0.2 },
+  "tasks": [
+    { "name": "bandit", "env": "bandit", "params": {}, "weight": 1, "ref": "auto" },
+    { "name": "cueR", "env": "cue", "params": { "mapping": "random" }, "weight": 1, "ref": "auto" }
+  ],
+  "map": { "dims": [ { "desc": "brain.logSynapses", "lo": 3, "hi": 5, "bins": 8 }, { "desc": "cueR.pass", "lo": 0, "hi": 1, "bins": 10 } ] },
+  "championEvery": 10,
+  "smoke": { "bandit": { "nTrials": 40 }, "cueR": { "nTrials": 6 } }
+}
