@@ -1,0 +1,86 @@
+{
+  "name": "needgrowth",
+  "description": "(R29) The balanced multitask run (text, order3 K8, bandit, cue random; capped soft-minimum) with need-growth ON in every starting genome (startPl ng 1) and its genes evolvable (reserve size, threshold, cost, timing, trophic test). Starts from the default plans predictK3 / rewardE and rewardMemK.",
+  "mode": "standard",
+  "seed": 1,
+  "workers": 7,
+  "population": 32,
+  "generations": 0,
+  "hours": 3,
+  "start": [
+    "predictK3",
+    "rewardE",
+    "rewardMemK"
+  ],
+  "engine": {
+    "growths": 2,
+    "episodes": 1,
+    "robustW": 0.5,
+    "valGrowths": 4,
+    "valArenas": 4,
+    "valTopK": 3,
+    "cellMut": 0.02,
+    "eliteFrac": 0.1,
+    "crossoverRate": 0.3
+  },
+  "tasks": [
+    {
+      "name": "text",
+      "env": "seq",
+      "params": {
+        "source": "text"
+      },
+      "weight": 1,
+      "ref": "auto"
+    },
+    {
+      "name": "order3",
+      "env": "seq",
+      "params": {
+        "source": "order3",
+        "K": 8
+      },
+      "weight": 1,
+      "ref": "auto"
+    },
+    {
+      "name": "bandit",
+      "env": "bandit",
+      "params": {},
+      "weight": 1,
+      "ref": "auto"
+    },
+    {
+      "name": "cueR",
+      "env": "cue",
+      "params": {
+        "mapping": "random"
+      },
+      "weight": 1,
+      "ref": "auto"
+    }
+  ],
+  "combine": {
+    "type": "softmin",
+    "tau": 0.25,
+    "cap": 1.5
+  },
+  "championEvery": 5,
+  "smoke": {
+    "text": {
+      "nSyms": 100
+    },
+    "order3": {
+      "nSyms": 60
+    },
+    "bandit": {
+      "nTrials": 40
+    },
+    "cueR": {
+      "nTrials": 6
+    }
+  },
+  "startPl": {
+    "ng": 1
+  }
+}

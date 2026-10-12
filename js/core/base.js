@@ -151,10 +151,16 @@ const PL_DEFAULTS = { lr: 0.03, tauPre: 10, tauPost: 10, aMinus: 0.3, tauElig: 5
   //   pre-trace at the cell's own spikes during the plateau); D = global dopamine (reward prediction error with the critic),
   //   which acts on the slow trace (tauElig). Teacher tasks get instructive signals and an RPE from right / wrong predictions;
   //   reward tasks get only the RPE.
-  uni: 0, uniI: 0.4 };   // trust0: starting trust (-1 = trustRef)
+  uni: 0, uniI: 0.4,
+  // v28 (R29) need-growth (net.js planNeed/initNeed): ng 1 = on; ngRes reserve cells; ngBatch cells per recruit; ngTau error-average window (events); ngThr / ngCost
+  // threshold and its rise when the new cells alive equal the layer in number (metabolic cost); ngHold events above before a recruit, ngRef events between recruits;
+  // ngTrial / ngKeep trophic test; ngW start weight of a new cell's axon (x the layer's mean); ngClaw dendrite size (0 = the layer's median);
+  // ngReduce: experiment only, fraction of the learning layer removed at birth (the reduced start).
+  ng: 0, ngRes: 256, ngBatch: 8, ngTau: 20, ngThr: 0.3, ngCost: 0.3, ngHold: 20, ngRef: 5, ngTrial: 60, ngKeep: 0.3, ngW: 0.5, ngClaw: 0, ngReduce: 0 };   // trust0: starting trust (-1 = trustRef)
 // v22 (round 23): the ONE learning-rule set of the default plans predictK3, rewardK, rewardMemK (and the region plans):
 // unified three-factor rule, instructive gain, eligibility, critic (outcome RPE), synaptic scaling setpoint (RESULTS R23)
 const UNIFIED_PL = { uni: 1, lr: 0.05, uniI: 0.4, tauElig: 100, aMinus: 0.3, rpe: 1, rpeMode: 1, rpeLr: 0.3, preNorm: 45, teachThr: 20, plateau: 4 };
+const NG_RANGES = { ngRes: [8, 512, true], ngBatch: [1, 32, true], ngTau: [5, 200, true], ngThr: [0.05, 0.9, false], ngCost: [0, 2, false], ngHold: [2, 200, true], ngRef: [1, 100, true], ngTrial: [10, 500, true], ngKeep: [0, 1, false] };
 const PL_RANGES = { lr: [1e-4, 0.3, true], tauPre: [2, 50, true], tauPost: [2, 50, true], aMinus: [0, 2, false], tauElig: [10, 2000, true] };
 // gFood / gPoison / gWall = gains of the three reward events every environment reports
 // (positive reward, negative reward, small "pain" such as wall contact).
@@ -186,6 +192,11 @@ function mutatePlasticityGenes(g, r, m) {
     if (r() > Math.max(0.1, m * 3)) continue;
     const [lo, hi, lg] = PL_RANGES[k];
     g.pl[k] = lg ? clamp(g.pl[k] * Math.exp(gauss(r) * 0.3), lo, hi) : clamp(g.pl[k] + gauss(r) * (hi - lo) * 0.05, lo, hi);
+  }
+  if (g.pl.ng > 0) for (const k in NG_RANGES) {   // v28: need-growth genes evolve only in genomes that use need-growth (other genomes draw no extra numbers)
+    if (r() > Math.max(0.1, m * 3)) continue;
+    const [lo, hi, lg] = NG_RANGES[k], v = g.pl[k] != null ? g.pl[k] : PL_DEFAULTS[k];
+    g.pl[k] = lg ? clamp(v * Math.exp(gauss(r) * 0.3), lo, hi) : clamp(v + gauss(r) * (hi - lo) * 0.05, lo, hi);
   }
   g.nCh = 1; g.ch.length = 1; const c = g.ch[0]; c.src = -1;
   for (const k in CH_RANGES) {
@@ -234,5 +245,5 @@ const DEMAND_SC = { demand: 1, demandRelax: 0 };
 const APP_VERSION = 'v27', DEFAULTS_VERSION = 22;   // v27 (round 28): local connection demand (DEMAND_SC) on in predictK3 + rewardE; v26 (round 27): evolved plan rewardE is the default for bandit + random-mapping cue/recall; v25 (round 26): headless runner + dashboard; v24 (round 25): UI-only (fast mode); v23 (round 24): no default changed
 const PARAM_DEFAULTS = Object.freeze(Object.assign({}, params));   // the recommended engine settings (snapshot before any UI change)
 Object.assign(SpikingArena, { APP_VERSION, DEFAULTS_VERSION, PARAM_DEFAULTS, DEMAND_SC });
-Object.assign(SpikingArena, { UNIFIED_PL, mulberry32, gauss, clamp, hashSeed, V_REST, V_THRESH, V_FLOOR, params, PL_DEFAULTS, PL_RANGES, CH_DEFAULTS, CH_RANGES,
+Object.assign(SpikingArena, { UNIFIED_PL, mulberry32, gauss, clamp, hashSeed, V_REST, V_THRESH, V_FLOOR, params, PL_DEFAULTS, PL_RANGES, NG_RANGES, CH_DEFAULTS, CH_RANGES,
   defaultPlasticity, defaultChannel, cleanPl, createNetGenome, isInput, isOutput, outputIndex, countSynapses, genomeParamCount, synapseStats, networkStats });
