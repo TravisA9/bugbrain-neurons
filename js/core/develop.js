@@ -634,7 +634,7 @@ function cellClass(o) { let b = 0; for (let k = 1; k < 8; k++) if (o[CO.T + k] >
 function juvenilePhase(g, sc, r, spec, jrec) {   // jrec (recorder, optional): spikes / thresholds per block, pruned edges
   const J = spec.juvenile, lines = J.waves.filter(l => l.length), kicks = J.kicks && J.kicks.chans.length ? J.kicks : null;
   const keep = g.prune; g.prune = { tick: 1e9, min: 0 };
-  const net = new SpikingNet(g); g.prune = keep;
+  const net = new SpikingNet(g, { noNeed: true }); g.prune = keep;   // (v28: no lifetime need-growth during development)
   const N = g.N, E = net.ws.length, hid0 = g.nIn, hid1 = g.nIn + g.nHid, iL = hid1;
   const blocks = 4, per = 50, spk = new Float32Array(N), tot = new Float32Array(N);
   let wave = null, gap = 0;

@@ -21,12 +21,12 @@
  * 3c. Each synapse can count pre->post coincidences (net.use); the juvenile
  *   phase of cellular development uses them for activity refinement.        */
 class SpikingNet {
-  constructor(g) {
+  constructor(g, opts) {
     g = phenotype(g);
     this.g = g; this.nSpk = 0; this.spikeCount = 0;   // (v, syn = input arriving next step, ext = sensory current, spiked/spk, trace = smoothed spike train: sized below)
     // Build CSR adjacency from dense W
     const nCh = Math.max(1, g.nCh || 1), p0 = Object.assign({}, PL_DEFAULTS, g.pl);
-    const NG = p0.ng > 0 && g.nHid > 0 ? this.planNeed(g, p0) : null;   // v28 need-growth: reserve cells appended after the grown cells (dormant)
+    const NG = p0.ng > 0 && g.nHid > 0 && !(opts && opts.noNeed) ? this.planNeed(g, p0) : null;   // v28 need-growth: reserve cells appended after the grown cells (dormant)
     const N = this.N = g.N + (NG ? NG.R : 0);
     this.v = new Float32Array(N).fill(V_REST); this.syn = new Float32Array(N); this.ext = new Float32Array(N);
     this.spiked = new Uint8Array(N); this.spk = new Int32Array(N); this.trace = new Float32Array(N);
