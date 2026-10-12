@@ -18,7 +18,7 @@ function banditIO(P) {
   spread(P.nGo, -0.9, 0.9).forEach((x, i) => inputs.push({ name: 'go' + i, group: 'go', tag: 3, cls: 4, pos: [x, 0.95], midline: true, diffuse: true }));
   inputs.push({ name: 'tonic', group: 'tonic', tag: 6, cls: 3, pos: [0, 0.9], midline: true, tonic: true });
   const outputs = Array.from({ length: K }, (_, k) => ({ name: 'arm_' + (k + 1), group: 'choice', tag: 4, cls: 5 + (k % 3), pos: [ox[k], -1], bias: P.outBias, topo: ox[k] }));
-  return { inputs, outputs, classes: ['cue', 'symbol', 'unused', 'tonic', 'go', 'out-A', 'out-B', 'out-C'],
+  return { outcome: true, inputs, outputs, classes: ['cue', 'symbol', 'unused', 'tonic', 'go', 'out-A', 'out-B', 'out-C'],
            tagNames: ['tag 0', 'cue', 'tag 2', 'go', 'output', 'tag 5', 'tonic', 'free'],
            juvenile: { waves: [inputs.slice(0, C).map((x, c) => c)], pairs: [], waveGain: P.cueGain, tonic: [[C + P.nGo, P.tonicCurrent]], kicks: { chans: [C], p: 0.02, gain: P.cueGain } } };
 }

@@ -36,7 +36,7 @@ function recallIO(P, K, names, outNames) {
   inputs.push({ name: 'tonic', group: 'tonic', tag: 6, cls: 3, pos: [0, 0.9], midline: true, tonic: true });
   const outputs = outNames.map((n, k) => ({ name: n, group: 'choice', tag: 4, cls: 5 + (k % 3), pos: [ox[k], -1], bias: P.outBias, topo: xs[k],
                                             mirror: K === 2 ? 1 - k : undefined }));
-  return { inputs, outputs, classes: ['cue', 'symbol', 'unused', 'tonic', 'go', 'out-A', 'out-B', 'out-C'],
+  return { outcome: true, inputs, outputs, classes: ['cue', 'symbol', 'unused', 'tonic', 'go', 'out-A', 'out-B', 'out-C'],
            tagNames: ['tag 0', 'cue', 'tag 2', 'go', 'output', 'tag 5', 'tonic', 'free'],
            juvenile: { waves: [names.map((n, k) => k)], pairs: names.map((n, k) => [k, k]), waveGain: P.cueGain, tonic: [[iTon, P.tonicCurrent]], kicks: { chans: [K], p: 0.02, gain: P.cueGain } } };
 }

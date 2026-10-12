@@ -12,3 +12,20 @@ const G = {"kind":"cell","cell":{"kind":"cell","seed":255891574,"Wg":[-1.0884017
 SA.registerPlan('rewardE', 'evolved actor-critic plan (rewardMemK body plan, evolved genes)', () => { const d = SA.genomeFromCompact(JSON.parse(JSON.stringify(G))); Object.assign(d.sc, SA.DEMAND_SC); return d; },   // v27: + local connection demand
   'rewardMemK body plan whose gene values were found by evolution (R26 multitask run, gen 318): the default for reward-only tasks');
 })();
+/* v29 (R30) 'unifiedR': ONE genome with three areas whose development is decided by the task's I/O (core/regions.js growAreal):
+ *   cortex + context (the predictK3 programs): receptor for the phase-clock morphogen A (sequence tasks bring a multi-phase clock);
+ *   striatum (the rewardE program, whole sensory sheet): receptor for the outcome/dopamine source O, repressed by A.
+ * Sequence task -> cortex + context develop (= predictK3); reward task -> the striatal area develops (= rewardE). */
+(function () {
+const SA = SpikingArena;
+function createUnifiedR() {
+  const k3 = SA.PLANS.predictK3.make(), rE = SA.PLANS.rewardE.make();
+  k3.regions[0].area = { a: 10, o: 0, b: -5 }; k3.regions[1].area = { a: 10, o: 0, b: -5 };
+  k3.regions.push({ name: 'striatum', color: '#7fd18b', g: rE, outputs: true, whole: true, area: { a: -10, o: 10, b: -5 }, inputs: [{ env: 'symbol' }, { env: 'go' }, { env: 'tonic' }] });
+  k3.areal = 1; k3.label = 'unified plan: one genome, areas chosen by the task I/O (cortex + context for sequences, striatum for reward)';
+  return k3;
+}
+SA.registerPlan('unifiedR', 'unified plan: areas develop from the task I/O signature', createUnifiedR, 'one genome: phase-clock input grows the cortex + context areas (predictK3), an outcome/dopamine source grows the striatal area (rewardE)');
+SA.createUnifiedR = createUnifiedR;
+})();
+

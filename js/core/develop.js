@@ -164,7 +164,7 @@ function createRandomCellGenome(r) {
   return d;
 }
 function mutateCell(d, r) {
-  if (d.kind === 'regions') { for (const R of d.regions) mutateCell(R.g, r); delete d._ph; delete d._vg; return d; }   // v21: every region's gene program mutates
+  if (d.kind === 'regions') { for (const R of d.regions) { mutateCell(R.g, r); if (R.area) for (const k of ['a', 'o', 'b']) if (r() < params.cellMut * 3) R.area[k] += gauss(r); } delete d._ph; delete d._vg; return d; }   // v21: every region's gene program mutates; v29: + area receptor genes
   const pm = params.cellMut, nud = (x, s) => x + gauss(r) * (s + 0.2 * Math.abs(x));
   for (let i = 0; i < d.Wg.length; i++) if (r() < pm) d.Wg[i] = nud(d.Wg[i], 0.5);
   for (let i = 0; i < d.R.length; i++) if (r() < pm) d.R[i] = nud(d.R[i], 0.5);
