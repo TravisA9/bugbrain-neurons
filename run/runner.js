@@ -5,6 +5,7 @@
  *   node run/runner.js experiments/multitask.json [options]       (or: bun run/runner.js ...)
  *   node run/runner.js --resume results/2026-10-11_220500_multitask [options]
  * options: --gens N (stop at generation N, counted from the start of the run, also on resume; 0 = no limit)  --hours H  --workers N (default: cores - 1; 0 = in-process)  --pop N  --name NAME
+ *          --force (run even if experiments/registry.jsonl has an exact or near duplicate; R38)
  *          --out DIR (default results/)  --seed N  --smoke (tiny run: pop 4, 2 generations, 1 growth, the config's "smoke" overrides)
  * Stop: Ctrl+C once = finish the current generation, write the checkpoint and stop; twice = quit now (the checkpoint of the
  *       last finished generation stays). Creating a file named STOP in the run folder also stops it after the generation.
@@ -26,11 +27,12 @@ const fs = require('fs'), path = require('path');
 const { ROOT, codeVersion, runtime } = require('./engine.js');
 const L = require('./lib.js'), SA = L.SA;
 const { Pool, defaultWorkers } = require('./pool.js');
+const REG = require('./registry.js');   // R38 experiment registry / dedup
 
 const ENGINE_DEFAULTS = { growths: 3, episodes: 1, robustW: 0.5, worstW: 0, valGrowths: 10, valArenas: 10, valTopK: 3, eliteFrac: 0.1, crossoverRate: 0.3, cellMut: 0.02 };
 function parseArgs(argv) {
   const a = { _: [] };
-  for (let i = 0; i < argv.length; i++) { const s = argv[i]; if (s.startsWith('--')) { const k = s.slice(2); if (['smoke'].includes(k)) a[k] = true; else a[k] = argv[++i]; } else a._.push(s); }
+  for (let i = 0; i < argv.length; i++) { const s = argv[i]; if (s.startsWith('--')) { const k = s.slice(2); if (['smoke', 'force'].includes(k)) a[k] = true; else a[k] = argv[++i]; } else a._.push(s); }
   return a;
 }
 const pad = (n, w) => String(n).padStart(w, '0');
@@ -70,6 +72,8 @@ async function main() {
   cfg.engine = Object.assign({}, ENGINE_DEFAULTS, cfg.engine); cfg.tasks.forEach((t, i) => { t.name = t.name || t.env + i; });
   const workers = cfg.workers == null || cfg.workers === 'auto' ? defaultWorkers() : +cfg.workers;
   L.applyEngine(cfg.engine);
+  // R38: dedup against experiments/registry.jsonl (fresh, non-smoke runs only); exit code 3 = skipped as a duplicate
+  if (!args.resume && !cfg.smokeRun && REG.gate(REG.describeRun(cfg, SA.DEFAULTS_VERSION), { force: !!args.force }) === 'skip') process.exit(3);
   if (!dir) {
     const out = path.resolve(args.out || path.join(ROOT, 'results'));
     dir = path.join(out, stamp(new Date()) + '_' + cfg.name.replace(/[^\w.-]+/g, '_'));
@@ -222,6 +226,7 @@ async function main() {
   if (!fs.existsSync(idx)) fs.writeFileSync(idx, 'dir,name,mode,status,generations,hours,evals,champion_val,champion_gen,tasks,champion_raw,runtime,workers,seed,ended\n');
   fs.appendFileSync(idx, [s.dir, s.name, s.mode, s.status, s.generations, s.hours, s.evals, r4(s.champion && s.champion.val), s.champion ? s.champion.gen : '', s.tasks.join(' '),
     s.champion ? s.champion.raw.map(r4).join(' ') : '', s.runtime, s.workers, s.seed, s.updatedAt].map(v => /[,"]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : v).join(',') + '\n');
+  if (!cfg.smokeRun) try { REG.record(REG.describeRun(cfg, SA.DEFAULTS_VERSION), { status: s.status, dir: path.basename(dir), champion: s.champion ? { val: r4(s.champion.val), gen: s.champion.gen, raw: s.champion.raw.map(r4) } : null, tasks: s.tasks, refs: (s.refs || []).map(r => r4(r.hi)), hoursRun: s.hours }); } catch (e) { log('registry write failed: ' + e.message); }
   log(`${s.status} (${endReason}) after ${st.gen} generations, ${s.hours} h; champion ${r4(s.champion && s.champion.val)}; resume with: ${typeof Bun !== "undefined" ? "bun" : "node"} run/runner.js --resume "${dir}"`);
   await pool.close();
 }
