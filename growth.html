@@ -275,6 +275,11 @@
   <p>Axon pathfinding between tissues is not simulated cell by cell. The tract rule names the populations, and the map says how axons pick targets.
     The result is one network that keeps the env's inputs and outputs. One region carries the outputs and the plasticity genes.
     In the <a href="viewer.html">viewer</a>, a region selector shows each tissue. The wiring diagram rings every population in its region's colour.</p>
+  <p><b>v30: one genome for every task.</b> The default for text and three-phase sequences, the bandit and random-mapping cue/recall is now
+    <code>unifiedR</code>: a single genome with three areas (cortex, context, striatum). Each area carries receptor genes for two
+    morphogen-like signals read from the task: a multi-phase clock (sequence tasks) and a dopamine/outcome source (reward tasks).
+    Areas whose expression stays low do not develop; so sequence tasks grow cortex + context (= predictK3) and reward tasks grow the
+    striatum (= rewardE). Same brains, same scores (16 held-out growths per task); the difference is that one genome now decides.</p>
   <p>Honest status: predictK3 (cortex + context) is the default for text. The two-region actor-critic (cortex → striatum, rewardKR) is close
     to the single tissue on the bandit (best arm 0.62 vs 0.65). It is still below on the cue task (0.70 vs 0.86).
     What made the difference: the cortex now grows its whole gene program, and its action band dies naturally for lack of targets.

@@ -66,7 +66,7 @@ function tableConsistent(rows) { const bad = []; for (let i = 0; i < rows.length
     // ---- A: fresh profile ----
     { const { p, errs } = await open(b); await chooseText(p); await p.select('#selSpeed', '10');
       const s = await p.evaluate(() => ({ plan: SpikingArena.defaultPlanId(SpikingArena.currentEnv()), P: SpikingArena.currentEnv().P, label: __arena.watch.genome.label }));
-      check(s.plan === 'predictK3' && s.P.clock2 && s.P.clock3 && s.P.nSyms === 1000, `A recommended text setup: plan ${s.plan}, clock2 ${s.P.clock2}, clock3 ${s.P.clock3}, nSyms ${s.P.nSyms}`);
+      check(s.plan === 'unifiedR' && s.P.clock2 && s.P.clock3 && s.P.nSyms === 1000, `A recommended text setup: plan ${s.plan}, clock2 ${s.P.clock2}, clock3 ${s.P.clock3}, nSyms ${s.P.nSyms}`);
       await record(p); const t0 = Date.now();
       while (Date.now() - t0 < 150000 && !(await p.evaluate(() => window.__lives.length))) await sleep(2000);
       const r = await p.evaluate(() => ({ rows: window.__rows, life: window.__lives[0] || null }));
@@ -109,12 +109,12 @@ function tableConsistent(rows) { const bad = []; for (let i = 0; i < rows.length
     // ---- D: the text stub entry ----
     { const { p, errs } = await open(b); await p.select('#selEnv', 'text'); await sleep(2500);
       const d = await p.evaluate(() => ({ env: SpikingArena.params.env, P: SpikingArena.currentEnv().P, plan: SpikingArena.defaultPlanId(SpikingArena.currentEnv()) }));
-      check(d.env === 'seq' && d.P.source === 'text' && d.plan === 'predictK3', `D text entry -> ${d.env}/${d.P.source}, plan ${d.plan}`);
+      check(d.env === 'seq' && d.P.source === 'text' && d.plan === 'unifiedR', `D text entry -> ${d.env}/${d.P.source}, plan ${d.plan}`);
       check(!errs.length, 'D no page errors ' + errs.join(' | ')); await p.close(); }
     // ---- F (v20): the bandit env and the reward-only cue mode ----
     { const { p, errs } = await open(b); await p.select('#selEnv', 'bandit'); await sleep(2500); await p.select('#selSpeed', '10');
       const f0 = await p.evaluate(() => ({ plan: SpikingArena.defaultPlanId(SpikingArena.currentEnv()), crit: !!__arena.watch.net.crit, noise: !!__arena.watch.net.anList }));
-      check(f0.plan === 'rewardE' && f0.crit && f0.noise, `F bandit: default plan ${f0.plan}, critic ${f0.crit}, action noise ${f0.noise}`);
+      check(f0.plan === 'unifiedR' && f0.crit && f0.noise, `F bandit: default plan ${f0.plan}, critic ${f0.crit}, action noise ${f0.noise}`);
       await p.evaluate(() => document.querySelector('[data-tab="tabAct"]').click()); await sleep(30000);
       const f1 = await p.evaluate(() => { const t = __arena.watch.task, n = __arena.watch.net, info = document.getElementById('learnInfo').textContent, st = document.getElementById('statline').textContent;
         const c = document.getElementById('learn'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let gold = 0; for (let i = 0; i < d.length; i += 4) if (d[i] < 140 && d[i + 1] > 170 && d[i + 2] > 190) gold++;
@@ -127,7 +127,7 @@ function tableConsistent(rows) { const bad = []; for (let i = 0; i < rows.length
       await p.evaluate(() => { const s = [...document.querySelectorAll('select')].find(x => [...x.options].some(o => o.value === 'random') && [...x.options].some(o => o.value === 'same')); s.value = 'random'; s.dispatchEvent(new Event('change')); });
       await sleep(2500);
       const f2 = await p.evaluate(() => ({ plan: SpikingArena.defaultPlanId(SpikingArena.currentEnv()), label: __arena.watch.genome.label, nIn: SpikingArena.currentEnv().spec.inputs.length, map: !!__arena.watch.task.map }));
-      check(f2.plan === 'rewardE' && /memory columns/.test(f2.label) && f2.nIn === 12 && f2.map, `F cue, random mapping: plan ${f2.plan}, ${f2.nIn} inputs (broadcast GO), hidden mapping drawn`);
+      check(f2.plan === 'unifiedR' && /unified plan|memory columns/.test(f2.label) && f2.nIn === 12 && f2.map, `F cue, random mapping: plan ${f2.plan}, ${f2.nIn} inputs (broadcast GO), hidden mapping drawn`);
       check(!errs.length, 'F no page errors ' + errs.join(' | ')); await p.close(); }
     // ---- G (v23): the Brain-tab network view keeps every neuron and synapse inside the canvas, for every default plan ----
     // (bug report: lines went off the bottom and came back; cause: the two-region text brain's context region lay outside the [-1, 1] mapping)

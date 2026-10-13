@@ -53,5 +53,8 @@ function createUnifiedC(T) {
 }
 SA.registerPlan('unifiedC', 'unified plan: graded areas + conjunctive corticostriatal input', () => createUnifiedC(), 'unifiedG whose striatum learns from the cortex mixing cells (symbol x context conjunctions)');
 SA.createUnifiedC = createUnifiedC;
+// v31 (R34) 'rewardED': rewardE with dual-timescale eligibility tags (slow tauElig + fast tauElig2, mix eligMix) and evolvable tag genes
+SA.registerPlan('rewardED', 'rewardE with dual-timescale eligibility (evolvable)', () => { const d = SA.PLANS.rewardE.make(); Object.assign(d.pl, { eligEvo: 1, eligMix: 0.3, tauElig2: 8, eligUse: 0 }); d.label += ' + dual-timescale tags'; return d; },
+  'rewardE whose synapses keep a slow and a fast eligibility tag; the mix, the fast time constant, tag capture at outcomes and receiver homeostasis evolve');
 })();
 

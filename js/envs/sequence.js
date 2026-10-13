@@ -235,7 +235,7 @@ SpikingArena.SeqTask = SeqTask; SpikingArena.seqIO = seqIO; SpikingArena.seqSymb
 registerEnv({
   id: 'seq', name: 'Sequence prediction (learned transitions)', view: { width: 700, height: 480 },
   description: 'A stream of symbols with a new rule every lifetime (cycle, Markov chain, 2nd-order pattern or text): predict the next symbol. Needs lifetime learning.',
-  defaultPlan: P => (P.clock2 && P.clock3) ? 'predictK3' : (P.clock2 ? 'predictK2' : 'predictK') + ((isText(P) || P.K > 12) ? (P.clock2 ? 'XO' : 'L') : ''),   // v19: XO (own-column M2 reset) replaces XG   // big alphabets need the 36x36 tissue; the two-phase clock -> second-order plan
+  defaultPlan: P => (P.clock2 && P.clock3) ? 'unifiedR' : (P.clock2 ? 'predictK2' : 'predictK') + ((isText(P) || P.K > 12) ? (P.clock2 ? 'XO' : 'L') : ''),   // v19: XO (own-column M2 reset) replaces XG   // big alphabets need the 36x36 tissue; the two-phase clock -> second-order plan
   // v17 (round 18): the task choice (kept by 'Reset to recommended settings') and the recommended settings per task:
   // Text -> two-phase clock (second-order plan predictK2XG) and a 1000-character lifetime (accuracy keeps rising past 200)
   taskKeys: ['source', 'K', 'det'],

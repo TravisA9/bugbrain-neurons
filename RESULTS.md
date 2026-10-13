@@ -1958,3 +1958,17 @@ Reproduce: `SEEDOFF=2000 EXTRA='{"demandRelax":0}' bun results_v27/demand_exp.js
 **Not adopted** (d does not beat a, and c does not match a). Code kept, off by default; no version bump, no UI control.
 Reproduce: `SEEDOFF=2000 bun results_v28/ng_exp.js <text|order3|fables|bandit|cueR> <a|b|c|d> 16 [K]` (env RED, EXTRA for pl overrides).
 Evolution: experiments/needgrowth.json (multitask balanced, startPl { ng: 1 }, start from the default plans, 3 h).
+
+## R30 adopted (v30, DEFAULTS_VERSION 23): unifiedR is the default (one genome, areas from the task I/O)
+The PC regions run (bun, 7 workers, 3 h + 5.5 h resume, 2026-10-12_163626_regions) reached champion 1.0171 at gen ~12.
+Re-evaluated on 16 held-out growths per task (mean; paired difference ± s.e.):
+| task | evolved champion | unifiedR (= predictK3 / rewardE) | diff |
+|---|---|---|---|
+| text (1000 chars) | 7.316 | 7.264 | +0.052 ± 0.038 |
+| order3 K8 | 8.617 | 8.528 | +0.089 ± 0.099 |
+| bandit | 6.540 | 6.686 | −0.146 ± 0.201 |
+| cue random | 9.563 | 10.172 | −0.608 ± 0.794 |
+The champion is within noise everywhere but not better (lower means on bandit / cue), so the hand-set unifiedR is adopted, not the
+champion. unifiedR grows bit-identical brains to the previous defaults (checked: same scores growth by growth on text, order3,
+bandit, cue), so no score changes; the default is now ONE genome whose area receptor genes read the task's clock / outcome signals.
+Legacy: legacy/v29/ keeps the previous pages and scripts.

@@ -142,7 +142,7 @@ const PL_DEFAULTS = { lr: 0.03, tauPre: 10, tauPost: 10, aMinus: 0.3, tauElig: 5
   //   its own action column by actFb and inhibits the other columns by actFb (efference copy of the selected action, so the
   //   column that drove the choice is the one that stays active and becomes eligible), and inhibits the other outputs by
   //   outInh (competition between actions, winner-take-all).
-  actFb: 0, outInh: 0, eligUse: 0,
+  actFb: 0, outInh: 0, eligUse: 0, eligMix: 0, tauElig2: 8, eligEvo: 0,
   rpe: 0, rpeGamma: 0.9, rpeLambda: 0.5, rpeLr: 0.3, rpeGain: 1, rpeSrc: 0, rpeEps: 1, rpeMode: 0, actNoiseV: 0,
   // v22 (round 23) UNIFIED THREE-FACTOR RULE (uni 1; 0 = off): every plastic synapse keeps its eligibility trace (STDP), and
   //   dw = lr * M_post * e, with ONE modulator per target cell M_post = uniI * I_post + D:
@@ -161,6 +161,7 @@ const PL_DEFAULTS = { lr: 0.03, tauPre: 10, tauPost: 10, aMinus: 0.3, tauElig: 5
 // unified three-factor rule, instructive gain, eligibility, critic (outcome RPE), synaptic scaling setpoint (RESULTS R23)
 const UNIFIED_PL = { uni: 1, lr: 0.05, uniI: 0.4, tauElig: 100, aMinus: 0.3, rpe: 1, rpeMode: 1, rpeLr: 0.3, preNorm: 45, teachThr: 20, plateau: 4 };
 const NG_RANGES = { ngRes: [8, 512, true], ngBatch: [1, 32, true], ngTau: [5, 200, true], ngThr: [0.05, 0.9, false], ngCost: [0, 2, false], ngHold: [2, 200, true], ngRef: [1, 100, true], ngTrial: [10, 500, true], ngKeep: [0, 1, false] };
+const EL_RANGES = { tauElig2: [2, 50, true], eligMix: [0, 1, false], eligUse: [0, 1, false], rcvHomeo: [0.005, 1, true] };   // v31 (R34)
 const PL_RANGES = { lr: [1e-4, 0.3, true], tauPre: [2, 50, true], tauPost: [2, 50, true], aMinus: [0, 2, false], tauElig: [10, 2000, true] };
 // gFood / gPoison / gWall = gains of the three reward events every environment reports
 // (positive reward, negative reward, small "pain" such as wall contact).
@@ -192,6 +193,11 @@ function mutatePlasticityGenes(g, r, m) {
     if (r() > Math.max(0.1, m * 3)) continue;
     const [lo, hi, lg] = PL_RANGES[k];
     g.pl[k] = lg ? clamp(g.pl[k] * Math.exp(gauss(r) * 0.3), lo, hi) : clamp(g.pl[k] + gauss(r) * (hi - lo) * 0.05, lo, hi);
+  }
+  if (g.pl.eligEvo > 0) for (const k in EL_RANGES) {   // v31 (R34): dual-timescale tag genes evolve only in genomes that carry them (others draw no extra numbers)
+    if (r() > Math.max(0.1, m * 3)) continue;
+    const [lo, hi, lg] = EL_RANGES[k], v = g.pl[k] != null ? g.pl[k] : PL_DEFAULTS[k];
+    g.pl[k] = lg ? clamp(Math.max(v, lo) * Math.exp(gauss(r) * 0.3), lo, hi) : clamp(v + gauss(r) * (hi - lo) * 0.05, lo, hi);
   }
   if (g.pl.ng > 0) for (const k in NG_RANGES) {   // v28: need-growth genes evolve only in genomes that use need-growth (other genomes draw no extra numbers)
     if (r() > Math.max(0.1, m * 3)) continue;
@@ -242,7 +248,7 @@ function networkStats(g) {
 // v22 (round 23): the default plans predictK3 / rewardK / rewardMemK learn with ONE rule set (UNIFIED_PL) -> DEFAULTS_VERSION 20.
 // v27 (round 28, neuro): pure local connection-demand attractant (attraction only, no relaxed matching), default on in the default plans
 const DEMAND_SC = { demand: 1, demandRelax: 0 };
-const APP_VERSION = 'v27', DEFAULTS_VERSION = 22;   // v27 (round 28): local connection demand (DEMAND_SC) on in predictK3 + rewardE; v26 (round 27): evolved plan rewardE is the default for bandit + random-mapping cue/recall; v25 (round 26): headless runner + dashboard; v24 (round 25): UI-only (fast mode); v23 (round 24): no default changed
+const APP_VERSION = 'v30', DEFAULTS_VERSION = 23;   // v30 (R30 adopted): one unified genome unifiedR is the default for three-phase-clock sequences/text, bandit and random-mapping cue/recall (grows exactly predictK3 / rewardE by arealization); v27 (round 28): local connection demand (DEMAND_SC) on in predictK3 + rewardE; v26 (round 27): evolved plan rewardE is the default for bandit + random-mapping cue/recall; v25 (round 26): headless runner + dashboard; v24 (round 25): UI-only (fast mode); v23 (round 24): no default changed
 const PARAM_DEFAULTS = Object.freeze(Object.assign({}, params));   // the recommended engine settings (snapshot before any UI change)
 Object.assign(SpikingArena, { APP_VERSION, DEFAULTS_VERSION, PARAM_DEFAULTS, DEMAND_SC });
 Object.assign(SpikingArena, { UNIFIED_PL, mulberry32, gauss, clamp, hashSeed, V_REST, V_THRESH, V_FLOOR, params, PL_DEFAULTS, PL_RANGES, NG_RANGES, CH_DEFAULTS, CH_RANGES,
