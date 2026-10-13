@@ -2012,3 +2012,21 @@ Screen on rewardE2, 8 held-out growths (same seeds as the first 8 of R35):
 | gate 2, T = 30 | 5.79 | 10.56 | 8.65 |
 Outcome timing does not separate the tasks: raising T moves all of them toward the fast tag, giving the same trade-off as a
 fixed mix (cycle up, bandit down). No setting reaches cycle >= 8 with bandit >= 6.5. Files: results_box/r36/.
+
+## R37 adopted (v32, DEFAULTS_VERSION 25): unifiedR handles tasks with both a clock and an outcome
+Areal rule changed (one genome; graded areas + mixing -> striatum tract, as in unifiedC): striatum (rewardE2) receptor
+sigmoid(10·O − 5) -> fully developed whenever O is present and owns the outputs; cortex + context sigmoid(10·A − 6·O − 5) ->
+full with a clock alone, graded (expression 0.27, about 30 % size) with clock + outcome, feeding the striatum. Screened variants
+(16 growths, seqchoice cycle / order2): cortex o = −4 (larger cortex) 5.17 / 4.58; same + M2/M3 linear tracts 4.38 / 4.12;
+o = −6 + linear tracts 4.10 / 4.00; o = −6, mixing tract only (adopted) 6.78 / 5.20. unifiedC / unifiedG (striatum graded too):
+5.35 / 4.51, 4.38 / 3.73.
+16 held-out growths per task:
+| task | unifiedR v32 | before (v31) | rewardE2 alone | diff vs before / vs rewardE2 |
+|---|---|---|---|---|
+| text | 7.264 | 7.264 | – | bit-identical |
+| order3 K8 | 8.528 | 8.528 | – | bit-identical |
+| bandit | 6.701 | 6.701 | 6.701 | bit-identical |
+| cue random | 10.102 | 10.102 | 10.102 | bit-identical |
+| seqchoice cycle | 6.782 | 1.452 | 6.397 | vs rewardE2 +0.386 ± 0.416 |
+| seqchoice order2 | 5.197 | 1.405 | 4.516 | vs rewardE2 +0.681 ± 0.229 |
+Legacy: legacy/v31/. Files: results_box/r37/, run/r37.js.

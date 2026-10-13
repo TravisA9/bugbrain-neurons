@@ -284,6 +284,10 @@
     eligibility tags per synapse (a fast one, about 8 steps, and a slow one, about 25 steps, mixed 24:76) and receiver homeostasis.
     16 held-out growths: bandit and random cue unchanged (6.70 / 10.10 vs 6.69 / 10.17), symbol-to-arm pairings learned from reward
     much better (seqchoice cycle 6.40 vs 4.55).</p>
+  <p><b>v32: tasks with both signals.</b> When a task brings a dopamine/outcome source, the striatum (rewardE2) now always develops
+    fully and owns the outputs; if it also brings a phase clock, the cortex and context areas develop too, smaller (graded), and feed the
+    striatum through their mixing cells. On seqchoice this beats the striatum alone (cycle 6.78 vs 6.40, order2 5.20 vs 4.52);
+    text, order3, bandit and cue grow exactly the same brains as before.</p>
   <p>Honest status: predictK3 (cortex + context) is the default for text. The two-region actor-critic (cortex → striatum, rewardKR) is close
     to the single tissue on the bandit (best arm 0.62 vs 0.65). It is still below on the cue task (0.70 vs 0.86).
     What made the difference: the cortex now grows its whole gene program, and its action band dies naturally for lack of targets.

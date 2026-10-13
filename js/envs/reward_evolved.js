@@ -27,13 +27,18 @@ SA.registerPlan('rewardE2', 'evolved actor-critic plan with dual-timescale eligi
  * Sequence task -> cortex + context develop (= predictK3); reward task -> the striatal area develops (= rewardE). */
 (function () {
 const SA = SpikingArena;
-function createUnifiedR() {
+function createUnifiedR0() {   // the R30 base layout (all-or-none areas); unifiedG / unifiedC build on it
   const k3 = SA.PLANS.predictK3.make(), rE = (SA.PLANS.rewardE2 || SA.PLANS.rewardE).make();   // v31 (R35): reward area = rewardE2
   k3.regions[0].area = { a: 10, o: 0, b: -5 }; k3.regions[1].area = { a: 10, o: 0, b: -5 };
   k3.regions.push({ name: 'striatum', color: '#7fd18b', g: rE, outputs: true, whole: true, area: { a: -10, o: 10, b: -5 }, inputs: [{ env: 'symbol' }, { env: 'go' }, { env: 'tonic' }] });
   k3.areal = 1; k3.label = 'unified plan: one genome, areas chosen by the task I/O (cortex + context for sequences, striatum for reward)';
   return k3;
 }
+// v32 (R37): when the outcome signal O is present the striatum (rewardE2) always develops fully and owns the outputs; the
+// sequence areas grow graded (smaller, expression sigmoid(10A - 6O - 5)) and feed it through their mixing cells. Single-signal
+// tasks grow exactly the R30 layout (clock only -> cortex + context; outcome only -> striatum alone).
+function createUnifiedR() { const d = createUnifiedC({ sa: { a: 0, o: 10, b: -5 }, ca: { a: 10, o: -6, b: -5 } });
+  d.label = 'unified plan: one genome, areas from the task I/O (outcome -> striatum owns the outputs; clock -> cortex + context, graded, feeding it)'; return d; }
 SA.registerPlan('unifiedR', 'unified plan: areas develop from the task I/O signature', createUnifiedR, 'one genome: phase-clock input grows the cortex + context areas (predictK3), an outcome/dopamine source grows the striatal area (rewardE)');
 SA.createUnifiedR = createUnifiedR;
 /* v30 (R31) 'unifiedG': unifiedR with GRADED areas (size follows expression, see core/regions.js growAreal) and receptor genes
@@ -41,7 +46,7 @@ SA.createUnifiedR = createUnifiedR;
  * outputs), cortex + context smaller; corticostriatal tracts carry the previous symbol (cortex M2) and the symbol two back
  * (context M3) to the striatal receivers as plastic parallel fibres. On single-signal tasks it grows exactly unifiedR. */
 function createUnifiedG(T) {
-  T = Object.assign({ wTot: 45, p: 0.3 }, T); const d = createUnifiedR();
+  T = Object.assign({ wTot: 45, p: 0.3 }, T); const d = createUnifiedR0();
   d.regions[0].area = { a: 10, o: -6, b: -5 }; d.regions[1].area = { a: 10, o: -6, b: -5 }; d.regions[2].area = { a: -4, o: 10, b: -5 };
   d.tracts.push({ name: 'M2 -> striatum', from: { region: 0, cls: 2 }, to: { region: 2, wTot: T.wTot }, map: 'all', p: T.p, plastic: true },
                 { name: 'M3 -> striatum', from: { region: 1, cls: 2 }, to: { region: 2, wTot: T.wTot }, map: 'all', p: T.p, plastic: true });
