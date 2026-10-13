@@ -32,6 +32,7 @@ const nowMs = () => (typeof performance !== 'undefined' ? performance : Date).no
  * parameter object (see io.js: envParams). */
 const V_REST = -70, V_THRESH = -55, V_FLOOR = -90;  // mV
 const params = {
+  juvMode: 0,          // R39 (Q05): juvenile activity 0 = travelling waves (default), 1 = the same wave energy spatially shuffled each tick (rate-matched control), 2 = no waves
   env: 'cue',          // id of the current environment (see js/envs/)
   popSize: 50,
   mutRate: 0.05,       // per-gene mutation probability (plasticity genes)

@@ -11,13 +11,14 @@
  * Yielding: children run at below-normal priority. PAUSE: create a file named PAUSE in the project folder (or results/PAUSE): the queue
  * stops after the current generation (evolve: STOP file -> checkpoint) or kills unfinished runs, then waits; delete PAUSE to continue.
  * --cpu-max P (default 0 = off): before starting or resuming work, wait while total CPU use (other programs) is above P %.
- * --status: print the job list and refresh results/queue.js, nothing else.
+ * --reset a,b: mark those jobs pending (results cleared) before starting. Laptop on battery = paused (--allow-battery to run anyway).
+ * Evolve budgets count active compute time (the runner excludes suspended time). --status: print the job list and refresh results/queue.js, nothing else.
  * One instance only (results/queue.lock). --once: run at most one job, then exit. Exits when nothing is runnable (unless --wait). */
 const fs = require('fs'), path = require('path'), os = require('os'), cp = require('child_process');
 const REG = require('./registry.js');
 const ROOT = path.resolve(__dirname, '..'), RES = process.env.BB_RESULTS || path.join(ROOT, 'results'), QDIR = process.env.BB_QUEUE_DIR || path.join(ROOT, 'experiments', 'queue');
 const STATE = path.join(RES, 'queue_state.json'), LOG = path.join(RES, 'QUEUE_LOG.md'), QJS = path.join(RES, 'queue.js'), LOCK = path.join(RES, 'queue.lock');
-const args = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'include-text', 'force', 'wait', 'status'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
+const args = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'include-text', 'force', 'wait', 'status', 'allow-battery'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
 const WORKERS = args.workers != null ? +args.workers : Math.max(1, os.cpus().length - 2), CPU_MAX = +(args['cpu-max'] || 0);
 const RUNTIME = typeof Bun !== 'undefined' ? process.execPath : (process.env.BB_BUN || 'bun');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -25,15 +26,25 @@ fs.mkdirSync(RES, { recursive: true });
 function writeAtomic(p, t) { const tmp = p + '.tmp'; fs.writeFileSync(tmp, t); for (let i = 0; i < 5; i++) { try { fs.renameSync(tmp, p); return; } catch (e) { const u = Date.now() + 200; while (Date.now() < u); } } fs.writeFileSync(p, t); }
 const now = () => new Date().toLocaleString();
 const say = s => console.log(`[${now()}] ${s}`);
-const paused = () => fs.existsSync(path.join(ROOT, 'PAUSE')) || fs.existsSync(path.join(RES, 'PAUSE'));
+const pauseFile = () => fs.existsSync(path.join(ROOT, 'PAUSE')) || fs.existsSync(path.join(RES, 'PAUSE'));
+// R39: on a laptop running on battery the queue yields like PAUSE (battery drain -> critical battery -> sleep wasted a whole job).
+let batT = 0, batV = false;
+function onBattery() {
+  if (args['allow-battery'] || process.platform !== 'win32') return false;
+  if (Date.now() - batT < 60000) return batV; batT = Date.now();
+  try { const o = cp.execFileSync('powershell', ['-NoProfile', '-Command', '(Get-CimInstance Win32_Battery | Select-Object -First 1).BatteryStatus'], { encoding: 'utf8', windowsHide: true, timeout: 20000 }).trim(); batV = o === '1'; } catch (e) { batV = false; }
+  return batV;
+}
+const paused = () => pauseFile() || onBattery();
+const pauseWhy = () => pauseFile() ? 'PAUSE file present' : 'running on battery';
 function loadState() { try { return JSON.parse(fs.readFileSync(STATE, 'utf8')); } catch (e) { return { jobs: {} }; } }
 let S = loadState(); const save = () => writeAtomic(STATE, JSON.stringify(S, null, 2));
 function loadJobs() { return fs.readdirSync(QDIR).filter(f => f.endsWith('.json')).map(f => { try { return JSON.parse(fs.readFileSync(path.join(QDIR, f), 'utf8')); } catch (e) { say('bad job file ' + f + ': ' + e.message); return null; } }).filter(Boolean); }
 const st = id => S.jobs[id] || (S.jobs[id] = { status: 'pending' });
-const DONE = ['done', 'failed', 'skipped-duplicate'];
+const DONE = ['done', 'failed', 'skipped-duplicate', 'skipped'];
 function runnable(jobs) {
   return jobs.filter(j => { const s = st(j.id).status; if (DONE.includes(s)) return false; if (j.kind === 'blocked') return false; if (j.kind === 'text' && !args['include-text']) return false;
-    if (j.after && st(j.after).status !== 'done') return false; return true; }).sort((a, b) => b.priority - a.priority);
+    if (j.after && st(j.after).status !== 'done') return false; if (j.after && j.afterPass && st(j.after).pass !== true) { if (st(j.id).status === 'pending') { st(j.id).status = 'skipped'; st(j.id).why = 'prerequisite ' + j.after + ' did not pass'; save(); } return false; } return true; }).sort((a, b) => b.priority - a.priority);
 }
 function statusOf(j) { const s = st(j.id); if (j.kind === 'blocked' && s.status === 'pending') return 'blocked'; if (j.kind === 'text' && s.status === 'pending') return 'text track'; if (j.after && s.status === 'pending' && st(j.after).status !== 'done') return 'waiting'; return s.status; }
 function logTail(n) { try { const t = fs.readFileSync(LOG, 'utf8').split('\n## ').slice(1); return t.slice(-n).map(x => '## ' + x.trim()); } catch (e) { return []; } }
@@ -47,7 +58,7 @@ function cpuSample(ms) { const a = os.cpus(); return sleep(ms).then(() => { cons
 async function waitForGo(running) {   // PAUSE file / busy CPU (only checked while the queue itself is not computing)
   let told = false;
   for (;;) {
-    if (paused()) { if (!told) { say('PAUSE file present: waiting (delete PAUSE to continue)'); told = true; } writeQueueJs({ state: 'paused' }); await sleep(15000); continue; }
+    if (paused()) { if (!told) { say(pauseWhy() + ': waiting'); told = true; } writeQueueJs({ state: 'paused (' + pauseWhy() + ')' }); await sleep(15000); continue; }
     if (CPU_MAX > 0 && !running) { const c = await cpuSample(5000); if (c > CPU_MAX) { if (!told) { say(`CPU busy (${c.toFixed(0)} % > ${CPU_MAX} %): waiting`); told = true; } writeQueueJs({ state: 'waiting for idle CPU' }); await sleep(25000); continue; } }
     return;
   }
@@ -66,9 +77,11 @@ async function runEvolve(j) {
   else { a = ['run/runner.js', j.config, '--hours', String(hours), '--workers', String(WORKERS), '--name', j.id].concat(j.extraArgs || [], process.env.BB_RESULTS ? ['--out', RES] : []); if (args.force) a.push('--force'); }
   s.status = 'running'; s.startedAt = s.startedAt || new Date().toISOString(); save(); writeQueueJs();
   let stopAsked = false;
-  const watch = setInterval(() => { if (paused() && s.dir && !stopAsked) { fs.writeFileSync(path.join(s.dir, 'STOP'), 'paused by queue'); stopAsked = true; say(`${j.id}: PAUSE -> asked the run to stop after this generation`); } }, 10000);
+  const watch = setInterval(() => { if (paused() && s.dir && !stopAsked) { fs.writeFileSync(path.join(s.dir, 'STOP'), 'paused by queue'); stopAsked = true; say(`${j.id}: ${pauseWhy()} -> asked the run to stop after this generation`); } }, 10000);
   const r = await spawn(a, null, l => { const m = l.match(/(?:starting|resuming) .* in (.+?): /); if (m && !s.dir) { s.dir = m[1]; save(); writeQueueJs(); } if (/gen \d+:/.test(l)) { s.lastLine = l.slice(0, 220); save(); writeQueueJs(); } });
   clearInterval(watch);
+  let sum0 = null; try { sum0 = s.dir && JSON.parse(fs.readFileSync(path.join(s.dir, 'summary.json'), 'utf8')); } catch (e) {}
+  if (r.code !== 0 && r.code !== 3 && sum0 && sum0.status === 'finished') { say(`${j.id}: runner exited with code ${r.code} after a finished run; using its summary`); r.code = 0; }   // R39 (q01: finished, then a non-zero exit)
   if (r.code === 3) { s.status = 'skipped-duplicate'; s.endedAt = new Date().toISOString(); save(); appendLog(`## ${now()} · ${j.id} · SKIPPED (duplicate)\n${j.title}. The registry already has this config (use --force to rerun).`); return; }
   if (r.code !== 0) { s.status = paused() ? 'running' : 'failed'; s.error = r.out.split('\n').slice(-5).join(' ').slice(0, 400); save(); if (s.status === 'failed') appendLog(`## ${now()} · ${j.id} · FAILED\n${s.error}`); return; }
   let sum = null; try { sum = JSON.parse(fs.readFileSync(path.join(s.dir, 'summary.json'), 'utf8')); } catch (e) {}
@@ -121,6 +134,13 @@ async function main() {
   fs.writeFileSync(LOCK, JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }));
   const unlock = () => { try { if (JSON.parse(fs.readFileSync(LOCK, 'utf8')).pid === process.pid) fs.unlinkSync(LOCK); } catch (e) {} };
   process.on('exit', unlock); process.on('SIGINT', () => { unlock(); process.exit(130); }); process.on('SIGTERM', () => { unlock(); process.exit(143); });
+  if (args.reset) { for (const id of String(args.reset).split(',')) { S.jobs[id] = { status: 'pending', resetAt: new Date().toISOString() }; say(`reset ${id}`); } save(); }   // --reset a,b: run those jobs again from scratch
+  // R39 recover: evolve jobs marked failed although their run finished (summary.json status finished) -> verdict from the summary
+  for (const j of loadJobs()) { const s = S.jobs[j.id]; if (j.kind !== 'evolve' || !s || s.status !== 'failed' || !s.dir) continue;
+    let sum = null; try { sum = JSON.parse(fs.readFileSync(path.join(s.dir, 'summary.json'), 'utf8')); } catch (e) {} if (!sum || sum.status !== 'finished') continue;
+    s.status = 'done'; s.recovered = true; s.endedAt = sum.updatedAt; delete s.error; s.summary = { champion: sum.champion, tasks: sum.tasks, refs: (sum.refs || []).map(x => x.hi), generations: sum.generations, hours: sum.hours };
+    const v = verdictEvolve(j, sum); s.pass = v.pass; save(); say(`recovered ${j.id} from its finished run`);
+    appendLog(`## ${now()} · ${j.id} · ${v.pass == null ? 'DONE' : v.pass ? 'PASS' : 'FAIL'} (recovered)\n${j.title} (question ${j.question}). Run ${path.basename(s.dir)}, ${sum.generations} generations, ${sum.hours} h. The runner had exited non-zero after finishing.\n${v.text}`); }
   try { cp.execFileSync(RUNTIME, ['run/registry_backfill.js'], { cwd: ROOT, stdio: 'ignore' }); } catch (e) {}
   try { cp.execFileSync(RUNTIME, ['run/ideas.js'], { cwd: ROOT, stdio: 'ignore' }); } catch (e) {}
   say(`queue started (pid ${process.pid}, ${WORKERS} workers, runtime ${path.basename(RUNTIME)}${CPU_MAX ? ', cpu-max ' + CPU_MAX + ' %' : ''})`);

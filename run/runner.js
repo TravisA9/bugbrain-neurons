@@ -128,15 +128,20 @@ async function main() {
   // ---- stop handling ----
   let stop = false, sigs = 0;
   process.on('SIGINT', () => { sigs++; if (sigs === 1) { stop = true; log('Ctrl+C: stopping after this generation (Ctrl+C again to quit now; the last checkpoint stays)'); } else { log('quit now'); process.exit(130); } });
-  const t0 = Date.now() - st.elapsed * 1000, maxGen = cfg.generations || 0, maxMs = (cfg.hours || 0) * 3600e3;
+  // R39: the budget counts ACTIVE compute time only. A 1-s ticker notices when the machine was suspended (sleep / Modern Standby:
+  // the ticker sees a gap) and that gap is excluded from elapsed time and from the generation time; it is logged.
+  let susp = 0, lastTick = Date.now(); const actNow = () => Date.now() - susp;
+  const ticker = setInterval(() => { const n = Date.now(), gap = n - lastTick; lastTick = n; if (workers > 0 && gap > 15000) { susp += gap - 1000; log(`machine was suspended or stalled for ${(gap / 60000).toFixed(1)} min: not counted in the time budget`); } }, 1000);
+  if (ticker.unref) ticker.unref();
+  const t0 = actNow() - st.elapsed * 1000, maxGen = cfg.generations || 0, maxMs = (cfg.hours || 0) * 3600e3;
   const evalAll = (xs, plan) => Promise.all(xs.map(x => pool.eval(L.serialize(x), tasks, plan)));
   const score = r => L.normFit(r, cfg.tasks, st.refs, cfg.combine);
   let lastGenMs = 0, endReason = 'stopped';
   while (true) {
     if (maxGen && st.gen >= maxGen) { endReason = 'generations'; break; }
-    if (maxMs && Date.now() - t0 >= maxMs) { endReason = 'hours'; break; }
+    if (maxMs && actNow() - t0 >= maxMs) { endReason = 'hours'; break; }
     if (stop || fs.existsSync(path.join(dir, 'STOP'))) { endReason = 'stopped'; break; }
-    const g0 = Date.now(), plan = L.seedPlan(cfg.engine, st.gen, false), vplan = L.seedPlan(cfg.engine, st.gen, true);
+    const g0 = actNow(), plan = L.seedPlan(cfg.engine, st.gen, false), vplan = L.seedPlan(cfg.engine, st.gen, true);
     // 1. the batch to evaluate
     let batch;
     if (cfg.mode === 'map-elites' && st.grid.size) {
@@ -172,7 +177,7 @@ async function main() {
       else if (!st.champion || s.fit > st.champion.val) st.champion = { x, val: s.fit, norm: s.norm, raw: vres[i].tasks.map(t => t.fit), gen: st.gen }; });
     st.evals += vq.length; st.ticks += vres.reduce((a, r) => a + r.ticks, 0);
     // 4. CSV + log
-    const fits = inds.map(o => o.fit), now = Date.now(); lastGenMs = now - g0; st.elapsed = (now - t0) / 1000;
+    const fits = inds.map(o => o.fit), now = actNow(); lastGenMs = now - g0; st.elapsed = (now - t0) / 1000;
     const row = { gen: st.gen, elapsed_s: r4(st.elapsed), gen_s: r4(lastGenMs / 1000), evals: st.evals, ticks: st.ticks, ticks_per_s: Math.round(genTicks / (lastGenMs / 1000)),
       best: r4(ranked[0].fit), mean: r4(mean(fits)), median: r4(median(fits)), champion_val: r4(st.champion.val), errors };
     tasks.forEach((t, i) => { const f = inds.map(o => o.r.tasks[i].fit); row[`${t.name}_best`] = r4(Math.max(...f)); row[`${t.name}_mean`] = r4(mean(f)); row[`${t.name}_median`] = r4(median(f));
@@ -228,6 +233,8 @@ async function main() {
     s.champion ? s.champion.raw.map(r4).join(' ') : '', s.runtime, s.workers, s.seed, s.updatedAt].map(v => /[,"]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : v).join(',') + '\n');
   if (!cfg.smokeRun) try { REG.record(REG.describeRun(cfg, SA.DEFAULTS_VERSION), { status: s.status, dir: path.basename(dir), champion: s.champion ? { val: r4(s.champion.val), gen: s.champion.gen, raw: s.champion.raw.map(r4) } : null, tasks: s.tasks, refs: (s.refs || []).map(r => r4(r.hi)), hoursRun: s.hours }); } catch (e) { log('registry write failed: ' + e.message); }
   log(`${s.status} (${endReason}) after ${st.gen} generations, ${s.hours} h; champion ${r4(s.champion && s.champion.val)}; resume with: ${typeof Bun !== "undefined" ? "bun" : "node"} run/runner.js --resume "${dir}"`);
-  await pool.close();
+  clearInterval(ticker);
+  try { await pool.close(); } catch (e) { log('pool close: ' + e.message); }
+  process.exit(0);   // R39: a finished run always exits 0 (bun on Windows could exit non-zero while tearing down the workers)
 }
 main().catch(e => { console.error(e && e.stack || e); process.exit(1); });

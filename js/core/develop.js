@@ -646,6 +646,8 @@ function juvenilePhase(g, sc, r, spec, jrec) {   // jrec (recorder, optional): s
       if (lines.length) {
         if (!wave && --gap <= 0) { const c0 = r() < 0.5 ? -1 : null; wave = { c: c0, v: 0, ch: (r() * lines.length) | 0 }; if (wave.c == null) wave.c = lines[wave.ch].length; wave.v = wave.c < 0 ? 0.3 : -0.3; }
         if (wave) { const line = lines[wave.ch], n = line.length; wave.c += wave.v; for (let k = 0; k < n; k++) ext[line[k]] = J.waveGain * Math.exp(-((k - wave.c) ** 2));
+          if (params.juvMode === 1) { const v = line.map(i => ext[i]); for (let k = n - 1; k > 0; k--) { const q = (r() * (k + 1)) | 0; [v[k], v[q]] = [v[q], v[k]]; } line.forEach((i, k) => { ext[i] = v[k]; }); }   // R39 shuffled control: same values, no spatial order
+          else if (params.juvMode === 2) for (let k = 0; k < n; k++) ext[line[k]] = 0;
           if (wave.c < -1.5 || wave.c > n + 0.5) { wave = null; gap = 5; } }
       }
       for (const [i, I] of J.tonic) ext[i] = I;
