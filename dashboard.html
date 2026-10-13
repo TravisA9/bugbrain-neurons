@@ -33,6 +33,7 @@
   <label class="filebtn" title="Pick files of one or more runs: generations.csv, summary.json, config.json, champions/*.json">📄 Open files<input type="file" id="inFiles" multiple accept=".csv,.json" hidden></label>
   <button id="btnClear" title="Forget all loaded runs">Clear</button>
   <span class="note">Runs written by <code>run/runner.js</code> (results/&lt;date&gt;_&lt;name&gt;/). Everything stays in this browser; nothing is uploaded.</span>
+  <label class="note" title="Load results/current.js (written by the runner every generation) and refresh it every 30 s"><input type="checkbox" id="chkLive" checked> live</label> <span id="live" class="note"></span>
   <span id="msg"></span>
 </header>
 <main>
@@ -88,7 +89,25 @@ function openChampion(text, where) {
     window.open('viewer.html#arena', '_blank');
   } else { localStorage.setItem('spikingArena.load', text); window.open('index.html#load', '_blank'); }
 }
-window.__dash = { runs, openChampion, loadFiles };
+// v30 LIVE: results/current.js (window.BB_CURRENT, rewritten by run/runner.js every generation), re-injected every 30 s
+function applyCurrent() {
+  const c = window.BB_CURRENT; if (!c || !c.summary) { $('live').textContent = 'live: no results/current.js yet (start a run)'; return false; }
+  const r = runOf('live:' + c.summary.dir); r.summary = c.summary; r.config = c.config; r.name = c.summary.dir + ' (live)';
+  if (c.csv) { const p = parseCSV(c.csv); r.rows = p.rows; r.cols = p.cols; }
+  const t = new Date(c.writtenAt || c.summary.updatedAt);
+  $('live').textContent = `${c.summary.status === 'running' ? '● live' : 'last run ' + c.summary.status} · ${c.summary.dir} · gen ${c.summary.generations} · last updated ${t.toLocaleTimeString()}`;
+  render(); return true;
+}
+function pollCurrent() {
+  if (!$('chkLive').checked) return;
+  const old = document.getElementById('curScript'); if (old) old.remove();
+  const sc = document.createElement('script'); sc.id = 'curScript'; sc.src = 'results/current.js?t=' + Date.now();
+  sc.onload = applyCurrent; sc.onerror = () => { $('live').textContent = 'live: results/current.js not found'; };
+  document.head.appendChild(sc);
+}
+$('chkLive').onchange = pollCurrent;
+pollCurrent(); setInterval(pollCurrent, 30000);
+window.__dash = { runs, openChampion, loadFiles, applyCurrent, pollCurrent };
 const fmt = x => x == null ? '–' : typeof x === 'number' ? (Math.abs(x) >= 100 ? x.toFixed(0) : +x.toFixed(3)) : x;
 function render() {
   const R = [...runs.values()];

@@ -209,7 +209,11 @@ async function main() {
     const s = { name: cfg.name, dir: path.basename(dir), mode: cfg.mode, status, generations: st.gen, hours: +(st.elapsed / 3600).toFixed(4), evals: st.evals, ticks: st.ticks,
       champion: st.champion ? { val: st.champion.val, gen: st.champion.gen, raw: st.champion.raw, norm: st.champion.norm } : null, tasks: tasks.map(t => t.name), refs: st.refs,
       workers, runtime: runtime(), seed: cfg.seed, updatedAt: new Date().toISOString() };
-    writeAtomic(path.join(dir, 'summary.json'), JSON.stringify(s, null, 2)); return s;
+    writeAtomic(path.join(dir, 'summary.json'), JSON.stringify(s, null, 2));
+    // v30: live dashboard feed: results/current.js (a script, so dashboard.html can load it from file:// with no server)
+    try { let csv = ''; try { csv = fs.readFileSync(csvPath, 'utf8'); } catch (e) {}
+      writeAtomic(path.join(path.dirname(dir), 'current.js'), 'window.BB_CURRENT = ' + JSON.stringify({ summary: s, csv, config: cfg, writtenAt: s.updatedAt }) + ';\n'); } catch (e) {}
+    return s;
   }
   // ---- end ----
   writeChampion(path.join(dir, 'champions', 'champion_final.json'));
