@@ -1,0 +1,97 @@
+{
+  "name": "needgrowth_v32",
+  "description": "(R38 queue, Q02 baseline) need-growth on, v32 genome, 4 tasks + cycle (parked idea re-run on the new default)",
+  "mode": "standard",
+  "seed": 1,
+  "workers": "auto",
+  "population": 32,
+  "generations": 0,
+  "hours": 2,
+  "start": [
+    "unifiedR"
+  ],
+  "engine": {
+    "growths": 2,
+    "episodes": 1,
+    "robustW": 0.5,
+    "valGrowths": 4,
+    "valArenas": 4,
+    "valTopK": 3,
+    "cellMut": 0.02,
+    "eliteFrac": 0.1,
+    "crossoverRate": 0.3
+  },
+  "tasks": [
+    {
+      "name": "text",
+      "env": "seq",
+      "params": {
+        "source": "text"
+      },
+      "weight": 1,
+      "ref": "auto"
+    },
+    {
+      "name": "order3",
+      "env": "seq",
+      "params": {
+        "source": "order3",
+        "K": 8
+      },
+      "weight": 1,
+      "ref": "auto"
+    },
+    {
+      "name": "bandit",
+      "env": "bandit",
+      "params": {},
+      "weight": 1,
+      "ref": "auto"
+    },
+    {
+      "name": "cueR",
+      "env": "cue",
+      "params": {
+        "mapping": "random"
+      },
+      "weight": 1,
+      "ref": "auto"
+    },
+    {
+      "name": "cycle",
+      "env": "seqchoice",
+      "params": {
+        "source": "cycle"
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "rewardE2"
+    }
+  ],
+  "combine": {
+    "type": "softmin",
+    "tau": 0.25,
+    "cap": 1.5
+  },
+  "championEvery": 5,
+  "smoke": {
+    "text": {
+      "nSyms": 100
+    },
+    "order3": {
+      "nSyms": 60
+    },
+    "bandit": {
+      "nTrials": 40
+    },
+    "cueR": {
+      "nTrials": 6
+    },
+    "cycle": {
+      "nSyms": 40
+    }
+  },
+  "startPl": {
+    "ng": 1
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "id": "q10_eliguse",
+  "title": "Tag consumption at outcomes (eligUse) on rewardE2",
+  "question": "Q10",
+  "track": "neuro",
+  "priority": 0.9,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "bandit",
+        "pl.eligUse=0.3",
+        "16"
+      ],
+      "label": "rewardE2 bandit pl.eligUse=0.3"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "cueR",
+        "pl.eligUse=0.3",
+        "16"
+      ],
+      "label": "rewardE2 cueR pl.eligUse=0.3"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "cycle",
+        "pl.eligUse=0.3",
+        "16"
+      ],
+      "label": "rewardE2 cycle pl.eligUse=0.3"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "bandit",
+        "pl.eligUse=0.5",
+        "16"
+      ],
+      "label": "rewardE2 bandit pl.eligUse=0.5"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "cueR",
+        "pl.eligUse=0.5",
+        "16"
+      ],
+      "label": "rewardE2 cueR pl.eligUse=0.5"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "cycle",
+        "pl.eligUse=0.5",
+        "16"
+      ],
+      "label": "rewardE2 cycle pl.eligUse=0.5"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "bandit",
+        "pl.eligUse=0.7",
+        "16"
+      ],
+      "label": "rewardE2 bandit pl.eligUse=0.7"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "cueR",
+        "pl.eligUse=0.7",
+        "16"
+      ],
+      "label": "rewardE2 cueR pl.eligUse=0.7"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "cycle",
+        "pl.eligUse=0.7",
+        "16"
+      ],
+      "label": "rewardE2 cycle pl.eligUse=0.7"
+    }
+  ],
+  "accept": {
+    "meanMin": {
+      "rewardE2 cycle pl.eligUse=0.5": 8
+    }
+  }
+}

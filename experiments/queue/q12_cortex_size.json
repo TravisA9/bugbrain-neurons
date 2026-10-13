@@ -1,0 +1,67 @@
+{
+  "id": "q12_cortex_size",
+  "title": "Sweep the graded cortex receptor o (-5..-8) on seqchoice",
+  "question": "Q12",
+  "track": "neuro",
+  "priority": 1.0,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/r37.js",
+      "args": [
+        "o=-5",
+        "cycle",
+        "16"
+      ],
+      "label": "cortex o=-5 cycle"
+    },
+    {
+      "script": "run/r37.js",
+      "args": [
+        "o=-5",
+        "order2",
+        "16"
+      ],
+      "label": "cortex o=-5 order2"
+    },
+    {
+      "script": "run/r37.js",
+      "args": [
+        "o=-7",
+        "cycle",
+        "16"
+      ],
+      "label": "cortex o=-7 cycle"
+    },
+    {
+      "script": "run/r37.js",
+      "args": [
+        "o=-7",
+        "order2",
+        "16"
+      ],
+      "label": "cortex o=-7 order2"
+    },
+    {
+      "script": "run/r37.js",
+      "args": [
+        "o=-8",
+        "cycle",
+        "16"
+      ],
+      "label": "cortex o=-8 cycle"
+    },
+    {
+      "script": "run/r37.js",
+      "args": [
+        "o=-8",
+        "order2",
+        "16"
+      ],
+      "label": "cortex o=-8 order2"
+    }
+  ],
+  "accept": {
+    "note": "adopt only if > o=-6 (6.78 / 5.20) beyond noise"
+  }
+}
