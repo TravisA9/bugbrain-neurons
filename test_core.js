@@ -203,4 +203,5 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const a = new S.Agent(d, 4, b, Sq); while (!a.done) a.tick(); const st = a.net.needStats();
   assert.ok(st.mode === 'mismatch' && st.added > 0 && st.alive <= 64 && st.dead > 0, 'need-growth recruits in a reduced brain: ' + JSON.stringify(st).slice(0, 200));
   console.log(`v28 need-growth (reduced text brain): ${st.dead} layer cells removed, ${st.added} recruited, ${st.pruned} pruned, ${st.alive} alive (cap 64), error ${st.E}: ok`); }
+{ const S = require('./js/node_load.js')(), U = S.PLANS.unifiedR.make(), E2 = S.PLANS.rewardE2.make(); assert.ok(JSON.stringify(U.regions[2].g) === JSON.stringify(E2) && E2.pl.eligMix > 0.2 && S.PL_DEFAULTS.eligGate === 0 && S.DEFAULTS_VERSION === 24, 'v31 (R35): unifiedR striatum = rewardE2; eligGate off by default'); console.log('v31 unifiedR reward area = rewardE2: ok'); }
 console.log('ALL OK');

@@ -1997,3 +1997,18 @@ Equal on bandit / cue, clearly better on the reward-learned pairings: adopted. T
 Caveat: seqchoice itself defaults to unifiedR, which on that task (clock + outcome) represses the striatum: unifiedR scores only
 1.45 (cycle) / 1.41 (order2) there; rewardE2 alone (or a graded unified plan) is needed for mixed tasks. Files: results_box/r35/.
 Legacy: legacy/v30/.
+
+## R36 [neuro] (code v31, defaults unchanged): timing-gated trace selection, not adopted
+New option eligGate (0 = off, default; bit-identical): 1 = each synapse uses its own recency (fast/slow tag ratio) as the mix;
+2 = the interval since the previous outcome picks the tag (short -> fast, long -> slow; sigmoid around eligGateT ticks).
+Screen on rewardE2, 8 held-out growths (same seeds as the first 8 of R35):
+| variant | bandit | cue random | seqchoice cycle |
+|---|---|---|---|
+| rewardE2 (fixed mix 0.24) | 6.72 | 10.48 | 6.70 |
+| gate 1 (synapse recency) | 6.53 | 10.67 | 6.46 |
+| gate 2, T = 10 | 6.84 | 10.26 | 6.96 |
+| gate 2, T = 15 | 6.76 | 10.36 | 7.19 |
+| gate 2, T = 20 | 6.00 | 10.27 | 7.96 |
+| gate 2, T = 30 | 5.79 | 10.56 | 8.65 |
+Outcome timing does not separate the tasks: raising T moves all of them toward the fast tag, giving the same trade-off as a
+fixed mix (cycle up, bandit down). No setting reaches cycle >= 8 with bandit >= 6.5. Files: results_box/r36/.
