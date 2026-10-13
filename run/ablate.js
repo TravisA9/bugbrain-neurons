@@ -4,7 +4,7 @@ const L = require('./lib.js'), SA = L.SA;
 const [plan, task, variant, G = 6] = process.argv.slice(2);
 const CH = require(process.env.CHAMP || '../results_overnight_r26/champions/champion_final.json').developmental_genome;
 const TASKS = { text: { name: 'text', env: 'seq', params: { source: 'text' } }, order3: { name: 'order3', env: 'seq', params: { source: 'order3', K: 8 } },
-  bandit: { name: 'bandit', env: 'bandit', params: {} }, cueR: { name: 'cueR', env: 'cue', params: { mapping: 'random' } }, recallR: { name: 'recallR', env: 'recall', params: { mapping: 'random' } }, banditH: { name: 'banditH', env: 'bandit', params: { nTrials: 400 } } };
+  bandit: { name: 'bandit', env: 'bandit', params: {} }, cueR: { name: 'cueR', env: 'cue', params: { mapping: 'random' } }, recallR: { name: 'recallR', env: 'recall', params: { mapping: 'random' } }, cycle: { name: 'cycle', env: 'seqchoice', params: { source: 'cycle' } }, order2: { name: 'order2', env: 'seqchoice', params: { source: 'order2' } }, banditH: { name: 'banditH', env: 'bandit', params: { nTrials: 400 } } };
 let gc = variant === 'champ' ? JSON.parse(JSON.stringify(CH)) : L.serialize(L.startGenome(plan));
 const cells = gc.kind === 'regions' ? gc.cell.regions.map(r => r.g) : [gc.cell];
 if (variant !== 'base' && variant !== 'champ') for (const kv of variant.split(',')) for (const C of cells) {
