@@ -142,7 +142,7 @@ const PL_DEFAULTS = { lr: 0.03, tauPre: 10, tauPost: 10, aMinus: 0.3, tauElig: 5
   //   its own action column by actFb and inhibits the other columns by actFb (efference copy of the selected action, so the
   //   column that drove the choice is the one that stays active and becomes eligible), and inhibits the other outputs by
   //   outInh (competition between actions, winner-take-all).
-  actFb: 0, outInh: 0,
+  actFb: 0, outInh: 0, eligUse: 0,
   rpe: 0, rpeGamma: 0.9, rpeLambda: 0.5, rpeLr: 0.3, rpeGain: 1, rpeSrc: 0, rpeEps: 1, rpeMode: 0, actNoiseV: 0,
   // v22 (round 23) UNIFIED THREE-FACTOR RULE (uni 1; 0 = off): every plastic synapse keeps its eligibility trace (STDP), and
   //   dw = lr * M_post * e, with ONE modulator per target cell M_post = uniI * I_post + D:

@@ -422,6 +422,10 @@ class SpikingNet {
       ws[k] = w; s += Math.abs(w - old);
       if (tro && w0[k] > 0 && w > old) tro[this.pres[k]] += w - old;
     }
+    // v31 (R33) eligUse (0..1, 0 = off): an outcome CONSUMES the eligibility tags it acted on (tag capture): traces shrink by
+    // eligUse at every outcome event, so the credit of one choice does not spill into the next trial's outcome.
+    if (outcome && this.p.eligUse > 0) { const f = 1 - this.p.eligUse;
+      for (let q = 0; q < pl.length; q++) { const k = pl[q]; if (eT) { const n = eS - eT[k]; eT[k] = eS; el[k] = n < 8192 ? el[k] * eP[n] : 0; } el[k] *= f; } }
     if (this.p.preNorm > 0 && s > 0) { if (!this.npStart) this.buildNp(); for (let i = 0; i < this.N; i++) if (this.npStart[i + 1] > this.npStart[i]) this.normPre(i); }   // v20: competition between targets
     this.dwSum = s;
   }
