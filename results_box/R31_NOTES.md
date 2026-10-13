@@ -11,3 +11,18 @@ Box evolution regions_mixed (5 tasks incl. seqchoice, start unifiedG, 34 gens / 
 text 6.74 (0.96), order3 7.21 (0.87), bandit 6.51 (0.99), cueR 9.85 (0.94), seqchoice 3.66 (1.33 vs rewardE).
 Verdict: graded areas work mechanically and are bit-identical on single-signal tasks; no plan solves the random-mapping
 mixed task (best 3.8/10): the striatum gets context only through a linear tract, no conjunction. Defaults unchanged.
+
+# R32 (box): conjunctive corticostriatal input, plan unifiedC
+Cortex mixing cells (sparse claw-like conjunctions of current x previous x two-back symbol, homeostatic thresholds) -> striatal
+receivers, plastic, dopamine-learned (new tract source from.mix); both areas ~0.73 expressed on clock + outcome; striatum owns outputs.
+seqchoice random mapping, 16 held-out growths (mean):
+| variant | 300 symbols | 1000 symbols, read 4 | 1000 symbols, read window 8/6 |
+|---|---|---|---|
+| rewardE | 3.80 | 3.83 | 4.10 |
+| unifiedR | 1.55 | 1.41 | 1.41 |
+| unifiedG | 3.09 | | |
+| unifiedC wTot 45 p 0.3 | 3.57 | 3.85 | 4.39 |
+Sweep (300 symbols): wTot 20 3.47, 90 3.21; p 1 2.28, p 0.1 2.88; + linear M2/M3 tracts 2.82; 30/0.5 3.22; 60/0.2 3.36.
+Diagnosis: the striatal reward learner itself is the limit, not the conjunctions: on a deterministic CYCLE (pure 6x6 contextual
+bandit, no context needed) rewardE gets only 4.4 (300 symbols) / 5.3 (1000); ~1/4 of growths stay at chance (1.6-1.9).
+text/order3/bandit/cue: unifiedC grows exactly unifiedR (checked: identical scores). Defaults unchanged.

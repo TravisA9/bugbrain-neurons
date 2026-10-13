@@ -65,7 +65,7 @@ function growRegions(d, opts) {
   const tractStats = [];
   for (const T of d.tracts || []) {
     const src = parts[T.from.region], dst = parts[T.to.region], cols = new Map();
-    for (let i = src.g.nIn; i < src.g.nIn + src.g.nHid; i++) if (src.g.cellType[i] === N_FIXED + T.from.cls && !(T.map === 'all' && inhib(src.g, i))) {   // 'all': excitatory sources only
+    for (let i = src.g.nIn; i < src.g.nIn + src.g.nHid; i++) if ((T.from.mix ? !!(src.g.mix && src.g.mix[i]) : src.g.cellType[i] === N_FIXED + T.from.cls) && !(T.map === 'all' && inhib(src.g, i))) {   // v30: from.mix = the sparse conjunctive (mixing) cells   // 'all': excitatory sources only
  const b = node(src, i), l = src.g.topo ? src.g.topo[i] : NaN; if (isNaN(l)) { if (T.map !== 'all') continue; l = 0; }
       const key = Math.round(l * 1e4); if (!cols.has(key)) cols.set(key, []); cols.get(key).push(b); }
     let nSyn = 0;

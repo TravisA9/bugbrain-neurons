@@ -41,5 +41,17 @@ function createUnifiedG(T) {
 }
 SA.registerPlan('unifiedG', 'unified plan with graded areas (sizes follow the task I/O signals)', () => createUnifiedG(), 'unifiedR whose areas grow in proportion to their expression; with clock + outcome both develop, linked by corticostriatal tracts');
 SA.createUnifiedG = createUnifiedG;
+/* v30 (R32) 'unifiedC': unifiedG whose striatum reads CONJUNCTIONS: the cortex's sparse mixing cells (claw-like
+ * conjunctions of current symbol x previous symbol x symbol two back, homeostatic thresholds) project to the striatal
+ * receivers as plastic corticostriatal fibres (dopamine-learned). Mixed tasks express cortex and striatum about equally. */
+function createUnifiedC(T) {
+  T = Object.assign({ wTot: 45, p: 0.3, ca: { a: 10, o: -4, b: -5 }, sa: { a: -4, o: 10, b: -4.9 }, lin: false }, T); const d = createUnifiedG(T);
+  d.regions[0].area = Object.assign({}, T.ca); d.regions[1].area = Object.assign({}, T.ca); d.regions[2].area = Object.assign({}, T.sa);
+  if (!T.lin) d.tracts = d.tracts.filter(t => !/striatum/.test(t.name));
+  d.tracts.push({ name: 'mixing -> striatum', from: { region: 0, mix: true }, to: { region: 2, wTot: T.wTot }, map: 'all', p: T.p, plastic: true });
+  d.label = 'unified plan, graded areas, conjunctive corticostriatal input (mixing cells -> striatum)'; return d;
+}
+SA.registerPlan('unifiedC', 'unified plan: graded areas + conjunctive corticostriatal input', () => createUnifiedC(), 'unifiedG whose striatum learns from the cortex mixing cells (symbol x context conjunctions)');
+SA.createUnifiedC = createUnifiedC;
 })();
 
