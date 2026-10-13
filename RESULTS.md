@@ -1972,3 +1972,15 @@ The champion is within noise everywhere but not better (lower means on bandit / 
 champion. unifiedR grows bit-identical brains to the previous defaults (checked: same scores growth by growth on text, order3,
 bandit, cue), so no score changes; the default is now ONE genome whose area receptor genes read the task's clock / outcome signals.
 Legacy: legacy/v29/ keeps the previous pages and scripts.
+
+## R34 [neuro] (code v30, defaults unchanged): dual-timescale eligibility traces + receiver homeostasis, not adopted
+Each synapse keeps a slow trace (tauElig) and a fast trace (tauElig2); the outcome reads eligMix·fast + (1−eligMix)·slow.
+eligMix / tauElig / tauElig2 / homeostasis evolvable via eligEvo (off by default, bit-identical when off). Box evolution on
+bandit + random cue + seqchoice fixed cycle (refs rewardE 6.55 / 10.48 / 4.00):
+| run | gens | bandit | cue | cycle | fitness |
+|---|---|---|---|---|---|
+| dualtag (1.25 h) | 208 | 7.07 | 11.00 | 5.69 | 1.137 |
+| dualtag2 (1.0 h) | 139 | 6.86 | 11.31 | 6.15 | 1.143 |
+Goal (cycle ≥ 8 with bandit ≥ 6.5, cue ≥ 10) not reached: both timescales together keep bandit/cue intact and raise the cycle
+from 4.0 to ~6.2, but not to the 8.7 the short-trace-only setting reaches (which breaks bandit/cue). dualtag2 champion:
+eligMix 0.24, tauElig 25.2, tauElig2 8, homeoRate 0.22 (results_box/dualtag2_champion.json).

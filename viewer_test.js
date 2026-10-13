@@ -19,7 +19,7 @@ const ready = p => p.waitForFunction(() => window.__viewer && window.__viewer.st
 (async () => {
   const b = await puppeteer.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox'], protocolTimeout: 600000 });
   try {
-    for (const [src, plan] of [['bug', 'v3h'], ['cue', 'memoryK'], ['recall', 'memoryK'], ['seq:text', 'predictK3']]) {
+    for (const [src, plan] of [['bug', 'v3h'], ['cue', 'memoryK'], ['recall', 'memoryK'], ['seq:text', 'unifiedR']]) {
       const { p, errs } = await page(b, 'file://' + path.join(ROOT, 'viewer.html') + '#src=' + src); await ready(p);
       await p.evaluate(() => { document.getElementById('help').style.display = 'none'; });
       const info = await p.evaluate(() => { const v = window.__viewer, m = v.st.model; return { TT: m.TT, T: m.T, cells: m.cells.length, syn: m.syn.n, pops: m.pops.length, N: m.N, plan: SpikingArena.defaultPlanId(SpikingArena.currentEnv()) }; });
