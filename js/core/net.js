@@ -308,7 +308,7 @@ class SpikingNet {
   setPlasticityConsts() {
     const p = Object.assign({}, PL_DEFAULTS, this.g.pl);
     this.p = p; this.dPre = Math.exp(-1 / p.tauPre); this.dPost = Math.exp(-1 / p.tauPost);
-    this.dElig = Math.exp(-1 / p.tauElig); this.dElig2 = p.eligMix > 0 ? Math.exp(-1 / p.tauElig2) : 0;   this.dMods = this.chs.map(c => Math.exp(-1 / c.tauMod));
+    this.dElig = Math.exp(-1 / p.tauElig); this.dElig2 = (p.eligMix > 0 || p.eligGate > 0) ? Math.exp(-1 / p.tauElig2) : 0;   this.dMods = this.chs.map(c => Math.exp(-1 / c.tauMod));
   }
   get learning() { return params.plasticity && this.plastic.length > 0 && this.p.lr > 0; }
   // One neural sub-step. Uses this.ext as external current.
@@ -411,13 +411,18 @@ class SpikingNet {
     if (!this.learning || (this.teachTr && !(this.uni && this.eOn))) return;   // (teacher rule: the eligibility traces stay 0, so w += lr*M*0 changes nothing)
     const lr = this.p.lr, pl = this.uni ? this.eList : this.plastic, el = this.elig, ws = this.ws, w0 = this.w0, wMax = params.wMax, sc = this.synCh;
     const eT = this.eT, eS = this.eSub, eP = this.ePow, eP2 = this.ePow2, el2 = this.elig2, mx = el2 ? this.p.eligMix : 0, tro = this.ng ? this.ng.tro : null;
+    const gm = el2 ? this.p.eligGate : 0; let gI = mx;
+    if (gm === 2) { if (outcome) { this.oIsi = this.tickNo - (this.lastOut || 0); this.lastOut = this.tickNo; } const T = this.p.eligGateT, d = (this.oIsi || T) - T; gI = 1 / (1 + Math.exp(d / (0.2 * T + 0.5))); }   // short outcome intervals -> fast tag, long -> slow tag
     let s = 0;
     for (let q = 0; q < pl.length; q++) {
       const k = pl[q], m = mods[sc[k]]; if (m === 0) continue;
       if (this.prunedMask && this.prunedMask[k]) continue;   // pruned
       const old = ws[k];
       let e = el[k]; if (eT) { const n = eS - eT[k]; eT[k] = eS; e = el[k] = n < 8192 ? e * eP[n] : 0; if (el2) el2[k] = n < 8192 ? el2[k] * eP2[n] : 0; }   // v22 lazy eligibility decay
-      if (el2) e = (1 - mx) * e + mx * el2[k];   // v31 dual-timescale: slow (tauElig) and fast (tauElig2) tags, mixed
+      if (el2) { let g = mx;   // v31 dual-timescale: slow (tauElig) and fast (tauElig2) tags, mixed
+        if (gm === 1) { const a = Math.abs(e); g = a > 1e-9 ? Math.min(1, Math.abs(el2[k]) / a) : 0; }   // R35 gate 1: the synapse's own recency (fast/slow tag ratio)
+        else if (gm === 2) g = gI;                                                                        // R35 gate 2: outcome timing (interval since the previous outcome)
+        e = (1 - g) * e + g * el2[k]; }
       let w = old + lr * m * e;
       if (w0[k] > 0) w = w < 0 ? 0 : w > wMax ? wMax : w;    // sign preserved
       else w = w > 0 ? 0 : w < -wMax ? -wMax : w;

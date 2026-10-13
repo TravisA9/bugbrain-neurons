@@ -142,7 +142,7 @@ const PL_DEFAULTS = { lr: 0.03, tauPre: 10, tauPost: 10, aMinus: 0.3, tauElig: 5
   //   its own action column by actFb and inhibits the other columns by actFb (efference copy of the selected action, so the
   //   column that drove the choice is the one that stays active and becomes eligible), and inhibits the other outputs by
   //   outInh (competition between actions, winner-take-all).
-  actFb: 0, outInh: 0, eligUse: 0, eligMix: 0, tauElig2: 8, eligEvo: 0,
+  actFb: 0, outInh: 0, eligUse: 0, eligMix: 0, tauElig2: 8, eligEvo: 0, eligGate: 0, eligGateT: 10,
   rpe: 0, rpeGamma: 0.9, rpeLambda: 0.5, rpeLr: 0.3, rpeGain: 1, rpeSrc: 0, rpeEps: 1, rpeMode: 0, actNoiseV: 0,
   // v22 (round 23) UNIFIED THREE-FACTOR RULE (uni 1; 0 = off): every plastic synapse keeps its eligibility trace (STDP), and
   //   dw = lr * M_post * e, with ONE modulator per target cell M_post = uniI * I_post + D:
@@ -248,7 +248,7 @@ function networkStats(g) {
 // v22 (round 23): the default plans predictK3 / rewardK / rewardMemK learn with ONE rule set (UNIFIED_PL) -> DEFAULTS_VERSION 20.
 // v27 (round 28, neuro): pure local connection-demand attractant (attraction only, no relaxed matching), default on in the default plans
 const DEMAND_SC = { demand: 1, demandRelax: 0 };
-const APP_VERSION = 'v30', DEFAULTS_VERSION = 23;   // v30 (R30 adopted): one unified genome unifiedR is the default for three-phase-clock sequences/text, bandit and random-mapping cue/recall (grows exactly predictK3 / rewardE by arealization); v27 (round 28): local connection demand (DEMAND_SC) on in predictK3 + rewardE; v26 (round 27): evolved plan rewardE is the default for bandit + random-mapping cue/recall; v25 (round 26): headless runner + dashboard; v24 (round 25): UI-only (fast mode); v23 (round 24): no default changed
+const APP_VERSION = 'v31', DEFAULTS_VERSION = 24;   // v31 (R35): unifiedR's reward area = rewardE2 (dual-timescale eligibility, dualtag2 champion); v30 (R30 adopted): one unified genome unifiedR is the default for three-phase-clock sequences/text, bandit and random-mapping cue/recall (grows exactly predictK3 / rewardE by arealization); v27 (round 28): local connection demand (DEMAND_SC) on in predictK3 + rewardE; v26 (round 27): evolved plan rewardE is the default for bandit + random-mapping cue/recall; v25 (round 26): headless runner + dashboard; v24 (round 25): UI-only (fast mode); v23 (round 24): no default changed
 const PARAM_DEFAULTS = Object.freeze(Object.assign({}, params));   // the recommended engine settings (snapshot before any UI change)
 Object.assign(SpikingArena, { APP_VERSION, DEFAULTS_VERSION, PARAM_DEFAULTS, DEMAND_SC });
 Object.assign(SpikingArena, { UNIFIED_PL, mulberry32, gauss, clamp, hashSeed, V_REST, V_THRESH, V_FLOOR, params, PL_DEFAULTS, PL_RANGES, NG_RANGES, CH_DEFAULTS, CH_RANGES,

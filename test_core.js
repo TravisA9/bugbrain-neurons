@@ -189,7 +189,7 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   console.log(`v22 unified rule: seq order3 last quarter ${a.task.stats().lastQuarter.toFixed(2)} (instructive), bandit last quarter ${b.task.stats().lastQuarter.toFixed(2)} (RPE): ok`); }
 // v27 (round 28): local connection demand, default on in predictK3 / rewardE; off (bit-identical) when the gene is 0
 { const S = require('./js/node_load.js')(), E = S.PLANS.rewardE.make(), K3 = S.PLANS.predictK3.make();
-  assert.ok(E.sc.demand === 1 && E.sc.demandRelax === 0 && K3.regions.every(r => r.g.sc.demand === 1) && S.DEFAULTS_VERSION === 23, 'demand on in the default plans');
+  assert.ok(E.sc.demand === 1 && E.sc.demandRelax === 0 && K3.regions.every(r => r.g.sc.demand === 1) && S.DEFAULTS_VERSION >= 23, 'demand on in the default plans');
   const B = S.setEnv('bandit', { K: 6 }); let cOn = 0, cOff = 0; const off = S.cloneCell(E); off.sc.demand = 0;
   for (const sd of [11, 12, 13, 14]) { cOn += S.growCell(E, { seed: sd, spec: B.spec }).devStats.outCov / 4; cOff += S.growCell(off, { seed: sd, spec: B.spec }).devStats.outCov / 4; }
   assert.ok(cOn > cOff, `demand raises output coverage (6 arms: ${cOff.toFixed(2)} -> ${cOn.toFixed(2)})`);

@@ -1984,3 +1984,16 @@ bandit + random cue + seqchoice fixed cycle (refs rewardE 6.55 / 10.48 / 4.00):
 Goal (cycle ≥ 8 with bandit ≥ 6.5, cue ≥ 10) not reached: both timescales together keep bandit/cue intact and raise the cycle
 from 4.0 to ~6.2, but not to the 8.7 the short-trace-only setting reaches (which breaks bandit/cue). dualtag2 champion:
 eligMix 0.24, tauElig 25.2, tauElig2 8, homeoRate 0.22 (results_box/dualtag2_champion.json).
+
+## R35 adopted (v31, DEFAULTS_VERSION 24): unifiedR's reward area = rewardE2 (dualtag2 champion, dual-timescale eligibility)
+16 held-out growths per task, rewardE2 (= unifiedR on reward tasks, verified growth by growth) vs rewardE; paired diff ± s.e.:
+| task | rewardE2 | rewardE | diff |
+|---|---|---|---|
+| bandit | 6.700 | 6.686 | +0.014 ± 0.164 |
+| cue random | 10.102 | 10.172 | −0.071 ± 0.595 |
+| seqchoice cycle | 6.397 | 4.545 | +1.852 ± 0.445 |
+| seqchoice order2 | 4.516 | 3.798 | +0.717 ± 0.224 |
+Equal on bandit / cue, clearly better on the reward-learned pairings: adopted. Text unchanged (7.264, striatum does not develop).
+Caveat: seqchoice itself defaults to unifiedR, which on that task (clock + outcome) represses the striatum: unifiedR scores only
+1.45 (cycle) / 1.41 (order2) there; rewardE2 alone (or a graded unified plan) is needed for mixed tasks. Files: results_box/r35/.
+Legacy: legacy/v30/.
