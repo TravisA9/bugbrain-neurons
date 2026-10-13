@@ -115,16 +115,21 @@ function arealSignals(spec) {
 function areaExpr(R, S) { const a = R.area || { a: 0, o: 0, b: 5 }; return 1 / (1 + Math.exp(-(a.a * S.A + a.o * S.O + a.b))); }
 function growAreal(d, opts) {
   const envSpec = opts.spec || currentEnv().spec, S = arealSignals(envSpec), e = d.regions.map(R => areaExpr(R, S));
-  let on = d.regions.map((R, k) => e[k] >= 0.5); if (!on.some(x => x)) on = e.map(x => x === Math.max(...e));
+  // v30 (R31) graded arealization (d.graded): an area develops once its expression reaches gMin (gene, default 0.15) and its
+  // progenitor pool (maxCells) scales with the expression: size = min(1, e / 0.9) of the full area (fully expressed areas unchanged).
+  const gMin = d.graded ? (d.gMin != null ? d.gMin : 0.15) : 0.5;
+  let on = d.regions.map((R, k) => e[k] >= gMin); if (!on.some(x => x)) on = e.map(x => x === Math.max(...e));
+  const scaled = (R, k) => { if (!d.graded) return R; const f = Math.min(1, e[k] / 0.9); if (f >= 1) return R;
+    const g = Object.assign({}, R.g, { sc: Object.assign({}, R.g.sc) }); if (g.sc.maxCells) g.sc.maxCells = Math.max(8, Math.round(g.sc.maxCells * f)); return Object.assign({}, R, { g }); };
   let own = -1; d.regions.forEach((R, k) => { if (on[k] && R.outputs && (own < 0 || e[k] > e[own])) own = k; });
   const idx = []; d.regions.forEach((R, k) => { if (on[k]) idx.push(k); });
-  const areas = d.regions.map((R, k) => ({ name: R.name, expr: +e[k].toFixed(3), on: on[k] }));
+  const areas = d.regions.map((R, k) => ({ name: R.name, expr: +e[k].toFixed(3), on: on[k], size: d.graded ? +Math.min(1, e[k] / 0.9).toFixed(3) : 1 }));
   let G;
   if (idx.length === 1 && d.regions[idx[0]].whole) {
-    G = growCell(d.regions[idx[0]].g, opts);
+    G = growCell(scaled(d.regions[idx[0]], idx[0]).g, opts);
   } else {
     const sub = { kind: 'regions', label: d.label, seed: d.seed,
-      regions: idx.map(k => Object.assign({}, d.regions[k], { outputs: k === own })),
+      regions: idx.map(k => Object.assign({}, scaled(d.regions[k], k), { outputs: k === own })),
       tracts: (d.tracts || []).filter(T => on[T.from.region] && on[T.to.region]).map(T => { const t = JSON.parse(JSON.stringify(T)); t.from.region = idx.indexOf(T.from.region); t.to.region = idx.indexOf(T.to.region); return t; }) };
     G = growRegions(sub, Object.assign({}, opts, { noAreal: true }));
   }
@@ -134,7 +139,7 @@ function growAreal(d, opts) {
 function cloneRegions(d) {
   return { kind: 'regions', label: d.label || '', seed: d.seed, fitness: null, tracts: JSON.parse(JSON.stringify(d.tracts || [])),
            regions: d.regions.map(R => Object.assign({ name: R.name, color: R.color, inputs: JSON.parse(JSON.stringify(R.inputs)), outputs: !!R.outputs, g: cloneCell(R.g) }, R.area ? { area: Object.assign({}, R.area) } : {}, R.whole ? { whole: true } : {})),
-           ...(d.areal ? { areal: 1 } : {}) };
+           ...(d.areal ? { areal: 1 } : {}), ...(d.graded ? { graded: 1, gMin: d.gMin } : {}) };
 }
 function regionsOf(d) { return d && d.kind === 'regions' ? d.regions : null; }
 Object.assign(SpikingArena, { arealSignals, areaExpr, growAreal, cloneRegions, growRegions, regionSpec, regionsOf });

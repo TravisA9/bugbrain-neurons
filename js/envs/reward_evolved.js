@@ -27,5 +27,19 @@ function createUnifiedR() {
 }
 SA.registerPlan('unifiedR', 'unified plan: areas develop from the task I/O signature', createUnifiedR, 'one genome: phase-clock input grows the cortex + context areas (predictK3), an outcome/dopamine source grows the striatal area (rewardE)');
 SA.createUnifiedR = createUnifiedR;
+/* v30 (R31) 'unifiedG': unifiedR with GRADED areas (size follows expression, see core/regions.js growAreal) and receptor genes
+ * tuned so a task with BOTH signals (phase clock + outcome, e.g. seqchoice) grows both areas: the striatum mostly (owns the
+ * outputs), cortex + context smaller; corticostriatal tracts carry the previous symbol (cortex M2) and the symbol two back
+ * (context M3) to the striatal receivers as plastic parallel fibres. On single-signal tasks it grows exactly unifiedR. */
+function createUnifiedG(T) {
+  T = Object.assign({ wTot: 45, p: 0.3 }, T); const d = createUnifiedR();
+  d.regions[0].area = { a: 10, o: -6, b: -5 }; d.regions[1].area = { a: 10, o: -6, b: -5 }; d.regions[2].area = { a: -4, o: 10, b: -5 };
+  d.tracts.push({ name: 'M2 -> striatum', from: { region: 0, cls: 2 }, to: { region: 2, wTot: T.wTot }, map: 'all', p: T.p, plastic: true },
+                { name: 'M3 -> striatum', from: { region: 1, cls: 2 }, to: { region: 2, wTot: T.wTot }, map: 'all', p: T.p, plastic: true });
+  d.graded = 1; d.gMin = 0.15; d.label = 'unified plan, graded areas: one genome, area sizes follow the task I/O signals; mixed tasks grow cortex + context + striatum';
+  return d;
+}
+SA.registerPlan('unifiedG', 'unified plan with graded areas (sizes follow the task I/O signals)', () => createUnifiedG(), 'unifiedR whose areas grow in proportion to their expression; with clock + outcome both develop, linked by corticostriatal tracts');
+SA.createUnifiedG = createUnifiedG;
 })();
 
