@@ -1,10 +1,103 @@
 {
   "id": "q05_patterned_activity",
-  "title": "Patterned vs matched-random juvenile activity",
+  "title": "Patterned vs shuffled (rate-matched) vs no juvenile waves (rewardE2; regions skip the juvenile phase)",
   "question": "Q05",
   "track": "neuro",
   "priority": 1.2,
-  "kind": "blocked",
-  "needsCode": "a juvenile activity source with patterned vs shuffled (rate-matched) schedules; not implemented yet",
-  "accept": {}
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "bandit",
+        "base",
+        "16"
+      ],
+      "label": "rewardE2 bandit base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "cueR",
+        "base",
+        "16"
+      ],
+      "label": "rewardE2 cueR base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "cycle",
+        "base",
+        "16"
+      ],
+      "label": "rewardE2 cycle base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "bandit",
+        "P.juvMode=1",
+        "16"
+      ],
+      "label": "rewardE2 bandit P.juvMode=1"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "cueR",
+        "P.juvMode=1",
+        "16"
+      ],
+      "label": "rewardE2 cueR P.juvMode=1"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "cycle",
+        "P.juvMode=1",
+        "16"
+      ],
+      "label": "rewardE2 cycle P.juvMode=1"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "bandit",
+        "P.juvMode=2",
+        "16"
+      ],
+      "label": "rewardE2 bandit P.juvMode=2"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "cueR",
+        "P.juvMode=2",
+        "16"
+      ],
+      "label": "rewardE2 cueR P.juvMode=2"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "cycle",
+        "P.juvMode=2",
+        "16"
+      ],
+      "label": "rewardE2 cycle P.juvMode=2"
+    }
+  ],
+  "accept": {
+    "note": "patterned helps if base > juvMode=1 beyond noise on most tasks"
+  }
 }

@@ -2050,3 +2050,33 @@ Legacy: legacy/v31/. Files: results_box/r37/, run/r37.js.
 - dashboard.html: Ideas tab (idea map with status colours and filter, ranked questions, queue with status, recent QUEUE_LOG results),
   file:// via results/ideas.js + results/queue.js; dashboard_test checks it (screenshot_ideas.png).
 - register_queue_task.ps1: Task Scheduler task "BugBrain Queue" (current user, limited rights; at logon + an on-idle copy).
+
+## R39 (v33, DEFAULTS_VERSION 26): queue fixes; q04 striatum adopted (rewardE3); patterned-activity option
+Queue problems on the PC (Oct 13) and fixes:
+- Every ablation row errored: run/ablate.js required results_overnight_r26/champions/champion_final.json at start (gitignored, absent
+  on the PC) -> crash ("Bun v1.2.15"). Now the champion file is read only when a variant needs it.
+- q01 "FAILED": the run finished normally (19 gens, summary finished) but the runner exited non-zero while tearing down workers.
+  Runner now exits 0 after a finished run; the queue trusts summary.json (status finished) over the exit code and recovers such jobs.
+- q02 1 generation in 3.17 h: the laptop ran on battery (critical battery 1:38 PM -> sleep), then Modern Standby 3:52-6:26 PM inside
+  generation 0; wall-clock counted. Runner budget now counts active time only (suspend gaps detected by a 1-s ticker, logged); the
+  queue treats "on battery" like PAUSE (--allow-battery to override).
+- New: --reset a,b (re-run, bypass registry), afterPass (q01b skipped since q01 failed), region:N transplant variant, P.<param> engine
+  overrides in ablate.
+Queue results: q09 dual-trace re-evolution FAIL (champion 1.00; cycle 7.25, bandit 6.47); q12 cortex o: -5 5.12/4.48, -7/-8 = cortex
+off (6.40/4.52), so o = -6 stays; q04_mixed_evolve PASS (1.174 on bandit/bandit6/cycle/order2).
+q04 champion, 16 held-out growths vs v32 unifiedR (paired diff ± s.e.):
+| task | whole champion | striatum transplanted into unifiedR | v32 unifiedR |
+|---|---|---|---|
+| text | 0.404 (−6.86) | 7.264 (identical) | 7.264 |
+| order3 | 1.366 (−7.16) | 8.529 (identical) | 8.529 |
+| bandit | 6.781 | 6.781 (+0.08 ± 0.23) | 6.700 |
+| bandit 6 arms | 5.112 | 5.112 (+0.81 ± 0.31) | 4.307 |
+| cue random | 9.253 | 9.253 (−0.85 ± 0.68); 40 growths 9.449 vs 9.531 (−0.08 ± 0.46) | 10.102 |
+| seqchoice cycle | 7.119 | 7.241 (+0.46 ± 0.40) | 6.782 |
+| seqchoice order2 | 4.790 | 5.193 (−0.00 ± 0.32) | 5.196 |
+The whole champion is rejected (its sequence areas lost text / order3). Its striatum (genome + area genes) transplanted into unifiedR
+is worse nowhere beyond noise and better on bandit 6 arms: adopted as unifiedR's reward area (rewardE3), v33 / DEFAULTS_VERSION 26;
+unifiedRv32 kept for comparison; legacy/v32/.
+Q05 (patterned activity): engine parameter juvMode (0 waves = default, 1 the same wave values spatially shuffled each tick = rate-matched
+control, 2 no waves). Screen (rewardE2 bandit, 2 growths): 6.89 / 6.73 / 4.33. Finding: region brains (unifiedR text/order3) skip
+the juvenile phase entirely (cellRefine/cellHomeo/juvMode change nothing) -> new question Q15. Queue job q05 runs 16 growths.

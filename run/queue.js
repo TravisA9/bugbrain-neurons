@@ -74,7 +74,7 @@ async function runEvolve(j) {
   const s = st(j.id), hours = (j.budget && j.budget.hours) || 1;
   let a;
   if (s.dir && fs.existsSync(path.join(s.dir, 'checkpoint.json'))) { a = ['run/runner.js', '--resume', s.dir, '--hours', String(hours), '--workers', String(WORKERS)]; say(`${j.id}: resuming ${s.dir}`); }
-  else { a = ['run/runner.js', j.config, '--hours', String(hours), '--workers', String(WORKERS), '--name', j.id].concat(j.extraArgs || [], process.env.BB_RESULTS ? ['--out', RES] : []); if (args.force) a.push('--force'); }
+  else { a = ['run/runner.js', j.config, '--hours', String(hours), '--workers', String(WORKERS), '--name', j.id].concat(j.extraArgs || [], process.env.BB_RESULTS ? ['--out', RES] : []); if (args.force || s.force) a.push('--force'); }
   s.status = 'running'; s.startedAt = s.startedAt || new Date().toISOString(); save(); writeQueueJs();
   let stopAsked = false;
   const watch = setInterval(() => { if (paused() && s.dir && !stopAsked) { fs.writeFileSync(path.join(s.dir, 'STOP'), 'paused by queue'); stopAsked = true; say(`${j.id}: ${pauseWhy()} -> asked the run to stop after this generation`); } }, 10000);
@@ -105,7 +105,7 @@ async function runRuns(j) {
   const sub = x => String(x).replace(/\$\{dir:([\w.-]+)\}/g, (m, id) => (S.jobs[id] && S.jobs[id].dir) || m);
   const todo = j.runs.map((r, k) => Object.assign({ k }, r)).filter(r => !s.results[r.k]); let idx = 0; const live = new Set();
   writeLiveRuns(j, s);
-  const one = async r => { if (paused()) return; const env = {}; for (const [k, v] of Object.entries(r.env || {})) env[k] = sub(v); const a = [r.script].concat(r.args.map(sub)); if (args.force) a.push('--force');
+  const one = async r => { if (paused()) return; const env = {}; for (const [k, v] of Object.entries(r.env || {})) env[k] = sub(v); const a = [r.script].concat(r.args.map(sub)); if (args.force || s.force) a.push('--force');
     const res = await spawn(a, env, (l, ch) => live.add(ch)); live.delete(res.child);
     const line = res.out.trim().split('\n').reverse().find(x => x.trim().startsWith('{'));
     if ((res.code === 0 || res.code === 3) && line) { try { const o = JSON.parse(line); s.results[r.k] = { label: r.label, mean: o.mean, sd: o.sd, n: (o.scores || []).length, dup: res.code === 3 }; } catch (e) {} }
@@ -134,7 +134,7 @@ async function main() {
   fs.writeFileSync(LOCK, JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }));
   const unlock = () => { try { if (JSON.parse(fs.readFileSync(LOCK, 'utf8')).pid === process.pid) fs.unlinkSync(LOCK); } catch (e) {} };
   process.on('exit', unlock); process.on('SIGINT', () => { unlock(); process.exit(130); }); process.on('SIGTERM', () => { unlock(); process.exit(143); });
-  if (args.reset) { for (const id of String(args.reset).split(',')) { S.jobs[id] = { status: 'pending', resetAt: new Date().toISOString() }; say(`reset ${id}`); } save(); }   // --reset a,b: run those jobs again from scratch
+  if (args.reset) { for (const id of String(args.reset).split(',')) { S.jobs[id] = { status: 'pending', resetAt: new Date().toISOString(), force: true }; say(`reset ${id}`); } save(); }   // --reset a,b: run those jobs again from scratch
   // R39 recover: evolve jobs marked failed although their run finished (summary.json status finished) -> verdict from the summary
   for (const j of loadJobs()) { const s = S.jobs[j.id]; if (j.kind !== 'evolve' || !s || s.status !== 'failed' || !s.dir) continue;
     let sum = null; try { sum = JSON.parse(fs.readFileSync(path.join(s.dir, 'summary.json'), 'utf8')); } catch (e) {} if (!sum || sum.status !== 'finished') continue;

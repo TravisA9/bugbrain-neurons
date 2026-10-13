@@ -41,26 +41,32 @@ Evidence is from RESULTS.md (round ids), results_box/R31_NOTES.md (R31-R33) and 
 | I34 | evaluation | Scaling harness (accuracy vs cells, context, corpus) | **open** | none yet | text track (issue #1) | issue #1 |
 | I35 | growth | Patterned vs random activity shaping growth | **open** | not run | from the research memo: tells whether input structure shapes wiring | memo #1 |
 | I36 | evaluation | Minimal genome generality across task families | **open** | unifiedR is one genome but hand-assembled from two proven programs | core of the goal: grow to fit the need | memo #5, R30, R37 |
+| I37 | reward | Striatum evolved on bandit 3/6 arms + seqchoice (q04 champion) transplanted into unifiedR = rewardE3 | **adopted** | whole champion: text 0.40, order3 1.37 (collapse); striatum only: bandit6 5.11 vs 4.31 (+0.81 ± 0.31), cycle 7.24 vs 6.78, cue -0.08 ± 0.46 (40 growths), text/order3 bit-identical | keep the evolved reward area, not the mutated sequence areas | R39 |
+| I38 | regions | Graded cortex size sweep (receptor o) | **rejected** | o=-5: 5.12/4.48; o=-7/-8: cortex does not develop (= rewardE2 alone 6.40/4.52); o=-6 (v32) 6.78/5.20 | v32 setting is the best | R39 (q12) |
+| I39 | reward | Re-evolved dual-trace genes (q09, 2 h) | **rejected** | champion 1.00: cycle 7.25, bandit 6.47, cue 10.67 (refs 6.86/11.31) | no gain beyond rewardE2 | R39 (q09) |
+| I40 | evaluation | Five-task evolution from v32 (q01, 3 h, 19 gens) | **rejected** | champion 0.966 never beat the start; text generations ~18 min | text makes generations slow; mutants lose text first | R39 (q01) |
 
-Counts: rejected 6, adopted 23, parked 1, open 6
+Counts: rejected 9, adopted 24, parked 1, open 6
 
 ## Open questions, ranked by expected payoff (impact x likelihood / cost)
 
 | rank | id | question | impact | likelihood | cost | payoff | experiment |
 |---|---|---|---|---|---|---|---|
-| 1 | Q01 | Does a v32 five-task evolution (text, order3, bandit, cue, seqchoice) find a genome better than unifiedR on mixed tasks without losing the others? | 5 | 0.5 | 2 | **1.25** | bun run/runner.js experiments/v32_five.json (3 h), re-eval on 16 held-out growths |
-| 2 | Q05 | Does patterned (structured) activity during juvenile growth produce better wiring than matched random activity? | 3 | 0.4 | 1 | **1.2** | juvenile activity patterned vs shuffled (matched rate), 16 growths, text/order3/bandit |
-| 3 | Q09 | Can evolution tune the dual-timescale mix per area so cycle >= 8 with bandit >= 6.5, cue >= 10? | 3 | 0.4 | 1 | **1.2** | evolve rewardE2 eligibility genes on bandit+cue+cycle with longer budget |
-| 4 | Q07 | How does text accuracy scale with tissue size and corpus length? | 3 | 0.7 | 2 | **1.05** | text track (issue #1): sweep grid/maxCells and corpus size |
-| 5 | Q02 | Do need-growth recruits with structured (claw/topo) inputs close the half-size text gap? | 4 | 0.5 | 2 | **1** | needgrowth with ngClaw structured inputs vs random, reduced text brain, 16 growths |
-| 6 | Q11 | Does the seqchoice random-mapping task (order2) improve with longer lives (1000 symbols)? | 2 | 0.5 | 1 | **1** | unifiedR v32 seqchoice order2 1000 symbols vs 300, 16 growths |
-| 7 | Q12 | Is the v32 graded cortex size (o = -6) optimal, or should it follow a finer sweep? | 2 | 0.5 | 1 | **1** | cortex o in -5..-8, 16 growths on cycle/order2 |
-| 8 | Q10 | Does tag consumption at outcomes (eligUse) combined with dual traces fix 6x6 without hurting cue? | 3 | 0.3 | 1 | **0.9** | ablate eligUse 0.3/0.5/0.7 on rewardE2, 16 growths |
-| 9 | Q03 | Does driving reward-area need-growth by raw failure rate (not RPE) make it trigger and help? | 4 | 0.4 | 2 | **0.8** | needgrowth on bandit/cue/seqchoice with failure-rate error, reduced striatum, 16 growths |
-| 10 | Q04 | Do demand + graded areas let area size follow task load (e.g. more arms -> bigger striatum)? | 4 | 0.4 | 2 | **0.8** | bandit 3/6/12 arms, seqchoice K 4/6/8 with demand on, measure size and score |
-| 11 | Q06 | How general is one minimal genome across held-out task variants (new K, delays, mappings)? | 5 | 0.3 | 2 | **0.75** | evaluate unifiedR on held-out variants; evolve on 3 families, test on the 4th |
+| 1 | Q05 | Does patterned (structured) activity during juvenile growth produce better wiring than matched random activity? | 3 | 0.4 | 1 | **1.2** | juvenile activity patterned vs shuffled (matched rate), 16 growths, text/order3/bandit |
+| 2 | Q15 | Do the sequence areas (regions) need a juvenile activity phase? (they currently skip it: cellRefine/juvMode have no effect on unifiedR text/order3) | 3 | 0.4 | 1 | **1.2** | q05b + implement juvenile phase in growRegions |
+| 3 | Q07 | How does text accuracy scale with tissue size and corpus length? | 3 | 0.7 | 2 | **1.05** | text track (issue #1): sweep grid/maxCells and corpus size |
+| 4 | Q02 | Do need-growth recruits with structured (claw/topo) inputs close the half-size text gap? | 4 | 0.5 | 2 | **1** | needgrowth with ngClaw structured inputs vs random, reduced text brain, 16 growths |
+| 5 | Q11 | Does the seqchoice random-mapping task (order2) improve with longer lives (1000 symbols)? | 2 | 0.5 | 1 | **1** | unifiedR v32 seqchoice order2 1000 symbols vs 300, 16 growths |
+| 6 | Q10 | Does tag consumption at outcomes (eligUse) combined with dual traces fix 6x6 without hurting cue? | 3 | 0.3 | 1 | **0.9** | ablate eligUse 0.3/0.5/0.7 on rewardE2, 16 growths |
+| 7 | Q03 | Does driving reward-area need-growth by raw failure rate (not RPE) make it trigger and help? | 4 | 0.4 | 2 | **0.8** | needgrowth on bandit/cue/seqchoice with failure-rate error, reduced striatum, 16 growths |
+| 8 | Q04 | Do demand + graded areas let area size follow task load (e.g. more arms -> bigger striatum)? | 4 | 0.4 | 2 | **0.8** | bandit 3/6/12 arms, seqchoice K 4/6/8 with demand on, measure size and score |
+| 9 | Q01 | Does a v32 five-task evolution (text, order3, bandit, cue, seqchoice) find a genome better than unifiedR on mixed tasks without losing the others? | 5 | 0.3 | 2 | **0.75** | bun run/runner.js experiments/v32_five.json (3 h), re-eval on 16 held-out growths |
+| 10 | Q06 | How general is one minimal genome across held-out task variants (new K, delays, mappings)? | 5 | 0.3 | 2 | **0.75** | evaluate unifiedR on held-out variants; evolve on 3 families, test on the 4th |
+| 11 | Q09 | Can evolution tune the dual-timescale mix per area so cycle >= 8 with bandit >= 6.5, cue >= 10? | 3 | 0.2 | 1 | **0.6** | evolve rewardE2 eligibility genes on bandit+cue+cycle with longer budget |
 | 12 | Q13 | Does the reversal-learning bug task become solvable with the v32 reward area? | 2 | 0.3 | 1 | **0.6** | bug reversal arena with rewardE2 actor-critic, 16 growths |
 | 13 | Q14 | Typed-array/WebGPU update for 2x speed | 3 | 0.6 | 3 | **0.6** | text track (issue #3) |
-| 14 | Q08 | Can a slow-decay / recurrent context region push fables above 0.36 with text >= 0.772? | 4 | 0.3 | 3 | **0.4** | text track (issue #2) |
+| 14 | Q16 | Can a six-task evolution (adds bandit 6 arms) improve the v33 genome without losing text? | 4 | 0.3 | 2 | **0.6** | q16_six_task_evolve (4 h) |
+| 15 | Q08 | Can a slow-decay / recurrent context region push fables above 0.36 with text >= 0.772? | 4 | 0.3 | 3 | **0.4** | text track (issue #2) |
+| 16 | Q12 | Is the v32 graded cortex size (o = -6) optimal, or should it follow a finer sweep? [answered R39: o=-6 is best] | 2 | 0 | 1 | **0** | cortex o in -5..-8, 16 growths on cycle/order2 |
 
 Jobs that answer these questions live in experiments/queue/*.json (run/queue.js).

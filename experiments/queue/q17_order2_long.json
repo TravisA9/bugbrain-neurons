@@ -1,0 +1,21 @@
+{
+  "id": "q17_order2_long",
+  "title": "seqchoice order2 (random mapping) with 1000-symbol lives on rewardE2 vs unifiedR",
+  "question": "Q11",
+  "track": "neuro",
+  "priority": 0.65,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE2",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "base",
+        "16"
+      ],
+      "label": "rewardE2 seqchoice{\"source\":\"order2\",\"nSyms\":1000} base"
+    }
+  ],
+  "accept": {}
+}
