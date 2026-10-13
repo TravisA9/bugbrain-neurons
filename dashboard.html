@@ -24,11 +24,20 @@
   .chart h3 { margin: 0 0 4px; font-size: 12.5px; font-weight: 600; }
   .chart canvas { width: 100%; height: 190px; display: block; }
   #msg { color: #ffd34d; }
+  .tabs button.on { background: #3a5f8a; border-color: #5fb3ff; }
+  #ideasView h2 { font-size: 14px; margin: 14px 0 6px; }
+  #ideasView td { white-space: normal; max-width: 520px; }
+  .st { padding: 1px 6px; border-radius: 3px; font-size: 11.5px; color: #111; font-weight: 600; white-space: nowrap; }
+  .st-adopted, .st-done, .st-PASS { background: #4cd964; } .st-rejected, .st-failed, .st-FAIL { background: #ff6b6b; } .st-open, .st-pending { background: #5fb3ff; }
+  .st-parked, .st-blocked, .st-waiting { background: #ffd34d; } .st-running { background: #c88cff; } .st-text { background: #ff9f43; } .st-skipped-duplicate, .st-skipped { background: #8a919c; }
+  #qlog { white-space: pre-wrap; background: var(--panel); padding: 8px; border-radius: 6px; font: 12px ui-monospace, monospace; max-height: 480px; overflow: auto; }
+  .filt button { margin-right: 4px; }
 </style>
 </head>
 <body>
 <header>
   <h1>Experiment dashboard</h1>
+  <span class="tabs"><button id="tabRuns" class="on">Runs</button> <button id="tabIdeas" title="Idea map, ranked open questions, the experiment queue and its log (results/ideas.js, results/queue.js)">Ideas</button></span>
   <label class="filebtn" title="Pick a results folder (one run, or the whole results folder with many runs)">📁 Open results folder<input type="file" id="inDir" webkitdirectory directory multiple hidden></label>
   <label class="filebtn" title="Pick files of one or more runs: generations.csv, summary.json, config.json, champions/*.json">📄 Open files<input type="file" id="inFiles" multiple accept=".csv,.json" hidden></label>
   <button id="btnClear" title="Forget all loaded runs">Clear</button>
@@ -37,8 +46,21 @@
   <span id="msg"></span>
 </header>
 <main>
+ <div id="runsView">
   <table id="runs"><thead></thead><tbody></tbody></table>
   <div id="charts"></div>
+ </div>
+ <div id="ideasView" hidden>
+  <div class="note" id="ideasNote"></div>
+  <h2>Experiment queue <span class="note" id="qState"></span></h2>
+  <table id="qTable"><thead><tr><th>priority</th><th>job</th><th>question</th><th>track</th><th>kind</th><th>budget</th><th>status</th><th>result</th></tr></thead><tbody></tbody></table>
+  <h2>Open questions (ranked by expected payoff = impact × likelihood / cost)</h2>
+  <table id="qsTable"><thead><tr><th>#</th><th>id</th><th>question</th><th>impact</th><th>likelihood</th><th>cost</th><th>payoff</th><th>experiment</th></tr></thead><tbody></tbody></table>
+  <h2>Idea map <span class="filt" id="ideaFilt"></span></h2>
+  <table id="ideaTable"><thead><tr><th>id</th><th>area</th><th>idea</th><th>status</th><th>key evidence</th><th>why</th><th>rounds</th></tr></thead><tbody></tbody></table>
+  <h2>Recent queue results (results/QUEUE_LOG.md)</h2>
+  <div id="qlog">–</div>
+ </div>
 </main>
 <script>
 'use strict';
@@ -162,6 +184,37 @@ function drawCharts() {
 }
 window.addEventListener('resize', drawCharts);
 render();
+
+// R38 IDEAS tab: results/ideas.js (window.BB_IDEAS, run/ideas.js) and results/queue.js (window.BB_QUEUE, run/queue.js), re-injected every 30 s
+const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const badge = st => `<span class="st st-${esc(String(st).split(' ')[0])}">${esc(st)}</span>`;
+let ideaFilter = 'all';
+function inject(id, src, cb) { const o = document.getElementById(id); if (o) o.remove(); const sc = document.createElement('script'); sc.id = id; sc.src = src + '?t=' + Date.now(); sc.onload = cb; sc.onerror = cb; document.head.appendChild(sc); }
+function renderIdeas() {
+  const I = window.BB_IDEAS, Q = window.BB_QUEUE;
+  $('ideasNote').textContent = (I ? `${I.ideas.length} ideas, ${I.questions.length} open questions (results/ideas.js, ${new Date(I.writtenAt).toLocaleString()}). ` : 'results/ideas.js not found (run: node run/ideas.js). ') +
+    (Q ? `Queue updated ${new Date(Q.updatedAt).toLocaleTimeString()}.` : 'results/queue.js not found (start run_queue.bat).');
+  if (I) {
+    const sts = ['all', ...new Set(I.ideas.map(i => i.status))];
+    $('ideaFilt').innerHTML = sts.map(s => `<button data-f="${s}" class="${s === ideaFilter ? 'on' : ''}">${s}${s === 'all' ? '' : ' ' + I.ideas.filter(i => i.status === s).length}</button>`).join('');
+    $('ideaFilt').querySelectorAll('button').forEach(b => b.onclick = () => { ideaFilter = b.dataset.f; renderIdeas(); });
+    $('ideaTable').tBodies[0].innerHTML = I.ideas.filter(i => ideaFilter === 'all' || i.status === ideaFilter).map(i => `<tr><td>${esc(i.id)}</td><td>${esc(i.area)}</td><td>${esc(i.title)}</td><td>${badge(i.status)}</td><td>${esc(i.evidence)}</td><td>${esc(i.why)}</td><td>${esc(i.rounds.join(', '))}</td></tr>`).join('');
+    $('qsTable').tBodies[0].innerHTML = I.questions.map((q, k) => `<tr><td>${k + 1}</td><td>${esc(q.id)}</td><td>${esc(q.q)}</td><td>${q.impact}</td><td>${q.likelihood}</td><td>${q.cost}</td><td><b>${q.payoff}</b></td><td>${esc(q.experiment)}</td></tr>`).join('');
+  }
+  if (Q) {
+    $('qState').textContent = Q.paused ? '· PAUSED (delete the PAUSE file to continue)' : Q.state ? '· ' + Q.state : '';
+    $('qTable').tBodies[0].innerHTML = Q.jobs.map(j => { const s = j.state || {}, res = s.pass === true ? badge('PASS') : s.pass === false ? badge('FAIL') : '';
+      const info = s.lastLine ? esc(s.lastLine.replace(/^\[[^\]]*\]\s*/, '').slice(0, 120)) : s.results ? Object.keys(s.results).length + ' runs done' : s.summary && s.summary.champion ? 'champion ' + (+s.summary.champion.val).toFixed(3) : j.needsCode ? esc('needs code: ' + j.needsCode) : j.note ? esc(j.note) : '';
+      return `<tr><td>${j.priority}</td><td title="${esc(j.id)}">${esc(j.title)}</td><td>${esc(j.question)}</td><td>${esc(j.track || '')}</td><td>${esc(j.kind)}</td><td>${j.budget ? j.budget.hours + ' h' : ''}</td><td>${badge(j.status)}</td><td>${res} ${info}</td></tr>`; }).join('');
+    $('qlog').textContent = Q.log && Q.log.length ? Q.log.slice().reverse().join('\n\n') : 'no finished jobs yet';
+  }
+}
+function pollIdeas() { inject('ideasScript', 'results/ideas.js', () => inject('queueScript', 'results/queue.js', renderIdeas)); }
+function showTab(t) { $('runsView').hidden = t !== 'runs'; $('ideasView').hidden = t !== 'ideas'; $('tabRuns').classList.toggle('on', t === 'runs'); $('tabIdeas').classList.toggle('on', t === 'ideas'); if (t === 'ideas') pollIdeas(); if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t); }
+$('tabRuns').onclick = () => showTab('runs'); $('tabIdeas').onclick = () => showTab('ideas');
+setInterval(() => { if (!$('ideasView').hidden) pollIdeas(); }, 30000);
+if (location.hash === '#ideas') showTab('ideas');
+window.__dash.pollIdeas = pollIdeas; window.__dash.showTab = showTab;
 </script>
 </body>
 </html>

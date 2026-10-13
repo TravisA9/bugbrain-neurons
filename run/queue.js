@@ -11,12 +11,13 @@
  * Yielding: children run at below-normal priority. PAUSE: create a file named PAUSE in the project folder (or results/PAUSE): the queue
  * stops after the current generation (evolve: STOP file -> checkpoint) or kills unfinished runs, then waits; delete PAUSE to continue.
  * --cpu-max P (default 0 = off): before starting or resuming work, wait while total CPU use (other programs) is above P %.
+ * --status: print the job list and refresh results/queue.js, nothing else.
  * One instance only (results/queue.lock). --once: run at most one job, then exit. Exits when nothing is runnable (unless --wait). */
 const fs = require('fs'), path = require('path'), os = require('os'), cp = require('child_process');
 const REG = require('./registry.js');
 const ROOT = path.resolve(__dirname, '..'), RES = process.env.BB_RESULTS || path.join(ROOT, 'results'), QDIR = process.env.BB_QUEUE_DIR || path.join(ROOT, 'experiments', 'queue');
 const STATE = path.join(RES, 'queue_state.json'), LOG = path.join(RES, 'QUEUE_LOG.md'), QJS = path.join(RES, 'queue.js'), LOCK = path.join(RES, 'queue.lock');
-const args = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'include-text', 'force', 'wait'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
+const args = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'include-text', 'force', 'wait', 'status'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
 const WORKERS = args.workers != null ? +args.workers : Math.max(1, os.cpus().length - 2), CPU_MAX = +(args['cpu-max'] || 0);
 const RUNTIME = typeof Bun !== 'undefined' ? process.execPath : (process.env.BB_BUN || 'bun');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -115,6 +116,7 @@ function writeLiveRuns(j, s) {   // results/current.js for a runs job (the runne
 }
 // ---------- main ----------
 async function main() {
+  if (args.status) { writeQueueJs(); const jobs = loadJobs().sort((a, b) => b.priority - a.priority); for (const j of jobs) console.log(`${String(j.priority).padEnd(5)} ${statusOf(j).padEnd(18)} ${j.id}`); return; }   // --status: list + refresh results/queue.js only
   try { const o = JSON.parse(fs.readFileSync(LOCK, 'utf8')); if (o.pid && o.pid !== process.pid) { let alive = false; try { process.kill(o.pid, 0); alive = true; } catch (e) {} if (alive) { say(`another queue is running (pid ${o.pid}); exiting`); return; } } } catch (e) {}
   fs.writeFileSync(LOCK, JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }));
   const unlock = () => { try { if (JSON.parse(fs.readFileSync(LOCK, 'utf8')).pid === process.pid) fs.unlinkSync(LOCK); } catch (e) {} };

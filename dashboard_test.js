@@ -50,6 +50,16 @@ function walk(d, base) { const out = []; for (const f of fs.readdirSync(d)) { co
     const inp = await p2.$('#inFiles'); await inp.uploadFile(...['generations.csv', 'summary.json', 'config.json', 'champions/champion_final.json'].map(f => path.join(RES, one, f))); await sleep(800);
     const d2 = await p2.evaluate(() => ({ rows: [...window.__dash.runs.keys()].filter(k => !k.startsWith('live:')).length, charts: document.querySelectorAll('.chart canvas').length, champs: [...window.__dash.runs.values()].filter(r => !r.key.startsWith('live:')).reduce((a, r) => a + 2 * Math.min(1, r.champions.length), 0) }));
     check(d2.rows === 1 && d2.charts >= 3 && d2.champs === 2, `dashboard file picker: 1 run, ${d2.charts} charts, ${d2.champs} champion buttons`);
+    // R38 Ideas tab: results/ideas.js + results/queue.js (file://)
+    if (fs.existsSync(path.join(ROOT, 'results', 'ideas.js')) && fs.existsSync(path.join(ROOT, 'results', 'queue.js'))) {
+      const p3 = await b.newPage(); watch(p3); await p3.goto('file://' + path.join(ROOT, 'dashboard.html') + '#ideas'); await sleep(1200);
+      const t = await p3.evaluate(() => ({ vis: !document.getElementById('ideasView').hidden, ideas: document.querySelectorAll('#ideaTable tbody tr').length, qs: document.querySelectorAll('#qsTable tbody tr').length,
+        jobs: document.querySelectorAll('#qTable tbody tr').length, badges: document.querySelectorAll('#ideaTable .st-adopted, #ideaTable .st-rejected, #ideaTable .st-open, #ideaTable .st-parked').length }));
+      check(t.vis && t.ideas >= 20 && t.qs >= 10 && t.jobs >= 10 && t.badges === t.ideas, `dashboard Ideas tab: ${t.ideas} ideas (status colours ${t.badges}), ${t.qs} open questions, ${t.jobs} queue jobs`);
+      await p3.evaluate(() => document.querySelector('#ideaFilt button[data-f="parked"]').click()); const np = await p3.evaluate(() => document.querySelectorAll('#ideaTable tbody tr').length);
+      check(np >= 1 && np < t.ideas, `dashboard Ideas tab: status filter (parked: ${np})`);
+      await p3.screenshot({ path: path.join(ROOT, 'screenshot_ideas.png'), fullPage: true }); await p3.close();
+    }
     check(!errs.length, 'dashboard / index / viewer: no page errors ' + errs.join(' | '));
   } finally { await b.close(); }
   console.log(fails ? `${fails} FAILED` : 'DASHBOARD TEST: ALL OK'); process.exit(fails ? 1 : 0);
