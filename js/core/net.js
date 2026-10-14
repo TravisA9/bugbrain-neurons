@@ -109,7 +109,9 @@ class SpikingNet {
     if (!S.length || !Rc.length) return null;
     for (const s of S) extra[s] = Array.from({ length: R }, (_, j) => [N0 + j, 0]);
     for (let j = 0; j < R; j++) extra[N0 + j] = Rc.map(b => [b, 1]);
-    return { R, N0, dead, L: L.filter(l => !dead[l]), S, Rc, wOut, k, wIn: med(tot) / k, thr0: med(th), extra, nDead: dead.reduce((a, b) => a + b, 0) };
+    const sPos = new Int32Array(N0).fill(-1); S.forEach((s, q) => { sPos[s] = q; });
+    const Lsrc = L.filter(l => !dead[l]).map(l => { const o = []; for (let a = 0; a < N0; a++) if (W[a * N0 + l] > 0 && sPos[a] >= 0) o.push(sPos[a]); return o; });   // R40 ngStruct: the claw of each grown layer cell
+    return { R, N0, dead, L: L.filter(l => !dead[l]), Lsrc, S, Rc, wOut, k, wIn: med(tot) / k, thr0: med(th), extra, nDead: dead.reduce((a, b) => a + b, 0) };
   }
   initNeed() {
     const P = this.ngPlan, N = this.N, p = this.p, ng = this.ng = { on: [], act: [], E: 0, above: 0, since: 1e9, ev: 0, added: 0, pruned: 0, alive: 0, log: [], birth: new Float64Array(P.R).fill(-1), base: new Float64Array(P.R), baseL: new Float64Array(P.R), mature: new Uint8Array(P.R) };
@@ -148,7 +150,10 @@ class SpikingNet {
   needRecruit(j, Lm) {
     const ng = this.ng, P = this.ngPlan, r = P.N0 + j, tag = ng.tag, ws = this.ws, k = Math.min(P.k, P.S.length);
     const inK = ng.inK[j], w = Array.from(tag, x => x + 1e-6), chosen = [];
-    for (let n = 0; n < k; n++) { let s = 0; for (const x of w) s += x; let u = ng.rng() * s, q = 0; for (; q < w.length - 1; q++) { u -= w[q]; if (u <= 0) break; } chosen.push(q); w[q] = 0; }
+    if (this.p.ngStruct > 0 && P.Lsrc && P.Lsrc.length) {   // R40 structured recruit: bud from the grown layer cell whose claw carries the most error tag (same structured inputs)
+      let best = -1, bv = -1; for (let l = 0; l < P.Lsrc.length; l++) { const c = P.Lsrc[l]; if (!c.length) continue; let v = 0; for (const q of c) v += tag[q]; v /= c.length; if (v > bv) { bv = v; best = l; } }
+      if (best >= 0) for (const q of P.Lsrc[best]) if (chosen.length < k && !chosen.includes(q)) { chosen.push(q); w[q] = 0; } }
+    for (let n = chosen.length; n < k; n++) { let s = 0; for (const x of w) s += x; let u = ng.rng() * s, q = 0; for (; q < w.length - 1; q++) { u -= w[q]; if (u <= 0) break; } chosen.push(q); w[q] = 0; }
     for (const q of chosen) { ws[inK[q]] = P.wIn; this.w0[inK[q]] = P.wIn; tag[q] *= 0.5; }   // (source q's edge to r: extra lists were built in source order)
     const outK = ng.outK[j]; for (let q = 0; q < outK.length; q++) { ws[outK[q]] = P.wOut[q] * this.p.ngW; }
     if (this.p.preNorm > 0 && this.npStart) this.normPre(r);
@@ -398,7 +403,7 @@ class SpikingNet {
     const mods = this.mods;
     if (this.crit) {                         // v20: dopamine = reward prediction error (one global signal)
       const ch = this.chs[0], rw = ch.gFood * food - ch.gPoison * poison - ch.gWall * bump, d = this.p.rpeGain * this.criticStep(rw, outcome);
-      if (this.ng && !this.ng.pred && (rw !== 0 || outcome)) this.needEvent(Math.min(1, Math.max(0, -this.delta)));   // v28 need-growth: negative outcome RPE
+      if (this.ng && !this.ng.pred && (rw !== 0 || outcome)) this.needEvent(this.p.ngFail > 0 ? (outcome ? (rw > 0 ? 0 : 1) : (rw < 0 ? 1 : 0)) : Math.min(1, Math.max(0, -this.delta)));   // R40 ngFail: raw failure (no surprise needed)   // v28 need-growth: negative outcome RPE
       for (let c = 0; c < this.nCh; c++) { mods[c] = mods[c] * this.dMods[c] + d; this.chSpikes[c] = 0; }
     } else
     for (let c = 0; c < this.nCh; c++) {

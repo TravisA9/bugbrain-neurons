@@ -1,0 +1,173 @@
+{
+  "id": "q21_juv_task_shaped",
+  "title": "Juvenile activity: waves vs task-shaped symbol sequence (juvMode 3) vs same pulses shuffled (4), rewardE3",
+  "question": "Q17",
+  "track": "neuro",
+  "priority": 1.2,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "bandit",
+        "base",
+        "16"
+      ],
+      "label": "rewardE3 bandit base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cueR",
+        "base",
+        "16"
+      ],
+      "label": "rewardE3 cueR base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cycle",
+        "base",
+        "16"
+      ],
+      "label": "rewardE3 cycle base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":300}}",
+        "base",
+        "16"
+      ],
+      "label": "rewardE3 seqchoice{\"source\":\"order2\",\"nSyms\":300} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "bandit",
+        "P.juvMode=3",
+        "16"
+      ],
+      "label": "rewardE3 bandit P.juvMode=3"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cueR",
+        "P.juvMode=3",
+        "16"
+      ],
+      "label": "rewardE3 cueR P.juvMode=3"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cycle",
+        "P.juvMode=3",
+        "16"
+      ],
+      "label": "rewardE3 cycle P.juvMode=3"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":300}}",
+        "P.juvMode=3",
+        "16"
+      ],
+      "label": "rewardE3 seqchoice{\"source\":\"order2\",\"nSyms\":300} P.juvMode=3"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "bandit",
+        "P.juvMode=4",
+        "16"
+      ],
+      "label": "rewardE3 bandit P.juvMode=4"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cueR",
+        "P.juvMode=4",
+        "16"
+      ],
+      "label": "rewardE3 cueR P.juvMode=4"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cycle",
+        "P.juvMode=4",
+        "16"
+      ],
+      "label": "rewardE3 cycle P.juvMode=4"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":300}}",
+        "P.juvMode=4",
+        "16"
+      ],
+      "label": "rewardE3 seqchoice{\"source\":\"order2\",\"nSyms\":300} P.juvMode=4"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "bandit",
+        "P.juvMode=3,P.juvHold=8",
+        "16"
+      ],
+      "label": "rewardE3 bandit P.juvMode=3,P.juvHold=8"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cueR",
+        "P.juvMode=3,P.juvHold=8",
+        "16"
+      ],
+      "label": "rewardE3 cueR P.juvMode=3,P.juvHold=8"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cycle",
+        "P.juvMode=3,P.juvHold=8",
+        "16"
+      ],
+      "label": "rewardE3 cycle P.juvMode=3,P.juvHold=8"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":300}}",
+        "P.juvMode=3,P.juvHold=8",
+        "16"
+      ],
+      "label": "rewardE3 seqchoice{\"source\":\"order2\",\"nSyms\":300} P.juvMode=3,P.juvHold=8"
+    }
+  ],
+  "accept": {
+    "note": "pattern matters if juvMode 3 > 4 beyond noise"
+  }
+}

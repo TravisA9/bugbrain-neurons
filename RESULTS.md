@@ -2080,3 +2080,22 @@ unifiedRv32 kept for comparison; legacy/v32/.
 Q05 (patterned activity): engine parameter juvMode (0 waves = default, 1 the same wave values spatially shuffled each tick = rate-matched
 control, 2 no waves). Screen (rewardE2 bandit, 2 growths): 6.89 / 6.73 / 4.33. Finding: region brains (unifiedR text/order3) skip
 the juvenile phase entirely (cellRefine/cellHomeo/juvMode change nothing) -> new question Q15. Queue job q05 runs 16 growths.
+
+## R40 — overnight queue review, new genes, new queue (Oct 14)
+
+**Queue**: running since 7:34 PM Oct 13 (pid 17472). Done overnight: q16, q04_task_load, q06, q05b, q17; now q02_needgrowth_v32 (2 h, started 9:58 AM).
+
+| evidence | result |
+|---|---|
+| lifetime (q11, q17) | seqchoice at 1000 symbols: cycle 8.94, order2 5.85, vs 6.78 / 5.20 at 300. rewardE2 order2@1000 4.71. **Life length matters most.** |
+| juvenile (q05, q05b) | shuffled waves = patterned waves; no waves → cue 3.37 (collapse). Regions skip juvenile (q05b identical). **Waves are essential, pattern not yet.** |
+| eligUse (q10) | no effect → ruled out |
+| q16 six-task evolve | FAIL: champion 1.018 at gen 0 (= start genome) |
+| q04_task_load | bandit K3 6.78, K6 5.11; seqchoice cycle K4 7.42, K8 5.86 |
+| q06 generality | recall random −3.16, cue delay 20 9.98, bandit 400 trials 6.47, cycle K12 9.56, order3 6.02 |
+
+**Champions re-evaluated**: no new passing champion (q16 returned the start genome; q04's striatum already adopted as v33 in R39). **Nothing adopted; defaults unchanged (v33 / defaults 26).**
+
+**New code**: `pl.ngFail` (need error = raw failure), `pl.ngStruct` (recruits bud from the most error-tagged grown claw), `P.juvMode` 3 (task-shaped symbol pulses) / 4 (same pulses shuffled), plans `rewardE3` (v33 striatum alone; identical to unifiedR on bandit) and `rewardE3ng`. Defaults off, so all scores unchanged.
+
+**New queue (ranked)**: q20 sample-efficiency sweep (lr ×1.5/2/3, rpeLr, metaN) · q21 task-shaped juvenile · q19 long-life multitask evolve 4 h · q25 life curve · q26 short-life evolve 3 h · q22 structured recruits (was q02_structured_recruits) · q23 failure-rate need (was q03_failure_rate) · q24 need-growth evolve 3 h. ≈ 12–13 h.

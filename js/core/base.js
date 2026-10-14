@@ -32,7 +32,9 @@ const nowMs = () => (typeof performance !== 'undefined' ? performance : Date).no
  * parameter object (see io.js: envParams). */
 const V_REST = -70, V_THRESH = -55, V_FLOOR = -90;  // mV
 const params = {
-  juvMode: 0,          // R39 (Q05): juvenile activity 0 = travelling waves (default), 1 = the same wave energy spatially shuffled each tick (rate-matched control), 2 = no waves
+  juvMode: 0,          // R39 (Q05): juvenile activity 0 = travelling waves (default), 1 = the same wave energy spatially shuffled each tick (rate-matched control), 2 = no waves;
+                       // R40: 3 = task-shaped symbol sequence (one sensor at a time, stepping k -> k+1 like a cycle, juvHold ticks each), 4 = the same pulses in random order (matched)
+  juvHold: 4,
   env: 'cue',          // id of the current environment (see js/envs/)
   popSize: 50,
   mutRate: 0.05,       // per-gene mutation probability (plasticity genes)
@@ -143,7 +145,7 @@ const PL_DEFAULTS = { lr: 0.03, tauPre: 10, tauPost: 10, aMinus: 0.3, tauElig: 5
   //   its own action column by actFb and inhibits the other columns by actFb (efference copy of the selected action, so the
   //   column that drove the choice is the one that stays active and becomes eligible), and inhibits the other outputs by
   //   outInh (competition between actions, winner-take-all).
-  actFb: 0, outInh: 0, eligUse: 0, eligMix: 0, tauElig2: 8, eligEvo: 0, eligGate: 0, eligGateT: 10,
+  actFb: 0, outInh: 0, eligUse: 0, eligMix: 0, tauElig2: 8, eligEvo: 0, eligGate: 0, eligGateT: 10, ngFail: 0, ngStruct: 0,
   rpe: 0, rpeGamma: 0.9, rpeLambda: 0.5, rpeLr: 0.3, rpeGain: 1, rpeSrc: 0, rpeEps: 1, rpeMode: 0, actNoiseV: 0,
   // v22 (round 23) UNIFIED THREE-FACTOR RULE (uni 1; 0 = off): every plastic synapse keeps its eligibility trace (STDP), and
   //   dw = lr * M_post * e, with ONE modulator per target cell M_post = uniI * I_post + D:

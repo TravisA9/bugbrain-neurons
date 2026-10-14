@@ -1,603 +1,696 @@
 {
- "ideas": [
-  {
-   "id": "I01",
-   "area": "reward",
-   "title": "Compartmental dopamine (several modulator channels)",
-   "status": "rejected",
-   "evidence": "random colours: global 2.61 vs compartments 1.76 vs mushroom-body preset 0.47 (80 gens, 3 seeds)",
-   "why": "no gain; reversal unsolved by all variants",
-   "rounds": [
-    "R4-A",
-    "R21d"
-   ]
-  },
-  {
-   "id": "I02",
-   "area": "growth",
-   "title": "Developmental (grown) genome instead of direct weights",
-   "status": "adopted",
-   "evidence": "direct 11.23 vs developmental 3.86 at 80 gens, but genome 890 vs 143 numbers and constant (~140-210) from 30 to 420 hidden cells; hand recipe reaches ~11",
-   "why": "compact, scales; the project's founding principle; later hand plans + evolution close the gap",
-   "rounds": [
-    "R4-B",
-    "R4-B2",
-    "C1"
-   ]
-  },
-  {
-   "id": "I03",
-   "area": "evaluation",
-   "title": "Robust fitness over several regrowths (K growths, mean - lambda*sd, worstW)",
-   "status": "adopted",
-   "evidence": "single-growth champions 4.78 own seed but 2.71 regrown; robust 3.13 vs 3.17 (no lucky-growth gap), better worst case 2.07 vs 1.17",
-   "why": "removes the lucky-growth bias; held-out growths are now the standard check",
-   "rounds": [
-    "C4",
-    "R6a",
-    "R9b"
-   ]
-  },
-  {
-   "id": "I04",
-   "area": "growth",
-   "title": "Trophic competition / activity refinement / homeostasis during growth",
-   "status": "adopted",
-   "evidence": "ablations within noise on bug task (3.17 all vs 3.42-3.88); only homeostasis protects the worst case (min 2.07 vs 1.33)",
-   "why": "kept as plausible defaults; homeostasis buffers developmental noise",
-   "rounds": [
-    "R6b",
-    "C4"
-   ]
-  },
-  {
-   "id": "I05",
-   "area": "memory",
-   "title": "Crossed two-latch working memory (plan memory)",
-   "status": "rejected",
-   "evidence": "41-48% failed growths: loop gain varies; mirror 65%, grow-until-satisfied 47%",
-   "why": "needs fine asymmetry that growth noise destroys; replaced by memoryK",
-   "rounds": [
-    "R8a",
-    "R9a"
-   ]
-  },
-  {
-   "id": "I06",
-   "area": "memory",
-   "title": "memoryK: slow self-exciting columns with topographic snapping",
-   "status": "adopted",
-   "evidence": "K-way recall, curriculum reached delay 200 (40x cue); knockouts -> 0",
-   "why": "robust generic working memory; default for same-mapping cue/recall",
-   "rounds": [
-    "R8d",
-    "R9c",
-    "R9d"
-   ]
-  },
-  {
-   "id": "I07",
-   "area": "growth",
-   "title": "Synaptic scaling, topo maps, parallel fibres, grow-until-satisfied, redundancy genes",
-   "status": "adopted",
-   "evidence": "enable memoryK and the predict plans; old genomes bit-identical",
-   "why": "generic mechanisms reused by every later plan",
-   "rounds": [
-    "R9b"
-   ]
-  },
-  {
-   "id": "I08",
-   "area": "growth",
-   "title": "Hunger / deprivation signal and activity-timed requests (Travis)",
-   "status": "adopted",
-   "evidence": "orphan outputs / silent inputs to 0% on recall4 (hunger_test); later split: hunger mixed deficit with waiting time",
-   "why": "superseded by separate local connection demand (R28)",
-   "rounds": [
-    "R9f",
-    "R28"
-   ]
-  },
-  {
-   "id": "I09",
-   "area": "learning",
-   "title": "Teacher-gated plasticity (climbing-fibre-like plateau) for prediction",
-   "status": "adopted",
-   "evidence": "predictK learns bigram-like text 0.49 last q (83% of ideal counter); cycle K=16 1.00",
-   "why": "local, works within one lifetime",
-   "rounds": [
-    "R10a",
-    "R10b",
-    "R10c"
-   ]
-  },
-  {
-   "id": "I10",
-   "area": "memory",
-   "title": "Second-order context via M2 shift register (predictK2*)",
-   "status": "adopted",
-   "evidence": "60x60 tissue needed (36x36 fails 0.015); text 0.581 -> 0.650 (XT) -> 0.673 (XN) -> 0.720 (XG) -> 0.764 (XO)",
-   "why": "each step a replicated gain",
-   "rounds": [
-    "R11b",
-    "R11c",
-    "R12c",
-    "R13",
-    "R14",
-    "R16",
-    "R20b"
-   ]
-  },
-  {
-   "id": "I11",
-   "area": "speed",
-   "title": "Event-driven simulation and faster growth",
-   "status": "adopted",
-   "evidence": "predictK2L simulate 1783 -> 313 ms (337 -> ~1950 ticks/s), bit-identical",
-   "why": "pure speed",
-   "rounds": [
-    "R12a"
-   ]
-  },
-  {
-   "id": "I12",
-   "area": "memory",
-   "title": "Bigger tissue (80x80) for more conjunctive cells",
-   "status": "rejected",
-   "evidence": "0.44-0.51 last q vs 0.69 on 60x60; edge columns missed",
-   "why": "more cells per context is not the limit",
-   "rounds": [
-    "R13c"
-   ]
-  },
-  {
-   "id": "I13",
-   "area": "learning",
-   "title": "Metaplasticity + learned trust (metaN, trustPow)",
-   "status": "adopted",
-   "evidence": "text last q 0.581 -> 0.650, beats corpus bigram 0.598",
-   "why": "part of predictK2XT and successors",
-   "rounds": [
-    "R13b"
-   ]
-  },
-  {
-   "id": "I14",
-   "area": "learning",
-   "title": "Divisive normalisation of the prediction layer + graded decoder",
-   "status": "adopted",
-   "evidence": "0.650 -> 0.673 (0.686 graded); shared inhibitory pool rejected (fights teacher)",
-   "why": "gain control helps the readout",
-   "rounds": [
-    "R14"
-   ]
-  },
-  {
-   "id": "I15",
-   "area": "memory",
-   "title": "Mixing (granule / Kenyon-like) layer with intrinsic homeostatic thresholds",
-   "status": "adopted",
-   "evidence": "predictK2XG 0.720 vs XS 0.673 vs XM 0.694 (32 growths); competitive instar learning neutral/harmful",
-   "why": "selective conjunction cells; still the core of the cortex",
-   "rounds": [
-    "R15",
-    "R16"
-   ]
-  },
-  {
-   "id": "I16",
-   "area": "reward",
-   "title": "Actor-critic: outcome RPE critic, value-dependent noise, efference loop (rewardK / rewardMemK)",
-   "status": "adopted",
-   "evidence": "bandit best arm 0.653 (Thompson 0.692); cue random last q 0.883; each part ablated hurts; TD critic fails",
-   "why": "first reward-only within-life learner",
-   "rounds": [
-    "R21a",
-    "R21b",
-    "R21c"
-   ]
-  },
-  {
-   "id": "I17",
-   "area": "regions",
-   "title": "Context cascade predictK3 (second region holding the symbol two back)",
-   "status": "adopted",
-   "evidence": "order3 0.747 -> 0.970; text 0.763 -> 0.772; fables 0.317 -> 0.321",
-   "why": "first multi-region win",
-   "rounds": [
-    "R22a"
-   ]
-  },
-  {
-   "id": "I18",
-   "area": "regions",
-   "title": "Two-region actor-critic (cortex -> striatum, rewardKR)",
-   "status": "rejected",
-   "evidence": "bandit 0.620 vs 0.653, cue 0.698 vs 0.855",
-   "why": "below single tissue; later unified genome solved the goal differently",
-   "rounds": [
-    "R22",
-    "R24"
-   ]
-  },
-  {
-   "id": "I19",
-   "area": "learning",
-   "title": "One learning rule for teacher and reward tasks (uni: dw = lr*M*e)",
-   "status": "adopted",
-   "evidence": "order3 0.970/0.968, text 0.773/0.769, bandit 0.653/0.653, cue 0.855/0.855; dopamine on instructed cells rejected (collapse, 20x slower)",
-   "why": "one rule set, no loss",
-   "rounds": [
-    "R23"
-   ]
-  },
-  {
-   "id": "I20",
-   "area": "speed",
-   "title": "Headless runner (bun, worker pool) + dashboard",
-   "status": "adopted",
-   "evidence": "multi-hour runs on PC and box; live current.js",
-   "why": "infrastructure",
-   "rounds": [
-    "R26",
-    "v30 live dashboard"
-   ]
-  },
-  {
-   "id": "I21",
-   "area": "evaluation",
-   "title": "Balanced multitask fitness (weakest task counts most)",
-   "status": "adopted",
-   "evidence": "overnight champion 1.18 -> 0.49 under the new score; balanced run 0.47 -> 0.62",
-   "why": "stops trading one task away",
-   "rounds": [
-    "R27"
-   ]
-  },
-  {
-   "id": "I22",
-   "area": "reward",
-   "title": "Evolved reward plan rewardE (whole genome kept)",
-   "status": "adopted",
-   "evidence": "bandit 6.80 vs 5.28, cue random 9.68 vs 4.79, recall random 1.37 vs -3.25; no single gene explains it",
-   "why": "default reward genome until R35",
-   "rounds": [
-    "R27"
-   ]
-  },
-  {
-   "id": "I23",
-   "area": "growth",
-   "title": "Local connection demand (target-derived attractant, off when satisfied)",
-   "status": "adopted",
-   "evidence": "2x outputs: coverage 72% -> 94%, 0 orphans, no task worse",
-   "why": "separates demand from the other 4 signals",
-   "rounds": [
-    "R28"
-   ]
-  },
-  {
-   "id": "I24",
-   "area": "growth",
-   "title": "Need-driven growth (adult neurogenesis on persistent errors)",
-   "status": "parked",
-   "evidence": "half-size text brain: wins back ~1/4 of the lost accuracy; never triggers on reward tasks; PC evolution 0.59 vs 0.62",
-   "why": "new cells get random claws (worse than structured mixing inputs); reward areas stop being surprised. Known fixes: (1) give recruits the same structured (topo/claw) inputs as grown mixing cells; (2) drive reward areas by raw failure rate, not RPE surprise",
-   "rounds": [
-    "R29"
-   ]
-  },
-  {
-   "id": "I25",
-   "area": "regions",
-   "title": "One genome, areas from the task I/O (unifiedR, receptor genes for clock A and outcome O)",
-   "status": "adopted",
-   "evidence": "bit-identical to predictK3/rewardE on single-signal tasks; evolved champion 1.017 within noise",
-   "why": "one genome decides; v30 default",
-   "rounds": [
-    "R30"
-   ]
-  },
-  {
-   "id": "I26",
-   "area": "regions",
-   "title": "Graded areas (size follows expression) and linear corticostriatal tracts (unifiedG)",
-   "status": "rejected",
-   "evidence": "seqchoice random 3.09 vs rewardE 3.80",
-   "why": "linear context gives no conjunctions",
-   "rounds": [
-    "R31"
-   ]
-  },
-  {
-   "id": "I27",
-   "area": "regions",
-   "title": "Conjunctive corticostriatal input from mixing cells (unifiedC)",
-   "status": "adopted",
-   "evidence": "3.57 alone (R32); as part of v32 unifiedR seqchoice order2 5.20 vs rewardE2 4.52",
-   "why": "used inside v32 with a full striatum",
-   "rounds": [
-    "R32",
-    "R37"
-   ]
-  },
-  {
-   "id": "I28",
-   "area": "reward",
-   "title": "Reward learner on 6x6 pairings: short trace / tag consumption / receiver homeostasis",
-   "status": "open",
-   "evidence": "cycle 4.54 -> 8.74 with tauElig 8 + rcvHomeo 0.3, but bandit 3.53, cue 1.74; eligUse 0.7 neutral",
-   "why": "trial-matched trace helps short trials, breaks long-delay tasks",
-   "rounds": [
-    "R33"
-   ]
-  },
-  {
-   "id": "I29",
-   "area": "reward",
-   "title": "Dual-timescale eligibility (fast + slow tags, evolvable mix) -> rewardE2",
-   "status": "adopted",
-   "evidence": "bandit 6.70/6.69, cue 10.10/10.17, cycle 6.40 vs 4.55, order2 4.52 vs 3.80",
-   "why": "no loss, clear gain on pairings",
-   "rounds": [
-    "R34",
-    "R35"
-   ]
-  },
-  {
-   "id": "I30",
-   "area": "reward",
-   "title": "Timing-gated trace selection (synapse recency or outcome interval)",
-   "status": "rejected",
-   "evidence": "gate2 T=30 cycle 8.65 but bandit 5.79; T=10 6.84/10.26/6.96 within noise",
-   "why": "outcome timing does not separate the tasks",
-   "rounds": [
-    "R36"
-   ]
-  },
-  {
-   "id": "I31",
-   "area": "regions",
-   "title": "Outcome -> full striatum owns outputs, clock -> graded cortex feeding it (v32)",
-   "status": "adopted",
-   "evidence": "seqchoice cycle 6.78 (was 1.45), order2 5.20 (was 1.41); text/order3/bandit/cue bit-identical",
-   "why": "one genome now covers mixed tasks",
-   "rounds": [
-    "R37"
-   ]
-  },
-  {
-   "id": "I32",
-   "area": "memory",
-   "title": "Longer context for text (beyond 3 symbols)",
-   "status": "open",
-   "evidence": "fables stuck at ~0.32; order3 solved only by explicit shift register",
-   "why": "text track (issue #2)",
-   "rounds": [
-    "R20a",
-    "R22a",
-    "issue #2"
-   ]
-  },
-  {
-   "id": "I33",
-   "area": "speed",
-   "title": "Typed-array / WebGPU neuron update",
-   "status": "open",
-   "evidence": "rewardE/unifiedR gens ~6 min on PC",
-   "why": "text track (issue #3)",
-   "rounds": [
-    "issue #3"
-   ]
-  },
-  {
-   "id": "I34",
-   "area": "evaluation",
-   "title": "Scaling harness (accuracy vs cells, context, corpus)",
-   "status": "open",
-   "evidence": "none yet",
-   "why": "text track (issue #1)",
-   "rounds": [
-    "issue #1"
-   ]
-  },
-  {
-   "id": "I35",
-   "area": "growth",
-   "title": "Patterned vs random activity shaping growth",
-   "status": "open",
-   "evidence": "not run",
-   "why": "from the research memo: tells whether input structure shapes wiring",
-   "rounds": [
-    "memo #1"
-   ]
-  },
-  {
-   "id": "I36",
-   "area": "evaluation",
-   "title": "Minimal genome generality across task families",
-   "status": "open",
-   "evidence": "unifiedR is one genome but hand-assembled from two proven programs",
-   "why": "core of the goal: grow to fit the need",
-   "rounds": [
-    "memo #5",
-    "R30",
-    "R37"
-   ]
-  },
-  {
-   "id": "I37",
-   "area": "reward",
-   "title": "Striatum evolved on bandit 3/6 arms + seqchoice (q04 champion) transplanted into unifiedR = rewardE3",
-   "status": "adopted",
-   "evidence": "whole champion: text 0.40, order3 1.37 (collapse); striatum only: bandit6 5.11 vs 4.31 (+0.81 \u00b1 0.31), cycle 7.24 vs 6.78, cue -0.08 \u00b1 0.46 (40 growths), text/order3 bit-identical",
-   "why": "keep the evolved reward area, not the mutated sequence areas",
-   "rounds": [
-    "R39"
-   ]
-  },
-  {
-   "id": "I38",
-   "area": "regions",
-   "title": "Graded cortex size sweep (receptor o)",
-   "status": "rejected",
-   "evidence": "o=-5: 5.12/4.48; o=-7/-8: cortex does not develop (= rewardE2 alone 6.40/4.52); o=-6 (v32) 6.78/5.20",
-   "why": "v32 setting is the best",
-   "rounds": [
-    "R39 (q12)"
-   ]
-  },
-  {
-   "id": "I39",
-   "area": "reward",
-   "title": "Re-evolved dual-trace genes (q09, 2 h)",
-   "status": "rejected",
-   "evidence": "champion 1.00: cycle 7.25, bandit 6.47, cue 10.67 (refs 6.86/11.31)",
-   "why": "no gain beyond rewardE2",
-   "rounds": [
-    "R39 (q09)"
-   ]
-  },
-  {
-   "id": "I40",
-   "area": "evaluation",
-   "title": "Five-task evolution from v32 (q01, 3 h, 19 gens)",
-   "status": "rejected",
-   "evidence": "champion 0.966 never beat the start; text generations ~18 min",
-   "why": "text makes generations slow; mutants lose text first",
-   "rounds": [
-    "R39 (q01)"
-   ]
-  }
- ],
- "questions": [
-  {
-   "id": "Q01",
-   "q": "Does a v32 five-task evolution (text, order3, bandit, cue, seqchoice) find a genome better than unifiedR on mixed tasks without losing the others?",
-   "impact": 5,
-   "likelihood": 0.3,
-   "cost": 2,
-   "experiment": "bun run/runner.js experiments/v32_five.json (3 h), re-eval on 16 held-out growths"
-  },
-  {
-   "id": "Q02",
-   "q": "Do need-growth recruits with structured (claw/topo) inputs close the half-size text gap?",
-   "impact": 4,
-   "likelihood": 0.5,
-   "cost": 2,
-   "experiment": "needgrowth with ngClaw structured inputs vs random, reduced text brain, 16 growths"
-  },
-  {
-   "id": "Q03",
-   "q": "Does driving reward-area need-growth by raw failure rate (not RPE) make it trigger and help?",
-   "impact": 4,
-   "likelihood": 0.4,
-   "cost": 2,
-   "experiment": "needgrowth on bandit/cue/seqchoice with failure-rate error, reduced striatum, 16 growths"
-  },
-  {
-   "id": "Q04",
-   "q": "Do demand + graded areas let area size follow task load (e.g. more arms -> bigger striatum)?",
-   "impact": 4,
-   "likelihood": 0.4,
-   "cost": 2,
-   "experiment": "bandit 3/6/12 arms, seqchoice K 4/6/8 with demand on, measure size and score"
-  },
-  {
-   "id": "Q05",
-   "q": "Does patterned (structured) activity during juvenile growth produce better wiring than matched random activity?",
-   "impact": 3,
-   "likelihood": 0.4,
-   "cost": 1,
-   "experiment": "juvenile activity patterned vs shuffled (matched rate), 16 growths, text/order3/bandit"
-  },
-  {
-   "id": "Q06",
-   "q": "How general is one minimal genome across held-out task variants (new K, delays, mappings)?",
-   "impact": 5,
-   "likelihood": 0.3,
-   "cost": 2,
-   "experiment": "evaluate unifiedR on held-out variants; evolve on 3 families, test on the 4th"
-  },
-  {
-   "id": "Q07",
-   "q": "How does text accuracy scale with tissue size and corpus length?",
-   "impact": 3,
-   "likelihood": 0.7,
-   "cost": 2,
-   "experiment": "text track (issue #1): sweep grid/maxCells and corpus size"
-  },
-  {
-   "id": "Q08",
-   "q": "Can a slow-decay / recurrent context region push fables above 0.36 with text >= 0.772?",
-   "impact": 4,
-   "likelihood": 0.3,
-   "cost": 3,
-   "experiment": "text track (issue #2)"
-  },
-  {
-   "id": "Q09",
-   "q": "Can evolution tune the dual-timescale mix per area so cycle >= 8 with bandit >= 6.5, cue >= 10?",
-   "impact": 3,
-   "likelihood": 0.2,
-   "cost": 1,
-   "experiment": "evolve rewardE2 eligibility genes on bandit+cue+cycle with longer budget"
-  },
-  {
-   "id": "Q10",
-   "q": "Does tag consumption at outcomes (eligUse) combined with dual traces fix 6x6 without hurting cue?",
-   "impact": 3,
-   "likelihood": 0.3,
-   "cost": 1,
-   "experiment": "ablate eligUse 0.3/0.5/0.7 on rewardE2, 16 growths"
-  },
-  {
-   "id": "Q11",
-   "q": "Does the seqchoice random-mapping task (order2) improve with longer lives (1000 symbols)?",
-   "impact": 2,
-   "likelihood": 0.5,
-   "cost": 1,
-   "experiment": "unifiedR v32 seqchoice order2 1000 symbols vs 300, 16 growths"
-  },
-  {
-   "id": "Q12",
-   "q": "Is the v32 graded cortex size (o = -6) optimal, or should it follow a finer sweep? [answered R39: o=-6 is best]",
-   "impact": 2,
-   "likelihood": 0.0,
-   "cost": 1,
-   "experiment": "cortex o in -5..-8, 16 growths on cycle/order2"
-  },
-  {
-   "id": "Q13",
-   "q": "Does the reversal-learning bug task become solvable with the v32 reward area?",
-   "impact": 2,
-   "likelihood": 0.3,
-   "cost": 1,
-   "experiment": "bug reversal arena with rewardE2 actor-critic, 16 growths"
-  },
-  {
-   "id": "Q14",
-   "q": "Typed-array/WebGPU update for 2x speed",
-   "impact": 3,
-   "likelihood": 0.6,
-   "cost": 3,
-   "experiment": "text track (issue #3)"
-  },
-  {
-   "id": "Q15",
-   "q": "Do the sequence areas (regions) need a juvenile activity phase? (they currently skip it: cellRefine/juvMode have no effect on unifiedR text/order3)",
-   "impact": 3,
-   "likelihood": 0.4,
-   "cost": 1,
-   "experiment": "q05b + implement juvenile phase in growRegions"
-  },
-  {
-   "id": "Q16",
-   "q": "Can a six-task evolution (adds bandit 6 arms) improve the v33 genome without losing text?",
-   "impact": 4,
-   "likelihood": 0.3,
-   "cost": 2,
-   "experiment": "q16_six_task_evolve (4 h)"
-  }
- ]
+  "ideas": [
+    {
+      "id": "I01",
+      "area": "reward",
+      "title": "Compartmental dopamine (several modulator channels)",
+      "status": "rejected",
+      "evidence": "random colours: global 2.61 vs compartments 1.76 vs mushroom-body preset 0.47 (80 gens, 3 seeds)",
+      "why": "no gain; reversal unsolved by all variants",
+      "rounds": [
+        "R4-A",
+        "R21d"
+      ]
+    },
+    {
+      "id": "I02",
+      "area": "growth",
+      "title": "Developmental (grown) genome instead of direct weights",
+      "status": "adopted",
+      "evidence": "direct 11.23 vs developmental 3.86 at 80 gens, but genome 890 vs 143 numbers and constant (~140-210) from 30 to 420 hidden cells; hand recipe reaches ~11",
+      "why": "compact, scales; the project's founding principle; later hand plans + evolution close the gap",
+      "rounds": [
+        "R4-B",
+        "R4-B2",
+        "C1"
+      ]
+    },
+    {
+      "id": "I03",
+      "area": "evaluation",
+      "title": "Robust fitness over several regrowths (K growths, mean - lambda*sd, worstW)",
+      "status": "adopted",
+      "evidence": "single-growth champions 4.78 own seed but 2.71 regrown; robust 3.13 vs 3.17 (no lucky-growth gap), better worst case 2.07 vs 1.17",
+      "why": "removes the lucky-growth bias; held-out growths are now the standard check",
+      "rounds": [
+        "C4",
+        "R6a",
+        "R9b"
+      ]
+    },
+    {
+      "id": "I04",
+      "area": "growth",
+      "title": "Trophic competition / activity refinement / homeostasis during growth",
+      "status": "adopted",
+      "evidence": "ablations within noise on bug task (3.17 all vs 3.42-3.88); only homeostasis protects the worst case (min 2.07 vs 1.33)",
+      "why": "kept as plausible defaults; homeostasis buffers developmental noise",
+      "rounds": [
+        "R6b",
+        "C4"
+      ]
+    },
+    {
+      "id": "I05",
+      "area": "memory",
+      "title": "Crossed two-latch working memory (plan memory)",
+      "status": "rejected",
+      "evidence": "41-48% failed growths: loop gain varies; mirror 65%, grow-until-satisfied 47%",
+      "why": "needs fine asymmetry that growth noise destroys; replaced by memoryK",
+      "rounds": [
+        "R8a",
+        "R9a"
+      ]
+    },
+    {
+      "id": "I06",
+      "area": "memory",
+      "title": "memoryK: slow self-exciting columns with topographic snapping",
+      "status": "adopted",
+      "evidence": "K-way recall, curriculum reached delay 200 (40x cue); knockouts -> 0",
+      "why": "robust generic working memory; default for same-mapping cue/recall",
+      "rounds": [
+        "R8d",
+        "R9c",
+        "R9d"
+      ]
+    },
+    {
+      "id": "I07",
+      "area": "growth",
+      "title": "Synaptic scaling, topo maps, parallel fibres, grow-until-satisfied, redundancy genes",
+      "status": "adopted",
+      "evidence": "enable memoryK and the predict plans; old genomes bit-identical",
+      "why": "generic mechanisms reused by every later plan",
+      "rounds": [
+        "R9b"
+      ]
+    },
+    {
+      "id": "I08",
+      "area": "growth",
+      "title": "Hunger / deprivation signal and activity-timed requests (Travis)",
+      "status": "adopted",
+      "evidence": "orphan outputs / silent inputs to 0% on recall4 (hunger_test); later split: hunger mixed deficit with waiting time",
+      "why": "superseded by separate local connection demand (R28)",
+      "rounds": [
+        "R9f",
+        "R28"
+      ]
+    },
+    {
+      "id": "I09",
+      "area": "learning",
+      "title": "Teacher-gated plasticity (climbing-fibre-like plateau) for prediction",
+      "status": "adopted",
+      "evidence": "predictK learns bigram-like text 0.49 last q (83% of ideal counter); cycle K=16 1.00",
+      "why": "local, works within one lifetime",
+      "rounds": [
+        "R10a",
+        "R10b",
+        "R10c"
+      ]
+    },
+    {
+      "id": "I10",
+      "area": "memory",
+      "title": "Second-order context via M2 shift register (predictK2*)",
+      "status": "adopted",
+      "evidence": "60x60 tissue needed (36x36 fails 0.015); text 0.581 -> 0.650 (XT) -> 0.673 (XN) -> 0.720 (XG) -> 0.764 (XO)",
+      "why": "each step a replicated gain",
+      "rounds": [
+        "R11b",
+        "R11c",
+        "R12c",
+        "R13",
+        "R14",
+        "R16",
+        "R20b"
+      ]
+    },
+    {
+      "id": "I11",
+      "area": "speed",
+      "title": "Event-driven simulation and faster growth",
+      "status": "adopted",
+      "evidence": "predictK2L simulate 1783 -> 313 ms (337 -> ~1950 ticks/s), bit-identical",
+      "why": "pure speed",
+      "rounds": [
+        "R12a"
+      ]
+    },
+    {
+      "id": "I12",
+      "area": "memory",
+      "title": "Bigger tissue (80x80) for more conjunctive cells",
+      "status": "rejected",
+      "evidence": "0.44-0.51 last q vs 0.69 on 60x60; edge columns missed",
+      "why": "more cells per context is not the limit",
+      "rounds": [
+        "R13c"
+      ]
+    },
+    {
+      "id": "I13",
+      "area": "learning",
+      "title": "Metaplasticity + learned trust (metaN, trustPow)",
+      "status": "adopted",
+      "evidence": "text last q 0.581 -> 0.650, beats corpus bigram 0.598",
+      "why": "part of predictK2XT and successors",
+      "rounds": [
+        "R13b"
+      ]
+    },
+    {
+      "id": "I14",
+      "area": "learning",
+      "title": "Divisive normalisation of the prediction layer + graded decoder",
+      "status": "adopted",
+      "evidence": "0.650 -> 0.673 (0.686 graded); shared inhibitory pool rejected (fights teacher)",
+      "why": "gain control helps the readout",
+      "rounds": [
+        "R14"
+      ]
+    },
+    {
+      "id": "I15",
+      "area": "memory",
+      "title": "Mixing (granule / Kenyon-like) layer with intrinsic homeostatic thresholds",
+      "status": "adopted",
+      "evidence": "predictK2XG 0.720 vs XS 0.673 vs XM 0.694 (32 growths); competitive instar learning neutral/harmful",
+      "why": "selective conjunction cells; still the core of the cortex",
+      "rounds": [
+        "R15",
+        "R16"
+      ]
+    },
+    {
+      "id": "I16",
+      "area": "reward",
+      "title": "Actor-critic: outcome RPE critic, value-dependent noise, efference loop (rewardK / rewardMemK)",
+      "status": "adopted",
+      "evidence": "bandit best arm 0.653 (Thompson 0.692); cue random last q 0.883; each part ablated hurts; TD critic fails",
+      "why": "first reward-only within-life learner",
+      "rounds": [
+        "R21a",
+        "R21b",
+        "R21c"
+      ]
+    },
+    {
+      "id": "I17",
+      "area": "regions",
+      "title": "Context cascade predictK3 (second region holding the symbol two back)",
+      "status": "adopted",
+      "evidence": "order3 0.747 -> 0.970; text 0.763 -> 0.772; fables 0.317 -> 0.321",
+      "why": "first multi-region win",
+      "rounds": [
+        "R22a"
+      ]
+    },
+    {
+      "id": "I18",
+      "area": "regions",
+      "title": "Two-region actor-critic (cortex -> striatum, rewardKR)",
+      "status": "rejected",
+      "evidence": "bandit 0.620 vs 0.653, cue 0.698 vs 0.855",
+      "why": "below single tissue; later unified genome solved the goal differently",
+      "rounds": [
+        "R22",
+        "R24"
+      ]
+    },
+    {
+      "id": "I19",
+      "area": "learning",
+      "title": "One learning rule for teacher and reward tasks (uni: dw = lr*M*e)",
+      "status": "adopted",
+      "evidence": "order3 0.970/0.968, text 0.773/0.769, bandit 0.653/0.653, cue 0.855/0.855; dopamine on instructed cells rejected (collapse, 20x slower)",
+      "why": "one rule set, no loss",
+      "rounds": [
+        "R23"
+      ]
+    },
+    {
+      "id": "I20",
+      "area": "speed",
+      "title": "Headless runner (bun, worker pool) + dashboard",
+      "status": "adopted",
+      "evidence": "multi-hour runs on PC and box; live current.js",
+      "why": "infrastructure",
+      "rounds": [
+        "R26",
+        "v30 live dashboard"
+      ]
+    },
+    {
+      "id": "I21",
+      "area": "evaluation",
+      "title": "Balanced multitask fitness (weakest task counts most)",
+      "status": "adopted",
+      "evidence": "overnight champion 1.18 -> 0.49 under the new score; balanced run 0.47 -> 0.62",
+      "why": "stops trading one task away",
+      "rounds": [
+        "R27"
+      ]
+    },
+    {
+      "id": "I22",
+      "area": "reward",
+      "title": "Evolved reward plan rewardE (whole genome kept)",
+      "status": "adopted",
+      "evidence": "bandit 6.80 vs 5.28, cue random 9.68 vs 4.79, recall random 1.37 vs -3.25; no single gene explains it",
+      "why": "default reward genome until R35",
+      "rounds": [
+        "R27"
+      ]
+    },
+    {
+      "id": "I23",
+      "area": "growth",
+      "title": "Local connection demand (target-derived attractant, off when satisfied)",
+      "status": "adopted",
+      "evidence": "2x outputs: coverage 72% -> 94%, 0 orphans, no task worse",
+      "why": "separates demand from the other 4 signals",
+      "rounds": [
+        "R28"
+      ]
+    },
+    {
+      "id": "I24",
+      "area": "growth",
+      "title": "Need-driven growth (adult neurogenesis on persistent errors)",
+      "status": "parked",
+      "evidence": "half-size text brain: wins back ~1/4 of the lost accuracy; never triggers on reward tasks; PC evolution 0.59 vs 0.62",
+      "why": "new cells get random claws (worse than structured mixing inputs); reward areas stop being surprised. Known fixes: (1) give recruits the same structured (topo/claw) inputs as grown mixing cells; (2) drive reward areas by raw failure rate, not RPE surprise",
+      "rounds": [
+        "R29"
+      ]
+    },
+    {
+      "id": "I25",
+      "area": "regions",
+      "title": "One genome, areas from the task I/O (unifiedR, receptor genes for clock A and outcome O)",
+      "status": "adopted",
+      "evidence": "bit-identical to predictK3/rewardE on single-signal tasks; evolved champion 1.017 within noise",
+      "why": "one genome decides; v30 default",
+      "rounds": [
+        "R30"
+      ]
+    },
+    {
+      "id": "I26",
+      "area": "regions",
+      "title": "Graded areas (size follows expression) and linear corticostriatal tracts (unifiedG)",
+      "status": "rejected",
+      "evidence": "seqchoice random 3.09 vs rewardE 3.80",
+      "why": "linear context gives no conjunctions",
+      "rounds": [
+        "R31"
+      ]
+    },
+    {
+      "id": "I27",
+      "area": "regions",
+      "title": "Conjunctive corticostriatal input from mixing cells (unifiedC)",
+      "status": "adopted",
+      "evidence": "3.57 alone (R32); as part of v32 unifiedR seqchoice order2 5.20 vs rewardE2 4.52",
+      "why": "used inside v32 with a full striatum",
+      "rounds": [
+        "R32",
+        "R37"
+      ]
+    },
+    {
+      "id": "I28",
+      "area": "reward",
+      "title": "Reward learner on 6x6 pairings: short trace / tag consumption / receiver homeostasis",
+      "status": "open",
+      "evidence": "cycle 4.54 -> 8.74 with tauElig 8 + rcvHomeo 0.3, but bandit 3.53, cue 1.74; eligUse 0.7 neutral",
+      "why": "trial-matched trace helps short trials, breaks long-delay tasks",
+      "rounds": [
+        "R33"
+      ]
+    },
+    {
+      "id": "I29",
+      "area": "reward",
+      "title": "Dual-timescale eligibility (fast + slow tags, evolvable mix) -> rewardE2",
+      "status": "adopted",
+      "evidence": "bandit 6.70/6.69, cue 10.10/10.17, cycle 6.40 vs 4.55, order2 4.52 vs 3.80",
+      "why": "no loss, clear gain on pairings",
+      "rounds": [
+        "R34",
+        "R35"
+      ]
+    },
+    {
+      "id": "I30",
+      "area": "reward",
+      "title": "Timing-gated trace selection (synapse recency or outcome interval)",
+      "status": "rejected",
+      "evidence": "gate2 T=30 cycle 8.65 but bandit 5.79; T=10 6.84/10.26/6.96 within noise",
+      "why": "outcome timing does not separate the tasks",
+      "rounds": [
+        "R36"
+      ]
+    },
+    {
+      "id": "I31",
+      "area": "regions",
+      "title": "Outcome -> full striatum owns outputs, clock -> graded cortex feeding it (v32)",
+      "status": "adopted",
+      "evidence": "seqchoice cycle 6.78 (was 1.45), order2 5.20 (was 1.41); text/order3/bandit/cue bit-identical",
+      "why": "one genome now covers mixed tasks",
+      "rounds": [
+        "R37"
+      ]
+    },
+    {
+      "id": "I32",
+      "area": "memory",
+      "title": "Longer context for text (beyond 3 symbols)",
+      "status": "open",
+      "evidence": "fables stuck at ~0.32; order3 solved only by explicit shift register",
+      "why": "text track (issue #2)",
+      "rounds": [
+        "R20a",
+        "R22a",
+        "issue #2"
+      ]
+    },
+    {
+      "id": "I33",
+      "area": "speed",
+      "title": "Typed-array / WebGPU neuron update",
+      "status": "open",
+      "evidence": "rewardE/unifiedR gens ~6 min on PC",
+      "why": "text track (issue #3)",
+      "rounds": [
+        "issue #3"
+      ]
+    },
+    {
+      "id": "I34",
+      "area": "evaluation",
+      "title": "Scaling harness (accuracy vs cells, context, corpus)",
+      "status": "open",
+      "evidence": "none yet",
+      "why": "text track (issue #1)",
+      "rounds": [
+        "issue #1"
+      ]
+    },
+    {
+      "id": "I35",
+      "area": "growth",
+      "title": "Patterned vs random activity shaping growth",
+      "status": "open",
+      "evidence": "not run",
+      "why": "from the research memo: tells whether input structure shapes wiring",
+      "rounds": [
+        "memo #1"
+      ]
+    },
+    {
+      "id": "I36",
+      "area": "evaluation",
+      "title": "Minimal genome generality across task families",
+      "status": "open",
+      "evidence": "unifiedR is one genome but hand-assembled from two proven programs",
+      "why": "core of the goal: grow to fit the need",
+      "rounds": [
+        "memo #5",
+        "R30",
+        "R37"
+      ]
+    },
+    {
+      "id": "I37",
+      "area": "reward",
+      "title": "Striatum evolved on bandit 3/6 arms + seqchoice (q04 champion) transplanted into unifiedR = rewardE3",
+      "status": "adopted",
+      "evidence": "whole champion: text 0.40, order3 1.37 (collapse); striatum only: bandit6 5.11 vs 4.31 (+0.81 \u00b1 0.31), cycle 7.24 vs 6.78, cue -0.08 \u00b1 0.46 (40 growths), text/order3 bit-identical",
+      "why": "keep the evolved reward area, not the mutated sequence areas",
+      "rounds": [
+        "R39"
+      ]
+    },
+    {
+      "id": "I38",
+      "area": "regions",
+      "title": "Graded cortex size sweep (receptor o)",
+      "status": "rejected",
+      "evidence": "o=-5: 5.12/4.48; o=-7/-8: cortex does not develop (= rewardE2 alone 6.40/4.52); o=-6 (v32) 6.78/5.20",
+      "why": "v32 setting is the best",
+      "rounds": [
+        "R39 (q12)"
+      ]
+    },
+    {
+      "id": "I39",
+      "area": "reward",
+      "title": "Re-evolved dual-trace genes (q09, 2 h)",
+      "status": "rejected",
+      "evidence": "champion 1.00: cycle 7.25, bandit 6.47, cue 10.67 (refs 6.86/11.31)",
+      "why": "no gain beyond rewardE2",
+      "rounds": [
+        "R39 (q09)"
+      ]
+    },
+    {
+      "id": "I40",
+      "area": "evaluation",
+      "title": "Five-task evolution from v32 (q01, 3 h, 19 gens)",
+      "status": "rejected",
+      "evidence": "champion 0.966 never beat the start; text generations ~18 min",
+      "why": "text makes generations slow; mutants lose text first",
+      "rounds": [
+        "R39 (q01)"
+      ]
+    },
+    {
+      "id": "I41",
+      "area": "learning",
+      "title": "Lifetime length is the biggest lever for sequence choice",
+      "status": "confirmed",
+      "evidence": "seqchoice 1000 symbols: cycle 8.94, order2 5.85 vs 6.78 / 5.20 at 300 (q11); rewardE2 order2@1000 4.71 (q17)",
+      "why": "the reward area learns slowly; long lives, or better sample efficiency, are what pay",
+      "rounds": [
+        "R39",
+        "R40"
+      ]
+    },
+    {
+      "id": "I42",
+      "area": "development",
+      "title": "Juvenile waves are essential but their pattern is not (yet)",
+      "status": "confirmed",
+      "evidence": "q05: shuffled = patterned; no waves collapses cue to 3.37; regions skip juvenile (q05b identical)",
+      "why": "activity drives maturation; structure of activity untested on task-shaped input -> q21 (juvMode 3 vs 4)",
+      "rounds": [
+        "R39",
+        "R40"
+      ]
+    },
+    {
+      "id": "I43",
+      "area": "learning",
+      "title": "eligUse gene",
+      "status": "rejected",
+      "evidence": "q10: no gain beyond noise",
+      "why": "ruled out",
+      "rounds": [
+        "R40"
+      ]
+    },
+    {
+      "id": "I44",
+      "area": "evaluation",
+      "title": "Six-task evolution from v33 (q16)",
+      "status": "rejected",
+      "evidence": "champion 1.018 = the start genome (gen 0); no mutant improved",
+      "why": "text-bearing multitask evolution too slow to search",
+      "rounds": [
+        "R40"
+      ]
+    },
+    {
+      "id": "I45",
+      "area": "growth",
+      "title": "Structured recruits (ngStruct) and failure-rate need (ngFail)",
+      "status": "testing",
+      "evidence": "implemented R40; smoke runs ok (ngFail changes cycle 3.69->3.66 at 2 growths)",
+      "why": "q02/q03 were blocked on these; now q22, q23, q24",
+      "rounds": [
+        "R40"
+      ]
+    },
+    {
+      "id": "I46",
+      "area": "development",
+      "title": "Task-shaped juvenile activity (juvMode 3) vs same pulses shuffled (4)",
+      "status": "testing",
+      "evidence": "implemented R40",
+      "why": "I42 left open whether the pattern matters when it resembles the task",
+      "rounds": [
+        "R40"
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "Q01",
+      "q": "Does a v32 five-task evolution (text, order3, bandit, cue, seqchoice) find a genome better than unifiedR on mixed tasks without losing the others?",
+      "impact": 5,
+      "likelihood": 0.3,
+      "cost": 2,
+      "experiment": "bun run/runner.js experiments/v32_five.json (3 h), re-eval on 16 held-out growths"
+    },
+    {
+      "id": "Q02",
+      "q": "Do need-growth recruits with structured (claw/topo) inputs close the half-size text gap?",
+      "impact": 4,
+      "likelihood": 0.5,
+      "cost": 2,
+      "experiment": "q22_struct_recruits (16 growths)"
+    },
+    {
+      "id": "Q03",
+      "q": "Does driving reward-area need-growth by raw failure rate (not RPE) make it trigger and help?",
+      "impact": 4,
+      "likelihood": 0.4,
+      "cost": 2,
+      "experiment": "q23_fail_rate_need, q24_needfail_evolve (3 h)"
+    },
+    {
+      "id": "Q04",
+      "q": "Do demand + graded areas let area size follow task load (e.g. more arms -> bigger striatum)?",
+      "impact": 4,
+      "likelihood": 0.4,
+      "cost": 2,
+      "experiment": "bandit 3/6/12 arms, seqchoice K 4/6/8 with demand on, measure size and score"
+    },
+    {
+      "id": "Q05",
+      "q": "Does patterned (structured) activity during juvenile growth produce better wiring than matched random activity?",
+      "impact": 3,
+      "likelihood": 0.4,
+      "cost": 1,
+      "experiment": "juvenile activity patterned vs shuffled (matched rate), 16 growths, text/order3/bandit"
+    },
+    {
+      "id": "Q06",
+      "q": "How general is one minimal genome across held-out task variants (new K, delays, mappings)?",
+      "impact": 5,
+      "likelihood": 0.3,
+      "cost": 2,
+      "experiment": "evaluate unifiedR on held-out variants; evolve on 3 families, test on the 4th"
+    },
+    {
+      "id": "Q07",
+      "q": "How does text accuracy scale with tissue size and corpus length?",
+      "impact": 3,
+      "likelihood": 0.7,
+      "cost": 2,
+      "experiment": "text track (issue #1): sweep grid/maxCells and corpus size"
+    },
+    {
+      "id": "Q08",
+      "q": "Can a slow-decay / recurrent context region push fables above 0.36 with text >= 0.772?",
+      "impact": 4,
+      "likelihood": 0.3,
+      "cost": 3,
+      "experiment": "text track (issue #2)"
+    },
+    {
+      "id": "Q09",
+      "q": "Can evolution tune the dual-timescale mix per area so cycle >= 8 with bandit >= 6.5, cue >= 10?",
+      "impact": 3,
+      "likelihood": 0.2,
+      "cost": 1,
+      "experiment": "evolve rewardE2 eligibility genes on bandit+cue+cycle with longer budget"
+    },
+    {
+      "id": "Q10",
+      "q": "Does tag consumption at outcomes (eligUse) combined with dual traces fix 6x6 without hurting cue?",
+      "impact": 3,
+      "likelihood": 0.3,
+      "cost": 1,
+      "experiment": "ablate eligUse 0.3/0.5/0.7 on rewardE2, 16 growths"
+    },
+    {
+      "id": "Q11",
+      "q": "Does the seqchoice random-mapping task (order2) improve with longer lives (1000 symbols)?",
+      "impact": 2,
+      "likelihood": 0.5,
+      "cost": 1,
+      "experiment": "unifiedR v32 seqchoice order2 1000 symbols vs 300, 16 growths"
+    },
+    {
+      "id": "Q12",
+      "q": "Is the v32 graded cortex size (o = -6) optimal, or should it follow a finer sweep? [answered R39: o=-6 is best]",
+      "impact": 2,
+      "likelihood": 0.0,
+      "cost": 1,
+      "experiment": "cortex o in -5..-8, 16 growths on cycle/order2"
+    },
+    {
+      "id": "Q13",
+      "q": "Does the reversal-learning bug task become solvable with the v32 reward area?",
+      "impact": 2,
+      "likelihood": 0.3,
+      "cost": 1,
+      "experiment": "bug reversal arena with rewardE2 actor-critic, 16 growths"
+    },
+    {
+      "id": "Q14",
+      "q": "Typed-array/WebGPU update for 2x speed",
+      "impact": 3,
+      "likelihood": 0.6,
+      "cost": 3,
+      "experiment": "text track (issue #3)"
+    },
+    {
+      "id": "Q15",
+      "q": "Do the sequence areas (regions) need a juvenile activity phase? (they currently skip it: cellRefine/juvMode have no effect on unifiedR text/order3)",
+      "impact": 3,
+      "likelihood": 0.4,
+      "cost": 1,
+      "experiment": "q05b + implement juvenile phase in growRegions"
+    },
+    {
+      "id": "Q16",
+      "q": "Can a six-task evolution (adds bandit 6 arms) improve the v33 genome without losing text?",
+      "impact": 4,
+      "likelihood": 0.3,
+      "cost": 2,
+      "experiment": "q16_six_task_evolve (4 h)",
+      "answer": "No (R40): champion = start genome."
+    },
+    {
+      "id": "Q17",
+      "q": "Does task-shaped juvenile activity beat the same pulses in random order?",
+      "impact": 3,
+      "likelihood": 0.3,
+      "cost": 1,
+      "experiment": "q21_juv_task_shaped"
+    },
+    {
+      "id": "Q18",
+      "q": "Does evolving with 1000-symbol lives in the fitness find a better reward area?",
+      "impact": 4,
+      "likelihood": 0.35,
+      "cost": 2,
+      "experiment": "q19_long_multitask (4 h)"
+    },
+    {
+      "id": "Q19",
+      "q": "Can learning-rate / metaplasticity settings make short lives (300 symbols) reach long-life scores?",
+      "impact": 5,
+      "likelihood": 0.3,
+      "cost": 2,
+      "experiment": "q20_sample_eff_sweep, q25_life_curve, q26_short_life_evolve (3 h)"
+    }
+  ]
 }

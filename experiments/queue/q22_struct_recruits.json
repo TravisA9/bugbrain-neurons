@@ -1,0 +1,73 @@
+{
+  "id": "q22_struct_recruits",
+  "title": "Need-growth with structured recruits (ngStruct: bud from the most error-tagged grown claw), half-size text brain",
+  "question": "Q02",
+  "track": "neuro",
+  "priority": 1.0,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "text",
+        "pl.ng=1,pl.ngReduce=0.5",
+        "16"
+      ],
+      "label": "predictK3 text pl.ng=1,pl.ngReduce=0.5"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "order3",
+        "pl.ng=1,pl.ngReduce=0.5",
+        "16"
+      ],
+      "label": "predictK3 order3 pl.ng=1,pl.ngReduce=0.5"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "text",
+        "pl.ng=1,pl.ngReduce=0.5,pl.ngStruct=1",
+        "16"
+      ],
+      "label": "predictK3 text pl.ng=1,pl.ngReduce=0.5,pl.ngStruct=1"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "order3",
+        "pl.ng=1,pl.ngReduce=0.5,pl.ngStruct=1",
+        "16"
+      ],
+      "label": "predictK3 order3 pl.ng=1,pl.ngReduce=0.5,pl.ngStruct=1"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "text",
+        "base",
+        "16"
+      ],
+      "label": "predictK3 text base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "order3",
+        "base",
+        "16"
+      ],
+      "label": "predictK3 order3 base"
+    }
+  ],
+  "accept": {
+    "note": "structured recruits close more of the half-size gap than random recruits (R29: ~1/4)"
+  }
+}
