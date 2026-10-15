@@ -1,0 +1,33 @@
+{
+  "id": "q05b_regions_juvenile",
+  "title": "Do sequence areas (regions) get a juvenile phase at all? juvMode/cellRefine on unifiedR text/order3",
+  "question": "Q05",
+  "track": "neuro",
+  "priority": 0.7,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "order3",
+        "base",
+        "8"
+      ],
+      "label": "unifiedR order3 base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "order3",
+        "P.cellRefine=0,P.cellHomeo=0",
+        "8"
+      ],
+      "label": "unifiedR order3 P.cellRefine=0,P.cellHomeo=0"
+    }
+  ],
+  "accept": {
+    "note": "if identical: regions skip juvenile refinement (code follow-up)"
+  }
+}

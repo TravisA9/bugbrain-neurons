@@ -1,0 +1,84 @@
+{
+  "name": "short_life_evolve",
+  "description": "(R40 queue, Q19) sample efficiency by evolution: rewardE3 on bandit, cue, cycle/order2 at 300 symbols",
+  "mode": "standard",
+  "seed": 1,
+  "workers": "auto",
+  "population": 32,
+  "generations": 0,
+  "hours": 3,
+  "start": [
+    "rewardE3"
+  ],
+  "engine": {
+    "growths": 2,
+    "episodes": 1,
+    "robustW": 0.5,
+    "valGrowths": 4,
+    "valArenas": 4,
+    "valTopK": 3,
+    "cellMut": 0.02,
+    "eliteFrac": 0.1,
+    "crossoverRate": 0.3
+  },
+  "tasks": [
+    {
+      "name": "bandit",
+      "env": "bandit",
+      "params": {},
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "rewardE3"
+    },
+    {
+      "name": "cueR",
+      "env": "cue",
+      "params": {
+        "mapping": "random"
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "rewardE3"
+    },
+    {
+      "name": "cycle",
+      "env": "seqchoice",
+      "params": {
+        "source": "cycle"
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "rewardE3"
+    },
+    {
+      "name": "order2",
+      "env": "seqchoice",
+      "params": {
+        "source": "order2"
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "rewardE3"
+    }
+  ],
+  "combine": {
+    "type": "softmin",
+    "tau": 0.25,
+    "cap": 1.5
+  },
+  "championEvery": 5,
+  "smoke": {
+    "bandit": {
+      "nTrials": 40
+    },
+    "cueR": {
+      "nTrials": 6
+    },
+    "cycle": {
+      "nSyms": 40
+    },
+    "order2": {
+      "nSyms": 40
+    }
+  }
+}

@@ -109,7 +109,9 @@ class SpikingNet {
     if (!S.length || !Rc.length) return null;
     for (const s of S) extra[s] = Array.from({ length: R }, (_, j) => [N0 + j, 0]);
     for (let j = 0; j < R; j++) extra[N0 + j] = Rc.map(b => [b, 1]);
-    return { R, N0, dead, L: L.filter(l => !dead[l]), S, Rc, wOut, k, wIn: med(tot) / k, thr0: med(th), extra, nDead: dead.reduce((a, b) => a + b, 0) };
+    const sPos = new Int32Array(N0).fill(-1); S.forEach((s, q) => { sPos[s] = q; });
+    const Lsrc = L.filter(l => !dead[l]).map(l => { const o = []; for (let a = 0; a < N0; a++) if (W[a * N0 + l] > 0 && sPos[a] >= 0) o.push(sPos[a]); return o; });   // R40 ngStruct: the claw of each grown layer cell
+    return { R, N0, dead, L: L.filter(l => !dead[l]), Lsrc, S, Rc, wOut, k, wIn: med(tot) / k, thr0: med(th), extra, nDead: dead.reduce((a, b) => a + b, 0) };
   }
   initNeed() {
     const P = this.ngPlan, N = this.N, p = this.p, ng = this.ng = { on: [], act: [], E: 0, above: 0, since: 1e9, ev: 0, added: 0, pruned: 0, alive: 0, log: [], birth: new Float64Array(P.R).fill(-1), base: new Float64Array(P.R), baseL: new Float64Array(P.R), mature: new Uint8Array(P.R) };
@@ -148,7 +150,10 @@ class SpikingNet {
   needRecruit(j, Lm) {
     const ng = this.ng, P = this.ngPlan, r = P.N0 + j, tag = ng.tag, ws = this.ws, k = Math.min(P.k, P.S.length);
     const inK = ng.inK[j], w = Array.from(tag, x => x + 1e-6), chosen = [];
-    for (let n = 0; n < k; n++) { let s = 0; for (const x of w) s += x; let u = ng.rng() * s, q = 0; for (; q < w.length - 1; q++) { u -= w[q]; if (u <= 0) break; } chosen.push(q); w[q] = 0; }
+    if (this.p.ngStruct > 0 && P.Lsrc && P.Lsrc.length) {   // R40 structured recruit: bud from the grown layer cell whose claw carries the most error tag (same structured inputs)
+      let best = -1, bv = -1; for (let l = 0; l < P.Lsrc.length; l++) { const c = P.Lsrc[l]; if (!c.length) continue; let v = 0; for (const q of c) v += tag[q]; v /= c.length; if (v > bv) { bv = v; best = l; } }
+      if (best >= 0) for (const q of P.Lsrc[best]) if (chosen.length < k && !chosen.includes(q)) { chosen.push(q); w[q] = 0; } }
+    for (let n = chosen.length; n < k; n++) { let s = 0; for (const x of w) s += x; let u = ng.rng() * s, q = 0; for (; q < w.length - 1; q++) { u -= w[q]; if (u <= 0) break; } chosen.push(q); w[q] = 0; }
     for (const q of chosen) { ws[inK[q]] = P.wIn; this.w0[inK[q]] = P.wIn; tag[q] *= 0.5; }   // (source q's edge to r: extra lists were built in source order)
     const outK = ng.outK[j]; for (let q = 0; q < outK.length; q++) { ws[outK[q]] = P.wOut[q] * this.p.ngW; }
     if (this.p.preNorm > 0 && this.npStart) this.normPre(r);
@@ -308,7 +313,7 @@ class SpikingNet {
   setPlasticityConsts() {
     const p = Object.assign({}, PL_DEFAULTS, this.g.pl);
     this.p = p; this.dPre = Math.exp(-1 / p.tauPre); this.dPost = Math.exp(-1 / p.tauPost);
-    this.dElig = Math.exp(-1 / p.tauElig); this.dMods = this.chs.map(c => Math.exp(-1 / c.tauMod));
+    this.dElig = Math.exp(-1 / p.tauElig); this.dElig2 = (p.eligMix > 0 || p.eligGate > 0) ? Math.exp(-1 / p.tauElig2) : 0;   this.dMods = this.chs.map(c => Math.exp(-1 / c.tauMod));
   }
   get learning() { return params.plasticity && this.plastic.length > 0 && this.p.lr > 0; }
   // One neural sub-step. Uses this.ext as external current.
@@ -358,12 +363,13 @@ class SpikingNet {
   }
   stdp() {
     const N = this.N, sp = this.spiked, xPre = this.xPre, xPost = this.xPost, el = this.elig, use = this.use;
-    const learn = this.learning, pl = this.plastic, dE = this.dElig;
+    const learn = this.learning, pl = this.plastic, dE = this.dElig, dE2 = this.dElig2;
+    if (dE2 && !this.elig2) this.elig2 = new Float32Array(el.length); const el2 = this.elig2;
     const teach = !!this.teachTr && !(this.uni && this.eOn), spk = this.spk, nSpk = this.nSpk;   // v22 unified rule: eligibility traces kept (for dopamine-learning receivers)
     const lz = this.uni && this.eOn && learn, isEl = this.uni ? this.isE : this.isPlastic;   // v22 unified rule: LAZY eligibility decay (each trace is decayed when it is touched; same values, far fewer operations)
-    if (lz) { if (!this.eT) { this.eT = new Int32Array(el.length); this.eSub = 0; this.ePow = new Float32Array(8192); for (let n = 0; n < 8192; n++) this.ePow[n] = Math.pow(dE, n); } this.eSub++; }
-    const eT = this.eT, eS = this.eSub, eP = this.ePow, eAt = k => { const n = eS - eT[k]; eT[k] = eS; return el[k] *= n < 8192 ? eP[n] : 0; };
-    if (learn && !teach && !lz) for (let q = 0; q < pl.length; q++) el[pl[q]] *= dE;     // eligibility decays (the teacher rule never uses it: all 0)
+    if (lz) { if (!this.eT) { this.eT = new Int32Array(el.length); this.eSub = 0; this.ePow = new Float32Array(8192); for (let n = 0; n < 8192; n++) this.ePow[n] = Math.pow(dE, n); if (dE2) { this.ePow2 = new Float32Array(8192); for (let n = 0; n < 8192; n++) this.ePow2[n] = Math.pow(dE2, n); } } this.eSub++; }
+    const eT = this.eT, eS = this.eSub, eP = this.ePow, eP2 = this.ePow2, eAt = k => { const n = eS - eT[k]; eT[k] = eS; if (el2) el2[k] *= n < 8192 ? eP2[n] : 0; return el[k] *= n < 8192 ? eP[n] : 0; };
+    if (learn && !teach && !lz) for (let q = 0; q < pl.length; q++) { el[pl[q]] *= dE; if (el2) el2[pl[q]] *= dE2; }     // eligibility decays (the teacher rule never uses it: all 0)
     const start = this.start, posts = this.posts, pres = this.pres, isP = this.isPlastic,
           inS = this.inStart, inE = this.inEdges, aM = this.p.aMinus;
     if (learn && this.teachTr) {             // teacher-gated rule: a spike during a teacher plateau potentiates
@@ -379,10 +385,10 @@ class SpikingNet {
     }
     if ((learn && !teach) || use) for (let s = 0; s < nSpk; s++) { const i = spk[s];   // (teacher rule without pruning: nothing to do here)
       if (learn && !teach) for (let k = start[i], e = start[i + 1]; k < e; k++)    // i is PRE: post fired earlier -> depress
-        if (isEl[k]) { if (lz) eAt(k); el[k] -= aM * xPost[posts[k]]; }
+        if (isEl[k]) { if (lz) eAt(k); const d = aM * xPost[posts[k]]; el[k] -= d; if (el2) el2[k] -= d; }
       for (let q = inS[i], e = inS[i + 1]; q < e; q++) {      // i is POST: pre fired earlier -> potentiate
         const k = inE[q], x = xPre[pres[k]];
-        if (learn && isEl[k] && !teach) { if (lz) eAt(k); el[k] += x; }
+        if (learn && isEl[k] && !teach) { if (lz) eAt(k); el[k] += x; if (el2) el2[k] += x; }
         if (use) use[k] += x;
       }
     }
@@ -397,7 +403,7 @@ class SpikingNet {
     const mods = this.mods;
     if (this.crit) {                         // v20: dopamine = reward prediction error (one global signal)
       const ch = this.chs[0], rw = ch.gFood * food - ch.gPoison * poison - ch.gWall * bump, d = this.p.rpeGain * this.criticStep(rw, outcome);
-      if (this.ng && !this.ng.pred && (rw !== 0 || outcome)) this.needEvent(Math.min(1, Math.max(0, -this.delta)));   // v28 need-growth: negative outcome RPE
+      if (this.ng && !this.ng.pred && (rw !== 0 || outcome)) this.needEvent(this.p.ngFail > 0 ? (outcome ? (rw > 0 ? 0 : 1) : (rw < 0 ? 1 : 0)) : Math.min(1, Math.max(0, -this.delta)));   // R40 ngFail: raw failure (no surprise needed)   // v28 need-growth: negative outcome RPE
       for (let c = 0; c < this.nCh; c++) { mods[c] = mods[c] * this.dMods[c] + d; this.chSpikes[c] = 0; }
     } else
     for (let c = 0; c < this.nCh; c++) {
@@ -409,19 +415,29 @@ class SpikingNet {
     if (this.use && this.tickNo === this.pruning.tick) this.prune();
     if (!this.learning || (this.teachTr && !(this.uni && this.eOn))) return;   // (teacher rule: the eligibility traces stay 0, so w += lr*M*0 changes nothing)
     const lr = this.p.lr, pl = this.uni ? this.eList : this.plastic, el = this.elig, ws = this.ws, w0 = this.w0, wMax = params.wMax, sc = this.synCh;
-    const eT = this.eT, eS = this.eSub, eP = this.ePow, tro = this.ng ? this.ng.tro : null;
+    const eT = this.eT, eS = this.eSub, eP = this.ePow, eP2 = this.ePow2, el2 = this.elig2, mx = el2 ? this.p.eligMix : 0, tro = this.ng ? this.ng.tro : null;
+    const gm = el2 ? this.p.eligGate : 0; let gI = mx;
+    if (gm === 2) { if (outcome) { this.oIsi = this.tickNo - (this.lastOut || 0); this.lastOut = this.tickNo; } const T = this.p.eligGateT, d = (this.oIsi || T) - T; gI = 1 / (1 + Math.exp(d / (0.2 * T + 0.5))); }   // short outcome intervals -> fast tag, long -> slow tag
     let s = 0;
     for (let q = 0; q < pl.length; q++) {
       const k = pl[q], m = mods[sc[k]]; if (m === 0) continue;
       if (this.prunedMask && this.prunedMask[k]) continue;   // pruned
       const old = ws[k];
-      let e = el[k]; if (eT) { const n = eS - eT[k]; eT[k] = eS; e = el[k] = n < 8192 ? e * eP[n] : 0; }   // v22 lazy eligibility decay
+      let e = el[k]; if (eT) { const n = eS - eT[k]; eT[k] = eS; e = el[k] = n < 8192 ? e * eP[n] : 0; if (el2) el2[k] = n < 8192 ? el2[k] * eP2[n] : 0; }   // v22 lazy eligibility decay
+      if (el2) { let g = mx;   // v31 dual-timescale: slow (tauElig) and fast (tauElig2) tags, mixed
+        if (gm === 1) { const a = Math.abs(e); g = a > 1e-9 ? Math.min(1, Math.abs(el2[k]) / a) : 0; }   // R35 gate 1: the synapse's own recency (fast/slow tag ratio)
+        else if (gm === 2) g = gI;                                                                        // R35 gate 2: outcome timing (interval since the previous outcome)
+        e = (1 - g) * e + g * el2[k]; }
       let w = old + lr * m * e;
       if (w0[k] > 0) w = w < 0 ? 0 : w > wMax ? wMax : w;    // sign preserved
       else w = w > 0 ? 0 : w < -wMax ? -wMax : w;
       ws[k] = w; s += Math.abs(w - old);
       if (tro && w0[k] > 0 && w > old) tro[this.pres[k]] += w - old;
     }
+    // v31 (R33) eligUse (0..1, 0 = off): an outcome CONSUMES the eligibility tags it acted on (tag capture): traces shrink by
+    // eligUse at every outcome event, so the credit of one choice does not spill into the next trial's outcome.
+    if (outcome && this.p.eligUse > 0) { const f = 1 - this.p.eligUse;
+      for (let q = 0; q < pl.length; q++) { const k = pl[q]; if (eT) { const n = eS - eT[k]; eT[k] = eS; el[k] = n < 8192 ? el[k] * eP[n] : 0; if (el2) el2[k] = n < 8192 ? el2[k] * eP2[n] : 0; } el[k] *= f; if (el2) el2[k] *= f; } }
     if (this.p.preNorm > 0 && s > 0) { if (!this.npStart) this.buildNp(); for (let i = 0; i < this.N; i++) if (this.npStart[i + 1] > this.npStart[i]) this.normPre(i); }   // v20: competition between targets
     this.dwSum = s;
   }

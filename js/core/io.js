@@ -37,7 +37,7 @@ function makeSpec(s) {
   if (!cueSources) { const f = inputs.filter(c => c.cue); cueSources = (f.length ? f : inputs).map(c => c.at); }
   const juv = Object.assign({ waves: [inputs.map((c, i) => i).filter(i => !inputs[i].tonic)], waveGain: 10, tonic: [], kicks: null }, s.juvenile || {});
   const spec = { inputs, outputs, nIn, nOut, classes: s.classes || [], tagNames: s.tagNames || DEFAULT_TAG_NAMES,
-                 coneOrder: s.coneOrder || inputs.map((c, i) => i), cueSources, juvenile: juv };
+                 coneOrder: s.coneOrder || inputs.map((c, i) => i), cueSources, juvenile: juv, outcome: !!s.outcome };   // v29: outcome = the env delivers reward/punishment (a dopamine source); not part of the key
   spec.key = JSON.stringify([inputs, outputs, spec.coneOrder, cueSources, juv]);
   return spec;
 }

@@ -1,0 +1,33 @@
+{
+  "id": "q11_long_life",
+  "title": "seqchoice with 1000-symbol lives (v32)",
+  "question": "Q11",
+  "track": "neuro",
+  "priority": 1.0,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"seqchoice\", \"params\": {\"source\": \"cycle\", \"nSyms\": 1000}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR seqchoice{\"source\": \"cycle\", \"nSyms\": 1000} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"seqchoice\", \"params\": {\"source\": \"order2\", \"nSyms\": 1000}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR seqchoice{\"source\": \"order2\", \"nSyms\": 1000} base"
+    }
+  ],
+  "accept": {
+    "meanMin": {}
+  }
+}

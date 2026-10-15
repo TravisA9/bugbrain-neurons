@@ -164,7 +164,7 @@ function createRandomCellGenome(r) {
   return d;
 }
 function mutateCell(d, r) {
-  if (d.kind === 'regions') { for (const R of d.regions) mutateCell(R.g, r); delete d._ph; delete d._vg; return d; }   // v21: every region's gene program mutates
+  if (d.kind === 'regions') { for (const R of d.regions) { mutateCell(R.g, r); if (R.area) for (const k of ['a', 'o', 'b']) if (r() < params.cellMut * 3) R.area[k] += gauss(r); } delete d._ph; delete d._vg; return d; }   // v21: every region's gene program mutates; v29: + area receptor genes
   const pm = params.cellMut, nud = (x, s) => x + gauss(r) * (s + 0.2 * Math.abs(x));
   for (let i = 0; i < d.Wg.length; i++) if (r() < pm) d.Wg[i] = nud(d.Wg[i], 0.5);
   for (let i = 0; i < d.R.length; i++) if (r() < pm) d.R[i] = nud(d.R[i], 0.5);
@@ -643,9 +643,15 @@ function juvenilePhase(g, sc, r, spec, jrec) {   // jrec (recorder, optional): s
     spk.fill(0);
     for (let t = 0; t < per; t++) {
       const ext = net.ext; ext.fill(0);
-      if (lines.length) {
+      if (lines.length && params.juvMode >= 3) {   // R40 task-shaped juvenile activity: discrete symbol pulses in sequence (3) or random order (4), same count / gain
+        if (t % params.juvHold === 0) { if (!wave) wave = { ch: 0, k: -1 }; const line = lines[wave.ch], n = line.length;
+          if (params.juvMode === 3) { wave.k++; if (wave.k >= n) { wave.k = 0; wave.ch = (wave.ch + 1) % lines.length; } } else { wave.ch = (r() * lines.length) | 0; wave.k = (r() * lines[wave.ch].length) | 0; } }
+        if (wave) ext[lines[wave.ch][wave.k]] = J.waveGain;
+      } else if (lines.length) {
         if (!wave && --gap <= 0) { const c0 = r() < 0.5 ? -1 : null; wave = { c: c0, v: 0, ch: (r() * lines.length) | 0 }; if (wave.c == null) wave.c = lines[wave.ch].length; wave.v = wave.c < 0 ? 0.3 : -0.3; }
         if (wave) { const line = lines[wave.ch], n = line.length; wave.c += wave.v; for (let k = 0; k < n; k++) ext[line[k]] = J.waveGain * Math.exp(-((k - wave.c) ** 2));
+          if (params.juvMode === 1) { const v = line.map(i => ext[i]); for (let k = n - 1; k > 0; k--) { const q = (r() * (k + 1)) | 0; [v[k], v[q]] = [v[q], v[k]]; } line.forEach((i, k) => { ext[i] = v[k]; }); }   // R39 shuffled control: same values, no spatial order
+          else if (params.juvMode === 2) for (let k = 0; k < n; k++) ext[line[k]] = 0;
           if (wave.c < -1.5 || wave.c > n + 0.5) { wave = null; gap = 5; } }
       }
       for (const [i, I] of J.tonic) ext[i] = I;

@@ -1,0 +1,69 @@
+{
+  "name": "dualtag2",
+  "description": "(R34) bandit + cue random + seqchoice cycle (6x6 pairings), from rewardED: evolve dual-timescale eligibility genes",
+  "mode": "standard",
+  "seed": 1,
+  "workers": 7,
+  "population": 32,
+  "generations": 0,
+  "hours": 1,
+  "start": [
+    "rewardED"
+  ],
+  "engine": {
+    "growths": 2,
+    "episodes": 1,
+    "robustW": 0.5,
+    "valGrowths": 4,
+    "valArenas": 4,
+    "valTopK": 3,
+    "cellMut": 0.02,
+    "eliteFrac": 0.1,
+    "crossoverRate": 0.3
+  },
+  "tasks": [
+    {
+      "name": "bandit",
+      "env": "bandit",
+      "params": {},
+      "weight": 1,
+      "ref": "auto"
+    },
+    {
+      "name": "cueR",
+      "env": "cue",
+      "params": {
+        "mapping": "random"
+      },
+      "weight": 1,
+      "ref": "auto"
+    },
+    {
+      "name": "cycle",
+      "env": "seqchoice",
+      "params": {
+        "source": "cycle"
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "rewardE"
+    }
+  ],
+  "combine": {
+    "type": "softmin",
+    "tau": 0.25,
+    "cap": 1.5
+  },
+  "championEvery": 5,
+  "smoke": {
+    "bandit": {
+      "nTrials": 40
+    },
+    "cueR": {
+      "nTrials": 6
+    },
+    "cycle": {
+      "nSyms": 40
+    }
+  }
+}

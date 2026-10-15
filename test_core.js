@@ -158,17 +158,17 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const B = { switchEvery: 0, nTrials: 120 }, b = run('bandit', B, 'rewardK', 0), bf = run('bandit', B, 'rewardK', 1);
   assert.ok(b > 0.6 && b > bf + 0.25, `bandit: rewardK learns the best arm from reward alone (last quarter ${b.toFixed(2)}, frozen ${bf.toFixed(2)})`);
   const C = { mapping: 'random', wrongCost: 0, nTrials: 80 }, Ec = S20.setEnv('cue', C);
-  assert.ok(S20.defaultPlanId(Ec) === 'rewardE' && Ec.spec.inputs.length === 12 && S20.defaultPlanId(S20.setEnv('cue', { mapping: 'same', wrongCost: 1, nTrials: 60 })) === 'memoryK', 'cue: random mapping -> rewardE (v26) + broadcast GO; same mapping -> memoryK');
+  assert.ok(S20.defaultPlanId(Ec) === 'unifiedR' && Ec.spec.inputs.length === 12 && S20.defaultPlanId(S20.setEnv('cue', { mapping: 'same', wrongCost: 1, nTrials: 60 })) === 'memoryK', 'cue: random mapping -> rewardE (v26) + broadcast GO; same mapping -> memoryK');
   const c = run('cue', C, 'rewardMemK', 0), cf = run('cue', C, 'rewardMemK', 1);
   assert.ok(c > 0.6 && c > cf + 0.25, `cue random mapping, reward only: rewardMemK learns (last quarter ${c.toFixed(2)}, frozen ${cf.toFixed(2)})`);
   const n0 = new S20.Agent(S20.PLANS.v3h.make(), 1).net; assert.ok(!n0.crit && !n0.anList, 'new genes off: no critic, no action noise in old plans');
   { const be = run('bandit', B, 'rewardE', 0), ce = run('cue', { mapping: 'random', wrongCost: 1, nTrials: 80 }, 'rewardE', 0);   // default wrongCost (1): rewardE was evolved with punishment; with wrongCost 0 it is weaker than rewardMemK (R27)
-    assert.ok(be > 0.6 && ce > 0.6 && S20.defaultPlanId(S20.setEnv('bandit', B)) === 'rewardE', `v26 rewardE (default): bandit last quarter ${be.toFixed(2)} (rewardK ${b.toFixed(2)}), cue random ${ce.toFixed(2)} (rewardMemK ${c.toFixed(2)})`);
+    assert.ok(be > 0.6 && ce > 0.6 && S20.defaultPlanId(S20.setEnv('bandit', B)) === 'unifiedR', `v26 rewardE (default): bandit last quarter ${be.toFixed(2)} (rewardK ${b.toFixed(2)}), cue random ${ce.toFixed(2)} (rewardMemK ${c.toFixed(2)})`);
     console.log(`rewardE (v26): bandit ${be.toFixed(2)}, cue random ${ce.toFixed(2)}: ok`); }
   console.log(`reward learning (v20): bandit last quarter ${b.toFixed(2)} (frozen ${bf.toFixed(2)}), cue random mapping ${c.toFixed(2)} (frozen ${cf.toFixed(2)}): ok`); }
 // v21 (round 22): context cascade (predictK3: cortex + context region on the three-phase clock) and multi-region brains
 { const S21 = require('./js/node_load.js')();
-  const T = S21.setEnv('seq', S21.recommendedEnvParams('seq', { source: 'text' }, ['source'])); assert.ok(T.P.clock3 && S21.defaultPlanId(T) === 'predictK3' && S21.DEFAULTS_VERSION >= 19, 'text default: three-phase clock -> predictK3');
+  const T = S21.setEnv('seq', S21.recommendedEnvParams('seq', { source: 'text' }, ['source'])); assert.ok(T.P.clock3 && S21.defaultPlanId(T) === 'unifiedR' && S21.DEFAULTS_VERSION >= 19, 'text default: three-phase clock -> predictK3');
   const E = S21.setEnv('seq', { source: 'order3', K: 8, nSyms: 400, clock2: true, clock3: true }), q = w3 => { let s = 0; for (const sd of [40, 41]) { const d = S21.createPredict3Plan(w3 != null ? { w3 } : {}), g = S21.growCell(d, { seed: sd, spec: E.spec }); s += S21.runEpisode(d, 1000 + sd, g, E).task.stats().lastQuarter; } return s / 2; };
   const k3 = q(), cut = q(0); assert.ok(k3 > 0.85 && k3 > cut + 0.1, `order3: predictK3 beats the 2nd-order limit and needs its M3 tract (last quarter ${k3.toFixed(2)}, tract cut ${cut.toFixed(2)})`);
   const g = S21.growCell(S21.PLANS.predictK3.make(), { seed: 1, spec: E.spec, record: true }); assert.ok(g.regions.length === 2 && g.tracts.every(t => t.synapses > 0) && g.regionParts.length === 2 && !Object.keys(g).includes('regionParts'), 'regions: 2 regions, tracts laid, parts not saved');
@@ -189,7 +189,7 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   console.log(`v22 unified rule: seq order3 last quarter ${a.task.stats().lastQuarter.toFixed(2)} (instructive), bandit last quarter ${b.task.stats().lastQuarter.toFixed(2)} (RPE): ok`); }
 // v27 (round 28): local connection demand, default on in predictK3 / rewardE; off (bit-identical) when the gene is 0
 { const S = require('./js/node_load.js')(), E = S.PLANS.rewardE.make(), K3 = S.PLANS.predictK3.make();
-  assert.ok(E.sc.demand === 1 && E.sc.demandRelax === 0 && K3.regions.every(r => r.g.sc.demand === 1) && S.DEFAULTS_VERSION === 22, 'demand on in the default plans');
+  assert.ok(E.sc.demand === 1 && E.sc.demandRelax === 0 && K3.regions.every(r => r.g.sc.demand === 1) && S.DEFAULTS_VERSION >= 23, 'demand on in the default plans');
   const B = S.setEnv('bandit', { K: 6 }); let cOn = 0, cOff = 0; const off = S.cloneCell(E); off.sc.demand = 0;
   for (const sd of [11, 12, 13, 14]) { cOn += S.growCell(E, { seed: sd, spec: B.spec }).devStats.outCov / 4; cOff += S.growCell(off, { seed: sd, spec: B.spec }).devStats.outCov / 4; }
   assert.ok(cOn > cOff, `demand raises output coverage (6 arms: ${cOff.toFixed(2)} -> ${cOn.toFixed(2)})`);
@@ -203,4 +203,7 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const a = new S.Agent(d, 4, b, Sq); while (!a.done) a.tick(); const st = a.net.needStats();
   assert.ok(st.mode === 'mismatch' && st.added > 0 && st.alive <= 64 && st.dead > 0, 'need-growth recruits in a reduced brain: ' + JSON.stringify(st).slice(0, 200));
   console.log(`v28 need-growth (reduced text brain): ${st.dead} layer cells removed, ${st.added} recruited, ${st.pruned} pruned, ${st.alive} alive (cap 64), error ${st.E}: ok`); }
+{ const S = require('./js/node_load.js')(), U = S.PLANS.unifiedRv32.make(), E2 = S.PLANS.rewardE2.make(); assert.ok(JSON.stringify(U.regions[2].g) === JSON.stringify(E2) && E2.pl.eligMix > 0.2 && S.PL_DEFAULTS.eligGate === 0 && S.DEFAULTS_VERSION >= 24, 'v31 (R35): unifiedR striatum = rewardE2; eligGate off by default'); console.log('v31 unifiedR reward area = rewardE2: ok'); }
+{ const S = require('./js/node_load.js')(), U = S.PLANS.unifiedRv32.make(), sig = (R, A, O) => S.areaExpr(R, { A, O }); assert.ok(U.areal && U.graded && sig(U.regions[2], 1, 1) > 0.99 && sig(U.regions[2], 1, 0) < 0.15 && sig(U.regions[0], 1, 0) > 0.99 && sig(U.regions[0], 0, 1) < 0.15 && sig(U.regions[0], 1, 1) > 0.15 && sig(U.regions[0], 1, 1) < sig(U.regions[2], 1, 1) && S.DEFAULTS_VERSION >= 25, 'v32 (R37): outcome -> striatum full + owns outputs; clock + outcome -> graded cortex feeding it'); console.log('v32 unifiedR mixed-task areal rule: ok'); }
+{ const S = require('./js/node_load.js')(), U = S.PLANS.unifiedR.make(), O = S.PLANS.unifiedRv32.make(); const cu = S.genomeToCompact(U).cell.regions, co = S.genomeToCompact(O).cell.regions; assert.ok(JSON.stringify(cu[0]) === JSON.stringify(co[0]) && JSON.stringify(cu[1]) === JSON.stringify(co[1]) && JSON.stringify(cu[2]) !== JSON.stringify(co[2]) && S.params.juvMode === 0 && S.DEFAULTS_VERSION === 26, 'v33 (R39): striatum rewardE3, cortex unchanged, juvMode off'); console.log('v33 unifiedR striatum = rewardE3: ok'); }
 console.log('ALL OK');

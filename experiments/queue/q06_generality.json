@@ -1,0 +1,63 @@
+{
+  "id": "q06_generality",
+  "title": "One genome on held-out task variants (v32 unifiedR)",
+  "question": "Q06",
+  "track": "neuro",
+  "priority": 0.75,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"recall\", \"params\": {\"mapping\": \"random\"}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR recall{\"mapping\": \"random\"} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"cue\", \"params\": {\"mapping\": \"random\", \"delay\": 20}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR cue{\"mapping\": \"random\", \"delay\": 20} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"bandit\", \"params\": {\"nTrials\": 400}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR bandit{\"nTrials\": 400} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"seq\", \"params\": {\"source\": \"cycle\", \"K\": 12, \"clock2\": true, \"clock3\": true}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR seq{\"source\": \"cycle\", \"K\": 12, \"clock2\": true, \"clock3\": true} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"seqchoice\", \"params\": {\"source\": \"order3\"}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR seqchoice{\"source\": \"order3\"} base"
+    }
+  ],
+  "accept": {
+    "note": "baseline numbers for the generality score"
+  }
+}

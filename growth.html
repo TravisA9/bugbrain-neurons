@@ -275,6 +275,22 @@
   <p>Axon pathfinding between tissues is not simulated cell by cell. The tract rule names the populations, and the map says how axons pick targets.
     The result is one network that keeps the env's inputs and outputs. One region carries the outputs and the plasticity genes.
     In the <a href="viewer.html">viewer</a>, a region selector shows each tissue. The wiring diagram rings every population in its region's colour.</p>
+  <p><b>v30: one genome for every task.</b> The default for text and three-phase sequences, the bandit and random-mapping cue/recall is now
+    <code>unifiedR</code>: a single genome with three areas (cortex, context, striatum). Each area carries receptor genes for two
+    morphogen-like signals read from the task: a multi-phase clock (sequence tasks) and a dopamine/outcome source (reward tasks).
+    Areas whose expression stays low do not develop; so sequence tasks grow cortex + context (= predictK3) and reward tasks grow the
+    striatum (= rewardE). Same brains, same scores (16 held-out growths per task); the difference is that one genome now decides.</p>
+  <p><b>v31: a better reward area.</b> The striatum of <code>unifiedR</code> now grows from <code>rewardE2</code>, re-evolved with two
+    eligibility tags per synapse (a fast one, about 8 steps, and a slow one, about 25 steps, mixed 24:76) and receiver homeostasis.
+    16 held-out growths: bandit and random cue unchanged (6.70 / 10.10 vs 6.69 / 10.17), symbol-to-arm pairings learned from reward
+    much better (seqchoice cycle 6.40 vs 4.55).</p>
+  <p><b>v32: tasks with both signals.</b> When a task brings a dopamine/outcome source, the striatum (rewardE2) now always develops
+    fully and owns the outputs; if it also brings a phase clock, the cortex and context areas develop too, smaller (graded), and feed the
+    striatum through their mixing cells. On seqchoice this beats the striatum alone (cycle 6.78 vs 6.40, order2 5.20 vs 4.52);
+    text, order3, bandit and cue grow exactly the same brains as before.</p>
+  <p><b>v33: an evolved reward area.</b> The striatum of <code>unifiedR</code> now comes from a brain evolved on bandits with 3 and 6 arms
+    and the symbol-to-arm tasks (rewardE3). Only that area was taken over: the whole evolved brain had lost its sequence skills. Bandit with
+    6 arms 5.11 vs 4.31; other tasks unchanged within noise; text and order3 grow the same brains as before.</p>
   <p>Honest status: predictK3 (cortex + context) is the default for text. The two-region actor-critic (cortex → striatum, rewardKR) is close
     to the single tissue on the bandit (best arm 0.62 vs 0.65). It is still below on the cue task (0.70 vs 0.86).
     What made the difference: the cortex now grows its whole gene program, and its action band dies naturally for lack of targets.

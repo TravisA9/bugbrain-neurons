@@ -1,0 +1,71 @@
+{
+  "id": "q25_life_curve",
+  "title": "Learning curve: seqchoice cycle / order2 at 150, 300, 600, 1000, 2000 symbols (unifiedR v33)",
+  "question": "Q19",
+  "track": "neuro",
+  "priority": 1.1,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":150}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR seqchoice{\"source\":\"cycle\",\"nSyms\":150} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":600}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR seqchoice{\"source\":\"cycle\",\"nSyms\":600} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":2000}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR seqchoice{\"source\":\"cycle\",\"nSyms\":2000} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":150}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR seqchoice{\"source\":\"order2\",\"nSyms\":150} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":600}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR seqchoice{\"source\":\"order2\",\"nSyms\":600} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":2000}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR seqchoice{\"source\":\"order2\",\"nSyms\":2000} base"
+    }
+  ],
+  "accept": {}
+}

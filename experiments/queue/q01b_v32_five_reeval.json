@@ -1,0 +1,80 @@
+{
+  "id": "q01b_v32_five_reeval",
+  "title": "Re-evaluate the q01 champion vs unifiedR on 16 held-out growths",
+  "question": "Q01",
+  "track": "neuro",
+  "priority": 1.24,
+  "kind": "runs",
+  "after": "q01_v32_five",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "text",
+        "champ",
+        "16"
+      ],
+      "label": "unifiedR text champ",
+      "env": {
+        "CHAMP": "${dir:q01_v32_five}/champions/champion_final.json"
+      }
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "order3",
+        "champ",
+        "16"
+      ],
+      "label": "unifiedR order3 champ",
+      "env": {
+        "CHAMP": "${dir:q01_v32_five}/champions/champion_final.json"
+      }
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "bandit",
+        "champ",
+        "16"
+      ],
+      "label": "unifiedR bandit champ",
+      "env": {
+        "CHAMP": "${dir:q01_v32_five}/champions/champion_final.json"
+      }
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "cueR",
+        "champ",
+        "16"
+      ],
+      "label": "unifiedR cueR champ",
+      "env": {
+        "CHAMP": "${dir:q01_v32_five}/champions/champion_final.json"
+      }
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "cycle",
+        "champ",
+        "16"
+      ],
+      "label": "unifiedR cycle champ",
+      "env": {
+        "CHAMP": "${dir:q01_v32_five}/champions/champion_final.json"
+      }
+    }
+  ],
+  "accept": {
+    "note": "no task worse than unifiedR beyond noise (compare with registry entries for unifiedR base)"
+  },
+  "afterPass": true
+}

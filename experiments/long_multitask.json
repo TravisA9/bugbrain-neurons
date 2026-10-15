@@ -1,0 +1,99 @@
+{
+  "name": "long_multitask",
+  "description": "(R40 queue, Q18) reward area evolved with long lives: bandit, bandit6, cue, seqchoice cycle/order2 at 1000 symbols, from rewardE3",
+  "mode": "standard",
+  "seed": 1,
+  "workers": "auto",
+  "population": 32,
+  "generations": 0,
+  "hours": 4,
+  "start": [
+    "rewardE3"
+  ],
+  "engine": {
+    "growths": 2,
+    "episodes": 1,
+    "robustW": 0.5,
+    "valGrowths": 4,
+    "valArenas": 4,
+    "valTopK": 3,
+    "cellMut": 0.02,
+    "eliteFrac": 0.1,
+    "crossoverRate": 0.3
+  },
+  "tasks": [
+    {
+      "name": "bandit",
+      "env": "bandit",
+      "params": {},
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "rewardE3"
+    },
+    {
+      "name": "bandit6",
+      "env": "bandit",
+      "params": {
+        "K": 6
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "rewardE3"
+    },
+    {
+      "name": "cueR",
+      "env": "cue",
+      "params": {
+        "mapping": "random"
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "rewardE3"
+    },
+    {
+      "name": "cycle1000",
+      "env": "seqchoice",
+      "params": {
+        "source": "cycle",
+        "nSyms": 1000
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "rewardE3"
+    },
+    {
+      "name": "order2_1000",
+      "env": "seqchoice",
+      "params": {
+        "source": "order2",
+        "nSyms": 1000
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "rewardE3"
+    }
+  ],
+  "combine": {
+    "type": "softmin",
+    "tau": 0.25,
+    "cap": 1.5
+  },
+  "championEvery": 5,
+  "smoke": {
+    "bandit": {
+      "nTrials": 40
+    },
+    "bandit6": {
+      "nTrials": 40
+    },
+    "cueR": {
+      "nTrials": 6
+    },
+    "cycle1000": {
+      "nSyms": 40
+    },
+    "order2_1000": {
+      "nSyms": 40
+    }
+  }
+}

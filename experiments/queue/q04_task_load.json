@@ -1,0 +1,53 @@
+{
+  "id": "q04_task_load",
+  "title": "Does area size follow task load? bandit 3/6 arms, seqchoice K 4/8 (v32 + demand)",
+  "question": "Q04",
+  "track": "neuro",
+  "priority": 0.8,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"bandit\", \"params\": {\"K\": 3}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR bandit{\"K\": 3} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"bandit\", \"params\": {\"K\": 6}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR bandit{\"K\": 6} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"seqchoice\", \"params\": {\"source\": \"cycle\", \"K\": 4}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR seqchoice{\"source\": \"cycle\", \"K\": 4} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"seqchoice\", \"params\": {\"source\": \"cycle\", \"K\": 8}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR seqchoice{\"source\": \"cycle\", \"K\": 8} base"
+    }
+  ],
+  "accept": {
+    "note": "record scores; growth sizes need the viewer/devStats (follow-up)"
+  }
+}

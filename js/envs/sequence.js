@@ -105,6 +105,7 @@ class SeqTask {
     this.counts = new Float64Array(this.K); this.lastCounts = new Float64Array(this.K);
     this.hits = []; this.ideal = []; this.cal = new Calib(this.K); this.idealBits = 0; this.tab = Array.from({ length: this.K }, () => new Float64Array(this.K)); this.correct = 0; this.n = 0; this.bits = 0; this.rewardLog = []; this.recent = []; this.horizon = n * this.slot;
   }
+  targetOf(s) { return s; }   // v30: the output that is right for next symbol s (seqchoice: a per-lifetime arm mapping)
   get done() { return this.pos >= this.P.nSyms; }
   sense(ext) {
     const P = this.P, K = this.K;
@@ -126,7 +127,7 @@ class SeqTask {
       if (g > 0 && out.input) for (let k = 0; k < K; k++) this.counts[k] += out.spikes[k] + g * Math.max(0, out.input[k]); else for (let k = 0; k < K; k++) this.counts[k] += out.spikes[k]; }
     this.phaseT++; this.t++;
     if (this.phaseT >= this.slot) {                 // end of the slot: the prediction of the next symbol
-      const target = this.seq[this.pos + 1], k = Dec.wta(this.counts), ok = k === target;
+      const target = this.targetOf(this.seq[this.pos + 1]), k = Dec.wta(this.counts), ok = k === target;
       // ideal online 1st-order learner on the same stream: predicts the most frequent successor seen so far
       const row = this.tab[this.seq[this.pos]]; let bi = 0; for (let j = 1; j < K; j++) if (row[j] > row[bi]) bi = j;
       this.ideal.push(row[bi] > 0 && bi === target ? 1 : 0);
@@ -137,7 +138,7 @@ class SeqTask {
       if (k === this.seq[this.pos]) this.nEcho = (this.nEcho || 0) + 1;   // v16 display: predictions equal to the current input
       this.recent.push([this.seq[this.pos], k, ok, target]); if (this.recent.length > 40) this.recent.shift();   // [input, predicted next, right?, actual next]
       this.rewardLog.push([this.t, ok ? 1 : 0]); this.lastCounts.set(this.counts);
-      ev = { pos: ok ? 1 : 0, neg: ok ? 0 : P.wrongCost, pain: 0, reward: ok ? 1 : 0 };
+      ev = { pos: ok ? 1 : 0, neg: ok ? 0 : P.wrongCost, pain: 0, reward: ok ? 1 : 0 }; if (this.outcomeEv) ev.outcome = true;
       this.counts.fill(0); this.phaseT = 0; this.pos++;
     }
     return ev;
@@ -230,10 +231,11 @@ class SeqTask {
   }
 }
 
+SpikingArena.SeqTask = SeqTask; SpikingArena.seqIO = seqIO; SpikingArena.seqSymbols = symbolsOf;   // v30: reused by envs/seqchoice.js
 registerEnv({
   id: 'seq', name: 'Sequence prediction (learned transitions)', view: { width: 700, height: 480 },
   description: 'A stream of symbols with a new rule every lifetime (cycle, Markov chain, 2nd-order pattern or text): predict the next symbol. Needs lifetime learning.',
-  defaultPlan: P => (P.clock2 && P.clock3) ? 'predictK3' : (P.clock2 ? 'predictK2' : 'predictK') + ((isText(P) || P.K > 12) ? (P.clock2 ? 'XO' : 'L') : ''),   // v19: XO (own-column M2 reset) replaces XG   // big alphabets need the 36x36 tissue; the two-phase clock -> second-order plan
+  defaultPlan: P => (P.clock2 && P.clock3) ? 'unifiedR' : (P.clock2 ? 'predictK2' : 'predictK') + ((isText(P) || P.K > 12) ? (P.clock2 ? 'XO' : 'L') : ''),   // v19: XO (own-column M2 reset) replaces XG   // big alphabets need the 36x36 tissue; the two-phase clock -> second-order plan
   // v17 (round 18): the task choice (kept by 'Reset to recommended settings') and the recommended settings per task:
   // Text -> two-phase clock (second-order plan predictK2XG) and a 1000-character lifetime (accuracy keeps rising past 200)
   taskKeys: ['source', 'K', 'det'],

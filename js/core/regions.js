@@ -41,6 +41,7 @@ function regionSpec(envSpec, R) {
 const inhib = (g, i) => { const n = g.N; for (let b = 0; b < n; b++) if (g.W[i * n + b] < 0) return true; return false; };   // a cell with an inhibitory synapse
 function growRegions(d, opts) {
   opts = opts || {};
+  if (d.areal && !opts.noAreal) return growAreal(d, opts);
   const t0 = nowMs(), envSpec = opts.spec || currentEnv().spec, seed = opts.seed != null ? opts.seed : (d.seed || 1);
   const parts = d.regions.map((R, k) => { const { spec, map } = regionSpec(envSpec, R);
     const g = growCell(R.g, { spec, seed: (seed + 7919 * k) >>> 0, record: !!opts.record }); return { R, spec, map, g }; });
@@ -64,7 +65,7 @@ function growRegions(d, opts) {
   const tractStats = [];
   for (const T of d.tracts || []) {
     const src = parts[T.from.region], dst = parts[T.to.region], cols = new Map();
-    for (let i = src.g.nIn; i < src.g.nIn + src.g.nHid; i++) if (src.g.cellType[i] === N_FIXED + T.from.cls && !(T.map === 'all' && inhib(src.g, i))) {   // 'all': excitatory sources only
+    for (let i = src.g.nIn; i < src.g.nIn + src.g.nHid; i++) if ((T.from.mix ? !!(src.g.mix && src.g.mix[i]) : src.g.cellType[i] === N_FIXED + T.from.cls) && !(T.map === 'all' && inhib(src.g, i))) {   // v30: from.mix = the sparse conjunctive (mixing) cells   // 'all': excitatory sources only
  const b = node(src, i), l = src.g.topo ? src.g.topo[i] : NaN; if (isNaN(l)) { if (T.map !== 'all') continue; l = 0; }
       const key = Math.round(l * 1e4); if (!cols.has(key)) cols.set(key, []); cols.get(key).push(b); }
     let nSyn = 0;
@@ -97,9 +98,48 @@ function growRegions(d, opts) {
   Object.defineProperty(G, 'regionParts', { value: parts.map((p, k) => ({ name: G.regions[k].name, color: G.regions[k].color, off: p.off, outputs: p === outPart, brain: p.g, spec: p.spec, map: p.map })), enumerable: false });
   return G;
 }
+/* v29 (R30) AREALIZATION: one genome, the task's I/O decides which areas develop.
+ * Two morphogen sources are read off the environment's sensory/modulatory surface:
+ *   A ("FGF8-like", anterior): the phase-clock channels (groups go2/go3, a multi-phase rhythmic input that a
+ *     sequence task brings): A = share of clock channels per GO channel (0..1);
+ *   O ("dopamine source", ventral): the env delivers outcomes (spec.outcome: reward / punishment).
+ * Every region carries area receptor genes area = { a, o, b }: its expression e = sigmoid(a*A + o*O + b) (an
+ * Emx2/Pax6-like transcription-factor gradient). An area whose expression stays below 0.5 does not develop (its
+ * progenitors take another fate); tracts to or from it are not laid. The developing area with the highest expression
+ * that can carry outputs owns the env outputs. An area marked whole reads the full sensory sheet: if it develops alone it
+ * grows exactly as a single tissue (growCell). The receptor genes mutate with the rest of the genome. */
+function arealSignals(spec) {
+  const I = spec.inputs, nGo = I.filter(c => c.group === 'go').length, nPh = I.filter(c => c.group === 'go2' || c.group === 'go3').length;
+  return { A: nGo ? Math.min(1, nPh / nGo) : (nPh ? 1 : 0), O: spec.outcome ? 1 : 0 };
+}
+function areaExpr(R, S) { const a = R.area || { a: 0, o: 0, b: 5 }; return 1 / (1 + Math.exp(-(a.a * S.A + a.o * S.O + a.b))); }
+function growAreal(d, opts) {
+  const envSpec = opts.spec || currentEnv().spec, S = arealSignals(envSpec), e = d.regions.map(R => areaExpr(R, S));
+  // v30 (R31) graded arealization (d.graded): an area develops once its expression reaches gMin (gene, default 0.15) and its
+  // progenitor pool (maxCells) scales with the expression: size = min(1, e / 0.9) of the full area (fully expressed areas unchanged).
+  const gMin = d.graded ? (d.gMin != null ? d.gMin : 0.15) : 0.5;
+  let on = d.regions.map((R, k) => e[k] >= gMin); if (!on.some(x => x)) on = e.map(x => x === Math.max(...e));
+  const scaled = (R, k) => { if (!d.graded) return R; const f = Math.min(1, e[k] / 0.9); if (f >= 1) return R;
+    const g = Object.assign({}, R.g, { sc: Object.assign({}, R.g.sc) }); if (g.sc.maxCells) g.sc.maxCells = Math.max(8, Math.round(g.sc.maxCells * f)); return Object.assign({}, R, { g }); };
+  let own = -1; d.regions.forEach((R, k) => { if (on[k] && R.outputs && (own < 0 || e[k] > e[own])) own = k; });
+  const idx = []; d.regions.forEach((R, k) => { if (on[k]) idx.push(k); });
+  const areas = d.regions.map((R, k) => ({ name: R.name, expr: +e[k].toFixed(3), on: on[k], size: d.graded ? +Math.min(1, e[k] / 0.9).toFixed(3) : 1 }));
+  let G;
+  if (idx.length === 1 && d.regions[idx[0]].whole) {
+    G = growCell(scaled(d.regions[idx[0]], idx[0]).g, opts);
+  } else {
+    const sub = { kind: 'regions', label: d.label, seed: d.seed,
+      regions: idx.map(k => Object.assign({}, scaled(d.regions[k], k), { outputs: k === own })),
+      tracts: (d.tracts || []).filter(T => on[T.from.region] && on[T.to.region]).map(T => { const t = JSON.parse(JSON.stringify(T)); t.from.region = idx.indexOf(T.from.region); t.to.region = idx.indexOf(T.to.region); return t; }) };
+    G = growRegions(sub, Object.assign({}, opts, { noAreal: true }));
+  }
+  G.grownFrom = d; G.areas = areas; G.devStats.areas = areas.filter(a => a.on).map(a => a.name).join('+');
+  return G;
+}
 function cloneRegions(d) {
   return { kind: 'regions', label: d.label || '', seed: d.seed, fitness: null, tracts: JSON.parse(JSON.stringify(d.tracts || [])),
-           regions: d.regions.map(R => ({ name: R.name, color: R.color, inputs: JSON.parse(JSON.stringify(R.inputs)), outputs: !!R.outputs, g: cloneCell(R.g) })) };
+           regions: d.regions.map(R => Object.assign({ name: R.name, color: R.color, inputs: JSON.parse(JSON.stringify(R.inputs)), outputs: !!R.outputs, g: cloneCell(R.g) }, R.area ? { area: Object.assign({}, R.area) } : {}, R.whole ? { whole: true } : {})),
+           ...(d.areal ? { areal: 1 } : {}), ...(d.graded ? { graded: 1, gMin: d.gMin } : {}) };
 }
 function regionsOf(d) { return d && d.kind === 'regions' ? d.regions : null; }
-Object.assign(SpikingArena, { cloneRegions, growRegions, regionSpec, regionsOf });
+Object.assign(SpikingArena, { arealSignals, areaExpr, growAreal, cloneRegions, growRegions, regionSpec, regionsOf });

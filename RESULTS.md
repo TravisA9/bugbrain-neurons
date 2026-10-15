@@ -1958,3 +1958,144 @@ Reproduce: `SEEDOFF=2000 EXTRA='{"demandRelax":0}' bun results_v27/demand_exp.js
 **Not adopted** (d does not beat a, and c does not match a). Code kept, off by default; no version bump, no UI control.
 Reproduce: `SEEDOFF=2000 bun results_v28/ng_exp.js <text|order3|fables|bandit|cueR> <a|b|c|d> 16 [K]` (env RED, EXTRA for pl overrides).
 Evolution: experiments/needgrowth.json (multitask balanced, startPl { ng: 1 }, start from the default plans, 3 h).
+
+## R30 adopted (v30, DEFAULTS_VERSION 23): unifiedR is the default (one genome, areas from the task I/O)
+The PC regions run (bun, 7 workers, 3 h + 5.5 h resume, 2026-10-12_163626_regions) reached champion 1.0171 at gen ~12.
+Re-evaluated on 16 held-out growths per task (mean; paired difference ± s.e.):
+| task | evolved champion | unifiedR (= predictK3 / rewardE) | diff |
+|---|---|---|---|
+| text (1000 chars) | 7.316 | 7.264 | +0.052 ± 0.038 |
+| order3 K8 | 8.617 | 8.528 | +0.089 ± 0.099 |
+| bandit | 6.540 | 6.686 | −0.146 ± 0.201 |
+| cue random | 9.563 | 10.172 | −0.608 ± 0.794 |
+The champion is within noise everywhere but not better (lower means on bandit / cue), so the hand-set unifiedR is adopted, not the
+champion. unifiedR grows bit-identical brains to the previous defaults (checked: same scores growth by growth on text, order3,
+bandit, cue), so no score changes; the default is now ONE genome whose area receptor genes read the task's clock / outcome signals.
+Legacy: legacy/v29/ keeps the previous pages and scripts.
+
+## R34 [neuro] (code v30, defaults unchanged): dual-timescale eligibility traces + receiver homeostasis, not adopted
+Each synapse keeps a slow trace (tauElig) and a fast trace (tauElig2); the outcome reads eligMix·fast + (1−eligMix)·slow.
+eligMix / tauElig / tauElig2 / homeostasis evolvable via eligEvo (off by default, bit-identical when off). Box evolution on
+bandit + random cue + seqchoice fixed cycle (refs rewardE 6.55 / 10.48 / 4.00):
+| run | gens | bandit | cue | cycle | fitness |
+|---|---|---|---|---|---|
+| dualtag (1.25 h) | 208 | 7.07 | 11.00 | 5.69 | 1.137 |
+| dualtag2 (1.0 h) | 139 | 6.86 | 11.31 | 6.15 | 1.143 |
+Goal (cycle ≥ 8 with bandit ≥ 6.5, cue ≥ 10) not reached: both timescales together keep bandit/cue intact and raise the cycle
+from 4.0 to ~6.2, but not to the 8.7 the short-trace-only setting reaches (which breaks bandit/cue). dualtag2 champion:
+eligMix 0.24, tauElig 25.2, tauElig2 8, homeoRate 0.22 (results_box/dualtag2_champion.json).
+
+## R35 adopted (v31, DEFAULTS_VERSION 24): unifiedR's reward area = rewardE2 (dualtag2 champion, dual-timescale eligibility)
+16 held-out growths per task, rewardE2 (= unifiedR on reward tasks, verified growth by growth) vs rewardE; paired diff ± s.e.:
+| task | rewardE2 | rewardE | diff |
+|---|---|---|---|
+| bandit | 6.700 | 6.686 | +0.014 ± 0.164 |
+| cue random | 10.102 | 10.172 | −0.071 ± 0.595 |
+| seqchoice cycle | 6.397 | 4.545 | +1.852 ± 0.445 |
+| seqchoice order2 | 4.516 | 3.798 | +0.717 ± 0.224 |
+Equal on bandit / cue, clearly better on the reward-learned pairings: adopted. Text unchanged (7.264, striatum does not develop).
+Caveat: seqchoice itself defaults to unifiedR, which on that task (clock + outcome) represses the striatum: unifiedR scores only
+1.45 (cycle) / 1.41 (order2) there; rewardE2 alone (or a graded unified plan) is needed for mixed tasks. Files: results_box/r35/.
+Legacy: legacy/v30/.
+
+## R36 [neuro] (code v31, defaults unchanged): timing-gated trace selection, not adopted
+New option eligGate (0 = off, default; bit-identical): 1 = each synapse uses its own recency (fast/slow tag ratio) as the mix;
+2 = the interval since the previous outcome picks the tag (short -> fast, long -> slow; sigmoid around eligGateT ticks).
+Screen on rewardE2, 8 held-out growths (same seeds as the first 8 of R35):
+| variant | bandit | cue random | seqchoice cycle |
+|---|---|---|---|
+| rewardE2 (fixed mix 0.24) | 6.72 | 10.48 | 6.70 |
+| gate 1 (synapse recency) | 6.53 | 10.67 | 6.46 |
+| gate 2, T = 10 | 6.84 | 10.26 | 6.96 |
+| gate 2, T = 15 | 6.76 | 10.36 | 7.19 |
+| gate 2, T = 20 | 6.00 | 10.27 | 7.96 |
+| gate 2, T = 30 | 5.79 | 10.56 | 8.65 |
+Outcome timing does not separate the tasks: raising T moves all of them toward the fast tag, giving the same trade-off as a
+fixed mix (cycle up, bandit down). No setting reaches cycle >= 8 with bandit >= 6.5. Files: results_box/r36/.
+
+## R37 adopted (v32, DEFAULTS_VERSION 25): unifiedR handles tasks with both a clock and an outcome
+Areal rule changed (one genome; graded areas + mixing -> striatum tract, as in unifiedC): striatum (rewardE2) receptor
+sigmoid(10·O − 5) -> fully developed whenever O is present and owns the outputs; cortex + context sigmoid(10·A − 6·O − 5) ->
+full with a clock alone, graded (expression 0.27, about 30 % size) with clock + outcome, feeding the striatum. Screened variants
+(16 growths, seqchoice cycle / order2): cortex o = −4 (larger cortex) 5.17 / 4.58; same + M2/M3 linear tracts 4.38 / 4.12;
+o = −6 + linear tracts 4.10 / 4.00; o = −6, mixing tract only (adopted) 6.78 / 5.20. unifiedC / unifiedG (striatum graded too):
+5.35 / 4.51, 4.38 / 3.73.
+16 held-out growths per task:
+| task | unifiedR v32 | before (v31) | rewardE2 alone | diff vs before / vs rewardE2 |
+|---|---|---|---|---|
+| text | 7.264 | 7.264 | – | bit-identical |
+| order3 K8 | 8.528 | 8.528 | – | bit-identical |
+| bandit | 6.701 | 6.701 | 6.701 | bit-identical |
+| cue random | 10.102 | 10.102 | 10.102 | bit-identical |
+| seqchoice cycle | 6.782 | 1.452 | 6.397 | vs rewardE2 +0.386 ± 0.416 |
+| seqchoice order2 | 5.197 | 1.405 | 4.516 | vs rewardE2 +0.681 ± 0.229 |
+Legacy: legacy/v31/. Files: results_box/r37/, run/r37.js.
+
+## R38 (v32, infrastructure only; defaults unchanged): idea map, experiment registry, autonomous queue, Ideas tab
+- IDEAS.md (generated by run/ideas.js from experiments/ideas.json): 36 ideas from R1-R37 / R31_NOTES / legacy notes, one row each
+  (area, status adopted / rejected / open / parked, key evidence, why, rounds), parked need-growth with its two known fixes, and 14
+  open questions ranked by payoff = impact x likelihood / cost, each with the experiment that answers it.
+- Registry (run/registry.js, experiments/registry.jsonl): every finished runner run, run/ablate.js and run/r37.js evaluation writes a
+  normalized fingerprint (plan / start plans, gene overrides, task + params, engine, seed, DEFAULTS_VERSION). Exact duplicates are skipped;
+  near duplicates (same except seed / budget) are skipped unless the new budget is bigger; `--force` (or FORCE=1) runs anyway; exit code 3
+  = skipped (ablate/r37 print the stored result). run/registry_backfill.js adds the R35-R37 evaluations and finished runs.
+- Queue (run/queue.js, experiments/queue/*.json, run_queue.bat, pause_queue.bat / resume_queue.bat): picks the highest-priority runnable
+  job, checks the registry, runs it at below-normal priority (evolve jobs through run/runner.js and the worker pool, `runs` jobs as parallel
+  scripts), writes pass / fail against the job's acceptance criteria to results/QUEUE_LOG.md, keeps results/queue.js and results/current.js
+  current. Resumable (results/queue_state.json + run checkpoints); PAUSE file -> the run stops after the current generation and waits;
+  --cpu-max P waits while the PC is busy before starting / resuming; single instance (results/queue.lock). Tested on the box: runs job,
+  evolve job, PAUSE mid-run -> checkpoint at gen 10 -> resume -> finished at gen 12.
+- 16 seeded jobs (10 runnable, 3 blocked until code exists: structured recruits, failure-rate need-growth, patterned activity; 3 text
+  track = GitHub issues #1-#3, skipped unless --include-text).
+- dashboard.html: Ideas tab (idea map with status colours and filter, ranked questions, queue with status, recent QUEUE_LOG results),
+  file:// via results/ideas.js + results/queue.js; dashboard_test checks it (screenshot_ideas.png).
+- register_queue_task.ps1: Task Scheduler task "BugBrain Queue" (current user, limited rights; at logon + an on-idle copy).
+
+## R39 (v33, DEFAULTS_VERSION 26): queue fixes; q04 striatum adopted (rewardE3); patterned-activity option
+Queue problems on the PC (Oct 13) and fixes:
+- Every ablation row errored: run/ablate.js required results_overnight_r26/champions/champion_final.json at start (gitignored, absent
+  on the PC) -> crash ("Bun v1.2.15"). Now the champion file is read only when a variant needs it.
+- q01 "FAILED": the run finished normally (19 gens, summary finished) but the runner exited non-zero while tearing down workers.
+  Runner now exits 0 after a finished run; the queue trusts summary.json (status finished) over the exit code and recovers such jobs.
+- q02 1 generation in 3.17 h: the laptop ran on battery (critical battery 1:38 PM -> sleep), then Modern Standby 3:52-6:26 PM inside
+  generation 0; wall-clock counted. Runner budget now counts active time only (suspend gaps detected by a 1-s ticker, logged); the
+  queue treats "on battery" like PAUSE (--allow-battery to override).
+- New: --reset a,b (re-run, bypass registry), afterPass (q01b skipped since q01 failed), region:N transplant variant, P.<param> engine
+  overrides in ablate.
+Queue results: q09 dual-trace re-evolution FAIL (champion 1.00; cycle 7.25, bandit 6.47); q12 cortex o: -5 5.12/4.48, -7/-8 = cortex
+off (6.40/4.52), so o = -6 stays; q04_mixed_evolve PASS (1.174 on bandit/bandit6/cycle/order2).
+q04 champion, 16 held-out growths vs v32 unifiedR (paired diff ± s.e.):
+| task | whole champion | striatum transplanted into unifiedR | v32 unifiedR |
+|---|---|---|---|
+| text | 0.404 (−6.86) | 7.264 (identical) | 7.264 |
+| order3 | 1.366 (−7.16) | 8.529 (identical) | 8.529 |
+| bandit | 6.781 | 6.781 (+0.08 ± 0.23) | 6.700 |
+| bandit 6 arms | 5.112 | 5.112 (+0.81 ± 0.31) | 4.307 |
+| cue random | 9.253 | 9.253 (−0.85 ± 0.68); 40 growths 9.449 vs 9.531 (−0.08 ± 0.46) | 10.102 |
+| seqchoice cycle | 7.119 | 7.241 (+0.46 ± 0.40) | 6.782 |
+| seqchoice order2 | 4.790 | 5.193 (−0.00 ± 0.32) | 5.196 |
+The whole champion is rejected (its sequence areas lost text / order3). Its striatum (genome + area genes) transplanted into unifiedR
+is worse nowhere beyond noise and better on bandit 6 arms: adopted as unifiedR's reward area (rewardE3), v33 / DEFAULTS_VERSION 26;
+unifiedRv32 kept for comparison; legacy/v32/.
+Q05 (patterned activity): engine parameter juvMode (0 waves = default, 1 the same wave values spatially shuffled each tick = rate-matched
+control, 2 no waves). Screen (rewardE2 bandit, 2 growths): 6.89 / 6.73 / 4.33. Finding: region brains (unifiedR text/order3) skip
+the juvenile phase entirely (cellRefine/cellHomeo/juvMode change nothing) -> new question Q15. Queue job q05 runs 16 growths.
+
+## R40 — overnight queue review, new genes, new queue (Oct 14)
+
+**Queue**: running since 7:34 PM Oct 13 (pid 17472). Done overnight: q16, q04_task_load, q06, q05b, q17; now q02_needgrowth_v32 (2 h, started 9:58 AM).
+
+| evidence | result |
+|---|---|
+| lifetime (q11, q17) | seqchoice at 1000 symbols: cycle 8.94, order2 5.85, vs 6.78 / 5.20 at 300. rewardE2 order2@1000 4.71. **Life length matters most.** |
+| juvenile (q05, q05b) | shuffled waves = patterned waves; no waves → cue 3.37 (collapse). Regions skip juvenile (q05b identical). **Waves are essential, pattern not yet.** |
+| eligUse (q10) | no effect → ruled out |
+| q16 six-task evolve | FAIL: champion 1.018 at gen 0 (= start genome) |
+| q04_task_load | bandit K3 6.78, K6 5.11; seqchoice cycle K4 7.42, K8 5.86 |
+| q06 generality | recall random −3.16, cue delay 20 9.98, bandit 400 trials 6.47, cycle K12 9.56, order3 6.02 |
+
+**Champions re-evaluated**: no new passing champion (q16 returned the start genome; q04's striatum already adopted as v33 in R39). **Nothing adopted; defaults unchanged (v33 / defaults 26).**
+
+**New code**: `pl.ngFail` (need error = raw failure), `pl.ngStruct` (recruits bud from the most error-tagged grown claw), `P.juvMode` 3 (task-shaped symbol pulses) / 4 (same pulses shuffled), plans `rewardE3` (v33 striatum alone; identical to unifiedR on bandit) and `rewardE3ng`. Defaults off, so all scores unchanged.
+
+**New queue (ranked)**: q20 sample-efficiency sweep (lr ×1.5/2/3, rpeLr, metaN) · q21 task-shaped juvenile · q19 long-life multitask evolve 4 h · q25 life curve · q26 short-life evolve 3 h · q22 structured recruits (was q02_structured_recruits) · q23 failure-rate need (was q03_failure_rate) · q24 need-growth evolve 3 h. ≈ 12–13 h.

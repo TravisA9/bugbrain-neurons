@@ -36,7 +36,7 @@ function recallIO(P, K, names, outNames) {
   inputs.push({ name: 'tonic', group: 'tonic', tag: 6, cls: 3, pos: [0, 0.9], midline: true, tonic: true });
   const outputs = outNames.map((n, k) => ({ name: n, group: 'choice', tag: 4, cls: 5 + (k % 3), pos: [ox[k], -1], bias: P.outBias, topo: xs[k],
                                             mirror: K === 2 ? 1 - k : undefined }));
-  return { inputs, outputs, classes: ['cue', 'symbol', 'unused', 'tonic', 'go', 'out-A', 'out-B', 'out-C'],
+  return { outcome: true, inputs, outputs, classes: ['cue', 'symbol', 'unused', 'tonic', 'go', 'out-A', 'out-B', 'out-C'],
            tagNames: ['tag 0', 'cue', 'tag 2', 'go', 'output', 'tag 5', 'tonic', 'free'],
            juvenile: { waves: [names.map((n, k) => k)], pairs: names.map((n, k) => [k, k]), waveGain: P.cueGain, tonic: [[iTon, P.tonicCurrent]], kicks: { chans: [K], p: 0.02, gain: P.cueGain } } };
 }
@@ -171,7 +171,7 @@ function curriculum(evo, P) {
 registerEnv({
   id: 'cue', name: 'Cue-then-turn (memory)', view: { width: VIEW_W, height: VIEW_H },
   description: 'A cue on the left or right, a delay, then GO: turn to the cued side. Needs working memory.',
-  defaultPlan: P => P.mapping === 'random' ? 'rewardE' : 'memoryK',   // v26 (R27): evolved actor-critic plan for reward-only random mappings (v20: rewardMemK)
+  defaultPlan: P => P.mapping === 'random' ? 'unifiedR' : 'memoryK',   // v26 (R27): evolved actor-critic plan for reward-only random mappings (v20: rewardMemK)
   params: Object.assign({}, COMMON),
   io: P => recallIO(P, 2, ['cue_left', 'cue_right'], ['turn_left', 'turn_right']),
   create(seed, P, spec) { const t = new RecallTask(seed, P, spec, 2); t.names = ['left', 'right']; return t; },
@@ -180,7 +180,7 @@ registerEnv({
 registerEnv({
   id: 'recall', name: 'Sequence: symbol recall', view: { width: VIEW_W, height: VIEW_H },
   description: 'A symbol (one-hot) is shown, then a delay, then GO: output the same symbol (winner-take-all).',
-  defaultPlan: P => P.mapping === 'random' ? 'rewardE' : 'memoryK',   // v26 (R27): evolved actor-critic plan for reward-only random mappings (v20: rewardMemK)
+  defaultPlan: P => P.mapping === 'random' ? 'unifiedR' : 'memoryK',   // v26 (R27): evolved actor-critic plan for reward-only random mappings (v20: rewardMemK)
   params: Object.assign({}, COMMON, { K: { value: 4, min: 2, max: 16, step: 1, label: 'Alphabet size (symbols)' }, cueX: { value: 0.8, hidden: true },
                                       outLayout: { value: 'aligned', hidden: true } }),
   io: P => { const K = P.K | 0, s = 'ABCDEFGHIJKLMNOP'.slice(0, K).split(''); return recallIO(P, K, s.map(x => 'sym_' + x), s.map(x => 'out_' + x)); },
