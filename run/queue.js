@@ -18,9 +18,10 @@ const fs = require('fs'), path = require('path'), os = require('os'), cp = requi
 const REG = require('./registry.js');
 const ROOT = path.resolve(__dirname, '..'), RES = process.env.BB_RESULTS || path.join(ROOT, 'results'), QDIR = process.env.BB_QUEUE_DIR || path.join(ROOT, 'experiments', 'queue');
 const STATE = path.join(RES, 'queue_state.json'), LOG = path.join(RES, 'QUEUE_LOG.md'), QJS = path.join(RES, 'queue.js'), LOCK = path.join(RES, 'queue.lock');
-const args = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'include-text', 'force', 'wait', 'status', 'allow-battery'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
-const WORKERS = args.workers != null ? +args.workers : Math.max(1, os.cpus().length - 2), CPU_MAX = +(args['cpu-max'] || 0);
-const RUNTIME = typeof Bun !== 'undefined' ? process.execPath : (process.env.BB_BUN || 'bun');
+const args = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'include-text', 'force', 'wait', 'status', 'allow-battery', 'no-refill', 'phone'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
+const WORKERS = args.workers != null ? +args.workers : ((args.phone || process.env.BB_PHONE === '1') ? Math.min(2, Math.max(1, os.cpus().length - 2)) : Math.max(1, os.cpus().length - 2)), CPU_MAX = +(args['cpu-max'] || 0);
+const RUNTIME = process.env.BB_BUN || process.execPath;   // R48: children use the same runtime (node or bun) as this process
+const PHONE = !!args.phone || process.env.BB_PHONE === '1';   // R48: Termux phone/tablet mode (run/power.js)
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 fs.mkdirSync(RES, { recursive: true });
 function writeAtomic(p, t) { const tmp = p + '.tmp'; fs.writeFileSync(tmp, t); for (let i = 0; i < 5; i++) { try { fs.renameSync(tmp, p); return; } catch (e) { const u = Date.now() + 200; while (Date.now() < u); } } fs.writeFileSync(p, t); }
@@ -28,15 +29,16 @@ const now = () => new Date().toLocaleString();
 const say = s => console.log(`[${now()}] ${s}`);
 const pauseFile = () => fs.existsSync(path.join(ROOT, 'PAUSE')) || fs.existsSync(path.join(RES, 'PAUSE'));
 // R39: on a laptop running on battery the queue yields like PAUSE (battery drain -> critical battery -> sleep wasted a whole job).
-let batT = 0, batV = false;
+let batT = 0, batV = false, phoneWhy = '';
 function onBattery() {
+  if (PHONE) { const p = require('./power').check(); phoneWhy = p.why; return p.pause; }
   if (args['allow-battery'] || process.platform !== 'win32') return false;
   if (Date.now() - batT < 60000) return batV; batT = Date.now();
   try { const o = cp.execFileSync('powershell', ['-NoProfile', '-Command', '(Get-CimInstance Win32_Battery | Select-Object -First 1).BatteryStatus'], { encoding: 'utf8', windowsHide: true, timeout: 20000 }).trim(); batV = o === '1'; } catch (e) { batV = false; }
   return batV;
 }
 const paused = () => pauseFile() || onBattery();
-const pauseWhy = () => pauseFile() ? 'PAUSE file present' : 'running on battery';
+const pauseWhy = () => pauseFile() ? 'PAUSE file present' : PHONE ? 'phone power guard: ' + phoneWhy : 'running on battery';
 function loadState() { try { return JSON.parse(fs.readFileSync(STATE, 'utf8')); } catch (e) { return { jobs: {} }; } }
 let S = loadState(); const save = () => writeAtomic(STATE, JSON.stringify(S, null, 2));
 function loadJobs() { return fs.readdirSync(QDIR).filter(f => f.endsWith('.json')).map(f => { try { return JSON.parse(fs.readFileSync(path.join(QDIR, f), 'utf8')); } catch (e) { say('bad job file ' + f + ': ' + e.message); return null; } }).filter(Boolean); }

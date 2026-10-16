@@ -13,18 +13,23 @@
  *   run/queue.js on the same PC is not touched (separate lock + state). The scratch registry is seeded with local + shared lines.
  * --hours H: stop claiming new jobs when the job's budget (budget.hours or estHours, default 1) would not fit (GitHub Actions: 6 h cap).
  * Auth: plain git; needs push rights to the repo (PC: Travis's git credentials; Actions: GITHUB_TOKEN; elsewhere: a token in the URL
- *   or a credential helper). Never touches main. */
+ *   or a credential helper, or BB_DQ_TOKEN env: used via a one-shot git credential helper, never written to disk). Never touches main.
+ * --phone (R48, Termux): queue.js gets --phone --no-refill (<= 2 workers, pauses on battery < 30 %, not charging, or hot; run/power.js),
+ *   and no new job is claimed while the power guard says pause. */
 const fs = require('fs'), path = require('path'), os = require('os'), cp = require('child_process');
 const ROOT = path.resolve(__dirname, '..');
-const A = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'wait', 'dry', 'allow-battery', 'include-text'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
+const A = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'wait', 'dry', 'allow-battery', 'include-text', 'phone'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
 const WORKER = A.worker || process.env.BB_WORKER || (os.hostname() + '-' + process.pid);
 const BRANCH = A.branch || 'queue', DIR = path.resolve(A.dir || path.join(ROOT, '.dq')), LEASE_H = +(A['lease-hours'] || 4);
 const REPO = A.repo || process.env.BB_DQ_REPO || 'https://github.com/TravisA9/bugbrain-neurons.git';
 const T0 = Date.now(), HOURS = A.hours != null ? +A.hours : Infinity;
-const RUNTIME = typeof Bun !== 'undefined' ? process.execPath : (process.env.BB_BUN || 'bun');
+const RUNTIME = process.env.BB_BUN || process.execPath;   // R48: same runtime as this process (plain node works, e.g. Termux)
+const PHONE = !!A.phone || process.env.BB_PHONE === '1';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const say = s => console.log(`[${new Date().toLocaleString()}] [${WORKER}] ${s}`);
-function git(args, opt) { return cp.execFileSync('git', args, Object.assign({ cwd: DIR, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }, opt || {})).trim(); }
+const TOKEN = process.env.BB_DQ_TOKEN || '';
+const AUTH = TOKEN ? ['-c', 'credential.helper=', '-c', 'credential.helper=!f() { echo username=x-access-token; echo password=$BB_DQ_TOKEN; }; f'] : [];
+function git(args, opt) { return cp.execFileSync('git', AUTH.concat(args), Object.assign({ cwd: DIR, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }, opt || {})).trim(); }
 function tryGit(args) { try { return { ok: true, out: git(args) }; } catch (e) { return { ok: false, out: String(e.stderr || e.message) }; } }
 const rd = p => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return null; } };
 function ensureClone() {
@@ -78,7 +83,7 @@ async function runJob(j) {
   fs.writeFileSync(path.join(q, j.id + '.json'), JSON.stringify(Object.assign({}, j, { after: undefined }), null, 2));
   let local = ''; try { local = fs.readFileSync(path.join(ROOT, 'experiments', 'registry.jsonl'), 'utf8'); } catch (e) {}
   const seed = (local + (local && !local.endsWith('\n') ? '\n' : '') + sharedRegistry()); fs.writeFileSync(reg, seed);
-  const qargs = ['run/queue.js', '--once'].concat(A['allow-battery'] ? ['--allow-battery'] : [], A['include-text'] ? ['--include-text'] : [], A.workers ? ['--workers', String(A.workers)] : []);
+  const qargs = ['run/queue.js', '--once'].concat(A['allow-battery'] ? ['--allow-battery'] : [], A['include-text'] ? ['--include-text'] : [], A.workers ? ['--workers', String(A.workers)] : [], PHONE ? ['--phone', '--no-refill'] : []);
   say(`running ${j.id} in ${scratch}`);
   let code;
   if (A.dry) { fs.writeFileSync(path.join(res, 'queue_state.json'), JSON.stringify({ jobs: { [j.id]: { status: 'done', pass: null, dry: true } } })); fs.appendFileSync(reg, JSON.stringify({ fp: 'dry-' + j.id, desc: { dry: j.id }, status: 'finished', by: WORKER }) + '\n'); await sleep(+(process.env.BB_DQ_DRY_MS || 1500)); code = 0; }
@@ -111,6 +116,7 @@ async function main() {
   ensureClone(); say(`worker on ${BRANCH} of ${REPO.replace(/\/\/[^@]*@/, '//')}${isFinite(HOURS) ? ', ' + HOURS + ' h' : ''}`);
   let n = 0;
   for (;;) {
+    if (PHONE) { const p = require('./power').check(true); if (p.pause) { say('phone power guard: ' + p.why + '; waiting'); await sleep(120000); continue; } }
     const j = await claimNext();
     if (!j) { if (A.wait && Date.now() - T0 < HOURS * 3600e3 - 3600e3) { await sleep(300000); continue; } say('nothing to claim; exiting'); break; }
     const hb = setInterval(() => { renew(j).then(ok => { if (!ok) say(`warning: lost the claim on ${j.id}`); }).catch(() => {}); }, +(process.env.BB_DQ_RENEW_MS || 1800e3));
