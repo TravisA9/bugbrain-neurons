@@ -1,0 +1,181 @@
+{
+  "id": "q29_prederr_deep",
+  "title": "World model step 1b: prediction-mismatch depression (pl.predErr 0.02 / 0.05) on the v34 default deepURSx3: text 1000/3000, order3, fables 2000, 32 held-out growths (bases double as the PC check of the v34 port vs R44)",
+  "question": "Q20",
+  "track": "neuro",
+  "priority": 1.6,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\"}}",
+        "32",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 text1000 base",
+      "env": {
+        "BB_OUT": "results/r45/q29_prederr_deep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\"}}",
+        "32",
+        "pl.predErr=0.02",
+        "0"
+      ],
+      "label": "deepURSx3 text1000 pl.predErr=0.02",
+      "env": {
+        "BB_OUT": "results/r45/q29_prederr_deep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\"}}",
+        "32",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx3 text1000 pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r45/q29_prederr_deep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "32",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 order3 base",
+      "env": {
+        "BB_OUT": "results/r45/q29_prederr_deep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "32",
+        "pl.predErr=0.02",
+        "0"
+      ],
+      "label": "deepURSx3 order3 pl.predErr=0.02",
+      "env": {
+        "BB_OUT": "results/r45/q29_prederr_deep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "32",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx3 order3 pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r45/q29_prederr_deep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\"}}",
+        "32",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 fables2000 base",
+      "env": {
+        "BB_OUT": "results/r45/q29_prederr_deep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\"}}",
+        "32",
+        "pl.predErr=0.02",
+        "0"
+      ],
+      "label": "deepURSx3 fables2000 pl.predErr=0.02",
+      "env": {
+        "BB_OUT": "results/r45/q29_prederr_deep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\"}}",
+        "32",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx3 fables2000 pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r45/q29_prederr_deep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "32",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 text3000 base",
+      "env": {
+        "BB_OUT": "results/r45/q29_prederr_deep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "32",
+        "pl.predErr=0.02",
+        "0"
+      ],
+      "label": "deepURSx3 text3000 pl.predErr=0.02",
+      "env": {
+        "BB_OUT": "results/r45/q29_prederr_deep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "32",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx3 text3000 pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r45/q29_prederr_deep.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "adopt-candidate if predErr beats base on order3 and text3000 (paired t > 2) without losing text1000/fables"
+  }
+}

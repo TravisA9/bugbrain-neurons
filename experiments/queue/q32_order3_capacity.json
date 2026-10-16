@@ -1,0 +1,125 @@
+{
+  "id": "q32_order3_capacity",
+  "title": "Memory capacity: order3 with 12 / 16 symbols (5 / 7 segments, 1000-symbol lives) for unifiedR vs deepURSx3/x4/x6, 16 growths",
+  "question": "Q21",
+  "track": "neuro",
+  "priority": 1.45,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":12,\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "unifiedR order3 K12 n1000",
+      "env": {
+        "BB_OUT": "results/r45/q32_order3_capacity.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":12,\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 order3 K12 n1000",
+      "env": {
+        "BB_OUT": "results/r45/q32_order3_capacity.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":12,\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx4 order3 K12 n1000",
+      "env": {
+        "BB_OUT": "results/r45/q32_order3_capacity.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx6",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":12,\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx6 order3 K12 n1000",
+      "env": {
+        "BB_OUT": "results/r45/q32_order3_capacity.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":16,\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "unifiedR order3 K16 n1000",
+      "env": {
+        "BB_OUT": "results/r45/q32_order3_capacity.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":16,\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 order3 K16 n1000",
+      "env": {
+        "BB_OUT": "results/r45/q32_order3_capacity.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":16,\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx4 order3 K16 n1000",
+      "env": {
+        "BB_OUT": "results/r45/q32_order3_capacity.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx6",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":16,\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx6 order3 K16 n1000",
+      "env": {
+        "BB_OUT": "results/r45/q32_order3_capacity.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "shows whether depth or capacity limits longer patterns"
+  }
+}

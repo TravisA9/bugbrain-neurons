@@ -18,12 +18,22 @@ class SeqChoiceTask extends SA.SeqTask {
   }
   targetOf(s) { return this.map[s]; }
 }
+// R42 (I51) bottom-up stage 1: WORD-BOUNDARY CHUNKER. The letter stream of the text corpus; two outputs, 'boundary'
+// (a space comes next) and 'in word'. Spaces are free labels: each read-out is an outcome event (dopamine for the right
+// call). Score = boundary F1 (spaces are ~20% of characters, so plain accuracy would reward 'never a boundary').
+class ChunkTask extends SA.SeqTask {
+  constructor(seed, P, spec) { super(seed, Object.assign({}, P, { source: 'text' }), spec); this.outcomeEv = true; this.nOut = 2; this.sp = this.names.indexOf('␣'); this.bIdx = 0; }
+  targetOf(s) { return s === this.sp ? 0 : 1; }
+  score() { return this.bF1; }
+  fitness() { return 10 * this.bF1; }
+}
+SA.ChunkTask = ChunkTask;
 function io(P) { const s = SA.seqIO(Object.assign({}, P, { clock2: true, clock3: true })); s.outcome = true;
   s.outputs.forEach((o, k) => { o.name = 'arm_' + (k + 1); }); return s; }
 registerEnv({
   id: 'seqchoice', name: 'Sequence + choice (mixed: context and reward)', view: { width: 700, height: 480 },
   description: 'A symbol stream with a new rule every lifetime; after each symbol pick an arm. Only the arm assigned (new every lifetime) to the NEXT symbol pays. Needs sequence context and reward learning together.',
-  defaultPlan: 'unifiedR',
+  defaultPlan: 'deepURSx3',
   taskKeys: ['source', 'K', 'mapping'],
   params: {
     source: { value: 'order2', label: 'Sequence', options: [['cycle', 'Cycle'], ['order2', 'Second-order pattern'], ['order3', 'Third-order pattern']] },
@@ -37,5 +47,20 @@ registerEnv({
   },
   io,
   create(seed, P, spec) { return new SeqChoiceTask(seed, P, spec); },
+});
+registerEnv({
+  id: 'chunk', name: 'Word-boundary chunker (text, stage 1)', view: { width: 700, height: 480 },
+  description: 'R42 experimental: letters of the text corpus; call whether a word boundary (space) comes next. Spaces are the free labels. Score = boundary F1.',
+  defaultPlan: 'deepURSx3', taskKeys: [],
+  params: {
+    nSyms: { value: 1000, min: 20, max: 5000, step: 20, label: 'Characters per lifetime' },
+    source: { value: 'text', hidden: true }, K: { value: 4, hidden: true }, det: { value: 0.8, hidden: true },
+    onTicks: { value: 4, hidden: true }, holdTicks: { value: 4, hidden: true }, clock2: { value: true, hidden: true }, clock3: { value: true, hidden: true },
+    wrongCost: { value: 0, hidden: true }, goTicks: { value: 1, hidden: true }, nClock: { value: 9, hidden: true }, readTicks: { value: 4, hidden: true }, readIn: { value: 0, hidden: true }, beta: { value: 0.5, hidden: true },
+    inGain: { value: 10, hidden: true }, goGain: { value: 6, hidden: true }, tonicCurrent: { value: 1.5, hidden: true }, outBias: { value: 0, hidden: true },
+  },
+  io(P) { const s = SA.seqIO(Object.assign({}, P, { source: 'text', clock2: true, clock3: true })); s.outcome = true;
+    s.outputs = [Object.assign(s.outputs[0], { name: 'boundary', pos: [-0.5, -1], topo: -0.5 }), Object.assign(s.outputs[1], { name: 'in_word', pos: [0.5, -1], topo: 0.5 })]; return s; },
+  create(seed, P, spec) { return new ChunkTask(seed, P, spec); },
 });
 })();

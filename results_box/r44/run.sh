@@ -1,0 +1,3 @@
+pl=$1; t=$2; g0=$3
+case $t in text) J='{"env":"seq","params":{"source":"text","clock2":true,"clock3":true,"nSyms":1000}}';; fables) J='{"env":"seq","params":{"source":"fables","clock2":true,"clock3":true,"nSyms":2000}}';; o3) J='{"env":"seq","params":{"source":"order3","K":8,"clock2":true,"clock3":true}}';; cycle) J='{"env":"seqchoice","params":{"source":"cycle"}}';; order2) J='{"env":"seqchoice","params":{"source":"order2"}}';; bandit) J='{"env":"bandit","params":{}}';; bandit6) J='{"env":"bandit","params":{"K":6}}';; esac
+node ../../run/r42.js $pl "$J" 8 base $g0 > r44_${pl}_${t}_$g0.json 2>&1

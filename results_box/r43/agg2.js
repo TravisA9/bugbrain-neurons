@@ -1,0 +1,3 @@
+const fs=require('fs');const o={};for(const f of fs.readdirSync(__dirname)){const m=f.match(/^r43_(.+)_(text|o3)_(16|24)\.json$/);if(!m)continue;const j=JSON.parse(fs.readFileSync(__dirname+'/'+f));const k=m[1]+' '+m[2];o[k]=o[k]||{};o[k][m[3]]=j}
+for(const k in o){const s=[...o[k]['16'].scores,...o[k]['24'].scores],b=o['predictK3 '+k.split(' ')[1]],bs=[...b['16'].scores,...b['24'].scores],mu=s.reduce((a,c)=>a+c)/16,d=s.map((x,i)=>x-bs[i]),dm=d.reduce((a,c)=>a+c)/16,se=Math.sqrt(d.reduce((a,x)=>a+(x-dm)**2,0)/15/16);
+const lq=(o[k]['16'].stats.lastQuarter+o[k]['24'].stats.lastQuarter)/2;console.log(k.padEnd(16),mu.toFixed(3),'last',lq.toFixed(3),'diff',dm.toFixed(3),'t',(dm/se).toFixed(1),'wins',d.filter(x=>x>0).length)}

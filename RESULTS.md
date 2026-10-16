@@ -2099,3 +2099,134 @@ the juvenile phase entirely (cellRefine/cellHomeo/juvMode change nothing) -> new
 **New code**: `pl.ngFail` (need error = raw failure), `pl.ngStruct` (recruits bud from the most error-tagged grown claw), `P.juvMode` 3 (task-shaped symbol pulses) / 4 (same pulses shuffled), plans `rewardE3` (v33 striatum alone; identical to unifiedR on bandit) and `rewardE3ng`. Defaults off, so all scores unchanged.
 
 **New queue (ranked)**: q20 sample-efficiency sweep (lr ×1.5/2/3, rpeLr, metaN) · q21 task-shaped juvenile · q19 long-life multitask evolve 4 h · q25 life curve · q26 short-life evolve 3 h · q22 structured recruits (was q02_structured_recruits) · q23 failure-rate need (was q03_failure_rate) · q24 need-growth evolve 3 h. ≈ 12–13 h.
+
+## R42 — bottom-up stage 1 (word-boundary chunker) and fractal module scaling (box, Oct 15; defaults unchanged, v33 / 26)
+
+New code (all experimental, off by default): seq env reports word-boundary stats (`bF1`, `bP`, `bR`, online letter-bigram `bF1bigram`);
+env `chunk` (I51: letters of the text corpus, outputs boundary / in-word, outcome events, score = boundary F1); plans
+`tiledK3x2/x4/x8` (+ `wNN` / `fNN` wiring variants, I52); runner `run/r42.js` (held-out growths with full stats). Raw: results_box/r42/.
+
+**Stage 1 — chunker** (16 held-out growths, 1000 chars)
+
+| brain | boundary F1 | P | R | letter-bigram F1 |
+|---|---|---|---|---|
+| chunk env, rewardE | 0.485 | 0.46 | 0.55 | 0.725 |
+| chunk env, unifiedR | 0.434 | 0.48 | 0.46 | 0.725 |
+| chunk env, rewardE3 | 0.432 | 0.49 | 0.44 | 0.725 |
+| chunk env, predictK3 (no reward area) | 0.136 | 0.19 | 0.11 | 0.725 |
+| **text next-char predictor, predictK3 / unifiedR** (read: predicts space) | **0.868** | 0.86 | 0.88 | 0.733 |
+
+Verdict: a reward-trained boundary region loses to the letter bigram; the predictive cortex already chunks words (F1 0.87, beats
+the bigram) as a by-product of next-character prediction. Stage 2 (I55) should consume the cortex's boundary prediction, not a separate chunker.
+
+**Fractal scaling** (16 held-out growths each; text 1000 chars; order3 K 8)
+
+| modules | hidden | text score | text last ¼ | order3 score | order3 last ¼ |
+|---|---|---|---|---|---|
+| 1 (predictK3) | 2.4k | 7.264 ± 0.035 | 0.770 | 8.529 ± 0.106 | 0.903 |
+| 2 | 4.3k | 7.368 ± 0.031 | 0.784 | 8.333 ± 0.093 | 0.887 |
+| 4 | 8.3k | 7.360 ± 0.031 | 0.779 | 7.215 ± 0.009 | 0.742 |
+| 8 | 16.1k | 7.174 ± 0.041 | 0.760 | 7.228 ± 0.016 | 0.742 |
+| 4, fixed fibres w10 / w45 | 8.3k | 7.337 / 7.341 | 0.779 | 7.289 / 7.321 | 0.752 / 0.759 |
+| 8, fixed w10 | 16.1k | 7.032 | 0.746 | 7.207 | 0.740 |
+
+Plastic inter-module weight (wTot 10 / 22 / 45) gives bit-identical results: preNorm rescales every fibre cell's plastic output to 45.
+Verdict: no scaling. Text +0.10 at x2 (small), then flat and down at x8; order3 collapses at x4+ to the order-2 limit (0.74): identical
+copies converging on one output module swamp its own third-order context. Not adopted. Next: I53 module voting at the outputs,
+I54 morphogen-specialised modules (different memory depth). seqchoice order2 not run (tiled plan has no striatum).
+
+## R43 — specialised modules, module voting, stage-2 word region (box, Oct 15; defaults unchanged, v33 / 26)
+
+New code (experimental, off by default): region flag `vote` (a module's own output copy sums onto the shared outputs), tract map
+`outReset` (an output/prediction cell inhibits a class of another region); plans `slowK3x2/x4`, `deepK3x2/x4` (I54), `voteK3x2/x4` (I53),
+`wordK3`, `wordK3nr`, `wordK3r10` (I55). Held-out growths 0-15 (same seeds as R42, paired) plus a fresh replicate 16-31. Raw: results_box/r43/.
+
+| plan | text score | Δ vs predictK3 (t, wins) | text last ¼ | order3 score | Δ (t, wins) | order3 last ¼ |
+|---|---|---|---|---|---|---|
+| predictK3 (baseline) | 7.264 | | 0.770 | 8.529 | | 0.903 |
+| **deepK3x2** (+1 chained context: symbol 3 back) | 7.332 | +0.07 (1.9, 11/16) | 0.778 | **8.931** | **+0.40 (3.2, 12/16)** | 0.923 |
+| **deepK3x4** (+3: symbols 3-5 back) | **7.392** | **+0.13 (4.8, 14/16)** | 0.784 | 8.617 | +0.09 (0.5) | 0.900 |
+| slowK3x2 (module 1 mixLeak 0.8) | 7.255 | -0.01 | 0.769 | 8.754 | +0.23 (1.2) | 0.916 |
+| slowK3x4 (mixLeak 0.8/0.9/0.95) | 7.068 | -0.20 (-5.1) | 0.748 | 7.374 | -1.16 (-9.7) | 0.766 |
+| voteK3x2 | 7.361 | +0.10 (5.0, 15/16) | 0.782 | 8.277 | -0.25 (-1.4) | 0.867 |
+| voteK3x4 | 7.350 | +0.09 (3.5) | 0.780 | 7.657 | -0.87 (-8.2) | 0.808 |
+
+Replicate (fresh growths 16-31): predictK3 text 7.264 / order3 8.584; deepK3x2 7.337 (+0.07, t 3.0) / **9.019 (+0.44, t 4.4, last ¼ 0.944)**;
+deepK3x4 **7.408 (+0.14, t 4.8)** / 8.846 (+0.26, t 2.4); voteK3x2 7.353 (+0.09, t 3.8) / 8.353 (-0.23).
+
+**Stage 2 word region** (text, 16 growths; next-letter accuracy / boundary F1): predictK3 0.682 / 0.867; wordK3 (reset by the cortex's own
+predicted space) 0.677 / 0.859 (score -0.05, t -3.1); no-reset control 0.661 / 0.833 (-0.17); claw weight 10 = 30 (mixNorm normalises).
+
+Verdicts: **I54 deeper memory works** — the first scaling that adds performance: modules must add *new* memory depth, not copies or
+slower membranes (slow layers hurt at x4). deepK3x2 is best on order3, deepK3x4 on text; replicated on fresh growths. Not adopted yet:
+candidate default pending x3 and a fables / mixed-task check (I56). I53 voting: small text gain, hurts order3 — control only. I55 rejected
+in this form: the predicted-space reset is useful (beats no reset) but a bag-of-letters word state still costs accuracy; next is an ordered
+in-word code (I57).
+
+## R44 (box, Oct 15 2026): I56 deep-context depth on fables + mixed tasks, I57 ordered in-word memory
+
+New experimental plans (js/envs/reward_evolved.js, defaults unchanged): `deepURxM` = unifiedR v33 + M-1 chained context regions
+(context m holds the symbol m+2 back, claw -> cortex mixing; same receptor genes as the context area); `deepURSxM` = same but the
+extra areas are repressed by the outcome signal (area o = -20), so any task with dopamine grows exactly unifiedR; `wordChainxM` =
+deepURxM whose extra contexts are inhibited by the cortex's predicted space (letter k back *within the current word*).
+32 held-out growths per cell (16 + fresh 16), paired vs unifiedR (= predictK3 on sequences); score diff (t, wins/32):
+
+| task | unifiedR | x2 | x3 | x4 |
+|---|---|---|---|---|
+| text (1000) | 7.264 | +0.07 (3.3, 23) | +0.10 (4.7, 26) | **+0.14 (6.8, 28)** |
+| order3 | 8.556 | +0.42 (5.2, 25) | **+0.44 (4.2, 25)** | +0.17 (1.8, 18) |
+| fables (2000) | 2.926 | +0.02 (1.5) | +0.02 (1.0) | +0.02 (1.0) |
+| seqchoice cycle (deepURx) | 6.977 | -0.75 (-3.3) | -1.52 (-4.8) | -2.25 (-7.1) |
+| seqchoice order2 (deepURx) | 5.266 | +0.14 (0.6) | -0.43 (-3.0) | -1.09 (-4.1) |
+| bandit6 | 5.034 | identical | identical | identical |
+| cycle / order2 (deepURSx3/x4) | | | identical | identical |
+
+deepURx2/x3 on text/order3 reproduce deepK3x2/x4 of R43 exactly (same growths). wordChainx3 text +0.01 (t 0.5), x4 -0.00;
+fables -0.00 / -0.01: no gain over unifiedR and far below the unreset deep chain (+0.10 / +0.14).
+
+Verdicts: **I56** depth helps pure sequence prediction (x3 best compromise: text +0.10, order3 +0.44; x4 best text, weaker order3;
+fables only +0.02, n.s.), but extra context fed into the graded cortex badly hurts reward-driven sequences (seqchoice), so the
+naive unified variant fails. With outcome-repressed areas (deepURSx3) mixed tasks are bit-identical to unifiedR while text/order3 keep
+the gain -> **candidate default deepURSx3, awaiting Travis's approval** (not adopted). **I57 rejected** in this form: resetting deep
+memory at the predicted space removes exactly the cross-word context that made depth useful; in-word order alone adds nothing.
+
+**R44 adopted (v34, DEFAULTS_VERSION 27, Oct 16 2026, approved by Travis):** `deepURSx3` replaces `unifiedR` as the default plan for
+three-phase-clock sequences (text, fables, order3) and seqchoice. Bandit / cue keep `unifiedR` (deepURSx3 grows it identically there).
+Expected: text +0.10, order3 +0.44, fables +0.02, seqchoice bit-identical. Old defaults backed up in legacy/v33; test_core.js v34 test added.
+
+## R45 — queue review (Oct 16, 7:16 AM CT): queue had run dry; v34 ported to the PC; new depth / world-model / analogy queue (defaults unchanged, v34 / 27)
+
+**Queue status**: the runner (pid 35000, `--wait`) was alive but idle with no runnable jobs from 10:33 PM Oct 15 to 7:35 AM Oct 16
+(about 9 h of PC idle time lost). Not crashed, no PAUSE file. New jobs were added; it picked up q28 at 7:35 AM.
+The q26 evolution (3 h of active compute) took Oct 14 7:40 PM → Oct 15 10:22 PM of wall time because the queue waits while other programs use > 60 % CPU.
+
+**Finished since the last recorded round** (all from results/QUEUE_LOG.md on the PC; 16 held-out growths each, means ± sd):
+
+| job | result | verdict |
+|---|---|---|
+| q20 sample-efficiency sweep (rewardE3, 300-symbol lives) | lr ×1.5/×2/×3: cycle 7.43/7.28/6.87 vs base 7.44, bandit 6.85/6.70/6.39 vs 6.78, cueR 9.71/10.37/9.60 vs 9.25; rpeLr 0.5/0.8 cycle 7.77/7.38, bandit 6.73/6.14; metaN 20/40 bit-identical to base | no setting helps all tasks (largest: cueR +1.1 at lr ×2, t ≈ 2 unpaired, with cycle/bandit slightly worse) → rejected (I60) |
+| q21 task-shaped juvenile activity (rewardE3) | juvMode 3 vs 4 (shuffled): bandit 6.67/6.69, cueR 9.88/9.25, cycle 7.33/7.04, order2@300 5.12/5.09; juvHold 8: cueR 8.62 | within noise → I46 rejected |
+| q19 long-life multitask evolve (4 h, 78 gens) | champion 0.945 (gen 18): bandit 0.89, bandit6 0.98, cueR 1.05, cycle1000 0.93, order2_1000 0.91 of reference | FAIL (< 1.03), nothing to re-evaluate |
+| q25 life curve (unifiedR v33) | seqchoice cycle 150/600/2000 symbols: 5.82/8.48/9.20; order2 4.76/5.55/6.08 | life length keeps paying (I41) |
+| q26 short-life evolve (rewardE3, 3 h, 105 gens) | champion 1.019 (gen 35): bandit 7.16 (1.00), cueR 9.65 (1.02), cycle 8.02 (1.14), order2 4.67 (0.95) | FAIL (< 1.03): cycle gain bought with order2 loss; not re-evaluated |
+| q27 world model step 1, pl.predErr (Oct 15, 10:33 PM) | predictK3 text 7.264 → 7.211 / 7.126 / 6.983 (predErr 0.05 / 0.15 / 0.3); order3 8.528 → 8.816 / 8.747 / 8.156; unifiedR seqchoice order2@1000 5.852 → 5.738 (0.1) / 4.411 (0.3) | mixed: order3 +0.29 at 0.05 (t ≈ 1.7 unpaired, n.s.), text loses with dose, mixed task loses at 0.3 → not adopted; retest small rates on v34 (q29) |
+
+**Adoptions**: none from the queue (no evolve champion passed its criterion, so no held-out re-evaluation was needed). Defaults stay
+v34 / DEFAULTS_VERSION 27 (R44, deepURSx3, approved by Travis Oct 16).
+
+**PC brought up to v34**: the PC was still on v33 / 26 (R41 code). The R44 files (base.js, regions.js, reward_evolved.js, seqchoice.js,
+sequence.js, test_core.js, run/dq.js, run/r42.js, legacy/v33 backup) were copied to the PC; the replaced PC files are in
+results/backup_pre_r45_20261016. Check: deepURSx3 order3 growth 0 scores 8.475 on both the PC and the box (bit-identical); box test_core.js ALL OK (incl. v34 test).
+
+**New code (R45, off by default, scores unchanged)**: plans `deepURSx6`, `deepURSx8` (same deep chain, more depth); seq env option
+`relabel` (I49 analogy test: from that fraction of the life on, every symbol is renamed by one fixed random permutation; stats `q1`, `q2`
+added); `run/r42.js` records each run in the registry and, with `BB_OUT=<file>`, appends the full result (per-growth scores + stats)
+so paired tests are possible (new jobs write to results/r45/*.jsonl).
+
+**New queue (ranked by payoff)**: q28 depth × life length (x3/x4/x6/x8 vs unifiedR on text 3000/5000, fables 5000; x6/x8 on text 1000,
+fables 2000, order3) · q29 predErr 0.02/0.05 on deepURSx3 (text 1000/3000, order3, fables; 32 growths; bases double as the PC check of
+the v34 port vs R44) · q31 analogy relabel (order3 / text / cycle, unifiedR vs deepURSx3 ± predErr, with no-relabel controls) ·
+q32 order3 capacity (K 12 / 16) · q30 evolve deepURSx3 on text 2000 + fables 2000 + order3 (5 h) · q33 evolve for fast reuse after
+renaming (3 h, after q31) · q34 evolve deepURSx4 with 5000-symbol lives (3 h, after q28). About 1.5 h of held-out runs + 11 h of
+evolution ≈ 12 h of active compute (more wall time when the PC is busy).
+Not queued on the PC: q18, q22-q24 stay on the distributed `queue` branch (still unclaimed).

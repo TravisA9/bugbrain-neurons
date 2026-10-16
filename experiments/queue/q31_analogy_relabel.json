@@ -1,0 +1,195 @@
+{
+  "id": "q31_analogy_relabel",
+  "title": "Analogy test I49: rename every symbol mid-life (relabel 0.5, same structure) on order3 / text / cycle; post-switch quarter (q2) vs a fresh brain's first quarter; unifiedR vs deepURSx3 (+predErr 0.05), 16 growths",
+  "question": "Q23",
+  "track": "neuro",
+  "priority": 1.5,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "unifiedR order3 n2000 relabel base",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel base",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "unifiedR text n2000 relabel base",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 text n2000 relabel base",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx3 text n2000 relabel pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"cycle\",\"K\":8,\"nSyms\":1000,\"relabel\":0.5,\"clock2\":true,\"clock3\":true}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "unifiedR cycle K8 n1000 relabel base",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"cycle\",\"K\":8,\"nSyms\":1000,\"relabel\":0.5,\"clock2\":true,\"clock3\":true}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 cycle K8 n1000 relabel base",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"cycle\",\"K\":8,\"nSyms\":1000,\"relabel\":0.5,\"clock2\":true,\"clock3\":true}}",
+        "16",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx3 cycle K8 n1000 relabel pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "unifiedR order3 n2000 (no relabel control)",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 order3 n2000 (no relabel control)",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":2000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "unifiedR text n2000 (no relabel control)",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":2000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 text n2000 (no relabel control)",
+      "env": {
+        "BB_OUT": "results/r45/q31_analogy_relabel.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "transfer if q2 after relabel > firstQuarter of a fresh brain (stats in results/r45/q31_analogy_relabel.jsonl)"
+  }
+}

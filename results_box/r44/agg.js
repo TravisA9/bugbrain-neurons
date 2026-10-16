@@ -1,0 +1,5 @@
+const fs=require('fs');const o={};for(const f of fs.readdirSync(__dirname)){const m=f.match(/^r44_(.+)_(\w+?)_(\d+)\.json$/);if(!m)continue;let j;try{j=JSON.parse(fs.readFileSync(__dirname+'/'+f))}catch(e){continue}(o[m[2]]=o[m[2]]||{});(o[m[2]][m[1]]=o[m[2]][m[1]]||{})[m[3]]=j}
+const half=(r,gs)=>gs.flatMap(g=>r[g]?r[g].scores:[]);
+for(const t in o){const B=o[t].unifiedR;if(!B)continue;for(const p in o[t]){const r=o[t][p];const row=[t.padEnd(7),p.padEnd(12)];
+ for(const gs of [['0','8'],['16','24'],['0','8','16','24']]){const s=half(r,gs),b=half(B,gs);if(s.length!==b.length||!s.length){row.push('   -');continue}const n=s.length,mu=s.reduce((a,c)=>a+c)/n,d=s.map((x,i)=>x-b[i]),dm=d.reduce((a,c)=>a+c)/n,se=Math.sqrt(d.reduce((a,x)=>a+(x-dm)**2,0)/(n-1)/n)||1e-9;row.push(`${mu.toFixed(3)} ${dm>=0?'+':''}${dm.toFixed(2)}(t${(dm/se).toFixed(1)},${d.filter(x=>x>0).length}/${n})`)}
+ const ac=Object.values(r).map(x=>x.stats.accuracy),lq=Object.values(r).map(x=>x.stats.lastQuarter);row.push('acc '+(ac.reduce((a,c)=>a+c)/ac.length).toFixed(3),'lastQ '+(lq.reduce((a,c)=>a+c)/lq.length).toFixed(3));console.log(row.join(' | '))}}

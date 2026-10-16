@@ -1,0 +1,20 @@
+{
+  "name": "deep_seq_evolve",
+  "description": "(R45 queue, Q22) evolve the v34 default deepURSx3 on long-memory sequence prediction: text 2000, fables 2000, order3 (K 8); mixed tasks are re-checked on held-out growths afterwards",
+  "mode": "standard",
+  "seed": 45,
+  "workers": "auto",
+  "population": 32,
+  "generations": 0,
+  "hours": 4,
+  "start": ["deepURSx3"],
+  "engine": { "growths": 2, "episodes": 1, "robustW": 0.5, "valGrowths": 4, "valArenas": 4, "valTopK": 3, "cellMut": 0.02, "eliteFrac": 0.1, "crossoverRate": 0.3 },
+  "tasks": [
+    { "name": "text2000", "env": "seq", "params": { "source": "text", "nSyms": 2000 }, "weight": 1, "ref": "auto", "refPlan": "deepURSx3" },
+    { "name": "fables2000", "env": "seq", "params": { "source": "fables", "nSyms": 2000 }, "weight": 1, "ref": "auto", "refPlan": "deepURSx3" },
+    { "name": "order3", "env": "seq", "params": { "source": "order3", "K": 8 }, "weight": 1, "ref": "auto", "refPlan": "deepURSx3" }
+  ],
+  "combine": { "type": "softmin", "tau": 0.25, "cap": 1.5 },
+  "championEvery": 5,
+  "smoke": { "text2000": { "nSyms": 60 }, "fables2000": { "nSyms": 60 }, "order3": { "nSyms": 60 } }
+}

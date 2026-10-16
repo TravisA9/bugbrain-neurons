@@ -35,7 +35,7 @@ function regionSpec(envSpec, R) {
   const juvenile = { waves: [waves], waveGain: J.waveGain, tonic: (J.tonic || []).map(([i, v]) => [loc(i), v]).filter(t => t[0] >= 0),
                      kicks: J.kicks ? Object.assign({}, J.kicks, { chans: ins.map((c, i) => i).filter(i => !ins[i].tonic && ins[i].diffuse) }) : null };
   if (juvenile.kicks && !juvenile.kicks.chans.length) juvenile.kicks = null;
-  const spec = makeSpec({ inputs: ins, outputs: R.outputs ? envSpec.outputs : [], classes: envSpec.classes, tagNames: envSpec.tagNames, juvenile });
+  const spec = makeSpec({ inputs: ins, outputs: (R.outputs || R.vote) ? envSpec.outputs : [], classes: envSpec.classes, tagNames: envSpec.tagNames, juvenile });
   spec.key += '|region ' + R.name; return { spec, map };
 }
 const inhib = (g, i) => { const n = g.N; for (let b = 0; b < n; b++) if (g.W[i * n + b] < 0) return true; return false; };   // a cell with an inhibitory synapse
@@ -48,7 +48,7 @@ function growRegions(d, opts) {
   const nIn = envSpec.nIn, nOut = envSpec.nOut, outPart = parts.find(p => p.R.outputs) || parts[0];
   let off = nIn; for (const p of parts) { p.off = off; off += p.g.nHid; }
   const nHid = off - nIn, G = createNetGenome(nIn, nHid, nOut), N = G.N;
-  const node = (p, i) => i < p.g.nIn ? (typeof p.map[i] === 'number' ? p.map[i] : -1) : i < p.g.nIn + p.g.nHid ? p.off + i - p.g.nIn : (p === outPart ? nIn + nHid + i - p.g.nIn - p.g.nHid : -1);
+  const node = (p, i) => i < p.g.nIn ? (typeof p.map[i] === 'number' ? p.map[i] : -1) : i < p.g.nIn + p.g.nHid ? p.off + i - p.g.nIn : ((p === outPart || p.R.vote) ? nIn + nHid + i - p.g.nIn - p.g.nHid : -1);   // R43 (I53) vote: a module's own output copy sums onto the shared outputs
   G.pos = new Array(N); G.cellType = new Int16Array(N); G.region = new Uint8Array(N); G.topo = new Float32Array(N).fill(NaN);
   for (let i = 0; i < nIn; i++) { G.pos[i] = envSpec.inputs[i].pos; G.cellType[i] = envSpec.inputs[i].cls; G.region[i] = 255; }
   for (let m = 0; m < nOut; m++) { const i = nIn + nHid + m; G.pos[i] = envSpec.outputs[m].pos; G.cellType[i] = envSpec.outputs[m].cls; G.region[i] = parts.indexOf(outPart); }
@@ -60,7 +60,7 @@ function growRegions(d, opts) {
     for (let a = 0; a < n; a++) { const A = node(p, a), tr = a < g.nIn && typeof p.map[a] !== 'number' ? p.map[a] : null;
       for (let b = 0; b < n; b++) { const w = g.W[a * n + b]; if (!w) continue; const B = node(p, b); if (B < 0) continue;
         if (tr) { (p.arrivals = p.arrivals || []).push([tr.tract, tr.label, B, w]); continue; }
-        if (A < 0) continue; const q = A * N + B; G.W[q] += w; if (g.P[a * n + b]) G.P[q] = 1; if (g.C[a * n + b]) G.C[q] = g.C[a * n + b]; } } });
+        if (A < 0) continue; const q = A * N + B; G.W[q] += (p.R.vote && B >= nIn + nHid) ? w * (p.R.voteScale || 1) : w; if (g.P[a * n + b]) G.P[q] = 1; if (g.C[a * n + b]) G.C[q] = g.C[a * n + b]; } } });
   // tracts
   const tractStats = [];
   for (const T of d.tracts || []) {
@@ -81,6 +81,10 @@ function growRegions(d, opts) {
       const tg = []; for (let i = dst.g.nIn; i < dst.g.nIn + dst.g.nHid; i++) if (dst.g.recv && dst.g.recv[i]) tg.push(node(dst, i));
       const src = [].concat(...cols.values()), pc = T.p || 1, ws = T.to.wTot / Math.max(1, pc * src.length), r = mulberry32((seed ^ 0x2c1b3c6d ^ (T.salt || 0)) >>> 0);   // total weight ~wTot per target
       for (const A of src) for (const B of tg) { if (pc < 1 && r() >= pc) continue; const q = A * N + B; G.W[q] += ws; if (T.plastic) G.P[q] = 1; nSyn++; }   // p < 1: each pair connects with probability p
+    }
+    else if (T.map === 'outReset') {   // R43 (I55): the output (prediction) cell named T.from.out inhibits every cell of class T.to.cls of the target region (a predicted word boundary resets it)
+      const m = envSpec.outputs.findIndex(o => o.name === T.from.out); if (m >= 0) { const A = nIn + nHid + m;
+        for (let i = dst.g.nIn; i < dst.g.nIn + dst.g.nHid; i++) if (dst.g.cellType[i] === N_FIXED + T.to.cls) { G.W[A * N + node(dst, i)] -= T.to.w; nSyn++; } }
     }
     tractStats.push({ name: T.name, from: src.R.name, to: dst.R.name, columns: cols.size, synapses: nSyn });
   }

@@ -1,0 +1,151 @@
+{
+  "id": "q27_world_model_prederr",
+  "title": "World model step 1: prediction-mismatch depression (pl.predErr) on text / order3 / order2 n1000, 16 held-out growths vs predictK3 & unifiedR base",
+  "question": "Q20",
+  "track": "neuro",
+  "priority": 1.6,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "text",
+        "base",
+        "16"
+      ],
+      "label": "predictK3 text base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "text",
+        "pl.predErr=0.05",
+        "16"
+      ],
+      "label": "predictK3 text pl.predErr=0.05"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "text",
+        "pl.predErr=0.15",
+        "16"
+      ],
+      "label": "predictK3 text pl.predErr=0.15"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "text",
+        "pl.predErr=0.3",
+        "16"
+      ],
+      "label": "predictK3 text pl.predErr=0.3"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "order3",
+        "base",
+        "16"
+      ],
+      "label": "predictK3 order3 base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "order3",
+        "pl.predErr=0.05",
+        "16"
+      ],
+      "label": "predictK3 order3 pl.predErr=0.05"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "order3",
+        "pl.predErr=0.15",
+        "16"
+      ],
+      "label": "predictK3 order3 pl.predErr=0.15"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "predictK3",
+        "order3",
+        "pl.predErr=0.3",
+        "16"
+      ],
+      "label": "predictK3 order3 pl.predErr=0.3"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "text",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR text base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "text",
+        "pl.predErr=0.1",
+        "16"
+      ],
+      "label": "unifiedR text pl.predErr=0.1"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "text",
+        "pl.predErr=0.3",
+        "16"
+      ],
+      "label": "unifiedR text pl.predErr=0.3"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR order2 n1000 base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "pl.predErr=0.1",
+        "16"
+      ],
+      "label": "unifiedR order2 n1000 pl.predErr=0.1"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "pl.predErr=0.3",
+        "16"
+      ],
+      "label": "unifiedR order2 n1000 pl.predErr=0.3"
+    }
+  ],
+  "accept": {}
+}

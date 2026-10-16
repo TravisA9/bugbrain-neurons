@@ -374,6 +374,12 @@ class SpikingNet {
           inS = this.inStart, inE = this.inEdges, aM = this.p.aMinus;
     if (learn && this.teachTr) {             // teacher-gated rule: a spike during a teacher plateau potentiates
       const lr = this.p.lr * (this.uni ? this.p.uniI : 1), ws = this.ws, wMax = params.wMax, dirty = this.dirtyList, nd = this.normDirty, xT = this.xLag || xPre, mE = this.metaE, mN = this.p.metaN, tro = this.ng ? this.ng.tro : null;
+      const pe = this.p.predErr || 0;   // R41 predErr (0 = off): prediction-MISMATCH depression. A taught cell that fires with no teacher plateau
+      // predicted an input that did not arrive: its recently active plastic inputs are depressed by predErr*lr*x (local, cerebellar-LTD-like).
+      // With the plateau potentiation this makes a sign-balanced, error-driven local delta rule: the cell learns to predict its own next input.
+      if (pe > 0) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (i < this.g.nIn || this.plat[i] > 0 || !this.armed[i]) continue;
+        for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]]; if (x < 0.01) continue;
+          ws[k] = Math.max(0, ws[k] - pe * lr * x); } }
       for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (this.plat[i] <= 0) continue;
         for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]]; if (x < 0.01) continue;
           if (mE) { const j = pres[k], d = lr * x; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; }

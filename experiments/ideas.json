@@ -430,7 +430,7 @@
       "area": "reward",
       "title": "Striatum evolved on bandit 3/6 arms + seqchoice (q04 champion) transplanted into unifiedR = rewardE3",
       "status": "adopted",
-      "evidence": "whole champion: text 0.40, order3 1.37 (collapse); striatum only: bandit6 5.11 vs 4.31 (+0.81 \u00b1 0.31), cycle 7.24 vs 6.78, cue -0.08 \u00b1 0.46 (40 growths), text/order3 bit-identical",
+      "evidence": "whole champion: text 0.40, order3 1.37 (collapse); striatum only: bandit6 5.11 vs 4.31 (+0.81 ± 0.31), cycle 7.24 vs 6.78, cue -0.08 ± 0.46 (40 growths), text/order3 bit-identical",
       "why": "keep the evolved reward area, not the mutated sequence areas",
       "rounds": [
         "R39"
@@ -474,11 +474,12 @@
       "area": "learning",
       "title": "Lifetime length is the biggest lever for sequence choice",
       "status": "confirmed",
-      "evidence": "seqchoice 1000 symbols: cycle 8.94, order2 5.85 vs 6.78 / 5.20 at 300 (q11); rewardE2 order2@1000 4.71 (q17)",
+      "evidence": "seqchoice 1000 symbols: cycle 8.94, order2 5.85 vs 6.78 / 5.20 at 300 (q11); rewardE2 order2@1000 4.71 (q17); R45 life curve (q25, unifiedR v33, 16 growths): seqchoice cycle 150/600/2000 symbols 5.82/8.48/9.20, order2 4.76/5.55/6.08 (still rising at 2000)",
       "why": "the reward area learns slowly; long lives, or better sample efficiency, are what pay",
       "rounds": [
         "R39",
-        "R40"
+        "R40",
+        "R45"
       ]
     },
     {
@@ -530,20 +531,174 @@
       "id": "I46",
       "area": "development",
       "title": "Task-shaped juvenile activity (juvMode 3) vs same pulses shuffled (4)",
-      "status": "testing",
-      "evidence": "implemented R40",
+      "status": "rejected",
+      "evidence": "q21 (rewardE3, 16 growths) juvMode 3 (task-shaped) vs 4 (same pulses shuffled): bandit 6.67/6.69, cueR 9.88/9.25, cycle 7.33/7.04, order2@300 5.12/5.09 (base 6.78/9.25/7.44/5.00); hold 8: cueR 8.62. All within noise (sd 0.6-2.3)",
       "why": "I42 left open whether the pattern matters when it resembles the task",
       "rounds": [
-        "R40"
+        "R40",
+        "R45"
+      ]
+    },
+    {
+      "id": "I47",
+      "area": "learning",
+      "title": "World model: taught cells predict their next input; mismatch (spike without teacher plateau) depresses inputs (pl.predErr)",
+      "status": "mixed",
+      "evidence": "q27 (16 held-out growths, means; unpaired t): predictK3 order3 8.53 -> 8.82 (0.05, t~1.7) / 8.75 (0.15) / 8.16 (0.3); text 7.26 -> 7.21 / 7.13 / 6.98 (dose-dependent loss, t -0.9/-1.8/-3.3); unifiedR seqchoice order2@1000 5.85 -> 5.74 (0.1) / 4.41 (0.3). Not adopted. Hint on order3 only at small rates -> q29 retests 0.02/0.05 on the v34 deep plan with 32 paired growths",
+      "why": "step 1 of the world-model roadmap; local error-driven rule, no backprop",
+      "rounds": [
+        "q27",
+        "R45"
+      ]
+    },
+    {
+      "id": "I48",
+      "area": "memory",
+      "title": "Slow context layers: chain of increasingly slow recurrent/adaptive cells summarising the layer below",
+      "status": "open",
+      "evidence": "R43: slow-membrane modules (mixLeak by position) neutral at x2, harmful at x4; depth as a chained shift register (deepK3, I54) works instead",
+      "why": "gives 'where it came from' state for long non-repeating sequences",
+      "rounds": [
+        "R43"
+      ]
+    },
+    {
+      "id": "I49",
+      "area": "evaluation",
+      "title": "Alphabet-transfer analogy test: learn a grammar on one alphabet, relabel symbols, measure relearning speed vs fresh brain",
+      "status": "testing",
+      "evidence": "R45: seq env option relabel (rename all symbols by one random permutation from that fraction of the life on; stats q1/q2); box smoke 2 growths deepURSx3: order3 n2000 fresh first quarter 0.91 vs 0.62 right after the renaming (no-relabel 1.00) -> interference, not yet transfer; q31 measures 16 growths, q33 evolves for it",
+      "why": "faster relearning = reusable role/structure circuits (analogy)",
+      "rounds": [
+        "R45"
+      ]
+    },
+    {
+      "id": "I50",
+      "area": "world-model",
+      "title": "Imagined rollouts: feed the world model's predictions back as input to try actions before taking them (bug world)",
+      "status": "open",
+      "evidence": "",
+      "why": "needs I47 accurate first",
+      "rounds": []
+    },
+    {
+      "id": "I51",
+      "area": "staged-learning",
+      "title": "Bottom-up stage 1: word-boundary chunker (env chunk: 2 outputs boundary / in-word, spaces as free dopamine labels; seq stats bF1)",
+      "status": "rejected",
+      "evidence": "R42, 16 held-out growths, 1000 chars: dedicated chunker F1 rewardE 0.485, unifiedR 0.434, rewardE3 0.432, predictK3 0.136 vs online letter-bigram 0.725. But the next-character predictor (predictK3 on text) already marks boundaries at F1 0.868 (P 0.856 R 0.881) vs bigram 0.733: chunking emerges from prediction for free",
+      "why": "stage 1 of bottom-up staging; result: use the predictive cortex itself as the chunker, not a reward-trained boundary region",
+      "rounds": [
+        "R42"
+      ]
+    },
+    {
+      "id": "I52",
+      "area": "scaling",
+      "title": "Fractal module tiling: predictK3 module x M (tiledK3xM), extra modules mixing cells -> module 0 receivers",
+      "status": "rejected",
+      "evidence": "R42, 16 growths: text 7.264 (x1) / 7.368 (x2) / 7.360 (x4) / 7.174 (x8); order3 8.529 / 8.333 / 7.215 / 7.228 (x4+ collapses to the order-2 limit, last quarter 0.90 -> 0.74). Inter-module weight irrelevant when plastic (preNorm rescales each fibre cell to 45); fixed weights 10/45 same collapse",
+      "why": "convergence of copies onto one output module dilutes the module own third-order context; needs I53/I54",
+      "rounds": [
+        "R42"
+      ]
+    },
+    {
+      "id": "I53",
+      "area": "scaling",
+      "title": "Module voting: every tiled module owns a copy of the outputs; outputs sum (population vote) instead of feeding module 0 receivers",
+      "status": "mixed",
+      "evidence": "R43 voteK3x2 / x4: text +0.10 / +0.09 (t 5.0 / 3.5, replicate +0.09) but order3 -0.25 / -0.87 (redundant votes from modules wash out the third-order output). Cheap text gain only; deepK3 beats it on both",
+      "why": "R42: naive convergence hurt order3; parallel columns voting at the readout is how cortex pools redundant columns",
+      "rounds": [
+        "R43"
+      ]
+    },
+    {
+      "id": "I54",
+      "area": "scaling",
+      "title": "Specialized modules by morphogen position: module k context depth k+2 (longer shift registers / slower clocks) so copies add NEW information (longer memory) instead of redundant",
+      "status": "promising",
+      "evidence": "R43, 32 held-out growths (16 + fresh 16 replicate): deepK3x2 (one extra chained context = symbol 3 back -> mixing) order3 8.529->8.931 / replicate 8.584->9.019 (paired t 3.2 / 4.4, last quarter 0.94), text +0.07 (t 1.9 / 3.0); deepK3x4 text +0.13 / +0.14 (t 4.8 both, last quarter 0.786), order3 +0.09 / +0.26. Slower-membrane modules (slowK3x2/x4, mixLeak 0.8-0.95): x2 neutral, x4 harmful (text -0.20, order3 -1.16). Deeper memory helps; slower membranes do not. Candidate default (deepK3x2 or x3) pending a fables / mixed-task check",
+      "why": "R42: identical copies carry the same third-order code; scaling must add memory depth (ties to I48 slow context layers, issue #2)",
+      "rounds": [
+        "R43"
+      ]
+    },
+    {
+      "id": "I55",
+      "area": "staged-learning",
+      "title": "Stage 2: word-level region fed by the cortex boundary/prediction signal (word onset gating a slow word-context register) for next-letter and next-word prediction",
+      "status": "rejected",
+      "evidence": "R43 wordK3: slow word region (context program, memory columns accumulate letters, inhibited by the cortex own next_space prediction, claw -> mixing): text 7.210 vs 7.264 (-0.05, t -3.1), boundary F1 0.859 vs 0.867; no-reset control 7.097 (reset helps the region, -0.17 -> -0.05) but a bag-of-letters word state still hurts; claw weight 10 vs 30 identical (mixNorm). Next: word state as a sequence code (I56)",
+      "why": "R42 showed boundaries are already available from prediction (F1 0.87); stage 2 should consume them, not retrain them",
+      "rounds": [
+        "R43"
+      ]
+    },
+    {
+      "id": "I56",
+      "area": "memory",
+      "title": "deepK3 follow-ups: x3 depth, fables + mixed task held-out check, then adopt as text default if it holds",
+      "status": "adopted",
+      "evidence": "R44, 32 held-out growths: depth x2/x3/x4 text +0.07/+0.10/+0.14 (t 3.3/4.7/6.8), order3 +0.42/+0.44/+0.17, fables +0.02 n.s.; extra context areas in unifiedR hurt seqchoice cycle -0.75/-1.52/-2.25 and order2 (x3 -0.43); outcome-repressed areas (deepURSx3) identical to unifiedR on mixed tasks. Candidate default deepURSx3 pending approval. ADOPTED v34 (DEFAULTS_VERSION 27) after approval",
+      "why": "R43 deepK3 is the first scaling that helps (order3 +0.4, text +0.13)",
+      "rounds": [
+        "R44"
+      ]
+    },
+    {
+      "id": "I57",
+      "area": "staged-learning",
+      "title": "Word region as an ordered code (position-in-word x letter conjunctions) rather than a bag of letters, still reset by the predicted space",
+      "status": "rejected",
+      "evidence": "R44 wordChainx3/x4 (deep chain reset by predicted space = ordered in-word memory): text +0.01/-0.00, fables -0.00/-0.01 vs unreset chain +0.10/+0.14; cross-word context is what depth buys",
+      "why": "R43: bag-of-letters word state hurt; order inside the word is what carries information",
+      "rounds": [
+        "R44"
+      ]
+    },
+    {
+      "id": "I58",
+      "area": "memory",
+      "title": "Memory depth x life length: deeper chains (deepURSx6/x8) pay off only with long lives (text 3000/5000, fables 5000) and bigger alphabets (order3 K12/16)",
+      "status": "testing",
+      "evidence": "R44: depth gain grows x2->x4 on text 1000 (+0.07/+0.10/+0.14) but fables 2000 only +0.02; box smoke 1 growth: x6/x8 text 1000 7.38/7.42 vs x3 7.34. q28, q32 (16 growths, paired with R44 seeds)",
+      "why": "I41 life length is the biggest lever; Travis: longer memory for non-repetitive sequence prediction; fractal scaling that adds new memory depth (I54)",
+      "rounds": [
+        "R45"
+      ]
+    },
+    {
+      "id": "I59",
+      "area": "evolution",
+      "title": "Evolve the v34 deep plan on long-memory prediction (text/fables 2000 + order3; and text/fables 5000 from deepURSx4)",
+      "status": "testing",
+      "evidence": "queued q30 (5 h) and q34 (3 h); earlier multitask evolutions mostly returned the start genome (I40, I44, q19 0.945, q26 1.019)",
+      "why": "sequence-only fitness is cheaper per generation than text+reward multitask and targets the key focus",
+      "rounds": [
+        "R45"
+      ]
+    },
+    {
+      "id": "I60",
+      "area": "learning",
+      "title": "Sample efficiency at 300-symbol lives by rate genes (lr, rpeLr, metaN) or evolution (q20, q26)",
+      "status": "rejected",
+      "evidence": "q20 rewardE3 16 growths: lr x1.5/x2/x3 cycle 7.43/7.28/6.87 vs 7.44, cueR 9.71/10.37/9.60 vs 9.25 (n.s.), bandit 6.85/6.70/6.39 vs 6.78; rpeLr 0.5/0.8 cycle 7.77/7.38; metaN 20/40 bit-identical (unused by rewardE3). q26 evolve 3 h (105 gens): champion 1.019 < 1.03, cycle@300 8.02 vs 7.05 (+14%) but order2 4.67 vs 4.91 (-5%). q19 1000-symbol multitask evolve 0.945",
+      "why": "Q19: short lives far below long-life scores (I41)",
+      "rounds": [
+        "R45"
       ]
     }
   ],
   "questions": [
     {
       "id": "Q01",
-      "q": "Does a v32 five-task evolution (text, order3, bandit, cue, seqchoice) find a genome better than unifiedR on mixed tasks without losing the others?",
+      "q": "Does a v32 five-task evolution (text, order3, bandit, cue, seqchoice) find a genome better than unifiedR on mixed tasks without losing the others? [answered R39 q01: champion 0.966]",
       "impact": 5,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 2,
       "experiment": "bun run/runner.js experiments/v32_five.json (3 h), re-eval on 16 held-out growths"
     },
@@ -573,9 +728,9 @@
     },
     {
       "id": "Q05",
-      "q": "Does patterned (structured) activity during juvenile growth produce better wiring than matched random activity?",
+      "q": "Does patterned (structured) activity during juvenile growth produce better wiring than matched random activity? [answered R40: shuffled = patterned waves]",
       "impact": 3,
-      "likelihood": 0.4,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "juvenile activity patterned vs shuffled (matched rate), 16 growths, text/order3/bandit"
     },
@@ -605,25 +760,25 @@
     },
     {
       "id": "Q09",
-      "q": "Can evolution tune the dual-timescale mix per area so cycle >= 8 with bandit >= 6.5, cue >= 10?",
+      "q": "Can evolution tune the dual-timescale mix per area so cycle >= 8 with bandit >= 6.5, cue >= 10? [answered R39 q09: no gain]",
       "impact": 3,
-      "likelihood": 0.2,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "evolve rewardE2 eligibility genes on bandit+cue+cycle with longer budget"
     },
     {
       "id": "Q10",
-      "q": "Does tag consumption at outcomes (eligUse) combined with dual traces fix 6x6 without hurting cue?",
+      "q": "Does tag consumption at outcomes (eligUse) combined with dual traces fix 6x6 without hurting cue? [answered R40: eligUse no effect]",
       "impact": 3,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "ablate eligUse 0.3/0.5/0.7 on rewardE2, 16 growths"
     },
     {
       "id": "Q11",
-      "q": "Does the seqchoice random-mapping task (order2) improve with longer lives (1000 symbols)?",
+      "q": "Does the seqchoice random-mapping task (order2) improve with longer lives (1000 symbols)? [answered R40: yes, 1000 symbols cycle 8.94 / order2 5.85]",
       "impact": 2,
-      "likelihood": 0.5,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "unifiedR v32 seqchoice order2 1000 symbols vs 300, 16 growths"
     },
@@ -631,7 +786,7 @@
       "id": "Q12",
       "q": "Is the v32 graded cortex size (o = -6) optimal, or should it follow a finer sweep? [answered R39: o=-6 is best]",
       "impact": 2,
-      "likelihood": 0.0,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "cortex o in -5..-8, 16 growths on cycle/order2"
     },
@@ -653,44 +808,92 @@
     },
     {
       "id": "Q15",
-      "q": "Do the sequence areas (regions) need a juvenile activity phase? (they currently skip it: cellRefine/juvMode have no effect on unifiedR text/order3)",
+      "q": "Do the sequence areas (regions) need a juvenile activity phase? (they currently skip it: cellRefine/juvMode have no effect on unifiedR text/order3) [answered R40 q05b: no effect on regions]",
       "impact": 3,
-      "likelihood": 0.4,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "q05b + implement juvenile phase in growRegions"
     },
     {
       "id": "Q16",
-      "q": "Can a six-task evolution (adds bandit 6 arms) improve the v33 genome without losing text?",
+      "q": "Can a six-task evolution (adds bandit 6 arms) improve the v33 genome without losing text? [answered R40 q16: champion = start genome]",
       "impact": 4,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 2,
       "experiment": "q16_six_task_evolve (4 h)",
       "answer": "No (R40): champion = start genome."
     },
     {
       "id": "Q17",
-      "q": "Does task-shaped juvenile activity beat the same pulses in random order?",
+      "q": "Does task-shaped juvenile activity beat the same pulses in random order? [answered R45 q21: no, within noise]",
       "impact": 3,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "q21_juv_task_shaped"
     },
     {
       "id": "Q18",
-      "q": "Does evolving with 1000-symbol lives in the fitness find a better reward area?",
+      "q": "Does evolving with 1000-symbol lives in the fitness find a better reward area? [answered R45 q19: champion 0.945, no]",
       "impact": 4,
-      "likelihood": 0.35,
+      "likelihood": 0,
       "cost": 2,
       "experiment": "q19_long_multitask (4 h)"
     },
     {
       "id": "Q19",
-      "q": "Can learning-rate / metaplasticity settings make short lives (300 symbols) reach long-life scores?",
+      "q": "Can learning-rate / metaplasticity settings make short lives (300 symbols) reach long-life scores? [answered R45 q20/q26: no rate setting helps; evolution 1.019 trades order2 for cycle]",
       "impact": 5,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 2,
       "experiment": "q20_sample_eff_sweep, q25_life_curve, q26_short_life_evolve (3 h)"
+    },
+    {
+      "id": "Q20",
+      "q": "Does prediction-mismatch depression (pl.predErr, world-model step 1) at small rates improve the v34 deep plan on order3 / long text without losing text or fables?",
+      "impact": 4,
+      "likelihood": 0.3,
+      "cost": 1,
+      "experiment": "q29_prederr_deep (32 paired growths); q27 (R45) mixed"
+    },
+    {
+      "id": "Q21",
+      "q": "Do deeper context chains (x6/x8) pay off with long lives (text 3000/5000, fables 5000) or bigger alphabets (order3 K12/16)?",
+      "impact": 5,
+      "likelihood": 0.4,
+      "cost": 1,
+      "experiment": "q28_depth_life, q32_order3_capacity"
+    },
+    {
+      "id": "Q22",
+      "q": "Can evolution improve the v34 deep plan on long-memory prediction (sequence-only fitness)?",
+      "impact": 4,
+      "likelihood": 0.25,
+      "cost": 2,
+      "experiment": "q30_deep_seq_evolve (5 h), q34_deep_long_life_evolve (3 h)"
+    },
+    {
+      "id": "Q23",
+      "q": "Analogy: after a mid-life renaming of all symbols (same structure), does the brain relearn faster than a fresh brain, and can evolution make it?",
+      "impact": 5,
+      "likelihood": 0.25,
+      "cost": 1,
+      "experiment": "q31_analogy_relabel (env option relabel, R45), q33_analogy_evolve (3 h)"
+    },
+    {
+      "id": "Q24",
+      "q": "Staged training (Travis): grow and train the sequence areas on a subtask first (e.g. text prediction), then add/wire the striatum for a reward task - better than learning both at once?",
+      "impact": 5,
+      "likelihood": 0.35,
+      "cost": 2,
+      "experiment": "needs code: mid-life task switch / pretrained-region transplant (not yet queued)"
+    },
+    {
+      "id": "Q25",
+      "q": "Internal world model as memory/state: can the cortex's own predictions be fed back as input (imagined rollouts) to keep context over gaps in the input?",
+      "impact": 5,
+      "likelihood": 0.2,
+      "cost": 3,
+      "experiment": "needs code (I50); after Q20"
     }
   ]
 }

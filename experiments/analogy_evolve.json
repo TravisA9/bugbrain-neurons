@@ -1,0 +1,78 @@
+{
+  "name": "analogy_evolve",
+  "description": "(R45 queue, Q23) evolve deepURSx3 for re-learning after a mid-life renaming of all symbols (analogy / structure reuse), keeping plain text",
+  "mode": "standard",
+  "seed": 46,
+  "workers": "auto",
+  "population": 32,
+  "generations": 0,
+  "hours": 3,
+  "start": [
+    "deepURSx3"
+  ],
+  "engine": {
+    "growths": 2,
+    "episodes": 1,
+    "robustW": 0.5,
+    "valGrowths": 4,
+    "valArenas": 4,
+    "valTopK": 3,
+    "cellMut": 0.02,
+    "eliteFrac": 0.1,
+    "crossoverRate": 0.3
+  },
+  "tasks": [
+    {
+      "name": "order3_relabel",
+      "env": "seq",
+      "params": {
+        "source": "order3",
+        "K": 8,
+        "nSyms": 2000,
+        "relabel": 0.5
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "deepURSx3"
+    },
+    {
+      "name": "text_relabel",
+      "env": "seq",
+      "params": {
+        "source": "text",
+        "nSyms": 2000,
+        "relabel": 0.5
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "deepURSx3"
+    },
+    {
+      "name": "text1000",
+      "env": "seq",
+      "params": {
+        "source": "text"
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "deepURSx3"
+    }
+  ],
+  "combine": {
+    "type": "softmin",
+    "tau": 0.25,
+    "cap": 1.5
+  },
+  "championEvery": 5,
+  "smoke": {
+    "order3_relabel": {
+      "nSyms": 60
+    },
+    "text_relabel": {
+      "nSyms": 60
+    },
+    "text1000": {
+      "nSyms": 60
+    }
+  }
+}

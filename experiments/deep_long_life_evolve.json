@@ -1,0 +1,62 @@
+{
+  "name": "deep_long_life_evolve",
+  "description": "(R45 queue, Q22) evolve deepURSx4 (best text depth in R44) with long lives only: text 5000, fables 5000",
+  "mode": "standard",
+  "seed": 47,
+  "workers": "auto",
+  "population": 32,
+  "generations": 0,
+  "hours": 3,
+  "start": [
+    "deepURSx4"
+  ],
+  "engine": {
+    "growths": 2,
+    "episodes": 1,
+    "robustW": 0.5,
+    "valGrowths": 4,
+    "valArenas": 4,
+    "valTopK": 3,
+    "cellMut": 0.02,
+    "eliteFrac": 0.1,
+    "crossoverRate": 0.3
+  },
+  "tasks": [
+    {
+      "name": "text5000",
+      "env": "seq",
+      "params": {
+        "source": "text",
+        "nSyms": 5000
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "deepURSx4"
+    },
+    {
+      "name": "fables5000",
+      "env": "seq",
+      "params": {
+        "source": "fables",
+        "nSyms": 5000
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "deepURSx4"
+    }
+  ],
+  "combine": {
+    "type": "softmin",
+    "tau": 0.25,
+    "cap": 1.5
+  },
+  "championEvery": 5,
+  "smoke": {
+    "text5000": {
+      "nSyms": 60
+    },
+    "fables5000": {
+      "nSyms": 60
+    }
+  }
+}
