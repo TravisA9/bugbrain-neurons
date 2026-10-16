@@ -1,0 +1,41 @@
+{
+  "id": "q18_bandit_hard",
+  "title": "Generality: bandit 6 arms 3 contexts, switches every 40; cue random delay 40",
+  "question": "Q06",
+  "track": "neuro",
+  "priority": 0.6,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"bandit\", \"params\": {\"K\": 6, \"C\": 3, \"switchEvery\": 40}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR bandit{\"K\":6,\"C\":3,\"switchEvery\":40} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"cue\", \"params\": {\"mapping\": \"random\", \"delay\": 40}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR cue{\"mapping\":\"random\",\"delay\":40} base"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "unifiedR",
+        "{\"env\": \"recall\", \"params\": {\"mapping\": \"random\", \"K\": 6}}",
+        "base",
+        "16"
+      ],
+      "label": "unifiedR recall{\"mapping\":\"random\",\"K\":6} base"
+    }
+  ],
+  "accept": {}
+}

@@ -1,0 +1,103 @@
+{
+  "id": "q23_fail_rate_need",
+  "title": "Reward-area need-growth driven by raw failure rate (ngFail), half-size striatum",
+  "question": "Q03",
+  "track": "neuro",
+  "priority": 0.9,
+  "kind": "runs",
+  "runs": [
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "bandit",
+        "pl.ng=1,pl.ngReduce=0.5",
+        "16"
+      ],
+      "label": "rewardE3 bandit pl.ng=1,pl.ngReduce=0.5"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cueR",
+        "pl.ng=1,pl.ngReduce=0.5",
+        "16"
+      ],
+      "label": "rewardE3 cueR pl.ng=1,pl.ngReduce=0.5"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cycle",
+        "pl.ng=1,pl.ngReduce=0.5",
+        "16"
+      ],
+      "label": "rewardE3 cycle pl.ng=1,pl.ngReduce=0.5"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "bandit",
+        "pl.ng=1,pl.ngReduce=0.5,pl.ngFail=1",
+        "16"
+      ],
+      "label": "rewardE3 bandit pl.ng=1,pl.ngReduce=0.5,pl.ngFail=1"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cueR",
+        "pl.ng=1,pl.ngReduce=0.5,pl.ngFail=1",
+        "16"
+      ],
+      "label": "rewardE3 cueR pl.ng=1,pl.ngReduce=0.5,pl.ngFail=1"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cycle",
+        "pl.ng=1,pl.ngReduce=0.5,pl.ngFail=1",
+        "16"
+      ],
+      "label": "rewardE3 cycle pl.ng=1,pl.ngReduce=0.5,pl.ngFail=1"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "bandit",
+        "pl.ng=1,pl.ngReduce=0.5,pl.ngFail=1,pl.ngStruct=1",
+        "16"
+      ],
+      "label": "rewardE3 bandit pl.ng=1,pl.ngReduce=0.5,pl.ngFail=1,pl.ngStruct=1"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cueR",
+        "pl.ng=1,pl.ngReduce=0.5,pl.ngFail=1,pl.ngStruct=1",
+        "16"
+      ],
+      "label": "rewardE3 cueR pl.ng=1,pl.ngReduce=0.5,pl.ngFail=1,pl.ngStruct=1"
+    },
+    {
+      "script": "run/ablate.js",
+      "args": [
+        "rewardE3",
+        "cycle",
+        "pl.ng=1,pl.ngReduce=0.5,pl.ngFail=1,pl.ngStruct=1",
+        "16"
+      ],
+      "label": "rewardE3 cycle pl.ng=1,pl.ngReduce=0.5,pl.ngFail=1,pl.ngStruct=1"
+    }
+  ],
+  "accept": {
+    "note": "ngFail recruits and recovers part of the reduced-striatum loss"
+  }
+}
