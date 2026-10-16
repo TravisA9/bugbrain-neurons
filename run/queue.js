@@ -11,6 +11,7 @@
  * Yielding: children run at below-normal priority. PAUSE: create a file named PAUSE in the project folder (or results/PAUSE): the queue
  * stops after the current generation (evolve: STOP file -> checkpoint) or kills unfinished runs, then waits; delete PAUSE to continue.
  * --cpu-max P (default 0 = off): before starting or resuming work, wait while total CPU use (other programs) is above P %.
+ * R46: before each pick run/refill.js tops the queue up (auto_*.json, marked auto) when < 3 h of work is pending; --no-refill disables.
  * --reset a,b: mark those jobs pending (results cleared) before starting. Laptop on battery = paused (--allow-battery to run anyway).
  * Evolve budgets count active compute time (the runner excludes suspended time). --status: print the job list and refresh results/queue.js, nothing else.
  * One instance only (results/queue.lock). --once: run at most one job, then exit. Exits when nothing is runnable (unless --wait). */
@@ -18,7 +19,7 @@ const fs = require('fs'), path = require('path'), os = require('os'), cp = requi
 const REG = require('./registry.js');
 const ROOT = path.resolve(__dirname, '..'), RES = process.env.BB_RESULTS || path.join(ROOT, 'results'), QDIR = process.env.BB_QUEUE_DIR || path.join(ROOT, 'experiments', 'queue');
 const STATE = path.join(RES, 'queue_state.json'), LOG = path.join(RES, 'QUEUE_LOG.md'), QJS = path.join(RES, 'queue.js'), LOCK = path.join(RES, 'queue.lock');
-const args = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'include-text', 'force', 'wait', 'status', 'allow-battery'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
+const args = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'include-text', 'force', 'wait', 'status', 'allow-battery', 'no-refill'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
 const WORKERS = args.workers != null ? +args.workers : Math.max(1, os.cpus().length - 2), CPU_MAX = +(args['cpu-max'] || 0);
 const RUNTIME = typeof Bun !== 'undefined' ? process.execPath : (process.env.BB_BUN || 'bun');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -146,6 +147,7 @@ async function main() {
   say(`queue started (pid ${process.pid}, ${WORKERS} workers, runtime ${path.basename(RUNTIME)}${CPU_MAX ? ', cpu-max ' + CPU_MAX + ' %' : ''})`);
   let n = 0;
   for (;;) {
+    if (!args['no-refill'] && !pauseFile()) { try { const o = cp.execFileSync(RUNTIME, ['run/refill.js', '--workers', String(WORKERS)], { cwd: ROOT, encoding: 'utf8', env: process.env }); if (/auto-added [1-9]/.test(o)) say('queue refilled: ' + (o.match(/auto-added .*/) || [''])[0]); } catch (e) { say('refill failed: ' + String(e.message).slice(0, 200)); } }   // R46 self-refill (child process: edits to refill.js apply without restart)
     S = loadState(); const jobs = loadJobs(); writeQueueJs();
     const next = runnable(jobs)[0];
     if (!next) { if (args.wait) { writeQueueJs({ state: 'idle (no runnable jobs)' }); await sleep(300000); continue; } say('no runnable jobs left; exiting'); writeQueueJs({ state: 'idle (no runnable jobs)' }); break; }
