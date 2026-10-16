@@ -1,0 +1,60 @@
+{
+  "id": "p01_prederr_o3_heldout",
+  "title": "Held-out (growths 32-47) q29: predErr 0.02/0.05 vs base on deepURSx3 order3",
+  "question": "Q20",
+  "track": "neuro",
+  "priority": 0.55,
+  "kind": "runs",
+  "estHours": 0.8,
+  "requires": [
+    "run/r42.js"
+  ],
+  "phone": true,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "base",
+        "32"
+      ],
+      "label": "deepURSx3 order3 base g32",
+      "env": {
+        "BB_OUT": "results/phone/p01_prederr_o3_heldout.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.05",
+        "32"
+      ],
+      "label": "deepURSx3 order3 pl.predErr=0.05 g32",
+      "env": {
+        "BB_OUT": "results/phone/p01_prederr_o3_heldout.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.02",
+        "32"
+      ],
+      "label": "deepURSx3 order3 pl.predErr=0.02 g32",
+      "env": {
+        "BB_OUT": "results/phone/p01_prederr_o3_heldout.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "confirms q29 order3 gain (9.35 vs 9.00) on unseen growths"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "id": "p11_sweep_mixRate",
+  "title": "Sweep deepURSx3 pl.mixRate x0.75/x1.25 on order3/order2 (non-text half of refill tier b), 16 growths",
+  "question": "AUTO",
+  "track": "neuro",
+  "priority": 0.42,
+  "kind": "runs",
+  "estHours": 1.5,
+  "requires": [
+    "run/r42.js"
+  ],
+  "phone": true,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"nSyms\":1000}}",
+        "16",
+        "pl.mixRate=0.006",
+        "0"
+      ],
+      "label": "deepURSx3 order3 pl.mixRate=0.006 g0",
+      "env": {
+        "BB_OUT": "results/phone/p11_sweep_mixRate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.mixRate=0.006",
+        "0"
+      ],
+      "label": "deepURSx3 order2 pl.mixRate=0.006 g0",
+      "env": {
+        "BB_OUT": "results/phone/p11_sweep_mixRate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"nSyms\":1000}}",
+        "16",
+        "pl.mixRate=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 order3 pl.mixRate=0.01 g0",
+      "env": {
+        "BB_OUT": "results/phone/p11_sweep_mixRate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.mixRate=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 order2 pl.mixRate=0.01 g0",
+      "env": {
+        "BB_OUT": "results/phone/p11_sweep_mixRate.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "same keys as run/refill.js sweeps; refill keeps only the text runs"
+  }
+}

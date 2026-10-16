@@ -1,0 +1,33 @@
+{
+  "id": "p07_depth_x8_text3000_heldout",
+  "title": "Depth held-out (g16-31): deepURSx8 on text3000 (x3 in p06)",
+  "question": "Q21",
+  "track": "neuro",
+  "priority": 0.49,
+  "kind": "runs",
+  "estHours": 4,
+  "requires": [
+    "run/r42.js"
+  ],
+  "phone": true,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx8",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "base",
+        "16"
+      ],
+      "label": "deepURSx8 text3000 base g16",
+      "env": {
+        "BB_OUT": "results/phone/p07_depth_x8_text3000_heldout.jsonl"
+      }
+    }
+  ],
+  "flag": "text",
+  "accept": {
+    "note": "q28: x8 7.96 vs x3 7.79 on g0-15"
+  }
+}

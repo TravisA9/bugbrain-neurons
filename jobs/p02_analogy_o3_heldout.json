@@ -1,0 +1,74 @@
+{
+  "id": "p02_analogy_o3_heldout",
+  "title": "Analogy q31 held-out (g16-31): order3 relabel base vs predErr 0.05, + fresh-brain n1000 controls (first-quarter comparison)",
+  "question": "Q23",
+  "track": "neuro",
+  "priority": 0.54,
+  "kind": "runs",
+  "estHours": 2.5,
+  "requires": [
+    "run/r42.js"
+  ],
+  "phone": true,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "base",
+        "16"
+      ],
+      "label": "deepURSx3 order3 relabel base g16",
+      "env": {
+        "BB_OUT": "results/phone/p02_analogy_o3_heldout.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.05",
+        "16"
+      ],
+      "label": "deepURSx3 order3 relabel pl.predErr=0.05 g16",
+      "env": {
+        "BB_OUT": "results/phone/p02_analogy_o3_heldout.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 order3 fresh n1000 base g0",
+      "env": {
+        "BB_OUT": "results/phone/p02_analogy_o3_heldout.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx3 order3 fresh n1000 pl.predErr=0.05 g0",
+      "env": {
+        "BB_OUT": "results/phone/p02_analogy_o3_heldout.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "transfer if post-switch q2 > fresh firstQuarter on same plan/variant (registry stats)"
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "id": "p08_sweep_lr",
+  "title": "Sweep deepURSx3 pl.lr x0.75/x1.25 on order3/order2 (non-text half of refill tier b), 16 growths",
+  "question": "AUTO",
+  "track": "neuro",
+  "priority": 0.45,
+  "kind": "runs",
+  "estHours": 2,
+  "requires": [
+    "run/r42.js"
+  ],
+  "phone": true,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 order3 base g0",
+      "env": {
+        "BB_OUT": "results/phone/p08_sweep_lr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 order2 base g0",
+      "env": {
+        "BB_OUT": "results/phone/p08_sweep_lr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"nSyms\":1000}}",
+        "16",
+        "pl.lr=0.0375",
+        "0"
+      ],
+      "label": "deepURSx3 order3 pl.lr=0.0375 g0",
+      "env": {
+        "BB_OUT": "results/phone/p08_sweep_lr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.lr=0.0375",
+        "0"
+      ],
+      "label": "deepURSx3 order2 pl.lr=0.0375 g0",
+      "env": {
+        "BB_OUT": "results/phone/p08_sweep_lr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"nSyms\":1000}}",
+        "16",
+        "pl.lr=0.0625",
+        "0"
+      ],
+      "label": "deepURSx3 order3 pl.lr=0.0625 g0",
+      "env": {
+        "BB_OUT": "results/phone/p08_sweep_lr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.lr=0.0625",
+        "0"
+      ],
+      "label": "deepURSx3 order2 pl.lr=0.0625 g0",
+      "env": {
+        "BB_OUT": "results/phone/p08_sweep_lr.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "same keys as run/refill.js sweeps; refill keeps only the text runs"
+  }
+}

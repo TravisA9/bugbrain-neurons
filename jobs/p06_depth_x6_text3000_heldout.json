@@ -1,0 +1,47 @@
+{
+  "id": "p06_depth_x6_text3000_heldout",
+  "title": "Depth held-out (g16-31): deepURSx6 vs x3 on text3000",
+  "question": "Q21",
+  "track": "neuro",
+  "priority": 0.5,
+  "kind": "runs",
+  "estHours": 3.5,
+  "requires": [
+    "run/r42.js"
+  ],
+  "phone": true,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "base",
+        "16"
+      ],
+      "label": "deepURSx3 text3000 base g16",
+      "env": {
+        "BB_OUT": "results/phone/p06_depth_x6_text3000_heldout.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx6",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "base",
+        "16"
+      ],
+      "label": "deepURSx6 text3000 base g16",
+      "env": {
+        "BB_OUT": "results/phone/p06_depth_x6_text3000_heldout.jsonl"
+      }
+    }
+  ],
+  "flag": "text",
+  "accept": {
+    "note": "q28: x6 7.91 vs x3 7.79 on g0-15"
+  }
+}

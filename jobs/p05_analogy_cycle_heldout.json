@@ -1,0 +1,74 @@
+{
+  "id": "p05_analogy_cycle_heldout",
+  "title": "Analogy q31 held-out (g16-31): cycle relabel base vs predErr 0.05, + fresh n500 controls",
+  "question": "Q23",
+  "track": "neuro",
+  "priority": 0.51,
+  "kind": "runs",
+  "estHours": 1.5,
+  "requires": [
+    "run/r42.js"
+  ],
+  "phone": true,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"cycle\",\"K\":8,\"nSyms\":1000,\"relabel\":0.5,\"clock2\":true,\"clock3\":true}}",
+        "16",
+        "base",
+        "16"
+      ],
+      "label": "deepURSx3 cycle relabel base g16",
+      "env": {
+        "BB_OUT": "results/phone/p05_analogy_cycle_heldout.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"cycle\",\"K\":8,\"nSyms\":1000,\"relabel\":0.5,\"clock2\":true,\"clock3\":true}}",
+        "16",
+        "pl.predErr=0.05",
+        "16"
+      ],
+      "label": "deepURSx3 cycle relabel pl.predErr=0.05 g16",
+      "env": {
+        "BB_OUT": "results/phone/p05_analogy_cycle_heldout.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"cycle\",\"K\":8,\"nSyms\":500,\"clock2\":true,\"clock3\":true}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 cycle fresh n500 base g0",
+      "env": {
+        "BB_OUT": "results/phone/p05_analogy_cycle_heldout.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"cycle\",\"K\":8,\"nSyms\":500,\"clock2\":true,\"clock3\":true}}",
+        "16",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx3 cycle fresh n500 pl.predErr=0.05 g0",
+      "env": {
+        "BB_OUT": "results/phone/p05_analogy_cycle_heldout.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "transfer if post-switch q2 > fresh firstQuarter"
+  }
+}

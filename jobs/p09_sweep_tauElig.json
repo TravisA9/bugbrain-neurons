@@ -1,0 +1,74 @@
+{
+  "id": "p09_sweep_tauElig",
+  "title": "Sweep deepURSx3 pl.tauElig x0.75/x1.25 on order3/order2 (non-text half of refill tier b), 16 growths",
+  "question": "AUTO",
+  "track": "neuro",
+  "priority": 0.44,
+  "kind": "runs",
+  "estHours": 1.5,
+  "requires": [
+    "run/r42.js"
+  ],
+  "phone": true,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"nSyms\":1000}}",
+        "16",
+        "pl.tauElig=75",
+        "0"
+      ],
+      "label": "deepURSx3 order3 pl.tauElig=75 g0",
+      "env": {
+        "BB_OUT": "results/phone/p09_sweep_tauElig.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.tauElig=75",
+        "0"
+      ],
+      "label": "deepURSx3 order2 pl.tauElig=75 g0",
+      "env": {
+        "BB_OUT": "results/phone/p09_sweep_tauElig.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"nSyms\":1000}}",
+        "16",
+        "pl.tauElig=125",
+        "0"
+      ],
+      "label": "deepURSx3 order3 pl.tauElig=125 g0",
+      "env": {
+        "BB_OUT": "results/phone/p09_sweep_tauElig.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.tauElig=125",
+        "0"
+      ],
+      "label": "deepURSx3 order2 pl.tauElig=125 g0",
+      "env": {
+        "BB_OUT": "results/phone/p09_sweep_tauElig.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "same keys as run/refill.js sweeps; refill keeps only the text runs"
+  }
+}

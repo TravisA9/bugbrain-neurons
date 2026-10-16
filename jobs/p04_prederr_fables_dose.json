@@ -1,0 +1,47 @@
+{
+  "id": "p04_prederr_fables_dose",
+  "title": "Why predErr hurts fables: dose 0.01/0.03 on deepURSx3 fables2000 (g0-15; base/0.02/0.05 known at G32)",
+  "question": "Q20",
+  "track": "neuro",
+  "priority": 0.52,
+  "kind": "runs",
+  "estHours": 2.5,
+  "requires": [
+    "run/r42.js"
+  ],
+  "phone": true,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\"}}",
+        "16",
+        "pl.predErr=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 fables2000 pl.predErr=0.01 g0",
+      "env": {
+        "BB_OUT": "results/phone/p04_prederr_fables_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\"}}",
+        "16",
+        "pl.predErr=0.03",
+        "0"
+      ],
+      "label": "deepURSx3 fables2000 pl.predErr=0.03 g0",
+      "env": {
+        "BB_OUT": "results/phone/p04_prederr_fables_dose.jsonl"
+      }
+    }
+  ],
+  "flag": "text",
+  "accept": {
+    "note": "dose-response of the fables loss (2.94 base, 2.77 @0.02, 2.31 @0.05); check bits/bF1 stats"
+  }
+}
