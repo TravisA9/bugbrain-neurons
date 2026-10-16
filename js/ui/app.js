@@ -18,6 +18,8 @@ const UI_KEY = 'spikingArena.ui.v7';
 const PREV_KEY = 'spikingArena.session.prev';   // v17: a session set aside (older version, replaced by a reset / task change); 'Restore previous session' loads it
 const ui = (() => { try { return JSON.parse(localStorage.getItem(UI_KEY)) || {}; } catch (e) { return {}; } })();
 const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (e) {} };
+// v34 UI (Oct 16): Sequence prediction with the Text corpus is the first-open environment (main focus); applied once to remembered UI state too
+if (!ui.env || ui.envDefaultV !== 1) { ui.env = 'text'; ui.envDefaultV = 1; }   // 'text' redirects to seq + source text (recommended settings) below
 // v17: always start from the RECOMMENDED settings of the remembered environment (a redirecting env, e.g. the text stub, opens its target)
 if (ui.env && SA.ENVS[ui.env]) { const r = SA.ENVS[ui.env].redirect; if (r && SA.ENVS[r.env]) { ui.env = r.env; SA.setEnv(r.env, SA.recommendedEnvParams(r.env, r.params, Object.keys(r.params))); } else SA.setEnv(ui.env, SA.recommendedEnvParams(ui.env)); }
 ui.defaultsVersion = SA.DEFAULTS_VERSION;
@@ -79,7 +81,10 @@ const ENV_UI = {
 /* ---------- environment selector + environment-specific settings (generated from the env's declared params) ---------- */
 const envSel = $('selEnv');
 // v17: an env with a redirect (the never-learning text stub) is listed under its useful form and opens its target with the recommended settings
-envSel.innerHTML = SA.envList().map(d => `<option value="${d.id}">${d.redirect ? 'Text: next-character prediction (= Sequence prediction, Text corpus)' : d.name}</option>`).join('');
+// v34 UI: the text stub (duplicate of Sequence -> Text corpus) and the ruled-out chunker (I51) are not listed (code kept)
+const UI_HIDDEN_ENVS = ['text', 'chunk'];
+envSel.innerHTML = SA.envList().filter(d => !UI_HIDDEN_ENVS.includes(d.id) || d.id === P.env).map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+document.title = `Spiking Arena ${SA.APP_VERSION} — grown spiking brains, any environment`;
 envSel.value = P.env;
 envSel.onchange = () => { const id = envSel.value, r = SA.ENVS[id].redirect; envSel.value = P.env;
   if (r) switchEnv(r.env, SA.recommendedEnvParams(r.env, r.params, Object.keys(r.params)), 'Switched environment');

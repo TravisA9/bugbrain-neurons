@@ -101,6 +101,11 @@ class SeqTask {
     this.P = P; this.names = symbolsOf(P); this.K = this.names.length; this.rng = mulberry32((seed ^ 0x6a09e667) >>> 0);
     this.rule = makeRule(P, this.rng);
     const n = P.nSyms; this.seq = [this.rule.first]; for (let i = 1; i <= n; i++) this.seq.push(this.rule.next(this.seq[i - 2], this.seq[i - 1]));
+    // R45 (I49 analogy test, off by default): relabel > 0 -> from that fraction of the life on, every symbol is renamed by one fixed random
+    // permutation (same structure, new names). Compare accuracy right after the switch (stats q2 for relabel 0.5) with a fresh brain (firstQuarter).
+    if (P.relabel > 0 && P.relabel < 1) { const pm = Array.from({ length: this.K }, (_, i) => i); for (let i = this.K - 1; i > 0; i--) { const j = (this.rng() * (i + 1)) | 0; [pm[i], pm[j]] = [pm[j], pm[i]]; }
+      this.relabelAt = Math.max(1, Math.floor(n * P.relabel)); for (let i = this.relabelAt; i <= n; i++) this.seq[i] = pm[this.seq[i]]; }
+    this.nOut = this.K; this.bIdx = isText(P) ? this.names.indexOf('␣') : -1; this.bc = { tp: 0, fp: 0, fn: 0, itp: 0, ifp: 0, ifn: 0 };   // R42: word-boundary confusion (brain and online bigram)
     this.t = 0; this.pos = 0; this.phaseT = 0; this.c2 = P.clock2 ? (P.clock3 ? 3 : 2) : 0; this.slot = this.c2 + P.onTicks + P.holdTicks;   // clock2: two clock ticks (GO2, GO1) before the symbol
     this.counts = new Float64Array(this.K); this.lastCounts = new Float64Array(this.K);
     this.hits = []; this.ideal = []; this.cal = new Calib(this.K); this.idealBits = 0; this.tab = Array.from({ length: this.K }, () => new Float64Array(this.K)); this.correct = 0; this.n = 0; this.bits = 0; this.rewardLog = []; this.recent = []; this.horizon = n * this.slot;
@@ -124,13 +129,15 @@ class SeqTask {
   act(out) {
     const P = this.P, K = this.K; let ev = null;
     if (this.phaseT >= this.slot - P.readTicks) { const g = P.readIn || 0;   // v13 readIn > 0: graded decoder, adds readIn x the output cells' summed synaptic input
-      if (g > 0 && out.input) for (let k = 0; k < K; k++) this.counts[k] += out.spikes[k] + g * Math.max(0, out.input[k]); else for (let k = 0; k < K; k++) this.counts[k] += out.spikes[k]; }
+      const nO = Math.min(this.nOut, out.spikes.length); if (g > 0 && out.input) for (let k = 0; k < nO; k++) this.counts[k] += out.spikes[k] + g * Math.max(0, out.input[k]); else for (let k = 0; k < nO; k++) this.counts[k] += out.spikes[k]; }
     this.phaseT++; this.t++;
     if (this.phaseT >= this.slot) {                 // end of the slot: the prediction of the next symbol
       const target = this.targetOf(this.seq[this.pos + 1]), k = Dec.wta(this.counts), ok = k === target;
       // ideal online 1st-order learner on the same stream: predicts the most frequent successor seen so far
       const row = this.tab[this.seq[this.pos]]; let bi = 0; for (let j = 1; j < K; j++) if (row[j] > row[bi]) bi = j;
       this.ideal.push(row[bi] > 0 && bi === target ? 1 : 0);
+      if (this.bIdx >= 0) { const b = this.bIdx, bc = this.bc, pb = k === b, ib = row[bi] > 0 && bi === b, tb = target === b;   // R42 boundary F1
+        if (pb && tb) bc.tp++; else if (pb) bc.fp++; else if (tb) bc.fn++; if (ib && tb) bc.itp++; else if (ib) bc.ifp++; else if (tb) bc.ifn++; }
       { let rs = 0; for (const v of row) rs += v; this.idealBits += -Math.log2((row[target] + 0.5) / (rs + 0.5 * K)); }   // online bigram counter, add-1/2 (KT) estimate
       row[target]++; this.cal.add(this.counts, target);
       const p = Dec.softmax(this.counts, P.beta), q = (1 - 0.05) * p[target] + 0.05 / K;
@@ -150,7 +157,9 @@ class SeqTask {
   get bps() { return this.n ? this.bits / this.n : Math.log2(this.K); }
   score() { return this.accuracy; }
   fitness() { return 10 * (0.5 * this.accuracy + 0.5 * this.quarter(3)); }
-  stats() { return { symbols: this.n, accuracy: this.accuracy, firstQuarter: this.quarter(0), lastQuarter: this.quarter(3), bits: this.bps,
+  f1(t, f, n) { return t ? 2 * t / (2 * t + f + n) : 0; }
+  get bF1() { const c = this.bc; return this.f1(c.tp, c.fp, c.fn); }
+  stats() { const c = this.bc; return { bF1: this.bF1, bP: c.tp + c.fp ? c.tp / (c.tp + c.fp) : 0, bR: c.tp + c.fn ? c.tp / (c.tp + c.fn) : 0, bF1bigram: this.f1(c.itp, c.ifp, c.ifn), symbols: this.n, accuracy: this.accuracy, firstQuarter: this.quarter(0), q1: this.quarter(1), q2: this.quarter(2), lastQuarter: this.quarter(3), bits: this.bps,
                      chance: 1 / this.K, optimal: this.rule.optAcc, idealOnline: this.idealAcc(), idealLast: this.idealAcc(3), optBits: this.rule.optBits, firstOrder: this.rule.firstOrderAcc, unigram: this.rule.unigramAcc,
                      bitsSoft: this.cal.n ? this.cal.bitsSoft / this.cal.n : 0, bitsCount: this.cal.n ? this.cal.bitsCount / this.cal.n : 0, idealBits: this.n ? this.idealBits / this.n : 0, unigramBits: this.rule.unigramBits }; }
   statusLine() { return `symbol ${Math.min(this.pos + 1, this.P.nSyms)}/${this.P.nSyms} · accuracy ${(100 * this.accuracy).toFixed(0)}% · last 100 ${(100 * this.lastAcc(100)).toFixed(0)}% (first quarter ${(100 * this.quarter(0)).toFixed(0)}%, last ${(100 * this.quarter(3)).toFixed(0)}%) · chance ${(100 / this.K).toFixed(0)}% · ideal counter ${(100 * this.idealAcc()).toFixed(0)}% · optimal ${(100 * this.rule.optAcc).toFixed(0)}% · ${this.bps.toFixed(2)} bits (calibrated ${(this.cal.n ? this.cal.bitsSoft / this.cal.n : 0).toFixed(2)})`; }
@@ -235,7 +244,7 @@ SpikingArena.SeqTask = SeqTask; SpikingArena.seqIO = seqIO; SpikingArena.seqSymb
 registerEnv({
   id: 'seq', name: 'Sequence prediction (learned transitions)', view: { width: 700, height: 480 },
   description: 'A stream of symbols with a new rule every lifetime (cycle, Markov chain, 2nd-order pattern or text): predict the next symbol. Needs lifetime learning.',
-  defaultPlan: P => (P.clock2 && P.clock3) ? 'unifiedR' : (P.clock2 ? 'predictK2' : 'predictK') + ((isText(P) || P.K > 12) ? (P.clock2 ? 'XO' : 'L') : ''),   // v19: XO (own-column M2 reset) replaces XG   // big alphabets need the 36x36 tissue; the two-phase clock -> second-order plan
+  defaultPlan: P => (P.clock2 && P.clock3) ? 'deepURSx3' : (P.clock2 ? 'predictK2' : 'predictK') + ((isText(P) || P.K > 12) ? (P.clock2 ? 'XO' : 'L') : ''),   // v19: XO (own-column M2 reset) replaces XG   // big alphabets need the 36x36 tissue; the two-phase clock -> second-order plan
   // v17 (round 18): the task choice (kept by 'Reset to recommended settings') and the recommended settings per task:
   // Text -> two-phase clock (second-order plan predictK2XG) and a 1000-character lifetime (accuracy keeps rising past 200)
   taskKeys: ['source', 'K', 'det'],
@@ -247,6 +256,7 @@ registerEnv({
     K: { value: 4, min: 2, max: 16, step: 1, label: 'Alphabet size (not for text)' },
     det: { value: 0.8, min: 0.3, max: 1, step: 0.05, label: 'Markov: probability of the preferred successor' },
     nSyms: { value: 200, min: 20, max: 5000, step: 20, label: 'Symbols per lifetime' },
+    relabel: { value: 0, hidden: true },   // R45 (I49): rename all symbols by one random permutation from this fraction of the life on (0 = off)
     onTicks: { value: 4, min: 2, max: 12, step: 1, label: 'Symbol duration (ticks)' },
     holdTicks: { value: 4, min: 1, max: 12, step: 1, label: 'Prediction window (ticks)' },
     clock2: { value: false, label: 'Two-phase clock (GO2 then GO1 before each symbol; for the two-step memory of plan predictK2)' },
@@ -467,5 +477,54 @@ function createPredict3Plan(tune) {
 }
 registerPlan('predictK3', 'third-order plan: cortex + context region (needs the three-phase clock)', () => { const d = createPredict3Plan(); for (const r of d.regions) Object.assign(r.g.sc, SpikingArena.DEMAND_SC); return d; },   // v27: + local connection demand
   'predictK2XO plus a context region grown by the same gene program: a shift register holding the symbol two steps back, projecting to the mixing cells');
+// R42 (I52) FRACTAL MODULE TILING: the predictK3 module (cortex + context, same gene program) repeated M times by a tiling
+// rule. Each copy grows on its own tissue (own seed, so its own claw/conjunction sampling); module 0's cortex owns the
+// outputs. Inter-module wiring (T.inter): 'mix' = every other module's sparse mixing cells -> module 0's plastic receivers
+// (parallel fibres, total weight wTot shared over the modules, connection probability p, plastic: learned by the local rule).
+function createTiledK3(M, T) {
+  T = Object.assign({ inter: 'mix', wTot: 45, p: 0.3, scaleW: 1 }, T); const regions = [], tracts = [];
+  for (let m = 0; m < M; m++) { const d = SpikingArena.PLANS.predictK3.make(), c = regions.length;
+    d.regions.forEach((R, k) => regions.push(Object.assign(R, { name: R.name + (m ? ' ' + m : ''), outputs: m === 0 && R.outputs })));
+    d.tracts.forEach(t => { t.from.region += c; t.to.region += c; t.salt = 97 * m + 1; t.name += m ? ' ' + m : ''; tracts.push(t); });
+    if (m && T.inter === 'mix') tracts.push({ name: 'module ' + m + ' mixing -> module 0', from: { region: c, mix: true }, to: { region: 0, wTot: T.scaleW ? T.wTot / (M - 1) : T.wTot }, map: 'all', p: T.p, plastic: T.plastic !== 0, salt: 13 * m });
+  }
+  return { kind: 'regions', label: 'tiled predictK3 x' + M, seed: 1, regions, tracts };
+}
+for (const M of [2, 4, 8]) for (const w of [10, 22]) registerPlan('tiledK3x' + M + 'w' + w, 'R42 fractal test: x' + M + ', inter-module weight ' + w, () => createTiledK3(M, { wTot: w }), 'experimental (wiring diagnosis)');
+for (const M of [2, 4, 8]) for (const w of [10, 45]) registerPlan('tiledK3x' + M + 'f' + w, 'R42 fractal test: x' + M + ', FIXED (non-plastic) inter-module weight ' + w, () => createTiledK3(M, { wTot: w, plastic: 0 }), 'experimental (wiring diagnosis: plastic inter-module fibres are rescaled by preNorm)');
+for (const M of [2, 4, 8]) registerPlan('tiledK3x' + M, 'R42 fractal test: predictK3 module tiled x' + M, () => createTiledK3(M), 'experimental, off by default');
+SpikingArena.createTiledK3 = createTiledK3;
+// R43 (I54) SPECIALISED MODULES. slowK3xM: tiled modules (fibres from their mixing cells to module 0, as tiledK3) whose
+// position along the tiling axis sets a slower mixing-cell membrane (mixLeak 0.5 / 0.8 / 0.9 / 0.95: slow context layers, I48).
+const SLOW_LEAK = [0.5, 0.8, 0.9, 0.95];
+function createSlowK3(M, T) { const d = createTiledK3(M, T); d.label = 'specialised modules x' + M + ' (slower mixing membrane by position)';
+  for (let m = 1; m < M; m++) { const g = d.regions[2 * m].g; g.sc = Object.assign({}, g.sc, { mixLeak: SLOW_LEAK[m] }); } return d; }
+// deepK3xM: deeper memory by position: module m is one more context region chained to the previous one (its M receives the
+// previous context's M2 -> holds the symbol m+2 steps back), each projecting to the cortex mixing cells (claw, w3).
+function createDeepK3(M, w) { const d = SpikingArena.PLANS.predictK3.make(); d.label = 'deeper-memory modules x' + M;
+  for (let m = 1; m < M; m++) { const ctx = createPredict2Plan(Object.assign({}, CTX3)); Object.assign(ctx.sc, SpikingArena.DEMAND_SC); const k = d.regions.length;
+    d.regions.push({ name: 'context ' + (m + 1), color: '#f0d050', g: ctx, inputs: [{ tract: 'prev', like: 'symbol', tag: 1 }, { env: 'go2', tag: 3 }, { env: 'go3', tag: 8 }, { env: 'tonic' }] });
+    d.tracts.push({ name: 'M' + (m + 2) + ' -> context ' + (m + 1), from: { region: k - 1 + (m === 1 ? 0 : 0), cls: 2 }, map: 'topo', to: { region: k, tract: 'prev' } },
+                  { name: 'M' + (m + 3) + ' -> mixing', from: { region: k, cls: 2 }, map: 'claw', to: { region: 0, mix: true, w: w || 30 }, salt: 31 * m }); }
+  return d; }
+// R43 (I53) MODULE VOTING: M independent predictK3 modules, each with its OWN output copy, summed on the shared outputs.
+function createVoteK3(M, sc) { const d = createTiledK3(M, { inter: 'none' }); d.label = 'module voting x' + M;
+  for (let m = 1; m < M; m++) Object.assign(d.regions[2 * m], { vote: true, voteScale: sc || 1 }); return d; }
+// R43 (I55) STAGE 2 WORD REGION: a slow region (context gene program, no clock reset) whose memory columns accumulate the
+// letters of the current word; the cortex's own prediction of a space ('next_␣' output) inhibits them (word reset), and they
+// project to the cortex mixing cells (claw). reset 0: control without the boundary reset.
+function createWordK3(T) { T = Object.assign({ reset: 30, w: 30 }, T); const d = SpikingArena.PLANS.predictK3.make(); d.label = 'predictK3 + word region';
+  const wg = createPredict2Plan(Object.assign({}, CTX3)); Object.assign(wg.sc, SpikingArena.DEMAND_SC); const k = d.regions.length;
+  d.regions.push({ name: 'word', color: '#7fd18b', g: wg, inputs: [{ env: 'symbol', tag: 1 }, { env: 'tonic' }] });
+  d.tracts.push({ name: 'word -> mixing', from: { region: k, cls: T.cls || 0 }, map: 'claw', to: { region: 0, mix: true, w: T.w }, salt: 77 });
+  if (T.reset) d.tracts.push({ name: 'predicted space -| word', from: { region: 0, out: 'next_␣' }, map: 'outReset', to: { region: k, cls: T.cls || 0, w: T.reset } });
+  return d; }
+for (const M of [2, 4]) { registerPlan('slowK3x' + M, 'R43 I54: specialised modules x' + M + ' (slower membrane by position)', () => createSlowK3(M), 'experimental, off by default');
+  registerPlan('deepK3x' + M, 'R43 I54: deeper-memory modules x' + M + ' (chained context regions)', () => createDeepK3(M), 'experimental, off by default');
+  registerPlan('voteK3x' + M, 'R43 I53: module voting x' + M, () => createVoteK3(M), 'experimental, off by default'); }
+registerPlan('wordK3', 'R43 I55: predictK3 + word region reset by the predicted space', () => createWordK3(), 'experimental, off by default');
+registerPlan('wordK3nr', 'R43 I55 control: word region without reset', () => createWordK3({ reset: 0 }), 'experimental, off by default');
+registerPlan('wordK3r10', 'R43 I55: word region, weaker claw w10', () => createWordK3({ w: 10 }), 'experimental, off by default');
+
 Object.assign(SpikingArena, { SeqTask, createPredictPlan, createPredict3Plan, PREDICT3_CTX: CTX3, createPredict2Plan, seqIO, PREDICT_LARGE: LARGE, PREDICT2_LARGE: LARGE2, PREDICT2_XL: XL2, PREDICT2_XT: XT2, PREDICT2_XN: XN2, PREDICT2_XM: XM2, PREDICT2_XS: XS2, PREDICT2_XG: XG2, PREDICT2_XO: XO2 });
 })();

@@ -81,3 +81,22 @@ SA.registerPlan('rewardED', 'rewardE with dual-timescale eligibility (evolvable)
   'rewardE whose synapses keep a slow and a fast eligibility tag; the mix, the fast time constant, tag capture at outcomes and receiver homeostasis evolve');
 })();
 
+/* R44 (I56) deepUR xM: unifiedR (v33) with M-1 extra chained context regions (as deepK3xM: context m holds the symbol m+2 back,
+ * projecting to the cortex mixing cells by claw). Extra areas carry the cortex/context receptor genes, so they develop only with
+ * the phase clock (graded with the outcome); on pure reward tasks the plan grows exactly unifiedR. Experimental, off by default. */
+(function () { const SA = SpikingArena;
+function createDeepUR(M, T) { T = Object.assign({ w: 30 }, T); const d = SA.createUnifiedR(); d.label = 'unifiedR + deeper-memory context chain x' + M;
+  let prev = 1;
+  for (let m = 1; m < M; m++) { const ctx = SA.createPredict2Plan(Object.assign({}, SA.PREDICT3_CTX)); Object.assign(ctx.sc, SA.DEMAND_SC); const k = d.regions.length;
+    d.regions.push({ name: 'context ' + (m + 1), color: '#f0d050', g: ctx, area: Object.assign({}, d.regions[1].area, T.area || {}), inputs: [{ tract: 'prev', like: 'symbol', tag: 1 }, { env: 'go2', tag: 3 }, { env: 'go3', tag: 8 }, { env: 'tonic' }] });
+    d.tracts.push({ name: 'M' + (m + 2) + ' -> context ' + (m + 1), from: { region: prev, cls: 2 }, map: 'topo', to: { region: k, tract: 'prev' } },
+                  { name: 'M' + (m + 3) + ' -> mixing', from: { region: k, cls: 2 }, map: 'claw', to: { region: 0, mix: true, w: T.w }, salt: 31 * m });
+    if (T.wordReset) d.tracts.push({ name: 'predicted space -| context ' + (m + 1), from: { region: 0, out: 'next_␣' }, map: 'outReset', to: { region: k, cls: 2, w: T.wordReset } });
+    prev = k; }
+  return d; }
+for (const M of [2, 3, 4]) SA.registerPlan('deepURx' + M, 'R44 I56: unifiedR + deeper context chain x' + M, () => createDeepUR(M), 'experimental, off by default');
+// R44 (I57) ordered in-word code: the deep chain holds letters 3..M+1 back, cleared by the cortex's own predicted space, so its
+// columns encode 'letter k back WITHIN the current word' (order-preserving chained memory, empty past the word start).
+for (const M of [2, 3, 4, 6, 8]) SA.registerPlan('deepURSx' + M, 'R44 I56: deeper context chain x' + M + ', sequence-only areas (repressed by the outcome signal)', () => createDeepUR(M, { area: { o: -20 } }), 'experimental: grows unifiedR exactly when an outcome signal is present');
+for (const M of [3, 4]) SA.registerPlan('wordChainx' + M, 'R44 I57: deep context chain x' + M + ' reset by the predicted space (ordered in-word memory)', () => createDeepUR(M, { wordReset: 30 }), 'experimental, off by default');
+SA.createDeepUR = createDeepUR; })();
