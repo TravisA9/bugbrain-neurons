@@ -1,0 +1,29 @@
+name: BugBrain distributed queue
+# Free GitHub runners pull jobs from the `queue` branch via run/dq.js (claim -> run -> publish). Scheduled runs only fire
+# once this file is on the default branch (main); "Run workflow" (manual) also needs it there.
+on:
+  schedule:
+    - cron: '17 */6 * * *'   # every 6 hours
+  workflow_dispatch:
+    inputs:
+      runners: { description: 'parallel runners (informational; matrix is fixed below)', required: false, default: '4' }
+      hours: { description: 'hours per runner (max ~5.5)', required: false, default: '5' }
+permissions:
+  contents: write
+concurrency: { group: bugbrain-dq, cancel-in-progress: false }
+jobs:
+  work:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix: { slot: [1, 2, 3, 4] }
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: neuro/distributed-queue }
+      - uses: oven-sh/setup-bun@v2
+      - name: Worker
+        env:
+          BB_WORKER: gha-${{ github.run_id }}-${{ matrix.slot }}
+          BB_DQ_REPO: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        run: bun run/dq.js --hours "${{ github.event.inputs.hours || '5' }}" --workers 4 --allow-battery
