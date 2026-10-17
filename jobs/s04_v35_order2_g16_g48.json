@@ -1,0 +1,47 @@
+{
+  "id": "s04_v35_order2_g16_g48",
+  "question": "Q20",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "v35 rule (predErr 0.3 peMode 16 peFix 0.01, explicit genes) order2@1000 extra growths g16-31 + g48-63",
+  "priority": 0.58,
+  "estHours": 0.6,
+  "phone": true,
+  "accept": {
+    "note": "R53 order2 pooled +0.23 (t 1.2, n 32) was noisy; with s01 this makes n 64"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "deepURSx3 order2@1000 v35 g16",
+      "env": {
+        "BB_OUT": "results/phone/s04_v35_order2_g16_g48.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "deepURSx3 order2@1000 v35 g48",
+      "env": {
+        "BB_OUT": "results/phone/s04_v35_order2_g16_g48.jsonl"
+      }
+    }
+  ]
+}

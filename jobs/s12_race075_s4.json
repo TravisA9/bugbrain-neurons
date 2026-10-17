@@ -1,0 +1,21 @@
+{
+  "id": "s12_race075_s4",
+  "title": "Gentler racing evolution (engine.race 0.75 = cut 25%) seed 4, rewardE3 4-task, 12 gens (vs race_val off)",
+  "question": "PERF",
+  "track": "neuro",
+  "priority": 0.4,
+  "kind": "evolve",
+  "config": ".dq/configs/race075_s4.json",
+  "budget": {
+    "hours": 1
+  },
+  "estHours": 0.25,
+  "phone": false,
+  "requires": [
+    "perf/verify.js",
+    ".dq/configs/race075_s4.json"
+  ],
+  "accept": {
+    "note": "needs the perf/quickwins engine (engine.race); compare champion/ticks to perf/race_val off seed 4"
+  }
+}

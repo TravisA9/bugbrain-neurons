@@ -1,0 +1,47 @@
+{
+  "id": "s10_v35_analogy_relabel",
+  "question": "Q23",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "Analogy with v35: order3 relabel g16 (v34 base 8.319 in p02) + fresh n1000 v35 control g0",
+  "priority": 0.52,
+  "estHours": 0.6,
+  "phone": true,
+  "accept": {
+    "note": "transfer if post-switch q2 > fresh firstQuarter; p02: predErr 0.05 relabel 8.863"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "deepURSx3 order3 relabel v35 g16",
+      "env": {
+        "BB_OUT": "results/phone/s10_v35_analogy_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 order3 fresh n1000 v35 g0",
+      "env": {
+        "BB_OUT": "results/phone/s10_v35_analogy_relabel.jsonl"
+      }
+    }
+  ]
+}

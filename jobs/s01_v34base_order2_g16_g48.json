@@ -1,0 +1,46 @@
+{
+  "id": "s01_v34base_order2_g16_g48",
+  "question": "Q20",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js"
+  ],
+  "title": "v34 baselines (predErr 0) for v35 order2 extra growths: seqchoice order2@1000 g16-31 + g48-63",
+  "priority": 0.62,
+  "estHours": 0.6,
+  "phone": true,
+  "accept": {
+    "note": "pairs with s04 (v35); order2 pooled n would go 32 -> 64"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0",
+        "16"
+      ],
+      "label": "deepURSx3 order2@1000 v34(predErr0) g16",
+      "env": {
+        "BB_OUT": "results/phone/s01_v34base_order2_g16_g48.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0",
+        "48"
+      ],
+      "label": "deepURSx3 order2@1000 v34(predErr0) g48",
+      "env": {
+        "BB_OUT": "results/phone/s01_v34base_order2_g16_g48.jsonl"
+      }
+    }
+  ]
+}

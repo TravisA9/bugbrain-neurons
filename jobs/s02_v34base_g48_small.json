@@ -1,0 +1,46 @@
+{
+  "id": "s02_v34base_g48_small",
+  "question": "Q20",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js"
+  ],
+  "title": "v34 baselines (predErr 0) on fresh growths 48-63: order3 + text1000",
+  "priority": 0.61,
+  "estHours": 0.8,
+  "phone": true,
+  "accept": {
+    "note": "pairs with s05 (v35, g48)"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0",
+        "48"
+      ],
+      "label": "deepURSx3 order3 v34(predErr0) g48",
+      "env": {
+        "BB_OUT": "results/phone/s02_v34base_g48_small.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0",
+        "48"
+      ],
+      "label": "deepURSx3 text1000 v34(predErr0) g48",
+      "env": {
+        "BB_OUT": "results/phone/s02_v34base_g48_small.jsonl"
+      }
+    }
+  ]
+}

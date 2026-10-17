@@ -1,0 +1,75 @@
+{
+  "id": "s08_v35_prederr_sweep",
+  "question": "Q20",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "Sweep predErr 0.2 / 0.4 around v35 (peMode 16, peFix 0.01) on fables2000 + text1000, g0",
+  "priority": 0.49,
+  "estHours": 1.8,
+  "phone": false,
+  "accept": {
+    "note": "R53: 0.5/peFix 0.01 fables -0.024 (t -2.4); is 0.4 still safe with more text gain?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 fables2000 pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01 g0",
+      "env": {
+        "BB_OUT": "results/phone/s08_v35_prederr_sweep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 text1000 pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01 g0",
+      "env": {
+        "BB_OUT": "results/phone/s08_v35_prederr_sweep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.4,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 fables2000 pl.predErr=0.4,pl.peMode=16,pl.peFix=0.01 g0",
+      "env": {
+        "BB_OUT": "results/phone/s08_v35_prederr_sweep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.4,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 text1000 pl.predErr=0.4,pl.peMode=16,pl.peFix=0.01 g0",
+      "env": {
+        "BB_OUT": "results/phone/s08_v35_prederr_sweep.jsonl"
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "id": "s03_v34base_g48_text3000_fables",
+  "question": "Q20",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js"
+  ],
+  "title": "v34 baselines (predErr 0) on fresh growths 48-63: text3000 + fables2000",
+  "priority": 0.6,
+  "estHours": 2.2,
+  "phone": false,
+  "accept": {
+    "note": "pairs with s06 (v35, g48); fables is the binding task for v35"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0",
+        "48"
+      ],
+      "label": "deepURSx3 text3000 v34(predErr0) g48",
+      "env": {
+        "BB_OUT": "results/phone/s03_v34base_g48_text3000_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0",
+        "48"
+      ],
+      "label": "deepURSx3 fables2000 v34(predErr0) g48",
+      "env": {
+        "BB_OUT": "results/phone/s03_v34base_g48_text3000_fables.jsonl"
+      }
+    }
+  ]
+}

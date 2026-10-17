@@ -1,0 +1,61 @@
+{
+  "id": "s05_v35_g48_small",
+  "question": "Q20",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "v35 rule on fresh growths 48-63: order3 + text1000, plus engine-identity check row",
+  "priority": 0.57,
+  "estHours": 1,
+  "phone": true,
+  "accept": {
+    "note": "v35 vs s02 (paired g48); the predErr-0 order3 row must equal s02 row 1 (old vs new engine bit-identity)"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "deepURSx3 order3 v35 g48",
+      "env": {
+        "BB_OUT": "results/phone/s05_v35_g48_small.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "deepURSx3 text1000 v35 g48",
+      "env": {
+        "BB_OUT": "results/phone/s05_v35_g48_small.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0",
+        "48"
+      ],
+      "label": "deepURSx3 order3 v34(predErr0) g48",
+      "env": {
+        "BB_OUT": "results/phone/s05_v35_g48_small.jsonl"
+      }
+    }
+  ]
+}

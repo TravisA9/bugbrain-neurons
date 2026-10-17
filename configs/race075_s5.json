@@ -1,0 +1,85 @@
+{
+ "name": "race075_s5",
+ "mode": "standard",
+ "seed": 5,
+ "workers": 3,
+ "population": 24,
+ "generations": 12,
+ "hours": 0,
+ "start": [
+  "rewardE3"
+ ],
+ "engine": {
+  "growths": 4,
+  "episodes": 1,
+  "robustW": 0.5,
+  "valGrowths": 4,
+  "valArenas": 4,
+  "valTopK": 3,
+  "cellMut": 0.02,
+  "eliteFrac": 0.1,
+  "crossoverRate": 0.3,
+  "race": 0.75
+ },
+ "tasks": [
+  {
+   "name": "bandit",
+   "env": "bandit",
+   "params": {},
+   "weight": 1,
+   "ref": "auto",
+   "refPlan": "rewardE3"
+  },
+  {
+   "name": "cueR",
+   "env": "cue",
+   "params": {
+    "mapping": "random"
+   },
+   "weight": 1,
+   "ref": "auto",
+   "refPlan": "rewardE3"
+  },
+  {
+   "name": "cycle",
+   "env": "seqchoice",
+   "params": {
+    "source": "cycle"
+   },
+   "weight": 1,
+   "ref": "auto",
+   "refPlan": "rewardE3"
+  },
+  {
+   "name": "order2",
+   "env": "seqchoice",
+   "params": {
+    "source": "order2"
+   },
+   "weight": 1,
+   "ref": "auto",
+   "refPlan": "rewardE3"
+  }
+ ],
+ "combine": {
+  "type": "softmin",
+  "tau": 0.25,
+  "cap": 1.5
+ },
+ "championEvery": 5,
+ "smoke": {
+  "bandit": {
+   "nTrials": 40
+  },
+  "cueR": {
+   "nTrials": 6
+  },
+  "cycle": {
+   "nSyms": 40
+  },
+  "order2": {
+   "nSyms": 40
+  }
+ },
+ "description": "gentler racing evolution (keep 0.75 = cut 25%), compare to perf/race_val rv_off_s5 at equal ticks"
+}

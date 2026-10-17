@@ -1,0 +1,33 @@
+{
+  "id": "s11_depth_x6_text5000",
+  "question": "Q21",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js"
+  ],
+  "title": "Longer memory x depth: deepURSx6 on text5000 g0 (x3 v34 base 7.879 in R53)",
+  "priority": 0.5,
+  "estHours": 2.5,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "x6 beat x3 on text3000 held-out (+0.165, p06); does depth help more at 5000?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx6",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":5000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx6 text5000 base g0",
+      "env": {
+        "BB_OUT": "results/phone/s11_depth_x6_text5000.jsonl"
+      }
+    }
+  ]
+}

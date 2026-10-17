@@ -1,0 +1,47 @@
+{
+  "id": "s06_v35_g48_text3000_fables",
+  "question": "Q20",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "v35 rule on fresh growths 48-63: text3000 + fables2000",
+  "priority": 0.56,
+  "estHours": 2.2,
+  "phone": false,
+  "accept": {
+    "note": "third independent confirmation; R53: fables -0.007, text3000 +0.164"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "deepURSx3 text3000 v35 g48",
+      "env": {
+        "BB_OUT": "results/phone/s06_v35_g48_text3000_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "deepURSx3 fables2000 v35 g48",
+      "env": {
+        "BB_OUT": "results/phone/s06_v35_g48_text3000_fables.jsonl"
+      }
+    }
+  ]
+}
