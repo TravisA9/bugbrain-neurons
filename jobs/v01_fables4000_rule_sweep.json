@@ -1,0 +1,132 @@
+{
+  "id": "v01_fables4000_rule_sweep",
+  "question": "Q32",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "Fix v35 long-fables harm? predErr 0.1 / 0.2 (peFix 0.01), peFix 0 / 0.005 (predErr 0.3) on fables4000, growths 16-47",
+  "priority": 0.7,
+  "estHours": 6,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "v34/v35 g16-47 known (u06): v35 -0.029 (t -2.9, n 32). Want a variant with no fables loss"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "deepURSx3 fables4000 pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01 g16",
+      "env": {
+        "BB_OUT": "results/phone/v01_fables4000_rule_sweep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "32"
+      ],
+      "label": "deepURSx3 fables4000 pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01 g32",
+      "env": {
+        "BB_OUT": "results/phone/v01_fables4000_rule_sweep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "deepURSx3 fables4000 pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01 g16",
+      "env": {
+        "BB_OUT": "results/phone/v01_fables4000_rule_sweep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "32"
+      ],
+      "label": "deepURSx3 fables4000 pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01 g32",
+      "env": {
+        "BB_OUT": "results/phone/v01_fables4000_rule_sweep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0",
+        "16"
+      ],
+      "label": "deepURSx3 fables4000 pl.predErr=0.3,pl.peMode=16,pl.peFix=0 g16",
+      "env": {
+        "BB_OUT": "results/phone/v01_fables4000_rule_sweep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0",
+        "32"
+      ],
+      "label": "deepURSx3 fables4000 pl.predErr=0.3,pl.peMode=16,pl.peFix=0 g32",
+      "env": {
+        "BB_OUT": "results/phone/v01_fables4000_rule_sweep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.005",
+        "16"
+      ],
+      "label": "deepURSx3 fables4000 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.005 g16",
+      "env": {
+        "BB_OUT": "results/phone/v01_fables4000_rule_sweep.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.005",
+        "32"
+      ],
+      "label": "deepURSx3 fables4000 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.005 g32",
+      "env": {
+        "BB_OUT": "results/phone/v01_fables4000_rule_sweep.jsonl"
+      }
+    }
+  ]
+}

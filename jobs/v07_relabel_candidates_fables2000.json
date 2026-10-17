@@ -1,0 +1,47 @@
+{
+  "id": "v07_relabel_candidates_fables2000",
+  "question": "Q23",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "Fables safety for the renaming winners: peFix 0.2 (predErr 0.3) and predErr 1.0 (peFix 0.01) on fables2000 g0",
+  "priority": 0.58,
+  "estHours": 1.4,
+  "phone": false,
+  "accept": {
+    "note": "peFix 0.05 / 0.1 cost fables2000 -0.11 / -0.38 (u03)"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.2",
+        "0"
+      ],
+      "label": "deepURSx3 fables2000 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.2 g0",
+      "env": {
+        "BB_OUT": "results/phone/v07_relabel_candidates_fables2000.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 fables2000 pl.predErr=1,pl.peMode=16,pl.peFix=0.01 g0",
+      "env": {
+        "BB_OUT": "results/phone/v07_relabel_candidates_fables2000.jsonl"
+      }
+    }
+  ]
+}

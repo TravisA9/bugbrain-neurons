@@ -1,0 +1,75 @@
+{
+  "id": "v06_relabel_sweep_variants",
+  "question": "Q23",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "Renaming cost of the long-fables fix candidates: v01 variants on order3 relabel g16-31",
+  "priority": 0.6,
+  "estHours": 0.8,
+  "phone": true,
+  "accept": {
+    "note": "v35 8.460, v34 8.319 (g16-31); a fix that keeps fables may give up renaming speed"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01 g16",
+      "env": {
+        "BB_OUT": "results/phone/v06_relabel_sweep_variants.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01 g16",
+      "env": {
+        "BB_OUT": "results/phone/v06_relabel_sweep_variants.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0",
+        "16"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 pl.predErr=0.3,pl.peMode=16,pl.peFix=0 g16",
+      "env": {
+        "BB_OUT": "results/phone/v06_relabel_sweep_variants.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.005",
+        "16"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.005 g16",
+      "env": {
+        "BB_OUT": "results/phone/v06_relabel_sweep_variants.jsonl"
+      }
+    }
+  ]
+}

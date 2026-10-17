@@ -1,0 +1,47 @@
+{
+  "id": "v08_text1000_sweep_variants",
+  "question": "Q32",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "text1000 g0 for the two v01 variants without text data: predErr 0.1 / peFix 0.01 and predErr 0.3 / peFix 0",
+  "priority": 0.55,
+  "estHours": 0.4,
+  "phone": true,
+  "accept": {
+    "note": "v35 g0 7.53; text1000 for 0.2/0.01 and 0.3/0.005 already in s07/s08"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 text1000 pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01 g0",
+      "env": {
+        "BB_OUT": "results/phone/v08_text1000_sweep_variants.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0",
+        "0"
+      ],
+      "label": "deepURSx3 text1000 pl.predErr=0.3,pl.peMode=16,pl.peFix=0 g0",
+      "env": {
+        "BB_OUT": "results/phone/v08_text1000_sweep_variants.jsonl"
+      }
+    }
+  ]
+}

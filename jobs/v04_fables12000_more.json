@@ -1,0 +1,48 @@
+{
+  "id": "v04_fables12000_more",
+  "question": "Q32",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "fables12000 (three passes) growths 4-7, v34 vs v35 (n 4 -> 8)",
+  "priority": 0.55,
+  "estHours": 2.5,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "u05: v35 -0.142 (t -3.4, 0/4)"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000}}",
+        "4",
+        "pl.predErr=0",
+        "4"
+      ],
+      "label": "deepURSx3 fables12000 (3 passes) v34(predErr0) g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/v04_fables12000_more.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000}}",
+        "4",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "4"
+      ],
+      "label": "deepURSx3 fables12000 (3 passes) v35 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/v04_fables12000_more.jsonl"
+      }
+    }
+  ]
+}

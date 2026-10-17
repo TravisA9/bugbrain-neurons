@@ -1,0 +1,76 @@
+{
+  "id": "v03_v35_long_fables_confirm",
+  "question": "Q32",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "Confirm the v35 long-fables loss: fables4000 g48-63 and fables8000 g8-15 (n8), v34 vs v35",
+  "priority": 0.69,
+  "estHours": 3.75,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "fables4000 n 48 -> 64; fables8000 n 8 -> 16"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0",
+        "48"
+      ],
+      "label": "deepURSx3 fables4000 v34(predErr0) g48",
+      "env": {
+        "BB_OUT": "results/phone/v03_v35_long_fables_confirm.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "deepURSx3 fables4000 v35 g48",
+      "env": {
+        "BB_OUT": "results/phone/v03_v35_long_fables_confirm.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "8",
+        "pl.predErr=0",
+        "8"
+      ],
+      "label": "deepURSx3 fables8000 (2 passes) v34(predErr0) g8 n8",
+      "env": {
+        "BB_OUT": "results/phone/v03_v35_long_fables_confirm.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "8",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "8"
+      ],
+      "label": "deepURSx3 fables8000 (2 passes) v35 g8 n8",
+      "env": {
+        "BB_OUT": "results/phone/v03_v35_long_fables_confirm.jsonl"
+      }
+    }
+  ]
+}

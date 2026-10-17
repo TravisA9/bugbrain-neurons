@@ -1,0 +1,75 @@
+{
+  "id": "v05_relabel_replicate_g32",
+  "question": "Q23",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "Renaming replicate on growths 32-47: v34, v35, peFix 0.2, predErr 1.0 (order3 relabel)",
+  "priority": 0.62,
+  "estHours": 0.8,
+  "phone": true,
+  "accept": {
+    "note": "u01/u02 g16-31: peFix 0.2 +0.56 vs v35 (t 6.7), predErr 1.0 +0.46 (t 6.2)"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0",
+        "32"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 v34(predErr0) g32",
+      "env": {
+        "BB_OUT": "results/phone/v05_relabel_replicate_g32.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "32"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 v35 g32",
+      "env": {
+        "BB_OUT": "results/phone/v05_relabel_replicate_g32.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.2",
+        "32"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.2 g32",
+      "env": {
+        "BB_OUT": "results/phone/v05_relabel_replicate_g32.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=1,pl.peMode=16,pl.peFix=0.01",
+        "32"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 pl.predErr=1,pl.peMode=16,pl.peFix=0.01 g32",
+      "env": {
+        "BB_OUT": "results/phone/v05_relabel_replicate_g32.jsonl"
+      }
+    }
+  ]
+}
