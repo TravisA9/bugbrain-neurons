@@ -1,0 +1,89 @@
+{
+  "id": "p14_v34_depth_fables4000",
+  "title": "Long non-repeating memory on the v34 engine: deepURSx3 / x4 / x6 / x8 on fables 4000 (one full pass of the 4270-char corpus) + deepURSx3 fables4000 renamed at 0.5 (16 growths)",
+  "question": "Q32",
+  "track": "neuro",
+  "priority": 0.6,
+  "kind": "runs",
+  "estHours": 1.0,
+  "requires": [
+    "run/r42.js"
+  ],
+  "phone": false,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 fables4000 (v34 engine) g0",
+      "env": {
+        "BB_OUT": "results/shared/p14_v34_depth_fables4000.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx4 fables4000 (v34 engine) g0",
+      "env": {
+        "BB_OUT": "results/shared/p14_v34_depth_fables4000.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx6",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx6 fables4000 (v34 engine) g0",
+      "env": {
+        "BB_OUT": "results/shared/p14_v34_depth_fables4000.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx8",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx8 fables4000 (v34 engine) g0",
+      "env": {
+        "BB_OUT": "results/shared/p14_v34_depth_fables4000.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"relabel\":0.5}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "deepURSx3 fables4000 relabel 0.5 (v34 engine) g0",
+      "env": {
+        "BB_OUT": "results/shared/p14_v34_depth_fables4000.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "v34 engine only (DEFAULTS_VERSION 27, deepURSx3 = the v34 plan): pairs with PC job q40_v35_fables_long (v35 / x4+PE / x6+PE / slowS98w2+PE on the same growths) and q44 (v35 fables relabel). Do NOT run on a v35 checkout (deepURSx3 would then be v35 and duplicate q40)"
+  },
+  "note": "R54 queue review (Oct 17 7 AM CT): split with the PC so no run is done twice"
+}
