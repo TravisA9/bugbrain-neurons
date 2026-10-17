@@ -36,8 +36,10 @@ const r42Key = (plan, tj, variant, G, g0) => REG.fingerprints(REG.describeAblati
 function queuedKeys(jobs) { const s = new Set(); for (const j of jobs) for (const r of j.runs || []) if (r.script === 'run/r42.js') s.add([r.args[0], r.args[1], r.args[3] || 'base', r.args[4] || '0'].join('|')); return s; }
 const r42Run = (plan, tj, variant, g0, label, out) => ({ script: 'run/r42.js', args: [plan, tj, '16', variant, String(g0)], label, env: { BB_OUT: out } });
 
+// R49: jobs on the shared queue branch (copied to experiments/queue_shared, or a .dq clone) count as queued, so refill never duplicates phone/runner work
+function sharedJobs() { const o = []; for (const d of [path.join(ROOT, 'experiments', 'queue_shared'), path.join(ROOT, '.dq', 'jobs')]) { try { for (const f of fs.readdirSync(d)) if (f.endsWith('.json')) try { o.push(JSON.parse(fs.readFileSync(path.join(d, f), 'utf8'))); } catch (e) {} } catch (e) {} } return o; }
 function candidates(jobs) {
-  lib(); const reg = regAll(), fps = new Set(reg.map(e => e.fp)), queued = queuedKeys(jobs), out = [];
+  lib(); const reg = regAll(), fps = new Set(reg.map(e => e.fp)), queued = queuedKeys(jobs.concat(sharedJobs())), out = [];
   const known = (plan, tj, v, g0) => fps.has(r42Key(plan, tj, v, 16, g0)) || queued.has([plan, tj, v, String(g0)].join('|'));
   // (a) near-misses: same plan/task, defaults = current, variant mean > base mean on growths 0..15, not yet confirmed on 16..31
   const res = reg.filter(e => e.result && e.desc && e.desc.defaults === defaultsVersion && e.result.mean != null), base = {};

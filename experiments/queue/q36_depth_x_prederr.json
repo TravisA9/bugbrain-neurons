@@ -1,0 +1,99 @@
+{
+  "id": "q36_depth_x_prederr",
+  "title": "Depth x world model: do deeper chains (deepURSx6/x8) and predErr 0.05 add up on long text, and does mismatch depression remove the depth cost on order3 / fables? (16 growths, paired with q28 bases)",
+  "question": "Q27",
+  "track": "neuro",
+  "priority": 1.3,
+  "kind": "runs",
+  "estHours": 1.5,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx6",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx6 text3000 pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r50/q36_depth_x_prederr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx6",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx6 order3 pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r50/q36_depth_x_prederr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx6",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\"}}",
+        "16",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx6 fables2000 pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r50/q36_depth_x_prederr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx8",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx8 text3000 pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r50/q36_depth_x_prederr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx8",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":5000}}",
+        "16",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx8 text5000 pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r50/q36_depth_x_prederr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":5000}}",
+        "16",
+        "pl.predErr=0.05",
+        "0"
+      ],
+      "label": "deepURSx3 text5000 pl.predErr=0.05",
+      "env": {
+        "BB_OUT": "results/r50/q36_depth_x_prederr.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "additive if x6/x8 + predErr beats both x6/x8 base (q28) and x3 + predErr (q29 / this job) on text3000/5000 by > 2 SE paired; order3/fables: does predErr shrink the x6/x8 loss (q28: x8 order3 -0.26, fables -0.09 vs x3)?"
+  },
+  "note": "R50. Bases: results/r45/q28_depth_life.jsonl (x6/x8 text3000/5000, order3, fables2000, x3 text5000) and q29 (x3 + predErr text3000)"
+}

@@ -544,11 +544,12 @@
       "area": "learning",
       "title": "World model: taught cells predict their next input; mismatch (spike without teacher plateau) depresses inputs (pl.predErr)",
       "status": "mixed",
-      "evidence": "q27 (16 held-out growths, means; unpaired t): predictK3 order3 8.53 -> 8.82 (0.05, t~1.7) / 8.75 (0.15) / 8.16 (0.3); text 7.26 -> 7.21 / 7.13 / 6.98 (dose-dependent loss, t -0.9/-1.8/-3.3); unifiedR seqchoice order2@1000 5.85 -> 5.74 (0.1) / 4.41 (0.3). Not adopted. Hint on order3 only at small rates -> q29 retests 0.02/0.05 on the v34 deep plan with 32 paired growths",
+      "evidence": "q27 (16 held-out growths, means; unpaired t): predictK3 order3 8.53 -> 8.82 (0.05, t~1.7) / 8.75 (0.15) / 8.16 (0.3); text 7.26 -> 7.21 / 7.13 / 6.98 (dose-dependent loss, t -0.9/-1.8/-3.3); unifiedR seqchoice order2@1000 5.85 -> 5.74 (0.1) / 4.41 (0.3). Not adopted. Hint on order3 only at small rates -> q29 retests 0.02/0.05 on the v34 deep plan with 32 paired growths | R50 q29 (deepURSx3, 32 paired growths, base -> 0.02 / 0.05): text3000 7.79 -> 7.86 / 8.10 (t 2.8 / 11.8), order3 9.00 -> 9.25 / 9.35 (t 3.5 / 4.6), text1000 7.37 -> 7.36 / 7.49 (t -0.3 / 4.3), but fables2000 2.94 -> 2.77 / 2.31 (t -5.9 / -18.2, 0/32 wins at 0.05; accuracy already lower in the first quarter 0.221 -> 0.160). Not adoptable (fables). Gains still rising at 0.05 -> q35 doses 0.1/0.2; q36 with depth; I64 gate for the fables loss; held-out p01/p03, fables dose p04 on the shared queue",
       "why": "step 1 of the world-model roadmap; local error-driven rule, no backprop",
       "rounds": [
         "q27",
-        "R45"
+        "R45",
+        "R50"
       ]
     },
     {
@@ -567,10 +568,11 @@
       "area": "evaluation",
       "title": "Alphabet-transfer analogy test: learn a grammar on one alphabet, relabel symbols, measure relearning speed vs fresh brain",
       "status": "testing",
-      "evidence": "R45: seq env option relabel (rename all symbols by one random permutation from that fraction of the life on; stats q1/q2); box smoke 2 growths deepURSx3: order3 n2000 fresh first quarter 0.91 vs 0.62 right after the renaming (no-relabel 1.00) -> interference, not yet transfer; q31 measures 16 growths, q33 evolves for it",
+      "evidence": "R45: seq env option relabel (rename all symbols by one random permutation from that fraction of the life on; stats q1/q2); box smoke 2 growths deepURSx3: order3 n2000 fresh first quarter 0.91 vs 0.62 right after the renaming (no-relabel 1.00) -> interference, not yet transfer; q31 measures 16 growths, q33 evolves for it | R50 q31 (16 growths): no transfer, interference. Post-switch quarter q2 vs a fresh brain's first quarter: order3 0.594 vs 0.917 (deepURSx3), 0.589 vs 0.874 (unifiedR); cycle 0.617 vs 0.954; text 0.436 vs 0.616. predErr 0.05 speeds unlearning: order3 q2 0.718, cycle 0.807, text 0.453 (still below fresh). Next: q37 (predErr 0.1/0.2 after renaming), q33 evolve, p02/p05 held-out on the shared queue; real analogy probably needs role/structure cells that are not tied to symbol identity (I63)",
       "why": "faster relearning = reusable role/structure circuits (analogy)",
       "rounds": [
-        "R45"
+        "R45",
+        "R50"
       ]
     },
     {
@@ -663,11 +665,12 @@
       "id": "I58",
       "area": "memory",
       "title": "Memory depth x life length: deeper chains (deepURSx6/x8) pay off only with long lives (text 3000/5000, fables 5000) and bigger alphabets (order3 K12/16)",
-      "status": "testing",
-      "evidence": "R44: depth gain grows x2->x4 on text 1000 (+0.07/+0.10/+0.14) but fables 2000 only +0.02; box smoke 1 growth: x6/x8 text 1000 7.38/7.42 vs x3 7.34. q28, q32 (16 growths, paired with R44 seeds)",
+      "status": "mixed",
+      "evidence": "R44: depth gain grows x2->x4 on text 1000 (+0.07/+0.10/+0.14) but fables 2000 only +0.02; box smoke 1 growth: x6/x8 text 1000 7.38/7.42 vs x3 7.34. q28, q32 (16 growths, paired with R44 seeds) | R50 q28/q32 (16 paired growths vs deepURSx3): text gains grow with depth and life: text5000 x4/x6/x8 +0.05/+0.15/+0.21 (t 1.6/4.3/6.4, x8 15/16 wins), text3000 +0.03/+0.12/+0.17 (t 0.9/3.8/5.1), text1000 x6/x8 +0.05/+0.11 (t 1.2/2.6); but fables loses: fables5000 x6/x8 -0.03/-0.06 (t -2.9/-4.1), fables2000 x8 -0.09 (t -6.3); order3 x6/x8 -0.08/-0.26 (n.s.). order3 K12/K16 is at ceiling for every plan (9.81-9.89, last quarter 1.0) -> uninformative. Depth is a text-only win; not adoptable as a default. Held-out p06/p07 on the shared queue; q36 tests depth + predErr",
       "why": "I41 life length is the biggest lever; Travis: longer memory for non-repetitive sequence prediction; fractal scaling that adds new memory depth (I54)",
       "rounds": [
-        "R45"
+        "R45",
+        "R50"
       ]
     },
     {
@@ -675,10 +678,11 @@
       "area": "evolution",
       "title": "Evolve the v34 deep plan on long-memory prediction (text/fables 2000 + order3; and text/fables 5000 from deepURSx4)",
       "status": "testing",
-      "evidence": "queued q30 (5 h) and q34 (3 h); earlier multitask evolutions mostly returned the start genome (I40, I44, q19 0.945, q26 1.019)",
+      "evidence": "queued q30 (5 h) and q34 (3 h); earlier multitask evolutions mostly returned the start genome (I40, I44, q19 0.945, q26 1.019) | R50: q30 interrupted 3:05-6:30 PM Oct 16 (PC lost power), resumed from its gen-2 checkpoint; after 3 gens (2.4 h active) champion 1.0025 = start genome",
       "why": "sequence-only fitness is cheaper per generation than text+reward multitask and targets the key focus",
       "rounds": [
-        "R45"
+        "R45",
+        "R50"
       ]
     },
     {
@@ -690,6 +694,50 @@
       "why": "Q19: short lives far below long-life scores (I41)",
       "rounds": [
         "R45"
+      ]
+    },
+    {
+      "id": "I61",
+      "area": "learning",
+      "title": "predErr dose above 0.05 on the deep plan (0.1 / 0.2): find the peak for text / order3",
+      "status": "testing",
+      "evidence": "R50: q29 gains rise from 0.02 to 0.05 on text3000 (+0.07 -> +0.31), order3 (+0.25 -> +0.35), text1000 (-0.01 -> +0.12); q27 on predictK3 lost text at 0.15/0.3, so the deep plan may tolerate more. Queued q35",
+      "why": "largest single gain on long text since R44; Travis's world-model / prediction-mismatch focus",
+      "rounds": [
+        "R50"
+      ]
+    },
+    {
+      "id": "I62",
+      "area": "memory",
+      "title": "Depth x world model: deeper chains (x6/x8) + predErr; does mismatch depression prune the noisy extra context that costs order3 / fables?",
+      "status": "testing",
+      "evidence": "R50: depth and predErr both gain on long text (x8 text5000 +0.21, predErr 0.05 text3000 +0.31) and both lose fables; unknown whether they add up or overlap. Queued q36",
+      "why": "longer memory for non-repetitive text (Travis) without a second hand-tuned plan",
+      "rounds": [
+        "R50"
+      ]
+    },
+    {
+      "id": "I63",
+      "area": "evaluation",
+      "title": "Analogy needs symbol-independent role cells: after renaming, old symbol-specific weights interfere (negative transfer); test faster unlearning (predErr dose) first, then role/structure codes",
+      "status": "open",
+      "evidence": "R50 q31: every plan is far worse right after the renaming than a fresh brain (order3 0.59 vs 0.92), predErr 0.05 recovers part (0.72). Queued q37 (predErr 0.1/0.2 after renaming)",
+      "why": "Travis: learn and think by analogy; a brain that only unlearns faster is still not transferring structure",
+      "rounds": [
+        "R50"
+      ]
+    },
+    {
+      "id": "I64",
+      "area": "learning",
+      "title": "Confidence-gated predErr: depress only when the cell's prediction is usually right (running hit rate or a population-confidence gate), so noisy 24-symbol fables streams are not eroded",
+      "status": "open",
+      "evidence": "R50: fables (accuracy 0.28, optimal 0.33) loses 0.63 at predErr 0.05 and already in the first quarter, while text (0.74) and order3 (0.86) gain; mismatches dominate when most predictions miss. Needs code in js/core/net.js (off by default); after q35 / p04 show the dose shape",
+      "why": "keeps the world-model gain on text / order3 without the fables loss -> could make predErr adoptable",
+      "rounds": [
+        "R50"
       ]
     }
   ],
@@ -849,17 +897,17 @@
     },
     {
       "id": "Q20",
-      "q": "Does prediction-mismatch depression (pl.predErr, world-model step 1) at small rates improve the v34 deep plan on order3 / long text without losing text or fables?",
+      "q": "Does prediction-mismatch depression (pl.predErr, world-model step 1) at small rates improve the v34 deep plan on order3 / long text without losing text or fables? [answered R50 q29: mixed - text3000 +0.31, order3 +0.35, text1000 +0.12 at 0.05 (paired, 32 growths), fables2000 -0.63; not adoptable; follow-ups Q26-Q28]",
       "impact": 4,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "q29_prederr_deep (32 paired growths); q27 (R45) mixed"
     },
     {
       "id": "Q21",
-      "q": "Do deeper context chains (x6/x8) pay off with long lives (text 3000/5000, fables 5000) or bigger alphabets (order3 K12/16)?",
+      "q": "Do deeper context chains (x6/x8) pay off with long lives (text 3000/5000, fables 5000) or bigger alphabets (order3 K12/16)? [answered R50 q28/q32: text yes (x8 text5000 +0.21, t 6.4), fables / order3 no (x8 fables2000 -0.09, order3 -0.26); order3 K12/16 at ceiling]",
       "impact": 5,
-      "likelihood": 0.4,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "q28_depth_life, q32_order3_capacity"
     },
@@ -873,11 +921,11 @@
     },
     {
       "id": "Q23",
-      "q": "Analogy: after a mid-life renaming of all symbols (same structure), does the brain relearn faster than a fresh brain, and can evolution make it?",
+      "q": "Analogy: after a mid-life renaming of all symbols (same structure), does the brain relearn faster than a fresh brain, and can evolution make it? [R50 q31: no - interference (order3 post-switch 0.59 vs fresh 0.92); predErr 0.05 recovers part (0.72)]",
       "impact": 5,
-      "likelihood": 0.25,
+      "likelihood": 0.15,
       "cost": 1,
-      "experiment": "q31_analogy_relabel (env option relabel, R45), q33_analogy_evolve (3 h)"
+      "experiment": "q31_analogy_relabel (env option relabel, R45), q33_analogy_evolve (3 h); q37 predErr dose after renaming; p02/p05 held-out (shared queue)"
     },
     {
       "id": "Q24",
@@ -894,6 +942,38 @@
       "likelihood": 0.2,
       "cost": 3,
       "experiment": "needs code (I50); after Q20"
+    },
+    {
+      "id": "Q26",
+      "q": "Does a higher predErr dose (0.1 / 0.2) raise the deep plan's text / order3 gain further, and is it safe on seqchoice? (fables loss handled separately, I64)",
+      "impact": 5,
+      "likelihood": 0.35,
+      "cost": 1,
+      "experiment": "q35_prederr_dose_high, q38_prederr_seqchoice_safety; p01/p03/p04 on the shared queue"
+    },
+    {
+      "id": "Q27",
+      "q": "Do memory depth (deepURSx6/x8) and prediction-mismatch depression add up on long text, and does predErr remove the depth cost on order3 / fables?",
+      "impact": 5,
+      "likelihood": 0.3,
+      "cost": 1,
+      "experiment": "q36_depth_x_prederr (paired with q28)"
+    },
+    {
+      "id": "Q28",
+      "q": "After a mid-life renaming, does stronger mismatch depression close the gap to a fresh brain (first step towards analogy / reuse)?",
+      "impact": 4,
+      "likelihood": 0.3,
+      "cost": 1,
+      "experiment": "q37_relabel_prederr_dose (paired with q31)"
+    },
+    {
+      "id": "Q29",
+      "q": "Can a confidence-gated predErr keep the text / order3 gain without the fables loss?",
+      "impact": 5,
+      "likelihood": 0.3,
+      "cost": 2,
+      "experiment": "needs code (I64): gate predErr by the cell's running hit rate; then text / order3 / fables / seqchoice, 16 growths"
     }
   ]
 }

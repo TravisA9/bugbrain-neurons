@@ -1,0 +1,99 @@
+{
+  "id": "q35_prederr_dose_high",
+  "title": "World model step 1c: is 0.05 the peak? pl.predErr 0.1 / 0.2 on the v34 default deepURSx3: text 1000 / 3000, order3 (16 growths, paired with q29 bases g0-15)",
+  "question": "Q26",
+  "track": "neuro",
+  "priority": 1.35,
+  "kind": "runs",
+  "estHours": 1.0,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\"}}",
+        "16",
+        "pl.predErr=0.1",
+        "0"
+      ],
+      "label": "deepURSx3 text1000 pl.predErr=0.1",
+      "env": {
+        "BB_OUT": "results/r50/q35_prederr_dose_high.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\"}}",
+        "16",
+        "pl.predErr=0.2",
+        "0"
+      ],
+      "label": "deepURSx3 text1000 pl.predErr=0.2",
+      "env": {
+        "BB_OUT": "results/r50/q35_prederr_dose_high.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.1",
+        "0"
+      ],
+      "label": "deepURSx3 text3000 pl.predErr=0.1",
+      "env": {
+        "BB_OUT": "results/r50/q35_prederr_dose_high.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.2",
+        "0"
+      ],
+      "label": "deepURSx3 text3000 pl.predErr=0.2",
+      "env": {
+        "BB_OUT": "results/r50/q35_prederr_dose_high.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.1",
+        "0"
+      ],
+      "label": "deepURSx3 order3 pl.predErr=0.1",
+      "env": {
+        "BB_OUT": "results/r50/q35_prederr_dose_high.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.2",
+        "0"
+      ],
+      "label": "deepURSx3 order3 pl.predErr=0.2",
+      "env": {
+        "BB_OUT": "results/r50/q35_prederr_dose_high.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "q29 (32 paired growths): text3000 +0.31 (t 11.8), order3 +0.35 (t 4.6), text1000 +0.12 (t 4.3) at 0.05, all rising from 0.02. Peak dose = largest paired gain on all three; fables is NOT expected to recover (p04 on the shared queue tests 0.01/0.03 there)"
+  },
+  "note": "R50 (queue review Oct 16 7 PM). Bases: results/r45/q29_prederr_deep.jsonl (first 16 growths = same seeds)"
+}

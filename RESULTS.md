@@ -2230,3 +2230,76 @@ q32 order3 capacity (K 12 / 16) · q30 evolve deepURSx3 on text 2000 + fables 20
 renaming (3 h, after q31) · q34 evolve deepURSx4 with 5000-symbol lives (3 h, after q28). About 1.5 h of held-out runs + 11 h of
 evolution ≈ 12 h of active compute (more wall time when the PC is busy).
 Not queued on the PC: q18, q22-q24 stay on the distributed `queue` branch (still unclaimed).
+
+## R50 — queue review (Oct 16, 7:20 PM CT): q28/q29/q31/q32 results, q30 resumed after an outage, new queue q35-q38 (defaults unchanged, v34 / 27)
+
+(R46 = queue self-refill, commit 5b4a7c3; R48/R49 = phone mode + distributed queue on the PR #7 branch, see those commits; R47 unused.)
+
+**Queue status**: healthy at 7:20 PM — queue pid 11012 (started 6:29 PM), runner pid 16680 on q30, gen 2 finished 7:19 PM, no PAUSE.
+The previous queue (pid 23808) stopped silently after q30 gen 1 (3:04:57 PM): no battery / PAUSE / error line in queue_console.txt,
+no reboot (last boot Oct 13). The laptop then ran on battery and went into Modern Standby at 4:58 PM (battery 8 % when checked);
+the "BugBrain Queue (idle)" scheduled task fired at 4:58 PM and its queue started when power came back (6:29 PM), resuming q30 from the
+gen-2 checkpoint. Lost: about 3.4 h of wall time and the unfinished gen 2. Exact cause of the 3:05 PM stop not determinable from the logs
+(another session was testing dq.js on the PC around 4:30 PM).
+
+**Finished since R45** (results/r45/*.jsonl on the PC; 16 growths unless noted; paired = same growth seeds, d = mean diff, t, wins):
+
+q28 depth × life length (vs deepURSx3, paired):
+
+| task | x3 | unifiedR | x4 | x6 | x8 |
+|---|---|---|---|---|---|
+| text 3000 | 7.790 | -0.14 (t -3.9) | +0.03 (0.9) | +0.12 (3.8, 13/16) | **+0.17 (5.1, 15/16)** |
+| text 5000 | 7.878 | -0.16 (-5.8) | +0.05 (1.6) | +0.15 (4.3, 13/16) | **+0.21 (6.4, 15/16)** |
+| fables 5000 | 3.178 | -0.01 (-1.1) | +0.01 (0.5) | -0.03 (-2.9) | -0.06 (-4.1) |
+| text 1000 (x3 = q29 base) | 7.367 | | | +0.05 (1.2) | +0.11 (2.6) |
+| fables 2000 (x3 = q29 base) | 2.941 | | | -0.01 (-0.9) | -0.09 (-6.3) |
+| order3 (x3 = q29 base) | 8.995 | | | -0.08 (-0.7) | -0.26 (-1.7) |
+
+q32 order3 capacity (K 12 / 16, 1000-symbol lives): unifiedR 9.811 / 9.758, x3 9.852 / 9.854, x4 9.852 / 9.865, x6 9.889 / 9.870;
+last quarter = 1.0 for the deep plans -> the task is at ceiling, uninformative (bigger K makes order3 easier here, not harder).
+
+q29 predErr on the v34 default deepURSx3 (32 paired growths; bases double as the PC v34 check: text 7.367, order3 8.995, fables 2.941, text3000 7.791):
+
+| task | base | predErr 0.02 | predErr 0.05 |
+|---|---|---|---|
+| text 1000 | 7.367 | -0.01 (t -0.3) | **+0.12 (4.3, 27/32)** |
+| text 3000 | 7.791 | +0.07 (2.8) | **+0.31 (11.8, 31/32)** |
+| order3 | 8.995 | +0.25 (3.5) | **+0.35 (4.6, 23/32)** |
+| fables 2000 | 2.941 | -0.17 (-5.9) | **-0.63 (-18.2, 0/32)** |
+
+Fables accuracy drops from the first quarter on (0.221 -> 0.160 at 0.05; last quarter 0.310 -> 0.245), i.e. predErr slows learning on
+the noisy 24-symbol stream rather than eroding it late; order3 bits rise (1.00 -> 1.36) while accuracy rises (0.858 -> 0.898).
+
+q31 analogy / relabel (I49; quarter accuracies, n2000 lives, renaming at 0.5; q2 = first quarter after the renaming):
+
+| plan | task | fresh first quarter | q1 (before) | q2 (after renaming) | last quarter | no-relabel last quarter |
+|---|---|---|---|---|---|---|
+| unifiedR | order3 | 0.874 | 0.944 | 0.589 | 0.790 | 0.971 |
+| deepURSx3 | order3 | 0.917 | 0.971 | 0.594 | 0.828 | 0.988 |
+| deepURSx3 + predErr 0.05 | order3 | 0.944 | 0.988 | **0.718** | 0.893 | |
+| unifiedR / deepURSx3 | cycle K8 n1000 | 0.954 / 0.954 | 0.997 | 0.622 / 0.617 | 0.873 / 0.874 | |
+| deepURSx3 + predErr 0.05 | cycle | 0.929 | 0.985 | **0.807** | 0.889 | |
+| unifiedR / deepURSx3 | text | 0.601 / 0.616 | 0.761 / 0.771 | 0.418 / 0.436 | 0.681 / 0.706 | 0.784 / 0.796 |
+| deepURSx3 + predErr 0.05 | text | 0.603 | 0.797 | 0.453 | 0.713 | |
+
+Scores: order3 relabel 7.945 / 8.279 / 8.895, text 6.484 / 6.688 / 6.775, cycle 8.675 / 8.672 / 8.957 (unifiedR / x3 / x3 + predErr).
+Verdict: **no transfer — interference**: right after the renaming every plan is far below a fresh brain (old symbol-specific
+weights keep predicting the old names). predErr 0.05 speeds the unlearning (order3 q2 +0.12, cycle +0.19) but stays below fresh.
+
+Phone worker (shared queue, Moto G): q23 ngFail (rewardE3 half striatum, ng on): bandit 4.24 / 4.27 / 4.21, cycle 3.68 / 3.59 / 3.47,
+cueR -1.241 in all three (ng / + ngFail / + ngStruct) -> no recovery, Q03 not supported. q18 hard variants (unifiedR, no comparison arm):
+bandit 6 arms 3 contexts switch 40 3.323, cue random delay 40 9.098, recall random K6 -7.725 (baseline numbers only).
+
+q30 (evolve deepURSx3 on text2000 + fables2000 + order3, 5 h) still running: 3 generations, 2.42 h active, champion 1.0025 (gen 0 = start).
+
+**Adoptions: none.** predErr 0.05 beats the default on text 1000/3000 and order3 but loses fables by 0.63 (t -18), and deepURSx6/x8
+beat it on text but lose fables (and order3 for x8), so neither passes "no task worse beyond noise"; no held-out re-evaluation was
+needed for adoption. The held-out confirmations of the gains (p01 order3 predErr, p03 text3000 predErr, p06/p07 x6/x8 text3000, p02/p05
+relabel) and the fables dose (p04 0.01/0.03) are already on the shared queue (phone / linux-pc), so they were not duplicated here.
+
+**New PC queue (ranked by payoff, all new configs — checked against the merged registry and the shared queue):**
+q35 predErr 0.1 / 0.2 on deepURSx3 text1000 / text3000 / order3 (is 0.05 the peak? 6 runs, ~1 h) · q36 depth × predErr: x6 + 0.05 on
+text3000 / order3 / fables2000, x8 + 0.05 on text3000 / text5000, x3 + 0.05 on text5000 (additive? does predErr cut the depth cost? ~1.5 h) ·
+q37 predErr 0.1 / 0.2 after the renaming (order3, cycle, text; ~0.8 h) · q38 safety check predErr 0.05 on seqchoice order2 / cycle 1000,
+growths 16-31 (~0.6 h). With q30 (~2.6 h left), q33 (3 h) and q34 (3 h) about 12.5 h of active compute are queued.
+New ideas: I61-I64 (I64 confidence-gated predErr for the fables loss needs code; Q29).

@@ -1,0 +1,71 @@
+{
+  "id": "q38_prederr_seqchoice_safety",
+  "title": "Safety check before any predErr adoption: deepURSx3 pl.predErr 0.05 vs base on the reward-driven sequence tasks (seqchoice order2 / cycle, 1000-symbol lives), held-out growths 16-31",
+  "question": "Q26",
+  "track": "neuro",
+  "priority": 1.15,
+  "kind": "runs",
+  "estHours": 0.6,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "base",
+        "16"
+      ],
+      "label": "deepURSx3 sc_order2 base g16",
+      "env": {
+        "BB_OUT": "results/r50/q38_prederr_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.05",
+        "16"
+      ],
+      "label": "deepURSx3 sc_order2 pl.predErr=0.05 g16",
+      "env": {
+        "BB_OUT": "results/r50/q38_prederr_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "16",
+        "base",
+        "16"
+      ],
+      "label": "deepURSx3 sc_cycle base g16",
+      "env": {
+        "BB_OUT": "results/r50/q38_prederr_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.05",
+        "16"
+      ],
+      "label": "deepURSx3 sc_cycle pl.predErr=0.05 g16",
+      "env": {
+        "BB_OUT": "results/r50/q38_prederr_seqchoice_safety.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "predErr must not lose on seqchoice beyond noise (paired, growths 16-31; q27: unifiedR order2@1000 -0.11 at 0.1, -1.44 at 0.3). Growths 16-31 so the order2 base does not duplicate p08 (g0) on the shared queue"
+  },
+  "note": "R50"
+}
