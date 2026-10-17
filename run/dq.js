@@ -18,7 +18,7 @@
  *   and no new job is claimed while the power guard says pause. */
 const fs = require('fs'), path = require('path'), os = require('os'), cp = require('child_process');
 const ROOT = path.resolve(__dirname, '..');
-const A = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'wait', 'dry', 'allow-battery', 'include-text', 'phone', 'no-update'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
+const A = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'wait', 'dry', 'allow-battery', 'include-text', 'phone'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
 const WORKER = A.worker || process.env.BB_WORKER || (os.hostname() + '-' + process.pid);
 const BRANCH = A.branch || 'queue', DIR = path.resolve(A.dir || path.join(ROOT, '.dq')), LEASE_H = +(A['lease-hours'] || 4);
 const REPO = A.repo || process.env.BB_DQ_REPO || 'https://github.com/TravisA9/bugbrain-neurons.git';
@@ -29,17 +29,36 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const say = s => console.log(`[${new Date().toLocaleString()}] [${WORKER}] ${s}`);
 const TOKEN = process.env.BB_DQ_TOKEN || '';
 const AUTH = TOKEN ? ['-c', 'credential.helper=', '-c', 'credential.helper=!f() { echo username=x-access-token; echo password=$BB_DQ_TOKEN; }; f'] : [];
-function git(args, opt) { return cp.execFileSync('git', AUTH.concat(args), Object.assign({ cwd: DIR, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }, opt || {})).trim(); }
-function tryGit(args) { try { return { ok: true, out: git(args) }; } catch (e) { return { ok: false, out: String(e.stderr || e.message) }; } }
+function git(args, opt) { return cp.execFileSync('git', AUTH.concat(args), Object.assign({ cwd: DIR, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: Object.assign({}, process.env, { GIT_TERMINAL_PROMPT: '0' }) }, opt || {})).trim(); }
+const redact = s => String(s || '').replace(/(github_pat_|gh[pousr]_)[A-Za-z0-9_]+/g, '$1***').replace(/\/\/[^\/@\s]+@/g, '//***@').split(TOKEN || '\u0000').join('***');
+// R49: classify git failures: 'race' (non-fast-forward, retry), 'auth' (token refused: stop), 'other' (network etc.: back off)
+function classify(out) {
+  const s = String(out || '');
+  if (/\b403\b|\b401\b|Permission (to .* )?denied|Authentication failed|Invalid username or (password|token)|Write access to repository not granted|could not read Username|terminal prompts disabled|Repository not found|Resource not accessible/i.test(s)) return 'auth';
+  if (/non-fast-forward|fetch first|\[rejected\]|\(stale info\)|failed to update ref|cannot lock ref|updates were rejected/i.test(s)) return 'race';
+  return 'other';
+}
+function tryGit(args) { try { return { ok: true, out: git(args) }; } catch (e) { const out = redact(String(e.stderr || e.message)); return { ok: false, out, kind: classify(out) }; } }
+const AUTH_MSG = 'GitHub refused the token: check BB_DQ_TOKEN has Contents read/write on bugbrain-neurons (fine-grained token, repo TravisA9/bugbrain-neurons, not expired/deleted)';
+function authFail(r) { say(AUTH_MSG); say('git said: ' + r.out.trim().split('\n').slice(-4).join(' | ')); if (!TOKEN) say('BB_DQ_TOKEN is not set in this shell, so git has no push credentials'); process.exit(3); }
+let otherFails = 0;
+async function handleFail(r, what) {   // returns after a suitable wait; exits on auth errors
+  if (r.kind === 'auth') authFail(r);
+  if (r.kind === 'race') { otherFails = 0; say(`${what}: push rejected (another worker pushed first); retrying`); await sleep(500 + Math.random() * 2500); return; }
+  otherFails++; const w = Math.min(600e3, 15e3 * 2 ** Math.min(otherFails - 1, 6));
+  say(`${what}: git error (not a race), backing off ${Math.round(w / 1000)} s: ` + r.out.trim().split('\n').slice(-3).join(' | '));
+  await sleep(w);
+}
 const rd = p => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return null; } };
 function ensureClone() {
   if (!fs.existsSync(path.join(DIR, '.git'))) { fs.mkdirSync(DIR, { recursive: true }); git(['init', '-q']); git(['remote', 'add', 'origin', REPO]); }
   else if (A.repo || process.env.BB_DQ_REPO) git(['remote', 'set-url', 'origin', REPO]);
+  git(['config', 'credential.interactive', 'never']);
   git(['config', 'user.name', process.env.BB_GIT_NAME || 'bugbrain-dq']); git(['config', 'user.email', process.env.BB_GIT_EMAIL || 'bugbrain-dq@users.noreply.github.com']);
   sync();
 }
 function sync() {   // working copy := origin/<branch>, local commits that were not pushed are dropped
-  const f = tryGit(['fetch', '-q', 'origin', BRANCH]); if (!f.ok) throw new Error('cannot fetch ' + BRANCH + ': ' + f.out);
+  const f = tryGit(['fetch', '-q', 'origin', BRANCH]); if (!f.ok) { if (f.kind === 'auth') authFail(f); throw new Error('cannot fetch ' + BRANCH + ': ' + f.out); }
   git(['checkout', '-q', '-B', BRANCH, 'FETCH_HEAD']); git(['reset', '-q', '--hard', 'FETCH_HEAD']); git(['clean', '-qfd']);
 }
 function commitPush(msg, files) { git(['add', '--'].concat(files)); git(['commit', '-q', '-m', msg]); return tryGit(['push', '-q', 'origin', 'HEAD:' + BRANCH]); }
@@ -51,7 +70,6 @@ function candidates() {
   const left = (HOURS * 3600e3 - (Date.now() - T0)) / 3600e3;
   return ls('jobs').filter(f => f.endsWith('.json')).map(f => rd(path.join(DIR, 'jobs', f))).filter(Boolean)
     .filter(j => !isDone(j.id) && !claimOf(j.id) && j.kind !== 'blocked' && (j.kind !== 'text' || A['include-text']))
-    .filter(j => !(j.requires || []).some(r => !fs.existsSync(path.join(ROOT, r))))   // R49: skip jobs needing code this checkout lacks (self-update pulls it)
     .filter(j => !j.after || (isDone(j.after) && (!j.afterPass || (rd(path.join(DIR, 'done', j.after + '.json')) || {}).pass === true)))
     .filter(j => estH(j) * 1.15 + 0.1 <= left)
     .sort((a, b) => b.priority - a.priority || (a.id < b.id ? -1 : 1));
@@ -67,14 +85,15 @@ async function claimNext() {   // returns a job we own, or null
     sync(); const c = candidates(); if (!c.length) return null;
     const j = c[0], r = commitPush(`claim ${j.id} by ${WORKER}`, [writeClaim(j)]);
     if (r.ok) { say(`claimed ${j.id}`); return j; }
-    say(`lost the race for ${j.id} (push rejected); retrying`); await sleep(500 + Math.random() * 2500);
+    await handleFail(r, `claim ${j.id}`); if (r.kind === 'race') await sleep(Math.min(30e3, 250 * 2 ** attempt * Math.random()));
   }
   return null;
 }
 function stillMine(id) { const c = rd(path.join(DIR, 'claims', id + '.json')); return c && c.worker === WORKER; }
 async function renew(j) {   // lease heartbeat; false if someone else took the job over
   for (let i = 0; i < 5; i++) { sync(); if (!stillMine(j.id) || isDone(j.id)) return false;
-    if (commitPush(`renew ${j.id} by ${WORKER}`, [writeClaim(j, rd(path.join(DIR, 'claims', j.id + '.json')))]).ok) return true; await sleep(2000); }
+    const p = commitPush(`renew ${j.id} by ${WORKER}`, [writeClaim(j, rd(path.join(DIR, 'claims', j.id + '.json')))]); if (p.ok) return true;
+    if (p.kind === 'auth') { say(AUTH_MSG); return true; } await sleep(2000 * (i + 1)); }
   return true;
 }
 function sharedRegistry() { return ls('registry').filter(f => f.endsWith('.jsonl')).map(f => fs.readFileSync(path.join(DIR, 'registry', f), 'utf8')).join(''); }
@@ -109,21 +128,17 @@ async function publish(j, r) {
     else if (fs.existsSync(path.join(DIR, 'claims', j.id + '.json')) && stillMine(j.id)) { fs.unlinkSync(path.join(DIR, 'claims', j.id + '.json')); files.push('claims/' + j.id + '.json'); }   // unfinished: release the claim
     const p = commitPush(`${finished ? 'result' : 'release'} ${j.id} by ${WORKER} (${r.state.status})`, files);
     if (p.ok) { say(`published ${j.id}: ${r.state.status}${r.state.pass != null ? ' pass=' + r.state.pass : ''}`); return true; }
-    say('publish push rejected; resyncing and retrying'); await sleep(1000 + Math.random() * 3000);
+    if (p.kind === 'auth') { say(AUTH_MSG + '; results stay in ' + r.scratch); authFail(p); }
+    await handleFail(p, `publish ${j.id}`);
   }
   say(`could not publish ${j.id}; results stay in ${r.scratch}`); return false;
 }
-// R49: between jobs, fast-forward the code checkout (ROOT) if it is a clean git clone; restart this worker when run/dq.js itself changed.
-function selfUpdate() { if (A['no-update']) return; const g = a => cp.execFileSync('git', AUTH.concat(a), { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-  try { if (g(['status', '--porcelain', '--untracked-files=no'])) return; const before = g(['rev-parse', 'HEAD']); g(['pull', '-q', '--ff-only']); const after = g(['rev-parse', 'HEAD']); if (before === after) return;
-    say('code updated ' + before.slice(0, 7) + ' -> ' + after.slice(0, 7));
-    if (g(['diff', '--name-only', before, after, '--', 'run/dq.js'])) { say('run/dq.js changed; restarting worker'); cp.spawn(process.execPath, process.argv.slice(1), { cwd: ROOT, stdio: 'inherit', detached: true, env: process.env }).unref(); process.exit(0); } } catch (e) { say('self-update skipped: ' + String(e.message).split('\n')[0].slice(0, 120)); } }
 async function main() {
   ensureClone(); say(`worker on ${BRANCH} of ${REPO.replace(/\/\/[^@]*@/, '//')}${isFinite(HOURS) ? ', ' + HOURS + ' h' : ''}`);
   let n = 0;
   for (;;) {
     if (PHONE) { const p = require('./power').check(true); if (p.pause) { say('phone power guard: ' + p.why + '; waiting'); await sleep(120000); continue; } }
-    const j = await claimNext();
+    let j; try { j = await claimNext(); } catch (e) { otherFails++; const w = Math.min(600e3, 15e3 * 2 ** Math.min(otherFails, 6)); say('sync failed, retrying in ' + Math.round(w / 1000) + ' s: ' + redact(e.message).split('\n').slice(-2).join(' | ')); await sleep(w); continue; }
     if (!j) { if (A.wait && Date.now() - T0 < HOURS * 3600e3 - 3600e3) { await sleep(300000); continue; } say('nothing to claim; exiting'); break; }
     const hb = setInterval(() => { renew(j).then(ok => { if (!ok) say(`warning: lost the claim on ${j.id}`); }).catch(() => {}); }, +(process.env.BB_DQ_RENEW_MS || 1800e3));
     let r; try { r = await runJob(j); } finally { clearInterval(hb); }
