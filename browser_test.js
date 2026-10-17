@@ -66,9 +66,9 @@ function tableConsistent(rows) { const bad = []; for (let i = 0; i < rows.length
     // ---- A: fresh profile ----
     { const { p, errs } = await open(b); await chooseText(p); await p.select('#selSpeed', '10');
       const s = await p.evaluate(() => ({ plan: SpikingArena.defaultPlanId(SpikingArena.currentEnv()), P: SpikingArena.currentEnv().P, label: __arena.watch.genome.label }));
-      check(s.plan === 'unifiedR' && s.P.clock2 && s.P.clock3 && s.P.nSyms === 1000, `A recommended text setup: plan ${s.plan}, clock2 ${s.P.clock2}, clock3 ${s.P.clock3}, nSyms ${s.P.nSyms}`);
+      check(s.plan === 'deepURSx3' && s.P.clock2 && s.P.clock3 && s.P.nSyms === 1000, `A recommended text setup: plan ${s.plan}, clock2 ${s.P.clock2}, clock3 ${s.P.clock3}, nSyms ${s.P.nSyms}`);
       await record(p); const t0 = Date.now();
-      while (Date.now() - t0 < 150000 && !(await p.evaluate(() => window.__lives.length))) await sleep(2000);
+      while (Date.now() - t0 < 400000 && !(await p.evaluate(() => window.__lives.length))) await sleep(2000);
       const r = await p.evaluate(() => ({ rows: window.__rows, life: window.__lives[0] || null }));
       const rows = r.rows.slice(0, 1000), h = r.life || [], q = (a, i) => frac(a.slice(Math.floor(a.length * i / 4), Math.floor(a.length * (i + 1) / 4)).map(x => [0, 0, x]));
       console.log(`     A table: ${rows.length} rows, green ${frac(rows).toFixed(3)}, last 100 ${frac(rows.slice(-100)).toFixed(3)}; lifetime hits ${h.length}, quarters ${[0, 1, 2, 3].map(i => q(h, i).toFixed(2)).join(' ')}`);
@@ -106,10 +106,10 @@ function tableConsistent(rows) { const bad = []; for (let i = 0; i < rows.length
       const c2 = await p.evaluate(() => ({ gen: __arena.evo.gen, plan: SpikingArena.defaultPlanId(SpikingArena.currentEnv()), lbl: __arena.watch.genome.label, def: SpikingArena.planFor('env').make().label }));
       check(c2.gen === 0 && c2.lbl === c2.def && await p.$eval('#btnRestorePrev', e => !e.hidden), `C Reset to recommended settings: gen 0, watching the default plan ${c2.plan}, Restore button shown`);
       check(!errs.length, 'B/C no page errors ' + errs.join(' | ')); await p.close(); }
-    // ---- D: the text stub entry ----
-    { const { p, errs } = await open(b); await p.select('#selEnv', 'text'); await sleep(2500);
-      const d = await p.evaluate(() => ({ env: SpikingArena.params.env, P: SpikingArena.currentEnv().P, plan: SpikingArena.defaultPlanId(SpikingArena.currentEnv()) }));
-      check(d.env === 'seq' && d.P.source === 'text' && d.plan === 'unifiedR', `D text entry -> ${d.env}/${d.P.source}, plan ${d.plan}`);
+    // ---- D (v34 UI): first open = Sequence / Text, version in the title, text stub + chunker not listed ----
+    { const { p, errs } = await open(b); await sleep(2500);   // v34 UI: no text stub entry any more; a fresh profile opens Sequence prediction / Text corpus
+      const d = await p.evaluate(() => ({ env: SpikingArena.params.env, P: SpikingArena.currentEnv().P, plan: SpikingArena.defaultPlanId(SpikingArena.currentEnv()), title: document.title, opts: [...document.querySelectorAll('#selEnv option')].map(o => o.value) }));
+      check(d.env === 'seq' && d.P.source === 'text' && d.plan === 'deepURSx3' && d.title.includes(SAnode().APP_VERSION) && !d.opts.includes('text') && !d.opts.includes('chunk'), `D first open -> ${d.env}/${d.P.source}, plan ${d.plan}, title ${d.title}, envs ${d.opts}`);
       check(!errs.length, 'D no page errors ' + errs.join(' | ')); await p.close(); }
     // ---- F (v20): the bandit env and the reward-only cue mode ----
     { const { p, errs } = await open(b); await p.select('#selEnv', 'bandit'); await sleep(2500); await p.select('#selSpeed', '10');

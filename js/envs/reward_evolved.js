@@ -97,6 +97,27 @@ function createDeepUR(M, T) { T = Object.assign({ w: 30 }, T); const d = SA.crea
 for (const M of [2, 3, 4]) SA.registerPlan('deepURx' + M, 'R44 I56: unifiedR + deeper context chain x' + M, () => createDeepUR(M), 'experimental, off by default');
 // R44 (I57) ordered in-word code: the deep chain holds letters 3..M+1 back, cleared by the cortex's own predicted space, so its
 // columns encode 'letter k back WITHIN the current word' (order-preserving chained memory, empty past the word start).
-for (const M of [2, 3, 4, 6, 8]) SA.registerPlan('deepURSx' + M, 'R44 I56: deeper context chain x' + M + ', sequence-only areas (repressed by the outcome signal)', () => createDeepUR(M, { area: { o: -20 } }), 'experimental: grows unifiedR exactly when an outcome signal is present');
+for (const M of [2, 3, 4, 6, 8]) SA.registerPlan('deepURSx' + M + (M === 3 ? 'v34' : ''), 'R44 I56: deeper context chain x' + M + ', sequence-only areas (repressed by the outcome signal)' + (M === 3 ? ' (v34 default, without prediction-miss LTD)' : ''), () => createDeepUR(M, { area: { o: -20 } }), 'experimental: grows unifiedR exactly when an outcome signal is present');
+// v35 (R53 adopted): the default deepURSx3 learns with hybrid prediction-mismatch LTD in every area: a taught cell that fires without
+// its teacher plateau depresses its recently active inputs by predErr*lr*x*(peFix + (1 - peFix) w/wMax) (small fixed part + soft-bound part)
+const DEEP_PE = { predErr: 0.3, peMode: 16, peFix: 0.01 };
+SA.DEEP_PE = DEEP_PE;
+SA.registerPlan('deepURSx3', 'v35 default: unifiedR + deeper context chain x3 (outcome-repressed) + hybrid prediction-mismatch LTD (R53)', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_PE); d.label += ' + prediction-miss LTD'; return d; },
+  'default for three-phase-clock sequences/text and seqchoice; grows unifiedR exactly when an outcome signal is present');
 for (const M of [3, 4]) SA.registerPlan('wordChainx' + M, 'R44 I57: deep context chain x' + M + ' reset by the predicted space (ordered in-word memory)', () => createDeepUR(M, { wordReset: 30 }), 'experimental, off by default');
 SA.createDeepUR = createDeepUR; })();
+
+/* R47 (I48 revisited) SLOW CONTEXT LAYER: deepURSx3 + one region of slowly integrating memory cells (context gene program, memory
+ * leak slowLeak instead of the clock-reset short memory), driven by the current symbol only (no phase-clock reset), so its columns hold
+ * an exponentially fading summary of the sequence so far; it projects to the cortex mixing cells by claw (whose competitive learning
+ * picks the useful conjunctions). Sequence-only area (repressed by the outcome signal), so it grows only on clock tasks. Off by default. */
+(function () { const SA = SpikingArena;
+function createSlowCtx(T) { T = Object.assign({ leak: 0.995, w: 30 }, T); const d = SA.createDeepUR(3, { area: { o: -20 } }); d.label = 'deepURSx3 + slow context layer (leak ' + T.leak + ')';
+  const g = SA.createPredict2Plan(Object.assign({}, SA.PREDICT3_CTX)); g.sc = Object.assign({}, g.sc, SA.DEMAND_SC, { slowLeak: T.leak }, T.wIn ? { wIn: T.wIn } : {}); const k = d.regions.length;
+  d.regions.push({ name: 'slow context', color: '#9fb7ff', g, area: Object.assign({}, d.regions[1].area, { o: -20 }), inputs: [{ env: 'symbol', tag: 1 }, { env: 'tonic' }] });
+  d.tracts.push({ name: 'slow context -> mixing', from: { region: k, cls: T.cls == null ? 2 : T.cls }, map: 'claw', to: { region: 0, mix: true, w: T.w }, salt: 97 });
+  return d; }
+for (const [n, T] of [['slowCtxA', { leak: 0.98 }], ['slowCtxB', { leak: 0.995 }], ['slowCtxC', { leak: 0.999 }], ['slowCtxB15', { leak: 0.995, w: 15 }], ['slowCtxB0', { leak: 0.995, cls: 0 }], ['slowCtxB1', { leak: 0.995, cls: 1 }], ['slowCtxN0', { leak: 0, cls: 0 }], ['slowCtxA0', { leak: 0.98, cls: 0 }], ['slowCtxC0', { leak: 0.999, cls: 0 }], ['slowCtxA1', { leak: 0.98, cls: 1 }], ['slowCtxC1', { leak: 0.999, cls: 1 }]])
+  SA.registerPlan(n, 'R47 I48: deepURSx3 + slow context layer ' + JSON.stringify(T), () => createSlowCtx(T), 'experimental, off by default');
+for (const lk of [0.98, 0.995, 0.999]) for (const wIn of [0.5, 1, 2, 4, 8]) { const T = { leak: lk, wIn, cls: 0 }; SA.registerPlan('slowS' + String(lk).slice(2) + 'w' + wIn, 'R47 I48: slow context layer ' + JSON.stringify(T), () => createSlowCtx(T), 'experimental, off by default'); }
+SA.createSlowCtx = createSlowCtx; })();

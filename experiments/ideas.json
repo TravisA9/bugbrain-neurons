@@ -10,7 +10,8 @@
       "rounds": [
         "R4-A",
         "R21d"
-      ]
+      ],
+      "theme": "reward"
     },
     {
       "id": "I02",
@@ -23,7 +24,8 @@
         "R4-B",
         "R4-B2",
         "C1"
-      ]
+      ],
+      "theme": "growth"
     },
     {
       "id": "I03",
@@ -36,6 +38,10 @@
         "C4",
         "R6a",
         "R9b"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I02"
       ]
     },
     {
@@ -48,6 +54,10 @@
       "rounds": [
         "R6b",
         "C4"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I02"
       ]
     },
     {
@@ -60,7 +70,8 @@
       "rounds": [
         "R8a",
         "R9a"
-      ]
+      ],
+      "theme": "memory"
     },
     {
       "id": "I06",
@@ -73,6 +84,10 @@
         "R8d",
         "R9c",
         "R9d"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I05"
       ]
     },
     {
@@ -84,6 +99,10 @@
       "why": "generic mechanisms reused by every later plan",
       "rounds": [
         "R9b"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I04"
       ]
     },
     {
@@ -96,6 +115,10 @@
       "rounds": [
         "R9f",
         "R28"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I07"
       ]
     },
     {
@@ -109,6 +132,10 @@
         "R10a",
         "R10b",
         "R10c"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I06"
       ]
     },
     {
@@ -126,6 +153,11 @@
         "R14",
         "R16",
         "R20b"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I09",
+        "I06"
       ]
     },
     {
@@ -137,6 +169,10 @@
       "why": "pure speed",
       "rounds": [
         "R12a"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I02"
       ]
     },
     {
@@ -148,6 +184,10 @@
       "why": "more cells per context is not the limit",
       "rounds": [
         "R13c"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I10"
       ]
     },
     {
@@ -159,6 +199,10 @@
       "why": "part of predictK2XT and successors",
       "rounds": [
         "R13b"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I10"
       ]
     },
     {
@@ -170,6 +214,10 @@
       "why": "gain control helps the readout",
       "rounds": [
         "R14"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I13"
       ]
     },
     {
@@ -182,6 +230,10 @@
       "rounds": [
         "R15",
         "R16"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I14"
       ]
     },
     {
@@ -195,6 +247,10 @@
         "R21a",
         "R21b",
         "R21c"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I01"
       ]
     },
     {
@@ -206,6 +262,10 @@
       "why": "first multi-region win",
       "rounds": [
         "R22a"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I10"
       ]
     },
     {
@@ -218,6 +278,11 @@
       "rounds": [
         "R22",
         "R24"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I16",
+        "I17"
       ]
     },
     {
@@ -229,6 +294,11 @@
       "why": "one rule set, no loss",
       "rounds": [
         "R23"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I09",
+        "I16"
       ]
     },
     {
@@ -241,6 +311,10 @@
       "rounds": [
         "R26",
         "v30 live dashboard"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I11"
       ]
     },
     {
@@ -252,6 +326,11 @@
       "why": "stops trading one task away",
       "rounds": [
         "R27"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I03",
+        "I20"
       ]
     },
     {
@@ -263,6 +342,11 @@
       "why": "default reward genome until R35",
       "rounds": [
         "R27"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I16",
+        "I21"
       ]
     },
     {
@@ -274,6 +358,10 @@
       "why": "separates demand from the other 4 signals",
       "rounds": [
         "R28"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I07"
       ]
     },
     {
@@ -285,6 +373,11 @@
       "why": "new cells get random claws (worse than structured mixing inputs); reward areas stop being surprised. Known fixes: (1) give recruits the same structured (topo/claw) inputs as grown mixing cells; (2) drive reward areas by raw failure rate, not RPE surprise",
       "rounds": [
         "R29"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I23",
+        "I08"
       ]
     },
     {
@@ -296,6 +389,12 @@
       "why": "one genome decides; v30 default",
       "rounds": [
         "R30"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I17",
+        "I22",
+        "I19"
       ]
     },
     {
@@ -307,6 +406,10 @@
       "why": "linear context gives no conjunctions",
       "rounds": [
         "R31"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I25"
       ]
     },
     {
@@ -319,6 +422,11 @@
       "rounds": [
         "R32",
         "R37"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I25",
+        "I15"
       ]
     },
     {
@@ -330,6 +438,10 @@
       "why": "trial-matched trace helps short trials, breaks long-delay tasks",
       "rounds": [
         "R33"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I22"
       ]
     },
     {
@@ -342,6 +454,10 @@
       "rounds": [
         "R34",
         "R35"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I28"
       ]
     },
     {
@@ -353,6 +469,10 @@
       "why": "outcome timing does not separate the tasks",
       "rounds": [
         "R36"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I29"
       ]
     },
     {
@@ -364,6 +484,11 @@
       "why": "one genome now covers mixed tasks",
       "rounds": [
         "R37"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I25",
+        "I27"
       ]
     },
     {
@@ -377,6 +502,10 @@
         "R20a",
         "R22a",
         "issue #2"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I17"
       ]
     },
     {
@@ -388,6 +517,10 @@
       "why": "text track (issue #3)",
       "rounds": [
         "issue #3"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I11"
       ]
     },
     {
@@ -399,6 +532,10 @@
       "why": "text track (issue #1)",
       "rounds": [
         "issue #1"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I20"
       ]
     },
     {
@@ -410,6 +547,10 @@
       "why": "from the research memo: tells whether input structure shapes wiring",
       "rounds": [
         "memo #1"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I04"
       ]
     },
     {
@@ -423,6 +564,10 @@
         "memo #5",
         "R30",
         "R37"
+      ],
+      "theme": "analogy",
+      "parents": [
+        "I25"
       ]
     },
     {
@@ -430,10 +575,15 @@
       "area": "reward",
       "title": "Striatum evolved on bandit 3/6 arms + seqchoice (q04 champion) transplanted into unifiedR = rewardE3",
       "status": "adopted",
-      "evidence": "whole champion: text 0.40, order3 1.37 (collapse); striatum only: bandit6 5.11 vs 4.31 (+0.81 \u00b1 0.31), cycle 7.24 vs 6.78, cue -0.08 \u00b1 0.46 (40 growths), text/order3 bit-identical",
+      "evidence": "whole champion: text 0.40, order3 1.37 (collapse); striatum only: bandit6 5.11 vs 4.31 (+0.81 ± 0.31), cycle 7.24 vs 6.78, cue -0.08 ± 0.46 (40 growths), text/order3 bit-identical",
       "why": "keep the evolved reward area, not the mutated sequence areas",
       "rounds": [
         "R39"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I31",
+        "I29"
       ]
     },
     {
@@ -445,6 +595,10 @@
       "why": "v32 setting is the best",
       "rounds": [
         "R39 (q12)"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I31"
       ]
     },
     {
@@ -456,6 +610,10 @@
       "why": "no gain beyond rewardE2",
       "rounds": [
         "R39 (q09)"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I29"
       ]
     },
     {
@@ -467,6 +625,11 @@
       "why": "text makes generations slow; mutants lose text first",
       "rounds": [
         "R39 (q01)"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I21",
+        "I31"
       ]
     },
     {
@@ -474,11 +637,16 @@
       "area": "learning",
       "title": "Lifetime length is the biggest lever for sequence choice",
       "status": "confirmed",
-      "evidence": "seqchoice 1000 symbols: cycle 8.94, order2 5.85 vs 6.78 / 5.20 at 300 (q11); rewardE2 order2@1000 4.71 (q17)",
+      "evidence": "seqchoice 1000 symbols: cycle 8.94, order2 5.85 vs 6.78 / 5.20 at 300 (q11); rewardE2 order2@1000 4.71 (q17); R45 life curve (q25, unifiedR v33, 16 growths): seqchoice cycle 150/600/2000 symbols 5.82/8.48/9.20, order2 4.76/5.55/6.08 (still rising at 2000)",
       "why": "the reward area learns slowly; long lives, or better sample efficiency, are what pay",
       "rounds": [
         "R39",
-        "R40"
+        "R40",
+        "R45"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I37"
       ]
     },
     {
@@ -491,6 +659,10 @@
       "rounds": [
         "R39",
         "R40"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I35"
       ]
     },
     {
@@ -502,6 +674,10 @@
       "why": "ruled out",
       "rounds": [
         "R40"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I29"
       ]
     },
     {
@@ -513,37 +689,368 @@
       "why": "text-bearing multitask evolution too slow to search",
       "rounds": [
         "R40"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I40"
       ]
     },
     {
       "id": "I45",
       "area": "growth",
       "title": "Structured recruits (ngStruct) and failure-rate need (ngFail)",
-      "status": "testing",
-      "evidence": "implemented R40; smoke runs ok (ngFail changes cycle 3.69->3.66 at 2 growths)",
+      "status": "rejected",
+      "evidence": "implemented R40; smoke runs ok (ngFail changes cycle 3.69->3.66 at 2 growths) | shared queue (Oct 16-17): q22 predictK3 ng+ngReduce 0.5: text 6.56 vs base 7.26, order3 7.54 vs 8.53 (ngStruct worse: 6.35 / 7.45); q23 ngFail: no recovery (cueR -1.24 in all arms); q24 ngFail evolve 3 h: champion 1.017 < 1.03 (bandit 0.89 of ref)",
       "why": "q02/q03 were blocked on these; now q22, q23, q24",
       "rounds": [
-        "R40"
+        "R40",
+        "R54"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I24"
       ]
     },
     {
       "id": "I46",
       "area": "development",
       "title": "Task-shaped juvenile activity (juvMode 3) vs same pulses shuffled (4)",
-      "status": "testing",
-      "evidence": "implemented R40",
+      "status": "rejected",
+      "evidence": "q21 (rewardE3, 16 growths) juvMode 3 (task-shaped) vs 4 (same pulses shuffled): bandit 6.67/6.69, cueR 9.88/9.25, cycle 7.33/7.04, order2@300 5.12/5.09 (base 6.78/9.25/7.44/5.00); hold 8: cueR 8.62. All within noise (sd 0.6-2.3)",
       "why": "I42 left open whether the pattern matters when it resembles the task",
       "rounds": [
-        "R40"
+        "R40",
+        "R45"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I42"
+      ]
+    },
+    {
+      "id": "I47",
+      "area": "learning",
+      "title": "World model: taught cells predict their next input; mismatch (spike without teacher plateau) depresses inputs (pl.predErr)",
+      "status": "adopted",
+      "evidence": "q27 (16 held-out growths, means; unpaired t): predictK3 order3 8.53 -> 8.82 (0.05, t~1.7) / 8.75 (0.15) / 8.16 (0.3); text 7.26 -> 7.21 / 7.13 / 6.98 (dose-dependent loss, t -0.9/-1.8/-3.3); unifiedR seqchoice order2@1000 5.85 -> 5.74 (0.1) / 4.41 (0.3). Not adopted. Hint on order3 only at small rates -> q29 retests 0.02/0.05 on the v34 deep plan with 32 paired growths | R50 q29 (deepURSx3, 32 paired growths, base -> 0.02 / 0.05): text3000 7.79 -> 7.86 / 8.10 (t 2.8 / 11.8), order3 9.00 -> 9.25 / 9.35 (t 3.5 / 4.6), text1000 7.37 -> 7.36 / 7.49 (t -0.3 / 4.3), but fables2000 2.94 -> 2.77 / 2.31 (t -5.9 / -18.2, 0/32 wins at 0.05; accuracy already lower in the first quarter 0.221 -> 0.160). Not adoptable (fables). Gains still rising at 0.05 -> q35 doses 0.1/0.2; q36 with depth; I64 gate for the fables loss; held-out p01/p03, fables dose p04 on the shared queue | R52/R53: soft-bound and hybrid rules (pl.peMode 1 / 16, pl.peFix) remove the fables loss; hybrid predErr 0.3, peMode 16, peFix 0.01 on deepURSx3, 32 paired held-out growths: fables -0.007 (t -0.7), text3000 +0.164 (t 11.7), order3 +0.085 (t 2.5), text1000 +0.086 (t 6.6), order2@1000 +0.23 (t 1.2), text5000 +0.236 (t 8.1, n 16). ADOPTED v35 (DEFAULTS_VERSION 28) after Travis's approval (Oct 17)",
+      "why": "step 1 of the world-model roadmap; local error-driven rule, no backprop",
+      "rounds": [
+        "q27",
+        "R45",
+        "R50",
+        "R52",
+        "R53"
+      ],
+      "theme": "world model",
+      "parents": [
+        "I09"
+      ]
+    },
+    {
+      "id": "I48",
+      "area": "memory",
+      "title": "Slow context layers: chain of increasingly slow recurrent/adaptive cells summarising the layer below",
+      "status": "partial",
+      "evidence": "R43: slow-membrane modules (mixLeak by position) neutral at x2, harmful at x4; depth as a chained shift register (deepK3, I54) works instead; R52: slow context region (symbol-driven, slowLeak 0.98, wIn 2, claw -> mixing; plan slowS98w2) 32 paired growths: text3000 +0.11/+0.14 (t 5.0/6.7), text1000 +0.09/+0.10, order3 0, fables -0.03/-0.04 (t -1.9/-2.5); slower (0.995) or stronger (wIn 4) layers wreck order3 (-1.73)",
+      "why": "gives 'where it came from' state for long non-repeating sequences",
+      "rounds": [
+        "R43",
+        "R52"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I32"
+      ]
+    },
+    {
+      "id": "I49",
+      "area": "evaluation",
+      "title": "Alphabet-transfer analogy test: learn a grammar on one alphabet, relabel symbols, measure relearning speed vs fresh brain",
+      "status": "testing",
+      "evidence": "R45: seq env option relabel (rename all symbols by one random permutation from that fraction of the life on; stats q1/q2); box smoke 2 growths deepURSx3: order3 n2000 fresh first quarter 0.91 vs 0.62 right after the renaming (no-relabel 1.00) -> interference, not yet transfer; q31 measures 16 growths, q33 evolves for it | R50 q31 (16 growths): no transfer, interference. Post-switch quarter q2 vs a fresh brain's first quarter: order3 0.594 vs 0.917 (deepURSx3), 0.589 vs 0.874 (unifiedR); cycle 0.617 vs 0.954; text 0.436 vs 0.616. predErr 0.05 speeds unlearning: order3 q2 0.718, cycle 0.807, text 0.453 (still below fresh). Next: q37 (predErr 0.1/0.2 after renaming), q33 evolve, p02/p05 held-out on the shared queue; real analogy probably needs role/structure cells that are not tied to symbol identity (I63)",
+      "why": "faster relearning = reusable role/structure circuits (analogy)",
+      "rounds": [
+        "R45",
+        "R50"
+      ],
+      "theme": "analogy",
+      "parents": [
+        "I36"
+      ]
+    },
+    {
+      "id": "I50",
+      "area": "world-model",
+      "title": "Imagined rollouts: feed the world model's predictions back as input to try actions before taking them (bug world)",
+      "status": "open",
+      "evidence": "",
+      "why": "needs I47 accurate first",
+      "rounds": [],
+      "theme": "world model",
+      "parents": [
+        "I47"
+      ]
+    },
+    {
+      "id": "I51",
+      "area": "staged-learning",
+      "title": "Bottom-up stage 1: word-boundary chunker (env chunk: 2 outputs boundary / in-word, spaces as free dopamine labels; seq stats bF1)",
+      "status": "rejected",
+      "evidence": "R42, 16 held-out growths, 1000 chars: dedicated chunker F1 rewardE 0.485, unifiedR 0.434, rewardE3 0.432, predictK3 0.136 vs online letter-bigram 0.725. But the next-character predictor (predictK3 on text) already marks boundaries at F1 0.868 (P 0.856 R 0.881) vs bigram 0.733: chunking emerges from prediction for free",
+      "why": "stage 1 of bottom-up staging; result: use the predictive cortex itself as the chunker, not a reward-trained boundary region",
+      "rounds": [
+        "R42"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I32"
+      ]
+    },
+    {
+      "id": "I52",
+      "area": "scaling",
+      "title": "Fractal module tiling: predictK3 module x M (tiledK3xM), extra modules mixing cells -> module 0 receivers",
+      "status": "rejected",
+      "evidence": "R42, 16 growths: text 7.264 (x1) / 7.368 (x2) / 7.360 (x4) / 7.174 (x8); order3 8.529 / 8.333 / 7.215 / 7.228 (x4+ collapses to the order-2 limit, last quarter 0.90 -> 0.74). Inter-module weight irrelevant when plastic (preNorm rescales each fibre cell to 45); fixed weights 10/45 same collapse",
+      "why": "convergence of copies onto one output module dilutes the module own third-order context; needs I53/I54",
+      "rounds": [
+        "R42"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I17",
+        "I34"
+      ]
+    },
+    {
+      "id": "I53",
+      "area": "scaling",
+      "title": "Module voting: every tiled module owns a copy of the outputs; outputs sum (population vote) instead of feeding module 0 receivers",
+      "status": "mixed",
+      "evidence": "R43 voteK3x2 / x4: text +0.10 / +0.09 (t 5.0 / 3.5, replicate +0.09) but order3 -0.25 / -0.87 (redundant votes from modules wash out the third-order output). Cheap text gain only; deepK3 beats it on both",
+      "why": "R42: naive convergence hurt order3; parallel columns voting at the readout is how cortex pools redundant columns",
+      "rounds": [
+        "R43"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I52"
+      ]
+    },
+    {
+      "id": "I54",
+      "area": "scaling",
+      "title": "Specialized modules by morphogen position: module k context depth k+2 (longer shift registers / slower clocks) so copies add NEW information (longer memory) instead of redundant",
+      "status": "promising",
+      "evidence": "R43, 32 held-out growths (16 + fresh 16 replicate): deepK3x2 (one extra chained context = symbol 3 back -> mixing) order3 8.529->8.931 / replicate 8.584->9.019 (paired t 3.2 / 4.4, last quarter 0.94), text +0.07 (t 1.9 / 3.0); deepK3x4 text +0.13 / +0.14 (t 4.8 both, last quarter 0.786), order3 +0.09 / +0.26. Slower-membrane modules (slowK3x2/x4, mixLeak 0.8-0.95): x2 neutral, x4 harmful (text -0.20, order3 -1.16). Deeper memory helps; slower membranes do not. Candidate default (deepK3x2 or x3) pending a fables / mixed-task check",
+      "why": "R42: identical copies carry the same third-order code; scaling must add memory depth (ties to I48 slow context layers, issue #2)",
+      "rounds": [
+        "R43"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I52"
+      ]
+    },
+    {
+      "id": "I55",
+      "area": "staged-learning",
+      "title": "Stage 2: word-level region fed by the cortex boundary/prediction signal (word onset gating a slow word-context register) for next-letter and next-word prediction",
+      "status": "rejected",
+      "evidence": "R43 wordK3: slow word region (context program, memory columns accumulate letters, inhibited by the cortex own next_space prediction, claw -> mixing): text 7.210 vs 7.264 (-0.05, t -3.1), boundary F1 0.859 vs 0.867; no-reset control 7.097 (reset helps the region, -0.17 -> -0.05) but a bag-of-letters word state still hurts; claw weight 10 vs 30 identical (mixNorm). Next: word state as a sequence code (I56)",
+      "why": "R42 showed boundaries are already available from prediction (F1 0.87); stage 2 should consume them, not retrain them",
+      "rounds": [
+        "R43"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I51"
+      ]
+    },
+    {
+      "id": "I56",
+      "area": "memory",
+      "title": "deepK3 follow-ups: x3 depth, fables + mixed task held-out check, then adopt as text default if it holds",
+      "status": "adopted",
+      "evidence": "R44, 32 held-out growths: depth x2/x3/x4 text +0.07/+0.10/+0.14 (t 3.3/4.7/6.8), order3 +0.42/+0.44/+0.17, fables +0.02 n.s.; extra context areas in unifiedR hurt seqchoice cycle -0.75/-1.52/-2.25 and order2 (x3 -0.43); outcome-repressed areas (deepURSx3) identical to unifiedR on mixed tasks. Candidate default deepURSx3 pending approval. ADOPTED v34 (DEFAULTS_VERSION 27) after approval",
+      "why": "R43 deepK3 is the first scaling that helps (order3 +0.4, text +0.13)",
+      "rounds": [
+        "R44"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I54"
+      ]
+    },
+    {
+      "id": "I57",
+      "area": "staged-learning",
+      "title": "Word region as an ordered code (position-in-word x letter conjunctions) rather than a bag of letters, still reset by the predicted space",
+      "status": "rejected",
+      "evidence": "R44 wordChainx3/x4 (deep chain reset by predicted space = ordered in-word memory): text +0.01/-0.00, fables -0.00/-0.01 vs unreset chain +0.10/+0.14; cross-word context is what depth buys",
+      "why": "R43: bag-of-letters word state hurt; order inside the word is what carries information",
+      "rounds": [
+        "R44"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I55"
+      ]
+    },
+    {
+      "id": "I58",
+      "area": "memory",
+      "title": "Memory depth x life length: deeper chains (deepURSx6/x8) pay off only with long lives (text 3000/5000, fables 5000) and bigger alphabets (order3 K12/16)",
+      "status": "mixed",
+      "evidence": "R44: depth gain grows x2->x4 on text 1000 (+0.07/+0.10/+0.14) but fables 2000 only +0.02; box smoke 1 growth: x6/x8 text 1000 7.38/7.42 vs x3 7.34. q28, q32 (16 growths, paired with R44 seeds) | R50 q28/q32 (16 paired growths vs deepURSx3): text gains grow with depth and life: text5000 x4/x6/x8 +0.05/+0.15/+0.21 (t 1.6/4.3/6.4, x8 15/16 wins), text3000 +0.03/+0.12/+0.17 (t 0.9/3.8/5.1), text1000 x6/x8 +0.05/+0.11 (t 1.2/2.6); but fables loses: fables5000 x6/x8 -0.03/-0.06 (t -2.9/-4.1), fables2000 x8 -0.09 (t -6.3); order3 x6/x8 -0.08/-0.26 (n.s.). order3 K12/K16 is at ceiling for every plan (9.81-9.89, last quarter 1.0) -> uninformative. Depth is a text-only win; not adoptable as a default. Held-out p06/p07 on the shared queue; q36 tests depth + predErr | shared p06/p07 (g16-31): x6 text3000 +0.165, x8 +0.24 vs x3 (replicates). R54 caveat: the \"text\" corpus is a 224-character loop, so text3000/5000 replay it 13-22 times; long-life text gains measure loop recall. fables (4270 chars) is the only non-repeating long test, where depth loses",
+      "why": "I41 life length is the biggest lever; Travis: longer memory for non-repetitive sequence prediction; fractal scaling that adds new memory depth (I54)",
+      "rounds": [
+        "R45",
+        "R50",
+        "R54"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I56",
+        "I41"
+      ]
+    },
+    {
+      "id": "I59",
+      "area": "evolution",
+      "title": "Evolve the v34 deep plan on long-memory prediction (text/fables 2000 + order3; and text/fables 5000 from deepURSx4)",
+      "status": "testing",
+      "evidence": "queued q30 (5 h) and q34 (3 h); earlier multitask evolutions mostly returned the start genome (I40, I44, q19 0.945, q26 1.019) | R50: q30 interrupted 3:05-6:30 PM Oct 16 (PC lost power), resumed from its gen-2 checkpoint; after 3 gens (2.4 h active) champion 1.0025 = start genome",
+      "why": "sequence-only fitness is cheaper per generation than text+reward multitask and targets the key focus",
+      "rounds": [
+        "R45",
+        "R50"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I56"
+      ]
+    },
+    {
+      "id": "I60",
+      "area": "learning",
+      "title": "Sample efficiency at 300-symbol lives by rate genes (lr, rpeLr, metaN) or evolution (q20, q26)",
+      "status": "rejected",
+      "evidence": "q20 rewardE3 16 growths: lr x1.5/x2/x3 cycle 7.43/7.28/6.87 vs 7.44, cueR 9.71/10.37/9.60 vs 9.25 (n.s.), bandit 6.85/6.70/6.39 vs 6.78; rpeLr 0.5/0.8 cycle 7.77/7.38; metaN 20/40 bit-identical (unused by rewardE3). q26 evolve 3 h (105 gens): champion 1.019 < 1.03, cycle@300 8.02 vs 7.05 (+14%) but order2 4.67 vs 4.91 (-5%). q19 1000-symbol multitask evolve 0.945",
+      "why": "Q19: short lives far below long-life scores (I41)",
+      "rounds": [
+        "R45"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I41"
+      ]
+    },
+    {
+      "id": "I61",
+      "area": "learning",
+      "title": "predErr dose above 0.05 on the deep plan (0.1 / 0.2): find the peak for text / order3",
+      "status": "superseded",
+      "evidence": "R50: q29 gains rise from 0.02 to 0.05 on text3000 (+0.07 -> +0.31), order3 (+0.25 -> +0.35), text1000 (-0.01 -> +0.12); q27 on predictK3 lost text at 0.15/0.3, so the deep plan may tolerate more. Queued q35 | R54: not run on the PC (q35 retired): the additive rule's fables loss scales with dose (shared p04: 0.01 -> 2.885 = base, 0.03 -> 2.503, 0.05 -> -0.63), and R53's hybrid rule (v35) removed it; the v35 dose neighbourhood is q43 + shared s07/s08",
+      "why": "largest single gain on long text since R44; Travis's world-model / prediction-mismatch focus",
+      "rounds": [
+        "R50",
+        "R54"
+      ],
+      "theme": "world model",
+      "parents": [
+        "I47"
+      ]
+    },
+    {
+      "id": "I62",
+      "area": "memory",
+      "title": "Depth x world model: deeper chains (x6/x8) + predErr; does mismatch depression prune the noisy extra context that costs order3 / fables?",
+      "status": "testing",
+      "evidence": "R50: depth and predErr both gain on long text (x8 text5000 +0.21, predErr 0.05 text3000 +0.31) and both lose fables; unknown whether they add up or overlap. Queued q36 | R54: q36 (additive 0.05) retired; re-queued with the v35 hybrid rule as q41 (x6/x8 + PE on text3000 / fables2000 / order3) and q40 (x4/x6 + PE on fables4000)",
+      "why": "longer memory for non-repetitive text (Travis) without a second hand-tuned plan",
+      "rounds": [
+        "R50",
+        "R54"
+      ],
+      "theme": "world model",
+      "parents": [
+        "I58",
+        "I47"
+      ]
+    },
+    {
+      "id": "I63",
+      "area": "evaluation",
+      "title": "Analogy needs symbol-independent role cells: after renaming, old symbol-specific weights interfere (negative transfer); test faster unlearning (predErr dose) first, then role/structure codes",
+      "status": "open",
+      "evidence": "R50 q31: every plan is far worse right after the renaming than a fresh brain (order3 0.59 vs 0.92), predErr 0.05 recovers part (0.72). Queued q37 (predErr 0.1/0.2 after renaming)",
+      "why": "Travis: learn and think by analogy; a brain that only unlearns faster is still not transferring structure",
+      "rounds": [
+        "R50"
+      ],
+      "theme": "analogy",
+      "parents": [
+        "I49"
+      ]
+    },
+    {
+      "id": "I64",
+      "area": "learning",
+      "title": "Confidence-gated predErr: depress only when the cell's prediction is usually right (running hit rate or a population-confidence gate), so noisy 24-symbol fables streams are not eroded",
+      "status": "superseded",
+      "evidence": "R50: fables (accuracy 0.28, optimal 0.33) loses 0.63 at predErr 0.05 and already in the first quarter, while text (0.74) and order3 (0.86) gain; mismatches dominate when most predictions miss. Needs code in js/core/net.js (off by default); after q35 / p04 show the dose shape | R52/R53: solved differently: weight-dependent (soft-bound) LTD with a small fixed part keeps the weak fables weights; the confidence gate (peMode 8) helped less | R52 peMode 8 (scaled by 1 - own confirmation rate) only cut the fables loss from -0.62 to -0.44; the soft-bound / hybrid rule (I65, R53) removed it -> v35",
+      "why": "keeps the world-model gain on text / order3 without the fables loss -> could make predErr adoptable",
+      "rounds": [
+        "R50",
+        "R52",
+        "R54"
+      ],
+      "theme": "world model",
+      "parents": [
+        "I47"
+      ]
+    },
+    {
+      "id": "I65",
+      "area": "learning",
+      "title": "predErr fables fix: soft-bound (multiplicative) mismatch LTD, pl.peMode bitmask",
+      "status": "adopted",
+      "evidence": "R52, 32 paired growths: plain predErr 0.05 fables -0.62 (t -11.8) / text3000 +0.32; peMode 1 (dw ~ w/wMax) at predErr 1: text3000 +0.26/+0.24 (t 8.7/10.5), text1000 +0.19/+0.12, fables -0.05/-0.05 (t -2.6/-2.8), order3 gain lost (-0.01/+0.02). Renorm (2) halves the damage; one depression per prediction (4) helps fables (+0.11 at 0.2) but kills text gain; confidence-scaled (8) no better. Text gain and fables loss share one cause (additive LTD of weak weights) | R53: hybrid peMode 16 (dw = predErr*lr*x*(peFix + (1-peFix) w/wMax)), predErr 0.3, peFix 0.01, 32 paired growths: fables -0.007 (n.s.), text3000 +0.164 (t 11.7), order3 +0.085 (t 2.5), text1000 +0.086, text5000 +0.236 -> adopted as v35 (Oct 17, Travis approved). R54: renumbered from a duplicate I61; PC port bit-identical (text1000 g0 7.53)",
+      "why": "world-model learning without silencing rare-symbol pathways",
+      "rounds": [
+        "R52",
+        "R53",
+        "R54"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I58"
+      ]
+    },
+    {
+      "id": "I66",
+      "area": "evaluation",
+      "title": "Long NON-repeating sequence benchmark: score long memory on fables 4000 (one full pass of the 4270-char corpus) and on a much bigger public-domain corpus (>= 50k chars), not on 'text' (a 224-char loop)",
+      "status": "open",
+      "evidence": "R54: text3000 / text5000 replay the 224-char text corpus 13-22 times, so the life-length growth of the v35 / depth gains on text is loop recall; on fables2000 (no repeat) v35 is neutral (-0.007) and depth loses (x8 -0.09). q40 + shared p14 measure fables4000 now; a bigger corpus needs code (new seq source)",
+      "why": "Travis's focus is longer memory without short repetitive patterns; the current long-text metric rewards memorising a short loop",
+      "rounds": [
+        "R54"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I58",
+        "I47"
       ]
     }
   ],
   "questions": [
     {
       "id": "Q01",
-      "q": "Does a v32 five-task evolution (text, order3, bandit, cue, seqchoice) find a genome better than unifiedR on mixed tasks without losing the others?",
+      "q": "Does a v32 five-task evolution (text, order3, bandit, cue, seqchoice) find a genome better than unifiedR on mixed tasks without losing the others? [answered R39 q01: champion 0.966]",
       "impact": 5,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 2,
       "experiment": "bun run/runner.js experiments/v32_five.json (3 h), re-eval on 16 held-out growths"
     },
@@ -573,9 +1080,9 @@
     },
     {
       "id": "Q05",
-      "q": "Does patterned (structured) activity during juvenile growth produce better wiring than matched random activity?",
+      "q": "Does patterned (structured) activity during juvenile growth produce better wiring than matched random activity? [answered R40: shuffled = patterned waves]",
       "impact": 3,
-      "likelihood": 0.4,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "juvenile activity patterned vs shuffled (matched rate), 16 growths, text/order3/bandit"
     },
@@ -605,25 +1112,25 @@
     },
     {
       "id": "Q09",
-      "q": "Can evolution tune the dual-timescale mix per area so cycle >= 8 with bandit >= 6.5, cue >= 10?",
+      "q": "Can evolution tune the dual-timescale mix per area so cycle >= 8 with bandit >= 6.5, cue >= 10? [answered R39 q09: no gain]",
       "impact": 3,
-      "likelihood": 0.2,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "evolve rewardE2 eligibility genes on bandit+cue+cycle with longer budget"
     },
     {
       "id": "Q10",
-      "q": "Does tag consumption at outcomes (eligUse) combined with dual traces fix 6x6 without hurting cue?",
+      "q": "Does tag consumption at outcomes (eligUse) combined with dual traces fix 6x6 without hurting cue? [answered R40: eligUse no effect]",
       "impact": 3,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "ablate eligUse 0.3/0.5/0.7 on rewardE2, 16 growths"
     },
     {
       "id": "Q11",
-      "q": "Does the seqchoice random-mapping task (order2) improve with longer lives (1000 symbols)?",
+      "q": "Does the seqchoice random-mapping task (order2) improve with longer lives (1000 symbols)? [answered R40: yes, 1000 symbols cycle 8.94 / order2 5.85]",
       "impact": 2,
-      "likelihood": 0.5,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "unifiedR v32 seqchoice order2 1000 symbols vs 300, 16 growths"
     },
@@ -631,7 +1138,7 @@
       "id": "Q12",
       "q": "Is the v32 graded cortex size (o = -6) optimal, or should it follow a finer sweep? [answered R39: o=-6 is best]",
       "impact": 2,
-      "likelihood": 0.0,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "cortex o in -5..-8, 16 growths on cycle/order2"
     },
@@ -653,44 +1160,148 @@
     },
     {
       "id": "Q15",
-      "q": "Do the sequence areas (regions) need a juvenile activity phase? (they currently skip it: cellRefine/juvMode have no effect on unifiedR text/order3)",
+      "q": "Do the sequence areas (regions) need a juvenile activity phase? (they currently skip it: cellRefine/juvMode have no effect on unifiedR text/order3) [answered R40 q05b: no effect on regions]",
       "impact": 3,
-      "likelihood": 0.4,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "q05b + implement juvenile phase in growRegions"
     },
     {
       "id": "Q16",
-      "q": "Can a six-task evolution (adds bandit 6 arms) improve the v33 genome without losing text?",
+      "q": "Can a six-task evolution (adds bandit 6 arms) improve the v33 genome without losing text? [answered R40 q16: champion = start genome]",
       "impact": 4,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 2,
       "experiment": "q16_six_task_evolve (4 h)",
       "answer": "No (R40): champion = start genome."
     },
     {
       "id": "Q17",
-      "q": "Does task-shaped juvenile activity beat the same pulses in random order?",
+      "q": "Does task-shaped juvenile activity beat the same pulses in random order? [answered R45 q21: no, within noise]",
       "impact": 3,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "q21_juv_task_shaped"
     },
     {
       "id": "Q18",
-      "q": "Does evolving with 1000-symbol lives in the fitness find a better reward area?",
+      "q": "Does evolving with 1000-symbol lives in the fitness find a better reward area? [answered R45 q19: champion 0.945, no]",
       "impact": 4,
-      "likelihood": 0.35,
+      "likelihood": 0,
       "cost": 2,
       "experiment": "q19_long_multitask (4 h)"
     },
     {
       "id": "Q19",
-      "q": "Can learning-rate / metaplasticity settings make short lives (300 symbols) reach long-life scores?",
+      "q": "Can learning-rate / metaplasticity settings make short lives (300 symbols) reach long-life scores? [answered R45 q20/q26: no rate setting helps; evolution 1.019 trades order2 for cycle]",
       "impact": 5,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 2,
       "experiment": "q20_sample_eff_sweep, q25_life_curve, q26_short_life_evolve (3 h)"
+    },
+    {
+      "id": "Q20",
+      "q": "Does prediction-mismatch depression (pl.predErr, world-model step 1) at small rates improve the v34 deep plan on order3 / long text without losing text or fables? [answered R50 q29: mixed - text3000 +0.31, order3 +0.35, text1000 +0.12 at 0.05 (paired, 32 growths), fables2000 -0.63; not adoptable; follow-ups Q26-Q28]",
+      "impact": 4,
+      "likelihood": 0,
+      "cost": 1,
+      "experiment": "q29_prederr_deep (32 paired growths); q27 (R45) mixed"
+    },
+    {
+      "id": "Q21",
+      "q": "Do deeper context chains (x6/x8) pay off with long lives (text 3000/5000, fables 5000) or bigger alphabets (order3 K12/16)? [answered R50 q28/q32: text yes (x8 text5000 +0.21, t 6.4), fables / order3 no (x8 fables2000 -0.09, order3 -0.26); order3 K12/16 at ceiling]",
+      "impact": 5,
+      "likelihood": 0,
+      "cost": 1,
+      "experiment": "q28_depth_life, q32_order3_capacity"
+    },
+    {
+      "id": "Q22",
+      "q": "Can evolution improve the deep plan on long-memory prediction (sequence-only fitness)? [R54 q30: no - 5 h, 6 generations, champion 1.015 (text2000 1.005, fables2000 1.004, order3 1.036 of deepURSx3 v34) < 1.03 bar]",
+      "impact": 4,
+      "likelihood": 0.15,
+      "cost": 2,
+      "experiment": "q30_deep_seq_evolve (fail, R54); q45_v35_fables_evolve (3 h, from v35 on fables4000 + text1000 + order3)"
+    },
+    {
+      "id": "Q23",
+      "q": "Analogy: after a mid-life renaming of all symbols (same structure), does the brain relearn faster than a fresh brain, and can evolution make it? [R50 q31: no - interference (order3 post-switch 0.59 vs fresh 0.92); predErr 0.05 recovers part (0.72)]",
+      "impact": 5,
+      "likelihood": 0.15,
+      "cost": 1,
+      "experiment": "q31_analogy_relabel (env option relabel, R45), q33_analogy_evolve (3 h); q37 predErr dose after renaming; p02/p05 held-out (shared queue)"
+    },
+    {
+      "id": "Q24",
+      "q": "Staged training (Travis): grow and train the sequence areas on a subtask first (e.g. text prediction), then add/wire the striatum for a reward task - better than learning both at once?",
+      "impact": 5,
+      "likelihood": 0.35,
+      "cost": 2,
+      "experiment": "needs code: mid-life task switch / pretrained-region transplant (not yet queued)"
+    },
+    {
+      "id": "Q25",
+      "q": "Internal world model as memory/state: can the cortex's own predictions be fed back as input (imagined rollouts) to keep context over gaps in the input?",
+      "impact": 5,
+      "likelihood": 0.2,
+      "cost": 3,
+      "experiment": "needs code (I50); after Q20"
+    },
+    {
+      "id": "Q26",
+      "q": "Does a higher predErr dose (0.1 / 0.2) raise the deep plan's text / order3 gain further, and is it safe on seqchoice? (fables loss handled separately, I64) [superseded R54: the additive rule was replaced by the v35 hybrid rule; the v35 dose neighbourhood is Q30]",
+      "impact": 5,
+      "likelihood": 0,
+      "cost": 1,
+      "experiment": "q35/q38 retired (R54); shared p01/p03/p04 done"
+    },
+    {
+      "id": "Q27",
+      "q": "Do memory depth (deepURSx6/x8) and the v35 hybrid prediction-miss LTD add up on long text, and does it remove the depth cost on order3 / fables?",
+      "impact": 5,
+      "likelihood": 0.3,
+      "cost": 1,
+      "experiment": "q41_v35_depth_hybrid (x6/x8 + PE, g0-15; bases box R53 + q28); q36 retired"
+    },
+    {
+      "id": "Q28",
+      "q": "After a mid-life renaming, does v35 (hybrid prediction-miss LTD) close the gap to a fresh brain (first step towards analogy / reuse)?",
+      "impact": 4,
+      "likelihood": 0.3,
+      "cost": 1,
+      "experiment": "q44_v35_relabel (order3 / text / cycle / fables4000, g0, paired with q31); shared s10 (order3 g16) and p14 (v34 fables4000 relabel)"
+    },
+    {
+      "id": "Q29",
+      "q": "Can a confidence-gated predErr keep the text / order3 gain without the fables loss? [answered R53: yes in effect - the hybrid soft-bound rule (I65) keeps the text / order3 gain with fables -0.007 (n.s.) -> v35]",
+      "impact": 5,
+      "likelihood": 0,
+      "cost": 2,
+      "experiment": "needs code (I64): gate predErr by the cell's running hit rate; then text / order3 / fables / seqchoice, 16 growths"
+    },
+    {
+      "id": "Q30",
+      "q": "v35 neighbourhood: does a higher hybrid dose (predErr 0.4) or a smaller fixed part (peFix 0.005), or both, beat v35 on text3000 / order3 without a fables loss?",
+      "impact": 4,
+      "likelihood": 0.3,
+      "cost": 1,
+      "experiment": "q43_v35_dose (text3000 / order3 / fables2000 combo); shared s07 / s08 (fables2000 + text1000 single changes)"
+    },
+    {
+      "id": "Q31",
+      "q": "Is v35 safe on seqchoice (the reward-coupled sequence task deepURSx3 also serves): cycle 1000 and order2 1000?",
+      "impact": 3,
+      "likelihood": 0.5,
+      "cost": 1,
+      "experiment": "q39_v35_seqchoice_safety (cycle g0-15); shared s01 / s04 (order2 g16 / g48)"
+    },
+    {
+      "id": "Q32",
+      "q": "Long NON-repeating memory: does anything (v35 rule, deeper chains x4/x6 + hybrid LTD, slow context layer + hybrid LTD, evolution) improve fables 4000 (one full pass; the text corpus loops every 224 chars)?",
+      "impact": 5,
+      "likelihood": 0.3,
+      "cost": 1,
+      "experiment": "q40_v35_fables_long, shared p14 (v34 + plain depth), q45_v35_fables_evolve; a bigger corpus needs code (I66)"
     }
   ]
 }

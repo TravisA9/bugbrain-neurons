@@ -78,7 +78,7 @@ function evaluateGenome(gc, tasks, plan) {
       }
       for (const q in st) st[q] /= n;
       const rs = SA.robustScore(scores);
-      out.tasks.push({ fit: rs.fit, mean: rs.mean, sd: rs.sd, min: rs.min, stats: st });
+      out.tasks.push({ fit: rs.fit, mean: rs.mean, sd: rs.sd, min: rs.min, stats: st, scores });   // (scores: per-growth fitness, used by racing)
     } catch (e) { out.tasks.push({ fit: 0, mean: 0, sd: 0, min: 0, stats: {}, error: String(e && e.message || e) }); out.error = String(e && e.message || e); }
   }
   if (!out.brain) out.brain = { hidden: 0, synapses: 0 };

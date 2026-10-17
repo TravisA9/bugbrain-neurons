@@ -117,7 +117,7 @@ const CELL_SC = { wIn: [16, 0, 30], wHid: [10, 0, 30], theta: [0.3, 0.05, 2], pD
   //   are active NOW), clawNorm = their total excitatory input (instead of normE). With a fast membrane a cell
   //   whose total input is split between two sources fires only when both are active: a conjunction.
   //   clawIn = their total excitatory SENSORY input (e.g. a clock gate), independent of how many sensors they reach.
-  clawLeak: [0, 0, 0.95], clawNorm: [0, 0, 80], clawIn: [0, 0, 80],
+  clawLeak: [0, 0, 0.95], slowLeak: [0, 0, 0.999], clawNorm: [0, 0, 80], clawIn: [0, 0, 80],
   // v11: coneSpeed = growth-cone steps per developmental step (integer, default 1). On a finer grid (e.g. 60) a cone
   //   would otherwise cover only 24/grid of the distance in the same developmental time.
   // v11: bifAt4 = split threshold of BIF4 axons (signal 4); 0 = same as bifAt.
@@ -450,7 +450,7 @@ function growCell(d, opts) {
     const prep = cn => { if (cn.done) return false;
       if (!cn.sensor) { const c = cells[cn.pre]; if (!c.alive) { cn.done = true; return false; }
         if (cn.coll) return true;
-        cn.g = []; for (let k = 0; k < CH_NCHEM; k++) cn.g.push(guideW(c.o, k)); if (!cn.fibre) cn.maxSyn = 1 + Math.floor(c.o[CO.BRANCH] * sc.branchMax); }
+        const G = cn.gOwn === cn.g && cn.g ? cn.g : (cn.gOwn = cn.g = new Array(CH_NCHEM)); for (let k = 0; k < CH_NCHEM; k++) G[k] = guideW(c.o, k); if (!cn.fibre) cn.maxSyn = 1 + Math.floor(c.o[CO.BRANCH] * sc.branchMax); }
       return true; };
     if ((hungOn || reqOn) && tf >= sc.axonStart) {               // needs, spontaneous sensor events, requests
       if (hungOn) {
@@ -560,7 +560,8 @@ function growCell(d, opts) {
   for (let m = 0; m < nOut; m++) { const i = g.nIn + g.nHid + m; g.pos[i] = OUT[m].pos; g.cellType[i] = OUT[m].cls; }
   neurons.forEach((c, k) => { const i = nIn + k; g.pos[i] = [sx(c.i), sx(c.j)]; g.cellType[i] = N_FIXED + cellClass(c.o); g.thresh[i] = -60 + 10 * c.o[CO.THR]; if (c.topo != null) { g.topo = g.topo || new Float32Array(N).fill(NaN); g.topo[i] = c.topo; }
     if (d.kind === 'cell' && c.o[CO.RECV] > 0.5 && c.o[CO.INH] <= 0.5) { g.recv = g.recv || new Uint8Array(N); g.recv[i] = 1; }   // v21: excitatory plastic receivers (tract targets of multi-region brains; no effect on the dynamics)
-    const lk = c.o[CO.CLAW] > 0.5 && sc.clawLeak > 0 ? sc.clawLeak : c.o[CO.MIX] > 0.5 && sc.mixLeak > 0 ? sc.mixLeak : cellLeak(c.o); if (lk) { g.slow = g.slow || new Uint8Array(N); g.slow[i] = 1; g.leak[i] = lk; }
+    let lk = c.o[CO.CLAW] > 0.5 && sc.clawLeak > 0 ? sc.clawLeak : c.o[CO.MIX] > 0.5 && sc.mixLeak > 0 ? sc.mixLeak : cellLeak(c.o); if (sc.slowLeak > 0 && !(c.o[CO.CLAW] > 0.5) && !(c.o[CO.MIX] > 0.5)) { lk = sc.slowLeak; }   // R47 slowLeak (plan constant, 0 = off): every non-claw, non-mixing cell of the region integrates slowly (slow context layer)
+    if (lk) { g.slow = g.slow || new Uint8Array(N); g.slow[i] = 1; g.leak[i] = lk; }
     if (c.o[CO.MIX] > 0.5) { g.mix = g.mix || new Uint8Array(N); g.mix[i] = 1; } });   // v14: mixing cells (for feedforward inhibition)
   const nodeOf = key => typeof key === 'number' ? idx.get(key) : g.nIn + g.nHid + +key.slice(1);
   for (const s of live) {

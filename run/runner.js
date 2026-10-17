@@ -135,8 +135,29 @@ async function main() {
   if (ticker.unref) ticker.unref();
   const t0 = actNow() - st.elapsed * 1000, maxGen = cfg.generations || 0, maxMs = (cfg.hours || 0) * 3600e3;
   const evalAll = (xs, plan) => Promise.all(xs.map(x => pool.eval(L.serialize(x), tasks, plan)));
-  const score = r => L.normFit(r, cfg.tasks, st.refs, cfg.combine);
+  const score = r => { const s = L.normFit(r, cfg.tasks, st.refs, cfg.combine); if (r.raced) s.fit = r.raceFit; return s; };
   let lastGenMs = 0, endReason = 'stopped';
+  // perf (off unless engine.race, 0 < race < 1): successive halving over growths. Every genome lives growth 1 (the generation's shared seed);
+  // only the top ceil(race x population) (+ the champion) live the remaining growths with the SAME shared seeds. A survivor's fitness is
+  // bit-identical to the full evaluation (same per-growth scores in the same order); a dropped genome ranks below every survivor,
+  // keeping its stage-1 order (so tournaments still see a gradient). Saves (1 - race) x (G - 1) / G of the training evaluations.
+  const raceSaved = { evals: 0 };
+  async function raceEval(batch, plan) {
+    const A = plan.A, p1 = { G: 1, A, growSeeds: [plan.growSeeds[0]], arenaSeeds: plan.arenaSeeds.slice(0, A) };
+    const p2 = { G: plan.G - 1, A, growSeeds: plan.growSeeds.slice(1), arenaSeeds: plan.arenaSeeds.slice(A) };
+    const r1 = await evalAll(batch, p1), f1 = r1.map(r => score(r).fit);
+    const nKeep = Math.min(batch.length, Math.ceil(cfg.engine.race * batch.length)), order = batch.map((x, i) => i).sort((a, b) => f1[b] - f1[a]);
+    const keep = new Set(order.slice(0, nKeep)); batch.forEach((x, i) => { if (st.champion && x === st.champion.x) keep.add(i); });
+    const ki = [...keep].sort((a, b) => a - b), r2 = await evalAll(ki.map(i => batch[i]), p2), out = r1.slice();
+    ki.forEach((i, n) => { const a = r1[i], b = r2[n];
+      out[i] = Object.assign({}, b, { ticks: a.ticks + b.ticks, tasks: b.tasks.map((t, j) => { const sc = [].concat(a.tasks[j].scores || [], t.scores || []), rs = SA.robustScore(sc);
+        return Object.assign({}, t, { fit: rs.fit, mean: rs.mean, sd: rs.sd, min: rs.min, scores: sc }); }) }); });
+    raceSaved.evals += (batch.length - ki.length) * (plan.G - 1);
+    const dropped = batch.map((x, i) => i).filter(i => !keep.has(i));
+    if (dropped.length) { const sf = ki.map(i => score(out[i]).fit), floor = Math.min(...sf), top = Math.max(...dropped.map(i => f1[i]));
+      for (const i of dropped) out[i] = Object.assign({}, r1[i], { raceFit: floor - 1e-6 - (top - f1[i]), raced: true }); }
+    return out;
+  }
   while (true) {
     if (maxGen && st.gen >= maxGen) { endReason = 'generations'; break; }
     if (maxMs && actNow() - t0 >= maxMs) { endReason = 'hours'; break; }
@@ -149,7 +170,7 @@ async function main() {
       for (let i = 0; i < cfg.population; i++) { const p = elites[(st.rng() * elites.length) | 0].x;
         const child = st.rng() < cfg.engine.crossoverRate ? L.crossover(p, elites[(st.rng() * elites.length) | 0].x, st.rng) : p; batch.push(L.mutate(child, st.rng, cfg)); }
     } else batch = st.pop;
-    const res = await evalAll(batch, plan);
+    const res = cfg.engine.race > 0 && plan.G > 1 ? await raceEval(batch, plan) : await evalAll(batch, plan);
     const inds = batch.map((x, i) => { const r = res[i], s = score(r); return { x, r, fit: s.fit, norm: s.norm, desc: descNames ? L.descriptor(r, cfg, descNames) : null }; });
     const errors = res.filter(r => r.error).length; if (errors) log(`${errors} evaluation error(s), e.g. ${res.find(r => r.error).error.split('\n')[0]}`);
     st.evals += batch.length; const genTicks = res.reduce((a, r) => a + r.ticks, 0); st.ticks += genTicks;
