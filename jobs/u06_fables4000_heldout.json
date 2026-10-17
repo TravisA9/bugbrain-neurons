@@ -1,0 +1,76 @@
+{
+  "id": "u06_fables4000_heldout",
+  "question": "Q32",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "Fables 4000 (one non-repeating pass) held-out: v34 vs v35 on growths 16-31 and 32-47 (n 16 -> 48)",
+  "priority": 0.58,
+  "estHours": 3,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "g0-15: v35 -0.009 (t -0.6); tighten the no-harm estimate on the only non-looping long test"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0",
+        "16"
+      ],
+      "label": "deepURSx3 fables4000 v34(predErr0) g16",
+      "env": {
+        "BB_OUT": "results/phone/u06_fables4000_heldout.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "deepURSx3 fables4000 v35 g16",
+      "env": {
+        "BB_OUT": "results/phone/u06_fables4000_heldout.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0",
+        "32"
+      ],
+      "label": "deepURSx3 fables4000 v34(predErr0) g32",
+      "env": {
+        "BB_OUT": "results/phone/u06_fables4000_heldout.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "32"
+      ],
+      "label": "deepURSx3 fables4000 v35 g32",
+      "env": {
+        "BB_OUT": "results/phone/u06_fables4000_heldout.jsonl"
+      }
+    }
+  ]
+}

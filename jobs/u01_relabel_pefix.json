@@ -1,0 +1,61 @@
+{
+  "id": "u01_relabel_pefix",
+  "question": "Q23",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "Renaming (analogy): v35 hybrid LTD with a bigger fixed part, peFix 0.05 / 0.1 / 0.2 (predErr 0.3), order3 relabel g16-31",
+  "priority": 0.66,
+  "estHours": 0.6,
+  "phone": true,
+  "accept": {
+    "note": "paired g16-31: v34 8.319, v35 8.460, additive predErr 0.05 8.863 (v35 is -0.40 vs additive, t -4.7). Does more fixed-size LTD recover fast unlearning?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.05",
+        "16"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.05 g16",
+      "env": {
+        "BB_OUT": "results/phone/u01_relabel_pefix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.1",
+        "16"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.1 g16",
+      "env": {
+        "BB_OUT": "results/phone/u01_relabel_pefix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.2",
+        "16"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.2 g16",
+      "env": {
+        "BB_OUT": "results/phone/u01_relabel_pefix.jsonl"
+      }
+    }
+  ]
+}

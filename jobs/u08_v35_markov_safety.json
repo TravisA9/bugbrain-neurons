@@ -1,0 +1,47 @@
+{
+  "id": "u08_v35_markov_safety",
+  "question": "Q20",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "v35 safety on a stochastic first-order sequence (markov K8 det 0.8, 1000 symbols; never checked), v34 vs v35 g0",
+  "priority": 0.5,
+  "estHours": 0.5,
+  "phone": true,
+  "accept": {
+    "note": "no-task-worse check outside the clocked text/order tasks"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"markov\",\"K\":8,\"det\":0.8,\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0",
+        "0"
+      ],
+      "label": "deepURSx3 markov K8 det0.8 n1000 v34(predErr0) g0",
+      "env": {
+        "BB_OUT": "results/phone/u08_v35_markov_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"markov\",\"K\":8,\"det\":0.8,\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 markov K8 det0.8 n1000 v35 g0",
+      "env": {
+        "BB_OUT": "results/phone/u08_v35_markov_safety.jsonl"
+      }
+    }
+  ]
+}

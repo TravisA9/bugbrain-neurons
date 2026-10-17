@@ -1,0 +1,61 @@
+{
+  "id": "u02_relabel_dose_slow",
+  "question": "Q23",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "Renaming: v35 rule stronger (predErr 0.6 / 1.0, peFix 0.01) and slowS98w2 + v35 rule, order3 relabel g16-31",
+  "priority": 0.64,
+  "estHours": 0.6,
+  "phone": true,
+  "accept": {
+    "note": "same pairing as u01"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.6,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 pl.predErr=0.6,pl.peMode=16,pl.peFix=0.01 g16",
+      "env": {
+        "BB_OUT": "results/phone/u02_relabel_dose_slow.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=1,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "deepURSx3 order3 n2000 relabel0.5 pl.predErr=1,pl.peMode=16,pl.peFix=0.01 g16",
+      "env": {
+        "BB_OUT": "results/phone/u02_relabel_dose_slow.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "slowS98w2",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "slowS98w2 order3 n2000 relabel0.5 v35 g16",
+      "env": {
+        "BB_OUT": "results/phone/u02_relabel_dose_slow.jsonl"
+      }
+    }
+  ]
+}

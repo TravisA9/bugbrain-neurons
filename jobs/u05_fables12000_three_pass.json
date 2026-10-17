@@ -1,0 +1,48 @@
+{
+  "id": "u05_fables12000_three_pass",
+  "question": "Q32",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "Longer fables: fables 12000 (three passes), v34 vs v35 (4 growths g0)",
+  "priority": 0.55,
+  "estHours": 2.5,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "trend over 4000 / 8000 / 12000; the bigger non-looping corpus (I66) needs code first"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000}}",
+        "4",
+        "pl.predErr=0",
+        "0"
+      ],
+      "label": "deepURSx3 fables12000 (3 passes) v34(predErr0) g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/u05_fables12000_three_pass.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000}}",
+        "4",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 fables12000 (3 passes) v35 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/u05_fables12000_three_pass.jsonl"
+      }
+    }
+  ]
+}

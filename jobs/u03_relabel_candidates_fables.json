@@ -1,0 +1,75 @@
+{
+  "id": "u03_relabel_candidates_fables",
+  "question": "Q23",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/r47_sweep.js"
+  ],
+  "title": "Safety for the renaming candidates: peFix 0.05 / 0.1 (predErr 0.3) on fables2000 and fables4000 relabel, g0-15",
+  "priority": 0.6,
+  "estHours": 3,
+  "phone": false,
+  "accept": {
+    "note": "v34/v35 g0 known (fables2000, fables4000rl). R53: peFix 0.05 at predErr 0.5 cost fables -0.33; is predErr 0.3 milder?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.05",
+        "0"
+      ],
+      "label": "deepURSx3 fables2000 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.05 g0",
+      "env": {
+        "BB_OUT": "results/phone/u03_relabel_candidates_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.1",
+        "0"
+      ],
+      "label": "deepURSx3 fables2000 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.1 g0",
+      "env": {
+        "BB_OUT": "results/phone/u03_relabel_candidates_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.05",
+        "0"
+      ],
+      "label": "deepURSx3 fables4000 relabel0.5 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.05 g0",
+      "env": {
+        "BB_OUT": "results/phone/u03_relabel_candidates_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"relabel\":0.5}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.1",
+        "0"
+      ],
+      "label": "deepURSx3 fables4000 relabel0.5 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.1 g0",
+      "env": {
+        "BB_OUT": "results/phone/u03_relabel_candidates_fables.jsonl"
+      }
+    }
+  ]
+}
