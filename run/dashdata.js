@@ -62,6 +62,7 @@ const ADOPTIONS = [   // defaults adopted (app version, DEFAULTS_VERSION, round,
   { v: 'v32', dv: 25, round: 'R37', at: '2026-10-13T01:29:48-05:00', what: 'outcome -> striatum owns outputs, clock -> graded cortex' },
   { v: 'v33', dv: 26, round: 'R39', at: '2026-10-13T18:47:13-05:00', what: 'striatum = rewardE3 (q04 champion transplant)' },
   { v: 'v34', dv: 27, round: 'R44', at: '2026-10-16T06:17:14-05:00', what: 'deepURSx3 deep-memory brain for sequences/text/seqchoice' },
+  { v: 'v35', dv: 28, round: 'R53', at: '2026-10-17T07:00:00-05:00', what: 'prediction-miss weakening (hybrid LTD) in the default deepURSx3' },
 ];
 const MON = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
 function headingDate(h) {

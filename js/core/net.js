@@ -377,13 +377,27 @@ class SpikingNet {
       const pe = this.p.predErr || 0;   // R41 predErr (0 = off): prediction-MISMATCH depression. A taught cell that fires with no teacher plateau
       // predicted an input that did not arrive: its recently active plastic inputs are depressed by predErr*lr*x (local, cerebellar-LTD-like).
       // With the plateau potentiation this makes a sign-balanced, error-driven local delta rule: the cell learns to predict its own next input.
-      if (pe > 0) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (i < this.g.nIn || this.plat[i] > 0 || !this.armed[i]) continue;
+      // R47 peMode (bitmask, 0 = R41 rule): 1 soft-bound LTD (dw proportional to w / wMax), 2 depressed inputs are re-normalised by preNorm
+      // (heterosynaptic balance: depression redistributes a fixed presynaptic budget instead of removing it), 4 one depression per
+      // prediction (only the first unconfirmed spike of an armed cycle; re-armed by the next teacher plateau), 8 surprise-scaled: dw x (1 - c)
+      // with c the cell's own running confirmation rate (confident cells that were usually right are barely depressed by one miss).
+      // R53 peMode 16 hybrid LTD: dw = g x (peFix + (1 - peFix) w / wMax), a small fixed-size part plus a weight-proportional part (overrides bit 1)
+      const pm = this.p.peMode || 0, PD = globalThis.__peDbg, pf = this.p.peFix || 0;
+      if (pe > 0 && (pm & 4) && !this.peDone) this.peDone = new Uint8Array(N);
+      if (pe > 0 && (pm & 8) && !this.peConf) this.peConf = new Float32Array(N).fill(0.5);
+      if (pe > 0) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (i < this.g.nIn) continue;
+        if (this.plat[i] > 0) { if (this.peConf) this.peConf[i] += 0.02 * (1 - this.peConf[i]); if (this.peDone) this.peDone[i] = 0; continue; }
+        if (!this.armed[i]) continue;
+        if (this.peDone) { if (this.peDone[i]) continue; this.peDone[i] = 1; }
+        let g = pe * lr; if (this.peConf) { g *= 1 - this.peConf[i]; this.peConf[i] *= 0.98; }
         for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]]; if (x < 0.01) continue;
-          ws[k] = Math.max(0, ws[k] - pe * lr * x); } }
+          const d = Math.min(ws[k], g * x * ((pm & 16) ? pf + (1 - pf) * ws[k] / wMax : (pm & 1) ? ws[k] / wMax : 1)); ws[k] -= d; if (PD) { PD.d += d; PD.n++; }
+          if ((pm & 2) && !nd[pres[k]]) { nd[pres[k]] = 1; dirty.push(pres[k]); } } }
       for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (this.plat[i] <= 0) continue;
         for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]]; if (x < 0.01) continue;
           if (mE) { const j = pres[k], d = lr * x; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; }
           else ws[k] = Math.min(wMax, ws[k] + lr * x);
+          if (globalThis.__peDbg) globalThis.__peDbg.p += lr * x;
           if (tro) tro[pres[k]] += lr * x;
           if (!nd[pres[k]]) { nd[pres[k]] = 1; dirty.push(pres[k]); } } }
       if (this.p.preNorm > 0) for (const i of dirty) this.normPre(i);

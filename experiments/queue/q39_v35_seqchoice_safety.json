@@ -1,0 +1,43 @@
+{
+  "id": "q39_v35_seqchoice_safety",
+  "title": "v35 safety on seqchoice cycle 1000 (never checked): v35 vs deepURSx3v34, 16 growths g0-15 (order2 g16/g48 is on the shared queue, s01/s04)",
+  "question": "Q31",
+  "track": "neuro",
+  "priority": 1.6,
+  "kind": "runs",
+  "estHours": 0.35,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v35 seqchoice cycle1000 g0",
+      "env": {
+        "BB_OUT": "results/r54/q39_v35_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v34",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v34 seqchoice cycle1000 g0",
+      "env": {
+        "BB_OUT": "results/r54/q39_v35_seqchoice_safety.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "paired (same growths): v35 must not lose beyond noise (|d| > 2 paired SE) on seqchoice cycle; order2 is covered by shared jobs s01 (v34) / s04 (v35)"
+  },
+  "note": "R54 (queue review Oct 17 7 AM). v35 = deepURSx3 + hybrid prediction-miss LTD (predErr 0.3, peMode 16, peFix 0.01)"
+}

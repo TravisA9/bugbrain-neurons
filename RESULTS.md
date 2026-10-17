@@ -2303,3 +2303,154 @@ text3000 / order3 / fables2000, x8 + 0.05 on text3000 / text5000, x3 + 0.05 on t
 q37 predErr 0.1 / 0.2 after the renaming (order3, cycle, text; ~0.8 h) · q38 safety check predErr 0.05 on seqchoice order2 / cycle 1000,
 growths 16-31 (~0.6 h). With q30 (~2.6 h left), q33 (3 h) and q34 (3 h) about 12.5 h of active compute are queued.
 New ideas: I61-I64 (I64 confidence-gated predErr for the fables loss needs code; Q29).
+
+## R52 — predErr fables diagnosis + slow context layer (box, Oct 16 evening; defaults unchanged, v34 / 27)
+
+Paired held-out growths vs deepURSx3 (Δ score, paired t, wins/16). Screen = growths 0-15 (results_box/r52/pe_A, pe_B, slow_A.jsonl), confirm = fresh growths 16-31 (results_box/r52/confirm.jsonl).
+Base screen: fables2000 2.887, text3000 7.791, order3 (K8) 8.943, text1000 7.368.
+
+**Diagnosis.** Depression per symbol is no larger on fables than on text (dep/pot ≈ 0.18 vs 0.23 at 0.02), but potentiation falls as predErr rises (fables 13.7 → 10 per symbol, 0.02 → 0.05): additive LTD drives weak weights (rare symbols / contexts in the 24-symbol corpus) to zero, silencing those receivers so they stop being taught. The text gain and the fables loss scale together (same dose), so they share one cause.
+
+| variant (screen) | fables2000 | text3000 | order3 | text1000 |
+|---|---|---|---|---|
+| predErr 0.02 | −0.18 (t −4.0) | +0.12 (t 4.2) | +0.25 (t 2.1) | +0.04 |
+| predErr 0.05 | −0.62 (t −11.8) | +0.32 (t 10.3) | +0.33 (t 3.0) | +0.17 |
+| 0.05 + peMode 2 (preNorm re-normalises depressed inputs) | −0.39 | +0.32 | +0.32 | +0.17 |
+| 0.05 + peMode 8 (scaled by 1 − own confirmation rate) | −0.44 | +0.31 | +0.31 | +0.16 |
+| 0.2 + peMode 4 (one depression per prediction) | +0.11 (t 5.1) | −0.25 | +0.06 | −0.09 |
+| 0.3 + peMode 1 (soft bound, dw ∝ w/wMax) | −0.02 | +0.16 (t 7.5) | 0.00 | +0.07 |
+| **1.0 + peMode 1** | −0.05 (t −2.6) | +0.26 (t 8.7) | −0.01 | +0.19 (t 11.1) |
+| 1.0 + peMode 3 (soft + renorm) | −0.03 | +0.26 | 0.00 | +0.19 |
+| confirm 1.0 + peMode 1 (fresh 16) | −0.05 (t −2.8) | +0.24 (t 10.5) | +0.02 | +0.12 (t 6.4) |
+
+Verdict: soft-bound (multiplicative) mismatch LTD removes ~90 % of the fables damage and keeps most of the text gain (replicated), but fables is still slightly lower (−0.05, t ≈ −2.7 twice) and the order3 gain of additive predErr is lost. Not a clear winner; not adopted. New gene pl.peMode (bitmask, 0 = R41 rule).
+
+**Slow context layer (I48).** Plans slowS<leak>w<wIn> (reward_evolved.js): deepURSx3 + a symbol-driven region (context gene program, no clock reset) whose cells all get leak slowLeak (new plan constant), claw → mixing cells, area repressed by the outcome (clock tasks only). Low wIn (≤1) = silent (bit-identical); cls 1/2 cells are silent without the clock.
+
+| plan | fables2000 | text3000 | order3 | text1000 |
+|---|---|---|---|---|
+| slowS98w2 screen | −0.03 (t −1.9) | +0.11 (t 5.0) | 0.00 | +0.09 (t 4.2) |
+| slowS98w2 confirm | −0.04 (t −2.5) | +0.14 (t 6.7) | 0.00 | +0.10 (t 4.1) |
+| slowS995w2 | −0.12 | +0.12 | −1.73 | −0.03 |
+| slowS98w4 | −0.11 | +0.12 | −1.73 | −0.01 |
+
+Verdict: a mild, fast-ish (leak 0.98) summary layer reliably helps text (+0.1-0.14) but costs fables slightly; slower or stronger layers wreck order3. Not adopted. Defaults unchanged. Tools: run/r47_sweep.js (parallel paired sweep, appends each run to jsonl), run/r47_table.js.
+
+## R53 — predErr soft-bound at lower rates × slow context layer, and a hybrid LTD rule (box, Oct 16 night; defaults unchanged, v34 / 27)
+
+Paired held-out growths vs deepURSx3 (Δ score, paired t, wins/16). Text/fables/order3 base = R52 deepURSx3 growths 0-31; order2 = seqchoice order2 @1000 symbols (base 5.851, growths 0-15). Files results_box/r53/{screen,confirm,hybrid,order2}.jsonl; resumable driver run/r47_sweep.js (skips chunks already in the jsonl, BB_TASKS = task list), run/r47_table.js (BB_TT = task columns).
+New: pl.peMode bit 16 = hybrid mismatch LTD, dw = predErr·lr·x·(peFix + (1 − peFix)·w/wMax) (gene pl.peFix, default 0; peFix 0 ≡ peMode 1, peFix 1 ≡ R41 additive rule, checked bit-identical). Off by default.
+
+| variant | fables2000 | text3000 | order3 | text1000 | order2@1000 |
+|---|---|---|---|---|---|
+| deepURSx3 predErr 0.3 peMode 1 (confirm, growths 16-31) | −0.013 (t −1.3) | +0.099 (t 7.3) | +0.006 | +0.040 (t 3.3) | +0.27 (t 1.2) |
+| deepURSx3 predErr 0.5 peMode 1 (screen) | −0.019 (t −1.8) | +0.191 (t 7.1) | −0.011 | +0.096 (t 6.8) | +0.28 (t 1.4) |
+| deepURSx3 predErr 0.5 peMode 1 (confirm) | −0.014 (t −1.1) | +0.151 (t 7.4) | +0.021 | +0.055 (t 4.8) | |
+| slowS98w2 + predErr 0.3 peMode 1 | −0.055 (t −3.0) | +0.249 (t 9.5) | +0.003 | +0.153 (t 8.2) | +0.27 (t 1.2) |
+| slowS98w2 + predErr 0.5 peMode 1 | −0.047 (t −2.7) | +0.313 (t 9.1) | −0.011 | +0.206 (t 12.8) | +0.28 (t 1.4) |
+| slowS98w2 + predErr 1 peMode 1 | −0.108 (t −4.7) | +0.358 (t 11.2) | −0.012 | +0.247 (t 10.2) | |
+| predErr 1 / 3 peMode 5 (soft + once) | ≈0 | −0.01 / −0.02 | ≈0 | ≈0 | |
+| slowS98w2 + predErr 1 peMode 5 | −0.026 | +0.096 (t 4.4) | −0.013 | +0.088 (t 4.1) | |
+| hybrid deepURSx3 0.5, peFix 0.02 | −0.056 (t −2.9) | +0.229 (t 7.9) | +0.216 (t 1.9) | +0.141 (t 8.1) | +0.52 (t 2.2) |
+| hybrid deepURSx3 0.5, peFix 0.05 | −0.327 (t −7.4) | +0.400 (t 12.1) | +0.215 (t 1.8) | +0.164 (t 5.4) | +0.42 (t 2.0) |
+| hybrid slowS98w2 0.3, peFix 0.05 | −0.179 (t −6.9) | +0.327 (t 10.1) | +0.256 (t 2.1) | +0.140 (t 5.0) | +0.47 (t 2.2) |
+| hybrid slowS98w2 0.5, peFix 0.02 | −0.091 (t −4.8) | +0.329 (t 8.8) | +0.216 (t 1.9) | +0.174 (t 8.5) | +0.52 (t 2.2) |
+| hybrid deepURSx3 0.5, peFix 0.01 | −0.024 (t −2.4) | +0.219 (t 8.0) | +0.076 (t 1.2) | +0.147 (t 8.1) | +0.44 (t 2.0) |
+| **hybrid deepURSx3 0.3, peFix 0.01** | −0.006 (t −0.5) | +0.164 (t 7.4) | +0.100 (t 1.7) | +0.084 (t 5.2) | +0.55 (t 2.5) |
+
+slowS98w2 is bit-identical to deepURSx3 on order2 (the slow region is silent without the clock), so its order2 numbers equal the deepURSx3 rows.
+
+**Confirm 2 (fresh growths 32-47, results_box/r53/confirm2.jsonl; base 32-47 run alongside).**
+
+| variant | fables2000 | text3000 | order3 |
+|---|---|---|---|
+| predErr 0.5 peMode 1, growths 32-47 | −0.020 (t −2.3, 2/16) | +0.182 (t 8.5) | +0.009 |
+| predErr 0.5 peMode 1, **pooled 16-47 (n 32)** | −0.017 (t −2.3, 7/32) | +0.167 (t 11.2, 32/32) | +0.015 (t 0.7) |
+| hybrid 0.3 peFix 0.01, growths 32-47 | −0.007 (t −0.5, 5/16) | +0.164 (t 9.1, 16/16) | +0.070 (t 1.9) |
+| hybrid 0.3 peFix 0.01, **pooled 0-15 + 32-47 (n 32)** | −0.007 (t −0.7, 11/32) | +0.164 (t 11.7, 32/32) | +0.085 (t 2.5, 22/32) |
+
+Verdict: predErr 0.5 peMode 1 fails the no-task-worse rule (a small but now significant fables loss, −0.017, t −2.3 over 32 growths). The hybrid rule predErr 0.3, peMode 16, peFix 0.01 on deepURSx3 passes it: fables −0.007 (n.s.), text3000 +0.164 (t 11.7), order3 +0.085 (t 2.5), text1000 +0.084 (t 5.2, n 16), order2@1000 +0.55 (t 2.5, n 16). **Default candidate**, pending Travis's approval; defaults unchanged (v34 / 27). Caveat: growths 0-15 also selected it; the fresh 32-47 alone give the same picture.
+
+**Confirm 3 (results_box/r53/confirm3.jsonl): candidate hybrid predErr 0.3, peMode 16, peFix 0.01 vs deepURSx3.**
+
+| task | fresh growths | Δ (fresh) | pooled n 32 |
+|---|---|---|---|
+| text1000 | 32-47 (base 7.324) | +0.087 (t 4.2, 13/16) | +0.086 (t 6.6, 28/32) |
+| order2@1000 | 32-47 (base 6.031) | −0.081 (t −0.3, 6/16) | +0.232 (t 1.2, 16/32) |
+| text5000 (long text) | 0-15 (base 7.879) | +0.236 (t 8.1, 16/16) | (n 16) |
+
+All tasks, 32 growths each (text5000 16): fables −0.007 (t −0.7), text3000 +0.164 (t 11.7), order3 +0.085 (t 2.5), text1000 +0.086 (t 6.6), order2 +0.23 (t 1.2, noisy; the screen gain did not replicate, but no loss), text5000 +0.236 (t 8.1). No task significantly worse; text gain grows with life length. Still the R53 default candidate; defaults unchanged (v34 / 27) pending Travis.
+
+**ADOPTED (Oct 17, after Travis's approval): v35, DEFAULTS_VERSION 28.** The default plan deepURSx3 (three-phase-clock sequences/text and seqchoice) now learns with the hybrid prediction-mismatch rule in every area: pl.predErr 0.3, pl.peMode 16, pl.peFix 0.01 (SA.DEEP_PE in js/envs/reward_evolved.js). The v34 plan is kept as deepURSx3v34; deepURSx2/x4/x6/x8 and the slowS* plans are unchanged (no predErr). Checked bit-identical: the new default reproduces the R53 candidate's held-out scores (text1000 g0 7.53, fables g0 2.89, order2 g0 6.53) and deepURSx3v34 reproduces the v34 base (text1000 g0 7.34). Reward-only tasks (bandit, cue) keep unifiedR (unchanged). test_core.js: new v35 check, ALL OK.
+Tests (box): test_core ALL OK. browser_test: everything passes (D first open = Sequence/Text, plan deepURSx3, title v35; H fast-mode lifetimes equal Node runs bit for bit; no page errors) except section A's 400 s lifetime window (814-830 of 1000 rows recorded), which also fails on the unchanged v34 HEAD (853 rows), so it is a pre-existing timing limit of the big deepURSx3 brain in the watched view, not a v35 regression; B's text-after-old-session check passed 0.479 once and missed 0.390 < 0.40 once (v34: 0.453), noise around the threshold. Cost: the mismatch rule makes a growth ~15 % slower in Node (text1000 9.5 s vs 8.3 s) and the browser fast mode ~30 % (2100 vs 3065 ticks/s).
+
+## R54 — queue review (Oct 17, 7:15 AM CT): overnight battery outage, v35 installed on the PC, worker results, queue rebuilt for v35 (v35 / 28 unchanged)
+
+**Queue status**: running, not restarted: queue pid 11012 (started Oct 16 6:29 PM), runner pid 16680 on q30, no PAUSE.
+**Idle gap Oct 16 9:39 PM -> Oct 17 6:52 AM (about 9 h 15 min)**: the laptop was on battery, hit "Critical Battery Trigger Met" (System log 524)
+and went to sleep / hibernate (Kernel-Power 42, reason Battery); it resumed at 6:52 AM and q30 continued from its checkpoint (the runner
+logged 554 min suspended, not counted in the budget). At 7:45 AM the charger is connected (PowerOnline) but the battery is **not charging**
+(Charging False, ChargeRate 0, 3-4 %, flagged critical) while the queue keeps the CPU busy: one unplug = immediate hibernate. Needs Travis
+(adapter wattage / Dell charge setting / battery health).
+
+**v35 on the PC**: the PC was still v34 / 27 (an earlier box-only install). Installed now: js/core/base.js, net.js, develop.js,
+js/envs/reward_evolved.js, index.html, test_core.js, run/r42.js, run/dashdata.js, run/r47_sweep.js, run/r47_table.js, byte-identical to the
+box v35 (sha1 base.js e863b5a4, net.js 228ffd83, reward_evolved.js efabdf40); v34 copies in legacy/v34. PC check: APP_VERSION v35,
+DEFAULTS_VERSION 28, deepURSx3 = v34 plan + predErr 0.3 / peMode 16 / peFix 0.01 in every area, deepURSx3v34 kept, text default deepURSx3,
+and **text1000 growth 0 = 7.53 on the PC, the same as the box** (bit-identical). The running q30 workers loaded v34 at start and were not affected.
+This commit also brings the box rounds R52 / R53 (peMode, hybrid LTD, slow context plans slowS*, results_box/r52, r53) into PR #6.
+
+**Finished since R50 on the PC**: no job finished overnight (outage). q30 (evolve the v34 deepURSx3 on text2000 + fables2000 + order3, 5 h):
+6 generations (5.0 h active by the end of gen 6, still finishing at 7:57 AM): champion **1.0146** (gen 4; text2000 7.610 / ref 7.572 = 1.005,
+fables2000 2.869 / 2.859 = 1.004, order3 8.847 / 8.536 = 1.036); gen 5 best 1.008. Below the 1.03 bar -> **fail** (unless the last generation jumps;
+the queue log will show the final line). Evolution has now failed four times in a row on sequence fitness (q16, q24, q26, q30: champions 0.95-1.02),
+so evolution jobs were moved to the end of the queue.
+
+**Shared queue (dq.js) results since R50** — all by linux-pc (16 growths; "base" = the v34 deepURSx3; unpaired unless noted):
+
+| job | result | verdict |
+|---|---|---|
+| p01 order3, growths 32-47 | base 9.095, predErr 0.02 9.264, 0.05 **9.381** | replicates q29's order3 gain (+0.29) |
+| p03 text3000, g32-47 | base 7.776, predErr 0.05 **8.060** | replicates (+0.28) |
+| p04 fables2000 dose, g0-15 | predErr 0.01 2.885, 0.03 **2.503** (base 2.887) | additive rule's fables loss is steep with dose (0.01 harmless, 0.03 -0.38, 0.05 -0.63) |
+| p02 order3 renamed at 0.5, g16-31 | base 8.319, predErr 0.05 **8.863**; fresh n1000 9.607 / 9.788 | replicates q31: mismatch LTD speeds unlearning (+0.54) |
+| p05 cycle renamed, g16-31 | base 8.929, predErr 0.05 9.207; fresh n500 9.886 / 9.747 | same direction (+0.28) |
+| p06 / p07 text3000, g16-31 | x3 7.791, x6 **7.956**, x8 **8.028** | replicates q28 depth gain on text |
+| p08-p13 gene sweeps on deepURSx3 (order3, seqchoice order2@1000) | order3 9.96 everywhere (ceiling); order2 base 5.85 (sd 1.06): lr 0.0375 / 0.0625 6.00 / 5.61, aMinus 0.225 / 0.375 6.05 / 5.53 (noise), tauElig 75 / 125 **4.54 / 4.34**, rcvDiv 0.3 / 0.5 **1.69 / 2.06**, mixRate and teachThr bit-identical to base (unused here) | current values are at the optimum; tauElig 100 and rcvDiv are sharp; no change |
+| q22 structured recruits (predictK3) | ng + ngReduce 0.5: text 6.56, order3 7.54; + ngStruct 6.35 / 7.45 (base 7.26 / 8.53) | need-growth with pruning hurts; I45 rejected |
+| q24 ngFail evolution (rewardE3, 3 h, 82 gens) | champion 1.017 < 1.03 (bandit 0.89, cueR 1.05, cycle 1.10, order2 1.08 of ref) | fail |
+
+All additive-predErr results are now history: R53's hybrid rule (v35) keeps the text / order3 gain without the fables loss.
+Workers: **linux-pc** healthy (finished 16 jobs Oct 16 7:19 PM - Oct 17 2:14 AM, idle 2:14-7:45 AM because the shared list was empty;
+since 7:45 AM it runs the box-seeded s01/s02 and p14). **moto-g-2026-03a1** silent since Oct 16 9:33 PM: its last result was q18 at 4:59 PM; it
+then claimed p01, p02 (twice), p07 and p08 but never renewed or finished a claim, so each lease expired and linux-pc redid the job (no duplicate
+results, wasted phone time only). The phone worker looks stopped (Termux killed / asleep) and needs a check.
+
+**Observation (important for the long-memory goal)**: the "text" corpus is only **224 characters** (19 symbols), so text3000 / text5000 replay
+it 13-22 times; the growth of the v35 and depth gains with life length on text (+0.09 / +0.16 / +0.24 at 1000 / 3000 / 5000) is mostly better
+recall of a short loop. The fables corpus (4270 characters, 24 symbols) is the only long test that does not repeat; there v35 is neutral
+(-0.007) and deeper chains lose (x8 -0.09). New idea I66: score long memory on fables 4000 (one full pass) and add a much bigger public-domain
+corpus (needs code). New PC jobs use fables 4000.
+
+**Adoptions: none.** No new candidate passed a bar (q30 champion < 1.03; shared results only confirm known additive-rule effects); v35 stays
+the default (installed on the PC, see above). Noise rule unchanged: a task is "worse" if the paired difference is beyond 2 paired SE (t < -2).
+
+**Queue rebuilt for v35** (q34-q38 were written for the v34 plan / old additive rule; they are marked kind "superseded" and will be skipped).
+New PC jobs, ranked by payoff, de-duplicated against the shared queue (box s01-s12 seeded 7:41 AM, p14) and the registry:
+
+| job | what | runs | est h |
+|---|---|---|---|
+| q39 (1.6) | v35 vs deepURSx3v34 on seqchoice cycle 1000 (never checked; order2 is s01/s04) | 2 | 0.35 |
+| q40 (1.55) | fables 4000 (no repeat): v35, deepURSx4 + PE, deepURSx6 + PE, slowS98w2 + PE (v34 / plain depth = shared p14) | 4 | 1.1 |
+| q41 (1.45) | deepURSx6 / x8 + PE on text3000, fables2000, order3 (v35 bases = box R53, plain x6/x8 = q28) | 6 | 1.3 |
+| q42 (1.4) | slowS98w2 + PE on text1000, text3000, fables2000, order3 | 4 | 0.8 |
+| q43 (1.3) | v35 dose: predErr 0.4 / peFix 0.005 on text3000 + order3, both on text3000 / fables2000 / order3 (single changes on fables / text1000 = s07/s08) | 7 | 1.4 |
+| q44 (1.2) | v35 after renaming: order3 / text / cycle / fables4000 relabel 0.5 + controls (paired with q31; s10 = order3 g16) | 6 | 1.1 |
+| q33 (1.0) | analogy evolution, now from v35 (3 h) | | 3 |
+| q45 (0.95) | evolve v35 on fables4000 + text1000 + order3 (3 h; replaces q34) | | 3 |
+
+About 12 h of active compute queued (plus the end of q30). Shared queue: seeded p14 (deepURSx3 pl.predErr=0 = v34 plan, x4, x6, x8 on fables 4000
++ fables relabel; runs the same on a v34 or v35 checkout; linux-pc claimed it 7:49 AM). The box-seeded s04-s10 need run/r47_sweep.js, so they wait
+until the workers' branch (neuro/distributed-queue) has the v35 engine.
+Ideas: I61 (additive dose) and I64 (confidence gate) superseded by the hybrid rule; duplicate I61 (soft-bound / hybrid) renumbered I65, adopted;
+I45 rejected; I62 testing (q41); new I66; questions Q22 answered (q30: no), Q26 / Q29 closed, new Q30-Q32.

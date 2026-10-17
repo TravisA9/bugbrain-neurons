@@ -1,0 +1,99 @@
+{
+  "id": "q44_v35_relabel",
+  "title": "Analogy / renaming (I49) with v35: order3 / cycle / text relabel 0.5 and fables 4000 relabel 0.5, plus no-relabel controls (16 growths, paired with q31 v34 runs)",
+  "question": "Q28",
+  "track": "neuro",
+  "priority": 1.2,
+  "kind": "runs",
+  "estHours": 1.1,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v35 order3 n2000 relabel",
+      "env": {
+        "BB_OUT": "results/r54/q44_v35_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":2000,\"relabel\":0.5}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v35 text n2000 relabel",
+      "env": {
+        "BB_OUT": "results/r54/q44_v35_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"cycle\",\"K\":8,\"nSyms\":1000,\"relabel\":0.5,\"clock2\":true,\"clock3\":true}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v35 cycle K8 n1000 relabel",
+      "env": {
+        "BB_OUT": "results/r54/q44_v35_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"nSyms\":2000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v35 order3 n2000 control",
+      "env": {
+        "BB_OUT": "results/r54/q44_v35_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":2000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v35 text n2000 control",
+      "env": {
+        "BB_OUT": "results/r54/q44_v35_relabel.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"relabel\":0.5}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v35 fables4000 relabel",
+      "env": {
+        "BB_OUT": "results/r54/q44_v35_relabel.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "transfer if q2 (first quarter after renaming) >= a fresh brain's first quarter; q31 (v34): order3 q2 0.594 vs fresh 0.917, additive predErr 0.05 0.718. fables relabel pairs with the shared-queue job p15 (v34 engine)"
+  },
+  "note": "R54. Replaces q37"
+}

@@ -1,0 +1,113 @@
+{
+  "id": "q43_v35_dose",
+  "title": "v35 neighbourhood on the longer / harder tasks: predErr 0.4 and peFix 0.005 on text3000 + order3, and predErr 0.4 + peFix 0.005 on text3000 / fables2000 / order3 (16 growths g0-15; fables2000 + text1000 for the single changes run on the shared queue, s07/s08)",
+  "question": "Q30",
+  "track": "neuro",
+  "priority": 1.3,
+  "kind": "runs",
+  "estHours": 1.4,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.4,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 text3000 pl.predErr=0.4,pl.peMode=16,pl.peFix=0.01",
+      "env": {
+        "BB_OUT": "results/r54/q43_v35_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.4,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 order3 pl.predErr=0.4,pl.peMode=16,pl.peFix=0.01",
+      "env": {
+        "BB_OUT": "results/r54/q43_v35_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.005",
+        "0"
+      ],
+      "label": "v35 text3000 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.005",
+      "env": {
+        "BB_OUT": "results/r54/q43_v35_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.005",
+        "0"
+      ],
+      "label": "v35 order3 pl.predErr=0.3,pl.peMode=16,pl.peFix=0.005",
+      "env": {
+        "BB_OUT": "results/r54/q43_v35_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.4,pl.peMode=16,pl.peFix=0.005",
+        "0"
+      ],
+      "label": "v35 text3000 pl.predErr=0.4,pl.peMode=16,pl.peFix=0.005",
+      "env": {
+        "BB_OUT": "results/r54/q43_v35_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.4,pl.peMode=16,pl.peFix=0.005",
+        "0"
+      ],
+      "label": "v35 fables2000 pl.predErr=0.4,pl.peMode=16,pl.peFix=0.005",
+      "env": {
+        "BB_OUT": "results/r54/q43_v35_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.4,pl.peMode=16,pl.peFix=0.005",
+        "0"
+      ],
+      "label": "v35 order3 pl.predErr=0.4,pl.peMode=16,pl.peFix=0.005",
+      "env": {
+        "BB_OUT": "results/r54/q43_v35_dose.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "box R53: 0.5/0.01 fables -0.024 (t -2.4), 0.5/0.02 -0.056, 0.3/0.01 (v35) -0.007. Candidate if text3000/order3 beat v35 with fables not worse beyond noise; then confirm on growths 32-47 | bases: box R53 hybrid.jsonl (v35 g0-15)"
+  },
+  "note": "R54. Replaces q35 (old additive-rule dose)"
+}

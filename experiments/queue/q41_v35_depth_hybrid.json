@@ -1,0 +1,99 @@
+{
+  "id": "q41_v35_depth_hybrid",
+  "title": "Depth x hybrid LTD: deepURSx6 / x8 + v35's prediction-miss LTD on text3000, fables2000, order3 (16 growths g0-15; v35 bases = box R53 hybrid.jsonl, plain x6/x8 = q28)",
+  "question": "Q27",
+  "track": "neuro",
+  "priority": 1.45,
+  "kind": "runs",
+  "estHours": 1.3,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx6",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx6+PE text3000",
+      "env": {
+        "BB_OUT": "results/r54/q41_v35_depth_hybrid.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx6",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\"}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx6+PE fables2000",
+      "env": {
+        "BB_OUT": "results/r54/q41_v35_depth_hybrid.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx6",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx6+PE order3",
+      "env": {
+        "BB_OUT": "results/r54/q41_v35_depth_hybrid.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx8",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx8+PE text3000",
+      "env": {
+        "BB_OUT": "results/r54/q41_v35_depth_hybrid.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx8",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\"}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx8+PE fables2000",
+      "env": {
+        "BB_OUT": "results/r54/q41_v35_depth_hybrid.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx8",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx8+PE order3",
+      "env": {
+        "BB_OUT": "results/r54/q41_v35_depth_hybrid.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "candidate if x6/x8+PE beats v35 on text3000 (> 2 paired SE) with fables2000 and order3 not worse beyond noise (q28: x8 fables -0.09, order3 -0.26 without PE). v35 bases: results_box/r53/hybrid.jsonl (same growths; PC port checked bit-identical, text1000 g0 7.53)"
+  },
+  "note": "R54. Replaces q36 (written for the old additive predErr rule)"
+}

@@ -1,0 +1,71 @@
+{
+  "id": "q40_v35_fables_long",
+  "title": "Long NON-repeating memory: fables 4000 (one full pass of the 4270-char fables corpus; the 'text' corpus is only 224 chars and loops) - v35 and v35's hybrid LTD on deeper chains x4/x6 and on the slow context layer slowS98w2 (16 growths)",
+  "question": "Q32",
+  "track": "neuro",
+  "priority": 1.55,
+  "kind": "runs",
+  "estHours": 1.1,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v35 fables4000",
+      "env": {
+        "BB_OUT": "results/r54/q40_v35_fables_long.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4+PE fables4000",
+      "env": {
+        "BB_OUT": "results/r54/q40_v35_fables_long.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx6",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx6+PE fables4000",
+      "env": {
+        "BB_OUT": "results/r54/q40_v35_fables_long.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "slowS98w2",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "slowS98w2+PE fables4000",
+      "env": {
+        "BB_OUT": "results/r54/q40_v35_fables_long.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "a variant is a candidate if it beats v35 on fables4000 by > 2 paired SE and its last-quarter accuracy rises (memory, not loop recall); then check text1000/3000, order3, fables2000, seqchoice on held-out growths | v34 baseline (deepURSx3 pl.predErr=0) and plain x4/x6/x8 on fables4000 run on the shared queue (p14), same growths"
+  },
+  "note": "R54. Travis's focus is longer memory without short repetitive patterns: text3000/5000 replay a 224-char loop 13-22 times, fables does not repeat within 4000 symbols"
+}

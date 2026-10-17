@@ -1,0 +1,71 @@
+{
+  "id": "q42_v35_slow_hybrid",
+  "title": "Slow context layer x hybrid LTD: slowS98w2 + predErr 0.3 / peMode 16 / peFix 0.01 on text1000, text3000, fables2000, order3 (16 growths g0-15; v35 bases = box R53 hybrid.jsonl)",
+  "question": "Q22",
+  "track": "neuro",
+  "priority": 1.4,
+  "kind": "runs",
+  "estHours": 0.8,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "slowS98w2",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\"}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "slowS98w2+PE text1000",
+      "env": {
+        "BB_OUT": "results/r54/q42_v35_slow_hybrid.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "slowS98w2",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "slowS98w2+PE text3000",
+      "env": {
+        "BB_OUT": "results/r54/q42_v35_slow_hybrid.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "slowS98w2",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\"}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "slowS98w2+PE fables2000",
+      "env": {
+        "BB_OUT": "results/r54/q42_v35_slow_hybrid.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "slowS98w2",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "slowS98w2+PE order3",
+      "env": {
+        "BB_OUT": "results/r54/q42_v35_slow_hybrid.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "R52/R53: slowS98w2 alone text3000 +0.11-0.14, fables -0.03/-0.04; with peMode 1 fables -0.05; with hybrid 0.3/0.05 fables -0.18. Candidate only if fables2000 is not worse than v35 beyond noise"
+  },
+  "note": "R54"
+}

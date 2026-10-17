@@ -1,0 +1,75 @@
+{
+  "name": "v35_fables_evolve",
+  "description": "(R54 queue, Q32) evolve the v35 default deepURSx3 (hybrid prediction-miss LTD) on long non-repeating text: fables 4000 (one pass), plus text 1000 and order3 (K 8) to keep the short tasks",
+  "mode": "standard",
+  "seed": 54,
+  "workers": "auto",
+  "population": 32,
+  "generations": 0,
+  "hours": 3,
+  "start": [
+    "deepURSx3"
+  ],
+  "engine": {
+    "growths": 2,
+    "episodes": 1,
+    "robustW": 0.5,
+    "valGrowths": 4,
+    "valArenas": 4,
+    "valTopK": 3,
+    "cellMut": 0.02,
+    "eliteFrac": 0.1,
+    "crossoverRate": 0.3
+  },
+  "tasks": [
+    {
+      "name": "fables4000",
+      "env": "seq",
+      "params": {
+        "source": "fables",
+        "nSyms": 4000
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "deepURSx3"
+    },
+    {
+      "name": "text1000",
+      "env": "seq",
+      "params": {
+        "source": "text"
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "deepURSx3"
+    },
+    {
+      "name": "order3",
+      "env": "seq",
+      "params": {
+        "source": "order3",
+        "K": 8
+      },
+      "weight": 1,
+      "ref": "auto",
+      "refPlan": "deepURSx3"
+    }
+  ],
+  "combine": {
+    "type": "softmin",
+    "tau": 0.25,
+    "cap": 1.5
+  },
+  "championEvery": 5,
+  "smoke": {
+    "fables4000": {
+      "nSyms": 60
+    },
+    "text1000": {
+      "nSyms": 60
+    },
+    "order3": {
+      "nSyms": 60
+    }
+  }
+}
