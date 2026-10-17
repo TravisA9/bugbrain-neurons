@@ -54,11 +54,38 @@ function walk(d, base) { const out = []; for (const f of fs.readdirSync(d)) { co
     if (fs.existsSync(path.join(ROOT, 'results', 'ideas.js')) && fs.existsSync(path.join(ROOT, 'results', 'queue.js'))) {
       const p3 = await b.newPage(); watch(p3); await p3.goto('file://' + path.join(ROOT, 'dashboard.html') + '#ideas'); await sleep(1200);
       const t = await p3.evaluate(() => ({ vis: !document.getElementById('ideasView').hidden, ideas: document.querySelectorAll('#ideaTable tbody tr').length, qs: document.querySelectorAll('#qsTable tbody tr').length,
-        jobs: document.querySelectorAll('#qTable tbody tr').length, badges: document.querySelectorAll('#ideaTable .st-adopted, #ideaTable .st-rejected, #ideaTable .st-open, #ideaTable .st-parked').length }));
+        jobs: document.querySelectorAll('#qTable tbody tr').length, badges: document.querySelectorAll('#ideaTable .st').length }));
       check(t.vis && t.ideas >= 20 && t.qs >= 10 && t.jobs >= 10 && t.badges === t.ideas, `dashboard Ideas tab: ${t.ideas} ideas (status colours ${t.badges}), ${t.qs} open questions, ${t.jobs} queue jobs`);
       await p3.evaluate(() => document.querySelector('#ideaFilt button[data-f="parked"]').click()); const np = await p3.evaluate(() => document.querySelectorAll('#ideaTable tbody tr').length);
       check(np >= 1 && np < t.ideas, `dashboard Ideas tab: status filter (parked: ${np})`);
       await p3.screenshot({ path: path.join(ROOT, 'screenshot_ideas.png'), fullPage: true }); await p3.close();
+    }
+    // R51: idea map, progress, machines from results/dashdata.js (run/dashdata.js), markdown rendering
+    if (fs.existsSync(path.join(ROOT, 'results', 'dashdata.js'))) {
+      const p4 = await b.newPage(); watch(p4); await p4.setViewport({ width: 1600, height: 1000 }); await p4.goto('file://' + path.join(ROOT, 'dashboard.html')); await sleep(1500);
+      const m = await p4.evaluate(() => ({ nodes: document.querySelectorAll('#map .node').length, ideas: window.BB_DASH.ideas.length, edges: document.querySelectorAll('#map svg path').length,
+        settingsHidden: getComputedStyle(document.getElementById('settings')).display === 'none' }));
+      check(m.nodes === m.ideas && m.edges >= 40 && m.settingsHidden, `dashboard idea map: ${m.nodes} idea nodes (= ${m.ideas}), ${m.edges} 'grew from' links, settings tucked away`);
+      await p4.evaluate(() => document.querySelector('#map .node[data-id="I47"]').click()); await sleep(300);
+      const pn = await p4.evaluate(() => ({ h: document.querySelector('#panel h3').textContent, rounds: document.querySelectorAll('#panel [data-r]').length, jobs: document.querySelectorAll('#panel .job').length, dim: document.querySelectorAll('#map .node.dim').length }));
+      check(/World model/i.test(pn.h) && pn.rounds >= 1 && pn.jobs >= 1 && pn.dim > 10, `dashboard idea panel: "${pn.h.slice(0, 40)}", ${pn.rounds} rounds, ${pn.jobs} queue jobs, family highlighted (${pn.dim} dimmed)`);
+      await p4.evaluate(() => document.querySelector('#panel [data-r]').click()); await sleep(300);
+      const rm = await p4.evaluate(() => ({ open: !document.getElementById('modal').hidden, tables: document.querySelectorAll('#modalBody table').length, raw: /^\s*\|.*\|\s*$/m.test(document.getElementById('modalBody').innerText) && /\|---/.test(document.getElementById('modalBody').innerText) }));
+      check(rm.open && rm.tables >= 1 && !rm.raw, `dashboard round view: RESULTS.md section rendered as HTML (${rm.tables} tables, no raw markdown)`);
+      await p4.evaluate(() => { document.getElementById('modal').hidden = true; window.__dash.showTab('progress'); }); await sleep(500);
+      const pg = await p4.evaluate(() => ({ charts: document.querySelectorAll('#pgrid .pc').length, dots: document.querySelectorAll('#pgrid circle').length, ads: [...document.querySelectorAll('#pgrid text')].filter(t => /^v3[234]$/.test(t.textContent)).length }));
+      check(pg.charts >= 6 && pg.dots > 100 && pg.ads >= 3, `dashboard progress: ${pg.charts} task charts, ${pg.dots} points, adoption markers ${pg.ads}`);
+      await p4.screenshot({ path: path.join(ROOT, 'screenshot_dashboard_progress.png') });
+      await p4.evaluate(() => window.__dash.showTab('machines')); await sleep(500);
+      const mc = await p4.evaluate(() => ({ cards: document.querySelectorAll('#mcards .mc').length, bars: document.querySelectorAll('#gantt rect').length }));
+      check(mc.cards >= 1, `dashboard machines: ${mc.cards} machines, ${mc.bars} job bars`);
+      await p4.evaluate(() => window.__dash.showTab('ideas')); await sleep(800);
+      const ql = await p4.evaluate(() => ({ entries: document.querySelectorAll('#qlog .logentry').length, tables: document.querySelectorAll('#qlog table').length, raw: /\|---/.test(document.getElementById('qlog').innerText) }));
+      check(!ql.raw && (ql.entries === 0 || ql.tables >= 1 || ql.entries >= 1), `dashboard queue log rendered as HTML: ${ql.entries} entries, ${ql.tables} tables, no raw markdown`);
+      const mdt = await p4.evaluate(() => window.__dash.md('# T\n\n| a | b |\n|---|---|\n| 1 | **x** |\n\n- one\n- two `c`\n\n```\ncode\n```'));
+      check(/<h1>T<\/h1>/.test(mdt) && /<table>/.test(mdt) && /<b>x<\/b>/.test(mdt) && /<li>one<\/li>/.test(mdt) && /<code>c<\/code>/.test(mdt) && /<pre><code>code/.test(mdt), 'markdown renderer: headings, tables, bold, lists, code');
+      await p4.evaluate(() => window.__dash.showTab('map')); await sleep(400); await p4.evaluate(() => window.__dash.select('I56')); await sleep(300);
+      await p4.screenshot({ path: path.join(ROOT, 'screenshot_dashboard_map.png') }); await p4.close();
     }
     check(!errs.length, 'dashboard / index / viewer: no page errors ' + errs.join(' | '));
   } finally { await b.close(); }

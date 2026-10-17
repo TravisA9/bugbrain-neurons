@@ -54,6 +54,8 @@ function writeQueueJs(extra) {
     accept: j.accept || {}, needsCode: j.needsCode || null, note: j.note || null, after: j.after || null, status: statusOf(j), state: S.jobs[j.id] || null }));
   writeAtomic(QJS, 'window.BB_QUEUE = ' + JSON.stringify(Object.assign({ updatedAt: new Date().toISOString(), paused: paused(), pid: process.pid, jobs, log: logTail(12) }, extra || {})) + ';\n');
 }
+// R51: refresh results/dashdata.js (dashboard: idea map, progress, machines); skipped inside a run/dq.js scratch queue
+const dash = () => { if (process.env.BB_QUEUE_DIR) return; try { cp.execFileSync(RUNTIME, ['run/dashdata.js', '--quiet'], { cwd: ROOT, stdio: 'ignore', timeout: 90000, windowsHide: true }); } catch (e) {} };
 function appendLog(md) { if (!fs.existsSync(LOG)) fs.writeFileSync(LOG, '# Queue log (run/queue.js)\n'); fs.appendFileSync(LOG, '\n' + md.trim() + '\n'); }
 function cpuSample(ms) { const a = os.cpus(); return sleep(ms).then(() => { const b = os.cpus(); let busy = 0, tot = 0; b.forEach((c, i) => { const x = c.times, y = a[i].times; const t = (x.user + x.nice + x.sys + x.irq + x.idle) - (y.user + y.nice + y.sys + y.irq + y.idle); tot += t; busy += t - (x.idle - y.idle); }); return tot ? 100 * busy / tot : 0; }); }
 async function waitForGo(running) {   // PAUSE file / busy CPU (only checked while the queue itself is not computing)
@@ -144,6 +146,7 @@ async function main() {
     appendLog(`## ${now()} · ${j.id} · ${v.pass == null ? 'DONE' : v.pass ? 'PASS' : 'FAIL'} (recovered)\n${j.title} (question ${j.question}). Run ${path.basename(s.dir)}, ${sum.generations} generations, ${sum.hours} h. The runner had exited non-zero after finishing.\n${v.text}`); }
   try { cp.execFileSync(RUNTIME, ['run/registry_backfill.js'], { cwd: ROOT, stdio: 'ignore' }); } catch (e) {}
   try { cp.execFileSync(RUNTIME, ['run/ideas.js'], { cwd: ROOT, stdio: 'ignore' }); } catch (e) {}
+  dash();
   say(`queue started (pid ${process.pid}, ${WORKERS} workers, runtime ${path.basename(RUNTIME)}${CPU_MAX ? ', cpu-max ' + CPU_MAX + ' %' : ''})`);
   let n = 0;
   for (;;) {
@@ -156,6 +159,7 @@ async function main() {
     try { if (next.kind === 'evolve') await runEvolve(next); else if (next.kind === 'runs') await runRuns(next); else { st(next.id).status = 'skipped'; save(); } }
     catch (e) { const s = st(next.id); s.status = 'failed'; s.error = String(e && e.stack || e).slice(0, 400); save(); appendLog(`## ${now()} · ${next.id} · FAILED\n${s.error}`); }
     writeQueueJs();
+    dash();
     if (paused()) { await waitForGo(false); continue; }
     if (st(next.id).status === 'running') { say(`${next.id} did not finish (status running); retrying after a pause`); await sleep(60000); }
     if (args.once && ++n >= 1) break;

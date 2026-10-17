@@ -89,3 +89,6 @@ function main() {
   console.log(msg); if (!args.dry && made.length) { if (!fs.existsSync(LOG)) fs.writeFileSync(LOG, '# Queue log (run/queue.js)\n'); fs.appendFileSync(LOG, '\n' + msg + '\n'); }
 }
 main();
+// R51: keep the dashboard data current (results/dashdata.js); refill runs before every job pick, so this also runs after every job.
+// Not inside a run/dq.js scratch queue. Child process with a timeout; never fails the refill.
+if (!process.env.BB_QUEUE_DIR && !args.dry) { try { require('child_process').execFileSync(process.execPath, [path.join(__dirname, 'dashdata.js'), '--quiet'], { cwd: ROOT, stdio: 'ignore', timeout: 90000, windowsHide: true }); } catch (e) {} }

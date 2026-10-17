@@ -2,66 +2,171 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Spiking Arena · experiment dashboard</title>
+<title>BugBrain · dashboard</title>
 <style>
-  :root { --bg: #111317; --panel: #1a1d22; --fg: #e6e6e6; --dim: #8a919c; --acc: #5fb3ff; }
+  :root { --bg: #101216; --panel: #181b21; --panel2: #1f232b; --line: #2a2f38; --fg: #e4e6ea; --dim: #8b929e; --acc: #5fb3ff;
+    --adopted: #46c96b; --promising: #e8c547; --testing: #5fb3ff; --rejected: #e05d5d; --parked: #b48cff; --open: #8b929e; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 13px system-ui, sans-serif; }
-  header { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #2a2e36; }
-  h1 { font-size: 15px; margin: 0; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.45 system-ui, -apple-system, Segoe UI, sans-serif; }
+  header { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 14px; padding: 8px 14px; background: rgba(16,18,22,.96); border-bottom: 1px solid var(--line); }
+  h1 { font-size: 15px; margin: 0; font-weight: 650; letter-spacing: .2px; }
   a { color: var(--acc); }
-  button, .filebtn { background: #2a2e36; color: var(--fg); border: 1px solid #3a3f48; border-radius: 4px; padding: 4px 10px; cursor: pointer; font: inherit; }
-  button:hover, .filebtn:hover { background: #353b45; }
+  button, .filebtn { background: var(--panel2); color: var(--fg); border: 1px solid #353b46; border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit; }
+  button:hover, .filebtn:hover { background: #2a303a; }
+  .tabs { display: flex; gap: 2px; }
+  .tabs button { background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 6px 10px; color: var(--dim); }
+  .tabs button.on { color: var(--fg); border-bottom-color: var(--acc); background: none; }
+  .tabs button:hover { color: var(--fg); }
+  .grow { flex: 1; }
   .note { color: var(--dim); font-size: 12px; }
-  main { padding: 10px 12px; }
+  #gear { font-size: 15px; padding: 3px 9px; }
+  #settings { position: absolute; right: 12px; top: 44px; width: 340px; background: var(--panel); border: 1px solid #353b46; border-radius: 10px; padding: 12px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.5); display: grid; gap: 10px; }
+  #settings[hidden] { display: none; }
+  #settings h4 { margin: 0; font-size: 12px; color: var(--dim); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  #settings .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  main { padding: 12px 14px; }
+  .view[hidden] { display: none !important; }
+  h2 { font-size: 14px; margin: 18px 0 8px; font-weight: 650; }
   table { border-collapse: collapse; width: 100%; margin-bottom: 12px; }
-  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #2a2e36; vertical-align: top; white-space: nowrap; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
   th { color: var(--dim); font-weight: 600; }
+  #runs td { white-space: nowrap; }
   td.champs button { margin: 0 4px 2px 0; padding: 2px 6px; font-size: 12px; }
   .sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; }
   #charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 10px; }
-  .chart { background: var(--panel); border-radius: 6px; padding: 6px 8px; }
+  .chart { background: var(--panel); border-radius: 8px; padding: 6px 8px; }
   .chart h3 { margin: 0 0 4px; font-size: 12.5px; font-weight: 600; }
   .chart canvas { width: 100%; height: 190px; display: block; }
   #msg { color: #ffd34d; }
-  .tabs button.on { background: #3a5f8a; border-color: #5fb3ff; }
-  #ideasView h2 { font-size: 14px; margin: 14px 0 6px; }
-  #ideasView td { white-space: normal; max-width: 520px; }
-  .st { padding: 1px 6px; border-radius: 3px; font-size: 11.5px; color: #111; font-weight: 600; white-space: nowrap; }
-  .st-adopted, .st-done, .st-PASS { background: #4cd964; } .st-rejected, .st-failed, .st-FAIL { background: #ff6b6b; } .st-open, .st-pending { background: #5fb3ff; }
-  .st-parked, .st-blocked, .st-waiting { background: #ffd34d; } .st-running { background: #c88cff; } .st-text { background: #ff9f43; } .st-skipped-duplicate, .st-skipped { background: #8a919c; }
-  #qlog { white-space: pre-wrap; background: var(--panel); padding: 8px; border-radius: 6px; font: 12px ui-monospace, monospace; max-height: 480px; overflow: auto; }
-  .filt button { margin-right: 4px; }
+  .st { padding: 1px 7px; border-radius: 10px; font-size: 11.5px; color: #111; font-weight: 600; white-space: nowrap; background: #8b929e; }
+  .st-adopted, .st-confirmed, .st-done, .st-PASS { background: var(--adopted); } .st-rejected, .st-failed, .st-FAIL, .st-abandoned { background: var(--rejected); }
+  .st-open, .st-pending, .st-idle { background: #aab1bd; } .st-testing, .st-running { background: var(--testing); } .st-promising, .st-mixed { background: var(--promising); }
+  .st-parked, .st-blocked, .st-waiting, .st-paused, .st-held { background: var(--parked); } .st-offline, .st-skipped-duplicate, .st-skipped, .st-released, .st-stale { background: #5d636d; color: #ddd; }
+  .filt button { margin-right: 4px; } .filt button.on { border-color: var(--acc); background: #24344a; }
+  /* markdown */
+  .md { line-height: 1.5; } .md h1, .md h2, .md h3, .md h4 { margin: 12px 0 6px; font-weight: 650; } .md h1 { font-size: 16px; } .md h2 { font-size: 14.5px; } .md h3, .md h4 { font-size: 13.5px; }
+  .md p { margin: 6px 0; } .md ul, .md ol { margin: 4px 0 6px; padding-left: 22px; } .md li { margin: 2px 0; }
+  .md code { background: #262b34; padding: 1px 5px; border-radius: 4px; font: 12px ui-monospace, Consolas, monospace; }
+  .md pre { background: #14171c; border: 1px solid var(--line); padding: 8px 10px; border-radius: 6px; overflow: auto; } .md pre code { background: none; padding: 0; }
+  .md blockquote { margin: 6px 0; padding: 2px 10px; border-left: 3px solid #3a4250; color: #c3c8d0; }
+  .md hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0; }
+  .md .tw { overflow-x: auto; margin: 6px 0 10px; }
+  .md table { width: auto; min-width: 50%; margin: 0; font-size: 12.5px; border: 1px solid var(--line); border-radius: 6px; }
+  .md th { background: #20252e; color: #cfd4dc; position: sticky; top: 0; } .md th, .md td { padding: 4px 10px; border: 1px solid var(--line); white-space: nowrap; }
+  .md tr:nth-child(even) td { background: #1a1e25; } .md td.num, .md th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .logentry { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 4px 14px 8px; margin-bottom: 10px; }
+  /* idea map */
+  #mapWrap { display: flex; gap: 12px; align-items: flex-start; }
+  #mapScroll { flex: 1; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; max-height: calc(100vh - 150px); }
+  #map { position: relative; }
+  #map svg { position: absolute; left: 0; top: 0; pointer-events: none; }
+  .col-h { position: absolute; top: 8px; font-size: 12px; font-weight: 650; color: #cfd4dc; text-transform: capitalize; }
+  .col-h span { color: var(--dim); font-weight: 400; }
+  .node { position: absolute; border-radius: 8px; padding: 4px 8px 4px 10px; background: #222731; border: 1px solid #343b47; cursor: pointer; overflow: hidden; transition: opacity .15s, box-shadow .15s; }
+  .node::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c); }
+  .node .nid { font-size: 11px; color: var(--c); font-weight: 700; } .node .nst { float: right; font-size: 10.5px; color: var(--dim); }
+  .node .nt { font-size: 11.5px; line-height: 1.28; color: #d8dce2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .node:hover { box-shadow: 0 0 0 1px var(--c); } .node.sel { box-shadow: 0 0 0 2px var(--c); background: #283040; } .node.dim { opacity: .18; } .node.rel { box-shadow: 0 0 0 1px var(--c); }
+  #panel { width: 390px; flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; max-height: calc(100vh - 150px); overflow: auto; }
+  #panel h3 { margin: 4px 0 6px; font-size: 15px; } #panel h4 { margin: 14px 0 5px; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: var(--dim); }
+  .chip { display: inline-block; margin: 0 4px 4px 0; padding: 1px 8px; border-radius: 10px; background: #262c36; border: 1px solid #353c48; cursor: pointer; font-size: 12px; }
+  .chip:hover { border-color: var(--acc); }
+  .kn b.n { color: #ffd98a; font-weight: 600; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .legend button { display: inline-flex; gap: 6px; align-items: center; padding: 2px 9px; border-radius: 12px; }
+  .legend button i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); display: inline-block; }
+  .legend button.off { opacity: .35; }
+  input[type=search] { background: var(--panel2); border: 1px solid #353b46; color: var(--fg); border-radius: 6px; padding: 4px 8px; font: inherit; width: 200px; }
+  details > summary { cursor: pointer; color: #cfd4dc; margin: 4px 0; }
+  .job { border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; margin-bottom: 6px; background: var(--panel2); }
+  /* progress */
+  #pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 12px; }
+  .pc { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px 4px; }
+  .pc h3 { margin: 0; font-size: 13px; font-weight: 650; display: flex; justify-content: space-between; gap: 8px; } .pc h3 b { color: var(--adopted); font-variant-numeric: tabular-nums; }
+  .pc svg { width: 100%; height: 190px; display: block; }
+  .rounds { display: flex; flex-wrap: wrap; gap: 4px; }
+  /* machines */
+  #mcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .mc { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .mc h3 { margin: 0 0 4px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  .mc .big { font-size: 22px; font-weight: 700; } .mc ul { margin: 4px 0; padding-left: 18px; }
+  #gantt { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px; overflow-x: auto; }
+  #modal { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; }
+  #modal > div { background: var(--panel); border: 1px solid #353b46; border-radius: 10px; max-width: 1100px; width: 100%; max-height: calc(100vh - 80px); overflow: auto; padding: 10px 20px 16px; }
+  #modal[hidden] { display: none; }
+  #tip { position: fixed; pointer-events: none; z-index: 60; background: #0c0e12; border: 1px solid #3a4250; border-radius: 6px; padding: 5px 8px; font-size: 12px; max-width: 360px; white-space: pre-line; }
+  #tip[hidden] { display: none; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Experiment dashboard</h1>
-  <span class="tabs"><button id="tabRuns" class="on">Runs</button> <button id="tabIdeas" title="Idea map, ranked open questions, the experiment queue and its log (results/ideas.js, results/queue.js)">Ideas</button></span>
-  <label class="filebtn" title="Pick a results folder (one run, or the whole results folder with many runs)">📁 Open results folder<input type="file" id="inDir" webkitdirectory directory multiple hidden></label>
-  <label class="filebtn" title="Pick files of one or more runs: generations.csv, summary.json, config.json, champions/*.json">📄 Open files<input type="file" id="inFiles" multiple accept=".csv,.json" hidden></label>
-  <button id="btnClear" title="Forget all loaded runs">Clear</button>
-  <span class="note">Runs written by <code>run/runner.js</code> (results/&lt;date&gt;_&lt;name&gt;/). Everything stays in this browser; nothing is uploaded.</span>
-  <label class="note" title="Load results/current.js (written by the runner every generation) and refresh it every 30 s"><input type="checkbox" id="chkLive" checked> live</label> <span id="live" class="note"></span>
+  <h1>🧠 BugBrain</h1>
+  <nav class="tabs">
+    <button id="tabMap" title="All ideas, what grew from what, and how each one turned out">Idea map</button>
+    <button id="tabProgress" title="Best score per task over time, with the adopted defaults marked">Progress</button>
+    <button id="tabMachines" title="Which computer runs which job">Machines</button>
+    <button id="tabIdeas" title="Experiment queue, open questions, queue log">Queue</button>
+    <button id="tabRuns" title="Evolution runs (results folders) and the live run">Runs</button>
+  </nav>
+  <span class="grow"></span>
+  <span id="dataNote" class="note"></span>
   <span id="msg"></span>
+  <button id="gear" title="Settings">⚙</button>
+  <div id="settings" hidden>
+    <h4>Data</h4>
+    <div class="note">The dashboard reads <code>results/dashdata.js</code>, rewritten by <code>run/dashdata.js</code> after every queue job. To refresh by hand: <code>bun run/dashdata.js</code>.</div>
+    <div class="row"><label class="note"><input type="checkbox" id="chkLive" checked> auto-refresh every 30 s</label> <button id="btnReload">Reload now</button></div>
+    <h4>Runs tab</h4>
+    <div class="row">
+      <label class="filebtn" title="Pick a results folder (one run, or the whole results folder with many runs)">📁 Open results folder<input type="file" id="inDir" webkitdirectory directory multiple hidden></label>
+      <label class="filebtn" title="Pick files of one or more runs: generations.csv, summary.json, config.json, champions/*.json">📄 Open files<input type="file" id="inFiles" multiple accept=".csv,.json" hidden></label>
+      <button id="btnClear" title="Forget all loaded runs">Clear</button>
+    </div>
+    <div class="note" id="live"></div>
+    <h4>Progress tab</h4>
+    <div class="row"><label class="note"><input type="checkbox" id="chkAllTasks"> also show minor task variants</label></div>
+    <div class="row"><label class="note"><input type="checkbox" id="chkSmall" checked> show small smoke runs (fewer than 4 growths)</label></div>
+    <h4>Idea map</h4>
+    <div class="row"><label class="note"><input type="checkbox" id="chkEdges" checked> show "grew from" links</label></div>
+  </div>
 </header>
 <main>
- <div id="runsView">
+ <section id="mapView" class="view">
+  <div class="legend" id="legend"></div>
+  <div id="mapWrap"><div id="mapScroll"><div id="map"></div></div><aside id="panel"></aside></div>
+ </section>
+ <section id="progressView" class="view" hidden>
+  <div class="note" id="progNote"></div>
+  <div id="pgrid"></div>
+  <h2>Rounds <span class="note">(click to read the round in RESULTS.md)</span></h2>
+  <div class="rounds" id="roundList"></div>
+ </section>
+ <section id="machinesView" class="view" hidden>
+  <div class="note" id="machNote"></div>
+  <div id="mcards"></div>
+  <h2>Last 48 hours</h2>
+  <div id="gantt"></div>
+  <h2>Shared queue jobs</h2>
+  <table id="sharedTable"><thead><tr><th>job</th><th>status</th><th>machine</th><th>claimed / finished</th><th>est.</th></tr></thead><tbody></tbody></table>
+ </section>
+ <section id="ideasView" class="view" hidden>
+  <div class="note" id="ideasNote"></div>
+  <h2>Local experiment queue <span class="note" id="qState"></span></h2>
+  <table id="qTable"><thead><tr><th>priority</th><th>job</th><th>question</th><th>track</th><th>kind</th><th>budget</th><th>status</th><th>result</th></tr></thead><tbody></tbody></table>
+  <h2>Recent queue results</h2>
+  <div id="qlog" class="md">–</div>
+  <details><summary>Open questions (ranked by expected payoff = impact × likelihood / cost)</summary>
+  <table id="qsTable"><thead><tr><th>#</th><th>id</th><th>question</th><th>impact</th><th>likelihood</th><th>cost</th><th>payoff</th><th>experiment</th></tr></thead><tbody></tbody></table></details>
+  <details><summary>All ideas as a list <span class="filt" id="ideaFilt"></span></summary>
+  <table id="ideaTable"><thead><tr><th>id</th><th>area</th><th>idea</th><th>status</th><th>key evidence</th><th>why</th><th>rounds</th></tr></thead><tbody></tbody></table></details>
+ </section>
+ <section id="runsView" class="view" hidden>
   <table id="runs"><thead></thead><tbody></tbody></table>
   <div id="charts"></div>
- </div>
- <div id="ideasView" hidden>
-  <div class="note" id="ideasNote"></div>
-  <h2>Experiment queue <span class="note" id="qState"></span></h2>
-  <table id="qTable"><thead><tr><th>priority</th><th>job</th><th>question</th><th>track</th><th>kind</th><th>budget</th><th>status</th><th>result</th></tr></thead><tbody></tbody></table>
-  <h2>Open questions (ranked by expected payoff = impact × likelihood / cost)</h2>
-  <table id="qsTable"><thead><tr><th>#</th><th>id</th><th>question</th><th>impact</th><th>likelihood</th><th>cost</th><th>payoff</th><th>experiment</th></tr></thead><tbody></tbody></table>
-  <h2>Idea map <span class="filt" id="ideaFilt"></span></h2>
-  <table id="ideaTable"><thead><tr><th>id</th><th>area</th><th>idea</th><th>status</th><th>key evidence</th><th>why</th><th>rounds</th></tr></thead><tbody></tbody></table>
-  <h2>Recent queue results (results/QUEUE_LOG.md)</h2>
-  <div id="qlog">–</div>
- </div>
+ </section>
 </main>
+<div id="modal" hidden><div><div style="display:flex;justify-content:flex-end;position:sticky;top:0"><button id="modalClose">Close ✕</button></div><div id="modalBody" class="md"></div></div></div>
+<div id="tip" hidden></div>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -185,36 +290,296 @@ function drawCharts() {
 window.addEventListener('resize', drawCharts);
 render();
 
-// R38 IDEAS tab: results/ideas.js (window.BB_IDEAS, run/ideas.js) and results/queue.js (window.BB_QUEUE, run/queue.js), re-injected every 30 s
+// ======================= R51: idea map, progress, machines (results/dashdata.js = window.BB_DASH) =======================
 const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const badge = st => `<span class="st st-${esc(String(st).split(' ')[0])}">${esc(st)}</span>`;
+const fmtT = t => { if (!t) return '–'; const d = new Date(t); return isNaN(d) ? '–' : d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); };
+const ago = t => { if (!t) return 'never'; const m = (Date.now() - Date.parse(t)) / 60000; return m < 1 ? 'just now' : m < 60 ? Math.round(m) + ' min ago' : m < 48 * 60 ? (m / 60).toFixed(m < 600 ? 1 : 0) + ' h ago' : Math.round(m / 1440) + ' days ago'; };
+const svgEl = (tag, attrs) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+
+// ---------- small offline markdown renderer (headings, tables, lists, code, quotes, bold/italic, links) ----------
+function mdInline(s) {
+  const codes = []; s = esc(s).replace(/`([^`]+)`/g, (m, c) => { codes.push(c); return '\u0000' + (codes.length - 1) + '\u0000'; });
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, t, u) => /^(https?:|#|[\w./-]+$)/.test(u) ? `<a href="${u}" target="_blank" rel="noopener">${t}</a>` : m)
+    .replace(/\*\*([^*]+?)\*\*/g, '<b>$1</b>').replace(/__([^_]+?)__/g, '<b>$1</b>')
+    .replace(/(^|[^\w*])\*([^*\s][^*]*?)\*(?!\w)/g, '$1<i>$2</i>').replace(/(^|[^\w])_([^_\s][^_]*?)_(?!\w)/g, '$1<i>$2</i>');
+  return s.replace(/\u0000(\d+)\u0000/g, (m, i) => `<code>${codes[+i]}</code>`);
+}
+function md(src) {
+  const L = String(src || '').replace(/\r/g, '').split('\n'), out = []; let i = 0;
+  const isNum = c => /^[-+−~≈]?\s*\d[\d.,]*\s*(%|h|s|x)?$/.test(c.replace(/<[^>]+>|\*\*/g, '').trim());
+  const cells = l => l.trim().replace(/^\|/, '').replace(/\|$/, '').split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, '|'));
+  while (i < L.length) {
+    const l = L[i];
+    if (/^\s*```/.test(l)) { const buf = []; i++; while (i < L.length && !/^\s*```/.test(L[i])) buf.push(L[i++]); i++; out.push(`<pre><code>${esc(buf.join('\n'))}</code></pre>`); continue; }
+    let m;
+    if ((m = l.match(/^(#{1,6})\s+(.*)$/))) { const n = Math.min(4, m[1].length); out.push(`<h${n}>${mdInline(m[2])}</h${n}>`); i++; continue; }
+    if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(l)) { out.push('<hr>'); i++; continue; }
+    if (/^\s*\|.*\|\s*$/.test(l) && i + 1 < L.length && /^\s*\|?\s*:?-{2,}/.test(L[i + 1])) {
+      const head = cells(l); i += 2; const rows = []; while (i < L.length && /^\s*\|.*\|?\s*$/.test(L[i]) && L[i].trim()) rows.push(cells(L[i++]));
+      const numCol = head.map((h, k) => rows.some(r => r[k] && isNum(r[k])) && rows.every(r => !r[k] || r[k] === '–' || r[k] === '-' || isNum(r[k])));
+      out.push('<div class="tw"><table><thead><tr>' + head.map((h, k) => `<th${numCol[k] ? ' class="num"' : ''}>${mdInline(h)}</th>`).join('') + '</tr></thead><tbody>' +
+        rows.map(r => '<tr>' + head.map((h, k) => `<td${numCol[k] ? ' class="num"' : ''}>${mdInline(r[k] || '')}</td>`).join('') + '</tr>').join('') + '</tbody></table></div>');
+      continue; }
+    if (/^\s*>/.test(l)) { const buf = []; while (i < L.length && /^\s*>/.test(L[i])) buf.push(L[i++].replace(/^\s*>\s?/, '')); out.push(`<blockquote>${md(buf.join('\n'))}</blockquote>`); continue; }
+    if (/^\s*([-*+]|\d+[.)])\s+/.test(l)) {
+      const ordered = /^\s*\d/.test(l), items = []; 
+      while (i < L.length && (/^\s*([-*+]|\d+[.)])\s+/.test(L[i]) || (/^\s{2,}\S/.test(L[i]) && items.length))) {
+        if (/^\s*([-*+]|\d+[.)])\s+/.test(L[i]) && !/^\s{4,}/.test(L[i])) items.push(L[i].replace(/^\s*([-*+]|\d+[.)])\s+/, '')); else items[items.length - 1] += '\n' + L[i].trim(); i++; }
+      out.push(`<${ordered ? 'ol' : 'ul'}>` + items.map(t => `<li>${mdInline(t).replace(/\n/g, '<br>')}</li>`).join('') + `</${ordered ? 'ol' : 'ul'}>`); continue; }
+    if (!l.trim()) { i++; continue; }
+    const buf = []; while (i < L.length && L[i].trim() && !/^(#{1,6}\s|\s*```|\s*>|\s*([-*+]|\d+[.)])\s+|\s*\|.*\|\s*$)/.test(L[i])) buf.push(L[i++]);
+    if (!buf.length) buf.push(L[i++]);
+    out.push(`<p>${buf.map(mdInline).join('<br>')}</p>`);
+  }
+  return out.join('\n');
+}
+window.md = md;
+
+// ---------- loading ----------
+let D = null;
+function inject(id, src, cb) { const o = document.getElementById(id); if (o) o.remove(); const sc = document.createElement('script'); sc.id = id; sc.src = src + '?t=' + Date.now(); sc.onload = () => cb(true); sc.onerror = () => cb(false); document.head.appendChild(sc); }
+function loadDash(cb) {
+  inject('dashScript', 'results/dashdata.js', ok => {
+    D = window.BB_DASH || null;
+    $('dataNote').textContent = D ? `data from ${fmtT(D.writtenAt)} (${ago(D.writtenAt)})` : 'results/dashdata.js not found: run  bun run/dashdata.js';
+    renderCurrent(); if (cb) cb();
+  });
+}
+const STATUS_GROUP = { adopted: 'adopted', confirmed: 'adopted', promising: 'promising', mixed: 'promising', testing: 'testing', open: 'open', rejected: 'rejected', parked: 'parked' };
+const GROUP_COLOR = { adopted: 'var(--adopted)', promising: 'var(--promising)', testing: 'var(--testing)', open: 'var(--open)', rejected: 'var(--rejected)', parked: 'var(--parked)' };
+const GROUP_HEX = { adopted: '#46c96b', promising: '#e8c547', testing: '#5fb3ff', open: '#8b929e', rejected: '#e05d5d', parked: '#b48cff' };
+const groupOf = st => STATUS_GROUP[st] || 'open';
+let tab = 'map', selIdea = null; const hiddenGroups = new Set(); let search = '';
+
+// ---------- idea map ----------
+function renderLegend() {
+  const cnt = {}; for (const i of D.ideas) cnt[groupOf(i.status)] = (cnt[groupOf(i.status)] || 0) + 1;
+  $('legend').innerHTML = Object.keys(GROUP_COLOR).map(g => `<button data-g="${g}" class="${hiddenGroups.has(g) ? 'off' : ''}" style="--c:${GROUP_COLOR[g]}" title="show / hide ${g} ideas"><i></i>${g} ${cnt[g] || 0}</button>`).join('') +
+    `<input type="search" id="ideaSearch" placeholder="search ideas…" value="${esc(search)}"> <span class="note">Click an idea to see its numbers, rounds and jobs. Lines show what grew from what.</span>`;
+  $('legend').querySelectorAll('button').forEach(b => b.onclick = () => { const g = b.dataset.g; hiddenGroups.has(g) ? hiddenGroups.delete(g) : hiddenGroups.add(g); renderLegend(); renderMap(); });
+  const s = $('ideaSearch'); s.oninput = () => { search = s.value; renderMap(); };
+}
+function ideaById(id) { return D && D.ideas.find(i => i.id === id); }
+function childrenOf(id) { return D.ideas.filter(i => (i.parents || []).includes(id)).map(i => i.id); }
+function lineage(id) { const up = new Set(), down = new Set(); const goU = x => { for (const p of (ideaById(x) || {}).parents || []) if (!up.has(p)) { up.add(p); goU(p); } }; const goD = x => { for (const c of childrenOf(x)) if (!down.has(c)) { down.add(c); goD(c); } }; goU(id); goD(id); return { up, down }; }
+function renderMap() {
+  const host = $('map'), scroll = $('mapScroll'); host.innerHTML = '';
+  const themes = D.themes.filter(t => D.ideas.some(i => i.theme === t));
+  const W = Math.max(scroll.clientWidth - 2, themes.length * 128), colW = W / themes.length, nodeW = colW - 14, nodeH = 54, gap = 8, top = 32;
+  const pos = {}; let H = 0;
+  const q = search.trim().toLowerCase(), match = i => !q || (i.id + ' ' + i.title + ' ' + i.evidence + ' ' + i.area).toLowerCase().includes(q);
+  const rel = selIdea ? lineage(selIdea) : null;
+  themes.forEach((t, c) => {
+    const list = D.ideas.filter(i => i.theme === t).sort((a, b) => +a.id.slice(1) - +b.id.slice(1));
+    const h = document.createElement('div'); h.className = 'col-h'; h.style.left = (c * colW + 8) + 'px'; h.innerHTML = `${esc(t)} <span>${list.length}</span>`; host.append(h);
+    list.forEach((i, r) => {
+      const x = c * colW + 8, y = top + r * (nodeH + gap), g = groupOf(i.status);
+      pos[i.id] = { x, y, w: nodeW, h: nodeH }; H = Math.max(H, y + nodeH + 12);
+      const n = document.createElement('div'); n.className = 'node'; n.dataset.id = i.id; n.style.cssText = `left:${x}px;top:${y}px;width:${nodeW}px;height:${nodeH}px;--c:${GROUP_COLOR[g]}`;
+      const off = hiddenGroups.has(g) || !match(i) || (rel && i.id !== selIdea && !rel.up.has(i.id) && !rel.down.has(i.id));
+      if (off) n.classList.add('dim'); if (i.id === selIdea) n.classList.add('sel'); else if (rel && (rel.up.has(i.id) || rel.down.has(i.id))) n.classList.add('rel');
+      n.title = `${i.id} · ${i.status}\n${i.title}`;
+      n.innerHTML = `<span class="nid">${esc(i.id)}</span><span class="nst">${esc(i.status)}</span><div class="nt">${esc(i.title)}</div>`;
+      n.onclick = () => { selIdea = selIdea === i.id ? null : i.id; renderMap(); renderPanel(); };
+      host.append(n);
+    });
+  });
+  host.style.width = W + 'px'; host.style.height = H + 'px';
+  if (!$('chkEdges').checked) return;
+  const svg = svgEl('svg', { width: W, height: H }); host.prepend(svg);
+  const defs = svgEl('defs', {}); const mk = svgEl('marker', { id: 'arr', viewBox: '0 0 8 8', refX: 7, refY: 4, markerWidth: 6, markerHeight: 6, orient: 'auto-start-reverse' }); mk.append(svgEl('path', { d: 'M0,0 L8,4 L0,8 z', fill: '#7a8394' })); defs.append(mk); svg.append(defs);
+  for (const i of D.ideas) for (const p of i.parents || []) {
+    const a = pos[p], b = pos[i.id]; if (!a || !b) continue;
+    const on = rel ? ((i.id === selIdea || rel.down.has(i.id)) && (p === selIdea || rel.up.has(p) || rel.down.has(p))) || (i.id === selIdea && rel.up.has(p)) || (rel.up.has(i.id) && rel.up.has(p)) : false;
+    const faded = rel && !on, g = groupOf(i.status);
+    let d;
+    if (Math.abs(a.x - b.x) < 1) { const x = a.x + a.w, y1 = a.y + a.h / 2, y2 = b.y + b.h / 2, bend = Math.min(40, 12 + Math.abs(y2 - y1) / 8); d = `M${x},${y1} C${x + bend},${y1} ${x + bend},${y2} ${x},${y2}`; }
+    else { const ltr = a.x < b.x, x1 = ltr ? a.x + a.w : a.x, x2 = ltr ? b.x : b.x + b.w, y1 = a.y + a.h / 2, y2 = b.y + b.h / 2, mx = (x1 + x2) / 2; d = `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`; }
+    svg.append(svgEl('path', { d, fill: 'none', stroke: on ? GROUP_HEX[g] : '#5a6272', 'stroke-width': on ? 2 : 1.1, opacity: faded ? 0.08 : on ? 0.95 : 0.45, 'marker-end': 'url(#arr)' }));
+  }
+}
+function jobsForIdea(i) {
+  const text = (i.evidence || '') + ' ' + (i.why || '') + ' ' + (i.rounds || []).join(' ');
+  const refs = new Set((text.match(/\b[qp]\d{2}[a-z]?\b/g) || []).map(s => s.toLowerCase()));
+  return D.jobs.filter(j => j.idea === i.id || [...refs].some(r => j.id.toLowerCase() === r || j.id.toLowerCase().startsWith(r + '_')));
+}
+function roundsForIdea(i) {
+  const out = new Set();
+  for (const r of i.rounds || []) { let m; if ((m = String(r).match(/^R(\d+)/))) out.add('R' + m[1]); else if (/^C\d/.test(r)) out.add('R5'); }
+  return [...out].filter(r => D.rounds[r]);
+}
+function highlightNums(s) { return mdInline(s).replace(/(^|[\s(\/:=~≈x-])(-?\d+(?:\.\d+)?%?)(?=[\s,;)\/]|$)/g, '$1<b class="n">$2</b>'); }
+function jobLine(j) {
+  const s = j.shared || {}, l = j.local || {}, who = s.done ? s.done.worker : s.claim ? s.claim.worker : l.status ? (D.machines.find(m => m.local) || {}).name || 'local' : '';
+  const res = l.results ? l.results.filter(r => r.mean != null).map(r => `${esc(r.label)}: <b>${r.mean}</b>`).join(' · ') : l.champion != null ? `champion <b>${l.champion}</b>` : s.done && s.done.champion != null ? `champion <b>${s.done.champion}</b>` : '';
+  const pass = (s.done && s.done.pass != null ? s.done.pass : l.pass); 
+  return `<div class="job">${badge(j.status)} ${pass === true ? badge('PASS') : pass === false ? badge('FAIL') : ''} <b>${esc(j.id)}</b>${who ? ` <span class="note">on ${esc(who)}</span>` : ''}<div>${esc(j.title)}</div>${res ? `<div class="note" style="margin-top:3px">${res}</div>` : ''}${j.sharedLog ? `<details><summary>result log</summary><div class="md">${md(j.sharedLog)}</div></details>` : ''}</div>`;
+}
+function renderPanel() {
+  const P = $('panel');
+  if (!selIdea || !ideaById(selIdea)) {
+    const cnt = {}; for (const i of D.ideas) cnt[groupOf(i.status)] = (cnt[groupOf(i.status)] || 0) + 1;
+    const recent = D.ideas.slice().sort((a, b) => +b.id.slice(1) - +a.id.slice(1)).slice(0, 8);
+    P.innerHTML = `<h3>${D.ideas.length} ideas so far</h3><div class="note">${Object.entries(cnt).map(([g, n]) => `${n} ${g}`).join(' · ')}</div>
+      <h4>Newest</h4>${recent.map(i => `<div class="chip" data-i="${i.id}" style="display:block;border-left:4px solid ${GROUP_COLOR[groupOf(i.status)]}"><b>${i.id}</b> ${esc(i.title.slice(0, 70))}</div>`).join('')}
+      <h4>How to read the map</h4><div class="note">Each column is a theme; ideas run from oldest (top) to newest. The colour is how it turned out. A line from A to B means B grew out of A. Click an idea to highlight its family and see the numbers behind it.</div>`;
+    P.querySelectorAll('[data-i]').forEach(c => c.onclick = () => { selIdea = c.dataset.i; renderMap(); renderPanel(); });
+    return;
+  }
+  const i = ideaById(selIdea), g = groupOf(i.status), kids = childrenOf(i.id), jobs = jobsForIdea(i), rds = roundsForIdea(i);
+  const chips = ids => ids.length ? ids.map(id => { const x = ideaById(id); return `<span class="chip" data-i="${id}" title="${esc(x ? x.title : '')}" style="border-left:4px solid ${x ? GROUP_COLOR[groupOf(x.status)] : '#555'}">${id}</span>`; }).join('') : '<span class="note">none</span>';
+  P.innerHTML = `<div class="note">${esc(i.id)} · ${esc(i.theme)} (${esc(i.area)})</div><h3>${esc(i.title)}</h3><div>${badge(i.status)}</div>
+    <h4>Key numbers</h4><div class="kn">${highlightNums((i.evidence || '–').replace(/ \| /g, '\n\n')).replace(/\n\n/g, '<br><br>')}</div>
+    <h4>Why</h4><div>${mdInline(i.why || '–')}</div>
+    <h4>Grew from</h4><div>${chips(i.parents || [])}</div>
+    <h4>Led to</h4><div>${chips(kids)}</div>
+    <h4>Rounds</h4><div>${rds.length ? rds.map(r => `<span class="chip" data-r="${r}" title="${esc(D.rounds[r].title)}">${r}${D.rounds[r].at ? ' · ' + new Date(D.rounds[r].at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}</span>`).join('') : ''} <span class="note">${esc((i.rounds || []).filter(r => !/^R\d|^C\d/.test(r)).join(', '))}</span></div>
+    <h4>Queue jobs</h4><div>${jobs.length ? jobs.map(jobLine).join('') : '<span class="note">no queue jobs linked</span>'}</div>`;
+  P.querySelectorAll('[data-i]').forEach(c => c.onclick = () => { selIdea = c.dataset.i; renderMap(); renderPanel(); const n = document.querySelector(`.node[data-id="${selIdea}"]`); if (n) n.scrollIntoView({ block: 'nearest', inline: 'nearest' }); });
+  P.querySelectorAll('[data-r]').forEach(c => c.onclick = () => openRound(c.dataset.r));
+}
+function openRound(r) {
+  const R = D.rounds[r]; if (!R) return;
+  $('modalBody').innerHTML = `<h1>${esc(r)}${R.at ? ' · ' + fmtT(R.at) : ''}</h1>` + R.sections.map(s => `<h2>${mdInline(s.title)}</h2>${md(s.md)}`).join('');
+  $('modal').hidden = false; $('modal').firstElementChild.scrollTop = 0;
+}
+$('modalClose').onclick = () => { $('modal').hidden = true; };
+$('modal').onclick = e => { if (e.target === $('modal')) $('modal').hidden = true; };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('modal').hidden = true; $('settings').hidden = true; } });
+
+// ---------- progress ----------
+const tip = $('tip');
+function showTip(e, text) { tip.textContent = text; tip.hidden = false; const x = Math.min(e.clientX + 14, innerWidth - 370); tip.style.left = x + 'px'; tip.style.top = (e.clientY + 14) + 'px'; }
+function hideTip() { tip.hidden = true; }
+const DV_COLOR = { 20: '#6b7280', 21: '#6b7280', 22: '#8b6b4a', 23: '#9a7b3c', 24: '#7a6bb0', 25: '#4b8bbf', 26: '#3aa39a', 27: '#5fb3ff' };
+function renderProgress() {
+  const all = $('chkAllTasks').checked, small = $('chkSmall').checked;
+  const S = D.progress.filter(s => all ? s.n >= 1 : s.main);
+  // x axis = rounds (equal width each), points spread inside their round by time
+  const rn = r => r ? +String(r).slice(1) : 0, rset = new Set();
+  for (const s of S) for (const p of s.points) if (p.round) rset.add(p.round);
+  const ads = D.adoptions.filter(a => /v3[234]/.test(a.v)); for (const a of ads) rset.add(a.round);
+  const RL = [...rset].sort((a, b) => rn(a) - rn(b)), RI = Object.fromEntries(RL.map((r, k) => [r, k]));
+  const span = {}; for (const s of S) for (const p of s.points) { const t = Date.parse(p.at), o = span[p.round] || (span[p.round] = [t, t]); o[0] = Math.min(o[0], t); o[1] = Math.max(o[1], t); }
+  const xr = p => { const k = RI[p.round] != null ? RI[p.round] : 0, o = span[p.round]; const f = o && o[1] > o[0] ? (Date.parse(p.at) - o[0]) / (o[1] - o[0]) : 0.5; return k + 0.15 + 0.7 * f; };
+  $('progNote').innerHTML = `Left to right: rounds of experiments. Each dot is one measured brain design (mean score over its growths; bigger dot = more growths, hover for details). The green line is the best result so far (designs with ≥ 4 growths). Dashed lines mark the adopted defaults: ${ads.map(a => `<b>${a.v}</b> (${esc(a.round)}, ${fmtT(a.at)}: ${esc(a.what)})`).join(' · ')}. Registry: ${D.registry.local} local + ${D.registry.shared} shared results.`;
+  const host = $('pgrid'); host.innerHTML = '';
+  for (const s of S) {
+    const pts = s.points.filter(p => small || p.G >= 4); if (!pts.length) continue;
+    const box = document.createElement('div'); box.className = 'pc';
+    const last = s.steps[s.steps.length - 1];
+    box.innerHTML = `<h3><span>${esc(s.label)} <span class="note">${esc(s.task)} · ${pts.length} results</span></span><b title="best (≥ 4 growths)">${s.best != null ? s.best.toFixed(2) : '–'}</b></h3><div class="note">${last ? `best: ${esc(last.plan)}${last.variant && last.variant !== 'base' ? ' · ' + esc(last.variant) : ''} (${esc(last.round || '')}, ${fmtT(last.at)})` : 'no result with ≥ 4 growths yet'}</div>`;
+    const W = 420, H = 190, pl = 34, pr = 8, pt = 16, pb = 22;
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'none' }); box.append(svg); host.append(box);
+    const vals = pts.map(p => p.mean).sort((a, b) => a - b), q = vals[Math.floor(vals.length * 0.08)];
+    let y1 = vals[vals.length - 1], y0 = Math.min(q, s.best != null ? s.best : q); const pad = Math.max(0.1, (y1 - y0) * 0.1); y0 -= pad; y1 += pad;
+    const n = Math.max(1, RL.length), X = x => pl + x / n * (W - pl - pr), Y = v => pt + (1 - (Math.max(y0, v) - y0) / (y1 - y0)) * (H - pt - pb);
+    for (let k = 0; k <= 4; k++) { const v = y0 + (y1 - y0) * k / 4; svg.append(svgEl('line', { x1: pl, x2: W - pr, y1: Y(v), y2: Y(v), stroke: '#262b33' })); const tx = svgEl('text', { x: pl - 4, y: Y(v) + 3, fill: '#8b929e', 'font-size': 9, 'text-anchor': 'end' }); tx.textContent = v.toFixed(v > 20 ? 0 : 1); svg.append(tx); }
+    let lastDay = '';
+    RL.forEach((r, k) => { const x = X(k); if (k) svg.append(svgEl('line', { x1: x, x2: x, y1: pt, y2: H - pb, stroke: '#1f232a' }));
+      const tx = svgEl('text', { x: X(k + 0.5), y: H - 12, fill: '#aab1bd', 'font-size': 8.5, 'text-anchor': 'middle' }); tx.textContent = r; svg.append(tx);
+      const R = D.rounds[r], day = R && R.at ? new Date(R.at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''; if (day && day !== lastDay) { const td = svgEl('text', { x: X(k + 0.5), y: H - 2, fill: '#6b7280', 'font-size': 8, 'text-anchor': 'middle' }); td.textContent = day; svg.append(td); lastDay = day; } });
+    for (const a of ads) { if (RI[a.round] == null) continue; const x = X(RI[a.round]) + 1; svg.append(svgEl('line', { x1: x, x2: x, y1: pt - 4, y2: H - pb, stroke: '#46c96b', 'stroke-dasharray': '3 3' })); const tx = svgEl('text', { x: x + 2, y: pt - 6, fill: '#46c96b', 'font-size': 9, 'font-weight': 600 }); tx.textContent = a.v; svg.append(tx); }
+    for (const p of pts) {
+      const c = svgEl('circle', { cx: X(xr(p)), cy: Y(p.mean), r: p.G >= 16 ? 3.2 : p.G >= 4 ? 2.4 : 1.6, fill: DV_COLOR[p.dv] || '#8b929e', opacity: p.G >= 4 ? 0.8 : 0.35 });
+      c.style.pointerEvents = 'all'; c.onmousemove = e => showTip(e, `${p.mean}${p.sd != null ? ' ± ' + p.sd : ''}  (${p.G} growths)\n${p.plan}${p.variant && p.variant !== 'base' ? ' · ' + p.variant : ''}\n${p.round || ''} · ${fmtT(p.at)}${p.by ? '\nshared queue: ' + p.by : ''}\ndefaults v${p.dv}`); c.onmouseleave = hideTip; svg.append(c);
+    }
+    if (s.steps.length) { let d = ''; s.steps.forEach((p, k) => { const x = X(xr(p)), y = Y(p.mean); d += k ? ` H${x} V${y}` : `M${x},${y}`; }); d += ` H${X(n)}`;
+      svg.append(svgEl('path', { d, fill: 'none', stroke: '#46c96b', 'stroke-width': 1.8 }));
+      for (const p of s.steps) { const c = svgEl('circle', { cx: X(xr(p)), cy: Y(p.mean), r: 3.6, fill: 'none', stroke: '#46c96b', 'stroke-width': 1.5 }); c.style.pointerEvents = 'all';
+        c.onmousemove = e => showTip(e, `new best ${p.mean} (${p.G} growths)\n${p.plan}${p.variant && p.variant !== 'base' ? ' · ' + p.variant : ''}\n${p.round || ''} · ${fmtT(p.at)}`); c.onmouseleave = hideTip; svg.append(c); } }
+  }
+  const rs = Object.values(D.rounds).sort((a, b) => a.n - b.n);
+  $('roundList').innerHTML = rs.map(r => `<span class="chip" data-r="${r.id}" title="${esc(r.title)}" style="${r.adopted ? 'border-color:#46c96b' : ''}">${r.id}${r.adoptedAs ? ' ✓ ' + r.adoptedAs : r.adopted ? ' ✓' : ''}</span>`).join('');
+  $('roundList').querySelectorAll('[data-r]').forEach(c => c.onclick = () => openRound(c.dataset.r));
+}
+
+// ---------- machines ----------
+const jobTitle = id => { const j = D.jobs.find(x => x.id === id); return j ? j.title : id; };
+function renderMachines() {
+  const M = D.machines;
+  $('machNote').innerHTML = `Shared queue: ${D.shared.source ? esc(D.shared.source) + (D.shared.fetchedAt ? ', fetched ' + ago(D.shared.fetchedAt) : '') : 'not reachable (offline): showing this computer only'}. A job is claimed by exactly one machine; a machine that stops renewing its claim loses it after the lease and the job goes back on the list.`;
+  $('mcards').innerHTML = M.map(m => {
+    const run = m.running[0];
+    return `<div class="mc"><h3><span>${esc(m.name)}</span>${badge(m.status)}</h3>
+      <div class="note">${esc(m.kind)}${m.platform ? ' · ' + esc(m.platform) : ''}${m.host && !m.name.includes(m.host) ? ' · ' + esc(m.host) : ''} · last seen ${ago(m.lastSeen)}</div>
+      <div style="display:flex;gap:18px;margin:6px 0"><div><div class="big">${m.doneCount}</div><div class="note">jobs done</div></div><div><div class="big">${m.running.length}</div><div class="note">running</div></div></div>
+      ${run ? `<div><b>Now:</b> ${esc(jobTitle(run.id))} <span class="note">(${esc(run.id)}, since ${fmtT(run.since)}${run.until ? ', lease until ' + fmtT(run.until) : ''})</span></div>` : ''}
+      ${m.held && m.held.length ? `<div class="note" style="margin-top:4px">${badge('held')} older claims, probably abandoned by a restart; they go back on the list when the lease ends: ${m.held.map(h => esc(h.id) + ' (until ' + fmtT(h.until) + ')').join(', ')}</div>` : ''}
+      ${m.paused ? `<div class="note">${badge('paused')} PAUSE file or battery</div>` : ''}
+      ${m.done.length ? `<div style="margin-top:6px"><b>Recent:</b><ul style="list-style:none;padding-left:2px">${m.done.slice(0, 5).map(d => `<li>${d.pass === true ? '✅' : d.pass === false ? '❌' : '•'} ${esc(jobTitle(d.id)).slice(0, 80)} <span class="note">${fmtT(d.at)}</span></li>`).join('')}</ul></div>` : ''}
+    </div>`; }).join('') || '<div class="note">No machines found yet.</div>';
+  // gantt
+  const t1 = Date.now() + 1800e3, t0 = t1 - 48 * 3600e3 - 1800e3, W = Math.max(700, $('gantt').clientWidth - 20), rowH = 26, pl = 190, H = M.length * rowH + 26;
+  const svg = svgEl('svg', { width: W, height: H }); const X = t => pl + (t - t0) / (t1 - t0) * (W - pl - 10);
+  for (let d = new Date(t0); d <= t1; d = new Date(+d + 3600e3)) { if (d.getMinutes()) d.setMinutes(0, 0, 0); const h = d.getHours(); if (h % 6) continue; const x = X(+d); if (x < pl) continue;
+    svg.append(svgEl('line', { x1: x, x2: x, y1: 0, y2: H - 18, stroke: h ? '#22262d' : '#3a404a' })); const tx = svgEl('text', { x: x + 2, y: H - 5, fill: '#8b929e', 'font-size': 10 }); tx.textContent = h ? d.toLocaleTimeString([], { hour: 'numeric' }) : d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }); svg.append(tx); }
+  const nx = X(Date.now()); svg.append(svgEl('line', { x1: nx, x2: nx, y1: 0, y2: H - 18, stroke: '#e8c547', 'stroke-dasharray': '2 3' }));
+  const COL = { done: '#46c96b', running: '#5fb3ff', released: '#5d636d', abandoned: '#e05d5d', failed: '#e05d5d' };
+  M.forEach((m, r) => { const y = r * rowH + 4; const tx = svgEl('text', { x: 4, y: y + 15, fill: '#d8dce2', 'font-size': 11.5 }); tx.textContent = m.name.length > 28 ? m.name.slice(0, 27) + '…' : m.name; svg.append(tx);
+    for (const e of m.events) { const a = Date.parse(e.start || e.end), b = e.end ? Date.parse(e.end) : Date.now(); if (b < t0) continue;
+      const x = X(Math.max(a, t0)), w = Math.max(3, X(b) - x), st = e.status === 'running' && e.end ? 'done' : e.status;
+      const rc = svgEl('rect', { x, y, width: w, height: rowH - 8, rx: 3, fill: COL[st] || '#8b929e', opacity: 0.85 }); rc.style.pointerEvents = 'all';
+      rc.onmousemove = ev => showTip(ev, `${e.job}\n${jobTitle(e.job)}\n${st} · ${fmtT(e.start)} → ${e.end ? fmtT(e.end) : 'now'}`); rc.onmouseleave = hideTip; svg.append(rc); } });
+  $('gantt').innerHTML = ''; $('gantt').append(svg);
+  if (!M.length) $('gantt').innerHTML = '<div class="note">nothing yet</div>';
+  const SJ = D.jobs.filter(j => j.shared).sort((a, b) => ['running', 'pending', 'stale claim', 'done'].indexOf(a.status) - ['running', 'pending', 'stale claim', 'done'].indexOf(b.status) || (b.priority || 0) - (a.priority || 0));
+  $('sharedTable').tBodies[0].innerHTML = SJ.map(j => { const s = j.shared; return `<tr><td title="${esc(j.id)}">${esc(j.title)} <span class="note">${esc(j.id)}</span></td><td>${badge(j.status)}</td><td>${esc(s.done ? s.done.worker : s.claim ? s.claim.worker : '')}</td><td>${s.done ? 'finished ' + fmtT(s.done.finishedAt) : s.claim ? 'claimed ' + fmtT(s.claim.at) : ''}</td><td>${j.estHours ? j.estHours + ' h' : ''}</td></tr>`; }).join('') || '<tr><td colspan="5" class="note">shared queue not reachable</td></tr>';
+}
+
+// ---------- queue tab (local queue: results/queue.js; ideas list: results/ideas.js) ----------
 let ideaFilter = 'all';
-function inject(id, src, cb) { const o = document.getElementById(id); if (o) o.remove(); const sc = document.createElement('script'); sc.id = id; sc.src = src + '?t=' + Date.now(); sc.onload = cb; sc.onerror = cb; document.head.appendChild(sc); }
 function renderIdeas() {
-  const I = window.BB_IDEAS, Q = window.BB_QUEUE;
-  $('ideasNote').textContent = (I ? `${I.ideas.length} ideas, ${I.questions.length} open questions (results/ideas.js, ${new Date(I.writtenAt).toLocaleString()}). ` : 'results/ideas.js not found (run: node run/ideas.js). ') +
-    (Q ? `Queue updated ${new Date(Q.updatedAt).toLocaleTimeString()}.` : 'results/queue.js not found (start run_queue.bat).');
+  const I = window.BB_IDEAS || (D && { ideas: D.ideas, questions: D.questions, writtenAt: D.writtenAt }), Q = window.BB_QUEUE;
+  $('ideasNote').textContent = (Q ? `Local queue updated ${fmtT(Q.updatedAt)}.` : 'results/queue.js not found (start run_queue.bat).') + ' The shared queue (phones, other computers) is on the Machines tab.';
   if (I) {
     const sts = ['all', ...new Set(I.ideas.map(i => i.status))];
     $('ideaFilt').innerHTML = sts.map(s => `<button data-f="${s}" class="${s === ideaFilter ? 'on' : ''}">${s}${s === 'all' ? '' : ' ' + I.ideas.filter(i => i.status === s).length}</button>`).join('');
-    $('ideaFilt').querySelectorAll('button').forEach(b => b.onclick = () => { ideaFilter = b.dataset.f; renderIdeas(); });
-    $('ideaTable').tBodies[0].innerHTML = I.ideas.filter(i => ideaFilter === 'all' || i.status === ideaFilter).map(i => `<tr><td>${esc(i.id)}</td><td>${esc(i.area)}</td><td>${esc(i.title)}</td><td>${badge(i.status)}</td><td>${esc(i.evidence)}</td><td>${esc(i.why)}</td><td>${esc(i.rounds.join(', '))}</td></tr>`).join('');
-    $('qsTable').tBodies[0].innerHTML = I.questions.map((q, k) => `<tr><td>${k + 1}</td><td>${esc(q.id)}</td><td>${esc(q.q)}</td><td>${q.impact}</td><td>${q.likelihood}</td><td>${q.cost}</td><td><b>${q.payoff}</b></td><td>${esc(q.experiment)}</td></tr>`).join('');
+    $('ideaFilt').querySelectorAll('button').forEach(b => b.onclick = e => { e.preventDefault(); ideaFilter = b.dataset.f; renderIdeas(); });
+    $('ideaTable').tBodies[0].innerHTML = I.ideas.filter(i => ideaFilter === 'all' || i.status === ideaFilter).map(i => `<tr><td>${esc(i.id)}</td><td>${esc(i.area)}</td><td>${mdInline(i.title)}</td><td>${badge(i.status)}</td><td>${mdInline(i.evidence)}</td><td>${mdInline(i.why)}</td><td>${esc(i.rounds.join(', '))}</td></tr>`).join('');
+    $('qsTable').tBodies[0].innerHTML = I.questions.map((q, k) => `<tr><td>${k + 1}</td><td>${esc(q.id)}</td><td>${mdInline(q.q)}</td><td>${q.impact}</td><td>${q.likelihood}</td><td>${q.cost}</td><td><b>${q.payoff}</b></td><td>${mdInline(q.experiment)}</td></tr>`).join('');
   }
   if (Q) {
     $('qState').textContent = Q.paused ? '· PAUSED (delete the PAUSE file to continue)' : Q.state ? '· ' + Q.state : '';
     $('qTable').tBodies[0].innerHTML = Q.jobs.map(j => { const s = j.state || {}, res = s.pass === true ? badge('PASS') : s.pass === false ? badge('FAIL') : '';
-      const info = s.lastLine ? esc(s.lastLine.replace(/^\[[^\]]*\]\s*/, '').slice(0, 120)) : s.results ? Object.keys(s.results).length + ' runs done' : s.summary && s.summary.champion ? 'champion ' + (+s.summary.champion.val).toFixed(3) : j.needsCode ? esc('needs code: ' + j.needsCode) : j.note ? esc(j.note) : '';
-      return `<tr><td>${j.priority}</td><td title="${esc(j.id)}">${esc(j.title)}</td><td>${esc(j.question)}</td><td>${esc(j.track || '')}</td><td>${esc(j.kind)}</td><td>${j.budget ? j.budget.hours + ' h' : ''}</td><td>${badge(j.status)}</td><td>${res} ${info}</td></tr>`; }).join('');
-    $('qlog').textContent = Q.log && Q.log.length ? Q.log.slice().reverse().join('\n\n') : 'no finished jobs yet';
+      const info = s.lastLine ? esc(s.lastLine.replace(/^\[[^\]]*\]\s*/, '').slice(0, 120)) : s.results ? Object.keys(s.results).length + ' runs done' : s.summary && s.summary.champion ? 'champion ' + (+s.summary.champion.val).toFixed(3) : j.needsCode ? esc('needs code: ' + j.needsCode) : j.note ? mdInline(j.note) : '';
+      return `<tr><td>${j.priority}</td><td title="${esc(j.id)}">${mdInline(j.title)}</td><td>${esc(j.question)}</td><td>${esc(j.track || '')}</td><td>${esc(j.kind)}</td><td>${j.budget ? j.budget.hours + ' h' : ''}</td><td>${badge(j.status)}</td><td>${res} ${info}</td></tr>`; }).join('');
   }
+  const log = (D && D.log && D.log.length ? D.log : Q && Q.log) || [];
+  $('qlog').innerHTML = log.length ? log.slice().reverse().slice(0, 25).map(x => `<div class="logentry">${md(x)}</div>`).join('') : '<p class="note">no finished jobs yet</p>';
 }
 function pollIdeas() { inject('ideasScript', 'results/ideas.js', () => inject('queueScript', 'results/queue.js', renderIdeas)); }
-function showTab(t) { $('runsView').hidden = t !== 'runs'; $('ideasView').hidden = t !== 'ideas'; $('tabRuns').classList.toggle('on', t === 'runs'); $('tabIdeas').classList.toggle('on', t === 'ideas'); if (t === 'ideas') pollIdeas(); if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t); }
-$('tabRuns').onclick = () => showTab('runs'); $('tabIdeas').onclick = () => showTab('ideas');
-setInterval(() => { if (!$('ideasView').hidden) pollIdeas(); }, 30000);
-if (location.hash === '#ideas') showTab('ideas');
-window.__dash.pollIdeas = pollIdeas; window.__dash.showTab = showTab;
+
+// ---------- tabs, settings, refresh ----------
+const TABS = { map: 'mapView', progress: 'progressView', machines: 'machinesView', ideas: 'ideasView', runs: 'runsView' };
+const TABBTN = { map: 'tabMap', progress: 'tabProgress', machines: 'tabMachines', ideas: 'tabIdeas', runs: 'tabRuns' };
+function renderCurrent() {
+  if (tab === 'ideas') renderIdeas();
+  if (!D) { for (const v of ['mapView', 'progressView', 'machinesView']) if (!$(v).hidden) { $('legend').innerHTML = ''; $('panel').innerHTML = '<div class="note">results/dashdata.js not found. On the PC run <code>bun run/dashdata.js</code> in the BugBrain Neurons folder (the queue does this after every job).</div>'; } return; }
+  if (tab === 'map') { renderLegend(); renderMap(); renderPanel(); }
+  if (tab === 'progress') renderProgress();
+  if (tab === 'machines') renderMachines();
+}
+function showTab(t) {
+  if (!TABS[t]) t = 'map'; tab = t;
+  for (const [k, v] of Object.entries(TABS)) { $(v).hidden = k !== t; $(TABBTN[k]).classList.toggle('on', k === t); }
+  if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
+  if (t === 'ideas') pollIdeas(); if (t === 'runs') drawCharts();
+  renderCurrent();
+}
+for (const [k, b] of Object.entries(TABBTN)) $(b).onclick = () => showTab(k);
+$('gear').onclick = e => { e.stopPropagation(); $('settings').hidden = !$('settings').hidden; };
+document.addEventListener('click', e => { if (!$('settings').hidden && !$('settings').contains(e.target) && e.target !== $('gear')) $('settings').hidden = true; });
+$('btnReload').onclick = () => { loadDash(); pollCurrent(); if (tab === 'ideas') pollIdeas(); };
+for (const id of ['chkAllTasks', 'chkSmall']) $(id).onchange = () => { if (tab === 'progress') renderProgress(); };
+$('chkEdges').onchange = () => { if (tab === 'map') renderMap(); };
+let rT = 0; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(renderCurrent, 150); });
+setInterval(() => { if (!$('chkLive').checked) return; loadDash(); if (tab === 'ideas') pollIdeas(); }, 30000);
+showTab((location.hash || '#map').slice(1));
+loadDash();
+window.__dash.pollIdeas = pollIdeas; window.__dash.showTab = showTab; window.__dash.md = md; window.__dash.loadDash = loadDash; window.__dash.openRound = openRound;
+window.__dash.select = id => { selIdea = id; renderMap(); renderPanel(); };
 </script>
 </body>
 </html>

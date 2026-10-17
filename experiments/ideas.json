@@ -10,7 +10,8 @@
       "rounds": [
         "R4-A",
         "R21d"
-      ]
+      ],
+      "theme": "reward"
     },
     {
       "id": "I02",
@@ -23,7 +24,8 @@
         "R4-B",
         "R4-B2",
         "C1"
-      ]
+      ],
+      "theme": "growth"
     },
     {
       "id": "I03",
@@ -36,6 +38,10 @@
         "C4",
         "R6a",
         "R9b"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I02"
       ]
     },
     {
@@ -48,6 +54,10 @@
       "rounds": [
         "R6b",
         "C4"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I02"
       ]
     },
     {
@@ -60,7 +70,8 @@
       "rounds": [
         "R8a",
         "R9a"
-      ]
+      ],
+      "theme": "memory"
     },
     {
       "id": "I06",
@@ -73,6 +84,10 @@
         "R8d",
         "R9c",
         "R9d"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I05"
       ]
     },
     {
@@ -84,6 +99,10 @@
       "why": "generic mechanisms reused by every later plan",
       "rounds": [
         "R9b"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I04"
       ]
     },
     {
@@ -96,6 +115,10 @@
       "rounds": [
         "R9f",
         "R28"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I07"
       ]
     },
     {
@@ -109,6 +132,10 @@
         "R10a",
         "R10b",
         "R10c"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I06"
       ]
     },
     {
@@ -126,6 +153,11 @@
         "R14",
         "R16",
         "R20b"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I09",
+        "I06"
       ]
     },
     {
@@ -137,6 +169,10 @@
       "why": "pure speed",
       "rounds": [
         "R12a"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I02"
       ]
     },
     {
@@ -148,6 +184,10 @@
       "why": "more cells per context is not the limit",
       "rounds": [
         "R13c"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I10"
       ]
     },
     {
@@ -159,6 +199,10 @@
       "why": "part of predictK2XT and successors",
       "rounds": [
         "R13b"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I10"
       ]
     },
     {
@@ -170,6 +214,10 @@
       "why": "gain control helps the readout",
       "rounds": [
         "R14"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I13"
       ]
     },
     {
@@ -182,6 +230,10 @@
       "rounds": [
         "R15",
         "R16"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I14"
       ]
     },
     {
@@ -195,6 +247,10 @@
         "R21a",
         "R21b",
         "R21c"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I01"
       ]
     },
     {
@@ -206,6 +262,10 @@
       "why": "first multi-region win",
       "rounds": [
         "R22a"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I10"
       ]
     },
     {
@@ -218,6 +278,11 @@
       "rounds": [
         "R22",
         "R24"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I16",
+        "I17"
       ]
     },
     {
@@ -229,6 +294,11 @@
       "why": "one rule set, no loss",
       "rounds": [
         "R23"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I09",
+        "I16"
       ]
     },
     {
@@ -241,6 +311,10 @@
       "rounds": [
         "R26",
         "v30 live dashboard"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I11"
       ]
     },
     {
@@ -252,6 +326,11 @@
       "why": "stops trading one task away",
       "rounds": [
         "R27"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I03",
+        "I20"
       ]
     },
     {
@@ -263,6 +342,11 @@
       "why": "default reward genome until R35",
       "rounds": [
         "R27"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I16",
+        "I21"
       ]
     },
     {
@@ -274,6 +358,10 @@
       "why": "separates demand from the other 4 signals",
       "rounds": [
         "R28"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I07"
       ]
     },
     {
@@ -285,6 +373,11 @@
       "why": "new cells get random claws (worse than structured mixing inputs); reward areas stop being surprised. Known fixes: (1) give recruits the same structured (topo/claw) inputs as grown mixing cells; (2) drive reward areas by raw failure rate, not RPE surprise",
       "rounds": [
         "R29"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I23",
+        "I08"
       ]
     },
     {
@@ -296,6 +389,12 @@
       "why": "one genome decides; v30 default",
       "rounds": [
         "R30"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I17",
+        "I22",
+        "I19"
       ]
     },
     {
@@ -307,6 +406,10 @@
       "why": "linear context gives no conjunctions",
       "rounds": [
         "R31"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I25"
       ]
     },
     {
@@ -319,6 +422,11 @@
       "rounds": [
         "R32",
         "R37"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I25",
+        "I15"
       ]
     },
     {
@@ -330,6 +438,10 @@
       "why": "trial-matched trace helps short trials, breaks long-delay tasks",
       "rounds": [
         "R33"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I22"
       ]
     },
     {
@@ -342,6 +454,10 @@
       "rounds": [
         "R34",
         "R35"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I28"
       ]
     },
     {
@@ -353,6 +469,10 @@
       "why": "outcome timing does not separate the tasks",
       "rounds": [
         "R36"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I29"
       ]
     },
     {
@@ -364,6 +484,11 @@
       "why": "one genome now covers mixed tasks",
       "rounds": [
         "R37"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I25",
+        "I27"
       ]
     },
     {
@@ -377,6 +502,10 @@
         "R20a",
         "R22a",
         "issue #2"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I17"
       ]
     },
     {
@@ -388,6 +517,10 @@
       "why": "text track (issue #3)",
       "rounds": [
         "issue #3"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I11"
       ]
     },
     {
@@ -399,6 +532,10 @@
       "why": "text track (issue #1)",
       "rounds": [
         "issue #1"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I20"
       ]
     },
     {
@@ -410,6 +547,10 @@
       "why": "from the research memo: tells whether input structure shapes wiring",
       "rounds": [
         "memo #1"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I04"
       ]
     },
     {
@@ -423,6 +564,10 @@
         "memo #5",
         "R30",
         "R37"
+      ],
+      "theme": "analogy",
+      "parents": [
+        "I25"
       ]
     },
     {
@@ -434,6 +579,11 @@
       "why": "keep the evolved reward area, not the mutated sequence areas",
       "rounds": [
         "R39"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I31",
+        "I29"
       ]
     },
     {
@@ -445,6 +595,10 @@
       "why": "v32 setting is the best",
       "rounds": [
         "R39 (q12)"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I31"
       ]
     },
     {
@@ -456,6 +610,10 @@
       "why": "no gain beyond rewardE2",
       "rounds": [
         "R39 (q09)"
+      ],
+      "theme": "reward",
+      "parents": [
+        "I29"
       ]
     },
     {
@@ -467,6 +625,11 @@
       "why": "text makes generations slow; mutants lose text first",
       "rounds": [
         "R39 (q01)"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I21",
+        "I31"
       ]
     },
     {
@@ -480,6 +643,10 @@
         "R39",
         "R40",
         "R45"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I37"
       ]
     },
     {
@@ -492,6 +659,10 @@
       "rounds": [
         "R39",
         "R40"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I35"
       ]
     },
     {
@@ -503,6 +674,10 @@
       "why": "ruled out",
       "rounds": [
         "R40"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I29"
       ]
     },
     {
@@ -514,6 +689,10 @@
       "why": "text-bearing multitask evolution too slow to search",
       "rounds": [
         "R40"
+      ],
+      "theme": "tooling",
+      "parents": [
+        "I40"
       ]
     },
     {
@@ -525,6 +704,10 @@
       "why": "q02/q03 were blocked on these; now q22, q23, q24",
       "rounds": [
         "R40"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I24"
       ]
     },
     {
@@ -537,6 +720,10 @@
       "rounds": [
         "R40",
         "R45"
+      ],
+      "theme": "growth",
+      "parents": [
+        "I42"
       ]
     },
     {
@@ -550,6 +737,10 @@
         "q27",
         "R45",
         "R50"
+      ],
+      "theme": "world model",
+      "parents": [
+        "I09"
       ]
     },
     {
@@ -561,6 +752,10 @@
       "why": "gives 'where it came from' state for long non-repeating sequences",
       "rounds": [
         "R43"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I32"
       ]
     },
     {
@@ -573,6 +768,10 @@
       "rounds": [
         "R45",
         "R50"
+      ],
+      "theme": "analogy",
+      "parents": [
+        "I36"
       ]
     },
     {
@@ -582,7 +781,11 @@
       "status": "open",
       "evidence": "",
       "why": "needs I47 accurate first",
-      "rounds": []
+      "rounds": [],
+      "theme": "world model",
+      "parents": [
+        "I47"
+      ]
     },
     {
       "id": "I51",
@@ -593,6 +796,10 @@
       "why": "stage 1 of bottom-up staging; result: use the predictive cortex itself as the chunker, not a reward-trained boundary region",
       "rounds": [
         "R42"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I32"
       ]
     },
     {
@@ -604,6 +811,11 @@
       "why": "convergence of copies onto one output module dilutes the module own third-order context; needs I53/I54",
       "rounds": [
         "R42"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I17",
+        "I34"
       ]
     },
     {
@@ -615,6 +827,10 @@
       "why": "R42: naive convergence hurt order3; parallel columns voting at the readout is how cortex pools redundant columns",
       "rounds": [
         "R43"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I52"
       ]
     },
     {
@@ -626,6 +842,10 @@
       "why": "R42: identical copies carry the same third-order code; scaling must add memory depth (ties to I48 slow context layers, issue #2)",
       "rounds": [
         "R43"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I52"
       ]
     },
     {
@@ -637,6 +857,10 @@
       "why": "R42 showed boundaries are already available from prediction (F1 0.87); stage 2 should consume them, not retrain them",
       "rounds": [
         "R43"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I51"
       ]
     },
     {
@@ -648,6 +872,10 @@
       "why": "R43 deepK3 is the first scaling that helps (order3 +0.4, text +0.13)",
       "rounds": [
         "R44"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I54"
       ]
     },
     {
@@ -659,6 +887,10 @@
       "why": "R43: bag-of-letters word state hurt; order inside the word is what carries information",
       "rounds": [
         "R44"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I55"
       ]
     },
     {
@@ -671,6 +903,11 @@
       "rounds": [
         "R45",
         "R50"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I56",
+        "I41"
       ]
     },
     {
@@ -683,6 +920,10 @@
       "rounds": [
         "R45",
         "R50"
+      ],
+      "theme": "memory",
+      "parents": [
+        "I56"
       ]
     },
     {
@@ -694,6 +935,10 @@
       "why": "Q19: short lives far below long-life scores (I41)",
       "rounds": [
         "R45"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I41"
       ]
     },
     {
@@ -705,6 +950,10 @@
       "why": "largest single gain on long text since R44; Travis's world-model / prediction-mismatch focus",
       "rounds": [
         "R50"
+      ],
+      "theme": "world model",
+      "parents": [
+        "I47"
       ]
     },
     {
@@ -716,6 +965,11 @@
       "why": "longer memory for non-repetitive text (Travis) without a second hand-tuned plan",
       "rounds": [
         "R50"
+      ],
+      "theme": "world model",
+      "parents": [
+        "I58",
+        "I47"
       ]
     },
     {
@@ -727,6 +981,10 @@
       "why": "Travis: learn and think by analogy; a brain that only unlearns faster is still not transferring structure",
       "rounds": [
         "R50"
+      ],
+      "theme": "analogy",
+      "parents": [
+        "I49"
       ]
     },
     {
@@ -738,6 +996,10 @@
       "why": "keeps the world-model gain on text / order3 without the fables loss -> could make predErr adoptable",
       "rounds": [
         "R50"
+      ],
+      "theme": "world model",
+      "parents": [
+        "I47"
       ]
     }
   ],
