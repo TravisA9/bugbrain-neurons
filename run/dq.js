@@ -18,7 +18,7 @@
  *   and no new job is claimed while the power guard says pause. */
 const fs = require('fs'), path = require('path'), os = require('os'), cp = require('child_process');
 const ROOT = path.resolve(__dirname, '..');
-const A = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'wait', 'dry', 'allow-battery', 'include-text', 'phone'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
+const A = (() => { const a = {}, v = process.argv.slice(2); for (let i = 0; i < v.length; i++) { const k = v[i].replace(/^--/, ''); if (['once', 'wait', 'dry', 'allow-battery', 'include-text', 'phone', 'no-update'].includes(k)) a[k] = true; else a[k] = v[++i]; } return a; })();
 const WORKER = A.worker || process.env.BB_WORKER || (os.hostname() + '-' + process.pid);
 const BRANCH = A.branch || 'queue', DIR = path.resolve(A.dir || path.join(ROOT, '.dq')), LEASE_H = +(A['lease-hours'] || 4);
 const REPO = A.repo || process.env.BB_DQ_REPO || 'https://github.com/TravisA9/bugbrain-neurons.git';
@@ -70,6 +70,7 @@ function candidates() {
   const left = (HOURS * 3600e3 - (Date.now() - T0)) / 3600e3;
   return ls('jobs').filter(f => f.endsWith('.json')).map(f => rd(path.join(DIR, 'jobs', f))).filter(Boolean)
     .filter(j => !isDone(j.id) && !claimOf(j.id) && j.kind !== 'blocked' && (j.kind !== 'text' || A['include-text']))
+    .filter(j => !(j.requires || []).some(r => !fs.existsSync(path.join(ROOT, r))))   // R49: skip jobs needing code this checkout lacks (self-update pulls it)
     .filter(j => !j.after || (isDone(j.after) && (!j.afterPass || (rd(path.join(DIR, 'done', j.after + '.json')) || {}).pass === true)))
     .filter(j => estH(j) * 1.15 + 0.1 <= left)
     .sort((a, b) => b.priority - a.priority || (a.id < b.id ? -1 : 1));
@@ -133,6 +134,11 @@ async function publish(j, r) {
   }
   say(`could not publish ${j.id}; results stay in ${r.scratch}`); return false;
 }
+// R49: between jobs, fast-forward the code checkout (ROOT) if it is a clean git clone; restart this worker when run/dq.js itself changed.
+function selfUpdate() { if (A['no-update']) return; const g = a => cp.execFileSync('git', AUTH.concat(a), { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  try { if (g(['status', '--porcelain', '--untracked-files=no'])) return; const before = g(['rev-parse', 'HEAD']); g(['pull', '-q', '--ff-only']); const after = g(['rev-parse', 'HEAD']); if (before === after) return;
+    say('code updated ' + before.slice(0, 7) + ' -> ' + after.slice(0, 7));
+    if (g(['diff', '--name-only', before, after, '--', 'run/dq.js'])) { say('run/dq.js changed; restarting worker'); cp.spawn(process.execPath, process.argv.slice(1), { cwd: ROOT, stdio: 'inherit', detached: true, env: process.env }).unref(); process.exit(0); } } catch (e) { say('self-update skipped: ' + String(e.message).split('\n')[0].slice(0, 120)); } }
 async function main() {
   ensureClone(); say(`worker on ${BRANCH} of ${REPO.replace(/\/\/[^@]*@/, '//')}${isFinite(HOURS) ? ', ' + HOURS + ' h' : ''}`);
   let n = 0;
