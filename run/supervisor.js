@@ -15,6 +15,8 @@ const ROOT = path.resolve(__dirname, '..'), ST = WC.STATE, CODE = process.env.BB
 fs.mkdirSync(ST, { recursive: true });
 const NAME = WC.workerName(), TYPE = WC.deviceType(), TOKEN = WC.token(), STOP = path.join(ST, 'dq.stop');
 const say = s => console.log(`[${new Date().toLocaleString()}] [supervisor ${NAME}] ${s}`);
+// R61d: local status file (~/.bugbrain/status.json) so a worker that cannot push (e.g. token refused) still says why: cat ~/.bugbrain/status.json
+const status = (state, why) => { try { fs.writeFileSync(path.join(ST, 'status.json'), JSON.stringify({ worker: NAME, state, why: why || '', at: new Date().toISOString(), pid: process.pid }, null, 2) + '\n'); } catch (e) {} };
 const AUTH = TOKEN ? ['-c', 'credential.helper=', '-c', 'credential.helper=!f() { echo username=x-access-token; echo password=$BB_DQ_TOKEN; }; f'] : [];
 const ENV = Object.assign({}, process.env, { GIT_TERMINAL_PROMPT: '0', BB_SUPERVISED: '1', BB_DEVICE_TYPE: TYPE }, TOKEN ? { BB_DQ_TOKEN: TOKEN } : {});
 const redact = s => String(s || '').split(TOKEN || '\u0000').join('***').replace(/(github_pat_|gh[pousr]_)[A-Za-z0-9_]+/g, '$1***');
@@ -40,7 +42,7 @@ function startDq() {
   try { fs.unlinkSync(STOP); } catch (e) {}
   const args = ['run/dq.js'].concat(WC.dqArgs(S, NAME), ['--stop-file', STOP]);
   say(`starting dq.js ${args.slice(1).join(' ')} (code ${git(['rev-parse', '--short', 'HEAD'])}, config ${S.version}, ${TYPE})`);
-  childStart = Date.now();
+  childStart = Date.now(); status('running-dq', 'code ' + git(['rev-parse', '--short', 'HEAD']) + ', config ' + S.version);
   child = cp.spawn(RUNTIME, args, { cwd: ROOT, stdio: 'inherit', env: ENV, detached: process.platform !== 'win32' });
   child.on('error', e => say('cannot start dq.js: ' + e.message));
   const pg = child.pid;
@@ -48,6 +50,7 @@ function startDq() {
     child = null; const ran = Date.now() - childStart;
     if (process.platform !== 'win32') try { process.kill(-pg, 'SIGTERM'); } catch (e) {}   // no orphaned queue.js / job processes after a crash
     else killOrphans(pg);
+    status(code === 3 ? 'token-refused' : 'dq-exited', code === 3 ? 'GitHub refused the token in ' + path.join(ST, 'token') + ' (replace it; the worker retries within a minute)' : 'dq.js exit ' + (code ?? sig));
     if (restartWhy) { say(`dq.js stopped (${code ?? sig}); restarting for: ${restartWhy}`); process.exit(10); }
     if (code === 10) { say('dq.js saw newer code; restarting via launcher'); process.exit(10); }
     if (code === 3) { say('GitHub refused the token (exit 3). Put a valid fine-grained token (Contents read/write on TravisA9/bugbrain-neurons) in ' + path.join(ST, 'token')); process.exit(3); }
@@ -90,7 +93,7 @@ function main() {
   fetchAll(); S = WC.resolve(readCfg(), NAME, TYPE); KEY = keyOf(S); FORCE = S.forceVersion;
   const nc = newerCode(); if (nc) { say('code is behind (' + nc + '); restarting via launcher'); process.exit(10); }
   say(`worker ${NAME} (${TYPE}), mode ${S.mode}, config version ${S.version}, polling every ${process.env.BB_POLL_MS ? process.env.BB_POLL_MS + ' ms' : S.pollMinutes + ' min'}`);
-  if (S.mode === 'pause') say('paused by worker-config.json; polling');
+  if (S.mode === 'pause') { say('paused by worker-config.json; polling'); status('paused', 'worker-config.json'); }
   startDq();
   const every = +(process.env.BB_POLL_MS || Math.max(1, +S.pollMinutes || 10) * 60e3);
   setInterval(poll, every);

@@ -75,3 +75,10 @@ Edit `worker-config.json` at the root of the queue branch:
 
 Settings layer as built-in < `defaults` < `types[linux|windows|mac|phone]` < `workers[name]`.
 Exit codes: dq.js 3 = token refused (the launcher waits for a new token file); 10 = update and restart.
+
+## Token refused (R61d)
+If `~/.bugbrain/worker.log` says "token refused" / exit 3, the worker cannot push anything (no heartbeat, no claims), so it is
+invisible on the queue branch. Check locally: `cat ~/.bugbrain/status.json` (state `token-refused`). Fix: re-run the installer
+(`sh ~/bugbrain-neurons/run/install-linux.sh` or `install-termux.sh`); it now tests the saved token with a dry-run push
+(`run/token-check.sh`, nothing is created), asks for a new one if GitHub refuses it, never saves a refused token, and restarts
+the service. Replacing `~/.bugbrain/token` by hand also works: the launcher notices the change within a minute.
