@@ -2495,3 +2495,68 @@ numbers with deepURSx3v35 + readIn 0 (fingerprints identical 8/8 on text / order
 screened arm C). seqchoice also defaults to deepURSx3 and was not in the eval (queued: w26). Remaining gap: v36 ~0.31-0.32 vs the 0.40 linear
 ceiling of its own states; it predicts space 62% of the time (truth 20%). Queue restocked with w13-w26 (size / depth / length under v36,
 output-side space-bias fixes, letter-pair code stability, generation, seqchoice safety).
+
+## R63 — queue review (Oct 18, 7:20 AM CT): w13-w26 results under v36, size tests were invalid (unscaled wiring), queue x00-x17 (v36 / 29 unchanged)
+Queue had run dry (all p01-w26 done). tacobell idle since ~5:18 AM CT (code 5c50ab2, supervised heartbeat); linux-pc finished w09 at 6:22 AM CT and
+was idle after that. linux-pc **has never written workers/linux-pc.json** (no heartbeat commit ever), so it still runs a dq.js older than R61 (the heartbeat
+came with R61) and not the R61 supervisor; its job runs do use current code (w13-w25 ran with DEFAULTS 29). Results still publish; reinstall
+with `sh run/install-linux.sh linux-pc` when someone is at the PC (needs Travis).
+
+All arms paired growth by growth with the v36 reference (w13 for book; box eval16c for fables4000, identical seeds: w13 book30k g4-7 =
+eval16c exactly). 16 held-out growths each unless noted. diff = arm - v36, t = mean / se of the paired diffs.
+
+| job | arm | task | arm mean | diff | t | wins/losses |
+|---|---|---|---|---|---|---|
+| w13 | **v36 reference** | book10k / book30k | **0.316 / 0.313** | | | |
+| w14 | size 2x (grid 85, unscaled wiring) | book10k / book30k | 0.296 / 0.299 | -0.020 / -0.014 | -3.8 / -2.6 | 2/14, 4/12 |
+| w15, w16 | size 4x (grid 120, unscaled) | book10k / book30k | **0.000 / 0.000** | (silent outputs) | | 0/16 |
+| w17 | depth x4 (deepURSx4 + metaCap 200) | book10k / book30k | 0.315 / 0.313 | -0.002 / +0.001 | -1.6 / +0.8 | 4/9, 9/5 |
+| w18 | 100k life | book100k vs 30k / 10k | 0.314 | +0.002 / -0.002 | +0.9 / -0.8 | 9/6, 8/8 |
+| w19 | readIn 0.03 / 0.1 (v36 0.01) | book30k | 0.313 / 0.305 | +0.000 / -0.008 | / -11.3 | 1/0, 0/16 |
+| w19 | readIn 0.03 / 0.1 | book10k | 0.316 / 0.308 | -0.000 / -0.008 | -1.9 / -12.9 | 0/3, 0/16 |
+| w20 | readTicks 6 / 8 (v36 4) | book30k | 0.169 / 0.114 | -0.144 / -0.199 | | 0/16 |
+| w21 | rcvHomeo 0.02 / 0.05 | book30k | 0.126 / 0.134 | -0.187 / -0.179 | | 0/16 |
+| w22 | mixHomeo 0.05 / 0.15 (v36 0.5) | book30k / fables4000 | 0.313 / 0.328 | +0.001 / -0.002 (0.05) | +0.5 / -1.6 | 8/7, 5/9 |
+| w23 | mixLr 0.005 | book30k / fables4000 | 0.316 / 0.328 | **+0.003** / -0.001 | **+2.3** / -1.3 | 10/4, 6/10 |
+| w23 | mixLr 0.02 | book30k / fables4000 | 0.315 / 0.328 | +0.002 / -0.001 | +1.8 / -1.1 | 12/3, 5/9 |
+| w24 | mixK 3 / 5 (v36 4) | book30k / fables4000 | 0.313 / 0.331 | -0.000 / +0.001 (3) | -0.1 / +1.9 | 8/7, 10/5 |
+| w26 | v36 vs v35 (seqchoice) | cycle 1000 / order2 1000 | 0.894 / 0.585 | -0.012 / **-0.055** | -0.9 / **-2.5** | 7/9, 6/10 |
+
+- **Scale, depth and life length do not pay as tested.** 100k = 30k = 10k (0.314 / 0.313 / 0.316): the v36 learner plateaus at about
+  bigram (0.30-0.32) by 10k symbols. Depth x4 = x3. But the size arms were broken, see below.
+- **Size bug (box diagnosis, R63):** `sc.grid` alone does not scale a brain. coneSpeed (growth-cone steps per developmental step) and axonLen
+  (axon length in grid steps) are in grid units, so on a finer grid the axons reach less of the sheet. Book 1.5k, 1 growth: grid 60 3.33,
+  85 2.67, 95 2.67, 100 2.27, 110 0, 120 0 (outputs silent, bits = log2 24: the reason w06 / w15 / w16 scored 0). With the wiring scaled to
+  the grid (85: coneSpeed 4, axonLen 57; 120: coneSpeed 6, axonLen 80) the same brains score 3.20 (2x) and **3.43 (4x, > 1x 3.33)**; axonLen
+  80 without coneSpeed 6 is still 0. So every earlier "size does not pay" result (w05 / w06 / w14-w16, w09) is confounded. Re-test: x01, x02,
+  x16, x17 (`S2` = grid 85, maxCells 6800, coneSpeed 4, axonLen 57; `S4` = grid 120, maxCells 13600, coneSpeed 6, axonLen 80).
+- **Space bias, output side: all rejected.** readIn above 0.01 is neutral-to-harmful; a longer read window (6 / 8 ticks) and taught-cell
+  homeostasis (rcvHomeo 0.02 / 0.05 at rcvRate 0.02) collapse accuracy to 0.11-0.17. Boundary precision stays ~0.31 (recall ~0.85).
+- **Letter-pair code knobs do nothing measurable** (all within +-0.003). Only mixLr 0.005 has t > 2 on book30k (+0.003); confirmation on
+  the other tasks queued (x13), not adoptable yet.
+- **Generation (w25, 30k life, 4 growths):** sampling (T 1) word rate 0.57 (v35 10k: 0.46-0.50), 99 words / 500 chars, top char 0.41
+  (v35 0.47-0.50), distinct 4-grams 0.60, trigram bits 6.1 (real text 2.5). Argmax still collapses to all spaces (top char 0.998).
+- **seqchoice safety (w26):** v36 is worse than v35 on reward-coupled order2 (-0.055, t -2.5, 6/10); cycle is within noise. A
+  no-task-worse violation on a task outside the R62 gate set. Dissect queued (x12: 16 more growths + which v36 change causes it).
+- For seq tasks a global pl.* override equals a cortex-only one (pl.lr / preNorm / plateau / trustPow: identical runs), because only the
+  cortex taught cells receive plastic synapses and the striatum does not grow without an outcome signal.
+
+Nothing qualifies for adoption (no arm won on 16 growths with no task worse). Defaults unchanged (v36 / 29).
+
+Code (R63): run/r42.js and run/gen.js accept region-targeted overrides `s.f@sel=v` (sel = region-name prefix, `!` negates, `|` joins;
+run/lib.js selCells), for seqchoice and other multi-region work; plain variants unchanged. run/r63_jobs.js writes the new queue.
+
+New queue (x00-x17, all v36, plain variants, run on any v36 checkout; est hours on the r62 scale, real ~3.7x faster on linux-pc and
+~2.75x on tacobell for many-run jobs, ~1x for the 2-run 100k jobs):
+| pri | id | what | est h |
+|---|---|---|---|
+| 0.975 | x00 | v36 reference on fables4000 / order3 / text1000 on the workers | 0.7 |
+| 0.97 | x01a/b | size 4x, scaled wiring, book 10k + 30k, 16 growths | 3.2 + 3.2 |
+| 0.965 | x02 | size 2x, scaled wiring, book 10k + 30k | 3.2 |
+| 0.962-0.935 | x03-x11 | 5-task screens (book30k, book10k, fables4000, order3, text1000; 16 growths) of the cortex teacher rule: trustPow 4/0, lr 0.1/0.025, metaCap 100/50, preNorm 60/30, confPow 2 / trustMax 8, predErr 0.03/0.01, rcvHomeo 0.005 at rcvRate 0.1 / 0.002 (space), plateau 2/6, preLag 4/12 | 4.1 each |
+| 0.93 | x12 | seqchoice order2 dissect (v36 / v35 g16-31, v36 + metaCap 0, v36 + predErr 0.3) | 0.5 |
+| 0.92 | x13 | confirm mixLr 0.005 (book10k, order3, text1000, fables2000) | 0.7 |
+| 0.91 | x14 | generation from the 4xS brain after 30k (T 1 / 0.7) | 2.4 |
+| 0.9 | x15 | generation after a 100k life (T 1 / 0.7) | 2 |
+| 0.89 | x16a/b | 2xS x 100k life | 4 + 4 |
+| 0.88 | x17a/b | 4xS x 100k life | 8 + 8 |

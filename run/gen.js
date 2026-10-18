@@ -10,7 +10,7 @@ const L = require('./lib.js'), SA = L.SA;
 const [plan, tj, G = 4, variant = 'base', g0 = 0] = process.argv.slice(2), task = Object.assign({ name: 'gen' }, JSON.parse(tj));
 if (task.params.source !== 'book' || !(task.params.genSyms > 0)) throw new Error('gen.js needs a seq task with source book and genSyms > 0');
 const gc = L.serialize(L.startGenome(plan)), cells = gc.kind === 'regions' ? gc.cell.regions.map(r => r.g) : [gc.cell];
-if (variant !== 'base') for (const kv of variant.split(',')) { const [k, v] = kv.split('='), [s, f] = k.split('.'); if (s === 'P') SA.params[f] = +v; else for (const C of cells) C[s][f] = +v; }
+if (variant !== 'base') for (const kv of variant.split(',')) { const [k0, v] = kv.split('='), [k, sel] = k0.split('@'), [s, f] = k.split('.'); if (s === 'P') SA.params[f] = +v; else for (const C of L.selCells(gc, cells, sel)) C[s][f] = +v; }   // R63: s.f@sel=v targets regions by name prefix (sel 'cortex', 'context', '!striatum'); no @ = every region
 const B = SA.book, A = B.ALPHA, K = A.length, IDX = new Map(A.map((c, i) => [c, i])), TR = B.TRAIN;
 const tri = new Float64Array(K * K * K), bi = new Float64Array(K * K);
 for (let i = 2; i < TR.length; i++) { const a = IDX.get(TR[i - 2]), b = IDX.get(TR[i - 1]), c = IDX.get(TR[i]); tri[(a * K + b) * K + c]++; bi[a * K + b]++; }

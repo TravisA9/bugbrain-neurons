@@ -123,4 +123,12 @@ function novelty(descs, archive, k) {
     ds.sort((a, b) => a - b); const kk = Math.min(k, ds.length); let s = 0; for (let q = 0; q < kk; q++) s += ds[q]; return kk ? s / kk : 0;
   });
 }
-module.exports = { SA, makeRng, applyEngine, taskEnvParams, setupTask, seedPlan, serialize, deserialize, startGenome, mutate, crossover, evaluateGenome, normFit, descriptorNames, descriptor, novelty };
+// R63: region selector for variant overrides (run/r42.js, run/gen.js): k@sel=v. sel = region-name prefix ('cortex', 'context' = all
+// three context areas, 'striatum'), '!' negates ('!striatum' = every region but the striatum), '|' joins alternatives. No sel = every cell.
+function selCells(gc, cells, sel) {
+  if (!sel) return cells; if (gc.kind !== 'regions') throw new Error('region selector @' + sel + ' needs a regions plan');
+  const neg = sel[0] === '!', alts = (neg ? sel.slice(1) : sel).split('|'), out = [];
+  gc.cell.regions.forEach((r, i) => { const hit = alts.some(a => r.name === a || r.name.startsWith(a + ' ') || (a === 'context' && /^context( \d+)?$/.test(r.name))); if (hit !== neg) out.push(cells[i]); });
+  if (!out.length) throw new Error('region selector @' + sel + ' matches no region'); return out;
+}
+module.exports = { selCells, SA, makeRng, applyEngine, taskEnvParams, setupTask, seedPlan, serialize, deserialize, startGenome, mutate, crossover, evaluateGenome, normFit, descriptorNames, descriptor, novelty };

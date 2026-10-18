@@ -3,7 +3,7 @@
 const L = require('./lib.js'), SA = L.SA;
 const [plan, tj, G = 16, variant = 'base', g0 = 0] = process.argv.slice(2), task = Object.assign({ name: 'r42' }, JSON.parse(tj));
 const gc = L.serialize(L.startGenome(plan)), cells = gc.kind === 'regions' ? gc.cell.regions.map(r => r.g) : [gc.cell];
-if (variant !== 'base') for (const kv of variant.split(',')) { const [k, v] = kv.split('='), [s, f] = k.split('.'); if (s === 'P') SA.params[f] = +v; else for (const C of cells) C[s][f] = +v; }
+if (variant !== 'base') for (const kv of variant.split(',')) { const [k0, v] = kv.split('='), [k, sel] = k0.split('@'), [s, f] = k.split('.'); if (s === 'P') SA.params[f] = +v; else for (const C of L.selCells(gc, cells, sel)) C[s][f] = +v; }   // R63: s.f@sel=v targets regions by name prefix (sel 'cortex', 'context', '!striatum'); no @ = every region
 if (process.env.BB_PEDBG) globalThis.__peDbg = { d: 0, p: 0, n: 0 };
 const p = L.seedPlan({ valGrowths: 64, valArenas: 64 }, 0, true), scores = [], st = {};
 for (let k = +g0; k < +g0 + +G; k++) { const r = L.evaluateGenome(gc, [task], { G: 1, A: 1, growSeeds: [p.growSeeds[k]], arenaSeeds: [p.arenaSeeds[k]] }); if (r.error) throw new Error(r.error);

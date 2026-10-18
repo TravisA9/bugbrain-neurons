@@ -1,9 +1,36 @@
-# PRIORITIES (R62, Oct 17 2026, 11 PM CT; v36)
+# PRIORITIES (R63, Oct 18 2026, 7:45 AM CT; v36)
 
 Goal (Travis): the best SNN design, found as fast as possible, on the way to a **large brain that generates text like a small LLM**.
 Analogy is secondary. Pick tests that bring the design landscape into focus, avoid low-payoff tangents, and keep every machine busy.
 
-## v36 adopted (R62, Oct 17, 11 PM CT, Travis approved)
+## Where we stand (R63)
+- v36 (book ~0.31-0.32) is still a bigram-level learner; its own states support 0.40 (linear readout) and 3-grams reach 0.43-0.52.
+- Life length does not help under v36 (10k 0.316, 30k 0.313, 100k 0.314); depth x4 = x3.
+- **Size was never tested properly**: sc.grid alone shrinks axons relative to the sheet (coneSpeed / axonLen are in grid steps), so the old
+  2x lost and 4x went silent. With wiring scaled to the grid, a 4x brain beat 1x on a box smoke test (3.43 vs 3.33, 1 growth). x01 / x02 decide it.
+- Output-side space-bias fixes (readIn > 0.01, readTicks, rcvHomeo 0.02-0.05) and mixing-code knobs (mixHomeo, mixLr, mixK) are ruled out.
+- v36 may hurt reward-coupled seqchoice order2 (-0.055 vs v35, t -2.5): x12.
+
+## Ranked open questions (shared jobs x00-x17)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I78 / I73 | Does size pay once the wiring scales with the grid (2xS / 4xS vs 1x at book 10k / 30k)? Decides the large-brain run | x01a/b, x02 |
+| 2 | I77 | Which teacher-rule knob of the cortex cells moves book toward 0.40 without hurting order3 / fables / text (5-task screens, adoption-ready) | x03-x08, x10, x11 (x00 = worker reference) |
+| 3 | I75 | Space bias through trust / sharpness weighting and very weak homeostasis at a realistic target rate | x03, x07, x09 |
+| 4 | Q31 | Is v36 really worse on seqchoice order2, and is it metaCap or predErr 0? | x12 |
+| 5 | I72 | Generation: 4xS brain at 30k, 1x at 100k (sampling T 1 / 0.7) | x14, x15 |
+| 6 | I73 | Size x length: 2xS / 4xS at 100k | x16a/b, x17a/b |
+| low | I76 | mixLr 0.005 confirmation (book30k +0.003) | x13 |
+Decision point: if 4xS (or 2xS) beats w13 by >= 0.01 on book30k, scale-up becomes the main track: propose a staged large run on linux-pc
+(4xS-8xS, best rule, 100k -> 300k -> 1M symbols with checkpoints and generation samples); do not start it without Travis. If a rule screen
+wins on book30k and book10k with no task worse, it is adoption-ready (16 growths) and goes to Travis / the authorised default rule.
+
+## Worker notes (R63)
+linux-pc publishes results but has no heartbeat (pre-R61 dq.js, not under the supervisor). When someone is at the PC: `sh run/install-linux.sh linux-pc`
+(systemd user service + linger, self-updating). tacobell: supervised, cpuMax 75, no claims on battery.
+
+## Previous status (R62)
+### v36 adopted (R62, Oct 17, 11 PM CT, Travis approved)
 R62 found the book weakness is the **learning rule, not the representation**: an offline linear readout of v35's own states predicts the
 next letter at 0.40 held-out (bigram 0.31, 3-gram 0.43), while v35 got 0.27 at 10k and fell with life length (0.15 at 100k): decoder ties
 (~30% of predictions), and a metaplastic potentiation scale that fades to 0 while the prediction-miss LTD does not. **v36** = deepURSx3 with
