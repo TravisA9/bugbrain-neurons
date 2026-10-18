@@ -1,0 +1,261 @@
+{
+  "id": "w21_v36_space_rcvHomeo",
+  "question": "I75",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Space bias: weak homeostasis of the taught cells, rcvHomeo 0.02 / 0.05 (0.2 was -0.10 on book30k), book 30k and 10k, growths 0-15",
+  "priority": 0.945,
+  "estHours": 3.2,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "equalises the over-active space cells; reject if book30k < w13"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.02",
+        "0",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.02 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.02",
+        "4",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.02 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.02",
+        "8",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.02 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.02",
+        "12",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.02 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.02",
+        "0",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.02 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.02",
+        "4",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.02 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.02",
+        "8",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.02 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.02",
+        "12",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.02 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.05",
+        "0",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.05 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.05",
+        "4",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.05 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.05",
+        "8",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.05 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.05",
+        "12",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.05 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.05",
+        "0",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.05 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.05",
+        "4",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.05 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.05",
+        "8",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.05 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.rcvHomeo=0.05",
+        "12",
+        "--force"
+      ],
+      "label": "v36 rcvHomeo0.05 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w21_v36_space_rcvHomeo.jsonl"
+      }
+    }
+  ]
+}

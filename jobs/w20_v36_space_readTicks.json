@@ -1,0 +1,261 @@
+{
+  "id": "w20_v36_space_readTicks",
+  "question": "I75",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Space bias, output side: longer read window readTicks 6 / 8 (v36 = 4), book 30k and 10k, growths 0-15",
+  "priority": 0.95,
+  "estHours": 3.2,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "more output spikes per decision, fewer near-ties"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"readTicks\":6}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v36 readTicks6 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"readTicks\":6}}",
+        "4",
+        "base",
+        "4",
+        "--force"
+      ],
+      "label": "v36 readTicks6 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"readTicks\":6}}",
+        "4",
+        "base",
+        "8",
+        "--force"
+      ],
+      "label": "v36 readTicks6 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"readTicks\":6}}",
+        "4",
+        "base",
+        "12",
+        "--force"
+      ],
+      "label": "v36 readTicks6 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000,\"readTicks\":6}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v36 readTicks6 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000,\"readTicks\":6}}",
+        "4",
+        "base",
+        "4",
+        "--force"
+      ],
+      "label": "v36 readTicks6 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000,\"readTicks\":6}}",
+        "4",
+        "base",
+        "8",
+        "--force"
+      ],
+      "label": "v36 readTicks6 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000,\"readTicks\":6}}",
+        "4",
+        "base",
+        "12",
+        "--force"
+      ],
+      "label": "v36 readTicks6 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"readTicks\":8}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v36 readTicks8 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"readTicks\":8}}",
+        "4",
+        "base",
+        "4",
+        "--force"
+      ],
+      "label": "v36 readTicks8 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"readTicks\":8}}",
+        "4",
+        "base",
+        "8",
+        "--force"
+      ],
+      "label": "v36 readTicks8 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"readTicks\":8}}",
+        "4",
+        "base",
+        "12",
+        "--force"
+      ],
+      "label": "v36 readTicks8 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000,\"readTicks\":8}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v36 readTicks8 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000,\"readTicks\":8}}",
+        "4",
+        "base",
+        "4",
+        "--force"
+      ],
+      "label": "v36 readTicks8 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000,\"readTicks\":8}}",
+        "4",
+        "base",
+        "8",
+        "--force"
+      ],
+      "label": "v36 readTicks8 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000,\"readTicks\":8}}",
+        "4",
+        "base",
+        "12",
+        "--force"
+      ],
+      "label": "v36 readTicks8 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w20_v36_space_readTicks.jsonl"
+      }
+    }
+  ]
+}

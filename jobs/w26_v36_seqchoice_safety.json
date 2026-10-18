@@ -1,0 +1,261 @@
+{
+  "id": "w26_v36_seqchoice_safety",
+  "question": "Q31",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Safety: v36 vs v35 (deepURSx3v35) on seqchoice cycle 1000 and order2 1000 (seqchoice defaults to deepURSx3), growths 0-15",
+  "priority": 0.95,
+  "estHours": 2.1,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "v36 must not be worse (t < -2) on the reward-coupled sequence task"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v36 seqchoice cycle g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "4",
+        "--force"
+      ],
+      "label": "v36 seqchoice cycle g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "8",
+        "--force"
+      ],
+      "label": "v36 seqchoice cycle g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "12",
+        "--force"
+      ],
+      "label": "v36 seqchoice cycle g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v35",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v35 seqchoice cycle g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v35",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "4",
+        "--force"
+      ],
+      "label": "v35 seqchoice cycle g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v35",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "8",
+        "--force"
+      ],
+      "label": "v35 seqchoice cycle g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v35",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "12",
+        "--force"
+      ],
+      "label": "v35 seqchoice cycle g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v36 seqchoice order2 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "4",
+        "--force"
+      ],
+      "label": "v36 seqchoice order2 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "8",
+        "--force"
+      ],
+      "label": "v36 seqchoice order2 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "12",
+        "--force"
+      ],
+      "label": "v36 seqchoice order2 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v35",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v35 seqchoice order2 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v35",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "4",
+        "--force"
+      ],
+      "label": "v35 seqchoice order2 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v35",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "8",
+        "--force"
+      ],
+      "label": "v35 seqchoice order2 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v35",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "12",
+        "--force"
+      ],
+      "label": "v35 seqchoice order2 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w26_v36_seqchoice_safety.jsonl"
+      }
+    }
+  ]
+}

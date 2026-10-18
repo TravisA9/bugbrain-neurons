@@ -1,0 +1,141 @@
+{
+  "id": "w14_v36_size2x_book",
+  "question": "I73",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Size 2x (sc.grid 85, maxCells 6800) under v36: book 10k and 30k, growths 0-15",
+  "priority": 0.96,
+  "estHours": 4.8,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "scaling pays only if 2x > 1x (w13) by >= 0.01"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800",
+        "0",
+        "--force"
+      ],
+      "label": "v36 2x book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w14_v36_size2x_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800",
+        "4",
+        "--force"
+      ],
+      "label": "v36 2x book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w14_v36_size2x_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800",
+        "8",
+        "--force"
+      ],
+      "label": "v36 2x book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w14_v36_size2x_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800",
+        "12",
+        "--force"
+      ],
+      "label": "v36 2x book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w14_v36_size2x_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800",
+        "0",
+        "--force"
+      ],
+      "label": "v36 2x book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w14_v36_size2x_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800",
+        "4",
+        "--force"
+      ],
+      "label": "v36 2x book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w14_v36_size2x_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800",
+        "8",
+        "--force"
+      ],
+      "label": "v36 2x book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w14_v36_size2x_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800",
+        "12",
+        "--force"
+      ],
+      "label": "v36 2x book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w14_v36_size2x_book.jsonl"
+      }
+    }
+  ]
+}

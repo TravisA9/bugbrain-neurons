@@ -1,0 +1,261 @@
+{
+  "id": "w24_v36_codes_mixK",
+  "question": "I76",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Letter-pair code stability: claws per mixing cell sc.mixK 3 / 5 (v36 4), book 30k + fables4000, growths 0-15",
+  "priority": 0.94,
+  "estHours": 2.8,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "fewer claws = more reliable pair detectors"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.mixK=3",
+        "0",
+        "--force"
+      ],
+      "label": "v36 mixK3 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.mixK=3",
+        "4",
+        "--force"
+      ],
+      "label": "v36 mixK3 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.mixK=3",
+        "8",
+        "--force"
+      ],
+      "label": "v36 mixK3 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.mixK=3",
+        "12",
+        "--force"
+      ],
+      "label": "v36 mixK3 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "sc.mixK=3",
+        "0",
+        "--force"
+      ],
+      "label": "v36 mixK3 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "sc.mixK=3",
+        "4",
+        "--force"
+      ],
+      "label": "v36 mixK3 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "sc.mixK=3",
+        "8",
+        "--force"
+      ],
+      "label": "v36 mixK3 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "sc.mixK=3",
+        "12",
+        "--force"
+      ],
+      "label": "v36 mixK3 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.mixK=5",
+        "0",
+        "--force"
+      ],
+      "label": "v36 mixK5 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.mixK=5",
+        "4",
+        "--force"
+      ],
+      "label": "v36 mixK5 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.mixK=5",
+        "8",
+        "--force"
+      ],
+      "label": "v36 mixK5 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.mixK=5",
+        "12",
+        "--force"
+      ],
+      "label": "v36 mixK5 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "sc.mixK=5",
+        "0",
+        "--force"
+      ],
+      "label": "v36 mixK5 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "sc.mixK=5",
+        "4",
+        "--force"
+      ],
+      "label": "v36 mixK5 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "sc.mixK=5",
+        "8",
+        "--force"
+      ],
+      "label": "v36 mixK5 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "sc.mixK=5",
+        "12",
+        "--force"
+      ],
+      "label": "v36 mixK5 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w24_v36_codes_mixK.jsonl"
+      }
+    }
+  ]
+}

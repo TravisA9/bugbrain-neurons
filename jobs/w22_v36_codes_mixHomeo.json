@@ -1,0 +1,261 @@
+{
+  "id": "w22_v36_codes_mixHomeo",
+  "question": "I76",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Letter-pair code stability: slower mixing-cell homeostasis mixHomeo 0.05 / 0.15 (v36 0.5), book 30k + fables4000, growths 0-15",
+  "priority": 0.945,
+  "estHours": 2.8,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "box R62 (8-16 g): mixHomeo 0.05 book30k +0.0, order3 +0.012"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixHomeo=0.05",
+        "0",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.05 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixHomeo=0.05",
+        "4",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.05 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixHomeo=0.05",
+        "8",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.05 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixHomeo=0.05",
+        "12",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.05 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixHomeo=0.05",
+        "0",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.05 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixHomeo=0.05",
+        "4",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.05 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixHomeo=0.05",
+        "8",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.05 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixHomeo=0.05",
+        "12",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.05 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixHomeo=0.15",
+        "0",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.15 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixHomeo=0.15",
+        "4",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.15 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixHomeo=0.15",
+        "8",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.15 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixHomeo=0.15",
+        "12",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.15 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixHomeo=0.15",
+        "0",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.15 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixHomeo=0.15",
+        "4",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.15 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixHomeo=0.15",
+        "8",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.15 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixHomeo=0.15",
+        "12",
+        "--force"
+      ],
+      "label": "v36 mixHomeo0.15 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w22_v36_codes_mixHomeo.jsonl"
+      }
+    }
+  ]
+}

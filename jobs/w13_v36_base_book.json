@@ -1,0 +1,141 @@
+{
+  "id": "w13_v36_base_book",
+  "question": "I73",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "v36 reference on the real corpus: deepURSx3 v36 on book 10k and 30k, held-out, growths 0-15",
+  "priority": 0.97,
+  "estHours": 1.6,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "box R62: 0.316 / 0.313; the yardstick for w14-w29"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v36 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w13_v36_base_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "4",
+        "--force"
+      ],
+      "label": "v36 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w13_v36_base_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "8",
+        "--force"
+      ],
+      "label": "v36 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w13_v36_base_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "12",
+        "--force"
+      ],
+      "label": "v36 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w13_v36_base_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v36 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w13_v36_base_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "4",
+        "--force"
+      ],
+      "label": "v36 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w13_v36_base_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "8",
+        "--force"
+      ],
+      "label": "v36 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w13_v36_base_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "12",
+        "--force"
+      ],
+      "label": "v36 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w13_v36_base_book.jsonl"
+      }
+    }
+  ]
+}

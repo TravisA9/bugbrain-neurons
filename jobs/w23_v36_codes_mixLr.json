@@ -1,0 +1,261 @@
+{
+  "id": "w23_v36_codes_mixLr",
+  "question": "I76",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Letter-pair code stability: learned mixing (competitive rule) mixLr 0.005 / 0.02, book 30k + fables4000, growths 0-15",
+  "priority": 0.94,
+  "estHours": 2.8,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "learned conjunctions should repeat for the same letter pair"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixLr=0.005",
+        "0",
+        "--force"
+      ],
+      "label": "v36 mixLr0.005 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixLr=0.005",
+        "4",
+        "--force"
+      ],
+      "label": "v36 mixLr0.005 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixLr=0.005",
+        "8",
+        "--force"
+      ],
+      "label": "v36 mixLr0.005 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixLr=0.005",
+        "12",
+        "--force"
+      ],
+      "label": "v36 mixLr0.005 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixLr=0.005",
+        "0",
+        "--force"
+      ],
+      "label": "v36 mixLr0.005 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixLr=0.005",
+        "4",
+        "--force"
+      ],
+      "label": "v36 mixLr0.005 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixLr=0.005",
+        "8",
+        "--force"
+      ],
+      "label": "v36 mixLr0.005 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixLr=0.005",
+        "12",
+        "--force"
+      ],
+      "label": "v36 mixLr0.005 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixLr=0.02",
+        "0",
+        "--force"
+      ],
+      "label": "v36 mixLr0.02 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixLr=0.02",
+        "4",
+        "--force"
+      ],
+      "label": "v36 mixLr0.02 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixLr=0.02",
+        "8",
+        "--force"
+      ],
+      "label": "v36 mixLr0.02 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.mixLr=0.02",
+        "12",
+        "--force"
+      ],
+      "label": "v36 mixLr0.02 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixLr=0.02",
+        "0",
+        "--force"
+      ],
+      "label": "v36 mixLr0.02 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixLr=0.02",
+        "4",
+        "--force"
+      ],
+      "label": "v36 mixLr0.02 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixLr=0.02",
+        "8",
+        "--force"
+      ],
+      "label": "v36 mixLr0.02 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "4",
+        "pl.mixLr=0.02",
+        "12",
+        "--force"
+      ],
+      "label": "v36 mixLr0.02 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w23_v36_codes_mixLr.jsonl"
+      }
+    }
+  ]
+}

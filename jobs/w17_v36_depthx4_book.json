@@ -1,0 +1,141 @@
+{
+  "id": "w17_v36_depthx4_book",
+  "question": "I73",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Depth x4 vs x3 under v36: deepURSx4 + metaCap 200 (+ readIn), book 10k and 30k, growths 0-15",
+  "priority": 0.96,
+  "estHours": 2.2,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "x4 kept for the large run only if > w13"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap=200",
+        "0",
+        "--force"
+      ],
+      "label": "v36 x4 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w17_v36_depthx4_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap=200",
+        "4",
+        "--force"
+      ],
+      "label": "v36 x4 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w17_v36_depthx4_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap=200",
+        "8",
+        "--force"
+      ],
+      "label": "v36 x4 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w17_v36_depthx4_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap=200",
+        "12",
+        "--force"
+      ],
+      "label": "v36 x4 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w17_v36_depthx4_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap=200",
+        "0",
+        "--force"
+      ],
+      "label": "v36 x4 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w17_v36_depthx4_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap=200",
+        "4",
+        "--force"
+      ],
+      "label": "v36 x4 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/w17_v36_depthx4_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap=200",
+        "8",
+        "--force"
+      ],
+      "label": "v36 x4 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/w17_v36_depthx4_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap=200",
+        "12",
+        "--force"
+      ],
+      "label": "v36 x4 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/w17_v36_depthx4_book.jsonl"
+      }
+    }
+  ]
+}
