@@ -60,3 +60,15 @@ Worktree /workspace/bb-book, branch neuro/book-diag (from 1b32911). Defaults unc
 - held-out 0.262 -> 0.330; no-answer (ties) 32% -> 0.4%; read spikes 4.1 -> 8.0; agreement with the bigram choice 0.26 -> 0.51.
 - The input, context and mixing states are identical in the two runs: only the taught cells (cortex tag 1/5) receive plastic synapses. The oracle ceiling therefore stays at 0.395 (current-symbol cells).
 - Remaining gap: the brain now predicts space 62% of the time (truth 20%).
+
+## Screens D1/D2 (21:45 CT); all arms use readIn 0.01; baseline readIn-only = 0.301 / 0.248 / 0.332 / 0.952
+| arm | book10k | book30k | fables4000 | order3 |
+|---|---|---|---|---|
+| metaN 0 (no consolidation) | 0.340 | **0.344** | **0.349** | 0.873 (harm) |
+| metaCap 200 | 0.320 | 0.318 | 0.335 | 0.952 |
+| peMode 18 (renormalise after LTD) | 0.301 | 0.248 | 0.332 | 0.952 (no effect) |
+| mixHomeo 0.05 (steadier pair codes) | (running) | 0.257 | (running) | (running) |
+- Removing consolidation helps text but breaks order3, which needs it.
+- Capping consolidation gives most of the text gain with no order3 harm. It is about as good as predErr 0.
+- Held-out eval16, base arm: book10k 0.271 and book30k 0.228 (16 growths). The rest is running; the candidate arm starts after D2.
+- Queued D3: metaN 400; metaCap 200 + predErr 0; rcvHomeo 0.2 (output-side homeostasis).
