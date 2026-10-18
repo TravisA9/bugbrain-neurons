@@ -30,8 +30,8 @@ powershell -ExecutionPolicy Bypass -File $HOME\bugbrain-neurons\run\install-wind
 ```
 This registers a hidden Task Scheduler task `BugBrainWorker` that runs at logon. Press Enter at the token prompt to use this PC's own git login.
 It is separate from the local `run/queue.js` runner, which is left untouched.
-Optional: set the user environment variable `BB_HOME` before installing to keep the worker checkout elsewhere (TacoBell uses `%LOCALAPPDATA%\Temp\bugbrain-worker`; the launcher re-clones it if it is ever deleted).
-On a laptop the worker never claims a job while on battery, and `cpuMax` (e.g. `"workers": { "tacobell": { "cpuMax": 40, "workers": 4 } }`) makes it wait while other work (the local queue) keeps the CPU busy.
+Optional: set the user environment variable `BB_HOME` before installing to keep the worker checkout elsewhere (TacoBell uses `%USERPROFILE%\.bugbrain\repo`; the launcher re-clones it if it is ever deleted).
+On a laptop the worker never claims a job while on battery, and `cpuMax` (e.g. `"workers": { "tacobell": { "cpuMax": 75, "workers": 4 } }`) makes it wait while other work (the local queue) keeps the CPU busy.
 If dq.js crashes or is killed, its job process tree is killed too (taskkill /T), so no orphaned runs keep computing.
 
 ## Everyday
