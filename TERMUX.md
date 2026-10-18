@@ -1,5 +1,7 @@
 # Running the BugBrain worker on Android (Termux)
 
+> **New (R61):** the always-on setup in [WORKERS.md](WORKERS.md) starts at boot and updates itself. Use it instead of step 2 below; step 1 (the token) is still needed.
+
 Each phone or tablet joins the shared job list (branch `queue`), the same one the PC and the GitHub runners use, so no job is run twice.
 Phone mode uses 1–2 cores. It pauses when the battery is below 30 %, when the device isn't charging, or when the battery reaches 42 °C, and it resumes on its own.
 
