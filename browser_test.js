@@ -60,6 +60,7 @@ async function record(p) {
 const frac = a => a.length ? a.reduce((s, r) => s + (r[2] ? 1 : 0), 0) / a.length : 0;
 function tableConsistent(rows) { const bad = []; for (let i = 0; i < rows.length; i++) { if (!!rows[i][2] !== (rows[i][1] === rows[i][3])) bad.push(['colour', i, rows[i]]); if (i + 1 < rows.length && rows[i][3] !== rows[i + 1][0]) bad.push(['next', i, rows[i], rows[i + 1]]); } if (bad.length) console.log('     table mismatches:', JSON.stringify(bad.slice(0, 5)), bad.length); return bad.length; }
 
+const LIFE_MS = +(process.env.BB_BT_LIFE_MS || 900000);   // wait budget for the full 1000-character lifetime of check A
 (async () => {
   const b = await puppeteer.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox'], protocolTimeout: 900000 });
   try {
@@ -68,7 +69,7 @@ function tableConsistent(rows) { const bad = []; for (let i = 0; i < rows.length
       const s = await p.evaluate(() => ({ plan: SpikingArena.defaultPlanId(SpikingArena.currentEnv()), P: SpikingArena.currentEnv().P, label: __arena.watch.genome.label }));
       check(s.plan === 'deepURSx3' && s.P.clock2 && s.P.clock3 && s.P.nSyms === 1000, `A recommended text setup: plan ${s.plan}, clock2 ${s.P.clock2}, clock3 ${s.P.clock3}, nSyms ${s.P.nSyms}`);
       await record(p); const t0 = Date.now();
-      while (Date.now() - t0 < 400000 && !(await p.evaluate(() => window.__lives.length))) await sleep(2000);
+      while (Date.now() - t0 < LIFE_MS && !(await p.evaluate(() => window.__lives.length))) await sleep(2000);   // R62: deepURSx3 needs ~430 s per 1000-char life at speed 10 on the box (v35 and v36 alike); 400 s cut it at ~940 rows
       const r = await p.evaluate(() => ({ rows: window.__rows, life: window.__lives[0] || null }));
       const rows = r.rows.slice(0, 1000), h = r.life || [], q = (a, i) => frac(a.slice(Math.floor(a.length * i / 4), Math.floor(a.length * (i + 1) / 4)).map(x => [0, 0, x]));
       console.log(`     A table: ${rows.length} rows, green ${frac(rows).toFixed(3)}, last 100 ${frac(rows.slice(-100)).toFixed(3)}; lifetime hits ${h.length}, quarters ${[0, 1, 2, 3].map(i => q(h, i).toFixed(2)).join(' ')}`);
