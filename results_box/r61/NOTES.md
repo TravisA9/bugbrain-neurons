@@ -93,3 +93,26 @@ Worktree /workspace/bb-book, branch neuro/book-diag (from 1b32911). Defaults unc
 - metaN 0 + predErr 0: book 0.339 / 0.341, fables 0.345, order3 0.864 (harm).
 - metaN 400: order3 0.920 (harm).
 - rcvHomeo 0.2: running.
+
+## Final 16-growth held-out evals (22:57 CT), paired vs v35 (all arms use readIn 0.01)
+| task | v35 | B: predErr 0 | C: + metaCap 200 | D: C + mixHomeo 0.05 |
+|---|---|---|---|---|
+| book30k | 0.229 | 0.299 (+0.070, 16/0) | 0.313 (+0.084, 16/0) | 0.313 (+0.085, 16/0) |
+| book10k | 0.271 | 0.308 (+0.038, 16/0) | 0.316 (+0.046, 16/0) | 0.313 (+0.043, 16/0) |
+| fables4000 | 0.300 | 0.327 (16/0) | 0.330 (16/0) | 0.328 (16/0) |
+| fables2000 | 0.288 | 0.315 (16/0) | 0.317 (16/0) | 0.313 (16/0) |
+| order3 | 0.904 | 0.953 (15/1) | 0.954 (15/1) | 0.965 (16/0) |
+| text1000 | 0.745 | 0.754 (15/1) | 0.753 (13/2) | 0.751 (12/2) |
+| order2@1000, no clocks (degenerate, ~0) | 0.034 | 0.032 | 0.032 | 0.032 |
+| order2@1000, clock2+3 | 0.996 | 0.996 | 0.996 | 0.996 |
+- All three pass no-task-worse against v35.
+- C vs B: book30k +0.014 (14/2), book10k +0.008 (13/3); text1000 -0.002 (4/8).
+- D vs B: book30k +0.015, order3 +0.012 (14/0); text1000 -0.003 (5/11), fables2000 -0.001 (6/9).
+- Recommended default candidate: C (graded decoder + predErr 0 + metaCap 200). B is the simpler fallback. Not adopted: awaiting Travis.
+
+## Other screens (8 growths, readIn 0.01)
+- metaN 400: book 0.335 / 0.323, fables 0.345, order3 0.920 (harm).
+- rcvHomeo 0.2: book30k 0.151 (strong harm); stopped.
+- mixHomeo 0.05 alone: book 0.307 / 0.257, fables 0.333, order3 0.965.
+- peMode 18: no effect.
+- metaN 0: best on text (0.34) but order3 0.87 (harm).
