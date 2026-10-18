@@ -1,7 +1,25 @@
-# PRIORITIES (R60, Oct 17 2026, evening)
+# PRIORITIES (R62, Oct 17 2026, 11 PM CT; v36)
 
 Goal (Travis): the best SNN design, found as fast as possible, on the way to a **large brain that generates text like a small LLM**.
 Analogy is secondary. Pick tests that bring the design landscape into focus, avoid low-payoff tangents, and keep every machine busy.
+
+## v36 adopted (R62, Oct 17, 11 PM CT, Travis approved)
+R62 found the book weakness is the **learning rule, not the representation**: an offline linear readout of v35's own states predicts the
+next letter at 0.40 held-out (bigram 0.31, 3-gram 0.43), while v35 got 0.27 at 10k and fell with life length (0.15 at 100k): decoder ties
+(~30% of predictions), and a metaplastic potentiation scale that fades to 0 while the prediction-miss LTD does not. **v36** = deepURSx3 with
+predErr 0 + pl.metaCap 200, graded decoder readIn 0.01 (seq recommend): book30k 0.229 -> 0.313, book10k 0.271 -> 0.316, 100k ~0.30, no task
+worse (16 growths; RESULTS R62). v35 = plan deepURSx3v35 (+ readIn 0), legacy/v35. The w01-w12 numbers are v35 / predErr-dose numbers;
+the still-pending w08-w12 were pinned to deepURSx3v35 + readIn 0 (same meaning as written) and moved to priority 0.6.
+
+New ranked questions (shared jobs w13-w26, all v36, 16 held-out growths in 4-growth runs):
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I73 | Does size / depth / length pay under v36? 2x and 4x cells, deepURSx4, 100k life, vs the v36 reference | w13 (ref), w14, w15a/b, w16a-d, w17, w18a/b |
+| 2 | I75 | Space bias (62% space predictions vs 20%): output-side fixes that keep book30k (readIn 0.03 / 0.1, readTicks 6 / 8, rcvHomeo 0.02 / 0.05) | w19-w21 |
+| 3 | I76 | Stable letter-pair codes (98k codes for 410 pairs): mixHomeo 0.05 / 0.15, mixLr 0.005 / 0.02, mixK 3 / 5 (book30k + fables4000) | w22-w24 |
+| 4 | I72 | Generation under v36 (argmax / sampling after a 30k life) | w25 |
+| 5 | Q31 | seqchoice safety of v36 (seqchoice defaults to deepURSx3, not in the R62 eval) | w26 |
+Decision point: if 2x / 4x / x4 beat w13 by >= 0.01 on book30k, propose the large run; otherwise keep working on the rule (I75 / I76).
 
 ## Yardstick: the real corpus (I66, `source:'book'`, js/envs/book.js)
 13 public-domain Gutenberg books in simple English (Alice, Grimm, Andersen, Aesop, Peter Pan, Wind in the Willows, Oz, Secret Garden, ...),

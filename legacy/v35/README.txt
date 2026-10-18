@@ -1,0 +1,1 @@
+v35 (R53 defaults; DEFAULTS_VERSION 28), snapshot taken at v36 adoption (R62). js/envs/book.js (node-only 3.4 MB corpus) is not copied: use ../../js/envs/book.js. In the current app the v35 brain is plan deepURSx3v35; reproduce v35 numbers with the seq param readIn 0.

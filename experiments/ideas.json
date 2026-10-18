@@ -1043,6 +1043,51 @@
         "I58",
         "I47"
       ]
+    },
+    {
+      "id": "I74",
+      "area": "learning",
+      "title": "Long-life stability on real text: no prediction-miss LTD + capped metaplastic consolidation (pl.metaCap) + graded decoder (readIn)",
+      "status": "adopted",
+      "evidence": "R62: v35 declines with life length on book (0.29 at 3k -> 0.15 at 100k) because the potentiation scale metaN/(metaN+E) fades while LTD does not; an offline readout of the states reaches 0.40. readIn 0.01 + predErr 0 + metaCap 200, 16 held-out growths vs v35: book30k +0.084, book10k +0.046, fables4000 +0.030, fables2000 +0.028, order3 +0.049, text1000 +0.008, none worse -> v36 (Oct 17, Travis approved)",
+      "why": "a learner that keeps learning over long lives",
+      "rounds": [
+        "R62"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I65"
+      ]
+    },
+    {
+      "id": "I75",
+      "area": "readout",
+      "title": "Space bias: v36 predicts space 62% of the time vs 20% truth; output-side fixes (stronger graded decoder, longer read window, weak homeostasis of taught cells) that must not hurt book30k",
+      "status": "testing",
+      "evidence": "R62: rcvHomeo 0.2 book30k 0.15 (harm); queued w19-w21",
+      "why": "part of the gap between v36 (0.31) and the 0.40 linear ceiling",
+      "rounds": [
+        "R62"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I74"
+      ]
+    },
+    {
+      "id": "I76",
+      "area": "representation",
+      "title": "Stable letter-pair (mixing) codes: 98k distinct codes for 410 pairs, so trigram conjunctions cannot be reused; slower mixing homeostasis, learned mixing, fewer claws",
+      "status": "testing",
+      "evidence": "R62: mixing readout of the next letter 0.19-0.23; mixHomeo 0.05 order3 +0.012, book ~0 (16 growths); queued w22-w24",
+      "why": "needed to go past bigram towards the 3-gram 0.43-0.52",
+      "rounds": [
+        "R62"
+      ],
+      "theme": "representation",
+      "parents": [
+        "I74"
+      ]
     }
   ],
   "questions": [
@@ -1302,6 +1347,14 @@
       "likelihood": 0.3,
       "cost": 1,
       "experiment": "q40_v35_fables_long, shared p14 (v34 + plain depth), q45_v35_fables_evolve; a bigger corpus needs code (I66)"
+    },
+    {
+      "id": "Q33",
+      "q": "What closes the gap between v36 on book (~0.31) and the 0.40 linear-readout ceiling of its own states (and the 3-gram 0.43-0.52): output-side calibration (space bias), stable letter-pair codes, or size / depth / longer lives?",
+      "impact": 5,
+      "likelihood": 0.4,
+      "cost": 2,
+      "experiment": "shared w13-w26 (R62)"
     }
   ]
 }

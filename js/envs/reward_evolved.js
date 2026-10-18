@@ -102,7 +102,15 @@ for (const M of [2, 3, 4, 6, 8]) SA.registerPlan('deepURSx' + M + (M === 3 ? 'v3
 // its teacher plateau depresses its recently active inputs by predErr*lr*x*(peFix + (1 - peFix) w/wMax) (small fixed part + soft-bound part)
 const DEEP_PE = { predErr: 0.3, peMode: 16, peFix: 0.01 };
 SA.DEEP_PE = DEEP_PE;
-SA.registerPlan('deepURSx3', 'v35 default: unifiedR + deeper context chain x3 (outcome-repressed) + hybrid prediction-mismatch LTD (R53)', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_PE); d.label += ' + prediction-miss LTD'; return d; },
+SA.registerPlan('deepURSx3v35', 'v35 default (kept): unifiedR + deeper context chain x3 (outcome-repressed) + hybrid prediction-mismatch LTD (R53). Reproduce v35 numbers with the seq param readIn 0', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_PE); d.label += ' + prediction-miss LTD'; return d; },
+  'old default (v35); grows unifiedR exactly when an outcome signal is present');
+// v36 (R62 adopted): the prediction-miss LTD is OFF (predErr 0; peMode / peFix kept but inactive) and the metaplastic consolidation is
+// capped (metaCap 200): each presynaptic cell's potentiation is scaled by metaN / (metaN + E) with E = potentiation received so far,
+// capped at metaCap, so learning keeps a floor rate lr x 40 / 240 instead of fading to 0 over a long life. Together with the graded
+// decoder (seq readIn 0.01, now the seq default): book 30k held-out 0.229 -> 0.313, book 10k 0.271 -> 0.316, no task worse (16 growths, R62).
+const DEEP_V36 = Object.assign({}, DEEP_PE, { predErr: 0, metaCap: 200 });
+SA.DEEP_V36 = DEEP_V36;
+SA.registerPlan('deepURSx3', 'v36 default: unifiedR + deeper context chain x3 (outcome-repressed), no prediction-miss LTD, capped consolidation (metaCap 200; R62)', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_V36); d.label += ' + capped consolidation'; return d; },
   'default for three-phase-clock sequences/text and seqchoice; grows unifiedR exactly when an outcome signal is present');
 for (const M of [3, 4]) SA.registerPlan('wordChainx' + M, 'R44 I57: deep context chain x' + M + ' reset by the predicted space (ordered in-word memory)', () => createDeepUR(M, { wordReset: 30 }), 'experimental, off by default');
 SA.createDeepUR = createDeepUR; })();

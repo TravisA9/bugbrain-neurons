@@ -209,8 +209,11 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
 { const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3.make(), sig = (R, A, O) => S.areaExpr(R, { A, O }), T = S.setEnv('seq', S.recommendedEnvParams('seq', { source: 'text' }, ['source']));
   assert.ok(D.regions.length === 5 && sig(D.regions[3], 1, 0) > 0.99 && sig(D.regions[4], 1, 0) > 0.99 && sig(D.regions[3], 1, 1) < 0.01 && sig(D.regions[4], 0, 1) < 0.01 && S.defaultPlanId(T) === 'deepURSx3' && S.defaultPlanId(S.setEnv('seqchoice', { source: 'cycle' })) === 'deepURSx3' && S.DEFAULTS_VERSION >= 27, 'v34 (R44): deepURSx3 default; deep context areas grow with the clock, repressed by the outcome');
   console.log('v34 deepURSx3 default (deep context, outcome-repressed): ok'); }
-{ const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3.make(), O = S.PLANS.deepURSx3v34.make();
-  assert.ok(D.regions.every(R => R.g.pl.predErr === 0.3 && R.g.pl.peMode === 16 && R.g.pl.peFix === 0.01) && O.regions.every(R => !R.g.pl.predErr) && D.regions.length === O.regions.length && S.PARAM_DEFAULTS && S.DEFAULTS_VERSION === 28 && S.APP_VERSION === 'v35', 'v35 (R53): deepURSx3 = v34 plan + hybrid prediction-miss LTD in every area');
-  const E = S.setEnv('seq', S.recommendedEnvParams('seq', { source: 'text' }, ['source'])); assert.ok(S.defaultPlanId(E) === 'deepURSx3', 'v35 text default plan');
-  console.log('v35 deepURSx3 + hybrid prediction-miss LTD (predErr 0.3, peMode 16, peFix 0.01): ok'); }
+{ const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3v35.make(), O = S.PLANS.deepURSx3v34.make();
+  assert.ok(D.regions.every(R => R.g.pl.predErr === 0.3 && R.g.pl.peMode === 16 && R.g.pl.peFix === 0.01 && !R.g.pl.metaCap) && O.regions.every(R => !R.g.pl.predErr) && D.regions.length === O.regions.length, 'v35 (R53, kept as deepURSx3v35): v34 plan + hybrid prediction-miss LTD in every area');
+  console.log('v35 deepURSx3v35 + hybrid prediction-miss LTD (predErr 0.3, peMode 16, peFix 0.01): ok'); }
+{ const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3.make(), O = S.PLANS.deepURSx3v35.make();
+  assert.ok(D.regions.every((R, i) => R.g.pl.predErr === 0 && R.g.pl.metaCap === 200 && R.g.pl.peMode === 16 && R.g.pl.peFix === 0.01 && R.g.pl.metaN === O.regions[i].g.pl.metaN) && D.regions.length === O.regions.length && S.PARAM_DEFAULTS && S.DEFAULTS_VERSION === 29 && S.APP_VERSION === 'v36', 'v36 (R62): deepURSx3 = v35 plan with predErr 0 + metaCap 200');
+  const E = S.setEnv('seq', S.recommendedEnvParams('seq', { source: 'text' }, ['source'])); assert.ok(S.defaultPlanId(E) === 'deepURSx3' && E.P.readIn === 0.01, 'v36 text default plan + graded decoder');
+  console.log('v36 deepURSx3 (predErr 0, metaCap 200) + seq graded decoder readIn 0.01: ok'); }
 console.log('ALL OK');

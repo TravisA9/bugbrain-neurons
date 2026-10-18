@@ -2461,3 +2461,37 @@ I45 rejected; I62 testing (q41); new I66; questions Q22 answered (q30: no), Q26 
 - perf/quickwins merged by hand (6cc36f2 + 1fe750d; applied cleanly next to the R52/R53 net.js changes): precomputed receiver flag in propagateRcv, fused trace loops, reused cone guidance arrays, index loops in the teacher rule; engine.race successive halving over growths in run/runner.js (off unless 0 < engine.race < 1); per-growth scores in evaluateGenome; perf/ tools (verify.js etc.), which s12_race075_s1..s5 require.
 - Bit-identity checks (box, node): fixed-seed fingerprints (growth W hash, final weight hash, fitness) for text / order3 / fables / order2@1000 / bandit x seeds 11, 23 are identical before and after the perf merge for deepURSx3 (v35) and deepURSx3v34 (20/20); deepURSx3v34 on the new code equals deepURSx3 on the old worker code e0cd6da (10/10); r42 reproduces R53 chunks (v35 text3000 g0-3 8.01 7.83 7.74 7.89; deepURSx3 + pl.predErr=0 order3 g0-3 = v34 base 8.47 8.90 9.47 8.32, so the s01-s03 "v34 baseline (predErr 0)" jobs stay valid on v35 code). run/selftest.js ALL OK; runner smoke with engine.race 0.75 (race075_s1 config) OK.
 - Not synced on purpose: run/dq.js and run/queue.js stay as on the branch (box queue.js would self-refill inside non-phone dq scratch queues); run/refill.js, run/dashdata.js (PC/local only).
+
+## R62 — why v35 is a weak learner on real text (book), and v36 (box, Oct 17 evening; adopted as v36 / 29, Travis approved)
+Diagnosis on book (24 symbols, held-out eval 2000; tools run/r62_rec.js / r62_ana.js / r62_out.js; data and notes results_box/r62/NOTES.md):
+- Learning curve (v35, 8 growths): 3k 0.289, 10k 0.279, 30k 0.230, 100k 0.149. Longer lives are worse; train ~ held-out (no memorising).
+- Oracle (softmax readout fit offline on recorded states): current / 1-back / 2-back letters decode at 0.97-1.0. Next letter from the 480
+  current-symbol cells (the plastic inputs) 0.39-0.40 at 10k, 30k and 100k (bigram 0.31-0.32, 3-gram 0.43) vs the brain's 0.31 / 0.26 / 0.18.
+  **The bottleneck is the learning rule / readout, not the representation** (up to ~3-gram).
+- Mixing (letter-pair) cells: ~98k distinct codes for 410 pairs (H(code|pair) 9.3 bits); next-letter readout from them only 0.19-0.23.
+- Decoder: 28-33% of held-out predictions were tied read-window counts (scored wrong); random tie-break would add ~0.05.
+- Long-life decline: the metaplastic potentiation scale metaN / (metaN + E) shrinks to 0 as E (potentiation received, never decays) grows,
+  while the prediction-miss LTD is not scaled, so weights sink and the output read-window firing fades (5.9 -> 2.7 spikes).
+Fixes (8-growth screens, then 16 held-out growths): graded decoder readIn 0.01 (+0.02-0.045 everywhere), predErr 0 (book30k +0.05),
+new pl.metaCap (cap on E; off by default, bit-identical when off). metaN 0 helps text most (book 0.34) but order3 0.87 (harm); metaN 400 order3 0.92;
+peMode 18 no effect; rcvHomeo 0.2 book30k 0.15 (harm); mixHomeo 0.05 small (+0.012 order3, ~0 book).
+
+16 growths, paired vs v35 (all arms readIn 0.01):
+
+| task | v35 | B: predErr 0 | **C: + metaCap 200 (v36)** | D: C + mixHomeo 0.05 |
+|---|---|---|---|---|
+| book30k | 0.229 | 0.299 | **0.313** (+0.084, 16/0) | 0.313 |
+| book10k | 0.271 | 0.308 | **0.316** (+0.046, 16/0) | 0.313 |
+| fables4000 | 0.300 | 0.327 | 0.330 (16/0) | 0.328 |
+| fables2000 | 0.288 | 0.315 | 0.317 (16/0) | 0.313 |
+| order3 | 0.904 | 0.953 | 0.954 (15/1) | 0.965 |
+| text1000 | 0.745 | 0.754 | 0.753 (13/2) | 0.751 |
+| order2@1000 clock2+3 | 0.996 | 0.996 | 0.996 | 0.996 |
+(order2@1000 without clocks is ~0.03 for every arm.) 100k life with readIn + predErr 0: 0.298 (v35 0.149).
+
+**v36 (DEFAULTS_VERSION 29):** plan deepURSx3 = v35 plan with pl.predErr 0 and pl.metaCap 200 (peMode / peFix kept, inactive); the seq
+recommend for text / fables / order3 / book adds readIn 0.01 (graded decoder). v35 kept as plan deepURSx3v35 and in legacy/v35; reproduce v35
+numbers with deepURSx3v35 + readIn 0 (fingerprints identical 8/8 on text / order3 / fables / book, 2 seeds; v36 deepURSx3 identical 8/8 to the
+screened arm C). seqchoice also defaults to deepURSx3 and was not in the eval (queued: w26). Remaining gap: v36 ~0.31-0.32 vs the 0.40 linear
+ceiling of its own states; it predicts space 62% of the time (truth 20%). Queue restocked with w13-w26 (size / depth / length under v36,
+output-side space-bias fixes, letter-pair code stability, generation, seqchoice safety).

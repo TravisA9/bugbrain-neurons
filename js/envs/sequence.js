@@ -267,7 +267,8 @@ registerEnv({
   // Text -> two-phase clock (second-order plan predictK2XG) and a 1000-character lifetime (accuracy keeps rising past 200)
   taskKeys: ['source', 'K', 'det'],
   // v21 (round 22): text, fables and order3 -> three-phase clock (two-region third-order plan predictK3, DEFAULTS_VERSION 19)
-  recommend: P => P.source === 'text' ? { clock2: true, clock3: true, nSyms: 1000 } : P.source === 'fables' ? { clock2: true, clock3: true, nSyms: 2000 } : P.source === 'book' ? { clock2: true, clock3: true, nSyms: 10000, evalSyms: 2000 } : P.source === 'order3' ? { clock2: true, clock3: true } : {},
+  recommend: P => P.source === 'text' ? { clock2: true, clock3: true, nSyms: 1000, readIn: 0.01 } : P.source === 'fables' ? { clock2: true, clock3: true, nSyms: 2000, readIn: 0.01 } : P.source === 'book' ? { clock2: true, clock3: true, nSyms: 10000, evalSyms: 2000, readIn: 0.01 } : P.source === 'order3' ? { clock2: true, clock3: true, readIn: 0.01 } : {},
+  // v36 (R62): the three-phase-clock tasks recommend the graded decoder (readIn 0.01: ties between output counts are broken by the outputs' synaptic input; ~30% of book predictions were ties)
   params: {
     source: { value: 'cycle', label: 'Sequence', options: [['cycle', 'Cycle: a random order of the symbols, repeated'], ['markov', 'Markov chain: preferred successor with probability p'],
               ['order2', 'Second-order pattern (successor depends on two symbols)'], ['order3', 'Third-order pattern (successor depends on three symbols)'], ['text', 'Text corpus (19 characters)'], ['fables', 'Fables: larger text corpus (4270 characters, 24 symbols)']] },

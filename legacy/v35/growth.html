@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>How the brain grows — Spiking Arena</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg:#14161a; --panel:#1d2026; --fg:#dde1e7; --dim:#8a919c; --acc:#5fb3ff; --ok:#4cd964; --warm:#ffb347; --bad:#ff6b6b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.55 system-ui, sans-serif; }
+  header { position: sticky; top: 0; background: #181b20ee; border-bottom: 1px solid #2a2e36; padding: 8px 18px; display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; z-index: 2; }
+  header h1 { font-size: 17px; margin: 0; } header a { color: var(--acc); text-decoration: none; font-size: 13px; } header nav { display: flex; gap: 10px; flex-wrap: wrap; }
+  main { max-width: 900px; margin: 0 auto; padding: 10px 18px 60px; }
+  section { background: var(--panel); border: 1px solid #2a2e36; border-radius: 8px; padding: 14px 20px; margin: 18px 0; }
+  h2 { font-size: 19px; margin: 4px 0 8px; color: #fff; } h2 small { color: var(--dim); font-weight: normal; font-size: 13px; }
+  p { margin: 8px 0; } ul { margin: 6px 0; padding-left: 22px; } li { margin: 3px 0; }
+  code { background: #2a2e36; border-radius: 3px; padding: 0 4px; font-size: 13px; }
+  .bio { color: var(--warm); font-size: 13.5px; border-left: 3px solid var(--warm); padding-left: 10px; margin: 10px 0 4px; }
+  .fig { display: flex; justify-content: center; margin: 10px 0; } svg { max-width: 100%; height: auto; }
+  svg text { fill: var(--fg); font: 12px system-ui, sans-serif; } svg .dim { fill: var(--dim); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin-top: 8px; }
+  th, td { border-bottom: 1px solid #2f343d; padding: 5px 6px; text-align: left; vertical-align: top; } th { color: var(--dim); font-weight: 600; }
+  .on { color: var(--ok); } .off { color: var(--dim); }
+</style>
+</head>
+<body>
+<header>
+  <h1>How the brain grows</h1>
+  <nav><a href="#idea">1 idea</a><a href="#genome">2 genome</a><a href="#morph">3 morphogens</a><a href="#cells">4 cells</a><a href="#axons">5 axons</a>
+  <a href="#topo">6 columns</a><a href="#troph">7 hunger</a><a href="#tune">8 tuning</a><a href="#learn">9 learning</a><a href="#plans">10 default plans</a></nav>
+  <a href="index.html">← back to the arena</a> · <a href="viewer.html">🌱 Watch a brain grow in the growth viewer</a> (timeline, morphogens, axons, synapses, click any cell)
+</header>
+<main>
+
+<section id="idea">
+  <h2>1 · The idea</h2>
+  <p>Nobody wires these brains by hand and nothing is trained by backpropagation. A brain is <b>grown</b>: a few seed cells in a flat sheet of tissue
+  divide, choose what to become, send out axons and make synapses. Every cell follows the same rules (one genome) and only uses what it can sense
+  locally: chemicals, its own genes, the cells its growth cone touches.</p>
+  <p>The grown network is then a population of spiking neurons (leaky integrate-and-fire, 4 substeps per tick). During its <b>lifetime</b> it
+  learns with local rules: a synapse only uses the activity of its two cells plus a broadcast signal (dopamine or a teacher input).
+  Evolution can change the genome; the hand-made <i>body plans</i> are genomes written by us as starting points.</p>
+  <div class="fig"><svg viewBox="0 0 760 90" width="760">
+    <g font-size="12">
+      <rect x="5" y="25" width="110" height="40" rx="6" fill="#2a3f5a"/><text x="60" y="50" text-anchor="middle">genome (DNA)</text>
+      <rect x="160" y="25" width="140" height="40" rx="6" fill="#2a4a3a"/><text x="230" y="44" text-anchor="middle">development</text><text x="230" y="58" text-anchor="middle" class="dim">40 steps, local rules</text>
+      <rect x="345" y="25" width="120" height="40" rx="6" fill="#4a3a2a"/><text x="405" y="44" text-anchor="middle">spiking network</text><text x="405" y="58" text-anchor="middle" class="dim">neurons + synapses</text>
+      <rect x="510" y="25" width="120" height="40" rx="6" fill="#4a2a44"/><text x="570" y="44" text-anchor="middle">lifetime learning</text><text x="570" y="58" text-anchor="middle" class="dim">local plasticity</text>
+      <text x="700" y="50" text-anchor="middle">behaviour</text>
+      <g stroke="#8a919c" stroke-width="2" marker-end="url(#ar)"><line x1="117" y1="45" x2="156" y2="45"/><line x1="302" y1="45" x2="341" y2="45"/><line x1="467" y1="45" x2="506" y2="45"/><line x1="632" y1="45" x2="665" y2="45"/></g>
+      <path d="M570 23 C 520 0, 140 0, 70 22" fill="none" stroke="#ffb347" stroke-dasharray="4 3" marker-end="url(#ar2)"/><text x="320" y="12" text-anchor="middle" style="fill:#ffb347">evolution (optional): fitter genomes are kept and mutated</text>
+    </g>
+    <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8a919c"/></marker>
+      <marker id="ar2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#ffb347"/></marker></defs>
+  </svg></div>
+</section>
+
+<section id="genome">
+  <h2>2 · One genome in every cell <small>gene regulatory network</small></h2>
+  <p>Each cell carries an expression state of 10 genes. Every developmental step it updates them from what it senses:
+  <code>s = tanh(Wg · [7 local chemicals, s, developmental time, 1])</code>. A second matrix turns the genes into 46 <b>cell decisions</b>,
+  <code>o = sigmoid(R · [s, 1])</code>: divide, die, migrate, emit a signal, become a neuron and grow an axon, be inhibitory, threshold,
+  slow (memory) membrane, plastic output, receptive to plastic input, address and seek tags, guidance preferences, axon shape
+  (collaterals, bifurcation, projection), topographic label, claw or mixing dendrites.</p>
+  <p>Same genome, different place → different chemicals → different genes on → different cell types. The matrices Wg and R <i>are</i> the genome
+  (plus some cell-scale numbers such as the tissue size or the synaptic budgets).</p>
+  <div class="fig"><svg viewBox="0 0 760 150" width="760">
+    <rect x="10" y="20" width="150" height="110" rx="8" fill="#22303f"/><text x="85" y="40" text-anchor="middle">what the cell senses</text>
+    <text x="22" y="62">• 7 chemicals here</text><text x="22" y="80">• its own genes s</text><text x="22" y="98">• developmental time</text><text x="22" y="116" class="dim">• (constant 1)</text>
+    <rect x="260" y="35" width="160" height="80" rx="40" fill="#2a4a3a"/><text x="340" y="70" text-anchor="middle">10 genes</text><text x="340" y="88" text-anchor="middle" class="dim">s = tanh(Wg · …)</text>
+    <path d="M405 40 q 40 -35 0 -10" fill="none" stroke="#4cd964" marker-end="url(#ar3)"/><text x="440" y="26" class="dim">feedback</text>
+    <rect x="520" y="10" width="235" height="130" rx="8" fill="#3d2f22"/><text x="637" y="30" text-anchor="middle">46 decisions o</text>
+    <text x="530" y="50">divide · die · migrate</text><text x="530" y="68">neuron? inhibitory? threshold</text><text x="530" y="86">tags T (who I am), S (whom I seek)</text><text x="530" y="104">guidance: attract / repel</text><text x="530" y="122">axon shape, column, plastic…</text>
+    <g stroke="#8a919c" stroke-width="2"><line x1="162" y1="75" x2="256" y2="75" marker-end="url(#ar3)"/><line x1="422" y1="75" x2="516" y2="75" marker-end="url(#ar3)"/></g><text x="468" y="68" text-anchor="middle" class="dim">R</text>
+    <defs><marker id="ar3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8a919c"/></marker></defs>
+  </svg></div>
+  <p class="bio">Biology: every cell has the same DNA; cell types arise from transcription-factor networks reading positional signals.</p>
+</section>
+
+<section id="morph">
+  <h2>3 · Morphogens: where am I? <small>sources and gradients</small></h2>
+  <p>Seven chemicals give each position an address. Fixed sources: <b>midline</b>, <b>anterior</b> (front edge), <b>sensor cue</b> (emitted by the
+  environment's sensors), <b>motor cue</b> (emitted by the output cells) and a <b>central zone</b> stripe. Two more, <b>signal A and B</b>, are emitted by
+  cells themselves (as much as their genes say) and diffuse and decay on the grid; their decay lengths are genes.</p>
+  <p>Layers come from thresholds on a gradient: in the prediction plans, <i>staircase genes</i> switch on sharply where the anterior signal crosses a
+  set value, so the sheet is cut into bands, one cell type per band (memory M, previous-symbol memory M2, resets, conjunctive C, mixing G,
+  prediction P).</p>
+  <div class="fig"><svg viewBox="0 0 800 170" width="800">
+    <defs><linearGradient id="gr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fb3ff" stop-opacity=".9"/><stop offset="1" stop-color="#5fb3ff" stop-opacity=".05"/></linearGradient></defs>
+    <rect x="20" y="10" width="300" height="150" fill="url(#gr)" stroke="#444"/><text x="170" y="26" text-anchor="middle">front edge: anterior source</text>
+    <line x1="170" y1="10" x2="170" y2="160" stroke="#ffb347" stroke-dasharray="4 3"/><text x="176" y="155" style="fill:#ffb347">midline</text>
+    <g font-size="11"><text x="330" y="22">sensors (inputs)</text><text x="330" y="160">outputs (motor / prediction)</text></g>
+    <g transform="translate(440,18)">
+      <text x="0" y="0" class="dim">anterior level → staircase genes → bands</text>
+      <rect x="0" y="10" width="280" height="18" fill="#2a3f5a"/><text x="6" y="23">M: memory of the current symbol</text>
+      <rect x="0" y="30" width="280" height="10" fill="#4a3a2a"/><text x="286" y="39" class="dim">X / R resets, gates</text>
+      <rect x="0" y="42" width="280" height="14" fill="#33415a"/><text x="6" y="53">M2: previous symbol</text>
+      <rect x="0" y="58" width="280" height="30" fill="#2a4a3a"/><text x="6" y="77">C: conjunctive (current × previous)</text>
+      <rect x="0" y="90" width="280" height="22" fill="#4a2a44"/><text x="6" y="105">G: mixing cells</text>
+      <rect x="0" y="114" width="280" height="30" fill="#5a4a2a"/><text x="6" y="133">P: prediction columns</text>
+    </g>
+  </svg></div>
+  <p class="bio">Biology: morphogen gradients (e.g. Bicoid, Shh) and threshold-reading genes ("French flag") pattern embryos into stripes and layers.</p>
+</section>
+
+<section id="cells">
+  <h2>4 · Cells divide, choose a fate, die</h2>
+  <ul>
+    <li><b>Division</b>: a proliferation gene driven by developmental time ("clock") lets seed cells divide while it is on; daughters land next to the mother (up to a cell budget).</li>
+    <li><b>Fate</b>: once a cell becomes a neuron it fixes its type: excitatory or inhibitory, threshold, membrane leak (slow cells hold memory), plastic or not.</li>
+    <li><b>Death</b>: a DIE gene removes cells where they are not wanted (e.g. the top band). After wiring, receptive cells that got no sensory (instructive)
+      input die (<i>afferent-dependent survival</i>), and neurons starved of trophic factor die (section 7).</li>
+  </ul>
+  <p class="bio">Biology: proliferation windows, fate commitment, programmed cell death; in the vertebrate nervous system about half of the neurons made die again.</p>
+</section>
+
+<section id="axons">
+  <h2>5 · Axons find their partners <small>tags and guidance</small></h2>
+  <p>A neuron's <b>growth cone</b> climbs (or descends) the chemical mix its genes chose: positive guidance weights attract, negative repel.
+  Each cell shows an <b>address tag</b> T ("who I am", 8 numbers) and its axon carries a <b>seek tag</b> S. When the cone touches a neuron, a synapse forms with
+  strength ∝ <code>S_pre · T_post</code>; no match, no synapse.</p>
+  <ul>
+    <li><b>Midline rule</b>: after an axon crosses the midline its midline attraction turns into repulsion, so it does not cross back. <i>Commissural</i> axons make no synapses before crossing.</li>
+    <li><b>Collaterals</b>: up to 4 short local side branches (gene COLL, length CLEN).</li>
+    <li><b>Bifurcation</b>: the axon rises, then splits into two branches running left and right through a whole layer, synapsing all the way
+      (<i>parallel fibres</i>); a delayed split happens only where a signal is high enough.</li>
+    <li><b>Projection axons</b> synapse only on outputs. Axons that found nothing may keep growing (<i>growth until satisfied</i>).</li>
+  </ul>
+  <div class="fig"><svg viewBox="0 0 760 170" width="760">
+    <line x1="350" y1="5" x2="350" y2="165" stroke="#ffb347" stroke-dasharray="4 3"/><text x="356" y="16" style="fill:#ffb347">midline</text>
+    <circle cx="120" cy="40" r="9" fill="#5fb3ff"/><text x="60" y="30">neuron (S = seek)</text>
+    <path d="M120 49 C 160 90, 300 70, 350 90 C 400 105, 440 110, 500 120" fill="none" stroke="#5fb3ff" stroke-width="2"/>
+    <path d="M440 112 l 8 -4 l -3 8" fill="#5fb3ff"/><text x="380" y="140" class="dim">crossed: midline now repels</text>
+    <circle cx="510" cy="122" r="9" fill="#4cd964"/><text x="525" y="126">target (tag T matches S)</text>
+    <circle cx="200" cy="140" r="7" fill="#ff6b6b"/><text x="150" y="160" class="dim">non-matching tag: no synapse</text>
+    <circle cx="600" cy="30" r="8" fill="#c08fff"/><line x1="600" y1="38" x2="600" y2="70" stroke="#c08fff" stroke-width="2"/>
+    <line x1="530" y1="70" x2="690" y2="70" stroke="#c08fff" stroke-width="2"/><text x="560" y="90">bifurcation: parallel fibres</text>
+  </svg></div>
+  <p class="bio">Biology: netrin / robo (midline crossing, robo3 for commissural axons), ephrin / Eph and cell-adhesion codes (partner matching),
+    cerebellar granule cells (T-shaped parallel fibres).</p>
+</section>
+
+<section id="topo">
+  <h2>6 · Topographic columns and claws</h2>
+  <p>Cells with the TOPO gene keep a positional label (their x position when they became neurons, or, with <i>input instruction</i>, the label of the
+  nearest input channel). Synapses between labelled cells are scaled by <code>exp(−(Δlabel / topoW)²)</code>, so the input for symbol <i>i</i>,
+  the memory cells under it and output <i>i</i> form a <b>column</b>, for any number of symbols. The learnable (plastic) projections ignore labels:
+  they cross all columns.</p>
+  <p><b>Claw cells</b> (conjunctive layer C) receive their own column's input plus parallel fibres from all previous-symbol columns, but keep the fibres of
+  only <b>one</b> randomly chosen column. With a fast membrane and a small input budget they fire only for one pair (previous j, current i).
+  <b>Mixing cells</b> (G) keep the inputs of only a few random C cells (4) of their column: sparse codes for combinations.</p>
+  <div class="fig"><svg viewBox="0 0 780 120" width="780">
+    <g font-size="11">
+      <g fill="#5fb3ff"><circle cx="80" cy="15" r="6"/><circle cx="180" cy="15" r="6"/><circle cx="280" cy="15" r="6"/></g>
+      <g fill="#2a3f5a" stroke="#5fb3ff"><rect x="65" y="30" width="30" height="20"/><rect x="165" y="30" width="30" height="20"/><rect x="265" y="30" width="30" height="20"/></g>
+      <g fill="#5a4a2a" stroke="#ffb347"><rect x="65" y="85" width="30" height="20"/><rect x="165" y="85" width="30" height="20"/><rect x="265" y="85" width="30" height="20"/></g>
+      <g stroke="#5fb3ff"><line x1="80" y1="21" x2="80" y2="30"/><line x1="180" y1="21" x2="180" y2="30"/><line x1="280" y1="21" x2="280" y2="30"/><line x1="80" y1="50" x2="80" y2="85"/><line x1="180" y1="50" x2="180" y2="85"/><line x1="280" y1="50" x2="280" y2="85"/></g>
+      <line x1="40" y1="68" x2="320" y2="68" stroke="#c08fff" stroke-dasharray="3 2"/><text x="326" y="72" style="fill:#c08fff">plastic fibres cross all columns</text>
+      <text x="40" y="12">a</text><text x="140" y="12">b</text><text x="240" y="12">c</text><text x="330" y="40">memory columns</text><text x="330" y="98">prediction columns</text>
+      <circle cx="520" cy="60" r="12" fill="#2a4a3a" stroke="#4cd964"/><text x="505" y="90">claw cell</text>
+      <line x1="460" y1="20" x2="512" y2="52" stroke="#5fb3ff"/><text x="420" y="16">own column (current)</text>
+      <line x1="600" y1="20" x2="530" y2="52" stroke="#4cd964" stroke-width="2"/><line x1="640" y1="30" x2="532" y2="56" stroke="#555" stroke-dasharray="3 3"/><line x1="650" y1="50" x2="533" y2="60" stroke="#555" stroke-dasharray="3 3"/>
+      <text x="560" y="14">keeps ONE previous column</text><text x="600" y="72" class="dim">others dropped</text>
+    </g>
+  </svg></div>
+  <p><b>Own-column reset (v19, plan predictK2XO):</b> inhibitory claw cells (the X2 cells that erase the previous-symbol memory M2 at the start of each slot)
+    keep their <i>own</i> column instead of a balanced pick. Each column's reset cell is then driven by its own symbol and silences exactly its own memory column;
+    before, about half of the 24 memory columns of a text brain were never loaded or never cleared. Text accuracy rose from 0.71 to 0.76.</p>
+  <p class="bio">Biology: retinotopic / barrel maps (ephrin gradients, thalamic instruction); cerebellar granule-cell claws with 4–5 mossy-fibre inputs;
+    Kenyon cells of the insect mushroom body with a few random inputs each.</p>
+</section>
+
+<section id="troph">
+  <h2>7 · Hunger and trophic signals</h2>
+  <ul>
+    <li><b>Neurotrophic competition</b>: outputs release a fixed amount of trophic factor. It is shared among their inputs by synaptic weight and passed
+      back up the chain (hidden targets add a little of their own). Neurons that receive too little die: no useful output, no survival.</li>
+    <li><b>Hunger</b> (gene, used by plan v3h): an output with too few inputs, or a sensor with too few targets, builds up a "need". Needy outputs emit an
+      attractant that pulls growing excitatory axons, and tag matching is relaxed in proportion to the need, so no output stays orphaned.</li>
+    <li><b>Request</b> (optional): spontaneous sensor activity during growth marks the cells it reaches; a little later the paired outputs call for them.</li>
+    <li><b>Connection demand</b> (v27, default in <code>predictK3</code> and <code>rewardE</code>): an output with fewer than 3 excitatory inputs releases an
+      attractant in proportion to how many it is still missing. It spreads and fades with distance, so nearby growing excitatory axons turn towards it.
+      It only attracts: tag matching is not relaxed, so an axon still needs the right partner tag. A sensor still short of targets, or an axon that has found
+      no partner while some output is still in demand, grows one stretch further. The signal switches off by itself once the output is satisfied.
+      Demand is kept apart from the other signals: spontaneous activity during growth (request), prediction errors (teacher plateau), reward (dopamine)
+      and activity balance (homeostasis). In R28, demand raised output coverage with 6 bandit arms from 72% to 94% and left no orphan outputs. No task got worse.</li>
+  </ul>
+  <p class="bio">Biology: neurotrophins (NGF, BDNF) from targets keep innervating neurons alive; target-derived attractants (netrin-like chemoattraction by uninnervated targets, which stops once innervation is complete).</p>
+</section>
+
+<section id="tune">
+  <h2>8 · Tuning the grown circuit</h2>
+  <ul>
+    <li><b>Synaptic scaling</b>: each neuron scales its excitatory (and inhibitory) inputs from hidden cells to a fixed total (genes normE / normI), so its drive
+      does not depend on how many axons happened to find it. Claw and mixing cells have their own budgets (clawNorm, clawIn, mixNorm).</li>
+    <li><b>Juvenile phase</b>: spontaneous waves sweep across the sensors. <b>Homeostatic thresholds</b>: each neuron moves its threshold (and scales its inputs)
+      toward a target rate. <b>Hebbian refinement</b>: inputs that reliably make the cell fire are strengthened, rarely co-active ones are pruned.</li>
+    <li><b>Random dendrite selection</b> after growth for claw and mixing cells (section 6).</li>
+  </ul>
+  <p class="bio">Biology: synaptic scaling (Turrigiano), retinal waves before eye opening, activity-dependent pruning ("fire together, wire together").</p>
+</section>
+
+<section id="learn">
+  <h2>9 · Lifetime learning <small>after growth, local rules only</small></h2>
+  <p><b>One rule (v22, the default plans):</b> every plastic synapse changes by <i>dw = lr · M · e</i>. Here e is what the synapse
+    recently did (its eligibility), and M is a third factor that tells the cell whether that was good. Which signal M is depends on the target cell:</p>
+  <ul>
+    <li>A cell contacted by a topographic sensory input gets a local <b>instructive signal</b>, like a cerebellar Purkinje cell with its
+      climbing fibre. When the right answer arrives as strong input to that cell, it enters a short plateau, and that plateau is M. It acts on the
+      fresh eligibility: inputs active just before are strengthened.</li>
+    <li>Every other plastic cell gets the global <b>dopamine</b> reward prediction error (r − V from a critic), like a striatal neuron. It acts on
+      a slowly fading eligibility trace, so it can reach the choice that earned the reward.</li>
+  </ul>
+  <p>The same genes and the same parameter set give teacher-like learning on text and reward learning on the bandit and the cue task.
+    It matches the separate rules within noise: text 0.773 / 0.769, order3 0.970 / 0.968, bandit 0.653 / 0.653, cue 0.855 / 0.855.
+    When the dopamine was also applied to taught cells, text learning collapsed: the instructive signal is the better teacher where one exists.</p>
+  <p>Mechanisms that shape the learning (older plans use them separately):</p>
+  <ul>
+    <li><b>Reward-modulated STDP</b> (bug arena): every plastic synapse keeps an eligibility trace of pre-before-post timing; a global dopamine signal
+      (food +, poison / wall −) turns it into a weight change.</li>
+    <li><b>Teacher-gated plasticity</b> (sequence prediction): the next symbol arrives as input to its own prediction column, putting those cells into a
+      short <i>plateau</i>. Plastic fibres from cells that were active a moment earlier (a lagged trace) onto plateau cells are strengthened: "what was
+      active before b comes, predicts b". Each cell's plastic outputs are normalised to a fixed total, so they become probabilities of what follows.</li>
+    <li><b>Metaplasticity</b> (metaN): a cell's learning step shrinks with the potentiation it already received, so its weights become running counts.</li>
+    <li><b>Learned trust</b> (trustPow): each cell keeps a running score of how much of its output weight lands on the cell that is then taught, and
+      scales its output budget by it: reliable, specific cells outvote vague ones.</li>
+    <li><b>Divisive normalisation</b> (rcvDiv): the plastic input to the prediction layer is divided by its total, so the relatively strongest prediction
+      fires even when all are weak (gain control).</li>
+    <li><b>Adaptive mixing cells</b>: feedforward inhibition (mixInh) from the cells that drive the mixing layer keeps it sparse, and each mixing cell has an
+      <b>intrinsic homeostatic threshold</b> (mixHomeo) that rises after each spike and slowly falls, so it fires rarely but not never.
+      (A competitive Hebbian rule for their inputs, mixLr, exists but did not help.)</li>
+    <li>Optional: <b>post-teacher afterhyperpolarisation</b> (teachAHP): when a column's teacher input ends it is briefly inhibited, so it cannot echo the
+      current symbol into the prediction window (off: it removes the small early echo but does not raise accuracy).</li>
+  </ul>
+  <div class="fig"><svg viewBox="0 0 830 110" width="830">
+    <text x="10" y="18" class="dim">one symbol slot (10 ticks): when the network is taught and when it is read</text>
+    <g font-size="11">
+      <rect x="10" y="30" width="60" height="30" fill="#33415a"/><text x="40" y="50" text-anchor="middle">GO2 GO1</text>
+      <rect x="72" y="30" width="250" height="30" fill="#5a4a2a"/><text x="197" y="50" text-anchor="middle">symbol b shown = teacher for column b</text>
+      <rect x="324" y="30" width="250" height="30" fill="#2a4a3a"/><text x="449" y="50" text-anchor="middle">read window: prediction of the NEXT symbol</text>
+      <text x="10" y="80" class="dim">memory holds b and the previous symbol a; conjunctive cells (a,b) and mixing cells fire; their fibres vote for the next column;</text>
+      <text x="10" y="96" class="dim">when the next symbol c arrives it teaches: the fibres that were active just before c are strengthened.</text>
+    </g>
+  </svg></div>
+  <p class="bio">Biology: dopamine-gated STDP (basal ganglia); climbing-fibre teaching signals and plateau potentials (cerebellum, hippocampus);
+    metaplasticity (BCM); divisive normalisation (cortex); APL / Golgi feedforward inhibition and intrinsic plasticity of Kenyon / granule cells
+    (mushroom body, cerebellar granular layer); the pause after a Purkinje complex spike.</p>
+</section>
+
+<section id="cascade">
+  <h2>10 · A context cascade <small>shift register across regions (v21)</small></h2>
+  <p>To predict the next letter, the brain must know what came before. The text plan (predictK2XO) holds the current symbol (M) and the
+    previous one (M2). M2 is filled by a clock: before each symbol, GO2 clears M2, then GO1 copies M into M2 and clears M.
+    predictK3 extends this into a <b>cascade</b>. A second region, grown by the same gene program, keeps only its front end. Its memory columns
+    receive the cortex's M2 through a topographic tract. A third clock phase, GO3, clears them one tick before GO2, so they hold the symbol
+    <b>two steps back</b> (M3). M3 then projects back to the cortex's mixing cells. Each mixing cell keeps one column of M3 along with its
+    M and M2 inputs, so it responds to a three-symbol context.</p>
+  <p>Result: on a third-order pattern the brain goes past the two-symbol limit (0.75 → 0.97). Cutting the M3 tract brings it back to exactly
+    the two-symbol level. Text improves a little (0.763 → 0.772). There are many more three-symbol contexts than mixing cells, so coverage is the limit.</p>
+  <p class="bio">Biology: delay lines and sequential memory buffers (prefrontal persistent activity, hippocampal time cells, songbird HVC chains);
+    clock-gated transfer is like theta-phase-locked updating of working memory.</p>
+</section>
+
+<section id="regions">
+  <h2>11 · Regions and tracts <small>a brain of several tissues (v21)</small></h2>
+  <p>A <b>region genome</b> lists regions. Each one has its own gene program, its own inputs and a colour. Each region grows on its own tissue,
+    with its own morphogen gradients, bands, cell types and juvenile activity. This is like the territories that early patterning
+    marks out in the neural tube (forebrain / midbrain / hindbrain), where each territory then develops on its own.
+    <b>Tracts</b> are then laid between regions:</p>
+  <ul>
+    <li><code>topo</code>: column to column, preserving the map, like a thalamocortical projection.</li>
+    <li><code>claw</code>: each mixing cell takes one source column, like mossy fibres onto granule cells.</li>
+    <li><code>all</code>: plastic parallel fibres onto every receiving cell, like corticostriatal fibres.</li>
+  </ul>
+  <p>Axon pathfinding between tissues is not simulated cell by cell. The tract rule names the populations, and the map says how axons pick targets.
+    The result is one network that keeps the env's inputs and outputs. One region carries the outputs and the plasticity genes.
+    In the <a href="viewer.html">viewer</a>, a region selector shows each tissue. The wiring diagram rings every population in its region's colour.</p>
+  <p><b>v30: one genome for every task.</b> The default for text and three-phase sequences, the bandit and random-mapping cue/recall is now
+    <code>unifiedR</code>: a single genome with three areas (cortex, context, striatum). Each area carries receptor genes for two
+    morphogen-like signals read from the task: a multi-phase clock (sequence tasks) and a dopamine/outcome source (reward tasks).
+    Areas whose expression stays low do not develop; so sequence tasks grow cortex + context (= predictK3) and reward tasks grow the
+    striatum (= rewardE). Same brains, same scores (16 held-out growths per task); the difference is that one genome now decides.</p>
+  <p><b>v31: a better reward area.</b> The striatum of <code>unifiedR</code> now grows from <code>rewardE2</code>, re-evolved with two
+    eligibility tags per synapse (a fast one, about 8 steps, and a slow one, about 25 steps, mixed 24:76) and receiver homeostasis.
+    16 held-out growths: bandit and random cue unchanged (6.70 / 10.10 vs 6.69 / 10.17), symbol-to-arm pairings learned from reward
+    much better (seqchoice cycle 6.40 vs 4.55).</p>
+  <p><b>v32: tasks with both signals.</b> When a task brings a dopamine/outcome source, the striatum (rewardE2) now always develops
+    fully and owns the outputs; if it also brings a phase clock, the cortex and context areas develop too, smaller (graded), and feed the
+    striatum through their mixing cells. On seqchoice this beats the striatum alone (cycle 6.78 vs 6.40, order2 5.20 vs 4.52);
+    text, order3, bandit and cue grow exactly the same brains as before.</p>
+  <p><b>v33: an evolved reward area.</b> The striatum of <code>unifiedR</code> now comes from a brain evolved on bandits with 3 and 6 arms
+    and the symbol-to-arm tasks (rewardE3). Only that area was taken over: the whole evolved brain had lost its sequence skills. Bandit with
+    6 arms 5.11 vs 4.31; other tasks unchanged within noise; text and order3 grow the same brains as before.</p>
+  <p>Honest status: predictK3 (cortex + context) is the default for text. The two-region actor-critic (cortex → striatum, rewardKR) is close
+    to the single tissue on the bandit (best arm 0.62 vs 0.65). It is still below on the cue task (0.70 vs 0.86).
+    What made the difference: the cortex now grows its whole gene program, and its action band dies naturally for lack of targets.
+    The earlier version killed that band with a gene, and its state columns came out smaller and less driven.</p>
+</section>
+
+<section id="needgrowth">
+  <h2>12b · Growing where learning fails <small>experimental, off by default (R29)</small></h2>
+  <p>A test of adult neurogenesis. The learning layer keeps a slow average of its own errors: missed predictions for prediction cells,
+    and negative reward-prediction errors for reward cells. When that average stays high, quiet reserve cells mature. Each one takes
+    inputs from the sources that were active just before the errors, sends weak plastic synapses to the layer's targets, and is pruned
+    again if those synapses don't strengthen. A metabolic cost and a cap limit growth. In half-size brains it recovers about a quarter
+    of what text and fables lose, but it doesn't reach the full grown brain, so it stays off.</p>
+</section>
+
+<section id="plans">
+  <h2>12 · What is on in the default plans</h2>
+  <table>
+    <tr><th>mechanism</th><th>bug arena<br><code>v3h</code></th><th>memory tasks<br><code>memoryK</code></th><th>sequence<br><code>predictK</code></th><th>text, three-phase clock<br><code>predictK3</code> (2 regions)</th><th>bandit / cue, random mapping<br><code>rewardE</code> (evolved rewardMemK)</th></tr>
+    <tr><td>genome / gene network, morphogens, division, fate</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td></tr>
+    <tr><td>tags and guidance, midline rule, collaterals</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td></tr>
+    <tr><td>topographic columns (input-instructed)</td><td class="off">–</td><td class="on">on</td><td class="on">on</td><td class="on">on (60×60 tissue)</td><td class="on">on (+ action columns under every output)</td></tr>
+    <tr><td>bifurcating parallel fibres</td><td class="off">–</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td></tr>
+    <tr><td>claw (conjunctive) cells, mixing cells + feedforward inhibition</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td><td class="off">–</td></tr>
+    <tr><td>own-column reset cells (inhibitory claws keep their own column; v19)</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td><td class="off">–</td></tr>
+    <tr><td>multi-region growth + tracts; context cascade (symbol two back; v21)</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td><td class="off">–</td></tr>
+    <tr><td>trophic competition</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td></tr>
+    <tr><td>hunger</td><td class="on">on</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="off">–</td></tr>
+    <tr><td>connection demand (attractant from under-connected outputs; v27)</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td><td class="on">on</td></tr>
+    <tr><td>afferent-dependent survival</td><td class="off">–</td><td class="off">–</td><td class="on">on</td><td class="on">on</td><td class="on">on</td></tr>
+    <tr><td>synaptic scaling (normE / normI)</td><td class="off">–</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="on">on</td></tr>
+    <tr><td>juvenile homeostatic thresholds</td><td class="on">on</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="off">–</td></tr>
+    <tr><td>juvenile Hebbian refinement / pruning</td><td class="on">on</td><td class="on">on</td><td class="on">on</td><td class="off">–</td><td class="on">on</td></tr>
+    <tr><td>reward-modulated STDP (dopamine)</td><td class="on">on</td><td class="off">– (no plastic synapses)</td><td class="off">–</td><td class="off">–</td><td class="on">on (dopamine = reward prediction error)</td></tr>
+    <tr><td>ONE three-factor rule: instructive plateau (taught cells) or dopamine RPE (others) × eligibility (v22)</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td><td class="on">on</td></tr>
+    <tr><td>teacher-gated plasticity + output normalisation</td><td class="off">–</td><td class="off">–</td><td class="on">on</td><td class="on">on</td><td class="off">–</td></tr>
+    <tr><td>metaplasticity, learned trust, divisive normalisation</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td><td class="off">–</td></tr>
+    <tr><td>homeostatic thresholds of mixing cells</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td><td class="off">–</td></tr>
+    <tr><td>competitive Hebbian mixing inputs, post-teacher AHP</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="off">off (available)</td><td class="off">–</td></tr>
+    <tr><td>critic: value cell reading the state columns; dopamine = r − V at each outcome (v20)</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td></tr>
+    <tr><td>exploration: one slow noise source per action column, scaled down where reward is expected (v20)</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td></tr>
+    <tr><td>action selection: competing columns + efference copy of the choice (v20)</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="off">–</td><td class="on">on</td></tr>
+  </table>
+  <p style="color:var(--dim);font-size:13px">"memory tasks" = cue and recall arenas; memoryK holds a symbol in slow self-exciting columns; it has no plastic synapses (evolution tunes it).
+    rewardK / rewardMemK (v20) learn from reward alone (the default, rewardE, is rewardMemK with gene values tuned by evolution), within one lifetime: state columns (relays, or working memory reset by GO) → plastic parallel fibres → competing action columns, like the basal ganglia; the critic is like the striatal value neurons that drive dopamine.
+    Details and measurements: README.md and RESULTS.md.</p>
+  <p>To see all of this happen step by step for any plan, open the <a href="viewer.html">growth viewer</a>: scrub the timeline, toggle each morphogen, follow growth cones, and click a cell to see its genes, tags, partners and lineage.</p>
+</section>
+</main>
+</body>
+</html>
