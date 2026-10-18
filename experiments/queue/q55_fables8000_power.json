@@ -1,0 +1,71 @@
+{
+  "id": "q55_fables8000_power",
+  "title": "More power on the second-pass fables test: v34, v35, predErr 0.1, 0.2 on fables8000 growths 24-39 (n16 each)",
+  "question": "Q33",
+  "track": "neuro",
+  "priority": 1.1,
+  "kind": "runs",
+  "estHours": 0.89,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "16",
+        "pl.predErr=0",
+        "24"
+      ],
+      "label": "v34(predErr0) fables8000 g24",
+      "env": {
+        "BB_OUT": "results/r60/q55_fables8000_power.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "16",
+        "base",
+        "24"
+      ],
+      "label": "v35 fables8000 g24",
+      "env": {
+        "BB_OUT": "results/r60/q55_fables8000_power.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "24"
+      ],
+      "label": "v35 predErr 0.1 fables8000 g24",
+      "env": {
+        "BB_OUT": "results/r60/q55_fables8000_power.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "24"
+      ],
+      "label": "v35 predErr 0.2 fables8000 g24",
+      "env": {
+        "BB_OUT": "results/r60/q55_fables8000_power.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "paired"
+  },
+  "note": "R60 (Oct 17 evening queue review). fables8000 shows the largest v35 loss (-0.088, n16); tighten the estimate for the default decision."
+}

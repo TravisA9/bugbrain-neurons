@@ -732,14 +732,15 @@
       "area": "learning",
       "title": "World model: taught cells predict their next input; mismatch (spike without teacher plateau) depresses inputs (pl.predErr)",
       "status": "adopted",
-      "evidence": "q27 (16 held-out growths, means; unpaired t): predictK3 order3 8.53 -> 8.82 (0.05, t~1.7) / 8.75 (0.15) / 8.16 (0.3); text 7.26 -> 7.21 / 7.13 / 6.98 (dose-dependent loss, t -0.9/-1.8/-3.3); unifiedR seqchoice order2@1000 5.85 -> 5.74 (0.1) / 4.41 (0.3). Not adopted. Hint on order3 only at small rates -> q29 retests 0.02/0.05 on the v34 deep plan with 32 paired growths | R50 q29 (deepURSx3, 32 paired growths, base -> 0.02 / 0.05): text3000 7.79 -> 7.86 / 8.10 (t 2.8 / 11.8), order3 9.00 -> 9.25 / 9.35 (t 3.5 / 4.6), text1000 7.37 -> 7.36 / 7.49 (t -0.3 / 4.3), but fables2000 2.94 -> 2.77 / 2.31 (t -5.9 / -18.2, 0/32 wins at 0.05; accuracy already lower in the first quarter 0.221 -> 0.160). Not adoptable (fables). Gains still rising at 0.05 -> q35 doses 0.1/0.2; q36 with depth; I64 gate for the fables loss; held-out p01/p03, fables dose p04 on the shared queue | R52/R53: soft-bound and hybrid rules (pl.peMode 1 / 16, pl.peFix) remove the fables loss; hybrid predErr 0.3, peMode 16, peFix 0.01 on deepURSx3, 32 paired held-out growths: fables -0.007 (t -0.7), text3000 +0.164 (t 11.7), order3 +0.085 (t 2.5), text1000 +0.086 (t 6.6), order2@1000 +0.23 (t 1.2), text5000 +0.236 (t 8.1, n 16). ADOPTED v35 (DEFAULTS_VERSION 28) after Travis's approval (Oct 17)",
+      "evidence": "q27 (16 held-out growths, means; unpaired t): predictK3 order3 8.53 -> 8.82 (0.05, t~1.7) / 8.75 (0.15) / 8.16 (0.3); text 7.26 -> 7.21 / 7.13 / 6.98 (dose-dependent loss, t -0.9/-1.8/-3.3); unifiedR seqchoice order2@1000 5.85 -> 5.74 (0.1) / 4.41 (0.3). Not adopted. Hint on order3 only at small rates -> q29 retests 0.02/0.05 on the v34 deep plan with 32 paired growths | R50 q29 (deepURSx3, 32 paired growths, base -> 0.02 / 0.05): text3000 7.79 -> 7.86 / 8.10 (t 2.8 / 11.8), order3 9.00 -> 9.25 / 9.35 (t 3.5 / 4.6), text1000 7.37 -> 7.36 / 7.49 (t -0.3 / 4.3), but fables2000 2.94 -> 2.77 / 2.31 (t -5.9 / -18.2, 0/32 wins at 0.05; accuracy already lower in the first quarter 0.221 -> 0.160). Not adoptable (fables). Gains still rising at 0.05 -> q35 doses 0.1/0.2; q36 with depth; I64 gate for the fables loss; held-out p01/p03, fables dose p04 on the shared queue | R52/R53: soft-bound and hybrid rules (pl.peMode 1 / 16, pl.peFix) remove the fables loss; hybrid predErr 0.3, peMode 16, peFix 0.01 on deepURSx3, 32 paired held-out growths: fables -0.007 (t -0.7), text3000 +0.164 (t 11.7), order3 +0.085 (t 2.5), text1000 +0.086 (t 6.6), order2@1000 +0.23 (t 1.2), text5000 +0.236 (t 8.1, n 16). ADOPTED v35 (DEFAULTS_VERSION 28) after Travis's approval (Oct 17). R60 caveat: on long NON-repeating text the v35 dose costs memory: fables4000 -0.018 (t -2.5, n 64), fables8000 -0.088 (t -6.7, 0/16), fables12000 -0.14 (n 4), while text10000 gains +0.36 (t 26.8); see I70",
       "why": "step 1 of the world-model roadmap; local error-driven rule, no backprop",
       "rounds": [
         "q27",
         "R45",
         "R50",
         "R52",
-        "R53"
+        "R53",
+        "R60"
       ],
       "theme": "world model",
       "parents": [
@@ -750,12 +751,13 @@
       "id": "I48",
       "area": "memory",
       "title": "Slow context layers: chain of increasingly slow recurrent/adaptive cells summarising the layer below",
-      "status": "partial",
-      "evidence": "R43: slow-membrane modules (mixLeak by position) neutral at x2, harmful at x4; depth as a chained shift register (deepK3, I54) works instead; R52: slow context region (symbol-driven, slowLeak 0.98, wIn 2, claw -> mixing; plan slowS98w2) 32 paired growths: text3000 +0.11/+0.14 (t 5.0/6.7), text1000 +0.09/+0.10, order3 0, fables -0.03/-0.04 (t -1.9/-2.5); slower (0.995) or stronger (wIn 4) layers wreck order3 (-1.73)",
+      "status": "rejected",
+      "evidence": "R43: slow-membrane modules (mixLeak by position) neutral at x2, harmful at x4; depth as a chained shift register (deepK3, I54) works instead; R52: slow context region (symbol-driven, slowLeak 0.98, wIn 2, claw -> mixing; plan slowS98w2) 32 paired growths: text3000 +0.11/+0.14 (t 5.0/6.7), text1000 +0.09/+0.10, order3 0, fables -0.03/-0.04 (t -1.9/-2.5); slower (0.995) or stronger (wIn 4) layers wreck order3 (-1.73). R60: slowS98w2+PE text1000 +0.065 (t 3.8), text3000 +0.099 (t 6.0), order3 0, fables2000 -0.014, but fables4000 -0.046 (t -2.3); slowS995w2 / slowS98w4 + PE on fables4000 -0.081 / -0.091 (t -6.4 / -7.1). Slow layers help only the looping text -> rejected for long memory",
       "why": "gives 'where it came from' state for long non-repeating sequences",
       "rounds": [
         "R43",
-        "R52"
+        "R52",
+        "R60"
       ],
       "theme": "memory",
       "parents": [
@@ -902,12 +904,13 @@
       "area": "memory",
       "title": "Memory depth x life length: deeper chains (deepURSx6/x8) pay off only with long lives (text 3000/5000, fables 5000) and bigger alphabets (order3 K12/16)",
       "status": "mixed",
-      "evidence": "R44: depth gain grows x2->x4 on text 1000 (+0.07/+0.10/+0.14) but fables 2000 only +0.02; box smoke 1 growth: x6/x8 text 1000 7.38/7.42 vs x3 7.34. q28, q32 (16 growths, paired with R44 seeds) | R50 q28/q32 (16 paired growths vs deepURSx3): text gains grow with depth and life: text5000 x4/x6/x8 +0.05/+0.15/+0.21 (t 1.6/4.3/6.4, x8 15/16 wins), text3000 +0.03/+0.12/+0.17 (t 0.9/3.8/5.1), text1000 x6/x8 +0.05/+0.11 (t 1.2/2.6); but fables loses: fables5000 x6/x8 -0.03/-0.06 (t -2.9/-4.1), fables2000 x8 -0.09 (t -6.3); order3 x6/x8 -0.08/-0.26 (n.s.). order3 K12/K16 is at ceiling for every plan (9.81-9.89, last quarter 1.0) -> uninformative. Depth is a text-only win; not adoptable as a default. Held-out p06/p07 on the shared queue; q36 tests depth + predErr | shared p06/p07 (g16-31): x6 text3000 +0.165, x8 +0.24 vs x3 (replicates). R54 caveat: the \"text\" corpus is a 224-character loop, so text3000/5000 replay it 13-22 times; long-life text gains measure loop recall. fables (4270 chars) is the only non-repeating long test, where depth loses",
+      "evidence": "R44: depth gain grows x2->x4 on text 1000 (+0.07/+0.10/+0.14) but fables 2000 only +0.02; box smoke 1 growth: x6/x8 text 1000 7.38/7.42 vs x3 7.34. q28, q32 (16 growths, paired with R44 seeds) | R50 q28/q32 (16 paired growths vs deepURSx3): text gains grow with depth and life: text5000 x4/x6/x8 +0.05/+0.15/+0.21 (t 1.6/4.3/6.4, x8 15/16 wins), text3000 +0.03/+0.12/+0.17 (t 0.9/3.8/5.1), text1000 x6/x8 +0.05/+0.11 (t 1.2/2.6); but fables loses: fables5000 x6/x8 -0.03/-0.06 (t -2.9/-4.1), fables2000 x8 -0.09 (t -6.3); order3 x6/x8 -0.08/-0.26 (n.s.). order3 K12/K16 is at ceiling for every plan (9.81-9.89, last quarter 1.0) -> uninformative. Depth is a text-only win; not adoptable as a default. Held-out p06/p07 on the shared queue; q36 tests depth + predErr | shared p06/p07 (g16-31): x6 text3000 +0.165, x8 +0.24 vs x3 (replicates). R54 caveat: the \"text\" corpus is a 224-character loop, so text3000/5000 replay it 13-22 times; long-life text gains measure loop recall. fables (4270 chars) is the only non-repeating long test, where depth loses. R60: deepURSx4 + v35 rule is the only depth not worse on non-repeating text (fables4000 +0.015, t 1.2; fables8000 +0.035, t 5.4, n 8); x6/x8 lose. q49 / q53 test x4 at lower doses",
       "why": "I41 life length is the biggest lever; Travis: longer memory for non-repetitive sequence prediction; fractal scaling that adds new memory depth (I54)",
       "rounds": [
         "R45",
         "R50",
-        "R54"
+        "R54",
+        "R60"
       ],
       "theme": "scaling",
       "parents": [
@@ -919,12 +922,13 @@
       "id": "I59",
       "area": "evolution",
       "title": "Evolve the v34 deep plan on long-memory prediction (text/fables 2000 + order3; and text/fables 5000 from deepURSx4)",
-      "status": "testing",
-      "evidence": "queued q30 (5 h) and q34 (3 h); earlier multitask evolutions mostly returned the start genome (I40, I44, q19 0.945, q26 1.019) | R50: q30 interrupted 3:05-6:30 PM Oct 16 (PC lost power), resumed from its gen-2 checkpoint; after 3 gens (2.4 h active) champion 1.0025 = start genome",
+      "status": "rejected",
+      "evidence": "queued q30 (5 h) and q34 (3 h); earlier multitask evolutions mostly returned the start genome (I40, I44, q19 0.945, q26 1.019) | R50: q30 interrupted 3:05-6:30 PM Oct 16 (PC lost power), resumed from its gen-2 checkpoint; after 3 gens (2.4 h active) champion 1.0025 = start genome. R60: q33 (analogy fitness) and q45 (v35, fables4000 fitness) also FAIL with champion = gen 0 (1.018 / 1.014); 6 failed evolves in a row. Evolution around the hand-designed deep plan is exhausted at this budget -> rejected",
       "why": "sequence-only fitness is cheaper per generation than text+reward multitask and targets the key focus",
       "rounds": [
         "R45",
-        "R50"
+        "R50",
+        "R60"
       ],
       "theme": "memory",
       "parents": [
@@ -966,12 +970,13 @@
       "id": "I62",
       "area": "memory",
       "title": "Depth x world model: deeper chains (x6/x8) + predErr; does mismatch depression prune the noisy extra context that costs order3 / fables?",
-      "status": "testing",
-      "evidence": "R50: depth and predErr both gain on long text (x8 text5000 +0.21, predErr 0.05 text3000 +0.31) and both lose fables; unknown whether they add up or overlap. Queued q36 | R54: q36 (additive 0.05) retired; re-queued with the v35 hybrid rule as q41 (x6/x8 + PE on text3000 / fables2000 / order3) and q40 (x4/x6 + PE on fables4000)",
+      "status": "rejected",
+      "evidence": "R50: depth and predErr both gain on long text (x8 text5000 +0.21, predErr 0.05 text3000 +0.31) and both lose fables; unknown whether they add up or overlap. Queued q36 | R54: q36 (additive 0.05) retired; re-queued with the v35 hybrid rule as q41 (x6/x8 + PE on text3000 / fables2000 / order3) and q40 (x4/x6 + PE on fables4000). R60 (q41): x6+PE / x8+PE text3000 +0.246 / +0.271 (t 10.5 / 12.8) but fables2000 -0.031 / -0.056 (t -1.6 / -3.6), order3 -0.05 / -0.30; fables4000 x6+PE -0.014. Depth + PE add only on the looping text -> rejected",
       "why": "longer memory for non-repetitive text (Travis) without a second hand-tuned plan",
       "rounds": [
         "R50",
-        "R54"
+        "R54",
+        "R60"
       ],
       "theme": "world model",
       "parents": [
@@ -984,10 +989,11 @@
       "area": "evaluation",
       "title": "Analogy needs symbol-independent role cells: after renaming, old symbol-specific weights interfere (negative transfer); test faster unlearning (predErr dose) first, then role/structure codes",
       "status": "open",
-      "evidence": "R50 q31: every plan is far worse right after the renaming than a fresh brain (order3 0.59 vs 0.92), predErr 0.05 recovers part (0.72). Queued q37 (predErr 0.1/0.2 after renaming)",
+      "evidence": "R50 q31: every plan is far worse right after the renaming than a fresh brain (order3 0.59 vs 0.92), predErr 0.05 recovers part (0.72). Queued q37 (predErr 0.1/0.2 after renaming). R60 (q44): v35 still far from fresh after renaming (order3 q2 0.61 vs 0.92; text 0.447 vs 0.618; fables4000 0.186 vs 0.255); v35 - v34 on order3-relabel +0.17 (t 4.4). Shared u01 / v05: peFix 0.2 or predErr 1.0 speed recovery +0.52 / +0.53 (t 7.7 / 8.6) but peFix 0.05 / 0.1 cost fables2000 -0.11 / -0.38",
       "why": "Travis: learn and think by analogy; a brain that only unlearns faster is still not transferring structure",
       "rounds": [
-        "R50"
+        "R50",
+        "R60"
       ],
       "theme": "analogy",
       "parents": [
@@ -1016,12 +1022,13 @@
       "area": "learning",
       "title": "predErr fables fix: soft-bound (multiplicative) mismatch LTD, pl.peMode bitmask",
       "status": "adopted",
-      "evidence": "R52, 32 paired growths: plain predErr 0.05 fables -0.62 (t -11.8) / text3000 +0.32; peMode 1 (dw ~ w/wMax) at predErr 1: text3000 +0.26/+0.24 (t 8.7/10.5), text1000 +0.19/+0.12, fables -0.05/-0.05 (t -2.6/-2.8), order3 gain lost (-0.01/+0.02). Renorm (2) halves the damage; one depression per prediction (4) helps fables (+0.11 at 0.2) but kills text gain; confidence-scaled (8) no better. Text gain and fables loss share one cause (additive LTD of weak weights) | R53: hybrid peMode 16 (dw = predErr*lr*x*(peFix + (1-peFix) w/wMax)), predErr 0.3, peFix 0.01, 32 paired growths: fables -0.007 (n.s.), text3000 +0.164 (t 11.7), order3 +0.085 (t 2.5), text1000 +0.086, text5000 +0.236 -> adopted as v35 (Oct 17, Travis approved). R54: renumbered from a duplicate I61; PC port bit-identical (text1000 g0 7.53)",
+      "evidence": "R52, 32 paired growths: plain predErr 0.05 fables -0.62 (t -11.8) / text3000 +0.32; peMode 1 (dw ~ w/wMax) at predErr 1: text3000 +0.26/+0.24 (t 8.7/10.5), text1000 +0.19/+0.12, fables -0.05/-0.05 (t -2.6/-2.8), order3 gain lost (-0.01/+0.02). Renorm (2) halves the damage; one depression per prediction (4) helps fables (+0.11 at 0.2) but kills text gain; confidence-scaled (8) no better. Text gain and fables loss share one cause (additive LTD of weak weights) | R53: hybrid peMode 16 (dw = predErr*lr*x*(peFix + (1-peFix) w/wMax)), predErr 0.3, peFix 0.01, 32 paired growths: fables -0.007 (n.s.), text3000 +0.164 (t 11.7), order3 +0.085 (t 2.5), text1000 +0.086, text5000 +0.236 -> adopted as v35 (Oct 17, Travis approved). R54: renumbered from a duplicate I61; PC port bit-identical (text1000 g0 7.53). R60: the soft-bound rule is fine; the problem is the dose (I70): predErr 0.1 / 0.2 recover long-fables memory (fables4000 +0.038 / +0.030 vs v35, t 4.3 / 5.5; fables8000 +0.074 / +0.031). Queued q46-q57 for the full held-out check",
       "why": "world-model learning without silencing rare-symbol pathways",
       "rounds": [
         "R52",
         "R53",
-        "R54"
+        "R54",
+        "R60"
       ],
       "theme": "learning",
       "parents": [
@@ -1033,16 +1040,82 @@
       "area": "evaluation",
       "title": "Long NON-repeating sequence benchmark: score long memory on fables 4000 (one full pass of the 4270-char corpus) and on a much bigger public-domain corpus (>= 50k chars), not on 'text' (a 224-char loop)",
       "status": "open",
-      "evidence": "R54: text3000 / text5000 replay the 224-char text corpus 13-22 times, so the life-length growth of the v35 / depth gains on text is loop recall; on fables2000 (no repeat) v35 is neutral (-0.007) and depth loses (x8 -0.09). q40 + shared p14 measure fables4000 now; a bigger corpus needs code (new seq source)",
+      "evidence": "R54: text3000 / text5000 replay the 224-char text corpus 13-22 times, so the life-length growth of the v35 / depth gains on text is loop recall; on fables2000 (no repeat) v35 is neutral (-0.007) and depth loses (x8 -0.09). q40 + shared p14 measure fables4000 now; a bigger corpus needs code (new seq source). R60: fables4000 / 8000 / 12000 now in use (8000 = two passes, so its late quarters partly measure recall). A box session started a Gutenberg corpus (13 books, train 3.3 MB / held-out 172 KB, fables alphabet) at 7:06 PM Oct 17; still needs a seq source",
       "why": "Travis's focus is longer memory without short repetitive patterns; the current long-text metric rewards memorising a short loop",
       "rounds": [
-        "R54"
+        "R54",
+        "R60"
       ],
       "theme": "memory",
       "parents": [
         "I58",
         "I47"
       ]
+    },
+    {
+      "id": "I70",
+      "area": "learning",
+      "theme": "world model",
+      "status": "testing",
+      "parents": [
+        "I47",
+        "I65",
+        "I66"
+      ],
+      "rounds": [
+        "R60"
+      ],
+      "title": "Stability-plasticity dose of the hybrid mismatch LTD: the v35 dose (predErr 0.3) sharpens the looping text but erodes long-gap memory on non-repeating text; a lower dose (0.1-0.2) may keep most of both",
+      "evidence": "R60: v35 - v34 on the 224-char loop grows with life (text1000 +0.08, text3000 +0.16, text10000 +0.36) while on non-repeating fables it falls with life (2000 -0.007, 4000 -0.018 t -2.5, 8000 -0.088 t -6.7, 12000 -0.14), lost in the last quarter (acc 0.314 vs 0.326). vs v35: predErr 0.1 fables4000 +0.038 (t 4.3, n 32), fables8000 +0.074 (t 3.2, n 8); predErr 0.2 +0.030 / +0.031 but text1000 -0.044 (t -2.4). Queued q46-q57 (held-out g48-63, long lives, 0.05/0.15, x4, peFix, safety)",
+      "why": "A text-generating brain learns from long non-repeating corpora; a rule that erodes old associations faster than they recur is the wrong default there even if it wins on a looping toy corpus"
+    },
+    {
+      "id": "I71",
+      "area": "staged-learning",
+      "theme": "world model",
+      "status": "open",
+      "parents": [
+        "I47",
+        "I70"
+      ],
+      "rounds": [
+        "R60"
+      ],
+      "title": "Travis's hunch, passive learner first, actor later: predict silently, and gate mismatch-LTD and output by prediction confidence (depress / act only when the brain was confident and wrong / right)",
+      "evidence": "Not tested; needs code: (a) confidence-gated mismatch LTD on top of the v35 hybrid rule, g *= confidence (the cell's running hit rate peConf, or the readout's winning probability); note the existing peMode bit 8 does the OPPOSITE (g *= 1 - peConf, depresses unreliable cells most; R52: no better), so this would be a new bit (e.g. 32); (b) output only above a confidence threshold, scored as precision vs coverage; (c) a listen-only developmental phase before readout learning",
+      "why": "In novel non-repeating text predictions are unconfident, so gated LTD would not erode memory; in familiar material they become confident and gated LTD sharpens. This could remove the I70 tradeoff in a principled, biological way (surprise-gated plasticity / neuromodulation)"
+    },
+    {
+      "id": "I72",
+      "area": "evaluation",
+      "theme": "tooling",
+      "status": "open",
+      "parents": [
+        "I66"
+      ],
+      "rounds": [
+        "R60"
+      ],
+      "title": "Free-running generation test: after a life of listening, feed the brain's own predicted character back as input and score the generated text (held-out bits per char, word / n-gram match to the corpus, repetition rate)",
+      "evidence": "Not built. All current scores are teacher-forced next-symbol prediction",
+      "why": "The goal is a brain that generates text like a small LLM; teacher-forced accuracy does not show whether the dynamics stay coherent when fed their own output"
+    },
+    {
+      "id": "I73",
+      "area": "scaling",
+      "theme": "scaling",
+      "status": "open",
+      "parents": [
+        "I12",
+        "I58",
+        "I66"
+      ],
+      "rounds": [
+        "R60"
+      ],
+      "title": "Size-scaling law on a big non-repeating corpus: does held-out accuracy keep rising with more mixing / context cells and longer lives (the prerequisite for a staged large-brain run on linux-pc)?",
+      "evidence": "Not tested on the honest corpus. Bigger tissue / tiling failed on predictK2/K3 (R2x); deep chains help only up to x4 on fables. Needs a size multiplier gene or plan family + the big-corpus seq source (I66)",
+      "why": "Before spending linux-pc hours on one large brain we need evidence that size, not just life, buys accuracy on non-repeating text"
     }
   ],
   "questions": [
@@ -1217,9 +1290,9 @@
     },
     {
       "id": "Q22",
-      "q": "Can evolution improve the deep plan on long-memory prediction (sequence-only fitness)? [R54 q30: no - 5 h, 6 generations, champion 1.015 (text2000 1.005, fables2000 1.004, order3 1.036 of deepURSx3 v34) < 1.03 bar]",
+      "q": "Can evolution improve the deep plan on long-memory prediction (sequence-only fitness)? [R54 q30: no - 5 h, 6 generations, champion 1.015 (text2000 1.005, fables2000 1.004, order3 1.036 of deepURSx3 v34) < 1.03 bar] [R60: q45 v35 fables evolve FAIL, champion = gen 0 (1.014); q33 too. Closed]",
       "impact": 4,
-      "likelihood": 0.15,
+      "likelihood": 0,
       "cost": 2,
       "experiment": "q30_deep_seq_evolve (fail, R54); q45_v35_fables_evolve (3 h, from v35 on fables4000 + text1000 + order3)"
     },
@@ -1257,17 +1330,17 @@
     },
     {
       "id": "Q27",
-      "q": "Do memory depth (deepURSx6/x8) and the v35 hybrid prediction-miss LTD add up on long text, and does it remove the depth cost on order3 / fables?",
+      "q": "Do memory depth (deepURSx6/x8) and the v35 hybrid prediction-miss LTD add up on long text, and does it remove the depth cost on order3 / fables? [R60 answered: no for honest memory. q41 x6/x8 + PE text3000 +0.25 / +0.27 but fables2000 -0.03 / -0.06, order3 -0.05 / -0.30]",
       "impact": 5,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "q41_v35_depth_hybrid (x6/x8 + PE, g0-15; bases box R53 + q28); q36 retired"
     },
     {
       "id": "Q28",
-      "q": "After a mid-life renaming, does v35 (hybrid prediction-miss LTD) close the gap to a fresh brain (first step towards analogy / reuse)?",
+      "q": "After a mid-life renaming, does v35 (hybrid prediction-miss LTD) close the gap to a fresh brain (first step towards analogy / reuse)? [R60 answered: no. q44 order3 q2 0.61 vs fresh 0.92. peFix 0.2 / predErr 1.0 speed recovery (+0.52) but cost fables]",
       "impact": 4,
-      "likelihood": 0.3,
+      "likelihood": 0.1,
       "cost": 1,
       "experiment": "q44_v35_relabel (order3 / text / cycle / fables4000, g0, paired with q31); shared s10 (order3 g16) and p14 (v34 fables4000 relabel)"
     },
@@ -1281,27 +1354,51 @@
     },
     {
       "id": "Q30",
-      "q": "v35 neighbourhood: does a higher hybrid dose (predErr 0.4) or a smaller fixed part (peFix 0.005), or both, beat v35 on text3000 / order3 without a fables loss?",
+      "q": "v35 neighbourhood: does a higher hybrid dose (predErr 0.4) or a smaller fixed part (peFix 0.005), or both, beat v35 on text3000 / order3 without a fables loss? [R60 answered: predErr 0.4 text3000 +0.044 (t 4.9), order3 -0.03, fables2000 -0.009; peFix 0.005 neutral. Higher dose only helps the loop; the real question is a LOWER dose (Q33)]",
       "impact": 4,
-      "likelihood": 0.3,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "q43_v35_dose (text3000 / order3 / fables2000 combo); shared s07 / s08 (fables2000 + text1000 single changes)"
     },
     {
       "id": "Q31",
-      "q": "Is v35 safe on seqchoice (the reward-coupled sequence task deepURSx3 also serves): cycle 1000 and order2 1000?",
+      "q": "Is v35 safe on seqchoice (the reward-coupled sequence task deepURSx3 also serves): cycle 1000 and order2 1000? [R60 answered: safe. cycle +0.12 (t 0.9), order2 +0.22 (t 1.9, n 64)]",
       "impact": 3,
-      "likelihood": 0.5,
+      "likelihood": 0,
       "cost": 1,
       "experiment": "q39_v35_seqchoice_safety (cycle g0-15); shared s01 / s04 (order2 g16 / g48)"
     },
     {
       "id": "Q32",
-      "q": "Long NON-repeating memory: does anything (v35 rule, deeper chains x4/x6 + hybrid LTD, slow context layer + hybrid LTD, evolution) improve fables 4000 (one full pass; the text corpus loops every 224 chars)?",
+      "q": "Long NON-repeating memory: does anything (v35 rule, deeper chains x4/x6 + hybrid LTD, slow context layer + hybrid LTD, evolution) improve fables 4000 (one full pass; the text corpus loops every 224 chars)? [R60: v35 loses on fables4000 / 8000 / 12000 (-0.018 / -0.088 / -0.14); slow layers and x6/x8 lose; evolve failed; only lower dose (0.1: +0.038 / +0.074) and x4 (+0.015 / +0.035) help -> Q33]",
+      "impact": 5,
+      "likelihood": 0.4,
+      "cost": 1,
+      "experiment": "q40_v35_fables_long, shared p14 (v34 + plain depth), q45_v35_fables_evolve; a bigger corpus needs code (I66); q49 (x4), q53 / q55 (fables12000 / 8000)"
+    },
+    {
+      "id": "Q33",
+      "q": "Which dose of the hybrid mismatch LTD (predErr 0 / 0.05 / 0.1 / 0.15 / 0.2 / 0.3, peFix 0-0.02) gives the best long non-repeating memory (fables 4000 / 8000 / 12000) without any task (text1000-10000, order3, order2, cycle, fables2000, markov, K12) worse beyond noise on held-out growths, i.e. should v35's dose be lowered (needs Travis's approval)?",
+      "impact": 5,
+      "likelihood": 0.5,
+      "cost": 1,
+      "experiment": "q46-q48, q50-q53, q55-q57 (PC, R60); shared v01 / v02 / v04 / v08 (linux-pc)"
+    },
+    {
+      "id": "Q34",
+      "q": "Does confidence-gated mismatch LTD and output (Travis's passive-learner-first hunch, I71) remove the I70 tradeoff, keeping the looping-text gain and the long-fables memory at once?",
       "impact": 5,
       "likelihood": 0.3,
-      "cost": 1,
-      "experiment": "q40_v35_fables_long, shared p14 (v34 + plain depth), q45_v35_fables_evolve; a bigger corpus needs code (I66)"
+      "cost": 2,
+      "experiment": "needs code (peMode bit for confidence gating; output threshold); then the q46 / q47 task set vs v35 and the best Q33 dose"
+    },
+    {
+      "id": "Q35",
+      "q": "Does held-out accuracy on a large non-repeating corpus rise with brain size and life length (the scaling evidence needed before a staged large-brain text run on linux-pc)?",
+      "impact": 5,
+      "likelihood": 0.4,
+      "cost": 2,
+      "experiment": "needs code: big-corpus seq source (I66, box corpus in progress), size multiplier (I73), generation test (I72)"
     }
   ]
 }

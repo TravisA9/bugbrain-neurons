@@ -1,0 +1,155 @@
+{
+  "id": "q46_dose_heldout_g48",
+  "title": "Long-memory dose, part 1: v35 rule at predErr 0.1 / 0.2 (peMode 16, peFix 0.01) on held-out growths 48-63: text1000, text3000, order3, fables2000, seqchoice order2@1000 (v35 / v34 bases on the same growths = shared s01-s06)",
+  "question": "Q33",
+  "track": "neuro",
+  "priority": 1.7,
+  "kind": "runs",
+  "estHours": 0.3,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "v35 predErr 0.1 text1000 g48",
+      "env": {
+        "BB_OUT": "results/r60/q46_dose_heldout_g48.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "v35 predErr 0.1 text3000 g48",
+      "env": {
+        "BB_OUT": "results/r60/q46_dose_heldout_g48.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "v35 predErr 0.1 order3 g48",
+      "env": {
+        "BB_OUT": "results/r60/q46_dose_heldout_g48.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "v35 predErr 0.1 fables2000 g48",
+      "env": {
+        "BB_OUT": "results/r60/q46_dose_heldout_g48.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "v35 predErr 0.1 order2 g48",
+      "env": {
+        "BB_OUT": "results/r60/q46_dose_heldout_g48.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "v35 predErr 0.2 text1000 g48",
+      "env": {
+        "BB_OUT": "results/r60/q46_dose_heldout_g48.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "v35 predErr 0.2 text3000 g48",
+      "env": {
+        "BB_OUT": "results/r60/q46_dose_heldout_g48.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "v35 predErr 0.2 order3 g48",
+      "env": {
+        "BB_OUT": "results/r60/q46_dose_heldout_g48.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "v35 predErr 0.2 fables2000 g48",
+      "env": {
+        "BB_OUT": "results/r60/q46_dose_heldout_g48.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "v35 predErr 0.2 order2 g48",
+      "env": {
+        "BB_OUT": "results/r60/q46_dose_heldout_g48.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "candidate default if, vs v35 on the same growths, no task is worse beyond noise (paired t < -2) AND the long-fables gains replicate (q47); report also vs v34"
+  },
+  "note": "R60 (Oct 17 evening queue review). Why: shared v01/v02 showed predErr 0.1 / 0.2 beat v35 on fables4000 (+0.038 t 4.3 / +0.030 t 5.5, n32) and fables8000 (+0.074 / +0.031, n8), but 0.2 costs text1000 -0.044 (t -2.4). Need the full no-harm picture on growths not used for selection."
+}

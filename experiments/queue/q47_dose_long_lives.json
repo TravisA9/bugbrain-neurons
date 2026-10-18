@@ -1,0 +1,155 @@
+{
+  "id": "q47_dose_long_lives",
+  "title": "Long-memory dose, part 2 (long lives): predErr 0.1 / 0.2 on fables4000 g48-63, fables8000 g8-15 (n8), text5000 g0-15, text10000 g0-7 (n8), seqchoice cycle1000 g0-15 (bases: shared v03, R53 confirm3, s09, q39)",
+  "question": "Q33",
+  "track": "neuro",
+  "priority": 1.65,
+  "kind": "runs",
+  "estHours": 0.76,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "v35 predErr 0.1 fables4000 g48",
+      "env": {
+        "BB_OUT": "results/r60/q47_dose_long_lives.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "8",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "8"
+      ],
+      "label": "v35 predErr 0.1 fables8000 g8 n8",
+      "env": {
+        "BB_OUT": "results/r60/q47_dose_long_lives.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":5000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 text5000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q47_dose_long_lives.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":10000}}",
+        "8",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 text10000 g0 n8",
+      "env": {
+        "BB_OUT": "results/r60/q47_dose_long_lives.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 seqchoice cycle1000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q47_dose_long_lives.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "48"
+      ],
+      "label": "v35 predErr 0.2 fables4000 g48",
+      "env": {
+        "BB_OUT": "results/r60/q47_dose_long_lives.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "8",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "8"
+      ],
+      "label": "v35 predErr 0.2 fables8000 g8 n8",
+      "env": {
+        "BB_OUT": "results/r60/q47_dose_long_lives.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":5000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.2 text5000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q47_dose_long_lives.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":10000}}",
+        "8",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.2 text10000 g0 n8",
+      "env": {
+        "BB_OUT": "results/r60/q47_dose_long_lives.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.2 seqchoice cycle1000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q47_dose_long_lives.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "paired vs v35 and v34 on the same growths"
+  },
+  "note": "R60 (Oct 17 evening queue review). Is the long-text tradeoff real: v35 gains on the 224-char looping text grow with life (text10000 +0.36) while it loses on non-repeating fables, more with life (fables4000 -0.018 n64, fables8000 -0.088 n16, fables12000 -0.14 n4)."
+}

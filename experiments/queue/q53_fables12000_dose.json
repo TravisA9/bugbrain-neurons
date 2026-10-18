@@ -1,0 +1,57 @@
+{
+  "id": "q53_fables12000_dose",
+  "title": "Three passes of fables (fables12000, growths 0-3, bases = shared u05 v34 3.261 / v35 3.119): predErr 0.1, predErr 0.2, deepURSx4+PE",
+  "question": "Q32",
+  "track": "neuro",
+  "priority": 1.2,
+  "kind": "runs",
+  "estHours": 0.4,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000}}",
+        "4",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 fables12000 g0 n4",
+      "env": {
+        "BB_OUT": "results/r60/q53_fables12000_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000}}",
+        "4",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.2 fables12000 g0 n4",
+      "env": {
+        "BB_OUT": "results/r60/q53_fables12000_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000}}",
+        "4",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4+PE fables12000 g0 n4",
+      "env": {
+        "BB_OUT": "results/r60/q53_fables12000_dose.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "descriptive (n4)"
+  },
+  "note": "R60 (Oct 17 evening queue review). Longest-gap recall test available until the big corpus lands."
+}

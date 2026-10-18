@@ -1,0 +1,127 @@
+{
+  "id": "q54_v35_genes_fables4000",
+  "title": "v35 learning genes on the honest long task: lr 0.0375/0.0625, metaN 20/80, preNorm 34/56, mixRate 0.006/0.01 on fables4000 g0-15 (the auto sweeps only measured the looping text, where all were within noise or worse)",
+  "question": "Q32",
+  "track": "neuro",
+  "priority": 1.0,
+  "kind": "runs",
+  "estHours": 0.89,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.lr=0.0375",
+        "0"
+      ],
+      "label": "v35 pl.lr=0.0375 fables4000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q54_v35_genes_fables4000.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.lr=0.0625",
+        "0"
+      ],
+      "label": "v35 pl.lr=0.0625 fables4000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q54_v35_genes_fables4000.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.metaN=20",
+        "0"
+      ],
+      "label": "v35 pl.metaN=20 fables4000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q54_v35_genes_fables4000.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.metaN=80",
+        "0"
+      ],
+      "label": "v35 pl.metaN=80 fables4000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q54_v35_genes_fables4000.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.preNorm=34",
+        "0"
+      ],
+      "label": "v35 pl.preNorm=34 fables4000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q54_v35_genes_fables4000.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.preNorm=56",
+        "0"
+      ],
+      "label": "v35 pl.preNorm=56 fables4000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q54_v35_genes_fables4000.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.mixRate=0.006",
+        "0"
+      ],
+      "label": "v35 pl.mixRate=0.006 fables4000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q54_v35_genes_fables4000.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.mixRate=0.01",
+        "0"
+      ],
+      "label": "v35 pl.mixRate=0.01 fables4000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q54_v35_genes_fables4000.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "near-miss if > 2 paired SE vs v35 fables4000 g0-15 (q40 base 3.000)"
+  },
+  "note": "R60 (Oct 17 evening queue review). Replaces the low-payoff [auto] sweeps (text1000 / ceiling order3) with the same genes on non-repeating text."
+}

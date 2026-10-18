@@ -1,0 +1,99 @@
+{
+  "id": "q57_seqchoice_long_dose",
+  "title": "Reward-driven sequences with longer lives (seqchoice cycle / order2 at 2000 symbols): v34, v35, predErr 0.1 (growths 0-15)",
+  "question": "Q33",
+  "track": "neuro",
+  "priority": 0.9,
+  "kind": "runs",
+  "estHours": 0.53,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0",
+        "0"
+      ],
+      "label": "v34(predErr0) seqchoice cycle2000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q57_seqchoice_long_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0",
+        "0"
+      ],
+      "label": "v34(predErr0) seqchoice order2@2000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q57_seqchoice_long_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":2000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v35 seqchoice cycle2000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q57_seqchoice_long_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":2000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v35 seqchoice order2@2000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q57_seqchoice_long_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 seqchoice cycle2000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q57_seqchoice_long_dose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 seqchoice order2@2000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q57_seqchoice_long_dose.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "paired"
+  },
+  "note": "R60 (Oct 17 evening queue review). Checks whether the dose tradeoff seen on long fables also appears in the outcome-driven sequence tasks when lives get longer."
+}

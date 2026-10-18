@@ -2454,3 +2454,132 @@ About 12 h of active compute queued (plus the end of q30). Shared queue: seeded 
 until the workers' branch (neuro/distributed-queue) has the v35 engine.
 Ideas: I61 (additive dose) and I64 (confidence gate) superseded by the hybrid rule; duplicate I61 (soft-bound / hybrid) renumbered I65, adopted;
 I45 rejected; I62 testing (q41); new I66; questions Q22 answered (q30: no), Q26 / Q29 closed, new Q30-Q32.
+
+## R60 — queue review (Oct 17, 7:20 PM CT): q39-q45 + 20 auto sweeps; long non-repeating text shows a v35 cost; obsolete auto-evolve stopped; refill generator fixed; new dose / long-fables queue q46-q57 (v35 / 28 unchanged)
+
+(R55-R59 are box rounds on the box's neuro/distributed-queue branch and are not in PR #6 yet: R55 v35 sync for the shared-queue workers, R56 critical-period plasticity (I67), R57 watcher region (I68), R58/R59 cross-domain relational transfer (I69). That is why this PC review is numbered R60, and why the new ideas start at I70 and the new questions at Q33.)
+
+**Queue status**: running and never restarted. Queue pid 11012 (started Oct 16 6:29 PM), no PAUSE file, AC power with the battery at 100 % (no sleep or hibernate since 6:52 AM).
+At 4:17 PM the queue ran out of work and auto-refilled 21 `[auto]` jobs. The refill estimated them at about 10 h, but the 20 sweeps took 1.85 h (4:17-6:08 PM). The 21st job was a "balanced multitask" evolve with a fresh seed.
+That evolve started from the obsolete v26 plans (predictK3 / rewardE / rewardMemK; champion text 1.90 vs v35's 7.45). Its 3 h would have been wasted, so it was stopped at 7:34 PM with a STOP file after gen 44 (FAIL 0.53). The queue moved on to q46 at 7:35 PM.
+Without this review the queue would have run dry at about 9:10 PM and then auto-refilled more low-payoff sweeps.
+
+**Finished on the PC since R54.** All comparisons are paired on the same growths: d = mean difference, t = paired t, w = wins. Bases: v35 = deepURSx3 (box R53 hybrid / PC sweep base), v34 = deepURSx3 pl.predErr=0 or deepURSx3v34.
+
+| job | result | verdict |
+|---|---|---|
+| q39 v35 safety, seqchoice cycle1000 g0-15 | v35 9.057 vs v34 8.938 (d +0.12, t 0.9); with shared s01/s04, order2@1000 v35 - v34 = +0.22 (t 1.9, n 64) | safe on the reward-coupled sequence tasks |
+| q40 fables4000 (one non-repeating pass) g0-15 | v35 3.000; deepURSx4+PE +0.015 (t 1.2, 10/16); deepURSx6+PE -0.014 (t -1.0); slowS98w2+PE -0.046 (t -2.3) | only x4 is not worse; the slow layer loses |
+| q41 depth x hybrid g0-15 | x6+PE / x8+PE: text3000 +0.246 / +0.271 (t 10.5 / 12.8, 16/16); fables2000 -0.031 (t -1.6) / -0.056 (t -3.6); order3 -0.05 (t -0.5) / -0.30 (t -2.1) | depth + PE adds only on the looping text; fails fables / order3 -> I62 rejected |
+| q42 slow layer + hybrid g0-15 | slowS98w2+PE: text1000 +0.065 (t 3.8), text3000 +0.099 (t 6.0), fables2000 -0.014 (t -0.9), order3 +0.000; but fables4000 -0.046 (t -2.3, q40), and shared u07 slowS995w2 / slowS98w4 + PE on fables4000 -0.081 / -0.091 (t -6.4 / -7.1) | slow context layers hurt long non-repeating memory -> I48 rejected |
+| q43 v35 dose neighbourhood g0-15 | predErr 0.4: text3000 +0.044 (t 4.9), order3 -0.029 (t -1.4); peFix 0.005: text3000 -0.001, order3 -0.018; 0.4 + 0.005: text3000 +0.029 (t 2.9), fables2000 +0.002, order3 -0.001 | a higher dose helps only the looping text; nothing to adopt (and see the dose tradeoff below) |
+| q44 v35 after a mid-life renaming (g0-15, n2000 lives) | post-switch quarter q2 vs a fresh first quarter: order3 0.61 vs 0.92, text 0.447 vs 0.618, cycle 0.62 vs 0.95, fables4000 0.186 vs 0.255 (v34 in q31: order3 0.594, text 0.436, cycle 0.617); shared: order3-relabel score v35 - v34 = +0.17 (t 4.4, n 32) | still interference; v35 is not an analogy fix |
+| q33 analogy evolve (3 h, 9 gens) | champion 1.018 = gen 0 (order3_relabel 1.024, text_relabel 1.019, text1000 1.012) | FAIL: no mutant beat the start genome |
+| q45 v35 fables evolve (3 h, 11 gens) | champion 1.014 = gen 0 (fables4000 1.034, text1000 1.013, order3 0.996) | FAIL: same pattern; the 6th failed evolve in a row (q16, q19, q26, q30, q33, q45) -> I59 rejected |
+
+No evolve champion passed, so there was nothing to re-evaluate on held-out growths.
+
+**The 20 `[auto]` sweeps (v35 neighbourhood, g0-15).** Checked: they did run on the v35 default. The sweep base text1000 growth 0 is 7.53, the v35 value (v34 is 7.34); the base mean is 7.451.
+
+- text1000:
+  - lr 0.0625: +0.033 (t 1.6)
+  - lr 0.0375: -0.073 (t -3.9)
+  - rcvDiv 0.3: -0.095 (t -4.5)
+  - mixRate 0.01: -0.047 (t -2.8)
+  - tauPre 9: -0.041 (t -2.2)
+  - metaN 30 / 50, preNorm 34 / 56, mixRate 0.006, rcvDiv 0.5, tauPre 15: within ±0.02
+  - tauElig, tauPost, aMinus, teachThr: bit-identical to base (the teacher rule does not use them)
+- order2@1000:
+  - tauPre 15: -0.41 (t -2.6)
+  - tauPre 9: -0.25
+  - preNorm 56: -0.14
+  - preNorm 34: +0.03
+  - tauPost, metaN: bit-identical
+- order3 (n1000, default K): 9.96 everywhere. This task is at ceiling and uninformative.
+- Verdict: v35 sits at a local optimum of its rate genes. Nothing beats it beyond noise, so nothing was re-evaluated.
+
+Generator problems found:
+1. The sweeps measured only the looping text and a ceiling order3, never fables.
+2. Four of the ten genes are inert on those tasks.
+3. Only the text rows ran for 12 of the 20 sweeps. The v34-era shared jobs p08-p13 (local copies in experiments/queue_shared) counted as "already queued" for the v35 order3 / order2 runs.
+4. It estimated 0.35 h per job instead of the real 3-13 min.
+5. The fallback evolve used experiments/multitask.json, which starts from the v26 plans.
+6. Near-miss confirmations were queued for any gain > 0, even pure noise.
+
+**Shared-queue results since R54** (all linux-pc; box-seeded s/u/v jobs). Paired with v34 = deepURSx3 pl.predErr=0 on the same growths:
+
+| test (life, growths) | v35 - v34 | note |
+|---|---|---|
+| text1000 (n 48) / text3000 (n 48) / text10000 (n 8, s09) | **+0.080 (t 7.8) / +0.162 (t 14.0) / +0.355 (t 26.8)** | the gain grows with life on the 224-char looping corpus |
+| order3 K8 (n 48) / order2@1000 (n 64) / markov K8 det 0.8 (u08) / order3 K12 n2000 (u09) | +0.076 (t 2.4) / +0.22 (t 1.9) / -0.004 (t -1.6) / +0.017 (t 0.6) | safe |
+| fables2000 (n 48) | -0.007 (t -0.9) | neutral |
+| **fables4000** (one pass, n 64: q40, p14, u06, v03) | **-0.018 (t -2.5, 19/64 wins)** | small but significant loss |
+| **fables8000** (two passes, n 16: u04, v03) | **-0.088 (t -6.7, 0/16 wins)** | loss in the last quarter (accuracy 0.314 vs 0.326); first quarter equal |
+| **fables12000** (three passes, n 4: u05) | **-0.14 (t -3.4, 0/4)** | last quarter 0.314 vs 0.333 |
+
+Lower doses of the same hybrid rule (shared v01 / v02; vs v35 on the same growths):
+
+| variant | fables4000 g16-47 (n 32) | fables8000 g0-7 (n 8) | text1000 g0-15 |
+|---|---|---|---|
+| predErr 0.1, peFix 0.01 | **+0.038 (t 4.3)** | **+0.074 (t 3.2)**, the v34 level | (shared v08 pending) |
+| predErr 0.2, peFix 0.01 | **+0.030 (t 5.5)** | +0.031 (t 2.1) | -0.044 (t -2.4) (s08) |
+| predErr 0.3, peFix 0.005 / 0 | +0.018 (t 3.2) / +0.011 (t 1.5) | +0.029 (t 2.2) / +0.034 (t 1.8) | -0.002 (peFix 0.005, s07) |
+| deepURSx4 + v35 rule (u04) | +0.015 (t 1.2, g0-15, q40) | +0.035 (t 5.4) | |
+
+Renaming jobs (u01-u03, v05-v07; analogy is secondary):
+- A bigger fixed LTD part, peFix 0.2 (predErr 0.3), or a stronger dose, predErr 1.0, speeds recovery after the renaming: order3 relabel +0.52 / +0.53 vs v35 (t 7.7 / 8.6, n 32).
+- But peFix 0.05 / 0.1 cost fables2000 -0.11 / -0.38 (t -4.6 / -9.1).
+- v07 (fables2000 safety of the two winners) is still running.
+
+**Key finding (R60): the hybrid mismatch LTD trades looping-text recall for long-gap memory on non-repeating text (I70).**
+- At the v35 dose (predErr 0.3), the gain on the 224-char text loop grows with life (+0.08 → +0.36). On non-repeating fables, the loss grows with life (-0.007 → -0.018 → -0.088 → -0.14), concentrated late in life, when material from more than about 4000 symbols earlier has to be recalled.
+- Lower doses (0.1-0.2) recover the long-fables memory (0.1 ≈ v34 on fables8000). They probably give back part of the looping-text gain (0.2: text1000 -0.044).
+- Taken together, the evidence says v35 fails the "no task worse beyond noise" rule on the honest long tests (fables4000 t -2.5, fables8000 t -6.7), which were not available when v35 was adopted.
+- For a text-generating brain trained on large non-repeating corpora, this is the most important open design question. The PC queue is now built around it (Q33).
+
+**Adoptions: none.**
+- q33 / q45 failed, and no sweep beats v35 beyond noise.
+- predErr 0.1 is the leading candidate, but it has fables-only evidence so far. It needs the full held-out check (text1000/3000/5000/10000, order3, order2, cycle, fables2000/4000/8000, markov, K12) before it can be proposed. That check is queued as q46-q57.
+- Any default change needs Travis's approval. v35 / DEFAULTS_VERSION 28 stays installed.
+
+**Fixes (R60)**:
+- run/refill.js (minimal; the queue calls it as a child before every pick, so no restart was needed; dry-run tested on the PC; backup in run/refill.js.bak_r60):
+  - Sweeps run on fables4000 (non-repeating) + text1000 + order3 K8 + seqchoice order2.
+  - Inert genes dropped (tauElig, tauPost, aMinus, teachThr).
+  - Per-run time estimate = growths × life × measured s/symbol (text 0.010, fables 0.025, order3 0.03, seqchoice 0.04 s; x4 ×1.2, x6 ×1.5, x8 ×1.9). Job estimate = max(longest run, sum / 4). This model reproduces q39-q44 within about 10 %.
+  - Shared jobs written for older defaults no longer block current-default runs.
+  - Near-misses need a gain of at least 1 unpaired SE.
+  - The obsolete fallback evolve is removed. It is opt-in only, via experiments/refill_evolve.json for the current default plan.
+- The running obsolete evolve was stopped with its STOP file.
+
+**New PC queue (R60), ranked by payoff toward the text-generating SNN.** Bases on the same growths come from shared s01-s06/s09/u04-u06/v01-v03, R53 confirm3 and q39/q40/q44; nothing duplicates the shared queue (v04/v07 running on linux-pc, v08/v09 pending). Estimates use the new timing model:
+
+| job (prio) | what | runs | est h |
+|---|---|---|---|
+| q46 (1.7) | predErr 0.1 / 0.2 on held-out growths 48-63: text1000, text3000, order3, fables2000, order2@1000 | 10 | 0.3 |
+| q47 (1.65) | predErr 0.1 / 0.2, long lives: fables4000 g48-63, fables8000 g8-15, text5000 g0-15, text10000 g0-7, seqchoice cycle1000 | 10 | 0.76 |
+| q48 (1.6) | dose curve: predErr 0.05 / 0.15 on fables4000 g16-47, fables8000 g0-7, text1000, text3000, order3 | 12 | 0.77 |
+| q49 (1.5) | deepURSx4 with the v35 rule and with predErr 0.1 on fables4000 / fables8000 / text3000 / order3 / fables2000 | 12 | 1.03 |
+| q50 (1.45) | fables learning curve: fables1000 / fables6000 for v34, v35, predErr 0.1 | 6 | 0.67 |
+| q51 (1.3) | peFix 0 / 0.005 / 0.02 at predErr 0.1 (fables4000, fables8000, text1000) | 12 | 1.03 |
+| q52 (1.25) | more growths for 0.1 / 0.2: fables4000 g0-15, text3000 g0-15 + g32-47, order3 g0-15 + g32-47, order2 g0-31, fables2000 (0.1) | 15 | 0.62 |
+| q53 (1.2) | fables12000 (three passes, n4): predErr 0.1, 0.2, deepURSx4+PE | 3 | 0.4 |
+| q55 (1.1) | fables8000 g24-39: v34, v35, predErr 0.1, 0.2 | 4 | 0.89 |
+| q54 (1.0) | v35 genes on fables4000 (lr, metaN, preNorm, mixRate; replaces the text-only auto sweeps) | 8 | 0.89 |
+| q56 (0.95) | safety of predErr 0.1: markov, order3 K12 n2000, fables4000 relabel | 3 | 0.44 |
+| q57 (0.9) | seqchoice cycle / order2 at 2000 symbols: v34, v35, predErr 0.1 | 6 | 0.53 |
+
+Hand-queued: about 8.3 h of active compute (q46 started 7:35 PM). When fewer than 3 h are pending, the fixed refill adds fables4000-based sweeps of the remaining genes: metaN, rcvDiv and tauPre at ±25 %, about 0.4 h each, about 2-3 h in total, because lr, preNorm and mixRate dedupe against q54. The queue therefore stays full for about 11 h.
+
+**Ideas / questions**:
+- New I70 (dose tradeoff; testing).
+- New I71 (Travis's hunch: passive learner first, actor later). Confidence-gated mismatch LTD and output: depress or act only on high-confidence predictions. This is the principled fix for I70 and needs code.
+- New I72: free-running generation test. This is the target metric for "generates text like a small LLM" and needs code.
+- New I73: brain-size scaling on a big non-repeating corpus, needed before the staged linux-pc run; needs code.
+- I48 (slow layer), I59 (evolve the deep plan) and I62 (depth × hybrid) are rejected. I58 and I65 updated.
+- Q27, Q28, Q30 and Q31 are answered. New questions Q33-Q35.
+- I66: a box session started building a Gutenberg corpus at 7:06 PM (13 books, train.txt 3.3 MB, held.txt 172 KB, in the fables alphabet). It is not yet a seq source in the code.
+
+**Workers**:
+- linux-pc is healthy: about 30 jobs since R54, the last claim (v04) at 7:18 PM. After v04 / v07 / v08 / v09 the shared list is empty, so it will idle unless someone seeds new jobs.
+- moto-g-2026-03a1 has been silent since Oct 16 9:33 PM; the phone worker still needs a check.

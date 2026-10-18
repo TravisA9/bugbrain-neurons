@@ -1,0 +1,183 @@
+{
+  "id": "q51_pefix_at_dose01",
+  "title": "Fixed part of the hybrid LTD at the lower dose: predErr 0.1 with peFix 0 / 0.005 / 0.02 on fables4000 g16-47, fables8000 g0-7, text1000 g0-15",
+  "question": "Q33",
+  "track": "neuro",
+  "priority": 1.3,
+  "kind": "runs",
+  "estHours": 1.03,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0",
+        "16"
+      ],
+      "label": "predErr 0.1 peFix 0 fables4000 g16",
+      "env": {
+        "BB_OUT": "results/r60/q51_pefix_at_dose01.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0",
+        "32"
+      ],
+      "label": "predErr 0.1 peFix 0 fables4000 g32",
+      "env": {
+        "BB_OUT": "results/r60/q51_pefix_at_dose01.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "8",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0",
+        "0"
+      ],
+      "label": "predErr 0.1 peFix 0 fables8000 g0 n8",
+      "env": {
+        "BB_OUT": "results/r60/q51_pefix_at_dose01.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0",
+        "0"
+      ],
+      "label": "predErr 0.1 peFix 0 text1000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q51_pefix_at_dose01.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.005",
+        "16"
+      ],
+      "label": "predErr 0.1 peFix 0.005 fables4000 g16",
+      "env": {
+        "BB_OUT": "results/r60/q51_pefix_at_dose01.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.005",
+        "32"
+      ],
+      "label": "predErr 0.1 peFix 0.005 fables4000 g32",
+      "env": {
+        "BB_OUT": "results/r60/q51_pefix_at_dose01.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "8",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.005",
+        "0"
+      ],
+      "label": "predErr 0.1 peFix 0.005 fables8000 g0 n8",
+      "env": {
+        "BB_OUT": "results/r60/q51_pefix_at_dose01.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.005",
+        "0"
+      ],
+      "label": "predErr 0.1 peFix 0.005 text1000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q51_pefix_at_dose01.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.02",
+        "16"
+      ],
+      "label": "predErr 0.1 peFix 0.02 fables4000 g16",
+      "env": {
+        "BB_OUT": "results/r60/q51_pefix_at_dose01.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.02",
+        "32"
+      ],
+      "label": "predErr 0.1 peFix 0.02 fables4000 g32",
+      "env": {
+        "BB_OUT": "results/r60/q51_pefix_at_dose01.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "8",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.02",
+        "0"
+      ],
+      "label": "predErr 0.1 peFix 0.02 fables8000 g0 n8",
+      "env": {
+        "BB_OUT": "results/r60/q51_pefix_at_dose01.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.02",
+        "0"
+      ],
+      "label": "predErr 0.1 peFix 0.02 text1000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q51_pefix_at_dose01.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "paired vs predErr 0.1 peFix 0.01 (q47/q48/v01) and v35"
+  },
+  "note": "R60 (Oct 17 evening queue review). At predErr 0.3, peFix 0 / 0.005 helped fables4000 slightly (+0.011 / +0.018, shared v01); check whether it adds to the lower dose."
+}

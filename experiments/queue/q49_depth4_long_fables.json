@@ -1,0 +1,183 @@
+{
+  "id": "q49_depth4_long_fables",
+  "title": "One more context stage for long text: deepURSx4 with the v35 rule (predErr 0.3) and with predErr 0.1 on fables4000, fables8000, text3000, order3, fables2000 (vs v35 deepURSx3 on the same growths)",
+  "question": "Q32",
+  "track": "neuro",
+  "priority": 1.5,
+  "kind": "runs",
+  "estHours": 1.03,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "deepURSx4+PE fables4000 g16",
+      "env": {
+        "BB_OUT": "results/r60/q49_depth4_long_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "8",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "8"
+      ],
+      "label": "deepURSx4+PE fables8000 g8 n8",
+      "env": {
+        "BB_OUT": "results/r60/q49_depth4_long_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4+PE text3000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q49_depth4_long_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4+PE order3 g0",
+      "env": {
+        "BB_OUT": "results/r60/q49_depth4_long_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4+PE fables2000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q49_depth4_long_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4+PE0.1 fables4000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q49_depth4_long_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "deepURSx4+PE0.1 fables4000 g16",
+      "env": {
+        "BB_OUT": "results/r60/q49_depth4_long_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "8",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4+PE0.1 fables8000 g0 n8",
+      "env": {
+        "BB_OUT": "results/r60/q49_depth4_long_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":8000}}",
+        "8",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "8"
+      ],
+      "label": "deepURSx4+PE0.1 fables8000 g8 n8",
+      "env": {
+        "BB_OUT": "results/r60/q49_depth4_long_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4+PE0.1 text3000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q49_depth4_long_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4+PE0.1 order3 g0",
+      "env": {
+        "BB_OUT": "results/r60/q49_depth4_long_fables.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4+PE0.1 fables2000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q49_depth4_long_fables.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "candidate if it beats v35 on fables4000/8000 with text3000, order3, fables2000 not worse beyond noise"
+  },
+  "note": "R60 (Oct 17 evening queue review). x4 is the only depth that is not worse on non-repeating fables: q40 x4+PE fables4000 +0.015 (t 1.2, 10/16), shared u04 fables8000 +0.035 (t 5.4, 7/8); x6/x8 win only on the looping text (text3000 +0.25 / +0.27) and lose fables2000 / order3."
+}

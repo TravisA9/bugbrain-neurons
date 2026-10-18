@@ -1,0 +1,225 @@
+{
+  "id": "q52_dose_second_block",
+  "title": "Long-memory dose, part 4 (more growths): predErr 0.1 / 0.2 on fables4000 g0-15, text3000 g0-15 + g32-47, order3 g0-15 + g32-47, seqchoice order2 g0-31, and 0.1 on fables2000 g0-15 (text1000 0.1 g0 = shared v08; 0.2 text1000 / fables2000 g0 = shared s08)",
+  "question": "Q33",
+  "track": "neuro",
+  "priority": 1.25,
+  "kind": "runs",
+  "estHours": 0.62,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 fables4000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 text3000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "32"
+      ],
+      "label": "v35 predErr 0.1 text3000 g32",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 order3 g0",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "32"
+      ],
+      "label": "v35 predErr 0.1 order3 g32",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 order2 g0",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "v35 predErr 0.1 order2 g16",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.2 fables4000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.2 text3000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":3000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "32"
+      ],
+      "label": "v35 predErr 0.2 text3000 g32",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.2 order3 g0",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "32"
+      ],
+      "label": "v35 predErr 0.2 order3 g32",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.2 order2 g0",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.2,pl.peMode=16,pl.peFix=0.01",
+        "16"
+      ],
+      "label": "v35 predErr 0.2 order2 g16",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":2000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 fables2000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q52_dose_second_block.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "pooled paired vs v35 over all blocks; no task worse beyond noise"
+  },
+  "note": "R60 (Oct 17 evening queue review). Raises n to 32-48 per task for the two candidate doses so a default decision does not rest on one block (r42 growth seeds exist only for growths 0-63)."
+}

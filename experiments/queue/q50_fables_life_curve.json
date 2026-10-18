@@ -1,0 +1,99 @@
+{
+  "id": "q50_fables_life_curve",
+  "title": "Learning curve on the non-repeating corpus: fables 1000 and 6000 (1.4 passes) for v34, v35 and predErr 0.1, growths 0-15 (with 2000/4000/8000/12000 already measured)",
+  "question": "Q32",
+  "track": "neuro",
+  "priority": 1.45,
+  "kind": "runs",
+  "estHours": 0.67,
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0",
+        "0"
+      ],
+      "label": "v34(predErr0) fables1000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q50_fables_life_curve.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":6000}}",
+        "16",
+        "pl.predErr=0",
+        "0"
+      ],
+      "label": "v34(predErr0) fables6000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q50_fables_life_curve.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":1000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v35 fables1000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q50_fables_life_curve.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":6000}}",
+        "16",
+        "base",
+        "0"
+      ],
+      "label": "v35 fables6000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q50_fables_life_curve.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":1000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 fables1000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q50_fables_life_curve.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":6000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "v35 predErr 0.1 fables6000 g0",
+      "env": {
+        "BB_OUT": "results/r60/q50_fables_life_curve.jsonl"
+      }
+    }
+  ],
+  "accept": {
+    "note": "descriptive: score and quarter accuracies vs life length per arm"
+  },
+  "note": "R60 (Oct 17 evening queue review). Shows where in a life v35 starts to lose on fables (early learning vs long-gap recall after the first pass) and whether the lower dose fixes both."
+}
