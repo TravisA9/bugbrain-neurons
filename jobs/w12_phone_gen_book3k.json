@@ -1,0 +1,49 @@
+{
+  "id": "w12_phone_gen_book3k",
+  "question": "I72",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/gen.js"
+  ],
+  "title": "Phone slice generation: book 3000 life, 300 sampled self-fed symbols (genTemp 1), v35 and predErr 0.1, growths 0-3",
+  "priority": 0.9,
+  "estHours": 0.1,
+  "phone": true,
+  "flag": "text",
+  "accept": {
+    "note": "short-life generation baseline"
+  },
+  "runs": [
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":3000,\"evalSyms\":1000,\"genSyms\":300,\"genTemp\":1}}",
+        "4",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 book3k gen300 T1 v35 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w12_phone_gen_book3k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":3000,\"evalSyms\":1000,\"genSyms\":300,\"genTemp\":1}}",
+        "4",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 book3k gen300 T1 predErr0.1 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w12_phone_gen_book3k.jsonl"
+      }
+    }
+  ]
+}

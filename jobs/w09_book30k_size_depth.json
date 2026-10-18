@@ -1,0 +1,48 @@
+{
+  "id": "w09_book30k_size_depth",
+  "question": "I73",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js"
+  ],
+  "title": "Size x length interaction: book 30k with the 2x brain (v35, g0-3) and with deepURSx4 (v35, g0-7)",
+  "priority": 0.93,
+  "estHours": 0.8,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "do bigger / deeper brains pull ahead with longer lives?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 book30k eval2000 v35 2x g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w09_book30k_size_depth.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "8",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4 book30k eval2000 v35 g0 n8",
+      "env": {
+        "BB_OUT": "results/phone/w09_book30k_size_depth.jsonl"
+      }
+    }
+  ]
+}

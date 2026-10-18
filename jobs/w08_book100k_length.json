@@ -1,0 +1,48 @@
+{
+  "id": "w08_book100k_length",
+  "question": "I73",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js"
+  ],
+  "title": "Length ladder top: book 100k-symbol life (1x, x3), v35 and predErr 0.1, growths 0-3",
+  "priority": 0.94,
+  "estHours": 1,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "does held-out accuracy keep rising 10k -> 30k -> 100k (LLM-style data curve)?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 book100k eval2000 v35 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w08_book100k_length.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 book100k eval2000 predErr0.1 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/w08_book100k_length.jsonl"
+      }
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "id": "w11_phone_book3k",
+  "question": "Q32",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js"
+  ],
+  "title": "Phone slice: book 3000 (last 1000 held out), v34 / v35 / predErr 0.1, growths 0-15",
+  "priority": 0.97,
+  "estHours": 0.25,
+  "phone": true,
+  "flag": "text",
+  "accept": {
+    "note": "short-life real-corpus held-out check (phones)"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":3000,\"evalSyms\":1000}}",
+        "16",
+        "pl.predErr=0",
+        "0"
+      ],
+      "label": "deepURSx3 book3k eval1000 v34 g0 n16",
+      "env": {
+        "BB_OUT": "results/phone/w11_phone_book3k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":3000,\"evalSyms\":1000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 book3k eval1000 v35 g0 n16",
+      "env": {
+        "BB_OUT": "results/phone/w11_phone_book3k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":3000,\"evalSyms\":1000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 book3k eval1000 predErr0.1 g0 n16",
+      "env": {
+        "BB_OUT": "results/phone/w11_phone_book3k.jsonl"
+      }
+    }
+  ]
+}

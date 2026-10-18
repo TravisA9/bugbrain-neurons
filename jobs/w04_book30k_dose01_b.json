@@ -1,0 +1,48 @@
+{
+  "id": "w04_book30k_dose01_b",
+  "question": "Q32",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js"
+  ],
+  "title": "Real corpus, 30k-symbol life: v35 vs predErr 0.1, growths 8-15 (second half of w03)",
+  "priority": 0.96,
+  "estHours": 0.6,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "n 8 -> 16"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "8",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "8"
+      ],
+      "label": "deepURSx3 book30k eval2000 v35 g8 n8",
+      "env": {
+        "BB_OUT": "results/phone/w04_book30k_dose01_b.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "8",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "8"
+      ],
+      "label": "deepURSx3 book30k eval2000 predErr0.1 g8 n8",
+      "env": {
+        "BB_OUT": "results/phone/w04_book30k_dose01_b.jsonl"
+      }
+    }
+  ]
+}

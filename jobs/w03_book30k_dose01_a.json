@@ -1,0 +1,48 @@
+{
+  "id": "w03_book30k_dose01_a",
+  "question": "Q32",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js"
+  ],
+  "title": "Real corpus, 30k-symbol life (length ladder + long-gap memory): v35 vs predErr 0.1, growths 0-7",
+  "priority": 0.97,
+  "estHours": 0.6,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "with w04: n16; compare to w01 (10k) for the length curve"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "8",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 book30k eval2000 v35 g0 n8",
+      "env": {
+        "BB_OUT": "results/phone/w03_book30k_dose01_a.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "8",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx3 book30k eval2000 predErr0.1 g0 n8",
+      "env": {
+        "BB_OUT": "results/phone/w03_book30k_dose01_a.jsonl"
+      }
+    }
+  ]
+}

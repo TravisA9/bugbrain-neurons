@@ -1,0 +1,48 @@
+{
+  "id": "w07_depth_x4_book10k",
+  "question": "I73",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js"
+  ],
+  "title": "Depth x3 vs x4 on the real corpus: deepURSx4 with v35 and predErr 0.1, book 10k growths 0-15 (x3 = w01; x6/x8/slow rejected)",
+  "priority": 0.95,
+  "estHours": 0.5,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "x4 adopted for the large run only if > x3 here"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "16",
+        "pl.predErr=0.3,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4 book10k eval2000 v35 g0 n16",
+      "env": {
+        "BB_OUT": "results/phone/w07_depth_x4_book10k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx4",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "16",
+        "pl.predErr=0.1,pl.peMode=16,pl.peFix=0.01",
+        "0"
+      ],
+      "label": "deepURSx4 book10k eval2000 predErr0.1 g0 n16",
+      "env": {
+        "BB_OUT": "results/phone/w07_depth_x4_book10k.jsonl"
+      }
+    }
+  ]
+}
