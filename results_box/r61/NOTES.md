@@ -30,3 +30,18 @@ Worktree /workspace/bb-book, branch neuro/book-diag (from 1b32911). Defaults unc
 - The predErr hybrid LTD drives much of the long-life decline (30k: +0.05 with it off).
 - readIn fixes the tie losses (+0.02–0.045 everywhere, no harm).
 - Running: readIn + predErr 0 / 0.1 on 10k, fables and order3 (screenC2), and the 100k book life for base / predErr 0 / predErr 0.1, all with readIn (screenC).
+
+## Mechanism of the long-life decline (code reading, 20:58 CT)
+- Teacher potentiation uses metaplasticity (pl.metaN 40). Each presynaptic cell's potentiation is scaled by metaN / (metaN + E), where E is the total potentiation that cell has ever received. E never decays, so the learning rate keeps shrinking towards 0 over a life.
+- The predErr LTD is NOT scaled that way. Over a long life depression wins, the weights fall to the floor and the output read-window firing fades.
+- This fits the data: turning predErr off helps the 30k life far more than the 10k life.
+- New option `pl.metaCap` (off by default; bit-identical when off: same scores and stats on book1500 x2 and order3): caps E, so potentiation keeps a floor rate.
+
+## Screen C/C2 partial (graded decoder readIn 0.01 + predErr 0)
+- book10k 0.316 (base 0.279), book30k 0.303 (base 0.230). Both above or at the bigram level now.
+
+## Queued
+- 30k recordings (base, readIn + predErr 0)
+- screen D1: metaN 0, metaCap 200
+- screen D2: peMode 18 (renormalise after LTD), mixHomeo 0.05 (steadier letter-pair codes), metaN 0 + predErr 0
+- All with readIn 0.01 on book10k/30k, fables4000 and order3.
