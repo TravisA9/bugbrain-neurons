@@ -17,8 +17,9 @@
 'use strict';
 const NAMES = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const TXT = () => SpikingArena.text;
-const isText = P => P.source === 'text' || P.source === 'fables';   // v19: 'fables' = the larger corpus (24 symbols)
-function symbolsOf(P) { if (isText(P)) return (P.source === 'fables' ? TXT().FABLES_ALPHA : TXT().ALPHA).map(c => c === ' ' ? '␣' : c); return NAMES.slice(0, P.K | 0).split(''); }
+const isText = P => P.source === 'text' || P.source === 'fables' || P.source === 'book';   // R60: 'book' = the real corpus (js/envs/book.js, Node only)   // v19: 'fables' = the larger corpus (24 symbols)
+const BOOK = () => { if (!SpikingArena.book) throw new Error("source 'book' needs js/envs/book.js (Node runner only)"); return SpikingArena.book; };
+function symbolsOf(P) { if (isText(P)) return (P.source === 'book' ? BOOK().ALPHA : P.source === 'fables' ? TXT().FABLES_ALPHA : TXT().ALPHA).map(c => c === ' ' ? '␣' : c); return NAMES.slice(0, P.K | 0).split(''); }
 
 function seqIO(P) {
   const names = symbolsOf(P), K = names.length, w = K > 12 ? 0.92 : 0.8, xs = spread(K, -w, w);
@@ -62,6 +63,13 @@ function makeRule(P, rng) {
       if (!tab.has(key)) tab.set(key, new Map()); const m = tab.get(key); m.set(y, (m.get(y) || 0) + 1); } let hit = 0; for (const m of tab.values()) hit += Math.max(...m.values()); return hit / pat.length; };
     let pos = 0; const seqNext = () => pat[(pos++) % pat.length];
     return { first: seqNext(), next: () => seqNext(), optAcc: 1, optBits: 0, firstOrderAcc: acc(1), secondOrderAcc: acc(2), desc: `third-order pattern ${pat.map(i => NAMES[i]).join('')} (order-2 limit ${(100 * acc(2)).toFixed(0)}%)`, order3: true }; }
+  // R60 (I66) real corpus: stream TRAIN from a random start (any length; wraps only after 3.3 M symbols); with evalSyms > 0 the last
+  // evalSyms symbols of the life come from HELD (book endings never in TRAIN, random start) and the fitness is the accuracy there.
+  if (P.source === 'book') { const B = BOOK(), C = B.TRAIN, H = B.HELD, A = B.ALPHA, IDX = new Map(A.map((c, i) => [c, i])), bg = B.bigram();
+    const nTr = P.evalSyms > 0 ? Math.max(1, P.nSyms - P.evalSyms) : Infinity; let pos = (rng() * C.length) | 0, i = 0, hp = -1;
+    const next = () => { i++; if (i <= nTr) return IDX.get(C[(++pos) % C.length]); if (hp < 0) hp = (rng() * H.length) | 0; return IDX.get(H[(hp++) % H.length]); };
+    return { first: IDX.get(C[pos]), next, optAcc: bg.acc, optBits: bg.bpc, firstOrderAcc: bg.acc, unigramAcc: bg.uniAcc, unigramBits: bg.uniBpc,
+             heldFrom: nTr === Infinity ? -1 : nTr, desc: `book corpus (${C.length} train / ${H.length} held-out characters; corpus bigram ${(100 * bg.acc).toFixed(0)}%)` }; }
   // text
   const T = TXT();
   if (P.source === 'fables') { const C = T.FABLES, IDX = new Map(T.FABLES_ALPHA.map((c, i) => [c, i])), B = T.FABLES_BIGRAM; let pos = (rng() * C.length) | 0;
@@ -106,12 +114,13 @@ class SeqTask {
     if (P.relabel > 0 && P.relabel < 1) { const pm = Array.from({ length: this.K }, (_, i) => i); for (let i = this.K - 1; i > 0; i--) { const j = (this.rng() * (i + 1)) | 0; [pm[i], pm[j]] = [pm[j], pm[i]]; }
       this.relabelAt = Math.max(1, Math.floor(n * P.relabel)); for (let i = this.relabelAt; i <= n; i++) this.seq[i] = pm[this.seq[i]]; }
     this.nOut = this.K; this.bIdx = isText(P) ? this.names.indexOf('␣') : -1; this.bc = { tp: 0, fp: 0, fn: 0, itp: 0, ifp: 0, ifn: 0 };   // R42: word-boundary confusion (brain and online bigram)
+    this.heldFrom = this.rule.heldFrom != null ? this.rule.heldFrom : -1; this.genSyms = P.source === 'book' && P.genSyms > 0 ? P.genSyms | 0 : 0; this.gen = [];   // R60 book: held-out eval / free-running generation
     this.t = 0; this.pos = 0; this.phaseT = 0; this.c2 = P.clock2 ? (P.clock3 ? 3 : 2) : 0; this.slot = this.c2 + P.onTicks + P.holdTicks;   // clock2: two clock ticks (GO2, GO1) before the symbol
     this.counts = new Float64Array(this.K); this.lastCounts = new Float64Array(this.K);
     this.hits = []; this.ideal = []; this.cal = new Calib(this.K); this.idealBits = 0; this.tab = Array.from({ length: this.K }, () => new Float64Array(this.K)); this.correct = 0; this.n = 0; this.bits = 0; this.rewardLog = []; this.recent = []; this.horizon = n * this.slot;
   }
   targetOf(s) { return s; }   // v30: the output that is right for next symbol s (seqchoice: a per-lifetime arm mapping)
-  get done() { return this.pos >= this.P.nSyms; }
+  get done() { return this.pos >= this.P.nSyms + this.genSyms; }
   sense(ext) {
     const P = this.P, K = this.K;
     if (!this.c2 && this.phaseT < P.onTicks) ext[this.seq[this.pos]] = P.inGain;
@@ -131,7 +140,13 @@ class SeqTask {
     if (this.phaseT >= this.slot - P.readTicks) { const g = P.readIn || 0;   // v13 readIn > 0: graded decoder, adds readIn x the output cells' summed synaptic input
       const nO = Math.min(this.nOut, out.spikes.length); if (g > 0 && out.input) for (let k = 0; k < nO; k++) this.counts[k] += out.spikes[k] + g * Math.max(0, out.input[k]); else for (let k = 0; k < nO; k++) this.counts[k] += out.spikes[k]; }
     this.phaseT++; this.t++;
+    if (this.phaseT >= this.slot && this.pos >= this.P.nSyms) {   // R60 free-running generation (book, genSyms): the prediction becomes the next input
+      let k = Dec.wta(this.counts), tot = 0; for (let j = 0; j < K; j++) tot += this.counts[j];
+      if (this.P.genTemp > 0 && tot > 0) { const w = new Float64Array(K); let z = 0; for (let j = 0; j < K; j++) z += (w[j] = Math.pow(this.counts[j] + 0.01, 1 / this.P.genTemp)); let u = this.rng() * z; for (k = 0; k < K - 1 && (u -= w[k]) > 0; k++); }   // genTemp > 0: sample p ~ counts^(1/T)
+      this.gen.push(k); this.genConf = (this.genConf || 0) + (tot > 0 ? this.counts[k] / tot : 0); this.seq[this.pos + 1] = k;
+      this.lastCounts.set(this.counts); this.counts.fill(0); this.phaseT = 0; this.pos++; return null; }
     if (this.phaseT >= this.slot) {                 // end of the slot: the prediction of the next symbol
+      if (this.pos === this.heldFrom) this.h0 = { c: this.correct, n: this.n, b: this.bits, bs: this.cal.bitsSoft, bc: this.cal.bitsCount, cn: this.cal.n };   // R60: held-out part starts
       const target = this.targetOf(this.seq[this.pos + 1]), k = Dec.wta(this.counts), ok = k === target;
       // ideal online 1st-order learner on the same stream: predicts the most frequent successor seen so far
       const row = this.tab[this.seq[this.pos]]; let bi = 0; for (let j = 1; j < K; j++) if (row[j] > row[bi]) bi = j;
@@ -156,12 +171,15 @@ class SeqTask {
   lastAcc(m) { const h = this.hits, a = Math.max(0, h.length - m); let s = 0; for (let j = a; j < h.length; j++) s += h[j]; return h.length > a ? s / (h.length - a) : 0; }   // v17: running 'last m' accuracy
   get bps() { return this.n ? this.bits / this.n : Math.log2(this.K); }
   score() { return this.accuracy; }
-  fitness() { return 10 * (0.5 * this.accuracy + 0.5 * this.quarter(3)); }
+  fitness() { if (this.h0) return 10 * this.heldAcc; return 10 * (0.5 * this.accuracy + 0.5 * this.quarter(3)); }
+  get heldAcc() { const h = this.h0; return h && this.n > h.n ? (this.correct - h.c) / (this.n - h.n) : 0; }
   f1(t, f, n) { return t ? 2 * t / (2 * t + f + n) : 0; }
   get bF1() { const c = this.bc; return this.f1(c.tp, c.fp, c.fn); }
   stats() { const c = this.bc; return { bF1: this.bF1, bP: c.tp + c.fp ? c.tp / (c.tp + c.fp) : 0, bR: c.tp + c.fn ? c.tp / (c.tp + c.fn) : 0, bF1bigram: this.f1(c.itp, c.ifp, c.ifn), symbols: this.n, accuracy: this.accuracy, firstQuarter: this.quarter(0), q1: this.quarter(1), q2: this.quarter(2), lastQuarter: this.quarter(3), bits: this.bps,
                      chance: 1 / this.K, optimal: this.rule.optAcc, idealOnline: this.idealAcc(), idealLast: this.idealAcc(3), optBits: this.rule.optBits, firstOrder: this.rule.firstOrderAcc, unigram: this.rule.unigramAcc,
-                     bitsSoft: this.cal.n ? this.cal.bitsSoft / this.cal.n : 0, bitsCount: this.cal.n ? this.cal.bitsCount / this.cal.n : 0, idealBits: this.n ? this.idealBits / this.n : 0, unigramBits: this.rule.unigramBits }; }
+                     bitsSoft: this.cal.n ? this.cal.bitsSoft / this.cal.n : 0, bitsCount: this.cal.n ? this.cal.bitsCount / this.cal.n : 0, idealBits: this.n ? this.idealBits / this.n : 0, unigramBits: this.rule.unigramBits, ...this.bookStats() }; }
+  bookStats() { const h = this.h0; if (!h) return {}; const n = this.n - h.n, cn = this.cal.n - h.cn;   // R60 held-out stats (book with evalSyms)
+    return { heldAcc: this.heldAcc, heldN: n, heldBits: n ? (this.bits - h.b) / n : 0, heldBitsSoft: cn ? (this.cal.bitsSoft - h.bs) / cn : 0, heldBitsCount: cn ? (this.cal.bitsCount - h.bc) / cn : 0, trainAcc: h.n ? h.c / h.n : 0 }; }
   statusLine() { return `symbol ${Math.min(this.pos + 1, this.P.nSyms)}/${this.P.nSyms} · accuracy ${(100 * this.accuracy).toFixed(0)}% · last 100 ${(100 * this.lastAcc(100)).toFixed(0)}% (first quarter ${(100 * this.quarter(0)).toFixed(0)}%, last ${(100 * this.quarter(3)).toFixed(0)}%) · chance ${(100 / this.K).toFixed(0)}% · ideal counter ${(100 * this.idealAcc()).toFixed(0)}% · optimal ${(100 * this.rule.optAcc).toFixed(0)}% · ${this.bps.toFixed(2)} bits (calibrated ${(this.cal.n ? this.cal.bitsSoft / this.cal.n : 0).toFixed(2)})`; }
   // v16 display: the read window is the last readTicks ticks of the slot; before it, the last prediction is shown
   get inRead() { return this.phaseT >= this.slot - this.P.readTicks; }
@@ -249,14 +267,17 @@ registerEnv({
   // Text -> two-phase clock (second-order plan predictK2XG) and a 1000-character lifetime (accuracy keeps rising past 200)
   taskKeys: ['source', 'K', 'det'],
   // v21 (round 22): text, fables and order3 -> three-phase clock (two-region third-order plan predictK3, DEFAULTS_VERSION 19)
-  recommend: P => P.source === 'text' ? { clock2: true, clock3: true, nSyms: 1000 } : P.source === 'fables' ? { clock2: true, clock3: true, nSyms: 2000 } : P.source === 'order3' ? { clock2: true, clock3: true } : {},
+  recommend: P => P.source === 'text' ? { clock2: true, clock3: true, nSyms: 1000 } : P.source === 'fables' ? { clock2: true, clock3: true, nSyms: 2000 } : P.source === 'book' ? { clock2: true, clock3: true, nSyms: 10000, evalSyms: 2000 } : P.source === 'order3' ? { clock2: true, clock3: true } : {},
   params: {
     source: { value: 'cycle', label: 'Sequence', options: [['cycle', 'Cycle: a random order of the symbols, repeated'], ['markov', 'Markov chain: preferred successor with probability p'],
               ['order2', 'Second-order pattern (successor depends on two symbols)'], ['order3', 'Third-order pattern (successor depends on three symbols)'], ['text', 'Text corpus (19 characters)'], ['fables', 'Fables: larger text corpus (4270 characters, 24 symbols)']] },
     K: { value: 4, min: 2, max: 16, step: 1, label: 'Alphabet size (not for text)' },
     det: { value: 0.8, min: 0.3, max: 1, step: 0.05, label: 'Markov: probability of the preferred successor' },
     nSyms: { value: 200, min: 20, max: 5000, step: 20, label: 'Symbols per lifetime' },
-    relabel: { value: 0, hidden: true },   // R45 (I49): rename all symbols by one random permutation from this fraction of the life on (0 = off)
+    relabel: { value: 0, hidden: true },
+    evalSyms: { value: 0, hidden: true },   // R60 (book): the last evalSyms symbols come from the held-out text; fitness = accuracy there
+    genSyms: { value: 0, hidden: true },    // R60 (book): after the life, free-run this many symbols (prediction fed back as input; run/gen.js freezes learning)
+    genTemp: { value: 0, hidden: true },    // R60 (book generation): 0 = winner-take-all, > 0 = sample the next symbol with p ~ spike counts^(1/genTemp)   // R45 (I49): rename all symbols by one random permutation from this fraction of the life on (0 = off)
     onTicks: { value: 4, min: 2, max: 12, step: 1, label: 'Symbol duration (ticks)' },
     holdTicks: { value: 4, min: 1, max: 12, step: 1, label: 'Prediction window (ticks)' },
     clock2: { value: false, label: 'Two-phase clock (GO2 then GO1 before each symbol; for the two-step memory of plan predictK2)' },
