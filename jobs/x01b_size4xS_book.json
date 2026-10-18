@@ -1,0 +1,81 @@
+{
+  "id": "x01b_size4xS_book",
+  "question": "I73",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Size 4x with scaled wiring (grid 120, maxCells 13600, coneSpeed 6, axonLen 80) under v36: book 10k + 30k, growths 8-15",
+  "priority": 0.97,
+  "estHours": 3.2,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "the first valid 4x point (w15/w16 were silent: wiring not scaled); vs w13 0.316 / 0.313; pays if >= +0.01"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "8",
+        "--force"
+      ],
+      "label": "v36 4xS book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x01b_size4xS_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "12",
+        "--force"
+      ],
+      "label": "v36 4xS book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x01b_size4xS_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "8",
+        "--force"
+      ],
+      "label": "v36 4xS book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x01b_size4xS_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "12",
+        "--force"
+      ],
+      "label": "v36 4xS book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x01b_size4xS_book.jsonl"
+      }
+    }
+  ]
+}

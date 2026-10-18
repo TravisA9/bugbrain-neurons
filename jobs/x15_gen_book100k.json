@@ -1,0 +1,51 @@
+{
+  "id": "x15_gen_book100k",
+  "question": "I72",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Generation after a 100k life under v36 (genTemp 1 and 0.7), growths 0-3",
+  "priority": 0.9,
+  "estHours": 2,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "does a longer life make samples more word-like? vs w25 (30k)"
+  },
+  "runs": [
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v36 gen T1 book100k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x15_gen_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v36 gen T0.7 book100k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x15_gen_book100k.jsonl"
+      }
+    }
+  ]
+}

@@ -1,0 +1,621 @@
+{
+  "id": "x08_rule_predErrSmall",
+  "question": "I77",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Learning rule (5-task screen, 16 growths): error-driven part back in small doses under the cap: predErr 0.03 / 0.01 (peMode 16, peFix 0.01; v35 0.3)",
+  "priority": 0.95,
+  "estHours": 4.1,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "adoption-ready if book30k and book10k win and no task is worse (t < -2) vs w13 / box eval16c"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "0",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "4",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "8",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "12",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "0",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "4",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "8",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "12",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "0",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "4",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "8",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "12",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "0",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 order3 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "4",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 order3 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "8",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 order3 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "12",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 order3 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "0",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 text1000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "4",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 text1000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "8",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 text1000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.03,pl.peMode=16,pl.peFix=0.01",
+        "12",
+        "--force"
+      ],
+      "label": "v36 predErr=0.03 text1000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "0",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "4",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "8",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "12",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "0",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "4",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "8",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "12",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "0",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "4",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "8",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "12",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "0",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 order3 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "4",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 order3 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "8",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 order3 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "12",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 order3 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "0",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 text1000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "4",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 text1000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "8",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 text1000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.predErr=0.01,pl.peMode=16,pl.peFix=0.01",
+        "12",
+        "--force"
+      ],
+      "label": "v36 predErr=0.01 text1000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x08_rule_predErrSmall.jsonl"
+      }
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "id": "x17b_size4xS_book100k",
+  "question": "I73",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Size 4x (scaled wiring) x 100k life: growths 8-15",
+  "priority": 0.88,
+  "estHours": 8,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "vs w18 (1x 100k 0.314) and x16"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "8",
+        "--force"
+      ],
+      "label": "v36 4xS book100k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x17b_size4xS_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "12",
+        "--force"
+      ],
+      "label": "v36 4xS book100k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x17b_size4xS_book100k.jsonl"
+      }
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "id": "x02_size2xS_book",
+  "question": "I73",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Size 2x with scaled wiring (grid 85, maxCells 6800, coneSpeed 4, axonLen 57) under v36: book 10k + 30k, growths 0-15",
+  "priority": 0.965,
+  "estHours": 3.2,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "w14 (unscaled 2x) was -0.020 / -0.014 vs w13; is that the wiring?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "0",
+        "--force"
+      ],
+      "label": "v36 2xS book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x02_size2xS_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "4",
+        "--force"
+      ],
+      "label": "v36 2xS book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x02_size2xS_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "8",
+        "--force"
+      ],
+      "label": "v36 2xS book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x02_size2xS_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "12",
+        "--force"
+      ],
+      "label": "v36 2xS book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x02_size2xS_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "0",
+        "--force"
+      ],
+      "label": "v36 2xS book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x02_size2xS_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "4",
+        "--force"
+      ],
+      "label": "v36 2xS book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x02_size2xS_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "8",
+        "--force"
+      ],
+      "label": "v36 2xS book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x02_size2xS_book.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "12",
+        "--force"
+      ],
+      "label": "v36 2xS book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x02_size2xS_book.jsonl"
+      }
+    }
+  ]
+}
