@@ -6,7 +6,7 @@ const L = require('./lib.js'), SA = L.SA, fs = require('fs');
 const [plan, nS, eS, seedS, out, variant = 'base'] = process.argv.slice(2), seed = +seedS;
 const task = { name: 'r61', env: 'seq', params: { source: 'book', nSyms: +nS, evalSyms: +eS, clock2: true, clock3: true } };
 const g = SA.PLANS[plan].make(), cells = g.kind === 'regions' ? g.regions.map(r => r.g) : [g];
-if (variant !== 'base') for (const kv of variant.split(',')) { const [k, v] = kv.split('='), [s, f] = k.split('.'); if (s === 'P') SA.params[f] = +v; else for (const C of cells) C[s][f] = +v; }
+if (variant !== 'base') for (const kv of variant.split(',')) { const [k, v] = kv.split('='), [s, f] = k.split('.'); if (s === 'P') SA.params[f] = +v; else if (s === 'T') task.params[f] = +v; else for (const C of cells) C[s][f] = +v; }
 const env = L.setupTask(task), brain = SA.growCell(g, { seed, spec: env.spec }), a = new SA.Agent(g, seed, brain, env), net = a.net, T = a.task;
 const nIn = brain.nIn, nHid = brain.nHid, o0 = nIn + nHid, cnt = new Uint16Array(nHid), K = T.K, chunks = [], meta = { plan, variant, seed, nSyms: +nS, evalSyms: +eS, nIn, nHid, nOut: brain.nOut, K,
   region: Array.from(brain.region.slice(nIn, o0)), mix: brain.mix ? Array.from(brain.mix.slice(nIn, o0)) : null, cellType: Array.from(brain.cellType.slice(nIn, o0)), regions: brain.regions.map(r => r.name), heldFrom: T.heldFrom, ckpt: [] };
