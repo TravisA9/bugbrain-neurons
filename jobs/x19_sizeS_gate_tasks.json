@@ -1,0 +1,381 @@
+{
+  "id": "x19_sizeS_gate_tasks",
+  "question": "I78",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r62_cmp.js"
+  ],
+  "title": "Size 2xS / 4xS (scaled wiring) on fables4000, order3, text1000, growths 0-15",
+  "priority": 0.905,
+  "estHours": 2.6,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "a size default needs no task worse; vs box eval16c / x00"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "0",
+        "--force"
+      ],
+      "label": "v36 2xS fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "4",
+        "--force"
+      ],
+      "label": "v36 2xS fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "8",
+        "--force"
+      ],
+      "label": "v36 2xS fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "12",
+        "--force"
+      ],
+      "label": "v36 2xS fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "0",
+        "--force"
+      ],
+      "label": "v36 2xS order3 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "4",
+        "--force"
+      ],
+      "label": "v36 2xS order3 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "8",
+        "--force"
+      ],
+      "label": "v36 2xS order3 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "12",
+        "--force"
+      ],
+      "label": "v36 2xS order3 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "0",
+        "--force"
+      ],
+      "label": "v36 2xS text1000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "4",
+        "--force"
+      ],
+      "label": "v36 2xS text1000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "8",
+        "--force"
+      ],
+      "label": "v36 2xS text1000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "12",
+        "--force"
+      ],
+      "label": "v36 2xS text1000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "0",
+        "--force"
+      ],
+      "label": "v36 4xS fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "4",
+        "--force"
+      ],
+      "label": "v36 4xS fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "8",
+        "--force"
+      ],
+      "label": "v36 4xS fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "12",
+        "--force"
+      ],
+      "label": "v36 4xS fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "0",
+        "--force"
+      ],
+      "label": "v36 4xS order3 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "4",
+        "--force"
+      ],
+      "label": "v36 4xS order3 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "8",
+        "--force"
+      ],
+      "label": "v36 4xS order3 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "12",
+        "--force"
+      ],
+      "label": "v36 4xS order3 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "0",
+        "--force"
+      ],
+      "label": "v36 4xS text1000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "4",
+        "--force"
+      ],
+      "label": "v36 4xS text1000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "8",
+        "--force"
+      ],
+      "label": "v36 4xS text1000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "12",
+        "--force"
+      ],
+      "label": "v36 4xS text1000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/x19_sizeS_gate_tasks.jsonl"
+      }
+    }
+  ]
+}
