@@ -45,3 +45,18 @@ Worktree /workspace/bb-book, branch neuro/book-diag (from 1b32911). Defaults unc
 - screen D1: metaN 0, metaCap 200
 - screen D2: peMode 18 (renormalise after LTD), mixHomeo 0.05 (steadier letter-pair codes), metaN 0 + predErr 0
 - All with readIn 0.01 on book10k/30k, fables4000 and order3.
+
+## Screen C/C2 complete-ish (21:25 CT); all arms use readIn 0.01
+| arm | book10k | book30k | book100k | fables4000 | order3 |
+|---|---|---|---|---|---|
+| readIn only (A, plus C for 100k) | 0.301 | 0.248 | 0.160 | 0.332 | 0.952 |
+| + predErr 0 | 0.316 | 0.303 | **0.298** | 0.331 | 0.951 |
+| + predErr 0.1 | 0.311 | 0.284 | (running) | 0.331 | 0.953 |
+| + metaN 0 (D1, predErr stays 0.3) | (running) | **0.344** | | (running) | (running) |
+- With predErr 0 the long-life decline is almost gone: 100k 0.298 vs 0.160.
+- metaN 0 gives the best 30k score, which confirms the mechanism (the metaplastic learning rate shrinks towards 0).
+
+## 30k recordings, seed 11 (base vs readIn + predErr 0)
+- held-out 0.262 -> 0.330; no-answer (ties) 32% -> 0.4%; read spikes 4.1 -> 8.0; agreement with the bigram choice 0.26 -> 0.51.
+- The input, context and mixing states are identical in the two runs: only the taught cells (cortex tag 1/5) receive plastic synapses. The oracle ceiling therefore stays at 0.395 (current-symbol cells).
+- Remaining gap: the brain now predicts space 62% of the time (truth 20%).
