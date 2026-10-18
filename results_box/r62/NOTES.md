@@ -1,4 +1,4 @@
-# R61: why v35 is a weak learner on real text (book): running notes
+# R62: why v35 is a weak learner on real text (book): running notes
 Worktree /workspace/bb-book, branch neuro/book-diag (from 1b32911). Defaults unchanged. Accuracy below = held-out (book), or fitness/10 (fables4000, order3). 8 growths unless noted.
 
 ## Diagnosis

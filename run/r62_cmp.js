@@ -1,4 +1,4 @@
-// R61 paired comparison per task: node run/r61_cmp.js <base.jsonl> <baseVariant> <cand.jsonl> <candVariant>; task keys ignore readIn; scores /10
+// R62 paired comparison per task: node run/r62_cmp.js <base.jsonl> <baseVariant> <cand.jsonl> <candVariant>; task keys ignore readIn; scores /10
 const fs = require('fs'), [fb, vb, fc, vc] = process.argv.slice(2);
 const load = (f, v) => { const m = {}; for (const l of fs.readFileSync(f, 'utf8').trim().split('\n')) { if (!l) continue; const r = JSON.parse(l); if (r.variant !== v) continue; const p = JSON.parse(r.task).params; delete p.readIn; const k = p.source + (p.nSyms || '') + (p.clock2 && p.source !== 'book' ? 'c' : '');
   r.scores.forEach((s, i) => { (m[k] = m[k] || {})[r.g0 + i] = s / 10; }); } return m; };

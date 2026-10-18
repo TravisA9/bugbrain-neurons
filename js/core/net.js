@@ -397,7 +397,7 @@ class SpikingNet {
           if ((pm & 2) && !nd[pres[k]]) { nd[pres[k]] = 1; dirty.push(pres[k]); } } }
       for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (this.plat[i] <= 0) continue;
         for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]]; if (x < 0.01) continue;
-          if (mE) { const j = pres[k], d = lr * x; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; if (mC > 0 && mE[j] > mC) mE[j] = mC; }   // R61 metaCap > 0: consolidation stops at metaCap (learning-rate floor lr mN / (mN + metaCap))
+          if (mE) { const j = pres[k], d = lr * x; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; if (mC > 0 && mE[j] > mC) mE[j] = mC; }   // R62 metaCap > 0: consolidation stops at metaCap (learning-rate floor lr mN / (mN + metaCap))
           else ws[k] = Math.min(wMax, ws[k] + lr * x);
           if (globalThis.__peDbg) globalThis.__peDbg.p += lr * x;
           if (tro) tro[pres[k]] += lr * x;

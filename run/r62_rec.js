@@ -1,4 +1,4 @@
-// R61 book diagnosis recorder: node run/r61_rec.js <plan> <nSyms> <evalSyms> <seed> <out prefix> [variant k=v,...]
+// R62 book diagnosis recorder: node run/r62_rec.js <plan> <nSyms> <evalSyms> <seed> <out prefix> [variant k=v,...]
 // Grows one brain, lives one book life, and records per symbol slot: the hidden cells' spike counts in the slot (sparse), the output
 // counts, the symbol and the brain's prediction; every nSyms/20 slots a saturation checkpoint (plastic weights, thresholds, output silence).
 // Writes <prefix>.bin (per slot: u16 nActive, nActive x (u16 cell, u8 count), 24 x u8 output counts) and <prefix>.json (meta + checkpoints).

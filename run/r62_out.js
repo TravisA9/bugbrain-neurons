@@ -1,5 +1,5 @@
-// R61: where is the prediction lost between the taught prediction cells (cortex tag 1) and the decoder?
-// node run/r61_out.js <prefix>: held accuracy of (a) brain, (b) argmax whole-slot output counts, (c) argmax read-window counts with random tie-break,
+// R62: where is the prediction lost between the taught prediction cells (cortex tag 1) and the decoder?
+// node run/r62_out.js <prefix>: held accuracy of (a) brain, (b) argmax whole-slot output counts, (c) argmax read-window counts with random tie-break,
 // (d) a column vote of the prediction cells (each tag-1 cell labelled by the next symbol it fires with most often in train; argmax of label counts)
 const fs = require('fs'), [pre] = process.argv.slice(2), M = JSON.parse(fs.readFileSync(pre + '.json')), B = fs.readFileSync(pre + '.bin');
 const K = M.K, seq = M.seq, S = [], OC = []; let o = 0;

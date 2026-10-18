@@ -1,4 +1,4 @@
-// R61 offline analysis of a recorded book life (run/r61_rec.js): node run/r61_ana.js <prefix> [trainSlots=20000] [epochs=4]
+// R62 offline analysis of a recorded book life (run/r62_rec.js): node run/r62_ana.js <prefix> [trainSlots=20000] [epochs=4]
 // (1) the brain's own accuracy: late train part vs held-out; (2) data-matched n-gram counters (fit on this life's TRAIN symbols, tested on
 // its held-out part); (3) ORACLE linear readouts: softmax regression on the recorded hidden-cell states (binary: spiked in the slot), fit on
 // the last trainSlots train slots, tested on the held-out slots, for target = next symbol and probes = current / 1 back / 2 back symbol,
