@@ -86,7 +86,7 @@ function poll() {
 function main() {
   process.on('SIGTERM', () => { killTree(); process.exit(0); }); process.on('SIGINT', () => { killTree(); process.exit(0); });
   const w = WC.tokenWarn(); if (w) say(w);
-  if (!TOKEN) say('no token (BB_DQ_TOKEN or ' + path.join(ST, 'token') + '): fetches work, but claiming/publishing will fail with exit 3');
+  if (!TOKEN) say('no token file (' + path.join(ST, 'token') + '): pushes use this computer\'s own git login; if GitHub refuses it, dq.js stops with exit 3 and says so');
   fetchAll(); S = WC.resolve(readCfg(), NAME, TYPE); KEY = keyOf(S); FORCE = S.forceVersion;
   const nc = newerCode(); if (nc) { say('code is behind (' + nc + '); restarting via launcher'); process.exit(10); }
   say(`worker ${NAME} (${TYPE}), mode ${S.mode}, config version ${S.version}, polling every ${process.env.BB_POLL_MS ? process.env.BB_POLL_MS + ' ms' : S.pollMinutes + ' min'}`);
