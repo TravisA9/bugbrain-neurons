@@ -72,3 +72,24 @@ Worktree /workspace/bb-book, branch neuro/book-diag (from 1b32911). Defaults unc
 - Capping consolidation gives most of the text gain with no order3 harm. It is about as good as predErr 0.
 - Held-out eval16, base arm: book10k 0.271 and book30k 0.228 (16 growths). The rest is running; the candidate arm starts after D2.
 - Queued D3: metaN 400; metaCap 200 + predErr 0; rcvHomeo 0.2 (output-side homeostasis).
+
+## Held-out eval, 16 growths (22:25 CT): candidate = graded decoder (readIn 0.01) + pl.predErr 0, vs v35. Paired by growth.
+| task | v35 | candidate | diff (se) | wins/losses |
+|---|---|---|---|---|
+| book30k | 0.229 | 0.299 | +0.070 (0.002) | 16/0 |
+| book10k | 0.271 | 0.308 | +0.038 (0.002) | 16/0 |
+| fables4000 | 0.300 | 0.327 | +0.027 (0.002) | 16/0 |
+| fables2000 | 0.288 | 0.315 | +0.026 (0.001) | 16/0 |
+| order3 | 0.904 | 0.953 | +0.048 (0.010) | 15/1 |
+| text1000 | 0.745 | 0.754 | +0.009 (0.002) | 15/1 |
+| order2@1000 (no clocks; both near 0, uninformative) | 0.034 | 0.032 | -0.002 (0.002) | 1/1 |
+| order2@1000 clock2+3 | 0.996 | 0.996 | 0.000 | 0/1 |
+=> Passes no-task-worse: no task is worse beyond noise. This is a default candidate, pending Travis's approval.
+
+## Learning-rule combos vs the candidate (8 growths, paired)
+- metaCap 200 + predErr 0: book30k +0.017 (8/0), book10k +0.009, fables4000 +0.003, order3 identical. Clean; 16-growth eval running (eval16c).
+- metaCap 100 + predErr 0: book +0.026 / +0.015, but order3 -0.007 (1/6). Rejected.
+- metaCap 200 + predErr 0 + mixHomeo 0.05: book +0.017 / +0.007, fables4000 -0.001 (3/4), order3 +0.014 (7/0). 16-growth eval queued (eval16d).
+- metaN 0 + predErr 0: book 0.339 / 0.341, fables 0.345, order3 0.864 (harm).
+- metaN 400: order3 0.920 (harm).
+- rcvHomeo 0.2: running.
