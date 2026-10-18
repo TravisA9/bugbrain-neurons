@@ -47,6 +47,7 @@ function startDq() {
   child.on('exit', (code, sig) => {
     child = null; const ran = Date.now() - childStart;
     if (process.platform !== 'win32') try { process.kill(-pg, 'SIGTERM'); } catch (e) {}   // no orphaned queue.js / job processes after a crash
+    else killOrphans(pg);
     if (restartWhy) { say(`dq.js stopped (${code ?? sig}); restarting for: ${restartWhy}`); process.exit(10); }
     if (code === 10) { say('dq.js saw newer code; restarting via launcher'); process.exit(10); }
     if (code === 3) { say('GitHub refused the token (exit 3). Put a valid fine-grained token (Contents read/write on TravisA9/bugbrain-neurons) in ' + path.join(ST, 'token')); process.exit(3); }
@@ -56,6 +57,13 @@ function startDq() {
     say(`dq.js exited (${code ?? sig}) after ${Math.round(ran / 1000)} s; restarting in ${Math.round(w / 1000)} s`);
     backoffTimer = setTimeout(startDq, w);
   });
+}
+// R61b (Windows): dq.js kills its job tree on exit, but a hard kill (taskkill /F, crash in native code) skips that.
+// Then its queue.js is orphaned; find node/bun processes whose parent was the dead dq.js and kill their trees.
+function killOrphans(pg) {
+  try { const out = cp.execFileSync('powershell', ['-NoProfile', '-Command', `Get-CimInstance Win32_Process -Filter "ParentProcessId=${+pg}" | Where-Object { $_.Name -match '^(node|bun)' -and $_.CommandLine -match 'queue\\.js' } | ForEach-Object { $_.ProcessId }`], { encoding: 'utf8', windowsHide: true, timeout: 30000 });
+    for (const pid of out.split(/\s+/).filter(x => /^\d+$/.test(x))) { say('killing orphaned job process tree ' + pid); try { cp.execFileSync('taskkill', ['/T', '/F', '/PID', pid], { stdio: 'ignore', windowsHide: true }); } catch (e) {} }
+  } catch (e) {}
 }
 function killTree() {
   if (!child) return; const pid = child.pid;

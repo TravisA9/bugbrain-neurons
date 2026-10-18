@@ -30,6 +30,9 @@ powershell -ExecutionPolicy Bypass -File $HOME\bugbrain-neurons\run\install-wind
 ```
 This registers a hidden Task Scheduler task `BugBrainWorker` that runs at logon. Press Enter at the token prompt to use this PC's own git login.
 It is separate from the local `run/queue.js` runner, which is left untouched.
+Optional: set the user environment variable `BB_HOME` before installing to keep the worker checkout elsewhere (TacoBell uses `%LOCALAPPDATA%\Temp\bugbrain-worker`; the launcher re-clones it if it is ever deleted).
+On a laptop the worker never claims a job while on battery, and `cpuMax` (e.g. `"workers": { "tacobell": { "cpuMax": 40, "workers": 4 } }`) makes it wait while other work (the local queue) keeps the CPU busy.
+If dq.js crashes or is killed, its job process tree is killed too (taskkill /T), so no orphaned runs keep computing.
 
 ## Everyday
 - Log: `tail -f ~/.bugbrain/worker.log` (Windows: `%USERPROFILE%\.bugbrain\worker.log`)
@@ -67,6 +70,7 @@ Edit `worker-config.json` at the root of the queue branch:
 | restart all workers after their current job | bump `version` (or `types.X.version` / `workers.N.version`) | ≤ 10 min + current job |
 | restart now, killing running jobs | bump `forceVersion` (claims are released on restart, so jobs restart from scratch) | ≤ 10 min |
 | new code | push to `neuro/distributed-queue` | after the current job, ≤ 2–10 min |
+| yield to other work on a shared PC | `cpuMax: P` (claim only while total CPU < P %) | next claim (graceful restart) |
 | other settings | `hours`, `phone`, `workers` (parallel runs per job), `allowBattery`, `includeText`, `pollMinutes` | graceful restart |
 
 Settings layer as built-in < `defaults` < `types[linux|windows|mac|phone]` < `workers[name]`.

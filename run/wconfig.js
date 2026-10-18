@@ -12,11 +12,12 @@
  * Settings (later layers win: built-in < defaults < types[type] < workers[name]):
  *   mode: "run" | "pause" (claim nothing new; the running job finishes) | "observe" (log what would be claimed, never push)
  *   hours, phone, workers (parallel workers inside queue.js), allowBattery, includeText,
+ *   cpuMax: claim a job only while total CPU use is below this % (yields to other work on a shared laptop, e.g. the local run/queue.js),
  *   only / skip: job-id patterns (* wildcard), minPriority, pollMinutes (supervisor check interval), version / forceVersion (per type / worker).
  * jobs: per-job overrides for every worker: "block" or { "priority": x, "block": true }; patterns allowed; later keys win. */
 const fs = require('fs'), path = require('path'), os = require('os'), cp = require('child_process');
 const STATE = process.env.BB_STATE_DIR || path.join(os.homedir(), '.bugbrain');
-const BUILTIN = { mode: 'run', hours: null, phone: false, workers: null, allowBattery: false, includeText: false, only: null, skip: null, minPriority: null, pollMinutes: 10 };
+const BUILTIN = { mode: 'run', hours: null, phone: false, workers: null, allowBattery: false, includeText: false, only: null, skip: null, minPriority: null, cpuMax: null, pollMinutes: 10 };
 const glob = p => new RegExp('^' + String(p).replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$');
 const matchAny = (pats, id) => [].concat(pats || []).some(p => glob(p).test(id));
 const isTermux = () => !!(process.env.TERMUX_VERSION || /com\.termux/.test(process.env.PREFIX || ''));
@@ -56,6 +57,6 @@ function jobView(cfg, j) {   // apply the config's per-job overrides; returns a 
 function allowed(s, j) { return (!s.only || matchAny(s.only, j.id)) && !matchAny(s.skip, j.id) && (s.minPriority == null || (j.priority || 0) >= s.minPriority); }
 function dqArgs(s, name) {
   return ['--worker', name, '--wait'].concat(s.hours ? ['--hours', String(s.hours)] : [], s.phone ? ['--phone'] : [], s.workers ? ['--workers', String(s.workers)] : [],
-    s.allowBattery ? ['--allow-battery'] : [], s.includeText ? ['--include-text'] : [], s.mode === 'observe' ? ['--observe'] : []);
+    s.allowBattery ? ['--allow-battery'] : [], s.includeText ? ['--include-text'] : [], s.cpuMax ? ['--cpu-max', String(s.cpuMax)] : [], s.mode === 'observe' ? ['--observe'] : []);
 }
 module.exports = { STATE, deviceType, token, tokenWarn, workerName, resolve, jobView, allowed, dqArgs, matchAny, isTermux };

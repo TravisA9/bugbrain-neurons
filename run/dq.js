@@ -23,6 +23,7 @@
  *     `requires` files arrive with new code are seen without a manual pull. Under the supervisor (BB_SUPERVISED=1) newer code ->
  *     exit 10 between jobs (the launcher resets the checkout and restarts); run directly -> fast-forward pull (was never called before R61).
  *   - --stop-file F: exit 0 between jobs / while waiting when F exists (graceful restart). --observe: never push; log what would be claimed.
+ *   - R61b: --cpu-max P (config cpuMax) waits before claiming while CPU > P %; Windows: no claims on battery; job tree killed on exit.
  *   - token: BB_DQ_TOKEN, else ~/.bugbrain/token. Heartbeat: workers/<name>.json on the queue branch (state, code, config version). */
 const fs = require('fs'), path = require('path'), os = require('os'), cp = require('child_process');
 const ROOT = path.resolve(__dirname, '..');
@@ -112,6 +113,28 @@ async function renew(j) {   // lease heartbeat; false if someone else took the j
   return true;
 }
 function sharedRegistry() { return ls('registry').filter(f => f.endsWith('.jsonl')).map(f => fs.readFileSync(path.join(DIR, 'registry', f), 'utf8')).join(''); }
+// R61b: before a claim, yield to other work (--cpu-max P: wait while total CPU > P %) and, on a Windows laptop, to battery power
+// (queue.js would pause on battery anyway, but only after the claim, holding the job hostage). --allow-battery skips the battery check.
+const CPU_MAX = +(A['cpu-max'] || 0);
+function cpuSample(ms) { const a = os.cpus(); return sleep(ms).then(() => { const b = os.cpus(); let busy = 0, tot = 0; b.forEach((c, i) => { const x = c.times, y = a[i].times; const t = (x.user + x.nice + x.sys + x.irq + x.idle) - (y.user + y.nice + y.sys + y.irq + y.idle); tot += t; busy += t - (x.idle - y.idle); }); return tot ? 100 * busy / tot : 0; }); }
+function onBatteryWin() {
+  if (A['allow-battery'] || PHONE || process.platform !== 'win32') return false;
+  try { return cp.execFileSync('powershell', ['-NoProfile', '-Command', '(Get-CimInstance Win32_Battery | Select-Object -First 1).BatteryStatus'], { encoding: 'utf8', windowsHide: true, timeout: 20000 }).trim() === '1'; } catch (e) { return false; }
+}
+async function yieldWhy() {
+  if (onBatteryWin()) return 'running on battery';
+  if (CPU_MAX > 0) { const c = await cpuSample(5000); if (c > CPU_MAX) return `CPU busy (${c.toFixed(0)} % > ${CPU_MAX} %)`; }
+  return '';
+}
+// R61b: never leave job processes behind. On Windows children are not killed with their parent, so a dq.js crash or kill used to
+// orphan queue.js and its runner/r42 processes (still computing, results lost). Kill the whole job tree whenever dq.js exits.
+let jobChild = null;
+function killJobTree() {
+  const ch = jobChild; jobChild = null; if (!ch || ch.exitCode != null) return;
+  try { if (process.platform === 'win32') cp.execFileSync('taskkill', ['/T', '/F', '/PID', String(ch.pid)], { stdio: 'ignore', windowsHide: true, timeout: 30000 }); else ch.kill('SIGTERM'); } catch (e) {}
+}
+process.on('exit', killJobTree);
+for (const sg of ['SIGINT', 'SIGTERM', 'SIGBREAK', 'SIGHUP']) try { process.on(sg, () => { killJobTree(); process.exit(130); }); } catch (e) {}
 async function runJob(j) {
   const scratch = path.join(os.tmpdir(), 'bb-dq-' + j.id + '-' + process.pid), q = path.join(scratch, 'queue'), res = path.join(scratch, 'results'), reg = path.join(scratch, 'registry.jsonl');
   fs.mkdirSync(q, { recursive: true }); fs.mkdirSync(res, { recursive: true });
@@ -122,7 +145,7 @@ async function runJob(j) {
   say(`running ${j.id} in ${scratch}`);
   let code;
   if (A.dry) { fs.writeFileSync(path.join(res, 'queue_state.json'), JSON.stringify({ jobs: { [j.id]: { status: 'done', pass: null, dry: true } } })); fs.appendFileSync(reg, JSON.stringify({ fp: 'dry-' + j.id, desc: { dry: j.id }, status: 'finished', by: WORKER }) + '\n'); await sleep(+(process.env.BB_DQ_DRY_MS || 1500)); code = 0; }
-  else code = await new Promise(r => { const ch = cp.spawn(RUNTIME, qargs, { cwd: ROOT, stdio: 'inherit', env: Object.assign({}, process.env, { BB_QUEUE_DIR: q, BB_RESULTS: res, BB_REGISTRY: reg }) }); ch.on('close', r); ch.on('error', () => r(-1)); });
+  else code = await new Promise(r => { const ch = cp.spawn(RUNTIME, qargs, { cwd: ROOT, stdio: 'inherit', env: Object.assign({}, process.env, { BB_QUEUE_DIR: q, BB_RESULTS: res, BB_REGISTRY: reg }) }); jobChild = ch; ch.on('close', c => { if (jobChild === ch) jobChild = null; r(c); }); ch.on('error', () => { if (jobChild === ch) jobChild = null; r(-1); }); });
   const state = (rd(path.join(res, 'queue_state.json')) || { jobs: {} }).jobs[j.id] || { status: 'unknown' };
   const newLines = fs.readFileSync(reg, 'utf8').slice(seed.length);
   return { code, state, newLines, res, scratch };
@@ -190,11 +213,12 @@ async function main() {
   ensureClone(); say(`worker on ${BRANCH} of ${REPO.replace(/\/\/[^@]*@/, '//')}${isFinite(HOURS) ? ', ' + HOURS + ' h' : ''}${SUPERVISED ? ' (supervised, ' + TYPE + ')' : ''}${OBSERVE ? ' [observe: no claims, no pushes]' : ''}`);
   const WAIT = +(process.env.BB_DQ_WAIT_MS || 180e3);
   codeCheck(true); await releaseOwn();
-  let n = 0;
+  let n = 0, lastYield = '';
   for (;;) {
     checkStop(); codeCheck();   // R61: new code (and its `requires` files) before every claim
     if (S.mode === 'pause') { try { sync(); } catch (e) {} if (S.mode === 'pause') { say('paused by worker-config.json'); heartbeat('paused'); await waitIdle(WAIT); continue; } }
     if (PHONE) { const p = require('./power').check(true); if (p.pause) { say('phone power guard: ' + p.why + '; waiting'); heartbeat('power-pause'); await waitIdle(120000); continue; } }
+    { const why = await yieldWhy(); if (why) { if (why !== lastYield) say(why + ': waiting before claiming'); lastYield = why; heartbeat('yielding'); await waitIdle(60000); continue; } if (lastYield) say('CPU/power free again'); lastYield = ''; }
     let j; try { j = await claimNext(); } catch (e) { otherFails++; const w = Math.min(600e3, 15e3 * 2 ** Math.min(otherFails, 6)); say('sync failed, retrying in ' + Math.round(w / 1000) + ' s: ' + redact(e.message).split('\n').slice(-2).join(' | ')); await sleep(w); continue; }
     if (!j) { if (A.wait && Date.now() - T0 < HOURS * 3600e3 - 3600e3) { heartbeat('idle'); await waitIdle(WAIT); continue; } say('nothing to claim; exiting'); break; }
     heartbeat('running', j.id);
