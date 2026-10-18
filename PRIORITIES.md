@@ -11,11 +11,11 @@ Analogy is secondary. Pick tests that bring the design landscape into focus, avo
 - Output-side space-bias fixes (readIn > 0.01, readTicks, rcvHomeo 0.02-0.05) and mixing-code knobs (mixHomeo, mixLr, mixK) are ruled out.
 - v36 may hurt reward-coupled seqchoice order2 (-0.055 vs v35, t -2.5): x12.
 
-## Ranked open questions (shared jobs x00-x17)
+## Ranked open questions (shared jobs x00-x19)
 | rank | id | question | jobs |
 |---|---|---|---|
-| 1 | I78 / I73 | Does size pay once the wiring scales with the grid (2xS / 4xS vs 1x at book 10k / 30k)? Decides the large-brain run | x01a/b, x02 |
-| 2 | I77 | Which teacher-rule knob of the cortex cells moves book toward 0.40 without hurting order3 / fables / text (5-task screens, adoption-ready) | x03-x08, x10, x11 (x00 = worker reference) |
+| 1 | I78 / I73 | Does size pay once the wiring scales with the grid (2xS / 4xS vs 1x at book 10k / 30k)? Decides the large-brain run | x01a/b, x02 (+ x19 gate tasks) |
+| 2 | I77 | Which teacher-rule knob of the cortex cells moves book toward 0.40 without hurting order3 / fables / text (5-task screens, adoption-ready) | x03-x08, x10, x11, x18 (x00 = worker reference) |
 | 3 | I75 | Space bias through trust / sharpness weighting and very weak homeostasis at a realistic target rate | x03, x07, x09 |
 | 4 | Q31 | Is v36 really worse on seqchoice order2, and is it metaCap or predErr 0? | x12 |
 | 5 | I72 | Generation: 4xS brain at 30k, 1x at 100k (sampling T 1 / 0.7) | x14, x15 |
@@ -26,7 +26,8 @@ Decision point: if 4xS (or 2xS) beats w13 by >= 0.01 on book30k, scale-up become
 wins on book30k and book10k with no task worse, it is adoption-ready (16 growths) and goes to Travis / the authorised default rule.
 
 ## Worker notes (R63)
-linux-pc publishes results but has no heartbeat (pre-R61 dq.js, not under the supervisor). When someone is at the PC: `sh run/install-linux.sh linux-pc`
+linux-pc publishes results but has no heartbeat (pre-R61 dq.js, not under the supervisor) and runs two worker processes under one name
+(two jobs at a time). When someone is at the PC: `sh run/install-linux.sh linux-pc`
 (systemd user service + linger, self-updating). tacobell: supervised, cpuMax 75, no claims on battery.
 
 ## Previous status (R62)

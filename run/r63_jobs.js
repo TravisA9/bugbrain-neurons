@@ -1,4 +1,4 @@
-// R63: shared-queue jobs x00-x17 (node run/r63_jobs.js <outdir>). 16 held-out growths per arm in 4-growth runs (g0 0/4/8/12, the same
+// R63: shared-queue jobs x00-x19 (node run/r63_jobs.js <outdir>). 16 held-out growths per arm in 4-growth runs (g0 0/4/8/12, the same
 // growth/arena seeds as w13 and the box R62 eval16c, so every arm is paired growth by growth with the v36 reference; run/r62_cmp.js).
 // R63 finding behind x01-x03 / x16-x17: sc.grid alone does not scale a brain. coneSpeed (growth-cone steps per developmental step) and
 // axonLen (axon length in grid steps) are in grid units, so on a finer grid the axons cover less of the sheet: book 1.5k (1 growth, box)
@@ -40,6 +40,9 @@ const RULE = [
   ['x10_rule_plateau', 0.94, 'potentiation window plateau 2 / 6 (v36 4)', ['pl.plateau=2', 'pl.plateau=6']],
   ['x11_rule_preLag', 0.935, 'credited context age preLag 4 / 12 (v36 8)', ['pl.preLag=4', 'pl.preLag=12']] ];
 for (const [id, pri, what, vs] of RULE) J.push(job(id, { q: id.includes('space') ? 'I75' : 'I77', pri, title: 'Learning rule (5-task screen, 16 growths): ' + what, note: 'adoption-ready if book30k and book10k win and no task is worse (t < -2) vs w13 / box eval16c', arms: vs.flatMap(v => screen(v, 'v36 ' + v.split(',')[0].replace('pl.', ''))) }));
+J.push(job('x18_rule_metaN', { q: 'I77', pri: 0.932, title: 'Learning rule (5-task screen, 16 growths): consolidation strength metaN 20 / 80 (v36 40, cap 200; metaN 0: book 0.34, order3 0.87 in R62)', note: 'adoption-ready if book30k and book10k win and no task is worse (t < -2) vs w13 / box eval16c', arms: ['pl.metaN=20', 'pl.metaN=80'].flatMap(v => screen(v, 'v36 ' + v.replace('pl.', ''))) }));
+// scaled sizes on the other gate tasks (needed before any size adoption)
+J.push(job('x19_sizeS_gate_tasks', { q: 'I78', pri: 0.905, title: 'Size 2xS / 4xS (scaled wiring) on fables4000, order3, text1000, growths 0-15', note: 'a size default needs no task worse; vs box eval16c / x00', arms: [[S2, '2xS', 2], [S4, '4xS', 4]].flatMap(([v, l, c]) => [{ variant: v, task: FAB4, n: 'f4', cost: c, lbl: `v36 ${l} fables4000` }, { variant: v, task: ORD3, n: 'o3', cost: c, lbl: `v36 ${l} order3` }, { variant: v, task: TXT, n: 't1', cost: c, lbl: `v36 ${l} text1000` }]) }));
 // --- safety and confirmations ---
 const SCO2 = JSON.stringify({ env: 'seqchoice', params: { source: 'order2', nSyms: 1000 } });
 J.push(job('x12_seqchoice_order2_dissect', { q: 'Q31', pri: 0.93, title: 'seqchoice order2 (w26: v36 -0.055 vs v35, t -2.5, 6/10): 16 more growths of v36 and v35, and which v36 change does it (v36 + metaCap 0; v36 + v35 predErr)', note: 'decides whether v36 really hurts reward-coupled order2 and whether metaCap or predErr 0 is the cause', arms: [

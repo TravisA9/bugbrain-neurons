@@ -2496,10 +2496,11 @@ screened arm C). seqchoice also defaults to deepURSx3 and was not in the eval (q
 ceiling of its own states; it predicts space 62% of the time (truth 20%). Queue restocked with w13-w26 (size / depth / length under v36,
 output-side space-bias fixes, letter-pair code stability, generation, seqchoice safety).
 
-## R63 — queue review (Oct 18, 7:20 AM CT): w13-w26 results under v36, size tests were invalid (unscaled wiring), queue x00-x17 (v36 / 29 unchanged)
+## R63 — queue review (Oct 18, 7:20 AM CT): w13-w26 results under v36, size tests were invalid (unscaled wiring), queue x00-x19 (v36 / 29 unchanged)
 Queue had run dry (all p01-w26 done). tacobell idle since ~5:18 AM CT (code 5c50ab2, supervised heartbeat); linux-pc finished w09 at 6:22 AM CT and
 was idle after that. linux-pc **has never written workers/linux-pc.json** (no heartbeat commit ever), so it still runs a dq.js older than R61 (the heartbeat
-came with R61) and not the R61 supervisor; its job runs do use current code (w13-w25 ran with DEFAULTS 29). Results still publish; reinstall
+came with R61) and not the R61 supervisor; its job runs do use current code (w13-w25 ran with DEFAULTS 29). It also runs **two**
+worker processes under the one name (overlapping claims: w25 + w12 + w09 at 4:45-5:19 AM, x00 + x01b at 7:44-7:47 AM CT). Results still publish; reinstall
 with `sh run/install-linux.sh linux-pc` when someone is at the PC (needs Travis).
 
 All arms paired growth by growth with the v36 reference (w13 for book; box eval16c for fables4000, identical seeds: w13 book30k g4-7 =
@@ -2546,7 +2547,7 @@ Nothing qualifies for adoption (no arm won on 16 growths with no task worse). De
 Code (R63): run/r42.js and run/gen.js accept region-targeted overrides `s.f@sel=v` (sel = region-name prefix, `!` negates, `|` joins;
 run/lib.js selCells), for seqchoice and other multi-region work; plain variants unchanged. run/r63_jobs.js writes the new queue.
 
-New queue (x00-x17, all v36, plain variants, run on any v36 checkout; est hours on the r62 scale, real ~3.7x faster on linux-pc and
+New queue (x00-x19, all v36, plain variants, run on any v36 checkout; est hours on the r62 scale, real ~3.7x faster on linux-pc and
 ~2.75x on tacobell for many-run jobs, ~1x for the 2-run 100k jobs):
 | pri | id | what | est h |
 |---|---|---|---|
@@ -2554,9 +2555,11 @@ New queue (x00-x17, all v36, plain variants, run on any v36 checkout; est hours 
 | 0.97 | x01a/b | size 4x, scaled wiring, book 10k + 30k, 16 growths | 3.2 + 3.2 |
 | 0.965 | x02 | size 2x, scaled wiring, book 10k + 30k | 3.2 |
 | 0.962-0.935 | x03-x11 | 5-task screens (book30k, book10k, fables4000, order3, text1000; 16 growths) of the cortex teacher rule: trustPow 4/0, lr 0.1/0.025, metaCap 100/50, preNorm 60/30, confPow 2 / trustMax 8, predErr 0.03/0.01, rcvHomeo 0.005 at rcvRate 0.1 / 0.002 (space), plateau 2/6, preLag 4/12 | 4.1 each |
+| 0.932 | x18 | 5-task screen: consolidation strength metaN 20 / 80 (v36 40) | 4.1 |
 | 0.93 | x12 | seqchoice order2 dissect (v36 / v35 g16-31, v36 + metaCap 0, v36 + predErr 0.3) | 0.5 |
 | 0.92 | x13 | confirm mixLr 0.005 (book10k, order3, text1000, fables2000) | 0.7 |
 | 0.91 | x14 | generation from the 4xS brain after 30k (T 1 / 0.7) | 2.4 |
+| 0.905 | x19 | 2xS / 4xS on fables4000, order3, text1000 (gate tasks for a size default) | 2.6 |
 | 0.9 | x15 | generation after a 100k life (T 1 / 0.7) | 2 |
 | 0.89 | x16a/b | 2xS x 100k life | 4 + 4 |
 | 0.88 | x17a/b | 4xS x 100k life | 8 + 8 |
