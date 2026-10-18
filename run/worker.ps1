@@ -12,24 +12,28 @@ New-Item -ItemType Directory -Force -Path $ST | Out-Null
 $mutex = New-Object System.Threading.Mutex($false, 'Global\BugBrainWorker')
 if (-not $mutex.WaitOne(0)) { exit 0 }   # already running
 $env:GIT_TERMINAL_PROMPT = '0'
-function Log($m) { Add-Content -Path $LOG -Value ("[{0}] [launcher] {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $m) }
-function Git { & git @args 2>&1 | ForEach-Object { "$_" } | Add-Content -Path $LOG; return $LASTEXITCODE }
+function Log($m) { [IO.File]::AppendAllText($LOG, ("[{0}] [launcher] {1}`r`n" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $m)) }
+# R61b: PowerShell names are case-insensitive, so a helper called "Git" called itself (endless recursion, worker never started).
+# The helper is RunGit and native git is always called as git.exe.
+# Log lines are appended one at a time with AppendAllText, so the log stays readable (a piped Add-Content locks the file).
+function ToLog { process { [IO.File]::AppendAllText($LOG, "$_`r`n") } }
+function RunGit { & git.exe @args 2>&1 | ToLog; return $LASTEXITCODE }
 $fails = 0
 while ($true) {
   if ((Test-Path $LOG) -and (Get-Item $LOG).Length -gt 5MB) { Move-Item -Force $LOG "$LOG.1" }
-  if (-not (Test-Path (Join-Path $DIR '.git'))) { Log "cloning $BR into $DIR"; if ((Git clone -q -b $BR $REPO $DIR) -ne 0) { Log 'clone failed; retry in 60 s'; Start-Sleep 60; continue } }
+  if (-not (Test-Path (Join-Path $DIR '.git'))) { Log "cloning $BR into $DIR"; if ((RunGit clone -q -b $BR $REPO $DIR) -ne 0) { Log 'clone failed; retry in 60 s'; Start-Sleep 60; continue } }
   Set-Location $DIR
-  if ((Git fetch -q origin "+refs/heads/${BR}:refs/bb/code") -eq 0) {
-    $dirty = & git status --porcelain --untracked-files=no
-    if ($dirty) { Git stash push -q -m ("bb-worker autostash " + (Get-Date -Format s)) | Out-Null; Log 'local edits stashed (git stash list)' }
-    $old = & git rev-parse --short HEAD
-    Git checkout -q -B $BR refs/bb/code | Out-Null; Git reset -q --hard refs/bb/code | Out-Null
-    $new = & git rev-parse --short HEAD; if ($old -ne $new) { Log "code $old -> $new" }
+  if ((RunGit fetch -q origin "+refs/heads/${BR}:refs/bb/code") -eq 0) {
+    $dirty = & git.exe status --porcelain --untracked-files=no
+    if ($dirty) { RunGit stash push -q -m ("bb-worker autostash " + (Get-Date -Format s)) | Out-Null; Log 'local edits stashed (git stash list)' }
+    $old = & git.exe rev-parse --short HEAD
+    RunGit checkout -q -B $BR refs/bb/code | Out-Null; RunGit reset -q --hard refs/bb/code | Out-Null
+    $new = & git.exe rev-parse --short HEAD; if ($old -ne $new) { Log "code $old -> $new" }
   } else { Log 'fetch failed; running the code that is here' }
   $rt = (Get-Command node -ErrorAction SilentlyContinue); if (-not $rt) { $rt = (Get-Command bun -ErrorAction SilentlyContinue) }
   if (-not $rt) { Log 'node (or bun) not found; retry in 5 min'; Start-Sleep 300; continue }
   $t0 = Get-Date
-  & $rt.Source run/supervisor.js *>> $LOG
+  & $rt.Source run/supervisor.js 2>&1 | ToLog   # one encoding in the log (*>> wrote UTF-16 in PowerShell 5.1)
   $code = $LASTEXITCODE; $ran = ((Get-Date) - $t0).TotalSeconds
   if ($code -eq 10) { $fails = 0; continue }
   if ($code -eq 3) {
