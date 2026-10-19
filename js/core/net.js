@@ -317,12 +317,17 @@ class SpikingNet {
     this.rcv = Int32Array.from(list); this.isRcv = isR; this.synP = new Float32Array(N); this.poolTr = 0;
     const P = this.posts, isP = this.isPlastic, toR = new Uint8Array(P.length); for (let k = 0; k < P.length; k++) toR[k] = isP[k] && isR[P[k]] ? 1 : 0;
     this.toRcv = toR;   // perf: per-synapse "plastic synapse onto a receiver" flag (isPlastic/isRcv are fixed after construction)
+    if (!globalThis.__bbSlow) {   // R65: syn and synP are two halves of one buffer; each synapse's target slot precomputed (branch-free, same additions in the same order)
+      const buf = new Float32Array(2 * N); buf.set(this.syn); this.syn = buf.subarray(0, N); this.synP = buf.subarray(N, 2 * N); this.synBuf = buf;
+      const tg = new Int32Array(P.length); for (let k = 0; k < P.length; k++) tg[k] = toR[k] ? N + P[k] : P[k]; this.synTgt = tg; }
     this.rcvRng = mulberry32(0x5eed1 ^ this.g.N); this.dPool = this.p.rcvInhTau > 0 ? Math.exp(-1 / this.p.rcvInhTau) : 0;
   }
   propagateRcv(spk, nSpk) {
     const start = this.start, posts = this.posts, ws = this.ws, syn = this.syn, toR = this.toRcv, isR = this.isRcv, sP = this.synP, R = this.rcv, p = this.p;
     let nR = 0;
-    for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (isR[i]) nR++;
+    if (this.synTgt) { const buf = this.synBuf, tg = this.synTgt; for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (isR[i]) nR++;
+      for (let k = start[i], e = start[i + 1]; k < e; k++) buf[tg[k]] += ws[k]; } }
+    else for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (isR[i]) nR++;
       for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = posts[k]; if (toR[k]) sP[j] += ws[k]; else syn[j] += ws[k]; } }
     let f = 1;
     if (p.rcvDiv > 0) { let S = 0; for (let q = 0; q < R.length; q++) S += sP[R[q]]; f = p.rcvDiv * R.length / (p.rcvSig + S); }
@@ -391,7 +396,7 @@ class SpikingNet {
     const teach = !!this.teachTr && !(this.uni && this.eOn), spk = this.spk, nSpk = this.nSpk;   // v22 unified rule: eligibility traces kept (for dopamine-learning receivers)
     const lz = this.uni && this.eOn && learn, isEl = this.uni ? this.isE : this.isPlastic;   // v22 unified rule: LAZY eligibility decay (each trace is decayed when it is touched; same values, far fewer operations)
     if (lz) { if (!this.eT) { this.eT = new Int32Array(el.length); this.eSub = 0; this.ePow = new Float32Array(8192); for (let n = 0; n < 8192; n++) this.ePow[n] = Math.pow(dE, n); if (dE2) { this.ePow2 = new Float32Array(8192); for (let n = 0; n < 8192; n++) this.ePow2[n] = Math.pow(dE2, n); } } this.eSub++; }
-    const eT = this.eT, eS = this.eSub, eP = this.ePow, eP2 = this.ePow2, eAt = k => { const n = eS - eT[k]; eT[k] = eS; if (el2) el2[k] *= n < 8192 ? eP2[n] : 0; return el[k] *= n < 8192 ? eP[n] : 0; };
+    const eT = this.eT, eS = this.eSub, eP = this.ePow, eP2 = this.ePow2, eAt = !lz ? null : k => { const n = eS - eT[k]; eT[k] = eS; if (el2) el2[k] *= n < 8192 ? eP2[n] : 0; return el[k] *= n < 8192 ? eP[n] : 0; };
     if (learn && !teach && !lz) for (let q = 0; q < pl.length; q++) { el[pl[q]] *= dE; if (el2) el2[pl[q]] *= dE2; }     // eligibility decays (the teacher rule never uses it: all 0)
     const start = this.start, posts = this.posts, pres = this.pres, isP = this.isPlastic,
           inS = this.inStart, inE = this.inEdges, aM = this.p.aMinus;
@@ -447,8 +452,15 @@ class SpikingNet {
       }
     }
     const dPre = this.dPre, dPost = this.dPost;
-    if (this.xLag && this.fast && !this.trNeedPre && !this.trNeedPost) { const xL = this.xLag, lb = this.lagBuf, o = this.lagPos * N;   // R65: only the lagged trace is read
-      for (let i = 0; i < N; i++) { xL[i] = xL[i] * dPre + lb[o + i]; lb[o + i] = sp[i]; } this.lagPos = (this.lagPos + 1) % this.p.preLag; }
+    if (this.xLag && this.fast && !this.trNeedPre && !this.trNeedPost) {   // R65: only the lagged trace is read; the lag line keeps spike LISTS
+      // (exact: a cell that spiked preLag substeps ago gets x*d + 1 from its saved pre-decay value, every other cell x*d = x*d + 0, as before)
+      const xL = this.xLag, P = this.p.preLag, slot = this.lagPos;
+      if (!this.lagL) { this.lagL = Array.from({ length: P }, () => new Int32Array(N)); this.lagN = new Int32Array(P); this.lagSv = new Float64Array(N); }
+      const Ls = this.lagL[slot], nL = this.lagN[slot], sv = this.lagSv;
+      for (let q = 0; q < nL; q++) sv[q] = xL[Ls[q]];
+      for (let i = 0; i < N; i++) xL[i] = xL[i] * dPre;
+      for (let q = 0; q < nL; q++) xL[Ls[q]] = sv[q] * dPre + 1;
+      for (let q = 0; q < nSpk; q++) Ls[q] = spk[q]; this.lagN[slot] = nSpk; this.lagPos = (slot + 1) % P; }
     else if (this.xLag) { const xL = this.xLag, lb = this.lagBuf, o = this.lagPos * N;   // pre trace of spikes older than preLag substeps (perf: fused with the pre/post trace loop, same per-element arithmetic)
       for (let i = 0; i < N; i++) { const si = sp[i]; xPre[i] = xPre[i] * dPre + si; xPost[i] = xPost[i] * dPost + si; xL[i] = xL[i] * dPre + lb[o + i]; lb[o + i] = si; } this.lagPos = (this.lagPos + 1) % this.p.preLag; }
     else for (let i = 0; i < N; i++) { xPre[i] = xPre[i] * dPre + sp[i]; xPost[i] = xPost[i] * dPost + sp[i]; }
