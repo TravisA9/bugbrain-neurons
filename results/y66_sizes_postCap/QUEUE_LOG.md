@@ -1,0 +1,105 @@
+# Queue log (run/queue.js)
+
+## 10/19/2026, 2:46:24 PM · y66_sizes_postCap · DONE
+seqchoice: cortex 8x (divRep 2) / 3x / 2x + fanRef 450/R126 + postCapRel 2.5, growths 0-15 (question I90).
+
+| run | mean | sd | growths | note |
+|---|---|---|---|---|
+| cx8 fix seqchoice order2 g0 n1 | 2.665 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g1 n1 | 2.32 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g2 n1 | 2.865 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g3 n1 | 1.94 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g4 n1 | 2.015 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g5 n1 | 1.445 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g6 n1 | 1.635 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g7 n1 | 2.48 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g8 n1 | 2.69 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g9 n1 | 1.895 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g10 n1 | 2.23 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g11 n1 | 1.825 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g12 n1 | 2.97 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g13 n1 | 1.725 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g14 n1 | 2.555 | 0 | 1 |  |
+| cx8 fix seqchoice order2 g15 n1 | 2.515 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g0 n1 | 2.205 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g1 n1 | 2.39 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g2 n1 | 2.13 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g3 n1 | 1.69 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g4 n1 | 1.995 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g5 n1 | 1.935 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g6 n1 | 1.745 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g7 n1 | 2.845 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g8 n1 | 2.61 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g9 n1 | 2.99 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g10 n1 | 1.565 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g11 n1 | 1.955 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g12 n1 | 1.86 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g13 n1 | 2.02 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g14 n1 | 2.435 | 0 | 1 |  |
+| cx8 fix seqchoice cycle g15 n1 | 1.68 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g0 n1 | 2.525 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g1 n1 | 2.47 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g2 n1 | 2.905 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g3 n1 | 4.995 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g4 n1 | 1.895 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g5 n1 | 3.105 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g6 n1 | 4.925 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g7 n1 | 0.925 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g8 n1 | 1.445 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g9 n1 | 3.275 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g10 n1 | 3.1 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g11 n1 | 3.365 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g12 n1 | 4.23 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g13 n1 | 1.6 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g14 n1 | 1.53 | 0 | 1 |  |
+| cx3 fix seqchoice order2 g15 n1 | 3.11 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g0 n1 | 3.23 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g1 n1 | 4.135 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g2 n1 | 3.39 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g3 n1 | 4.725 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g4 n1 | 4.55 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g5 n1 | 2.765 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g6 n1 | 4.805 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g7 n1 | 1.565 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g8 n1 | 0.91 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g9 n1 | 3.725 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g10 n1 | 2.99 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g11 n1 | 4.55 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g12 n1 | 3.715 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g13 n1 | 4.655 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g14 n1 | 2.78 | 0 | 1 |  |
+| cx3 fix seqchoice cycle g15 n1 | 3 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g0 n1 | 3.755 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g1 n1 | 4.095 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g2 n1 | 4.99 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g3 n1 | 4.66 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g4 n1 | 3.335 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g5 n1 | 3.985 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g6 n1 | 3.08 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g7 n1 | 4.175 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g8 n1 | 3.395 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g9 n1 | 1.79 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g10 n1 | 2.72 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g11 n1 | 4.56 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g12 n1 | 5.935 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g13 n1 | 2.78 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g14 n1 | 5.515 | 0 | 1 |  |
+| cx2 fix seqchoice order2 g15 n1 | 2.24 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g0 n1 | 6.255 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g1 n1 | 5.85 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g2 n1 | 4.99 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g3 n1 | 4.36 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g4 n1 | 4.34 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g5 n1 | 5.385 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g6 n1 | 2.465 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g7 n1 | 3.915 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g8 n1 | 5.43 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g9 n1 | 2.265 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g10 n1 | 2.785 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g11 n1 | 5.295 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g12 n1 | 5.09 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g13 n1 | 2.79 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g14 n1 | 8.76 | 0 | 1 |  |
+| cx2 fix seqchoice cycle g15 n1 | 3.505 | 0 | 1 |  |
+
+Criteria: size curve of the fixed striatum path
