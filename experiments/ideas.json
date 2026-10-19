@@ -1063,12 +1063,13 @@
       "id": "I75",
       "area": "readout",
       "title": "Space bias: v36 predicts space 62% of the time vs 20% truth; output-side fixes (stronger graded decoder, longer read window, weak homeostasis of taught cells) that must not hurt book30k",
-      "status": "testing",
-      "evidence": "R62: rcvHomeo 0.2 book30k 0.15 (harm); queued w19-w21; R63 (16 growths, vs w13): readIn 0.03 = same, readIn 0.1 -0.008 (0/16), readTicks 6 / 8 -0.14 / -0.20, rcvHomeo 0.02 / 0.05 -0.19 / -0.18 (all rejected); output-side fixes do not work. Next: trust / sharpness weighting (x03, x07) and very weak homeostasis at a realistic target rate (x09)",
+      "status": "rejected",
+      "evidence": "R62: rcvHomeo 0.2 book30k 0.15 (harm); queued w19-w21; R63 (16 growths, vs w13): readIn 0.03 = same, readIn 0.1 -0.008 (0/16), readTicks 6 / 8 -0.14 / -0.20, rcvHomeo 0.02 / 0.05 -0.19 / -0.18 (all rejected); output-side fixes do not work. Next: trust / sharpness weighting (x03, x07) and very weak homeostasis at a realistic target rate (x09); R64 (16 growths): rcvHomeo 0.005 at rcvRate 0.1 / 0.002 collapse book (0.12 / 0.10-0.13); trustPow 4 -0.06 book; confPow 2 -0.01; boundary precision stays 0.30-0.33 under every rule knob, only size raises it (4xS 0.32-0.36). Output-side / homeostatic fixes exhausted",
       "why": "part of the gap between v36 (0.31) and the 0.40 linear ceiling",
       "rounds": [
         "R62",
-        "R63"
+        "R63",
+        "R64"
       ],
       "theme": "learning",
       "parents": [
@@ -1080,11 +1081,12 @@
       "area": "representation",
       "title": "Stable letter-pair (mixing) codes: 98k distinct codes for 410 pairs, so trigram conjunctions cannot be reused; slower mixing homeostasis, learned mixing, fewer claws",
       "status": "rejected",
-      "evidence": "R62: mixing readout of the next letter 0.19-0.23; mixHomeo 0.05 order3 +0.012, book ~0 (16 growths); queued w22-w24; R63 (16 growths, book30k / fables4000 vs w13 / eval16c): mixHomeo 0.05 +0.001 / -0.002, 0.15 -0.000 / -0.001, mixLr 0.005 +0.003 (10/4, t 2.3) / -0.001, mixLr 0.02 +0.002 / -0.001, mixK 3 -0.000 / +0.001, mixK 5 +0.001 / -0.000: the mixing code knobs do not move the readout (only mixLr 0.005 is confirmed further, x13)",
+      "evidence": "R62: mixing readout of the next letter 0.19-0.23; mixHomeo 0.05 order3 +0.012, book ~0 (16 growths); queued w22-w24; R63 (16 growths, book30k / fables4000 vs w13 / eval16c): mixHomeo 0.05 +0.001 / -0.002, 0.15 -0.000 / -0.001, mixLr 0.005 +0.003 (10/4, t 2.3) / -0.001, mixLr 0.02 +0.002 / -0.001, mixK 3 -0.000 / +0.001, mixK 5 +0.001 / -0.000: the mixing code knobs do not move the readout (only mixLr 0.005 is confirmed further, x13); R64 x13: mixLr 0.005 book10k +0.000, order3 +0.011, text1000 -0.027 (0/16): rejected",
       "why": "needed to go past bigram towards the 3-gram 0.43-0.52",
       "rounds": [
         "R62",
-        "R63"
+        "R63",
+        "R64"
       ],
       "theme": "representation",
       "parents": [
@@ -1096,10 +1098,11 @@
       "area": "learning",
       "title": "Teacher-rule knobs of the taught (cortex) cells toward the 0.40 readout ceiling: trustPow, lr, metaCap, preNorm, confPow / trustMax, small predErr, plateau, preLag",
       "status": "testing",
-      "evidence": "R62: the readout, not the representation, is the bottleneck (oracle 0.40 vs brain 0.31); metaN 0 gave book 0.34 but order3 0.87. R63: queued as 5-task screens (book30k, book10k, fables4000, order3, text1000; 16 growths), x03-x11, so a winner is adoption-ready at once",
+      "evidence": "R62: the readout, not the representation, is the bottleneck (oracle 0.40 vs brain 0.31); metaN 0 gave book 0.34 but order3 0.87. R63: queued as 5-task screens (book30k, book10k, fables4000, order3, text1000; 16 growths), x03-x11, so a winner is adoption-ready at once; R64 (5-task screens vs v36, 16 growths): lr 0.1 wins all 5 (book10k +0.009 16/0, book30k +0.011 16/0, fables4000 +0.010 16/0, order3 +0.011 13/2, text1000 +0.005 13/3) -> adopted in v37 (I79); metaCap 100 / 50, metaN 80, preNorm 60 win book + fables but lose order3 (-0.005..-0.023); plateau 6 mildly positive on all 5; trustPow 4 / 0, confPow 2, preLag 4 / 12, predErr 0.03 / 0.01, metaN 20, lr 0.025, preNorm 30, plateau 2 rejected; trustMax 8 identical. Next on v37: y02 (lr 0.15 / 0.2), y04 (plateau 6 / metaCap 100 / metaN 80), y07 (tauPre 8 / 18)",
       "why": "the largest known gap (0.31 -> 0.40) is in the learning rule",
       "rounds": [
-        "R63"
+        "R63",
+        "R64"
       ],
       "theme": "learning",
       "parents": [
@@ -1110,15 +1113,47 @@
       "id": "I78",
       "area": "scaling",
       "title": "Size scaling needs wiring scaled to the grid: coneSpeed and axonLen are in grid steps, so sc.grid alone shrinks axons relative to the sheet",
-      "status": "testing",
-      "evidence": "R63 box diagnosis (book 1.5k, 1 growth): grid 60 3.33, 85 2.67, 100 2.27, 110 / 120 0 (silent outputs; why w06 / w15 / w16 were all 0 and w14 2x lost -0.02); scaled (85: coneSpeed 4 axonLen 57 -> 3.20; 120: coneSpeed 6 axonLen 80 -> 3.43). Queued x01 (4xS) and x02 (2xS) at book 10k / 30k, x16 / x17 at 100k, x14 generation",
+      "status": "confirmed (book); gate tasks pending",
+      "evidence": "R63 box diagnosis (book 1.5k, 1 growth): grid 60 3.33, 85 2.67, 100 2.27, 110 / 120 0 (silent outputs; why w06 / w15 / w16 were all 0 and w14 2x lost -0.02); scaled (85: coneSpeed 4 axonLen 57 -> 3.20; 120: coneSpeed 6 axonLen 80 -> 3.43). Queued x01 (4xS) and x02 (2xS) at book 10k / 30k, x16 / x17 at 100k, x14 generation; R64 (16 growths vs v36 1x): 4xS book10k 0.346 (+0.030, 15/1, t 5.9), book30k 0.349 (+0.036, 15/1, t 6.8); 2xS 0.337 / 0.337 (+0.021 / +0.024, 14/2 / 13/2). Size pays; cost ~17x (4xS) / ~2.5x (2xS) per growth. Next: y03 / y05 (v37 at 4xS / 2xS on all 5 tasks), x16 / x17 (size x 100k)",
       "why": "every earlier 'size does not pay' result is confounded; this decides the large-brain run",
       "rounds": [
-        "R63"
+        "R63",
+        "R64"
       ],
       "theme": "scaling",
       "parents": [
         "I73"
+      ]
+    },
+    {
+      "id": "I79",
+      "area": "learning",
+      "title": "v37: faster cortex teacher rule (lr 0.1) + striatum prediction-miss LTD back (predErr 0.3, as v35)",
+      "status": "adopted",
+      "evidence": "R64: cortex lr 0.1 vs v36, 16 held-out growths: book10k +0.009 (16/0), book30k +0.011 (16/0), fables4000 +0.010 (16/0), order3 +0.011 (13/2), text1000 +0.005 (13/3); no effect on seqchoice. x12 + box: the v36 seqchoice order2 loss (-0.035, t -2.45, 32 growths) is the striatum missing predErr; v36 + striatum predErr 0.3 = v35 exactly on seqchoice and bit-identical to v36 on seq tasks (no striatum without an outcome). Adopted as v37 / DEFAULTS_VERSION 30 under Travis's standing authorisation (no task worse)",
+      "why": "the only rule knob that wins every task; restores reward-coupled sequence learning",
+      "rounds": [
+        "R64"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I74",
+        "I77"
+      ]
+    },
+    {
+      "id": "I80",
+      "area": "scaling",
+      "title": "Growth that scales past 4x: proliferation / growth time counted in developmental steps (like coneSpeed / axonLen before R63)",
+      "status": "open",
+      "evidence": "R64 box (1 growth): 8xS (grid 170, maxCells 27200, coneSpeed 8, axonLen 113) grows 15.2k cells, book 1.5k 2.04 / 5k 1.98 vs 4xS 3.62 / 3.80; branchMax 1000 or maxCells 40000: no change; pDiv 1: 22k cells, 3.38 / 3.55 and 3.06 (still < 4xS). Needs a code-level fix (scale division rate / developmental time with the grid) before any 8x run",
+      "why": "the large-brain run needs brains beyond 4x",
+      "rounds": [
+        "R64"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I78"
       ]
     }
   ],
@@ -1366,11 +1401,11 @@
     },
     {
       "id": "Q31",
-      "q": "Is v35 safe on seqchoice (the reward-coupled sequence task deepURSx3 also serves): cycle 1000 and order2 1000?",
+      "q": "Is v35 safe on seqchoice (the reward-coupled sequence task deepURSx3 also serves): cycle 1000 and order2 1000? [answered R64: v36 lost order2 because the striatum lost predErr; v37 puts striatum predErr 0.3 back = v35 on seqchoice]",
       "impact": 3,
-      "likelihood": 0.5,
+      "likelihood": 0,
       "cost": 1,
-      "experiment": "q39_v35_seqchoice_safety (cycle g0-15); shared s01 / s04 (order2 g16 / g48); R63: w26 v36 vs v35 cycle -0.012 (7/9, t -0.9), order2 -0.055 (6/10, t -2.5): dissect x12"
+      "experiment": "q39_v35_seqchoice_safety (cycle g0-15); shared s01 / s04 (order2 g16 / g48); R63: w26 v36 vs v35 cycle -0.012 (7/9, t -0.9), order2 -0.055 (6/10, t -2.5): dissect x12; R64: x12 (32 growths v36 vs v35 -0.035, t -2.45; v36 + predErr 0.3 = v35; metaCap 0 = v36) + box striatum-only / cortex-only predErr -> v37"
     },
     {
       "id": "Q32",
@@ -1386,7 +1421,15 @@
       "impact": 5,
       "likelihood": 0.4,
       "cost": 2,
-      "experiment": "shared w13-w26 (R62); R63: output-side and mixing-code fixes ruled out (w19-w24), size re-tested with scaled wiring (x01 / x02 / x16 / x17), rule screens x03-x11"
+      "experiment": "shared w13-w26 (R62); R63: output-side and mixing-code fixes ruled out (w19-w24), size re-tested with scaled wiring (x01 / x02 / x16 / x17), rule screens x03-x11; R64: rule screens moved book +0.009..+0.015 (only lr 0.1 without an order3 loss -> v37); size 4xS +0.030..+0.036 (largest lever so far); output-side fixes exhausted"
+    },
+    {
+      "id": "Q37",
+      "q": "Large-run readiness: does v37 at 4xS beat v37 1x by >= 0.02 on book with no task worse, and does the 4xS gain keep growing with life length (100k)?",
+      "impact": 5,
+      "likelihood": 0.6,
+      "cost": 2,
+      "experiment": "shared y03a/b (v37 4xS 5-task), y05 (2xS), x17a/b / x16a/b (size x 100k, v36), y06 (v37 1x 100k)"
     }
   ]
 }

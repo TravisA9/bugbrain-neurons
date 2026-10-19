@@ -2563,3 +2563,84 @@ New queue (x00-x19, all v36, plain variants, run on any v36 checkout; est hours 
 | 0.9 | x15 | generation after a 100k life (T 1 / 0.7) | 2 |
 | 0.89 | x16a/b | 2xS x 100k life | 4 + 4 |
 | 0.88 | x17a/b | 4xS x 100k life | 8 + 8 |
+
+## R64 — queue review (Oct 18, 7:50 PM CT): size pays once the wiring scales, cortex lr 0.1 wins all 5 tasks, seqchoice loss traced to the striatum -> **v37 adopted** (DEFAULTS_VERSION 30)
+Workers healthy: linux-pc (now supervised, R61d code 29978cd, heartbeats since its reinstall ~1:40 PM CT; one claim at a time, the R63 double-process
+issue is gone: its two stale v1 claims of x01b / x02 expired and were re-run) and tacobell (supervised, 29978cd, cpuMax 75). Both busy all day:
+x00-x13 and x18 done since R63; running at review time x14 (tacobell) and x19 (linux-pc).
+
+All arms paired growth by growth with the v36 reference: w13 (book), x00 (fables4000 / order3 / text1000, = box eval16c). 16 held-out growths.
+Cell = diff vs v36 (wins/losses, t).
+
+| job | arm | book10k | book30k | fables4000 | order3 | text1000 |
+|---|---|---|---|---|---|---|
+| x01 | **size 4xS** (grid 120, maxCells 13600, coneSpeed 6, axonLen 80) | **+0.030 (15/1, 5.9)** | **+0.036 (15/1, 6.8)** | x19 / y03 | x19 / y03 | x19 / y03 |
+| x02 | **size 2xS** (grid 85, maxCells 6800, coneSpeed 4, axonLen 57) | **+0.021 (14/2, 4.2)** | **+0.024 (13/2, 4.0)** | x19 / y05 | | |
+| x03 | trustPow 4 | -0.058 (0/16) | -0.064 (0/16) | -0.037 (0/16) | +0.011 (13/2, 3.2) | -0.015 (0/16) |
+| x03 | trustPow 0 | -0.009 (4/11) | +0.002 (11/5) | -0.042 (0/16) | -0.171 (0/16) | -0.149 (0/16) |
+| x04 | **lr 0.1** (v36 0.05) | **+0.009 (16/0, 7.3)** | **+0.011 (16/0, 9.6)** | **+0.010 (16/0, 11.7)** | **+0.011 (13/2, 3.2)** | **+0.005 (13/3, 2.8)** |
+| x04 | lr 0.025 | -0.010 (1/15) | -0.008 (0/16) | -0.010 (0/16) | -0.023 (2/14) | -0.010 (2/14) |
+| x05 | metaCap 100 | +0.006 (16/0, 4.9) | +0.008 (16/0, 9.2) | +0.004 (13/1, 4.8) | -0.005 (1/8, -3.2) | -0.001 (5/6) |
+| x05 | metaCap 50 | +0.011 (16/0, 8.7) | +0.015 (16/0, 11.7) | +0.008 (15/0, 6.4) | -0.023 (0/12, -4.6) | -0.002 (6/10) |
+| x06 | preNorm 60 | +0.005 (13/2, 5.6) | +0.007 (15/0, 6.1) | +0.002 (12/4, 2.5) | -0.009 (1/13, -2.4) | -0.002 (7/9) |
+| x06 | preNorm 30 | -0.014 (0/14) | -0.014 (0/16) | -0.005 (1/15) | +0.002 (9/5) | -0.001 (6/10) |
+| x07 | confPow 2 (ref 6, max 4) | -0.010 (2/14) | -0.007 (2/14) | -0.003 (5/11) | +0.001 (11/5) | -0.005 (6/9) |
+| x07 | trustMax 8 | 0 (identical: the cap 4 is never reached) | 0 | 0 | 0 | 0 |
+| x08 | predErr 0.03 / 0.01 (peMode 16) | +0.000 / -0.001 | +0.001 / +0.001 | +0.001 / +0.001 | -0.001 / -0.002 | +0.001 / +0.001 |
+| x09 | rcvHomeo 0.005 @ rcvRate 0.1 | -0.195 (0/16) | -0.184 (0/16) | -0.202 (0/16) | -0.001 | -0.242 (0/16) |
+| x09 | rcvHomeo 0.002 | -0.192 (0/16) | -0.210 (0/16) | -0.052 (0/16) | +0.002 | +0.011 (14/2, 3.9) |
+| x10 | plateau 2 | collapse (0.02) | collapse | collapse | 0.00 | 0.01 |
+| x10 | plateau 6 | +0.001 (9/4, 1.1) | +0.005 (12/2, 4.4) | +0.003 (13/3, 3.1) | +0.006 (13/1, 2.9) | +0.003 (9/3, 1.6) |
+| x11 | preLag 4 | -0.001 (6/9) | -0.002 (7/9) | -0.004 (2/14, -3.5) | -0.009 (3/13) | -0.017 (0/16, -8.7) |
+| x11 | preLag 12 | -0.004 (2/13, -3.8) | -0.001 (4/11) | -0.000 (8/7) | +0.005 (9/2) | -0.000 (8/6) |
+| x13 | mixLr 0.005 (confirm) | +0.000 (5/7) | (w23 +0.003) | | +0.011 (13/1, 3.3) | **-0.027 (0/16, -9.1)** |
+| x18 | metaN 20 | -0.009 (0/15) | -0.008 (1/15) | -0.008 (0/16) | +0.001 (6/6) | +0.002 (10/5) |
+| x18 | metaN 80 | +0.008 (15/0, 5.8) | +0.010 (15/1, 8.7) | +0.008 (16/0, 7.7) | -0.010 (3/11, -2.7) | +0.000 (8/7) |
+
+- **Size pays (I78).** With the wiring scaled to the grid, 4xS gives book 0.346 / 0.349 (v36 1x 0.316 / 0.313; +0.030 / +0.036, 15/16 wins) and 2xS
+  0.337 / 0.337. The R63 decision point (4xS >= +0.01 on book30k) is met: **scale-up becomes the main track**. Boundary precision also rises
+  (bP 0.30 -> 0.32). Cost: 4xS takes ~17x a 1x growth on the workers (x01a / x01b: 2.1-2.2 h for 4 runs of 4 growths), 2xS ~2.5x, so 2xS buys
+  70% of the gain for 1/7 of the price.
+- **8x does not scale yet (box, R64, 1 growth each):** 8xS (grid 170, maxCells 27200, coneSpeed 8, axonLen 113) grows only 15.2k cells and scores
+  2.04 at book 1.5k / 1.98 at 5k (4xS 3.62 / 3.79-3.80, 1x 3.40 / 3.28-3.31); branchMax 1000 or maxCells 40000 change nothing; pDiv 1 grows 22k
+  cells and recovers to 3.38 (1.5k) and 3.55 / 3.06 (5k, g0 / g1), still below 4xS (pDiv 1 costs 4xS a little: 3.67 vs 3.79). Proliferation
+  (and probably other step-counted growth) stops scaling past 4x. Needs a growth-time scaling fix in code before any 8x run (next question).
+- **Learning rule (I77): only lr 0.1 wins every task.** All "more late potentiation" knobs (metaCap 100 / 50, metaN 80, preNorm 60) win book and
+  fables but lose order3 (consolidation protects order3); a faster rate is the one way to learn more without that cost. plateau 6 is mildly
+  positive everywhere (not significant on book10k / text). trustPow, confPow, preLag, small predErr: no. metaN 20, lr 0.025, preNorm 30: worse.
+- **Space bias (I75):** very weak taught-cell homeostasis collapses book again (x09, 0.10-0.13); boundary precision stays 0.30-0.33 with every
+  rule knob; only size moves it (0.32-0.36). Output-side and homeostatic fixes are exhausted.
+- **seqchoice order2 (Q31, x12 + box):** 32 growths v36 vs v35 -0.035 (t -2.45, 13/19): real. v36 + metaCap 0 = v36 exactly and v36 + predErr 0.3
+  = v35 exactly, so the loss is the removal of prediction-miss LTD. Box R64: **predErr 0.3 in the striatum only** reproduces v35 exactly on
+  seqchoice (order2 g0-31, cycle g0-15: +0.035 / +0.012 vs v36), predErr in the cortex only = v36; on seq tasks the striatum does not grow, so
+  book / fables / order3 / text are bit-identical with it (box: g0-3 of each).
+- mixLr 0.005 rejected (text1000 -0.027, 0/16).
+
+### v37 adopted (R64, under Travis's standing authorisation: 16 held-out growths, no task worse)
+**deepURSx3 = v36 + cortex lr 0.1 + striatum predErr 0.3** (DEFAULTS_VERSION 30, APP_VERSION v37; v36 kept as plan `deepURSx3v36`).
+- Cortex lr 0.1 = the x04 arm pl.lr=0.1 bit for bit on seq tasks (only the cortex taught cells are plastic there; box: global vs @cortex identical,
+  and the v37 plan reproduces x04 order3 / text / fables / book scores exactly): book10k 0.325 (+0.009, 16/0), book30k 0.324 (+0.011, 16/0),
+  fables4000 0.339 (+0.010, 16/0), order3 0.964 (+0.011, 13/2), text1000 0.758 (+0.005, 13/3).
+- Striatum predErr 0.3 = v35's striatum rule; seqchoice under v37 = v35 exactly (box: order2 g0 [6.53, 6.62, 6.59, 5.60], cycle g0 [9.05, 9.72, 9.40,
+  8.61] = w26 v35). Cortex lr has no effect on seqchoice (v36 + cortex lr = v36 on cycle g0-15 / order2 g0-31).
+- No task worse anywhere tested (5 seq tasks + seqchoice cycle / order2). test_core.js: v37 check added (v36 check now on deepURSx3v36).
+- Size is **not** part of the default: it multiplies the cost of every screen by 2.5-17x. Size is a run-time choice for the large run (y03 / y05
+  confirm it under v37 on all 5 tasks).
+
+Code (R64): js/envs/reward_evolved.js (plans deepURSx3 = v37, deepURSx3v36), js/core/base.js (v37 / 30), test_core.js, README, run/r64_jobs.js
+(new jobs y02-y07 and `--pin`: pending v36 jobs x15-x17 rewritten to plan deepURSx3v36 + `requires` run/r64_jobs.js, so no pending job changes
+meaning when the workers update; their multi-growth runs split into 1-growth runs with the same seeds so they use all cores).
+
+Queue after R64 (x14 / x19 running under v36 code; pinned x15-x17 keep v36 meaning; y* use v37; v37 reference = x04 lr 0.1 arm):
+| pri | id | what | wall h (est) |
+|---|---|---|---|
+| 0.975 | y02 | v37 + cortex lr 0.2 / 0.15, 5-task screen (does the rate keep paying?) | 1.3 |
+| 0.97 | y03a/b | v37 at 4xS on all 5 tasks, growths 0-7 / 8-15 (combined confirmation: rule + size) | 2.3 + 2.3 |
+| 0.965 | x17a/b | v36 4xS x 100k life (pinned; 1-growth runs) | 3.4 + 3.4 |
+| 0.955 | y04 | v37 + plateau 6 / metaCap 100 / metaN 80 (do consolidation knobs add to the faster rate?) | 2 |
+| 0.95 | y05 | v37 at 2xS on all 5 tasks (cheap screening size?) | 1.6 |
+| 0.945 | x16a/b | v36 2xS x 100k life (pinned) | 1 + 1 |
+| 0.93 | y07 | v37 + cortex tauPre 8 / 18 | 1.3 |
+| 0.9 | x15 | v36 generation after 100k (pinned) | 0.5 |
+| 0.89 | y06 | v37 1x at 100k (16 1-growth runs): life-length curve under the faster rate | 0.8 |
+About 21 wall-hours queued + ~2.5 h running = ~11.5-12 h per worker.

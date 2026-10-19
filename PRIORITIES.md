@@ -1,9 +1,38 @@
-# PRIORITIES (R63, Oct 18 2026, 7:45 AM CT; v36)
+# PRIORITIES (R64, Oct 18 2026, 8 PM CT; v37)
 
 Goal (Travis): the best SNN design, found as fast as possible, on the way to a **large brain that generates text like a small LLM**.
 Analogy is secondary. Pick tests that bring the design landscape into focus, avoid low-payoff tangents, and keep every machine busy.
 
-## Where we stand (R63)
+## Where we stand (R64)
+- **v37 adopted** (R64, standing authorisation, 16 held-out growths, no task worse): deepURSx3 = v36 + cortex lr 0.1 + striatum predErr 0.3.
+  Book 10k / 30k 0.325 / 0.324 (v36 0.316 / 0.313), fables4000 0.339, order3 0.964, text1000 0.758; seqchoice = v35 (the v36 order2 loss was the
+  striatum's missing prediction-miss LTD). v36 = plan deepURSx3v36.
+- **Size pays** once the wiring scales with the grid: 4xS book 0.346 / 0.349 (+0.030 / +0.036 vs v36 1x, 15/16), 2xS 0.337 / 0.337. The scale-up
+  track is now the main track. But **8x does not scale yet**: proliferation (and likely other step-counted growth) stops at ~15k cells (22k with
+  pDiv 1) and 8xS scores below 4xS on the box. Cost: 4xS ~17x a 1x growth, 2xS ~2.5x.
+- Rule knobs: lr is the only one that wins all 5 tasks; every consolidation-loosening knob (metaCap, metaN, preNorm) buys book / fables with an
+  order3 loss. The gap to the 0.40 readout ceiling is now ~0.075 at 1x and ~0.05 at 4xS (v36 rule).
+- Space bias: unchanged by every rule knob (boundary precision 0.30-0.33); size raises it to 0.32-0.36. Output-side fixes exhausted.
+
+## Ranked open questions (R64)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I78 | Does the size gain hold on every task under v37 (4xS / 2xS on the 5-task screen), and does it grow with life length (4xS / 2xS at 100k)? | y03a/b, y05, x17a/b, x16a/b (x19 v36 gate tasks running) |
+| 2 | I77 / I79 | Does the rate keep paying above 0.1 (cortex lr 0.15 / 0.2), and do plateau 6 / metaCap 100 / metaN 80 / tauPre add on top of v37? | y02, y04, y07 |
+| 3 | I80 | Make growth scale past 4x (proliferation / growth time counted in developmental steps): code + box diagnosis, then an 8xS point | code (no job yet) |
+| 4 | I72 | Generation: 4xS at 30k (x14 running), 1x at 100k (x15) | x14, x15 |
+| 5 | I73 | Life length under v37 (v36: 10k = 30k = 100k) | y06 |
+| low | I75 / I76 | space bias via output / homeostasis, mixing-code knobs: exhausted | none |
+Decision point (for Travis): if y03 shows v37 4xS >= v37 1x + 0.02 on book with no task worse, and x17 shows 4xS still climbing at 100k, propose the
+staged large run on linux-pc: v37 at 4xS (8x only after I80), 100k -> 300k -> 1M symbols with checkpoints + generation samples. Do not start it
+without Travis.
+
+## Worker notes (R64)
+linux-pc: supervised since ~1:39 PM CT Oct 18 (R61d, code 29978cd), heartbeats + 30-min claim renewals, one job at a time (the old double process
+is gone). tacobell: supervised, cpuMax 75, 4 parallel runs, no claims on battery. Its old local queue stays retired.
+
+## Previous status (R63)
+### Where we stood (R63)
 - v36 (book ~0.31-0.32) is still a bigram-level learner; its own states support 0.40 (linear readout) and 3-grams reach 0.43-0.52.
 - Life length does not help under v36 (10k 0.316, 30k 0.313, 100k 0.314); depth x4 = x3.
 - **Size was never tested properly**: sc.grid alone shrinks axons relative to the sheet (coneSpeed / axonLen are in grid steps), so the old
@@ -11,7 +40,7 @@ Analogy is secondary. Pick tests that bring the design landscape into focus, avo
 - Output-side space-bias fixes (readIn > 0.01, readTicks, rcvHomeo 0.02-0.05) and mixing-code knobs (mixHomeo, mixLr, mixK) are ruled out.
 - v36 may hurt reward-coupled seqchoice order2 (-0.055 vs v35, t -2.5): x12.
 
-## Ranked open questions (shared jobs x00-x19)
+### Ranked open questions (R63, shared jobs x00-x19)
 | rank | id | question | jobs |
 |---|---|---|---|
 | 1 | I78 / I73 | Does size pay once the wiring scales with the grid (2xS / 4xS vs 1x at book 10k / 30k)? Decides the large-brain run | x01a/b, x02 (+ x19 gate tasks) |
@@ -25,7 +54,7 @@ Decision point: if 4xS (or 2xS) beats w13 by >= 0.01 on book30k, scale-up become
 (4xS-8xS, best rule, 100k -> 300k -> 1M symbols with checkpoints and generation samples); do not start it without Travis. If a rule screen
 wins on book30k and book10k with no task worse, it is adoption-ready (16 growths) and goes to Travis / the authorised default rule.
 
-## Worker notes (R63)
+### Worker notes (R63)
 linux-pc publishes results but has no heartbeat (pre-R61 dq.js, not under the supervisor) and runs two worker processes under one name
 (two jobs at a time). When someone is at the PC: `sh run/install-linux.sh linux-pc`
 (systemd user service + linger, self-updating). tacobell: supervised, cpuMax 75, no claims on battery.

@@ -110,7 +110,19 @@ SA.registerPlan('deepURSx3v35', 'v35 default (kept): unifiedR + deeper context c
 // decoder (seq readIn 0.01, now the seq default): book 30k held-out 0.229 -> 0.313, book 10k 0.271 -> 0.316, no task worse (16 growths, R62).
 const DEEP_V36 = Object.assign({}, DEEP_PE, { predErr: 0, metaCap: 200 });
 SA.DEEP_V36 = DEEP_V36;
-SA.registerPlan('deepURSx3', 'v36 default: unifiedR + deeper context chain x3 (outcome-repressed), no prediction-miss LTD, capped consolidation (metaCap 200; R62)', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_V36); d.label += ' + capped consolidation'; return d; },
+SA.registerPlan('deepURSx3v36', 'v36 default (kept): unifiedR + deeper context chain x3 (outcome-repressed), no prediction-miss LTD, capped consolidation (metaCap 200; R62)', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_V36); d.label += ' + capped consolidation'; return d; },
+  'old default (v36); grows unifiedR exactly when an outcome signal is present');
+// v37 (R64 adopted under Travis's standing authorisation), two region-local changes to v36:
+//  (1) the cortex (taught cells) learns at lr 0.1 instead of 0.05 (other regions keep theirs: context 0.03, striatum ~0.029). On the seq
+//      tasks this equals the global variant pl.lr=0.1 of shared job x04 bit for bit (only the cortex taught cells have plastic synapses
+//      there). 16 held-out growths vs v36: book10k +0.009 (16/0), book30k +0.011 (16/0), fables4000 +0.010 (16/0), order3 +0.011 (13/2),
+//      text1000 +0.005 (13/3). On seqchoice the cortex rate changes nothing (cycle / order2 bit-identical to v36).
+//  (2) the striatum gets v35's hybrid prediction-miss LTD back (predErr 0.3; peMode 16 / peFix 0.01 were kept). x12 + box R64: removing it
+//      from the striatum was the whole seqchoice order2 loss of v36 (-0.035, t -2.45, 32 growths); v36 + striatum predErr 0.3 = v35 exactly
+//      on seqchoice (order2 +0.035 / cycle +0.012 vs v36). The striatum does not grow without an outcome signal, so seq tasks are bit-identical.
+const CORTEX_LR_V37 = 0.1, STRIATUM_PE_V37 = 0.3;
+Object.assign(SA, { CORTEX_LR_V37, STRIATUM_PE_V37 });
+SA.registerPlan('deepURSx3', 'v37 default: unifiedR + deeper context chain x3 (outcome-repressed), no prediction-miss LTD, capped consolidation (metaCap 200; R62), cortex lr 0.1 + striatum predErr 0.3 (R64)', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_V36, R.name === 'cortex' ? { lr: CORTEX_LR_V37 } : {}, R.name === 'striatum' ? { predErr: STRIATUM_PE_V37 } : {}); d.label += ' + capped consolidation + cortex lr 0.1 + striatum prediction-miss LTD'; return d; },
   'default for three-phase-clock sequences/text and seqchoice; grows unifiedR exactly when an outcome signal is present');
 for (const M of [3, 4]) SA.registerPlan('wordChainx' + M, 'R44 I57: deep context chain x' + M + ' reset by the predicted space (ordered in-word memory)', () => createDeepUR(M, { wordReset: 30 }), 'experimental, off by default');
 SA.createDeepUR = createDeepUR; })();
