@@ -1,0 +1,83 @@
+{
+  "id": "y70_fix_book1M",
+  "question": "I73",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "run/r72_jobs.js"
+  ],
+  "title": "cortex 4x fix at book1M (growths k 1400-1403)",
+  "priority": 0.85,
+  "estHours": 2.2,
+  "slotHours": 13.3,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "paired with y27 (1x v39 to 1M)"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1400",
+        "--force"
+      ],
+      "label": "cx4 fix book1M g1400 n1",
+      "env": {
+        "BB_OUT": "results/phone/y70_fix_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1401",
+        "--force"
+      ],
+      "label": "cx4 fix book1M g1401 n1",
+      "env": {
+        "BB_OUT": "results/phone/y70_fix_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1402",
+        "--force"
+      ],
+      "label": "cx4 fix book1M g1402 n1",
+      "env": {
+        "BB_OUT": "results/phone/y70_fix_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1403",
+        "--force"
+      ],
+      "label": "cx4 fix book1M g1403 n1",
+      "env": {
+        "BB_OUT": "results/phone/y70_fix_book1M.jsonl"
+      }
+    }
+  ]
+}
