@@ -1,6 +1,11 @@
-# PRIORITIES (R66, Oct 18 2026, 11:00 PM CT; v37, defaults unchanged)
+# PRIORITIES (R67, Oct 18 2026, 11:50 PM CT; v37, defaults unchanged)
 
-## R66 update
+## R67 update
+- Sparser activity (I85) is not a win. Text tasks already spike 1.6-2% per substep in the cortex; the 23% 'receiving' figure is fan-in. Every gene setting that cuts activity (adaptive hidden thresholds, pooled region inhibition, threshold offset) costs book / fables accuracy (best: -0.11 at -25% activity). Halving seqchoice activity costs -0.01 to -0.02.
+- Speed does not follow spikes: 10x fewer spikes gives 1.05x (1x) / 1.43x (4xS), and mode 2 stays slower. Next speed lever: fewer O(N) passes per substep, or threads.
+- Nothing queued from R67. The R66 z08-z10 fast-engine validation is pending.
+
+## Previous update (R66)
 - Fast engine (I84, params.fastEngine 1, off by default): life 1.86x (1x) / 1.60x (4xS) faster than the exact engine, total 1.70x / 1.45x; vs R64 total 2.4x. Box screen: no task worse. 4xS peak RSS 1.59 -> 1.08 GB (exact path too, bit-identical).
 - z08a/b, z09a/b, z10 (priority 0.975 / 0.974 / 0.95) validate it on 16 fresh growths. If they pass, make fastEngine 1 the default (standing authorisation).
 - Several-x needs threads: activity is dense (~23% of cells receive input per substep) and propagation is now the floor.

@@ -2746,3 +2746,61 @@ No task worse beyond noise. Most growths score identically; seqchoice (reward-dr
 
 ### 4. Queued (I84, fresh seeds k 1100-1115, requires R66 net.js)
 z08a / z08b fast vs exact at 1x on book10k / 30k, fables4000, order3, text1000, seqchoice order2 / cycle (16 growths); z09a / z09b 4xS book10k (16); z10 4xS other tasks (8). ~18 h. If no task is worse beyond noise, fastEngine 1 becomes the default (standing authorisation).
+
+## R67 — sparser activity screen (box, Oct 18 late night; defaults unchanged, v37 / 30; nothing queued)
+Code: 2e90900 + regMask commit (genes, off by default, identical when off: quick set 36/36), perf/act67.js (activity probe).
+
+### 1. Activity now (book10k etc., k0, per substep; "receive" = gets at least one spike this substep)
+| run | hidden spiking | hidden receiving | cortex spike / receive | context regions spike / receive | striatum |
+|---|---|---|---|---|---|
+| book10k 1x | 2.25% | 11.8% | 1.57% / 17.2% | 2.7-3.4% / 5.4-6.7% | - |
+| fables4000 1x | 2.27% | 11.7% | 1.60% / 17.2% | 2.7-3.4% / 5.4-6.7% | - |
+| text1000 1x | 2.75% | 13.2% | 1.98% / 19.1% | 3.3-4.0% / 6.2-7.8% | - |
+| order3 1x | 5.47% | 19.9% | 3.81% / 27.0% | 6.8-7.4% / 12-14% | - |
+| seqchoice order2 / cycle 1x | 15.5% / 15.0% | 33.8% / 33.2% | 15.2% / 40.7% | 20.2% / 31.0% | 7.1% / 22% |
+| book10k 4xS | 2.30% | 14.3% | 1.61% / 22.4% | 2.7-3.8% / 5.1-6.2% | - |
+| text1000 4xS | 2.89% | 15.7% | 1.98% / 24.1% | 3.4-4.8% / 6.1-7.4% | - |
+| seqchoice order2 4xS | 14.4% | 28.8% | 7.2% / 20.4% | 9.1% / 13.8% | 26.3% / 48.1% |
+On the text tasks spiking is already in the cortical few-percent range (cortex 1.6-2% per substep). The ~23% figure was cells *receiving* input. That follows from fan-in (~55 synapses per cell at 1x, ~260 at 4xS), not from dense firing. Only seqchoice is dense (13-15%).
+
+### 2. Genes (PL, all 0 = off, life net only)
+- thrAdd: +mV on the hidden thresholds.
+- hidHomeo / hidRate: adaptive thresholds of the hidden cells toward hidRate spikes per substep, never below the grown threshold.
+- regInh / regInhTau / regK: pooled feedback inhibition per region, k-WTA style, regInh mV per 1% active above regK.
+- regMask: region bitmask (1 = cortex, 14 = the context regions).
+- sc.homeoTarget (the existing developmental gene) has no effect on deepURSx3 brains (identical runs).
+
+### 3. Screen (fast engine; fit = 10 x accuracy for the seq tasks; paired by growth)
+- Strong settings cut activity 2-10x and destroy accuracy. Examples:
+  - hidHomeo 0.02 / rate 0.015: book 0.73% spiking, -0.27.
+  - regInh 1 / regK 0.01 cortex: book 1.72%, -0.065; order3 -0.45.
+- Mild settings barely change activity and still lose:
+  - regInh 0.1 cortex: -0.003 on all 4 tasks.
+  - thrAdd raises activity (homeostatic rebound) and loses everywhere.
+- Context-only inhibition (regInh 0.3, regK 0.01, mask 14) on 4 growths: book +0.005 (2/2), fables +0.001, text1000 -0.050 (0/4), order3 -0.23 (0/4).
+- The best candidate halves seqchoice activity: cortex hidHomeo 0.002 / rate 0.05 (8 growths). But it loses everywhere:
+
+| task | diff (accuracy) | win / loss | t | spiking (base -> new) |
+|---|---|---|---|---|
+| book10k | -0.114 | 0/8 | -31 | 2.31 -> 1.78% |
+| book30k | -0.122 | 0/8 | -35 | 2.30 -> 1.70% |
+| fables4000 | -0.074 | 0/8 | -21 | 2.32 -> 1.89% |
+| text1000 | -0.012 | 2/6 | -2.4 | 2.79 -> 2.52% |
+| order3 | -0.011 | 2/3 | -1.1 | 5.57 -> 5.54% |
+| seqchoice order2 | -0.018 | 1/7 | -0.9 | 13.4 -> 6.7% |
+| seqchoice cycle | -0.009 | 4/4 | -0.8 | 13.5 -> 7.1% |
+
+  Rate 0.03 is worse: book10k -0.167, book30k -0.194.
+- The busiest cortex cells carry the book prediction. Sparsifying them costs accuracy roughly in proportion. No setting kept accuracy at substantially lower activity, so no 16-growth job was queued.
+
+### 4. Speed at lower activity (book10k k0, bun, serial; activity set by hidHomeo, accuracy ignored)
+| setting | spiking | 1x mode 1 | 1x mode 2 | 4xS mode 1 | 4xS mode 2 |
+|---|---|---|---|---|---|
+| base | 2.25% | 7.36 s | 7.17 s | 41.9 s | 45.9 s |
+| hidHomeo 0.02 / 0.015 | 0.76% (0.71% 4xS) | 8.30 s | 9.06 s | 46.6 s | 67.4 s |
+| hidHomeo 0.05 / 0.005 | 0.27% (0.23% 4xS) | 7.03 s | 6.78 s | 29.3 s | 43.9 s |
+| regInh 1 cortex | 1.79% | 7.78 s | 8.60 s | - | - |
+- 10x fewer spikes buys 1.05x at 1x and 1.43x at 4xS.
+- The event-driven engine (mode 2) loses at every sparsity, at 4xS by up to 1.4x: marks plus the homeostasis that touches every cell.
+- Profile at 1x: the membrane loop (O(N) per substep) is the largest single cost, then the receiver propagation. Plasticity, trust, critic and the per-cell homeostasis loop are O(N) too. So run time follows N x substeps, not spikes.
+- Speed will come from fewer O(N) passes (lazy membranes only pay when far fewer cells are touched, which the fan-in prevents) or from threads, not from sparser firing.
