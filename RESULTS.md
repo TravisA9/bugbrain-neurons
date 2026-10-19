@@ -2810,3 +2810,36 @@ On the text tasks spiking is already in the cortical few-percent range (cortex 1
 fables4000 +0.0001 (1/1, t 0.27), order3 0.0000 (0/0), text1000 -0.0004 (0/2, t -1.33), seqchoice order2 -0.0004 (3/2, t -0.13),
 cycle -0.0000 (1/1). Worker wall time exact / fast: book10k 2.84x, book30k 3.26x, fables 2.33x, text1000 1.50x, seqchoice 1.16-1.35x, order3 1.01x.
 fastEngine stays 0 until z09a / z09b (4xS book10k, running) also pass; then it becomes the default (standing authorisation).
+
+## R68 — fewer substeps per symbol / coarser dt (box, Oct 19 early morning; defaults unchanged, v37 / 30; nothing queued)
+Code: ffa9701 (neuro/substeps) plus docs. All new knobs are off by default; when off, results are identical (quick set 36/36; fast-engine fingerprints unchanged).
+- New knobs:
+  - params.lifeSub: substeps per tick in the life only; growth keeps params.substeps.
+  - params.dtRescale 1: rescales every per-substep constant by dt = substeps / lifeSub. Leaks, trace and teacher decays become ^dt. Time constants and durations (tauPre / Post / Elig / Elig2, actNoiseTau, rcvInhTau, plateau, preLag, trustDelay, teachAHPDur) become / dt. Rates per substep become x dt, teachAHP x dt, actNoise x sqrt(dt), input currents x dt.
+- Existing knobs used: P.substeps (life and growth), and the task timing onTicks / holdTicks / readTicks. A symbol is 3 clock + 4 on + 4 hold ticks = 11 ticks x 4 substeps.
+
+### Screen (fast engine, accuracy diff vs base, paired by growth; 8 growths k0-7, the lifeSub rows 4)
+| setting | substeps per symbol | book10k | book30k | fables4000 | order3 | text1000 | seqchoice order2 | seqchoice cycle |
+|---|---|---|---|---|---|---|---|---|
+| P.substeps 3 | 75% | -0.031 (0/8) | -0.029 (0/8) | -0.022 (0/8) | -0.030 (0/8) | -0.021 (0/8) | -0.039 (1/7) | -0.066 (1/7) |
+| P.substeps 2 | 50% | -0.180 | -0.182 | -0.167 | -0.182 | -0.248 | -0.385 | -0.667 |
+| task on/hold/read 3 | 82% | -0.023 (0/8) | -0.026 (0/8) | -0.022 (0/8) | -0.031 (0/7) | -0.012 (0/8) | -0.031 (6/2) | -0.051 (2/6) |
+| task on/hold/read 2 | 64% | -0.117 | -0.112 | -0.105 | -0.134 | -0.046 | -0.131 | -0.318 |
+| lifeSub 3 | 75% | -0.028 (0/4) | - | -0.024 (0/4) | -0.014 (0/4) | -0.022 (0/4) | +0.002 (3/1) | -0.103 (1/3) |
+| lifeSub 3 + dtRescale | 75% | -0.223 | - | -0.210 | -0.920 | -0.410 | -0.188 | -0.055 |
+| lifeSub 2 + dtRescale | 50% | -0.319 | - | -0.321 | -0.966 | -0.739 | -0.109 | -0.094 |
+Every setting loses on every text task; the smallest loss is ~0.02-0.03 at 75-82% of the substeps.
+Rescaling the time constants makes it much worse. The model's synaptic delay and its one-spike-per-substep limit are tied to the substep, and neither can be rescaled: with dt x 2, propagation per unit time halves and spikes drop ~5x (text1000 0.89M vs 4.3M).
+Coarser steps therefore do not preserve the dynamics. The trained behaviour depends on the 4-substep resolution.
+
+### Speed (book10k k0, bun, serial, fast engine; life seconds)
+| setting | 1x life | speedup | 4xS life | speedup |
+|---|---|---|---|---|
+| base | 7.31 | 1.00 | 42.8 | 1.00 |
+| P.substeps 3 | 6.46 | 1.13 | 36.1 | 1.19 |
+| P.substeps 2 | 5.25 | 1.39 | 46.0 | 0.93 |
+| lifeSub 2 | 5.36 | 1.36 | - | - |
+| task on/hold/read 3 (90k ticks) | 6.27 | 1.17 | - | - |
+| task on/hold/read 2 (70k ticks) | 5.41 | 1.35 | 35.8 | 1.19 |
+Even at 50% of the substeps the life is only 1.4x faster at 1x (per-tick costs: readout, modulate, task, critic). At 4xS, substeps 2 is slower than base.
+Dense-mode mark trims (ext, receiver pool, mixing inhibition / homeostasis) are identical in results and not measurable (1x 7.31 vs 7.36 s, 4xS 42.8 vs 41.9 s).

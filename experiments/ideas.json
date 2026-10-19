@@ -1230,6 +1230,21 @@
       "parents": [
         "I84"
       ]
+    },
+    {
+      "id": "I86",
+      "area": "engine",
+      "title": "Fewer substeps per symbol: P.substeps 3 / 2, task on/hold/read 3 / 2, life-only lifeSub, dtRescale (time constants rescaled to a coarser dt)",
+      "status": "rejected",
+      "evidence": "R68 box, 8 paired growths: substeps 3 -0.02 to -0.07 (0-1 wins of 8 on every task), task timing 3 -0.01 to -0.05, 2 substeps or 2-tick timing -0.05 to -0.67; dtRescale -0.05 to -0.97; life speed 1.13-1.39x (1x), 0.93-1.19x (4xS)",
+      "why": "Run time tracks cells x substeps; hoped the dynamics survive a coarser step",
+      "rounds": [
+        "R68"
+      ],
+      "theme": "infrastructure",
+      "parents": [
+        "I84"
+      ]
     }
   ],
   "questions": [

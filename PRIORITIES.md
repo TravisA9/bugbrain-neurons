@@ -1,6 +1,10 @@
-# PRIORITIES (R67, Oct 18 2026, 11:50 PM CT; v37, defaults unchanged)
+# PRIORITIES (R68, Oct 19 2026, 12:40 AM CT; v37, defaults unchanged)
 
-## R67 update
+## R68 update
+- Fewer substeps per symbol (I86) is not a win. 75-82% of the substeps loses 0.02-0.03 on every text task (0/8) for 1.1-1.2x life speed. 50-64% loses 0.05-0.25. Time-constant rescaling (dtRescale) is far worse, because synaptic delay and the spike limit are tied to the substep.
+- Nothing queued from R68. Remaining speed levers: threads (SharedArrayBuffer workers over cells), or per-tick work (readout / modulate / critic), which caps substep savings at ~1.4x.
+
+## Previous update (R67)
 - Sparser activity (I85) is not a win. Text tasks already spike 1.6-2% per substep in the cortex; the 23% 'receiving' figure is fan-in. Every gene setting that cuts activity (adaptive hidden thresholds, pooled region inhibition, threshold offset) costs book / fables accuracy (best: -0.11 at -25% activity). Halving seqchoice activity costs -0.01 to -0.02.
 - Speed does not follow spikes: 10x fewer spikes gives 1.05x (1x) / 1.43x (4xS), and mode 2 stays slower. Next speed lever: fewer O(N) passes per substep, or threads.
 - Nothing queued from R67. R66 fast engine: z08 (1x, 16 growths x 7 tasks) passes (all |t| < 1.4, worker book 2.8-3.3x faster); z09 (4xS) running, adopt after it passes.
