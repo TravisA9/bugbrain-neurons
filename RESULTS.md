@@ -2804,3 +2804,9 @@ On the text tasks spiking is already in the cortical few-percent range (cortex 1
 - The event-driven engine (mode 2) loses at every sparsity, at 4xS by up to 1.4x: marks plus the homeostasis that touches every cell.
 - Profile at 1x: the membrane loop (O(N) per substep) is the largest single cost, then the receiver propagation. Plasticity, trust, critic and the per-cell homeostasis loop are O(N) too. So run time follows N x substeps, not spikes.
 - Speed will come from fewer O(N) passes (lazy membranes only pay when far fewer cells are touched, which the fan-in prevents) or from threads, not from sparser firing.
+
+### R66 validation update (z08a / z08b done on tacobell, Oct 18 11:27 PM CT): fast engine at 1x passes
+16 fresh growths (k 1100-1115), fast - exact accuracy, paired: book10k +0.0002 (3/4, t 0.33), book30k +0.0003 (3/2, t 0.50),
+fables4000 +0.0001 (1/1, t 0.27), order3 0.0000 (0/0), text1000 -0.0004 (0/2, t -1.33), seqchoice order2 -0.0004 (3/2, t -0.13),
+cycle -0.0000 (1/1). Worker wall time exact / fast: book10k 2.84x, book30k 3.26x, fables 2.33x, text1000 1.50x, seqchoice 1.16-1.35x, order3 1.01x.
+fastEngine stays 0 until z09a / z09b (4xS book10k, running) also pass; then it becomes the default (standing authorisation).
