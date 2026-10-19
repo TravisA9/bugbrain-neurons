@@ -1,0 +1,263 @@
+{
+  "id": "y19_4xS_lr02_book100k",
+  "question": "I73",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/envs/book.js",
+    "run/r69_jobs.js"
+  ],
+  "title": "4xS + cortex lr 0.2 at book100k (growths 0-15, 1-growth runs)",
+  "priority": 0.86,
+  "estHours": 1.5,
+  "slotHours": 8.9,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "vs y11 (4xS lr 0.2 at 30k / 10k) and x17 (v36 4xS 100k): does a faster rate turn length into accuracy at size?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g0 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "3",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g4 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "5",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g5 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g6 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "7",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g7 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "4xS lr 0.2 book100k g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
+      }
+    }
+  ]
+}

@@ -1,0 +1,1823 @@
+{
+  "id": "y09_v38_lr_ladder",
+  "question": "I77",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/envs/book.js",
+    "run/r69_jobs.js"
+  ],
+  "title": "v38 cortex lr 0.3 / 0.5 on the 5-task screen (growths 0-15), with a v38 base arm (fast engine)",
+  "priority": 0.975,
+  "estHours": 0.3,
+  "slotHours": 2.1,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "paired vs the base arm (and vs y02 lr 0.2); where does the rate gain stop and does order3 fall?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "v38 base book10k g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "v38 base book10k g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "v38 base book10k g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "v38 base book10k g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "v38 base book10k g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "v38 base book10k g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "v38 base book10k g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "v38 base book10k g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "v38 base book30k g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "v38 base book30k g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "v38 base book30k g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "v38 base book30k g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "v38 base book30k g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "v38 base book30k g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "v38 base book30k g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "v38 base book30k g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "v38 base fables4000 g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "v38 base fables4000 g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "v38 base fables4000 g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "v38 base fables4000 g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "v38 base fables4000 g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "v38 base fables4000 g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "v38 base fables4000 g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "v38 base fables4000 g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "v38 base order3 g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "v38 base order3 g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "v38 base order3 g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "v38 base order3 g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "v38 base order3 g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "v38 base order3 g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "v38 base order3 g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "v38 base order3 g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "v38 base text1000 g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "v38 base text1000 g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "v38 base text1000 g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "v38 base text1000 g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "v38 base text1000 g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "v38 base text1000 g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "v38 base text1000 g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "v38 base text1000 g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "lr 0.3 book10k g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "lr 0.3 book10k g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "lr 0.3 book10k g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "lr 0.3 book10k g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "lr 0.3 book10k g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "lr 0.3 book10k g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "lr 0.3 book10k g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "lr 0.3 book10k g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "lr 0.3 book30k g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "lr 0.3 book30k g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "lr 0.3 book30k g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "lr 0.3 book30k g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "lr 0.3 book30k g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "lr 0.3 book30k g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "lr 0.3 book30k g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "lr 0.3 book30k g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "lr 0.3 fables4000 g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "lr 0.3 fables4000 g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "lr 0.3 fables4000 g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "lr 0.3 fables4000 g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "lr 0.3 fables4000 g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "lr 0.3 fables4000 g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "lr 0.3 fables4000 g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "lr 0.3 fables4000 g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "lr 0.3 order3 g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "lr 0.3 order3 g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "lr 0.3 order3 g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "lr 0.3 order3 g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "lr 0.3 order3 g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "lr 0.3 order3 g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "lr 0.3 order3 g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "lr 0.3 order3 g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "lr 0.3 text1000 g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "lr 0.3 text1000 g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "lr 0.3 text1000 g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "lr 0.3 text1000 g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "lr 0.3 text1000 g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "lr 0.3 text1000 g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "lr 0.3 text1000 g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.3,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "lr 0.3 text1000 g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "lr 0.5 book10k g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "lr 0.5 book10k g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "lr 0.5 book10k g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "lr 0.5 book10k g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "lr 0.5 book10k g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "lr 0.5 book10k g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "lr 0.5 book10k g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "lr 0.5 book10k g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "lr 0.5 book30k g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "lr 0.5 book30k g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "lr 0.5 book30k g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "lr 0.5 book30k g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "lr 0.5 book30k g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "lr 0.5 book30k g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "lr 0.5 book30k g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "lr 0.5 book30k g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "lr 0.5 fables4000 g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "lr 0.5 fables4000 g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "lr 0.5 fables4000 g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "lr 0.5 fables4000 g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "lr 0.5 fables4000 g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "lr 0.5 fables4000 g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "lr 0.5 fables4000 g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "lr 0.5 fables4000 g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "lr 0.5 order3 g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "lr 0.5 order3 g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "lr 0.5 order3 g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "lr 0.5 order3 g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "lr 0.5 order3 g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "lr 0.5 order3 g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "lr 0.5 order3 g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "lr 0.5 order3 g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "lr 0.5 text1000 g0 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "lr 0.5 text1000 g2 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "lr 0.5 text1000 g4 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "lr 0.5 text1000 g6 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "lr 0.5 text1000 g8 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "lr 0.5 text1000 g10 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "lr 0.5 text1000 g12 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "2",
+        "pl.lr@cortex=0.5,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "lr 0.5 text1000 g14 n2",
+      "env": {
+        "BB_OUT": "results/phone/y09_v38_lr_ladder.jsonl"
+      }
+    }
+  ]
+}
