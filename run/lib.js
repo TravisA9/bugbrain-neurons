@@ -59,7 +59,7 @@ function crossover(a, b, r) {
 // for its whole life although the network (CSR) is built from them once. dropDense releases them for a brain that will not be reused
 // (a fresh growth whose last episode's net is built): no computation reads them afterwards, results are unchanged; the per-process
 // footprint of a 4xS life drops from ~1.3 GB to ~0.3 GB, so parallel runs on a worker no longer compete for RAM.
-function dropDense(b) { if (!b) return; for (const x of [b].concat((b.regionParts || []).map(p => p.brain))) if (x && x.W) { x.W = null; x.P = null; x.C = null; }
+function dropDense(b) { if (!b) return; for (const x of [b].concat((b.regionParts || []).map(p => p.brain))) if (x && (x.sp || x.W)) { x.W = null; x.P = null; x.C = null; }
   if (typeof Bun !== 'undefined') Bun.gc(true); else if (typeof global.gc === 'function') global.gc(); }   // (a full collection now: lives allocate little, so the GC would not run on its own)
 // ---- evaluation ----
 // returns { tasks: [{ fit, mean, sd, min, stats }], brain: { hidden, synapses }, ticks, ms, error? }

@@ -31,14 +31,17 @@ class SpikingNet {
     this.v = new Float32Array(N).fill(V_REST); this.syn = new Float32Array(N); this.ext = new Float32Array(N);
     this.spiked = new Uint8Array(N); this.spk = new Int32Array(N); this.trace = new Float32Array(N);
     const start = new Int32Array(N + 1), posts = [], pres = [], ws = [], plast = [], chs = [], N0 = g.N;
-    for (let pre = 0; pre < N; pre++) {
+    const S = g.sp && !NG ? g.sp : null;   // R66: sparse synapse list (merged multi-region brains), same order as the dense scan
+    if (S) { let k = 0; for (let pre = 0; pre < N; pre++) { start[pre] = posts.length;
+      for (; k < S.pre.length && S.pre[k] === pre; k++) { posts.push(S.post[k]); pres.push(pre); ws.push(S.w[k]); plast.push(S.p[k]); chs.push(S.c[k] % nCh); } } }
+    else { const GW = g.W, GP = g.P, GC = g.C; for (let pre = 0; pre < N; pre++) {
       start[pre] = posts.length;
       if (pre < N0) for (let post = 0; post < N0; post++) {
-        const i = pre * N0 + post, w = g.W[i];
-        if (w !== 0 && !(NG && (NG.dead[pre] || NG.dead[post]))) { posts.push(post); pres.push(pre); ws.push(w); plast.push(g.P ? g.P[i] : 1); chs.push(g.C ? g.C[i] % nCh : 0); }
+        const i = pre * N0 + post, w = GW[i];
+        if (w !== 0 && !(NG && (NG.dead[pre] || NG.dead[post]))) { posts.push(post); pres.push(pre); ws.push(w); plast.push(GP ? GP[i] : 1); chs.push(GC ? GC[i] % nCh : 0); }
       }
       if (NG) { const ex = NG.extra[pre]; if (ex) for (const [post, pl] of ex) { posts.push(post); pres.push(pre); ws.push(pl ? 1e-6 : 0); plast.push(pl); chs.push(0); } }
-    }
+    } }
     start[N] = posts.length;
     const E = posts.length;
     this.start = start; this.posts = Int32Array.from(posts); this.pres = Int32Array.from(pres);

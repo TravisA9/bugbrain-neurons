@@ -192,16 +192,16 @@ function channelsFromLegacy(pl) {
 }
 function cleanPl(pl) { const p = defaultPlasticity(); if (pl) for (const k in PL_DEFAULTS) if (pl[k] != null) p[k] = +pl[k]; return p; }
 // Empty network with nIn sensors, nHid hidden neurons, nOut outputs.
-function createNetGenome(nIn, nHid, nOut) {
+function createNetGenome(nIn, nHid, nOut, noDense) {   // (R66 noDense: no W / P / C; the caller attaches a sparse synapse list, regions.js)
   const N = nIn + nHid + nOut;
-  return { kind: 'direct', nIn, nHid, nOut, N, W: new Float32Array(N * N), P: new Uint8Array(N * N), C: new Uint8Array(N * N),
+  return { kind: 'direct', nIn, nHid, nOut, N, W: noDense ? null : new Float32Array(N * N), P: noDense ? null : new Uint8Array(N * N), C: noDense ? null : new Uint8Array(N * N),
            thresh: new Float32Array(N).fill(V_THRESH), leak: new Float32Array(N).fill(params.leak), pl: defaultPlasticity(), nCh: 1, ch: [defaultChannel()],
            locked: false, labels: null, ids: null, fitness: null };
 }
 function isInput(g, i) { return i < g.nIn; }
 function isOutput(g, i) { return i >= g.nIn + g.nHid; }
 function outputIndex(g, m) { return g.nIn + g.nHid + m; }
-function countSynapses(g) { g = phenotype(g); let c = 0; for (let i = 0; i < g.W.length; i++) if (g.W[i] !== 0) c++; return c; }
+function countSynapses(g) { g = phenotype(g); if (g.sp) return g.sp.w.length; let c = 0; for (let i = 0; i < g.W.length; i++) if (g.W[i] !== 0) c++; return c; }
 function genomeParamCount(g) { return g.kind === 'cell' || g.kind === 'regions' ? cellParamCount(g) : countSynapses(g) * 3 + g.N * 2; }
 // Learning-rule genes + the gains of the single global dopamine channel.
 function mutatePlasticityGenes(g, r, m) {
