@@ -2711,3 +2711,38 @@ So far staging costs accuracy and saves little time. z04 / z05 decide it at book
 | z05_staged_timing_ref | wall-time reference, scratch vs staged A | 6.2 h |
 | z06_gate_gen_book30k | generation: greedy / T1 / gate 0.5 / margin 0.2 / gate 0.4 + T0.7 | 4.8 h |
 | z07_gate_4xS_book30k | gate at 4xS | 14.6 h |
+
+## R66 — fast engine (non-bit-identical, selectable) + growth memory (box, Oct 18 night; defaults unchanged, v37 / 30)
+Code (branch neuro/fast-engine, fast-forwarded to neuro/distributed-queue): f9bc953 (sparse merge), f4f988e (growth helpers), d842406 (fast engine action noise, eligibility lists, run/r66_jobs.js), 1cde2f5 (p37 BB_NOWHASH), 7295416 (syncState), 3f8ad01 (typed CSR build, GC hints).
+Travis approved a faster engine that need not be bit-identical, judged by scores; exact stays the default until validated.
+
+### 1. What is new
+- `params.fastEngine` (default 0 = exact engine, unchanged). 1 = fast: same LIF model and rules, recomputed more cheaply. Spike traces / pre-lag / pre / post traces are kept scaled with a shared decay factor (one multiply per substep instead of N), the teacher trace runs over a hot set with closed-form 0.7^n catch-up, and the membrane loop is a lean dense pass. 2 = event-driven membrane with lazy closed-form leak (skips untouched cells); it is slower than 1 here, so 1 is the fast mode.
+  Differences from exact are float rounding only (spike counts match to ±1 in 120M).
+- Exact engine, bit-identical: eligibility STDP over per-cell eligibility lists (seqchoice 2.5 -> 2.28 s), sparse merge of multi-region brains (G.sp; dense G.W/P/C only on first read), typed hash / column lists in growth, two-pass typed CSR build in the net and juvenile phase, GC hint between grown regions. Quick set 36/36 identical fingerprints, test_core ALL OK, verify OK.
+- Why not several-x: at 4xS ~22.7% of cells receive input every substep (93% of them also the substep before), ~272 spikes / substep over 3.05M synapses. Skipping quiet cells saves little; propagation (~0.5-1 ns per synaptic event) is the floor single-threaded. Further gains need threads (workers / SharedArrayBuffer) or lower activity.
+
+### 2. Speed and memory (book10k growth k0, bun, serial on the box; R64 = code before R65)
+| config | peak RSS MB | grow s | build s | life s | total s |
+|---|---|---|---|---|---|
+| R64 1x | 238 | 2.06 | 0.15 | 18.45 | 20.66 |
+| exact 1x (R66) | 172 | 1.85 | 0.08 | 12.94 | 14.86 |
+| fast 1x | 168 | 1.72 | 0.08 | 6.96 | 8.76 |
+| R64 4xS | 1585 | 20.10 | 1.39 | 118.37 | 139.86 |
+| exact 4xS (R66) | 1122 | 17.53 | 0.78 | 65.95 | 84.26 |
+| fast 4xS | 1077 | 16.05 | 0.74 | 41.29 | 58.08 |
+Fast vs exact: life 1.86x (1x) / 1.60x (4xS), total 1.70x / 1.45x. Fast vs R64: life 2.65x / 2.87x, total 2.36x / 2.41x. 4xS peak 1.59 -> 1.08 GB (RSS after 4xS growth 1.6 -> 0.58 GB).
+
+### 3. Box screen, fast vs exact (8 growths each, paired, k 0-7)
+| task | mean diff | win / loss | t | life speedup |
+|---|---|---|---|---|
+| order3 | 0.0000 | 0 / 0 | - | 1.49x |
+| text1000 | -0.0006 | 0 / 1 | - | 1.70x |
+| fables4000 | +0.0094 | 2 / 1 | 0.93 | 1.76x |
+| book10k | -0.0037 | 0 / 1 | - | 1.69x |
+| seqchoice order2 | -0.0281 | 2 / 2 | -0.89 | 1.43x |
+| seqchoice cycle | +0.0031 | 1 / 0 | - | 1.50x |
+No task worse beyond noise. Most growths score identically; seqchoice (reward-driven, action noise) diverges most, both ways.
+
+### 4. Queued (I84, fresh seeds k 1100-1115, requires R66 net.js)
+z08a / z08b fast vs exact at 1x on book10k / 30k, fables4000, order3, text1000, seqchoice order2 / cycle (16 growths); z09a / z09b 4xS book10k (16); z10 4xS other tasks (8). ~18 h. If no task is worse beyond noise, fastEngine 1 becomes the default (standing authorisation).
