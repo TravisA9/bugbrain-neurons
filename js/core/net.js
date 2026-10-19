@@ -163,7 +163,7 @@ class SpikingNet {
   }
   syncState() {                              // bring every lazily kept value up to date (display / inspection; the engine does not need it)
     if (!this.fastE) return; const N = this.N, v = this.v, t = this.subNo, cls = this.lkCls, lv = this.lkVal;
-    for (let i = 0; i < N; i++) { const n = t - this.tv[i]; if (n > 0) { v[i] = V_REST + (v[i] - V_REST) * Math.pow(lv[cls[i]], n); this.tv[i] = t; } this.trace[i] = this.trS[i] * this.trG; }
+    for (let i = 0; i < N; i++) { const n = this.fDense ? 0 : t - this.tv[i]; if (n > 0) { v[i] = V_REST + (v[i] - V_REST) * Math.pow(lv[cls[i]], n); this.tv[i] = t; } this.trace[i] = this.trS[i] * this.trG; }
   }
   neuDense() {                               // R66 (fastEngine 1): every cell, as the exact loop, without the per-cell trace / flag writes
     const N = this.N, v = this.v, syn = this.syn, sp = this.spiked, th = this.thr || this.g.thresh, spk = this.spk, R = V_REST, FL = V_FLOOR, lk = this.lkC, trS = this.trS, trI = 1 / this.trG;

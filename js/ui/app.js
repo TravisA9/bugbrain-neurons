@@ -579,6 +579,7 @@ function drawEdges(c, n) {
   c.setLineDash([]);
 }
 function drawBrain() {
+  if (watch.net.syncState) watch.net.syncState();   // (R66 fast engine: lazily kept values up to date for the display)
   const c = bctx, g = watch.brain, N = g.N, v = watch.net.v, f = flash.a;
   if (rN !== N) resetRaster(); else if (!edgeCache || layoutOf !== g) layoutBrain();   // v24: the brain may have changed in fast mode
   c.clearRect(0, 0, 440, 300);
