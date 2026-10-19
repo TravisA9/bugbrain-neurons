@@ -139,9 +139,9 @@ class SpikingNet {
    *    factor per trace: decaying every cell is one multiplication, a spike adds 1 / factor (renormalised when the factor gets tiny);
    *  - teacher traces: only cells with teacher drive, a plateau, a disarmed teacher or an AHP are stepped ("hot" cells);
    *    a quiet cell's trace decays in closed form (x 0.7^n) when its next drive arrives.
-   * Juvenile development nets, need-growth, pruning, action noise and learned mixing keep the exact engine. */
+   * Juvenile development nets, need-growth, pruning and learned mixing (mixLr) keep the exact engine. */
   initFastE() {
-    if (this.ng || this.use || this.anList || (this.mxStart && this.p.mixLr > 0) || (this.teachTr && !(this.p.teachThr > 0))) return;
+    if (this.ng || this.use || (this.mxStart && this.p.mixLr > 0) || (this.teachTr && !(this.p.teachThr > 0))) return;
     const N = this.N, g = this.g, L = params.leak, TP = 256;
     this.fastE = true; this.subNo = 0; this.tv = new Int32Array(N);
     const cls = new Uint16Array(N), vals = [], idx = new Map();
@@ -212,6 +212,8 @@ class SpikingNet {
     } else if (this.fDense) for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) syn[posts[k]] += ws[k]; }
     else for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = posts[k]; syn[j] += ws[k]; mk[j] = 1; } }
     if (this.rhList && params.plasticity) { const L = this.rhList, h = this.p.rcvHomeo, r0 = this.p.rcvRate, thr = this.thr; for (let q = 0; q < L.length; q++) { const i = L[q]; thr[i] += h * (sp[i] - r0); if (thr[i] <= (v[i] > R ? v[i] : R)) mk[i] = 1; } }
+    if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp);   // v20 action noise / feedback (as the exact engine)
+      if (!this.fDense) { const A = this.anList, C = this.acList, o0 = this.g.nIn + this.g.nHid; for (let q = 0; q < A.length; q++) mk[A[q]] = 1; for (let q = 0; q < C.length; q++) mk[C[q]] = 1; for (let m = 0; m < this.g.nOut; m++) mk[o0 + m] = 1; } }
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];
       if (n) { const d = this.p.mixInh * n, ml = this.mixList; for (let q = 0; q < ml.length; q++) { syn[ml[q]] -= d; mk[ml[q]] = 1; } } }
     if (this.mxStart && params.plasticity && this.thr) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr;
@@ -537,6 +539,14 @@ class SpikingNet {
     for (let c = 0; c < this.nCh; c++) { const s = this.chSrc[c]; for (let q = 0; q < s.length; q++) this.chSpikes[c] += sp[s[q]]; }
     if (this.learning || this.use) this.stdp();
   }
+  buildEl(isEl) {                            // R66: outgoing / incoming eligibility synapses of every cell (CSR order), with the other end
+    const N = this.N, st = this.start, P = this.posts, inS = this.inStart, inE = this.inEdges, pres = this.pres;
+    const oS = new Int32Array(N + 1), oK = [], iS = new Int32Array(N + 1), iK = [];
+    for (let i = 0; i < N; i++) { oS[i] = oK.length; for (let k = st[i], e = st[i + 1]; k < e; k++) if (isEl[k]) oK.push(k);
+      iS[i] = iK.length; for (let q = inS[i], e = inS[i + 1]; q < e; q++) if (isEl[inE[q]]) iK.push(inE[q]); }
+    oS[N] = oK.length; iS[N] = iK.length;
+    this.elO = { isEl, s: oS, k: Int32Array.from(oK), p: Int32Array.from(oK, k => P[k]) }; this.elI = { s: iS, k: Int32Array.from(iK), p: Int32Array.from(iK, k => pres[k]) };
+  }
   stdp() {
     const N = this.N, sp = this.spiked, xPre = this.xPre, xPost = this.xPost, el = this.elig, use = this.use;
     const learn = this.learning, pl = this.plastic, dE = this.dElig, dE2 = this.dElig2;
@@ -591,7 +601,15 @@ class SpikingNet {
       for (let q = 0; q < dirty.length; q++) nd[dirty[q]] = 0; dirty.length = 0;
     }
     const gPr = this.fastE ? this.pG : 1, gPo = this.fastE ? this.qG : 1;
-    if ((learn && !teach) || use) for (let s = 0; s < nSpk; s++) { const i = spk[s];   // (teacher rule without pruning: nothing to do here)
+    if (learn && !teach && !use && this.fast) {   // R66 (bit-identical): the same updates over per-cell lists of the eligibility synapses only
+      if (!this.elO || this.elO.isEl !== isEl) this.buildEl(isEl);
+      const oS = this.elO.s, oK = this.elO.k, oP = this.elO.p, iS = this.elI.s, iK = this.elI.k, iP = this.elI.p;
+      for (let s = 0; s < nSpk; s++) { const i = spk[s];
+        for (let q = oS[i], e = oS[i + 1]; q < e; q++) { const k = oK[q]; if (lz) { const n = eS - eT[k]; eT[k] = eS; if (el2) el2[k] *= n < 8192 ? eP2[n] : 0; el[k] *= n < 8192 ? eP[n] : 0; }
+          const d = aM * xPost[oP[q]] * gPo; el[k] -= d; if (el2) el2[k] -= d; }
+        for (let q = iS[i], e = iS[i + 1]; q < e; q++) { const k = iK[q], x = xPre[iP[q]] * gPr;
+          if (lz) { const n = eS - eT[k]; eT[k] = eS; if (el2) el2[k] *= n < 8192 ? eP2[n] : 0; el[k] *= n < 8192 ? eP[n] : 0; } el[k] += x; if (el2) el2[k] += x; } } }
+    else if ((learn && !teach) || use) for (let s = 0; s < nSpk; s++) { const i = spk[s];   // (teacher rule without pruning: nothing to do here)
       if (learn && !teach) for (let k = start[i], e = start[i + 1]; k < e; k++)    // i is PRE: post fired earlier -> depress
         if (isEl[k]) { if (lz) { const n = eS - eT[k]; eT[k] = eS; if (el2) el2[k] *= n < 8192 ? eP2[n] : 0; el[k] *= n < 8192 ? eP[n] : 0; }   // (= eAt(k), inlined)
           const d = aM * xPost[posts[k]] * gPo; el[k] -= d; if (el2) el2[k] -= d; }
