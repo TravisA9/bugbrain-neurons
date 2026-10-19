@@ -1,0 +1,441 @@
+{
+  "id": "z01_cumul_v37",
+  "question": "Q38",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r65_jobs.js"
+  ],
+  "title": "Cumulative check on FRESH growth seeds (k 1000-1015, never used before): v37 on book10k / 30k, fables4000, order3, text1000, seqchoice order2 / cycle",
+  "priority": 0.968,
+  "estHours": 1.6,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "z01-z03 together: are the stacked v34 -> v36 -> v37 gains real on growths no decision ever saw? paired by growth seed across the three jobs"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "1000",
+        "--force"
+      ],
+      "label": "v37 book10k g1000 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "1004",
+        "--force"
+      ],
+      "label": "v37 book10k g1004 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "1008",
+        "--force"
+      ],
+      "label": "v37 book10k g1008 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "1012",
+        "--force"
+      ],
+      "label": "v37 book10k g1012 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "1000",
+        "--force"
+      ],
+      "label": "v37 book30k g1000 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "1004",
+        "--force"
+      ],
+      "label": "v37 book30k g1004 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "1008",
+        "--force"
+      ],
+      "label": "v37 book30k g1008 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "1012",
+        "--force"
+      ],
+      "label": "v37 book30k g1012 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1000",
+        "--force"
+      ],
+      "label": "v37 fables4000 g1000 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1004",
+        "--force"
+      ],
+      "label": "v37 fables4000 g1004 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1008",
+        "--force"
+      ],
+      "label": "v37 fables4000 g1008 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1012",
+        "--force"
+      ],
+      "label": "v37 fables4000 g1012 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1000",
+        "--force"
+      ],
+      "label": "v37 order3 g1000 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1004",
+        "--force"
+      ],
+      "label": "v37 order3 g1004 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1008",
+        "--force"
+      ],
+      "label": "v37 order3 g1008 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1012",
+        "--force"
+      ],
+      "label": "v37 order3 g1012 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1000",
+        "--force"
+      ],
+      "label": "v37 text1000 g1000 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1004",
+        "--force"
+      ],
+      "label": "v37 text1000 g1004 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1008",
+        "--force"
+      ],
+      "label": "v37 text1000 g1008 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1012",
+        "--force"
+      ],
+      "label": "v37 text1000 g1012 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "1000",
+        "--force"
+      ],
+      "label": "v37 seqchoice order2 g1000 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "1004",
+        "--force"
+      ],
+      "label": "v37 seqchoice order2 g1004 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "1008",
+        "--force"
+      ],
+      "label": "v37 seqchoice order2 g1008 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "1012",
+        "--force"
+      ],
+      "label": "v37 seqchoice order2 g1012 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "1000",
+        "--force"
+      ],
+      "label": "v37 seqchoice cycle g1000 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "1004",
+        "--force"
+      ],
+      "label": "v37 seqchoice cycle g1004 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "1008",
+        "--force"
+      ],
+      "label": "v37 seqchoice cycle g1008 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "1012",
+        "--force"
+      ],
+      "label": "v37 seqchoice cycle g1012 n4",
+      "env": {
+        "BB_OUT": "results/phone/z01_cumul_v37.jsonl"
+      }
+    }
+  ]
+}

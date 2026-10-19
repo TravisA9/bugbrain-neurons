@@ -1,0 +1,141 @@
+{
+  "id": "z04_staged4xS_book30k",
+  "question": "I82",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r65_jobs.js"
+  ],
+  "title": "Staged maturation at 4xS on book30k: 1/3 of the neurons mature at birth, +1/3 at 10k and 20k chars (A) / 1/4, +1/4 every 6k chars (B), growths 0-15",
+  "priority": 0.958,
+  "estHours": 20.6,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "vs y03a/b v37 4xS book30k (from scratch, same growths) and x04 1x; wall time (registry wallMs) vs the scratch arm of z05"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.stageF0=0.33,pl.stageWaves=2,pl.stageTicks=110000",
+        "0",
+        "--force"
+      ],
+      "label": "v37 4xS staged A book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/z04_staged4xS_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.stageF0=0.33,pl.stageWaves=2,pl.stageTicks=110000",
+        "4",
+        "--force"
+      ],
+      "label": "v37 4xS staged A book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/z04_staged4xS_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.stageF0=0.33,pl.stageWaves=2,pl.stageTicks=110000",
+        "8",
+        "--force"
+      ],
+      "label": "v37 4xS staged A book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/z04_staged4xS_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.stageF0=0.33,pl.stageWaves=2,pl.stageTicks=110000",
+        "12",
+        "--force"
+      ],
+      "label": "v37 4xS staged A book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/z04_staged4xS_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.stageF0=0.25,pl.stageWaves=3,pl.stageTicks=66000",
+        "0",
+        "--force"
+      ],
+      "label": "v37 4xS staged B book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/z04_staged4xS_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.stageF0=0.25,pl.stageWaves=3,pl.stageTicks=66000",
+        "4",
+        "--force"
+      ],
+      "label": "v37 4xS staged B book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/z04_staged4xS_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.stageF0=0.25,pl.stageWaves=3,pl.stageTicks=66000",
+        "8",
+        "--force"
+      ],
+      "label": "v37 4xS staged B book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/z04_staged4xS_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.stageF0=0.25,pl.stageWaves=3,pl.stageTicks=66000",
+        "12",
+        "--force"
+      ],
+      "label": "v37 4xS staged B book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/z04_staged4xS_book30k.jsonl"
+      }
+    }
+  ]
+}

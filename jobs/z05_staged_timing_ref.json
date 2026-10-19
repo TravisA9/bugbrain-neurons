@@ -1,0 +1,51 @@
+{
+  "id": "z05_staged_timing_ref",
+  "question": "I82",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r65_jobs.js"
+  ],
+  "title": "Timing reference for z04 on the same worker: v37 4xS book30k from scratch (growths 0-3) + staged A (growths 0-3)",
+  "priority": 0.957,
+  "estHours": 6.2,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "wallMs per run (registry): staged vs scratch on one machine; scores must equal y03a (scratch) and z04 (staged) exactly"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "0",
+        "--force"
+      ],
+      "label": "v37 4xS scratch book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/z05_staged_timing_ref.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.stageF0=0.33,pl.stageWaves=2,pl.stageTicks=110000",
+        "0",
+        "--force"
+      ],
+      "label": "v37 4xS staged A book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/z05_staged_timing_ref.jsonl"
+      }
+    }
+  ]
+}

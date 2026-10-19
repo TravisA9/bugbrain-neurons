@@ -1,0 +1,321 @@
+{
+  "id": "z06_gate_gen_book30k",
+  "question": "I81",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r65_jobs.js"
+  ],
+  "title": "Confidence-gated generation after a 30k life (1x, 16 growths): greedy / sampled T1 / gate share 0.5 / gate margin 0.2 / gate 0.4 + T0.7",
+  "priority": 0.952,
+  "estHours": 4.8,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "gen quality: wordValid, distinct4, topCharFrac, nonSpace, triBits; teacher-forced gateCov / gatePrec. Learning is identical in every arm (1x book: no dopamine-learning synapses), so heldAcc must be equal across arms"
+  },
+  "runs": [
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v37 gen greedy g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "4",
+        "base",
+        "4",
+        "--force"
+      ],
+      "label": "v37 gen greedy g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "4",
+        "base",
+        "8",
+        "--force"
+      ],
+      "label": "v37 gen greedy g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "4",
+        "base",
+        "12",
+        "--force"
+      ],
+      "label": "v37 gen greedy g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "4",
+        "base",
+        "0",
+        "--force"
+      ],
+      "label": "v37 gen T1 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "4",
+        "base",
+        "4",
+        "--force"
+      ],
+      "label": "v37 gen T1 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "4",
+        "base",
+        "8",
+        "--force"
+      ],
+      "label": "v37 gen T1 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "4",
+        "base",
+        "12",
+        "--force"
+      ],
+      "label": "v37 gen T1 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "4",
+        "pl.outGate=0.5",
+        "0",
+        "--force"
+      ],
+      "label": "v37 gen gate0.5 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "4",
+        "pl.outGate=0.5",
+        "4",
+        "--force"
+      ],
+      "label": "v37 gen gate0.5 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "4",
+        "pl.outGate=0.5",
+        "8",
+        "--force"
+      ],
+      "label": "v37 gen gate0.5 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "4",
+        "pl.outGate=0.5",
+        "12",
+        "--force"
+      ],
+      "label": "v37 gen gate0.5 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "4",
+        "pl.outGate=0.2,pl.outGateMode=1",
+        "0",
+        "--force"
+      ],
+      "label": "v37 gen gate margin0.2 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "4",
+        "pl.outGate=0.2,pl.outGateMode=1",
+        "4",
+        "--force"
+      ],
+      "label": "v37 gen gate margin0.2 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "4",
+        "pl.outGate=0.2,pl.outGateMode=1",
+        "8",
+        "--force"
+      ],
+      "label": "v37 gen gate margin0.2 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "4",
+        "pl.outGate=0.2,pl.outGateMode=1",
+        "12",
+        "--force"
+      ],
+      "label": "v37 gen gate margin0.2 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "4",
+        "pl.outGate=0.4",
+        "0",
+        "--force"
+      ],
+      "label": "v37 gen gate0.4 T0.7 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "4",
+        "pl.outGate=0.4",
+        "4",
+        "--force"
+      ],
+      "label": "v37 gen gate0.4 T0.7 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "4",
+        "pl.outGate=0.4",
+        "8",
+        "--force"
+      ],
+      "label": "v37 gen gate0.4 T0.7 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "4",
+        "pl.outGate=0.4",
+        "12",
+        "--force"
+      ],
+      "label": "v37 gen gate0.4 T0.7 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/z06_gate_gen_book30k.jsonl"
+      }
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "id": "z07_gate_4xS_book30k",
+  "question": "I81",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r65_jobs.js"
+  ],
+  "title": "Output gate on the 4xS brain (striatum dopamine learning present at 4xS: abstentions change its outcome signal): book30k, gate 0.5 / margin 0.2, growths 0-7",
+  "priority": 0.951,
+  "estHours": 14.6,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "vs y03a v37 4xS book30k: does abstaining (no reward / punishment when unconfident) change held-out accuracy? plus gateCov / gatePrec"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.outGate=0.5",
+        "0",
+        "--force"
+      ],
+      "label": "v37 4xS gate0.5 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/z07_gate_4xS_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.outGate=0.5",
+        "4",
+        "--force"
+      ],
+      "label": "v37 4xS gate0.5 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/z07_gate_4xS_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.outGate=0.2,pl.outGateMode=1",
+        "0",
+        "--force"
+      ],
+      "label": "v37 4xS gate margin0.2 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/z07_gate_4xS_book30k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.outGate=0.2,pl.outGateMode=1",
+        "4",
+        "--force"
+      ],
+      "label": "v37 4xS gate margin0.2 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/z07_gate_4xS_book30k.jsonl"
+      }
+    }
+  ]
+}
