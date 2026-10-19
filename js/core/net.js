@@ -471,6 +471,9 @@ class SpikingNet {
     for (let c = 0; c < N; c++) { st[c] = idx.length; for (let k = this.start[c], e = this.start[c + 1]; k < e; k++) if (isP[k] && w0[k] > 0) idx.push(k); }
     st[N] = idx.length; this.npStart = st; this.npIdx = Int32Array.from(idx);
   }
+  buildPc(pl) {                              // R72 postCap: excitatory plastic inputs of this rule grouped by receiver
+    const m = new Map(); for (let q = 0; q < pl.length; q++) { const k = pl[q]; if (!(this.w0[k] > 0)) continue; const i = this.posts[k]; if (!m.has(i)) m.set(i, []); m.get(i).push(k); }
+    const st = [0], ix = [], c0 = []; for (const ks of m.values()) { let t = 0; for (const k of ks) { ix.push(k); t += this.w0[k]; } st.push(ix.length); c0.push(t); } this.pcStart = Int32Array.from(st); this.pcIdx = Int32Array.from(ix); this.pcW0 = Float64Array.from(c0); }
   normPre(i) {                               // plastic outgoing weights of cell i sum to preNorm
     if (!this.npStart) this.buildNp();
     const ws = this.ws, wMax = params.wMax, st = this.npStart, idx = this.npIdx, a = st[i], e = st[i + 1]; let s = 0;
@@ -735,6 +738,12 @@ class SpikingNet {
     if (outcome && this.p.eligUse > 0) { const f = 1 - this.p.eligUse;
       for (let q = 0; q < pl.length; q++) { const k = pl[q]; if (eT) { const n = eS - eT[k]; eT[k] = eS; el[k] = n < 8192 ? el[k] * eP[n] : 0; if (el2) el2[k] = n < 8192 ? el2[k] * eP2[n] : 0; } el[k] *= f; if (el2) el2[k] *= f; } }
     if (this.p.preNorm > 0 && s > 0) { if (!this.npStart) this.buildNp(); for (let i = 0; i < this.N; i++) if (this.npStart[i + 1] > this.npStart[i]) this.normPre(i); }   // v20: competition between targets
+    // R72 postCap (global param, 0/undefined = off): postsynaptic scaling. preNorm gives every presynaptic cell the same outgoing budget, so a
+    // receiver's plastic total grows with the number of cells projecting to it (a 4x cortex: ~5x the corticostriatal weight, R72). With postCap > 0
+    // a receiver whose excitatory plastic inputs of this rule sum to more than postCap is scaled down to postCap (homeostatic synaptic scaling).
+    // postCapRel > 0 instead: the cap is postCapRel x the receiver's own genome (birth) total of those inputs (scale-free).
+    if ((params.postCap > 0 || params.postCapRel > 0) && s > 0) { if (!this.pcStart) this.buildPc(pl); const st = this.pcStart, ix = this.pcIdx, c0 = this.pcW0, rel = params.postCapRel > 0 ? params.postCapRel : 0;
+      for (let r = 0, R = st.length - 1; r < R; r++) { const cap = rel ? rel * c0[r] : params.postCap; let t = 0; for (let q = st[r]; q < st[r + 1]; q++) t += ws[ix[q]]; if (t > cap) { const f = cap / t; for (let q = st[r]; q < st[r + 1]; q++) ws[ix[q]] *= f; } } }
     this.dwSum = s;
   }
   prune() {

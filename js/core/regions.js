@@ -113,7 +113,9 @@ function growRegions(d, opts) {
         const S = cols.get(order.pop()); const ws = T.to.w / S.length; for (const A of S) { acc.add(A, B, ws, 0, 0); nSyn++; } }   // v25: a mutant whose source region grew no cells of the class gets no tract (it used to throw)
     } else if (T.map === 'all') {   // parallel fibres: every source cell -> every excitatory receiver of the target region, plastic (P = 1)
       const tg = []; for (let i = dst.g.nIn; i < dst.g.nIn + dst.g.nHid; i++) if (dst.g.recv && dst.g.recv[i]) tg.push(node(dst, i));
-      const src = [].concat(...cols.values()), pc = T.p || 1, ws = T.to.wTot / Math.max(1, pc * src.length), r = mulberry32((seed ^ 0x2c1b3c6d ^ (T.salt || 0)) >>> 0);   // total weight ~wTot per target
+      // R72 allMax (global param, 0/undefined = off): convergence limit. Each target receives from at most ~allMax source cells (the pair
+      // probability falls to allMax / sources when p x sources > allMax), with the weight per synapse of that count: fan-in no longer grows with the source size.
+      const src0 = [].concat(...cols.values()), aM = params.allMax > 0 ? params.allMax : 0, pc = aM && (T.p || 1) * src0.length > aM ? aM / src0.length : (T.p || 1), src = src0, ws = T.to.wTot / Math.max(1, pc * src.length), r = mulberry32((seed ^ 0x2c1b3c6d ^ (T.salt || 0)) >>> 0);   // total weight ~wTot per target
       for (const A of src) for (const B of tg) { if (pc < 1 && r() >= pc) continue; acc.add(A, B, ws, T.plastic ? 1 : 0, 0); nSyn++; }   // p < 1: each pair connects with probability p
     }
     else if (T.map === 'outReset') {   // R43 (I55): the output (prediction) cell named T.from.out inhibits every cell of class T.to.cls of the target region (a predicted word boundary resets it)
