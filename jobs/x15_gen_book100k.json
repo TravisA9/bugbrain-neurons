@@ -6,9 +6,10 @@
   "requires": [
     "run/r42.js",
     "js/envs/book.js",
-    "run/r62_cmp.js"
+    "run/r62_cmp.js",
+    "run/r64_jobs.js"
   ],
-  "title": "Generation after a 100k life under v36 (genTemp 1 and 0.7), growths 0-3",
+  "title": "Generation after a 100k life under v36 (pinned) (genTemp 1 and 0.7), growths 0-3",
   "priority": 0.9,
   "estHours": 2,
   "phone": false,
@@ -20,14 +21,14 @@
     {
       "script": "run/gen.js",
       "args": [
-        "deepURSx3",
+        "deepURSx3v36",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
-        "4",
+        "1",
         "base",
         "0",
         "--force"
       ],
-      "label": "v36 gen T1 book100k g0 n4",
+      "label": "v36 gen T1 book100k g0 n1",
       "env": {
         "BB_OUT": "results/phone/x15_gen_book100k.jsonl"
       }
@@ -35,17 +36,108 @@
     {
       "script": "run/gen.js",
       "args": [
-        "deepURSx3",
+        "deepURSx3v36",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "base",
+        "1",
+        "--force"
+      ],
+      "label": "v36 gen T1 book100k g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/x15_gen_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3v36",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "base",
+        "2",
+        "--force"
+      ],
+      "label": "v36 gen T1 book100k g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/x15_gen_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3v36",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "base",
+        "3",
+        "--force"
+      ],
+      "label": "v36 gen T1 book100k g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/x15_gen_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3v36",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
-        "4",
+        "1",
         "base",
         "0",
         "--force"
       ],
-      "label": "v36 gen T0.7 book100k g0 n4",
+      "label": "v36 gen T0.7 book100k g0 n1",
+      "env": {
+        "BB_OUT": "results/phone/x15_gen_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3v36",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "1",
+        "base",
+        "1",
+        "--force"
+      ],
+      "label": "v36 gen T0.7 book100k g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/x15_gen_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3v36",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "1",
+        "base",
+        "2",
+        "--force"
+      ],
+      "label": "v36 gen T0.7 book100k g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/x15_gen_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3v36",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "1",
+        "base",
+        "3",
+        "--force"
+      ],
+      "label": "v36 gen T0.7 book100k g3 n1",
       "env": {
         "BB_OUT": "results/phone/x15_gen_book100k.jsonl"
       }
     }
-  ]
+  ],
+  "pinned": "R64: plan deepURSx3v36 (v36 as written; the default became v37)"
 }

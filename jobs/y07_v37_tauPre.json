@@ -1,0 +1,621 @@
+{
+  "id": "y07_v37_tauPre",
+  "question": "I77",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r64_jobs.js"
+  ],
+  "title": "Learning rule (5-task screen) on v37: cortex tauPre 8 / 18 (v37 12)",
+  "priority": 0.93,
+  "estHours": 4.1,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "vs x04 pl.lr=0.1 arm (= v37); preLag 4 / 12 (x11) were neutral-to-worse"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "0",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "4",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "8",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "12",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "0",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "4",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "8",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "12",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "0",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "4",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "8",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "12",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "0",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 order3 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "4",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 order3 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "8",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 order3 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "12",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 order3 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "0",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 text1000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "4",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 text1000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "8",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 text1000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=8",
+        "12",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=8 text1000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "0",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "4",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "8",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "12",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "0",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "4",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "8",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "12",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "0",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "4",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "8",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "12",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "0",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 order3 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "4",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 order3 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "8",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 order3 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "12",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 order3 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "0",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 text1000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "4",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 text1000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "8",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 text1000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.tauPre@cortex=18",
+        "12",
+        "--force"
+      ],
+      "label": "v37 tauPre@cortex=18 text1000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y07_v37_tauPre.jsonl"
+      }
+    }
+  ]
+}

@@ -6,10 +6,11 @@
   "requires": [
     "run/r42.js",
     "js/envs/book.js",
-    "run/r62_cmp.js"
+    "run/r62_cmp.js",
+    "run/r64_jobs.js"
   ],
   "title": "Size 2x (scaled wiring) x 100k life: growths 0-7",
-  "priority": 0.89,
+  "priority": 0.945,
   "estHours": 4,
   "phone": false,
   "flag": "text",
@@ -20,14 +21,14 @@
     {
       "script": "run/r42.js",
       "args": [
-        "deepURSx3",
+        "deepURSx3v36",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
-        "4",
+        "1",
         "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
         "0",
         "--force"
       ],
-      "label": "v36 2xS book100k g0 n4",
+      "label": "v36 2xS book100k g0 n1",
       "env": {
         "BB_OUT": "results/phone/x16a_size2xS_book100k.jsonl"
       }
@@ -35,17 +36,108 @@
     {
       "script": "run/r42.js",
       "args": [
-        "deepURSx3",
+        "deepURSx3v36",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
-        "4",
+        "1",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "1",
+        "--force"
+      ],
+      "label": "v36 2xS book100k g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/x16a_size2xS_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v36",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "2",
+        "--force"
+      ],
+      "label": "v36 2xS book100k g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/x16a_size2xS_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v36",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "3",
+        "--force"
+      ],
+      "label": "v36 2xS book100k g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/x16a_size2xS_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v36",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
         "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
         "4",
         "--force"
       ],
-      "label": "v36 2xS book100k g4 n4",
+      "label": "v36 2xS book100k g4 n1",
+      "env": {
+        "BB_OUT": "results/phone/x16a_size2xS_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v36",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "5",
+        "--force"
+      ],
+      "label": "v36 2xS book100k g5 n1",
+      "env": {
+        "BB_OUT": "results/phone/x16a_size2xS_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v36",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "6",
+        "--force"
+      ],
+      "label": "v36 2xS book100k g6 n1",
+      "env": {
+        "BB_OUT": "results/phone/x16a_size2xS_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3v36",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=85,sc.maxCells=6800,sc.coneSpeed=4,sc.axonLen=57",
+        "7",
+        "--force"
+      ],
+      "label": "v36 2xS book100k g7 n1",
       "env": {
         "BB_OUT": "results/phone/x16a_size2xS_book100k.jsonl"
       }
     }
-  ]
+  ],
+  "pinned": "R64: plan deepURSx3v36 (v36 as written; the default became v37)"
 }

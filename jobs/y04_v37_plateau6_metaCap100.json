@@ -1,0 +1,921 @@
+{
+  "id": "y04_v37_plateau6_metaCap100",
+  "question": "I77",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r64_jobs.js"
+  ],
+  "title": "Learning rule (5-task screen) on v37: plateau 6 (x10: +0.001..+0.006 on all 5 tasks under v36) / metaCap 100 (x05: book +0.006 / +0.008, order3 -0.005) / metaN 80 (x18: book +0.008 / +0.010, fables +0.008, order3 -0.010)",
+  "priority": 0.955,
+  "estHours": 6.1,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "vs x04 pl.lr=0.1 arm (= v37); adoption-ready if both book tasks win and no task is worse; do the consolidation knobs still add on top of the faster rate?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "0",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "4",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "8",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "12",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "0",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "4",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "8",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "12",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "0",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "4",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "8",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "12",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "0",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 order3 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "4",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 order3 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "8",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 order3 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "12",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 order3 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "0",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 text1000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "4",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 text1000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "8",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 text1000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.plateau@cortex=6",
+        "12",
+        "--force"
+      ],
+      "label": "v37 plateau@cortex=6 text1000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "0",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "4",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "8",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "12",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "0",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "4",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "8",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "12",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "0",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "4",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "8",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "12",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "0",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 order3 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "4",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 order3 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "8",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 order3 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "12",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 order3 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "0",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 text1000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "4",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 text1000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "8",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 text1000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaCap@cortex=100",
+        "12",
+        "--force"
+      ],
+      "label": "v37 metaCap@cortex=100 text1000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "0",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 book30k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "4",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 book30k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "8",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "12",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "0",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 book10k g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "4",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 book10k g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "8",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "12",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "0",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 fables4000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "4",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 fables4000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "8",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "12",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "0",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 order3 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "4",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 order3 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "8",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 order3 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "12",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 order3 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "0",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 text1000 g0 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "4",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 text1000 g4 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "8",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 text1000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "pl.metaN@cortex=80",
+        "12",
+        "--force"
+      ],
+      "label": "v37 metaN@cortex=80 text1000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y04_v37_plateau6_metaCap100.jsonl"
+      }
+    }
+  ]
+}

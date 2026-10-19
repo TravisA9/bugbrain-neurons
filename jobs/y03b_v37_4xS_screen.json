@@ -1,0 +1,171 @@
+{
+  "id": "y03b_v37_4xS_screen",
+  "question": "I78",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/envs/book.js",
+    "run/r64_jobs.js"
+  ],
+  "title": "v37 at size 4x (scaled wiring) on the 5-task screen, growths 8-15",
+  "priority": 0.97,
+  "estHours": 17.2,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "vs v37 1x (x04 lr 0.1 arm) and v36 4xS (x01 book, x19 gate tasks): does the size gain (+0.030 / +0.036 book under v36) add to the rule gain, with no task worse?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "8",
+        "--force"
+      ],
+      "label": "v37 4xS book30k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y03b_v37_4xS_screen.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "12",
+        "--force"
+      ],
+      "label": "v37 4xS book30k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y03b_v37_4xS_screen.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "8",
+        "--force"
+      ],
+      "label": "v37 4xS book10k g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y03b_v37_4xS_screen.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "12",
+        "--force"
+      ],
+      "label": "v37 4xS book10k g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y03b_v37_4xS_screen.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "8",
+        "--force"
+      ],
+      "label": "v37 4xS fables4000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y03b_v37_4xS_screen.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "12",
+        "--force"
+      ],
+      "label": "v37 4xS fables4000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y03b_v37_4xS_screen.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "8",
+        "--force"
+      ],
+      "label": "v37 4xS order3 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y03b_v37_4xS_screen.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "12",
+        "--force"
+      ],
+      "label": "v37 4xS order3 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y03b_v37_4xS_screen.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "8",
+        "--force"
+      ],
+      "label": "v37 4xS text1000 g8 n4",
+      "env": {
+        "BB_OUT": "results/phone/y03b_v37_4xS_screen.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "12",
+        "--force"
+      ],
+      "label": "v37 4xS text1000 g12 n4",
+      "env": {
+        "BB_OUT": "results/phone/y03b_v37_4xS_screen.jsonl"
+      }
+    }
+  ]
+}
