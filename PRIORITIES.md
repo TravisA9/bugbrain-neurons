@@ -3,7 +3,7 @@
 ## R71 update
 - **New genes** (bit-identical when off; test_core checks it): `sc.sizeF` (per-region size factor), `sc.sizeNorm`, `sc.divReach`, `sc.divRep` (I80),
   `P.fanRef` / `P.fanRefR` (fan-in-normalised rate of the teacher / reward rule).
-- **fanRef is a partial fix (I89):** cortex 4x + fanRef 450 at lr 0.2 recovers order3 0.756 -> 0.875 (8/0; cortex 4x lr 0.1: 0.797; 1x 0.949) and keeps the
+- **fanRef is a partial fix (I89; ladder 200 / 300 / 450 / 840 -> order3 0.790 / 0.835 / 0.875 / 0.856, optimum ~450):** cortex 4x + fanRef 450 at lr 0.2 recovers order3 0.756 -> 0.875 (8/0; cortex 4x lr 0.1: 0.797; 1x 0.949) and keeps the
   cortex text gain (book10k / 30k +0.009, fables +0.005 vs v39 1x, 8 growths). Order3 is still -0.07 vs 1x, text1000 -0.008.
 - **Not fixed:** the seqchoice collapse from a bigger cortex (order2 3.2-3.7, cycle ~4.0 vs 6.5 / 9.2); fanRefR helps order2 a little, cycle not at all, so it is not
   a rate effect. sizeNorm 4 makes it worse (rejected). The context-side order3 loss is untouched by fanRef (predictor fan-in does not change with context size).

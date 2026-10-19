@@ -3059,3 +3059,6 @@ seqchoice does not depend on the cortex lr, so its 1x ref is the same for both r
 Queued y42-y61 (run/r71_jobs.js, ~172 slot-h): y42 completes the screen to 16 growths, y43 fanRef ladder (300 / 450, R60 / R126), y44 fresh growths,
 y45 whole-brain + per-region factors with fanRef, y46 / y61 8x cortex divRep 2, y47 fanRef at 1x, y48 lr 0.3 / 0.5 under fanRef, y49 2x cortex, y50 / y52-y56 / y60 long lives,
 y51 growths 16-31, y57 4xS fanRef 300, y58 rule knobs, y59 context 4x + sizeNorm.
+Box follow-up (same growths 0-7, cortex 4x lr 0.2): fanRef ladder order3 200 0.790 / 300 0.835 / **450 0.875** / 840 0.856 (no fanRef 0.756): the optimum is near 450,
+too strong a cut loses again. text1000 0.752 / 0.748 / 0.749. fanRefR 60 (fanRef 450): seqchoice order2 3.42, cycle 4.26 (R126: 3.70 / 4.11; none: 3.23 / 3.97);
+fanRef 200 cycle 4.60. No rate setting brings seqchoice near 1x (6.48 / 9.23): the collapse needs another mechanism (next: diagnose the striatum input from a big cortex).
