@@ -41,5 +41,9 @@ J.push(job('y79_trophic_g8', { q: 'I91', pri: 0.97, seeds: K(8, 8), title: 'cort
   arms: [{ variant: T3, tasks: ALL7, size: '4xC', lbl: 'cx4 trophic 3' }, { variant: T1F, tasks: ALL7, size: '4xC', lbl: 'cx4 trophic 1 + fanRef' }, { variant: FIX, tasks: SCH, size: '4xC', lbl: 'cx4 fix' }] }));
 J.push(job('y80_trophic_fresh', { q: 'I91', pri: 0.965, seeds: K(1300, 16), title: 'cortex 4x + P.trophic 3 / trophic 1 + fanRef 450 on fresh growths k 1300-1315, all 7 tasks', note: 'refs y63 (fix, seqchoice), y44 (cx4 fanRef), y23 (1x)',
   arms: [{ variant: T3, tasks: ALL7, size: '4xC', lbl: 'cx4 trophic 3' }, { variant: T1F, tasks: ALL7, size: '4xC', lbl: 'cx4 trophic 1 + fanRef' }] }));
+// R74 combo (P.trophic 28 = bit 4 striatal-path budget + bit 8 cortex teacher step + bit 16 reward step, each x min(1, 1x-equivalent fan-in / fan-in)): 1x-identical, no cutoff
+const C28 = v(C4, 'P.trophic=28', L2);
+J.push(job('y81_combo28_g8', { q: 'I91', pri: 0.968, seeds: K(8, 8), title: 'cortex 4x + P.trophic 28 (cutoff-free combo), all 7 tasks, growths 8-15', note: 'box R74 has growths 0-7; refs y62 / y42-y43 (R72 fix)', arms: [{ variant: C28, tasks: ALL7, size: '4xC', lbl: 'cx4 trophic 28' }] }));
+J.push(job('y82_combo28_fresh', { q: 'I91', pri: 0.963, seeds: K(1300, 16), title: 'cortex 4x + P.trophic 28 on fresh growths k 1300-1315, all 7 tasks', note: 'refs y63 (fix seqchoice), y44, y23', arms: [{ variant: C28, tasks: ALL7, size: '4xC', lbl: 'cx4 trophic 28' }] }));
 console.log(J.map(j => `${j.id} pri ${j.priority} runs ${j.runs.length} slot-h ${j.slotHours} est ${j.estHours} h`).join('\n'));
 console.log('total slot-h', J.reduce((a, j) => a + j.slotHours, 0).toFixed(1), ' est wall h (6 slots)', J.reduce((a, j) => a + j.estHours, 0).toFixed(1));

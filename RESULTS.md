@@ -3118,3 +3118,19 @@ seqchoice 6.48 / 9.23. Box, 8 paired growths, cortex 4x, lr 0.2 (R72 fix = fanRe
 Cue random / bandit 6x3 scored 8.67 / 3.02 in every arm (1x, 4x, fix, trophic): they do not exercise the sized pathway and cannot discriminate.
 Verdict: trophic fixes most of the striatum overload with no cutoff and is exactly 1x-neutral (the fix is not: 1x fix seqchoice 6.27 / 8.91 vs 6.48 / 9.23),
 but shrinking the cortex budget costs the sequence tasks; it does not replace fanRef. No winner over the fix; y79 / y80 (16 growths + fresh) queued.
+
+### R74: cutoff-free combo (P.trophic bits 4 / 8 / 16)
+bit 4 = the 1/f preNorm budget only for cells projecting onto the striatum; bit 8 = teacher step x min(1, n1x / n) per cell, n1x = the cell's 1x-equivalent
+plastic fan-in (an input from an f x region counts 1/f); bit 16 = the same per receiver for the reward rule. All 1x-identical (order3 g0 9.675, seqchoice order2 6.555).
+test_core ALL OK on 9f49d81. Box, cortex 4x, lr 0.2, 8 growths:
+
+| arm | order3 | text1000 | fables4000 | book10k | book30k | sc order2 | sc cycle |
+|---|---|---|---|---|---|---|---|
+| R72 fix | 0.875 | 0.749 | 0.355 | 0.350 | 0.349 | 5.76 | 7.83 |
+| trophic 3 | 0.771 | 0.733 | 0.344 | 0.333 | 0.329 | 5.62 | 8.16 |
+| trophic 12 | 0.869 | 0.744 | 0.355 | 0.351 | 0.350 | 4.78 | 7.11 |
+| trophic 28 (combo) | 0.869 | 0.744 | 0.355 | 0.351 | 0.350 | 5.50 | 7.46 |
+| trophic 4 + fanRef 450 | 0.875 | 0.749 | 0.355 | 0.350 | 0.349 | 5.21 | 7.05 |
+
+The combo matches the fix on every sequence task with no cutoff (bit 8 does what fanRef 450 did) and is exactly 1x-neutral (the fix is not), but trails it on
+seqchoice by 0.26 / 0.37. No strict winner; y81 / y82 (16 growths + fresh) queued to decide.
