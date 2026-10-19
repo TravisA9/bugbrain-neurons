@@ -3100,3 +3100,21 @@ Box screen (8 growths, seqchoice; cortex 4x, lr 0.2, fanRef 450 / R126 unless no
 - Seq tasks have no striatum without an outcome signal, so the postCap genes cannot change them (cortex 4x + fanRef numbers of R71 stand).
 Queued y62-y78 (run/r72_jobs.js, ~102 est slot-h): y62 / y63 / y67 / y69 16-48 growths of the fix, y64 1x neutrality (seqchoice, bandit, cue), y65 striatum-1x whole brain,
 y66 / y72 / y73 sizes 2x / 3x / 8x with the fix, y68 harder seqchoice (order3, 3000 symbols), y70 / y74-y77 long lives, y71 / y78 long text and generation.
+
+## R73: trophic (region-size) normalization as a principled replacement for fanRef + postCap/postN (I91)
+`P.trophic` (off by default, bit-identical when off): bit 1 gives every presynaptic cell of a region grown f x larger a preNorm budget of preNorm / f
+(a fixed trophic supply shared by f x more cells, so a receiver's plastic total stays what it was at 1x); bit 2 multiplies the learning step by 1/f of the
+presynaptic region. Exactly neutral at 1x (no cutoff, no reference fan-in): 1x + trophic 1 + fanRef 840 reproduced 1x v39 on order3 0.949, text 0.758,
+seqchoice 6.48 / 9.23. Box, 8 paired growths, cortex 4x, lr 0.2 (R72 fix = fanRef 450/R126 + postCapRel 1.5 + postN 130):
+
+| arm | order3 | text1000 | fables4000 | book10k | sc order2 | sc cycle |
+|---|---|---|---|---|---|---|
+| R72 fix | 0.875 | 0.749 | 0.355 | 0.350 | 5.76 | 7.83 |
+| trophic 1 | 0.740 | 0.725 | 0.333 | 0.313 | 5.21 | 7.05 |
+| trophic 1 + fanRef 840 | 0.764 | 0.735 | 0.346 | 0.335 | 5.21 | 7.05 |
+| trophic 1 + fanRef 450 | 0.809 | 0.737 | 0.348 | 0.333 | 5.21 | 7.05 |
+| trophic 3 | 0.771 | 0.733 | 0.344 | 0.333 | 5.62 | 8.16 |
+
+Cue random / bandit 6x3 scored 8.67 / 3.02 in every arm (1x, 4x, fix, trophic): they do not exercise the sized pathway and cannot discriminate.
+Verdict: trophic fixes most of the striatum overload with no cutoff and is exactly 1x-neutral (the fix is not: 1x fix seqchoice 6.27 / 8.91 vs 6.48 / 9.23),
+but shrinking the cortex budget costs the sequence tasks; it does not replace fanRef. No winner over the fix; y79 / y80 (16 growths + fresh) queued.

@@ -575,7 +575,7 @@
       "area": "reward",
       "title": "Striatum evolved on bandit 3/6 arms + seqchoice (q04 champion) transplanted into unifiedR = rewardE3",
       "status": "adopted",
-      "evidence": "whole champion: text 0.40, order3 1.37 (collapse); striatum only: bandit6 5.11 vs 4.31 (+0.81 ± 0.31), cycle 7.24 vs 6.78, cue -0.08 ± 0.46 (40 growths), text/order3 bit-identical",
+      "evidence": "whole champion: text 0.40, order3 1.37 (collapse); striatum only: bandit6 5.11 vs 4.31 (+0.81 \u00b1 0.31), cycle 7.24 vs 6.78, cue -0.08 \u00b1 0.46 (40 growths), text/order3 bit-identical",
       "why": "keep the evolved reward area, not the mutated sequence areas",
       "rounds": [
         "R39"
@@ -1311,6 +1311,22 @@
       "status": "promising (box, 8 growths)",
       "evidence": "R72: at cortex 4x striatal receivers (fan-in 120 -> 280) end with 665-963 plastic weight (1x 162-202); arm code in receivers 0.75 -> 0.3, margin 0.35 -> 0.12; mixing cells still decode everything. postCapRel 1.5 + postN 130 + fanRef 450/R126: seqchoice order2 3.23 -> 5.76, cycle 3.97 -> 7.83 (1x 6.48 / 9.23); all-receiver cap 6.1 / 8.8 but cue -2 at 1x; allMax no help. Queued y62-y78.",
       "why": "explains and (mostly) fixes the seqchoice collapse at size",
+      "rounds": [
+        "R72"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I87",
+        "I89"
+      ]
+    },
+    {
+      "id": "I91",
+      "area": "scaling",
+      "title": "Trophic (region-size) normalization of the presynaptic budget / step (P.trophic)",
+      "status": "testing",
+      "evidence": "R72: at cortex 4x striatal receivers (fan-in 120 -> 280) end with 665-963 plastic weight (1x 162-202); arm code in receivers 0.75 -> 0.3, margin 0.35 -> 0.12; mixing cells still decode everything. postCapRel 1.5 + postN 130 + fanRef 450/R126: seqchoice order2 3.23 -> 5.76, cycle 3.97 -> 7.83 (1x 6.48 / 9.23); all-receiver cap 6.1 / 8.8 but cue -2 at 1x; allMax no help. Queued y62-y78.",
+      "why": "R73: preNorm budget and/or step x 1/sizeF of the source region; exactly 1x-neutral; at cortex 4x helps seqchoice (trophic 3 cycle 8.16 vs fix 7.83) but costs order3/text/book vs fanRef; jobs y79/y80.",
       "rounds": [
         "R72"
       ],
