@@ -9,8 +9,9 @@ const p = L.seedPlan({ valGrowths: 64, valArenas: 64 }, 0, true), g = L.deserial
 const H = a => crypto.createHash('sha1').update(Buffer.from(a.buffer, a.byteOffset, a.byteLength)).digest('hex').slice(0, 12);
 let t = performance.now(); const brain = SA.growCell(g, { seed: p.growSeeds[+k], spec: env.spec }); const growMs = performance.now() - t;
 t = performance.now(); const a = new SA.Agent(g, p.arenaSeeds[+k], brain, env); const buildMs = performance.now() - t;
+const noW = !!process.env.BB_NOWHASH; if (noW && L.dropDense) L.dropDense(brain);   // (R66 memory benchmarks: no dense-matrix hash, matrices dropped as in r42)
 t = performance.now(); let n = 0; while (!a.done) { a.tick(); n++; } const lifeMs = performance.now() - t;
 const st = a.task.stats ? a.task.stats() : {};
-const o = { plan, task: tj, variant, k: +k, N: a.net.N, syn: a.net.ws.length, plastic: a.net.plastic.length, ticks: n, spikes: a.net.spikeCount, growMs: Math.round(growMs), buildMs: Math.round(buildMs), lifeMs: Math.round(lifeMs), fit: a.fitness, wsHash: H(a.net.ws), WHash: H(brain.W instanceof Float32Array || brain.W instanceof Float64Array ? brain.W : Float64Array.from(brain.W)), acc: st.acc, rt: typeof Bun !== 'undefined' ? 'bun' : 'node' };
+const o = { plan, task: tj, variant, k: +k, N: a.net.N, syn: a.net.ws.length, plastic: a.net.plastic.length, ticks: n, spikes: a.net.spikeCount, growMs: Math.round(growMs), buildMs: Math.round(buildMs), lifeMs: Math.round(lifeMs), fit: a.fitness, wsHash: H(a.net.ws), WHash: noW ? '-' : H(brain.W instanceof Float32Array || brain.W instanceof Float64Array ? brain.W : Float64Array.from(brain.W)), acc: st.acc, rt: typeof Bun !== 'undefined' ? 'bun' : 'node' };
 if (process.env.BB_PROF_OUT) require('fs').appendFileSync(process.env.BB_PROF_OUT, JSON.stringify(o) + '\n');
 console.log(JSON.stringify(o));
