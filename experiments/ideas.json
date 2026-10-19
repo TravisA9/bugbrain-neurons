@@ -1155,6 +1155,51 @@
       "parents": [
         "I78"
       ]
+    },
+    {
+      "id": "I81",
+      "area": "output",
+      "title": "Output confidence gate: readout fires only when winner share / margin passes pl.outGate; learning continues regardless",
+      "status": "open",
+      "evidence": "R65 box 1x book30k (4 growths): share>=0.5 fires on 34% with precision 0.525 vs 0.339; generation gate 0.5 gives word 0.63 / distinct4 0.51 vs greedy 0.75 / 0.013 (loops) and T1 0.52 / 0.69",
+      "why": "stops greedy loops without pure noise; a step toward abstaining / self-paced generation",
+      "rounds": [
+        "R65"
+      ],
+      "theme": "generation",
+      "parents": [
+        "I72"
+      ]
+    },
+    {
+      "id": "I82",
+      "area": "scaling",
+      "title": "Staged maturation: latest-born cells stay silent and mature in waves during life (pl.stageF0 / stageWaves / stageTicks)",
+      "status": "open",
+      "evidence": "R65 box (1 growth): 1x book3000 2.97 vs 3.33 scratch; 4xS book10k 3.26 vs 3.405, life 6% faster. Masking only, so the full brain is still allocated",
+      "why": "juvenile-small then large could save time and give better early learning",
+      "rounds": [
+        "R65"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I78"
+      ]
+    },
+    {
+      "id": "I83",
+      "area": "engine",
+      "title": "Engine speed / memory: bit-identical fast paths in net.js, dropDense after build",
+      "status": "adopted",
+      "evidence": "R65: life 1.47x (1x) / 1.59x (4xS), total 1.40x / 1.43x on book10k; 36/36 + 2/2 + verify 15/15 fingerprints identical; 4xS life RSS 1.45 -> 0.26 GB",
+      "why": "4xS cost 17x on workers; faster turnaround for the scale track",
+      "rounds": [
+        "R65"
+      ],
+      "theme": "infrastructure",
+      "parents": [
+        "I78"
+      ]
     }
   ],
   "questions": [
@@ -1430,6 +1475,14 @@
       "likelihood": 0.6,
       "cost": 2,
       "experiment": "shared y03a/b (v37 4xS 5-task), y05 (2xS), x17a/b / x16a/b (size x 100k, v36), y06 (v37 1x 100k)"
+    },
+    {
+      "id": "Q38",
+      "q": "Cumulative check: do v34 -> v36 -> v37 gains hold on brand-new growth seeds (k 1000-1015) across book10k/30k, fables4000, order3, text1000, seqchoice?",
+      "impact": 4,
+      "likelihood": 0.7,
+      "cost": 1,
+      "experiment": "z01 / z02 / z03"
     }
   ]
 }

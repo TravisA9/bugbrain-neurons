@@ -1,4 +1,14 @@
-# PRIORITIES (R64, Oct 18 2026, 8 PM CT; v37)
+# PRIORITIES (R65, Oct 18 2026, 9:30 PM CT; v37, defaults unchanged)
+
+Goal (Travis): the best SNN design, found as fast as possible, on the way to a **large brain that generates text like a small LLM**.
+
+## R65 update
+- Engine: bit-identical speedups give life 1.47x (1x) / 1.59x (4xS), total 1.40x / 1.43x. dropDense cuts 4xS life RSS from 1.45 to 0.26 GB, which should ease the 17x worker cost. Growth (~25% of a 4xS run, dense N² matrices) is the next speed target.
+- New genes, all off by default: output confidence gate (I81, z06 / z07) and staged maturation (I82, z04 / z05; early box signs are negative).
+- Q38 cumulative v34 / v36 / v37 check on fresh seeds k 1000-1015: z01-z03.
+- The ranking below is unchanged. Add: rank 3b I81 gate generation (z06); low I82 staged (z04 / z05) unless z04 shows staged ≥ scratch.
+
+## Previous status (R64)
 
 Goal (Travis): the best SNN design, found as fast as possible, on the way to a **large brain that generates text like a small LLM**.
 Analogy is secondary. Pick tests that bring the design landscape into focus, avoid low-payoff tangents, and keep every machine busy.

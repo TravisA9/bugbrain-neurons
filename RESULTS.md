@@ -2644,3 +2644,70 @@ Queue after R64 (x14 / x19 running under v36 code; pinned x15-x17 keep v36 meani
 | 0.9 | x15 | v36 generation after 100k (pinned) | 0.5 |
 | 0.89 | y06 | v37 1x at 100k (16 1-growth runs): life-length curve under the faster rate | 0.8 |
 About 21 wall-hours queued + ~2.5 h running = ~11.5-12 h per worker.
+
+## R65 — engine speed, output confidence gate, staged maturation, cumulative check (box, Oct 18 evening; defaults unchanged, v37 / 30)
+Code: d4b602a, fc99664 (engine speed), ff86852 (gate + seed fix), 567e458 (hotfix), 2bb5e60 (staged maturation, dropDense, wallMs, jobs).
+Note: ff86852 broke r42 / gen (`scores` / `st` declaration lost to a comment, ReferenceError). 567e458 fixed it ~5 min later. No job was claimed in between.
+
+### 1. Engine speed (I83), bit-identical
+What changed in net.js (initFast; `globalThis.__bbSlow` restores the old path):
+- The teacher pass, drive zeroing and AHP run only over the cells that inputs contact (when teachThr > 0).
+- Plateau potentiation and prediction-miss LTD walk pre-filtered incoming plastic excitatory lists.
+- The neuron loop is branch-light.
+- The pre-lag buffer is a ring of spike lists.
+- The receiver pool keeps contiguous synapse buffers and precomputed targets.
+- The eligibility closure is inlined.
+
+Identity checks: 36/36 fingerprints (book10k / fables4000 / text1000 / order3 x 8 growths, plus seqchoice order2 x 4), 2/2 at 4xS, 15/15 in verify.js, test_core ALL OK. r42 outputs are md5-identical.
+
+Clean serial bench (box, book10k, growth k0, bun):
+| size | phase | old | new | speedup |
+|---|---|---|---|---|
+| 1x (3.6k cells) | life | 18.6 s | 12.6 s | **1.47x** |
+| 1x | total | 20.8 s | 14.9 s | 1.40x |
+| 4xS (11.8k cells) | life | 103.0 s | 64.8 s | **1.59x** |
+| 4xS | total | 124.5 s | 87.3 s | 1.43x |
+
+Growth (20 s at 4xS) is not optimised and is now ~25% of a 4xS book10k run.
+
+Memory: `dropDense` (r42 / gen, plan.dropDense) frees the dense N² growth matrices (W / P / C, and each region's) once the net is built, then runs a full GC. RSS during a 4xS life drops from 1.45 GB to 0.26 GB, with outputs identical. Peak RSS (~1.6 GB during growth) is unchanged.
+The 17x worker cost of 4xS vs 1x (vs ~6x on the box) looks like memory bandwidth / RAM pressure with several parallel runs, so this should help the workers more than the box.
+
+### 2. Output confidence gate (I81), genes pl.outGate (0 = off) / outGateMode (0 = winner share, 1 = margin)
+The readout fires only when its confidence passes the threshold. Learning is unchanged, and so is heldAcc at 1x.
+Teacher-forced (book30k, 1x, 4 growths):
+- At share ≥ 0.5 the output fires on 34% of steps with precision 0.525, vs 0.339 overall.
+- At margin ≥ 0.2: coverage 0.45, precision 0.50.
+
+The brain knows when it knows.
+
+Generation (500 chars after book30k, 4 growths):
+| arm | word-like | distinct 4-grams | trigram bits |
+|---|---|---|---|
+| greedy | 0.75 | 0.013 ("he he he") | 5.16 |
+| T=1 sampling | 0.52 | 0.69 | 5.88 |
+| gate share 0.5 (else sample) | 0.63 | 0.51 | 5.63 |
+| gate margin 0.2 | 0.67 | 0.43 | 5.43 |
+| gate 0.4 + T 0.7 | 0.77 | 0.26 | 4.90 |
+
+The gate is a useful middle ground between loops and noise, but at 1x it is only a readout policy. z06 (generation, 16 growths) and z07 (4xS) test it properly.
+
+### 3. Staged maturation (I82), genes pl.stageF0 / stageWaves / stageTicks (0 = off)
+- How it works: a fraction of the cells (the latest-born first) stay silent (thr 1e9, synapses 0) and mature in waves during life. On maturing, their edges come back from w0 and normPre runs on the affected pre cells.
+- Bit-identical when off. The juvenile development net is excluded.
+- It masks the full 4xS brain rather than truly growing during life, so the only possible saving is fewer spikes.
+
+Box results (1 growth each):
+- 1x book3000: fit 2.97 vs 3.33 from scratch, no time saved.
+- 4xS book10k (stageF0 0.33, 2 waves, 36.7k ticks): life 60.7 s vs 64.8 s (6% faster), fit 3.26 vs 3.405.
+
+So far staging costs accuracy and saves little time. z04 / z05 decide it at book30k. Expect a negative result unless the long stage pays.
+
+### 4. Jobs queued (queue 4030094; all need code 2bb5e60 via requires)
+| job | what | est |
+|---|---|---|
+| z01_cumul_v37 / z02_cumul_v36 / z03_cumul_v34 | Q38 cumulative check on brand-new growth seeds k 1000-1015 (16 growths): book10k, book30k, fables4000, order3, text1000, seqchoice order2 / cycle | ~1.6 h each |
+| z04_staged4xS_book30k | 4xS scratch vs staged A (0.33 / 2 / 110k) vs B (0.25 / 3 / 66k) | 20.6 h |
+| z05_staged_timing_ref | wall-time reference, scratch vs staged A | 6.2 h |
+| z06_gate_gen_book30k | generation: greedy / T1 / gate 0.5 / margin 0.2 / gate 0.4 + T0.7 | 4.8 h |
+| z07_gate_4xS_book30k | gate at 4xS | 14.6 h |
