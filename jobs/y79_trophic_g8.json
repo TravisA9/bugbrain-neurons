@@ -1,0 +1,1943 @@
+{
+  "id": "y79_trophic_g8",
+  "question": "I91",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "run/r73_jobs.js"
+  ],
+  "title": "cortex 4x + P.trophic 3 / trophic 1 + fanRef 450, all 7 tasks, growths 8-15 (+ R72 fix on seqchoice)",
+  "priority": 0.97,
+  "estHours": 0.8,
+  "slotHours": 4.6,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "box R73 has growths 0-7; fix seq tasks = y42/y43"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book10k g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book10k g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book10k g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book10k g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book10k g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book10k g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book10k g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book10k g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book30k g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book30k g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book30k g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book30k g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book30k g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book30k g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book30k g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 book30k g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 fables4000 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 fables4000 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 fables4000 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 fables4000 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 fables4000 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 fables4000 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 fables4000 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 fables4000 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 order3 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 order3 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 order3 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 order3 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 order3 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 order3 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 order3 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 order3 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 text1000 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 text1000 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 text1000 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 text1000 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 text1000 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 text1000 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 text1000 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 text1000 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice order2 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice order2 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice order2 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice order2 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice order2 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice order2 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice order2 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice order2 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice cycle g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice cycle g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice cycle g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice cycle g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice cycle g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice cycle g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice cycle g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=3,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 3 seqchoice cycle g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book10k g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book10k g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book10k g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book10k g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book10k g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book10k g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book10k g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book10k g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book30k g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book30k g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book30k g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book30k g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book30k g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book30k g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book30k g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef book30k g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef fables4000 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef fables4000 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef fables4000 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef fables4000 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef fables4000 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef fables4000 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef fables4000 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef fables4000 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef order3 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef order3 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef order3 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef order3 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef order3 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef order3 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef order3 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef order3 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef text1000 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef text1000 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef text1000 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef text1000 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef text1000 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef text1000 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef text1000 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef text1000 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice order2 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice order2 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice order2 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice order2 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice order2 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice order2 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice order2 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice order2 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice cycle g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice cycle g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice cycle g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice cycle g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice cycle g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice cycle g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice cycle g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.trophic=1,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 trophic 1 + fanRef seqchoice cycle g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice order2 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice order2 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice order2 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice order2 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice order2 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice order2 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice order2 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice order2 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice cycle g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice cycle g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice cycle g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice cycle g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice cycle g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice cycle g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice cycle g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4 fix seqchoice cycle g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y79_trophic_g8.jsonl"
+      }
+    }
+  ]
+}
