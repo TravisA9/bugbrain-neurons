@@ -742,8 +742,8 @@ class SpikingNet {
     // receiver's plastic total grows with the number of cells projecting to it (a 4x cortex: ~5x the corticostriatal weight, R72). With postCap > 0
     // a receiver whose excitatory plastic inputs of this rule sum to more than postCap is scaled down to postCap (homeostatic synaptic scaling).
     // postCapRel > 0 instead: the cap is postCapRel x the receiver's own genome (birth) total of those inputs (scale-free).
-    if ((params.postCap > 0 || params.postCapRel > 0) && s > 0) { if (!this.pcStart) this.buildPc(pl); const st = this.pcStart, ix = this.pcIdx, c0 = this.pcW0, rel = params.postCapRel > 0 ? params.postCapRel : 0;
-      for (let r = 0, R = st.length - 1; r < R; r++) { const cap = rel ? rel * c0[r] : params.postCap; let t = 0; for (let q = st[r]; q < st[r + 1]; q++) t += ws[ix[q]]; if (t > cap) { const f = cap / t; for (let q = st[r]; q < st[r + 1]; q++) ws[ix[q]] *= f; } } }
+    if ((params.postCap > 0 || params.postCapRel > 0) && s > 0) { if (!this.pcStart) this.buildPc(pl); const st = this.pcStart, ix = this.pcIdx, c0 = this.pcW0, rel = params.postCapRel > 0 ? params.postCapRel : 0, pN = params.postN > 0 ? params.postN : 0;   // postN: only receivers with more than postN such inputs are capped (1x-sized receivers stay untouched)
+      for (let r = 0, R = st.length - 1; r < R; r++) { if (pN && st[r + 1] - st[r] <= pN) continue; const cap = rel ? rel * c0[r] : params.postCap; let t = 0; for (let q = st[r]; q < st[r + 1]; q++) t += ws[ix[q]]; if (t > cap) { const f = cap / t; for (let q = st[r]; q < st[r + 1]; q++) ws[ix[q]] *= f; } } }
     this.dwSum = s;
   }
   prune() {
