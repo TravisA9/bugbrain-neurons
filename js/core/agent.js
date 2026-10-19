@@ -17,7 +17,9 @@ class Agent {
     this.setBrain(genome, brain);
   }
   setBrain(genome, brain) {
-    this.genome = genome; this.brain = brain || phenotype(genome, this.env.spec); this.net = new SpikingNet(this.brain);
+    this.genome = genome; this.brain = brain || phenotype(genome, this.env.spec); const S = params.lifeSub > 0 ? params.lifeSub : params.substeps;   // R68 lifeSub: substeps per tick in the life only (growth keeps params.substeps); dtRescale 1: the dynamics rescaled to the coarser step
+    this.dtF = params.dtRescale > 0 && S !== params.substeps ? params.substeps / S : 0;
+    this.net = this.dtF ? new SpikingNet(this.brain, { dt: this.dtF }) : new SpikingNet(this.brain);
     const n = this.brain.nOut; this.out = { rates: new Float64Array(n), spikes: new Uint16Array(n), input: new Float64Array(n) };   // input (v13): synaptic input summed over the tick (graded decoders)
   }
   get world() { return this.task; }          // (the bug arena's World; kept for older scripts)
@@ -31,7 +33,8 @@ class Agent {
     ext.fill(0);
     this.task.sense(ext, this);
     for (let m = 0; m < nOut; m++) { ext[o0 + m] = OUT[m].bias; sp[m] = 0; inp[m] = 0; }
-    for (let s = 0; s < params.substeps; s++) {
+    if (this.dtF) { const f = this.dtF; for (let i = 0; i < ext.length; i++) ext[i] *= f; }   // (input currents are mV per substep)
+    for (let s = 0, S = params.lifeSub > 0 ? params.lifeSub : params.substeps; s < S; s++) {
       net.step();
       for (let m = 0; m < nOut; m++) { sp[m] += net.spiked[o0 + m]; inp[m] += net.syn[o0 + m]; }
       if (onSubstep) onSubstep(net);

@@ -72,6 +72,8 @@ class SpikingNet {
     this.mods = new Float32Array(nCh);       // modulator level per channel
     this.mod = 0;                            // channel 0 (kept for older code / display)
     this.dwSum = 0;                          // |dw| summed this tick
+    const dtF = opts && opts.dt > 0 && opts.dt !== 1 ? opts.dt : 0;   // R68 coarser time step: every per-substep constant rescaled by dt (see initDt)
+    if (dtF) this.initDt(dtF);
     this.setPlasticityConsts();
     if (NG) { this.thr = Float32Array.from({ length: N }, (_, i) => i < N0 ? (NG.dead[i] ? 1e9 : g.thresh[i]) : 1e9); this.ngPlan = NG; for (let k = 0; k < E; k++) if (pres[k] >= N0 && plast[k]) this.ws[k] = 0; }
     if (this.p.teach > 0 || this.p.uni > 0) this.initTeach();   // v22: the unified rule detects instructive events too
@@ -148,10 +150,10 @@ class SpikingNet {
    * Juvenile development nets, need-growth, pruning and learned mixing (mixLr) keep the exact engine. */
   initFastE() {
     if (this.ng || this.use || (this.mxStart && this.p.mixLr > 0) || (this.teachTr && !(this.p.teachThr > 0))) return;
-    const N = this.N, g = this.g, L = params.leak, TP = 256;
+    const N = this.N, g = this.g, L = this.dtF ? this.L : params.leak, GL = this.dtF ? this.gl : g.leak, TP = 256;
     this.fastE = true; this.subNo = 0; this.tv = new Int32Array(N);
     const cls = new Uint16Array(N), vals = [], idx = new Map();
-    for (let i = 0; i < N; i++) { const l = g.slow && g.slow[i] ? g.leak[i] : L; let c = idx.get(l); if (c === undefined) { c = vals.length; idx.set(l, c); vals.push(l); } cls[i] = c; }
+    for (let i = 0; i < N; i++) { const l = g.slow && g.slow[i] ? GL[i] : L; let c = idx.get(l); if (c === undefined) { c = vals.length; idx.set(l, c); vals.push(l); } cls[i] = c; }
     this.lkCls = cls; this.lkVal = Float64Array.from(vals); this.lkTP = TP; this.lkLeak = L;
     this.fDense = params.fastEngine !== 2; this.lkC = Float64Array.from(cls, c => vals[c]);   // (1: every membrane updated each substep (faster at the measured ~20% touched cells per substep); 2: only touched cells, lazy leak)
     const pw = this.lkPow = new Float64Array(vals.length * TP); vals.forEach((l, c) => { let x = 1; for (let n = 0; n < TP; n++) { pw[c * TP + n] = x; x *= l; } });
@@ -161,7 +163,7 @@ class SpikingNet {
     this.xPre = Float64Array.from(this.xPre); this.xPost = Float64Array.from(this.xPost); this.pG = 1; this.qG = 1;
     this.extL = new Int32Array(N); this.nExt = 0; this.extAt = -1;
     if (this.teachTr) { this.hotL = new Int32Array(N); this.inHot = new Uint8Array(N); this.nHot = 0; this.tTs = new Int32Array(N);
-      const P7 = this.p7 = new Float64Array(2048); let x = 1; for (let n = 0; n < 2048; n++) { P7[n] = x; x *= 0.7; } }
+      const P7 = this.p7 = new Float64Array(2048); let x = 1; const q7 = this.dtF ? this.t7 : 0.7; for (let n = 0; n < 2048; n++) { P7[n] = x; x *= q7; } }
   }
   buildExt() {                               // the cells with external current this tick (ext is set once per tick by the Agent)
     const ext = this.ext, E = this.extL; let n = 0; for (let i = 0; i < this.N; i++) if (ext[i] !== 0) E[n++] = i;
@@ -221,9 +223,9 @@ class SpikingNet {
     const N = this.N, v = this.v, syn = this.syn, ext = this.ext, sp = this.spiked, th = this.thr || this.g.thresh, mk = this.mk, m32 = this.mk32, tv = this.tv;
     const spk = this.spk, t = ++this.subNo, R = V_REST, FL = V_FLOOR;
     for (let s = 0; s < this.nSpk; s++) sp[spk[s]] = 0;       // spike flags of the previous substep
-    this.trG *= params.traceDecay; if (this.trG < 1e-100) { this.renormF(this.trS, this.trG); this.trG = 1; }
+    this.trG *= this.dtF ? this.td : params.traceDecay; if (this.trG < 1e-100) { this.renormF(this.trS, this.trG); this.trG = 1; }
     if (this.extAt !== this.tickNo) this.buildExt();
-    { const E = this.extL; for (let q = 0; q < this.nExt; q++) { const i = E[q]; syn[i] += ext[i]; mk[i] = 1; } }
+    { const E = this.extL; if (this.fDense) for (let q = 0; q < this.nExt; q++) { const i = E[q]; syn[i] += ext[i]; } else for (let q = 0; q < this.nExt; q++) { const i = E[q]; syn[i] += ext[i]; mk[i] = 1; } }
     const nSpk = this.fDense ? this.neuDense() : this.neuFast(t);
 
     this.spikeCount += nSpk; this.nSpk = nSpk;
@@ -234,7 +236,8 @@ class SpikingNet {
       else for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (isR[i]) nR++; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = tg[k]; buf[j] += ws[k]; mk[j] = 1; } }
       let f = 1; if (p.rcvDiv > 0) { let S = 0; for (let q = 0; q < RL.length; q++) S += sP[RL[q]]; f = p.rcvDiv * RL.length / (p.rcvSig + S); }
       this.poolTr = this.poolTr * this.dPool + nR; const inh = p.rcvInh * this.poolTr, sd = p.rcvNoise, rng = this.rcvRng, all = inh !== 0 || sd > 0 || this.fDense;
-      for (let q = 0; q < RL.length; q++) { const j = RL[q]; if (!mk[N + j] && !all) continue; mk[N + j] = 0;
+      if (this.fDense && sd === 0) for (let q = 0; q < RL.length; q++) { const j = RL[q]; syn[j] += sP[j] * f - inh; sP[j] = 0; }   // (dense: no marks)
+      else for (let q = 0; q < RL.length; q++) { const j = RL[q]; if (!mk[N + j] && !all) continue; mk[N + j] = 0;
         let x = sP[j] * f - inh; if (sd > 0) { const u = rng() || 1e-12, z = rng(); x += sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185307 * z); }
         syn[j] += x; sP[j] = 0; mk[j] = 1; }
     } else if (this.fDense) for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) syn[posts[k]] += ws[k]; }
@@ -244,9 +247,10 @@ class SpikingNet {
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp);   // v20 action noise / feedback (as the exact engine)
       if (!this.fDense) { const A = this.anList, C = this.acList, o0 = this.g.nIn + this.g.nHid; for (let q = 0; q < A.length; q++) mk[A[q]] = 1; for (let q = 0; q < C.length; q++) mk[C[q]] = 1; for (let m = 0; m < this.g.nOut; m++) mk[o0 + m] = 1; } }
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];
-      if (n) { const d = this.p.mixInh * n, ml = this.mixList; for (let q = 0; q < ml.length; q++) { syn[ml[q]] -= d; mk[ml[q]] = 1; } } }
+      if (n) { const d = this.p.mixInh * n, ml = this.mixList; if (this.fDense) for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d; else for (let q = 0; q < ml.length; q++) { syn[ml[q]] -= d; mk[ml[q]] = 1; } } }
     if (this.mxStart && params.plasticity && this.thr) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr;
-      if (ml) for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); if (thr[i] <= (v[i] > R ? v[i] : R)) mk[i] = 1; } }   // (a threshold that adapted down to the potential: the cell must be looked at)
+      if (ml) { if (this.fDense) for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); }
+        else for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); if (thr[i] <= (v[i] > R ? v[i] : R)) mk[i] = 1; } } }   // (a threshold that adapted down to the potential: the cell must be looked at)
     if (this.teachTr) {                      // teacher events: only hot cells are stepped
       const drv = this.drv, nIn = this.g.nIn, tT = this.teachTr, thr = this.p.teachThr, plat = this.plat, armed = this.armed, H = this.hotL, inH = this.inHot, tS = this.tTs, P7 = this.p7, iI = this.instrIn;
       let nH = this.nHot;
@@ -254,8 +258,8 @@ class SpikingNet {
         for (let k = start[i], e = start[i + 1]; k < e; k++) { if (!(ws[k] > 0)) continue; const j = posts[k]; if (j < nIn) continue;
           if (!inH[j]) { inH[j] = 1; H[nH++] = j; const n = t - 1 - tS[j]; tT[j] *= n < 2048 ? P7[n] : 0; }
           drv[j] += ws[k]; } }
-      const ahp = this.ahp, dA = this.p.teachAHP, plN = this.p.plateau; let w = 0;
-      for (let q = 0; q < nH; q++) { const i = H[q]; tT[i] = tT[i] * 0.7 + drv[i]; drv[i] = 0; if (plat[i] > 0) plat[i]--;
+      const ahp = this.ahp, dA = this.p.teachAHP, plN = this.p.plateau; let w = 0; const q7 = this.dtF ? this.t7 : 0.7;
+      for (let q = 0; q < nH; q++) { const i = H[q]; tT[i] = tT[i] * q7 + drv[i]; drv[i] = 0; if (plat[i] > 0) plat[i]--;
         if (tT[i] >= thr && armed[i]) { plat[i] = plN; armed[i] = 0; if (this.trust && this.trustT < 0 && this.trustRecv[i]) this.trustT = this.p.trustDelay; }
         else if (tT[i] < thr / 2) { if (ahp && !armed[i] && this.ahpRecv[i]) ahp[i] = this.p.teachAHPDur; armed[i] = 1; }
         if (ahp && ahp[i] > 0) { syn[i] -= dA; ahp[i]--; mk[i] = 1; }
@@ -398,7 +402,7 @@ class SpikingNet {
   }
   // one critic step per tick: returns the TD error for reward r (and learns u)
   criticStep(r, outcome) {
-    const c = this.crit, S = c.S, u = c.u, z = c.z, xp = c.xPrev, p = this.p, tr = this.fastE ? this.trS : this.trace, k = (1 - params.traceDecay) * (this.fastE ? this.trG : 1);   // (R66 fast engine: scaled trace)
+    const c = this.crit, S = c.S, u = c.u, z = c.z, xp = c.xPrev, p = this.p, tr = this.fastE ? this.trS : this.trace, k = (1 - (this.dtF ? this.td : params.traceDecay)) * (this.fastE ? this.trG : 1);   // (R66 fast engine: scaled trace)
     let V = 0; for (let q = 0; q < S.length; q++) V += u[q] * tr[S[q]] * k;
     if (p.rpeMode === 1) {                     // outcome-only (Rescorla-Wagner) critic: dopamine = r - V at outcome events (a reward, or a trial end the task marks with ev.outcome, so an omitted reward counts), 0 otherwise
       let delta = 0;
@@ -515,8 +519,21 @@ class SpikingNet {
       if (sd > 0) { const u = rng() || 1e-12, v = rng(); x += sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185307 * v); }
       syn[j] += x; sP[j] = 0; }
   }
+  initDt(f) {                                // R68: a substep lasts f reference substeps: leaks / decays ^ f, time constants and durations / f
+    const g = this.g; this.dtF = f; this.L = Math.pow(params.leak, f); this.td = Math.pow(params.traceDecay, f); this.t7 = Math.pow(0.7, f);
+    this.gl = g.leak ? Float32Array.from(g.leak, l => Math.pow(l, f)) : null;
+  }
+  dtScalePl(p) {                             // (rates per substep x f, mV per substep x f, noise sd per substep x sqrt f, durations in substeps / f)
+    const f = this.dtF, D = x => Math.max(1, Math.round(x / f));
+    for (const k of ['tauPre', 'tauPost', 'tauElig', 'tauElig2', 'actNoiseTau']) p[k] = p[k] / f;
+    for (const k of ['rcvInhTau', 'regInhTau']) if (p[k] > 0) p[k] = p[k] / f;
+    for (const k of ['plateau', 'trustDelay', 'teachAHPDur']) p[k] = D(p[k]);
+    if (p.preLag > 0) p.preLag = D(p.preLag);
+    for (const k of ['rcvRate', 'mixRate', 'hidRate']) p[k] = p[k] * f;
+    p.teachAHP *= f; p.actNoise *= Math.sqrt(f);
+  }
   setPlasticityConsts() {
-    const p = Object.assign({}, PL_DEFAULTS, this.g.pl);
+    const p = Object.assign({}, PL_DEFAULTS, this.g.pl); if (this.dtF) this.dtScalePl(p);
     this.p = p; this.dPre = Math.exp(-1 / p.tauPre); this.dPost = Math.exp(-1 / p.tauPost);
     this.dElig = Math.exp(-1 / p.tauElig); this.dElig2 = (p.eligMix > 0 || p.eligGate > 0) ? Math.exp(-1 / p.tauElig2) : 0;   this.dMods = this.chs.map(c => Math.exp(-1 / c.tauMod));
   }
@@ -525,8 +542,8 @@ class SpikingNet {
   step() {
     if (this.fastE) return this.stepFast();
     const N = this.N, v = this.v, syn = this.syn, ext = this.ext, sp = this.spiked,
-          th = this.thr || this.g.thresh, tr = this.trace, td = params.traceDecay;   // (v15: own thresholds if adaptive)
-    const L = params.leak, slow = this.g.slow, gl = this.g.leak;
+          th = this.thr || this.g.thresh, tr = this.trace, td = this.dtF ? this.td : params.traceDecay;   // (v15: own thresholds if adaptive)
+    const L = this.dtF ? this.L : params.leak, slow = this.g.slow, gl = this.dtF ? this.gl : this.g.leak;
     const spk = this.spk; let nSpk = 0;   // v11: list of this substep's spikes (ascending), for event-driven propagation
     for (let i = 0; i < N; i++) {
       let x = v[i] + syn[i] + ext[i];                        // receive_input
@@ -555,11 +572,11 @@ class SpikingNet {
       if (this.thr) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr; for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); } } }
     if (this.ng) this.needTrace(spk, nSpk);   // v28 need-growth source traces
     if (this.teachTr) {                     // teacher events: smoothed drive from sensory (input) neurons
-      const drv = this.drv, nIn = this.g.nIn, tT = this.teachTr, thr = this.p.teachThr;
+      const drv = this.drv, nIn = this.g.nIn, tT = this.teachTr, thr = this.p.teachThr, q7 = this.dtF ? this.t7 : 0.7;
       const TL = this.tgtList, nL = TL ? TL.length : N - nIn, plat = this.plat;
       if (TL) { const Z = this.tgtZero; for (let q = 0; q < Z.length; q++) drv[Z[q]] = 0; } else drv.fill(0);
       for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (i >= nIn) break; if (this.instrIn && !this.instrIn[i]) continue; for (let k = start[i], e = start[i + 1]; k < e; k++) if (ws[k] > 0) drv[posts[k]] += ws[k]; }
-      for (let q = 0; q < nL; q++) { const i = TL ? TL[q] : nIn + q; tT[i] = tT[i] * 0.7 + drv[i]; if (plat[i] > 0) plat[i]--;
+      for (let q = 0; q < nL; q++) { const i = TL ? TL[q] : nIn + q; tT[i] = tT[i] * q7 + drv[i]; if (plat[i] > 0) plat[i]--;
         if (tT[i] >= thr && this.armed[i]) { this.plat[i] = this.p.plateau; this.armed[i] = 0; if (this.ng && this.ng.pred && this.ng.rcv[i]) this.ng.on.push(i); if (this.trust && this.trustT < 0 && this.trustRecv[i]) this.trustT = this.p.trustDelay; }
         else if (tT[i] < thr / 2) { if (this.ahp && !this.armed[i] && this.ahpRecv[i]) this.ahp[i] = this.p.teachAHPDur; this.armed[i] = 1; } }
       if (this.ng && this.ng.on.length) this.needMiss();
@@ -717,6 +734,6 @@ class SpikingNet {
   // Total |w - w_genome| over all synapses: how far learning has moved this brain.
   drift() { let s = 0; for (let k = 0; k < this.ws.length; k++) s += Math.abs(this.ws[k] - this.w0[k]); return s; }
   // Smoothed firing rate of a neuron in [0,1] (spikes per substep)
-  rate(i) { return this.fastE ? this.trS[i] * this.trG * (1 - params.traceDecay) : this.trace[i] * (1 - params.traceDecay); }
+  rate(i) { const td = this.dtF ? this.td : params.traceDecay; return this.fastE ? this.trS[i] * this.trG * (1 - td) : this.trace[i] * (1 - td); }
 }
 Object.assign(SpikingArena, { SpikingNet });

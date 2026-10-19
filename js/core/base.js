@@ -40,6 +40,8 @@ const params = {
   mutRate: 0.05,       // per-gene mutation probability (plasticity genes)
   leak: 0.95,          // leak factor of every normal neuron (per substep)
   substeps: 4,         // neural sub-steps per environment tick
+  lifeSub: 0,          // R68: sub-steps per tick during the life only (0 = substeps; growth always uses substeps)
+  dtRescale: 0,        // R68: 1 = with lifeSub != substeps, rescale every per-substep constant (leaks, decays, time constants, durations, rates, input currents) so the dynamics follow the same biological time
   episodes: 1,         // episodes per GROWTH per generation
   growths: 3,          // ROBUST FITNESS: each genome is grown this many times (fresh developmental-noise
                        //   seeds every generation); 1 = grown once with its own seed
