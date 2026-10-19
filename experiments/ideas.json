@@ -1098,11 +1098,12 @@
       "area": "learning",
       "title": "Teacher-rule knobs of the taught (cortex) cells toward the 0.40 readout ceiling: trustPow, lr, metaCap, preNorm, confPow / trustMax, small predErr, plateau, preLag",
       "status": "testing",
-      "evidence": "R62: the readout, not the representation, is the bottleneck (oracle 0.40 vs brain 0.31); metaN 0 gave book 0.34 but order3 0.87. R63: queued as 5-task screens (book30k, book10k, fables4000, order3, text1000; 16 growths), x03-x11, so a winner is adoption-ready at once; R64 (5-task screens vs v36, 16 growths): lr 0.1 wins all 5 (book10k +0.009 16/0, book30k +0.011 16/0, fables4000 +0.010 16/0, order3 +0.011 13/2, text1000 +0.005 13/3) -> adopted in v37 (I79); metaCap 100 / 50, metaN 80, preNorm 60 win book + fables but lose order3 (-0.005..-0.023); plateau 6 mildly positive on all 5; trustPow 4 / 0, confPow 2, preLag 4 / 12, predErr 0.03 / 0.01, metaN 20, lr 0.025, preNorm 30, plateau 2 rejected; trustMax 8 identical. Next on v37: y02 (lr 0.15 / 0.2), y04 (plateau 6 / metaCap 100 / metaN 80), y07 (tauPre 8 / 18)",
+      "evidence": "R62: the readout, not the representation, is the bottleneck (oracle 0.40 vs brain 0.31); metaN 0 gave book 0.34 but order3 0.87. R63: queued as 5-task screens (book30k, book10k, fables4000, order3, text1000; 16 growths), x03-x11, so a winner is adoption-ready at once; R64 (5-task screens vs v36, 16 growths): lr 0.1 wins all 5 (book10k +0.009 16/0, book30k +0.011 16/0, fables4000 +0.010 16/0, order3 +0.011 13/2, text1000 +0.005 13/3) -> adopted in v37 (I79); metaCap 100 / 50, metaN 80, preNorm 60 win book + fables but lose order3 (-0.005..-0.023); plateau 6 mildly positive on all 5; trustPow 4 / 0, confPow 2, preLag 4 / 12, predErr 0.03 / 0.01, metaN 20, lr 0.025, preNorm 30, plateau 2 rejected; trustMax 8 identical. Next on v37: y02 (lr 0.15 / 0.2), y04 (plateau 6 / metaCap 100 / metaN 80), y07 (tauPre 8 / 18); R69 (y02 / y04 / y07 vs v37, 16 growths): cortex lr 0.2 book10k +0.008 (15/1), book30k +0.009 (15/1), fables +0.007 (16/0), order3 -0.007 (7/6, t -1.5), text +0.001 -> adoption candidate, fresh-seed confirmation y08a/b (+ lr 0.3 / 0.5 y09); lr 0.15 +0.005; metaCap 100 / metaN 80 win book / fables but lose order3 again (t -2.8 / -2.1); plateau 6 +0.002-0.003 (n.s. on book10k); tauPre 8 / 18 worse (rejected)",
       "why": "the largest known gap (0.31 -> 0.40) is in the learning rule",
       "rounds": [
         "R63",
-        "R64"
+        "R64",
+        "R69"
       ],
       "theme": "learning",
       "parents": [
@@ -1113,12 +1114,13 @@
       "id": "I78",
       "area": "scaling",
       "title": "Size scaling needs wiring scaled to the grid: coneSpeed and axonLen are in grid steps, so sc.grid alone shrinks axons relative to the sheet",
-      "status": "confirmed (book); gate tasks pending",
-      "evidence": "R63 box diagnosis (book 1.5k, 1 growth): grid 60 3.33, 85 2.67, 100 2.27, 110 / 120 0 (silent outputs; why w06 / w15 / w16 were all 0 and w14 2x lost -0.02); scaled (85: coneSpeed 4 axonLen 57 -> 3.20; 120: coneSpeed 6 axonLen 80 -> 3.43). Queued x01 (4xS) and x02 (2xS) at book 10k / 30k, x16 / x17 at 100k, x14 generation; R64 (16 growths vs v36 1x): 4xS book10k 0.346 (+0.030, 15/1, t 5.9), book30k 0.349 (+0.036, 15/1, t 6.8); 2xS 0.337 / 0.337 (+0.021 / +0.024, 14/2 / 13/2). Size pays; cost ~17x (4xS) / ~2.5x (2xS) per growth. Next: y03 / y05 (v37 at 4xS / 2xS on all 5 tasks), x16 / x17 (size x 100k)",
+      "status": "confirmed on book / fables; hurts order3 and seqchoice",
+      "evidence": "R63 box diagnosis (book 1.5k, 1 growth): grid 60 3.33, 85 2.67, 100 2.27, 110 / 120 0 (silent outputs; why w06 / w15 / w16 were all 0 and w14 2x lost -0.02); scaled (85: coneSpeed 4 axonLen 57 -> 3.20; 120: coneSpeed 6 axonLen 80 -> 3.43). Queued x01 (4xS) and x02 (2xS) at book 10k / 30k, x16 / x17 at 100k, x14 generation; R64 (16 growths vs v36 1x): 4xS book10k 0.346 (+0.030, 15/1, t 5.9), book30k 0.349 (+0.036, 15/1, t 6.8); 2xS 0.337 / 0.337 (+0.021 / +0.024, 14/2 / 13/2). Size pays; cost ~17x (4xS) / ~2.5x (2xS) per growth. Next: y03 / y05 (v37 at 4xS / 2xS on all 5 tasks), x16 / x17 (size x 100k); R69: the gain is TEXT-ONLY. v37 4xS vs 1x (y03, 16 growths): book10k +0.020, book30k +0.022, fables +0.017, but order3 -0.238 (0/16), text1000 +0.002; 2xS (y05): order3 -0.154, text1000 -0.017; 4xS seqchoice collapses (z10 vs z08, same seeds: order2 1.84 vs 6.20, cycle 1.43 vs 9.13, 0/8); v37 4xS = v36 4xS on book (rule and size gains do not add); length flat at 2xS / 4xS (100k = 30k). See I87",
       "why": "every earlier 'size does not pay' result is confounded; this decides the large-brain run",
       "rounds": [
         "R63",
-        "R64"
+        "R64",
+        "R69"
       ],
       "theme": "scaling",
       "parents": [
@@ -1160,11 +1162,12 @@
       "id": "I81",
       "area": "output",
       "title": "Output confidence gate: readout fires only when winner share / margin passes pl.outGate; learning continues regardless",
-      "status": "open",
-      "evidence": "R65 box 1x book30k (4 growths): share>=0.5 fires on 34% with precision 0.525 vs 0.339; generation gate 0.5 gives word 0.63 / distinct4 0.51 vs greedy 0.75 / 0.013 (loops) and T1 0.52 / 0.69",
+      "status": "useful (generation policy); learning half open",
+      "evidence": "R65 box 1x book30k (4 growths): share>=0.5 fires on 34% with precision 0.525 vs 0.339; generation gate 0.5 gives word 0.63 / distinct4 0.51 vs greedy 0.75 / 0.013 (loops) and T1 0.52 / 0.69; R69 (z06 16 growths 1x, z07 8 growths 4xS): teacher-forced accuracy unchanged; 4xS share 0.5 coverage 0.376 precision 0.512; generation word rate greedy 0.56 / T1 0.54 / gate 0.5 0.63 / margin 0.2 0.70 / gate 0.4 + T0.7 0.74, distinct4 0.013 / 0.66 / 0.35 / 0.29 / 0.17, trigram bits 5.26 / 6.14 / 5.69 / 5.55 / 5.24 (real 2.57): a better generation policy than greedy or T1, not a learning gain. Travis's passive-then-active hunch: the output half is this gate; the confidence-gated learning half and a silent-then-acting seqchoice phase are not built yet (code)",
       "why": "stops greedy loops without pure noise; a step toward abstaining / self-paced generation",
       "rounds": [
-        "R65"
+        "R65",
+        "R69"
       ],
       "theme": "generation",
       "parents": [
@@ -1175,11 +1178,12 @@
       "id": "I82",
       "area": "scaling",
       "title": "Staged maturation: latest-born cells stay silent and mature in waves during life (pl.stageF0 / stageWaves / stageTicks)",
-      "status": "open",
-      "evidence": "R65 box (1 growth): 1x book3000 2.97 vs 3.33 scratch; 4xS book10k 3.26 vs 3.405, life 6% faster. Masking only, so the full brain is still allocated",
+      "status": "rejected",
+      "evidence": "R65 box (1 growth): 1x book3000 2.97 vs 3.33 scratch; 4xS book10k 3.26 vs 3.405, life 6% faster. Masking only, so the full brain is still allocated; R69 z04 (4xS book30k, 16 growths vs y03 scratch): staged A -0.004 (3/11, t -3.7), B -0.001 (6/8); z05 wall 795 vs 817 s per growth (3%)",
       "why": "juvenile-small then large could save time and give better early learning",
       "rounds": [
-        "R65"
+        "R65",
+        "R69"
       ],
       "theme": "scaling",
       "parents": [
@@ -1205,11 +1209,12 @@
       "id": "I84",
       "area": "engine",
       "title": "Fast engine (params.fastEngine 1): scaled shared-factor traces, hot-set teacher, lean membrane loop; not bit-identical, judged by scores",
-      "status": "testing",
-      "evidence": "R66 box: life 1.86x (1x) / 1.60x (4xS) vs exact, total 1.70x / 1.45x; screen of 8 growths x 6 tasks no task worse (seqchoice order2 -0.028 t -0.89); 4xS peak RSS 1.59 -> 1.08 GB",
+      "status": "adopted",
+      "evidence": "R66 box: life 1.86x (1x) / 1.60x (4xS) vs exact, total 1.70x / 1.45x; screen of 8 growths x 6 tasks no task worse (seqchoice order2 -0.028 t -0.89); 4xS peak RSS 1.59 -> 1.08 GB; R69: z10 (4xS fables / order3 / text / seqchoice, 8 growths) no task worse (order3 / text identical, fables +0.0003, seqchoice -0.015 / -0.036 fit, t -0.8 / -0.9); with z08 (1x 16 x 7 tasks) and z09 (4xS book10k 16/16 identical) -> fastEngine 1 is the default in v38 (DEFAULTS_VERSION 31); worker book10k 35 vs 70 s (1x), 260 vs 368 s (4xS); z10b completes 4xS to 16 growths",
       "why": "4xS cost 17x on workers; the scale track needs faster lives",
       "rounds": [
-        "R66"
+        "R66",
+        "R69"
       ],
       "theme": "infrastructure",
       "parents": [
@@ -1244,6 +1249,21 @@
       "theme": "infrastructure",
       "parents": [
         "I84"
+      ]
+    },
+    {
+      "id": "I87",
+      "area": "scaling",
+      "title": "Why scaled brains lose order3 / seqchoice: bigger cortex or (non-plastic) context regions dilute sharp sequence context; plan-wide sc.* variants also inflate the 400-cell striatum",
+      "status": "open",
+      "evidence": "R69 box (order3 growths 0-1, 1x 9.68 / 9.65): 4xS all 7.28 / 7.28, cortex only 7.75 / 8.13, context only 7.60 / 7.75, context 2xS 8.13 / 8.15, context grid 120 with 1x wiring 7.60 / 7.75, maxCells alone or wiring alone at grid 60 = 1x; seqchoice cycle / order2 all 4xS 2.04 / 0.01, 2.48 / 1.53, striatum kept 3.27 / 6.37, 3.31 / 2.52. Queued y10a/b (4xS by region, 16 growths, 6 tasks), y16 (2xS by region), y17 (long fables x size), y21 (3xS)",
+      "why": "a large brain that loses higher-order context cannot become a language model; the size track depends on fixing this",
+      "rounds": [
+        "R69"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I78"
       ]
     }
   ],
@@ -1519,7 +1539,7 @@
       "impact": 5,
       "likelihood": 0.6,
       "cost": 2,
-      "experiment": "shared y03a/b (v37 4xS 5-task), y05 (2xS), x17a/b / x16a/b (size x 100k, v36), y06 (v37 1x 100k)"
+      "experiment": "shared y03a/b (v37 4xS 5-task), y05 (2xS), x17a/b / x16a/b (size x 100k, v36), y06 (v37 1x 100k); R69: y03 4xS +0.020 / +0.022 on book but order3 -0.238 and seqchoice collapse -> not ready; x16 / x17: 100k = 30k at 2xS / 4xS"
     },
     {
       "id": "Q38",
@@ -1527,7 +1547,23 @@
       "impact": 4,
       "likelihood": 0.7,
       "cost": 1,
-      "experiment": "z01 / z02 / z03"
+      "experiment": "z01 / z02 / z03; R69: holds on fresh seeds (v37 vs v34 book30k +0.049, order3 +0.066, 16/0; no task worse)"
+    },
+    {
+      "id": "Q39",
+      "q": "What makes a scaled brain keep higher-order sequence context (order3, seqchoice) while keeping the book / fables gain: which region's size causes the loss, and is it fan-in dilution, reservoir dynamics or the readout?",
+      "impact": 5,
+      "likelihood": 0.5,
+      "cost": 2,
+      "experiment": "y10a/b, y16, y11 (lr 0.05 / 0.2 at 4xS), y21 (3xS); then a code fix (e.g. per-region scaling, normalised fan-in from the context regions) on the box"
+    },
+    {
+      "id": "Q40",
+      "q": "Does cortex lr 0.2 (optionally + plateau 6) pass on fresh growths k 1200-1215 with seqchoice included (v39), and where does the rate stop paying (0.3 / 0.5)?",
+      "impact": 3,
+      "likelihood": 0.7,
+      "cost": 1,
+      "experiment": "y08a/b, y09"
     }
   ]
 }

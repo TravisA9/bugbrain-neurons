@@ -218,6 +218,8 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   console.log('v36 deepURSx3v36 (predErr 0, metaCap 200) + seq graded decoder readIn 0.01: ok'); }
 { const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3.make(), O = S.PLANS.deepURSx3v36.make();
   assert.ok(D.regions.every((R, i) => JSON.stringify(Object.assign({}, R.g.pl, { lr: 0, predErr: 0 })) === JSON.stringify(Object.assign({}, O.regions[i].g.pl, { lr: 0, predErr: 0 })) && R.g.pl.lr === (R.name === 'cortex' ? 0.1 : O.regions[i].g.pl.lr) && R.g.pl.predErr === (R.name === 'striatum' ? 0.3 : 0) && R.g.pl.peMode === 16)
-    && D.regions[0].name === 'cortex' && D.regions[2].name === 'striatum' && O.regions[0].g.pl.lr === 0.05 && S.DEFAULTS_VERSION === 30 && S.APP_VERSION === 'v37', 'v37 (R64): deepURSx3 = v36 plan with cortex lr 0.1 + striatum predErr 0.3 (other regions unchanged)');
+    && D.regions[0].name === 'cortex' && D.regions[2].name === 'striatum' && O.regions[0].g.pl.lr === 0.05 && S.DEFAULTS_VERSION >= 30, 'v37 (R64): deepURSx3 = v36 plan with cortex lr 0.1 + striatum predErr 0.3 (other regions unchanged)');
   console.log('v37 deepURSx3 = v36 + cortex lr 0.1 + striatum predErr 0.3: ok'); }
+{ const S = require('./js/node_load.js')(); assert.ok(S.PARAM_DEFAULTS && S.params.fastEngine === 1 && S.DEFAULTS_VERSION === 31 && S.APP_VERSION === 'v38', 'v38 (R69): fast engine (params.fastEngine 1) is the default');
+  console.log('v38 fast engine default: ok'); }
 console.log('ALL OK');

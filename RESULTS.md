@@ -2847,3 +2847,100 @@ Dense-mode mark trims (ext, receiver pool, mixing inhibition / homeostasis) are 
 ### R66 validation update 2 (z09a / z09b done on tacobell, Oct 18 11:53 PM CT): fast engine at 4xS passes
 16 fresh growths (k 1100-1115), 4xS book10k: fast - exact 0.0000 (0 / 0: all 16 scores identical, mean 0.3347 both), worker wall time 1.69 h -> 0.86 h (1.97x).
 z08 + z09 both pass the R66 rule. Adoption (fastEngine 1 default, DEFAULTS_VERSION 31) waits for z10 (4xS other tasks), because z10's exact arm is variant 'base' and would silently turn fast, and running jobs would mix engines between arms.
+
+## R69 — queue review (Oct 19, 7:20 AM CT): fast engine adopted (**v38**, DEFAULTS_VERSION 31), size breaks order3 / seqchoice, cortex lr 0.2 wins, length still flat
+Workers: linux-pc (ExplodingRumba, supervised, code d8e7d84, heartbeat 7:17 AM CT) and tacobell (supervised, d8e7d84, heartbeat 7:11 AM CT) both healthy,
+on the latest code, not stuck, but **idle since 6:16 / 5:57 AM CT because the queue ran dry** (R65-R68 queued nothing after z10). 26 jobs finished since R64
+(x14-x19, y02-y07, z01-z10). No phone worker. Cells: accuracy diff (wins / losses, paired t), paired by growth seed.
+
+### 1. Learning rule under v37 (5-task screen, growths 0-15, vs the v37 reference = x04 lr 0.1 arm)
+| job | arm | book10k | book30k | fables4000 | order3 | text1000 |
+|---|---|---|---|---|---|---|
+| y02 | **cortex lr 0.2** | **+0.008 (15/1, 8.1)** | **+0.009 (15/1, 6.5)** | **+0.007 (16/0, 6.9)** | -0.007 (7/6, -1.5) | +0.001 (8/8, 0.4) |
+| y02 | cortex lr 0.15 | +0.005 (14/1, 3.5) | +0.005 (14/2, 5.1) | +0.004 (13/0, 5.1) | -0.002 (7/4, -0.6) | +0.001 (9/7, 0.6) |
+| y04 | plateau 6 | +0.002 (10/4, 1.9) | +0.003 (12/3, 2.0) | +0.003 (10/4, 2.7) | -0.003 (5/5, -0.9) | +0.001 (10/5, 0.9) |
+| y04 | metaCap 100 | +0.006 (14/1, 5.1) | +0.008 (14/0, 6.2) | +0.003 (12/2, 3.8) | **-0.009 (1/9, -2.8)** | -0.001 (6/7) |
+| y04 | metaN 80 | +0.007 (15/0, 7.6) | +0.008 (16/0, 8.2) | +0.005 (14/0, 5.5) | **-0.008 (3/9, -2.1)** | -0.001 (6/9) |
+| y07 | tauPre 8 | -0.000 (7/7) | -0.001 (5/8) | -0.003 (5/11, -3.0) | -0.011 (1/12, -2.1) | +0.000 |
+| y07 | tauPre 18 | -0.007 (2/14, -4.6) | -0.007 (1/15, -5.1) | -0.004 (4/12, -2.7) | -0.011 (5/8, -2.2) | -0.011 (1/15, -4.6) |
+- The rate keeps paying: 0.1 -> 0.15 -> 0.2 gives book +0.005 -> +0.009, but order3 drifts down (-0.002 -> -0.007, not significant). lr 0.2 passes the screen
+  with no task worse at t < -2: **adoption candidate**, confirmation on fresh growths k 1200-1215 with seqchoice queued (y08a/b), plus lr 0.3 / 0.5 (y09).
+- metaCap 100 / metaN 80 again buy book / fables at an order3 cost (as under v36): rejected again. plateau 6: small, not significant on book10k: rides along in y08.
+- tauPre 8 / 18: worse; rejected.
+
+### 2. Size under v37 — **the size gain is text-only; scaled brains lose order3 and seqchoice**
+| comparison (16 growths unless noted) | book10k | book30k | fables4000 | order3 | text1000 | seqchoice order2 / cycle (fit) |
+|---|---|---|---|---|---|---|
+| y03 v37 4xS vs v37 1x | **+0.020 (14/2, 4.3)** | **+0.022 (14/2, 3.9)** | **+0.017 (14/2, 3.2)** | **-0.238 (0/16, -198)** | +0.002 (8/7) | (z10, 8 growths, vs z08 1x same seeds) **1.84 vs 6.20 / 1.43 vs 9.13 (0/8)** |
+| y05 v37 2xS vs v37 1x | +0.014 (12/4, 2.8) | +0.013 (13/3, 2.9) | +0.011 (13/3, 2.7) | **-0.154 (0/16, -10)** | **-0.017 (3/13, -3.0)** | - |
+| y03 4xS vs y05 2xS (v37) | +0.006 (10/5, 1.6) | +0.009 (14/2, 2.2) | +0.006 (10/6) | -0.084 (2/14) | +0.019 (13/2, 2.9) | - |
+| y03 v37 4xS vs v36 4xS (x01 / x19) | -0.001 | -0.003 | +0.003 (12/4, 2.8) | +0.002 | -0.003 | - |
+| x19 v36 4xS / 2xS vs v36 1x (x00) | - | - | +0.023 / +0.018 | -0.228 / -0.136 (0/16) | +0.010 / -0.014 | - |
+- **R64's "size pays" holds for natural text only.** 4xS order3 falls from 0.96 to 0.73 on every growth (2xS: 0.81), and seqchoice collapses at 4xS.
+  The rule gain of v37 does not add at 4xS (v37 4xS = v36 4xS on book): the faster rate and size buy the same thing.
+- Box dissection (R69, order3 growths 0-1, fast engine; 1x 9.68 / 9.65): all regions 4xS 7.28 / 7.28; cortex only 7.75 / 8.13; context regions only 7.60 / 7.75;
+  context grid 120 with 1x wiring 7.60 / 7.75; context 2xS 8.13 / 8.15; maxCells 13600 at grid 60 (cortex or context) or wiring alone = 1x exactly (the grid caps
+  the cell count); grid + wiring with 1x maxCells 4.33 / 3.90. So the loss grows with the number of cells in **either** the cortex or the (non-plastic) context
+  regions. seqchoice cycle / order2 at 4xS: all regions 2.04 / 0.01 and 2.48 / 1.53; striatum left at its own genes 3.27 / 6.37 and 3.31 / 2.52 (1x ~9 / ~6):
+  part of the collapse is the plan-wide `sc.*=` variant also inflating the 400-cell striatum (grid 28 -> 120), the rest is the scaled cortex / context.
+  Jobs y10a/b (4xS by region, 16 growths, 6 tasks) and y16 (2xS by region) quantify it. New idea I87.
+- Size x length (v36, 16 growths): 4xS 100k 0.347 = 4xS 30k (-0.002, 6/10), 2xS 100k 0.337 = 2xS 30k; at 100k 4xS vs 1x +0.032 (15/1), 2xS +0.023, 4xS vs 2xS +0.010.
+- Life length under v37 (y06, 1x 100k): 0.327 vs 30k 0.324 (+0.003, 9/6, t 1.7), vs v36 100k +0.013 (16/0). **Length is still flat at every size.**
+
+### 3. Cumulative check on fresh growths k 1000-1015 (Q38, z01-z03, 7 tasks)
+| | book10k | book30k | fables4000 | order3 | text1000 | seqchoice order2 | seqchoice cycle |
+|---|---|---|---|---|---|---|---|
+| v37 vs v36 | +0.009 (16/0) | +0.012 (16/0) | +0.010 (16/0) | +0.010 (15/1) | +0.006 (13/1) | -0.10 fit (8/8, -0.7) | +0.54 fit (9/7, 2.2) |
+| v36 vs v34 | +0.034 (16/0) | +0.038 (16/0) | +0.029 (16/0) | +0.056 (16/0) | +0.015 (16/0) | identical | identical |
+| v37 vs v34 | +0.043 | +0.049 | +0.039 | +0.066 | +0.021 | -0.10 | +0.54 |
+The stacked adoptions hold on never-used seeds: no task worse, v37 book10k / 30k 0.319 / 0.318 (v34 0.276 / 0.269). Selection noise did not inflate them.
+
+### 4. Staged maturation (I82, z04 / z05) — rejected
+4xS book30k vs y03 4xS scratch (16 growths): staged A (0.33 / 2 waves / 110k) -0.004 (3/11, t -3.7); B (0.25 / 3 / 66k) -0.001 (6/8, -0.4). Wall time staged
+795 s vs scratch 817 s per growth (z05, 3% faster). No accuracy and almost no time: rejected.
+
+### 5. Output confidence gate and generation (I81 / I72, z06 / z07 / x14 / x15)
+Teacher-forced accuracy is unchanged by the gate (as designed). At 4xS (z07, 8 growths) share 0.5 fires on 37.6% of steps at precision 0.512, margin 0.2 on
+50.2% at 0.467 (1x z06: 34% / 0.511, 45% / 0.489). Generation after book30k, 1x v37 (z06, 16 growths; word = train-vocabulary word rate, d4 = distinct 4-grams,
+tri = trigram bits, real text 2.57):
+| arm | word | d4 | tri | top-char share |
+|---|---|---|---|---|
+| greedy | 0.56 | 0.013 | 5.26 | 0.81 (spaces) |
+| T 1 | 0.54 | 0.66 | 6.14 | 0.41 |
+| gate share 0.5 | 0.63 | 0.35 | 5.69 | 0.64 |
+| gate margin 0.2 | 0.70 | 0.29 | 5.55 | 0.64 |
+| gate 0.4 + T 0.7 | 0.74 | 0.17 | 5.24 | 0.71 |
+v36 4xS (x14) T 0.7 / T 1: word 0.76 / 0.64, d4 0.49 / 0.67, tri 6.87 / 6.64; v36 1x 100k (x15) T 0.7 / T 1: 0.70 / 0.61, 0.41 / 0.61, 5.82 / 6.13.
+The gate is a better generation policy than greedy or T 1 (more word-like, still varied), but generation is babble at every size and length. y18 tests the
+gate at 4xS under v38.
+
+### 6. Fast engine: **adopted as v38** (I84, DEFAULTS_VERSION 31, under the standing authorisation)
+z10 (4xS, growths 1100-1107, the planned 8): fast - exact fables4000 +0.0003 (1/0), order3 0.0000 (identical), text1000 0.0000 (identical), seqchoice order2
+-0.015 fit (1/3, t -0.79), cycle -0.036 fit (1/3, t -0.93): no task worse. With z08 (1x, 16 growths x 7 tasks, all |t| < 1.4) and z09 (4xS book10k, 16/16
+identical) the R66 rule is met. Box (R69): test_core ALL OK; perf/verify.js exact vs fast on text / order3 / fables / seqchoice order2 / bandit x 3 seeds: same
+growth, 13/15 fitness identical, text/23 7.535 vs 7.56, fables/23 3.065 vs 3.035, bandit identical.
+Worker speed (fast / exact wall per growth): 1x book10k 35 / 70 s, book30k 81 / 198 s, 4xS book10k 260 / 368 s, 4xS fables 136 / 257 s; order3 / text at 4xS
+are no faster (88 / 73 s, 95 / 105 s). Pending jobs needing pinning: none (the queue was empty). All R69 jobs set P.fastEngine explicitly; z10b
+(growths 1108-1115, exact pinned P.fastEngine=0) completes the 4xS check to 16 growths after the fact: if a task is worse there, revert.
+Code: js/core/base.js (fastEngine 1, v38 / 31), test_core.js (v38 check), README, perf/verify.js (BB_ENGINE=0|1 picks the engine for fingerprints).
+For exact-engine identity checks (refactors), pass P.fastEngine=0 (r42 / p37 variants) or BB_ENGINE=0 (verify.js).
+
+### 7. Jobs queued (run/r69_jobs.js; all v38, every arm sets P.fastEngine; slot-hours from measured worker wall times)
+| pri | id | what | slot-h |
+|---|---|---|---|
+| 0.98 | y08a/b | cortex lr 0.2 and lr 0.2 + plateau 6 vs v38 base on FRESH growths k 1200-1215, all 7 tasks (adoption confirmation) | 1.2 + 1.2 |
+| 0.975 | y09 | cortex lr 0.3 / 0.5 + v38 base, 5-task screen growths 0-15 | 2.1 |
+| 0.97 | y10a/b | 4xS by region (all / cortex only / context only / all but striatum) on order3, text1000, fables4000, book10k, seqchoice x2, 16 growths | 6.8 + 6.8 |
+| 0.965 | y11a/b | 4xS x cortex lr: 0.2 on 5 tasks, 0.05 on order3 / text / book10k, 4xS base book30k | 5.2 + 5.2 |
+| 0.95 | z10b | fast vs exact at 4xS, other tasks, growths 1108-1115 (completes z10 to 16) | 3.2 |
+| 0.93 | y15a/b | v38 4xS on fresh growths k 1200-1215, all 7 tasks (1x refs = y08 base arm) | 3.5 + 3.5 |
+| 0.92 | y16 | 2xS by region (cortex only / context only, 5 tasks + seqchoice), 2xS all on seqchoice | 4.4 |
+| 0.9 | y17 | fables8000 / 12000 at 4xS vs 1x (long-gap memory x size) | 1.7 |
+| 0.88 | y18 | generation after book30k at 4xS: T 1, gate margin 0.2, gate 0.4 + T 0.7 | 4.3 |
+| 0.86 | y19 | 4xS + cortex lr 0.2 at book100k (16 growths) | 8.9 |
+| 0.87 | y21 | 3xS (grid 104, maxCells 10200, coneSpeed 5, axonLen 69) on 5 tasks + seqchoice: the size curve | 4.5 |
+| 0.84 | y20 | 4xS + plateau 6 / metaN 80 on book30k + order3 | 6.6 |
+| 0.83 | y22a/b | 4xS + cortex lr 0.2 on fresh growths k 1200-1215, all 7 tasks (the candidate large-run setting) | 3.5 + 3.5 |
+About 76 slot-hours. With linux-pc ~8 parallel runs and tacobell ~4 (measured: y06 16 x 1087 s in 36 min; y07 11.1k slot-s in 46 min) that is ~6-6.5 h of
+wall time on both workers together, perhaps 8-9 h if 4xS runs are memory-bound; short of 12 h on purpose (see PRIORITIES R69). The fast engine plus the 1-growth runs make the workers far faster than the old
+estimates (R64's "21 h" queue drained in ~10 h together with z01-z10).

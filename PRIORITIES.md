@@ -1,6 +1,36 @@
-# PRIORITIES (R68, Oct 19 2026, 12:40 AM CT; v37, defaults unchanged)
+# PRIORITIES (R69, Oct 19 2026, 7:50 AM CT; **v38 / DEFAULTS_VERSION 31** = v37 brains + fast engine default)
 
-## R68 update
+## R69 update
+- **v38 adopted** (standing authorisation): params.fastEngine 1 by default after z08 (1x, 16 growths x 7 tasks), z09 (4xS book10k, 16/16 identical) and
+  z10 (4xS 5 tasks, 8 growths) showed no task worse. Exact engine = P.fastEngine=0 (identity checks; verify.js BB_ENGINE=0). z10b completes the 4xS check.
+- **Size is not a free win.** 4xS gains book +0.02 and fables +0.017 but loses order3 -0.24 (0/16) and collapses seqchoice; 2xS loses order3 -0.15 and
+  text1000 -0.017. The loss grows with the cell count of the cortex or the context regions (box dissection), and plan-wide sc.* variants also inflate the
+  striatum. The large-brain run is **not ready**: fix higher-order context at size first (I87 / Q39).
+- **Length is flat at every size** (1x v37 100k = 30k; 2xS / 4xS 100k = 30k). The brain saturates at a bigram-plus level whatever it is fed.
+- Cortex lr 0.2 wins the 5-task screen (book +0.008 / +0.009, fables +0.007, order3 -0.007 n.s.): confirmation on fresh seeds with seqchoice (y08) -> v39 if it passes.
+- Rejected: staged maturation (I82), tauPre 8 / 18, metaCap 100 / metaN 80 under v37 (order3). Cumulative v34 -> v37 gains hold on fresh seeds (z01-z03).
+
+## Ranked open questions (R69)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q40 / I77 | Does cortex lr 0.2 (+ plateau 6) pass on fresh growths with seqchoice (adopt as v39)? Where does the rate stop paying? | y08a/b, y09 |
+| 2 | Q39 / I87 | Which region's size breaks order3 / seqchoice, and which carries the book gain (4xS and 2xS by region; 3xS curve; long fables x size)? Then a code fix on the box (per-region scaling, normalised fan-in from bigger context regions, striatum excluded from size variants) | y10a/b, y16, y21, y17 |
+| 3 | I78 | Rule x size: does lr 0.2 add at 4xS, does lr 0.05 rescue order3, do consolidation knobs behave differently at size? Fresh-seed replication of 4xS | y11a/b, y15a/b, y20, y22a/b |
+| 4 | I84 | Fast engine at 4xS on 16 growths (post-adoption check) | z10b |
+| 5 | I72 / I81 / I73 | Generation with the confidence gate at 4xS; size x length at the faster rate | y18, y19 |
+| 6 | I80 | 8x needs growth time / proliferation scaled to the grid (code, box) | none (code) |
+| 7 | I71 / I81 | Travis's passive-then-active hunch: output gate done (better generation policy, no accuracy gain); confidence-gated learning and a silent-then-acting seqchoice phase need code | none (code) |
+| low | - | space-bias output fixes, mixing codes, sparser activity, fewer substeps, staged maturation, analogy, evolution | none |
+Decision point (for Travis): no large run until a scaled brain keeps order3 within 0.02 of 1x and seqchoice within noise while keeping the book gain.
+Then: v39 (or v38) at 4xS, 100k -> 300k -> 1M symbols with checkpoints and generation samples, on linux-pc, only with Travis's go-ahead.
+
+## Worker notes (R69)
+Both workers healthy and on the latest code (d8e7d84 at review time; they self-update to the R69 commit), supervised, heartbeats every ~30 min. Both sat idle
+from ~6 AM CT because the queue ran dry. Measured capacity: linux-pc ~8 parallel runs, tacobell ~4 (cpuMax 75). R69 queued ~76 slot-hours = ~6-6.5 h of wall
+time on both workers together (up to ~9 h if 4xS is memory-bound): short of 12 h on purpose, because the next useful jobs depend on y08 / y10 (do not pad with
+low-value runs; the next review refills). The laptop's old local queue stays retired.
+
+## Previous update (R68)
 - Fewer substeps per symbol (I86) is not a win. 75-82% of the substeps loses 0.02-0.03 on every text task (0/8) for 1.1-1.2x life speed. 50-64% loses 0.05-0.25. Time-constant rescaling (dtRescale) is far worse, because synaptic delay and the spike limit are tied to the substep.
 - Fast engine (I84): z08 (1x) and z09 (4xS book10k, 16/16 identical scores, 1.97x on the worker) pass; flip fastEngine to 1 (DEFAULTS_VERSION 31) once z10 is done so no in-flight comparison mixes engines.
 - Nothing queued from R68. Remaining speed levers: threads (SharedArrayBuffer workers over cells), or per-tick work (readout / modulate / critic), which caps substep savings at ~1.4x.
