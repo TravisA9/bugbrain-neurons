@@ -253,7 +253,7 @@ function growCell(d, opts) {
   };
   const ZERO_G = new Array(CH_NCHEM).fill(0);
   const N8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
-  const synSet = new Set(), syns = [];         // {pre (cell id or 'sensor index'), post, w, plastic, t}
+  const synSet = new KeySet(), syns = [];      // {pre (cell id or 'sensor index'), post, w, plastic, t}   (R66: typed hash set, same membership as a Set)
   // sensor growth cones (fixed behaviour: grow straight back, fixed tags)
   const cones = [];
   const sensorCone = (inputIdx, x, y, tag) => cones.push({ sensor: true, pre: -1 - inputIdx, x, y, dx: 0, dy: -1, len: 0, maxLen: Math.round(sc.eyeReach / h),
@@ -575,25 +575,25 @@ function growCell(d, opts) {
     g._fed = new Set(); for (const id of clawFed) if (idx.has(id)) g._fed.add(idx.get(id)); }
   // synaptic scaling of total hidden->X input (genes normE / normI; off below 1)
   if (sc.normE >= 1 || sc.normI >= 1 || sc.clawNorm > 0 || sc.mixNorm > 0) {
-    const h0 = nIn, h1 = nIn + neurons.length;
+    const h0 = nIn, h1 = nIn + neurons.length, CS = colLists(g.W, N, h0, h1, h0), cS = CS.st, cA = CS.a;   // (R66: hidden inputs of each cell, ascending: the dense column scans without the zeros)
     for (let b = h0; b < N; b++) {
-      let e = 0, i = 0; for (let a = h0; a < h1; a++) { const w = g.W[a * N + b]; if (w > 0) e += w; else i -= w; }
+      let e = 0, i = 0; for (let u = cS[b], z = cS[b + 1]; u < z; u++) { const w = g.W[cA[u] * N + b]; if (w > 0) e += w; else i -= w; }
       const claw = sc.clawNorm > 0 && b < h1 && neurons[b - h0].o[CO.CLAW] > 0.5;
       if (claw && g._fib && g._fed.has(b)) {   // claw cell with parallel-fibre input: input from fibre-sending cells and the rest get half of the budget each
-        let ef = 0; for (let a = h0; a < h1; a++) { const q = a * N + b; if (g.W[q] > 0 && g._fib.has(a)) ef += g.W[q]; }
+        let ef = 0; for (let u = cS[b], z = cS[b + 1]; u < z; u++) { const a = cA[u], q = a * N + b; if (g.W[q] > 0 && g._fib.has(a)) ef += g.W[q]; }
         if (ef > 0 && e - ef > 0) { const ff = sc.clawNorm / 2 / ef, fd = sc.clawNorm / 2 / (e - ef);
-          for (let a = h0; a < h1; a++) { const q = a * N + b; if (g.W[q] > 0) g.W[q] *= g._fib.has(a) ? ff : fd; } continue; }
+          for (let u = cS[b], z = cS[b + 1]; u < z; u++) { const a = cA[u], q = a * N + b; if (g.W[q] > 0) g.W[q] *= g._fib.has(a) ? ff : fd; } continue; }
       }
       const mixC = sc.mixNorm > 0 && b < h1 && neurons[b - h0].o[CO.MIX] > 0.5;
       const fe = claw && e > 0 ? sc.clawNorm / e : mixC && e > 0 ? sc.mixNorm / e : sc.normE >= 1 && e > 0 ? sc.normE / e : 1, fi = sc.normI >= 1 && i > 0 ? sc.normI / i : 1;
-      if (fe !== 1 || fi !== 1) for (let a = h0; a < h1; a++) { const q = a * N + b; if (g.W[q] > 0) g.W[q] *= fe; else if (g.W[q] < 0) g.W[q] *= fi; }
+      if (fe !== 1 || fi !== 1) for (let u = cS[b], z = cS[b + 1]; u < z; u++) { const q = cA[u] * N + b; if (g.W[q] > 0) g.W[q] *= fe; else if (g.W[q] < 0) g.W[q] *= fi; }
     }
   }
   delete g._fib; delete g._fed;
   if (sc.clawIn > 0) for (let b = nIn; b < nIn + neurons.length; b++) if (neurons[b - nIn].o[CO.CLAW] > 0.5) {   // claw cells: fixed total sensory (gate) input
     let s = 0; for (let a = 0; a < nIn; a++) if (g.W[a * N + b] > 0) s += g.W[a * N + b];
     if (s > 0) for (let a = 0; a < nIn; a++) if (g.W[a * N + b] > 0) g.W[a * N + b] *= sc.clawIn / s; }
-  for (let q = 0; q < g.W.length; q++) if (g.W[q] > params.wMax) g.W[q] = params.wMax; else if (g.W[q] < -params.wMax) g.W[q] = -params.wMax;
+  clampW(g.W, params.wMax);
   g.typeInfo = spec.tagNames.map((n, j) => ({ label: 'tag ' + n + ' cells', inh: false }));
   g.fixedNames = spec.classes; g.specKey = spec.key;
   // 5 + 6. juvenile phase: spontaneous waves, Hebbian refinement, homeostasis
@@ -629,6 +629,23 @@ function growCell(d, opts) {
     g.devLog = rec; }
   return g;
 }
+// R66 growth helpers (same results as the dense loops they replace, in small functions the JIT optimises)
+class KeySet {                              // set of non-negative integer keys < 2^32 (open addressing)
+  constructor() { this.cap = 1 << 16; this.k = new Uint32Array(this.cap); this.has0 = false; this.n = 0; }
+  slot(key) { const m = this.cap - 1, K = this.k; let i = Math.imul(key, 0x9e3779b1) >>> 0 & m; while (K[i] !== 0 && K[i] !== key) i = (i + 1) & m; return i; }
+  has(key) { if (key === 0) return this.has0; if (key > 0xffffffff) return !!this.big && this.big.has(key); return this.k[this.slot(key)] === key; }
+  add(key) { if (key === 0) { this.has0 = true; return; } if (key > 0xffffffff) { (this.big = this.big || new Set()).add(key); return; } const i = this.slot(key); if (this.k[i] === key) return; this.k[i] = key; if (++this.n * 2 > this.cap) this.grow(); }
+  grow() { const o = this.k; this.cap *= 2; this.k = new Uint32Array(this.cap); for (let i = 0; i < o.length; i++) if (o[i] !== 0) this.k[this.slot(o[i])] = o[i]; }
+}
+function colLists(W, N, a0, a1, b0) {       // incoming lists (pre a in [a0, a1), non-zero W) of every cell b >= b0, ascending a
+  const cnt = new Int32Array(N + 1);
+  for (let a = a0; a < a1; a++) { const r = a * N; for (let b = b0; b < N; b++) if (W[r + b] !== 0) cnt[b + 1]++; }
+  for (let b = 0; b < N; b++) cnt[b + 1] += cnt[b];
+  const f = cnt.slice(0, N), A = new Int32Array(cnt[N]);
+  for (let a = a0; a < a1; a++) { const r = a * N; for (let b = b0; b < N; b++) if (W[r + b] !== 0) A[f[b]++] = a; }
+  return { st: cnt, a: A };
+}
+function clampW(W, wMax) { for (let q = 0; q < W.length; q++) { const w = W[q]; if (w > wMax) W[q] = wMax; else if (w < -wMax) W[q] = -wMax; } }
 function cellClass(o) { let b = 0; for (let k = 1; k < 8; k++) if (o[CO.T + k] > o[CO.T + b]) b = k; return b; }
 // Spontaneous activity (spec.juvenile): travelling waves along each wave line of sensors,
 // tonic channels, random kicks; outputs get their bias. NB the order of random draws is fixed
