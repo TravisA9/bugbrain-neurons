@@ -25,7 +25,7 @@ function metrics(s) {
   const top = Math.max(...A.map(c => s.split(c).length - 1)) / Math.max(1, s.length);
   return { wordValid: wv, words: words.length, distinct4: d4, copy8: cp(8), copy16: cp(16), longestCopy: longest, triBits: triBits(s), topCharFrac: top };
 }
-const nV = Math.max(64, +g0 + +G), p = L.seedPlan({ valGrowths: nV, valArenas: nV }, 0, true)   // R65: g0 >= 64 = fresh seeds (k < 64 unchanged), scores = [], st = {}, samples = [];
+const nV = Math.max(64, +g0 + +G), p = L.seedPlan({ valGrowths: nV, valArenas: nV }, 0, true), scores = [], st = {}, samples = [];   // R65: g0 >= 64 = fresh seeds (k < 64 unchanged)
 const env = L.setupTask(task), nS = env.P.nSyms, nG = env.P.genSyms;
 for (let k = +g0; k < +g0 + +G; k++) {
   const brain = SA.growCell(L.deserialize(gc).g, { seed: p.growSeeds[k], spec: env.spec }), a = new SA.Agent(L.deserialize(gc).g, p.arenaSeeds[k], brain, env);
@@ -36,7 +36,7 @@ for (let k = +g0; k < +g0 + +G; k++) {
   const m = Object.assign(metrics(text), { refTriBits: triBits(ref), refWordValid: metrics(ref).wordValid, genConf: T.gen.length ? T.genConf / T.gen.length : 0 });
   if (T.ggN) m.genGateCov = (T.ggE || 0) / T.ggN;   // R65 gated generation: share of steps emitted greedily (confident)
   { const sp = A.indexOf(' '), g = T.gen; let ns = 0; const d = new Set(); for (const c of g) if (c !== sp) { ns++; d.add(c); } m.nonSpace = g.length ? ns / g.length : 0; m.distinctChars = d.size; }   // R65: greedy degeneracy (only spaces) check
-  const s0 = T.stats(); for (const q of ['heldAcc', 'heldBitsCount', 'trainAcc', 'idealOnline']) m[q] = s0[q];
+  const s0 = T.stats(); for (const q of ['heldAcc', 'heldBitsCount', 'trainAcc', 'idealOnline']) m[q] = s0[q]; for (const q of ['gateCov', 'gatePrec']) if (s0[q] != null) m[q] = s0[q];
   scores.push(a.fitness); for (const q in m) st[q] = (st[q] || 0) + m[q] / G; st.hidden = (st.hidden || 0) + brain.nHid / G;
   samples.push({ g: k, prime, text: text.slice(0, 600) }); }
 const mean = scores.reduce((x, y) => x + y, 0) / scores.length, sd = Math.sqrt(scores.reduce((x, y) => x + (y - mean) ** 2, 0) / scores.length);
