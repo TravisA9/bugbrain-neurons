@@ -61,6 +61,7 @@ class SynAcc {
     return { pre: pre.slice(0, m), post: post.slice(0, m), w: w.slice(0, m), p: p.slice(0, m), c: c.slice(0, m) };
   }
 }
+function gcHint() { const B = globalThis.Bun; if (B && B.gc) B.gc(true); else if (typeof globalThis.gc === 'function') globalThis.gc(); }   // R66: collect growth garbage between regions (lower peak RSS; results unaffected)
 function attachSparse(G, sp) {              // G.W / P / C: dense on first read (or null once dropped)
   Object.defineProperty(G, 'sp', { value: sp, writable: true, configurable: true, enumerable: false });
   const M = { W: null, P: null, C: null, done: false };
@@ -77,7 +78,7 @@ function growRegions(d, opts) {
   if (d.areal && !opts.noAreal) return growAreal(d, opts);
   const t0 = nowMs(), envSpec = opts.spec || currentEnv().spec, seed = opts.seed != null ? opts.seed : (d.seed || 1);
   const parts = d.regions.map((R, k) => { const { spec, map } = regionSpec(envSpec, R);
-    const g = growCell(R.g, { spec, seed: (seed + 7919 * k) >>> 0, record: !!opts.record }); return { R, spec, map, g }; });
+    const g = growCell(R.g, { spec, seed: (seed + 7919 * k) >>> 0, record: !!opts.record }); gcHint(); return { R, spec, map, g }; });
   const nIn = envSpec.nIn, nOut = envSpec.nOut, outPart = parts.find(p => p.R.outputs) || parts[0];
   let off = nIn; for (const p of parts) { p.off = off; off += p.g.nHid; }
   const nHid = off - nIn, G = createNetGenome(nIn, nHid, nOut, true), N = G.N, acc = new SynAcc(1 << 16);
@@ -122,6 +123,7 @@ function growRegions(d, opts) {
     tractStats.push({ name: T.name, from: src.R.name, to: dst.R.name, columns: cols.size, synapses: nSyn });
   }
   attachSparse(G, acc.finish(N, params.wMax));   // (+ the wMax cap of the old dense merge)
+  gcHint();
   const og = outPart.g; G.pl = og.pl; G.nCh = og.nCh; G.ch = og.ch.map(c => Object.assign({}, c));
   G.typeInfo = og.typeInfo; G.fixedNames = og.fixedNames; G.specKey = envSpec.key; G.kind = 'direct'; G.grownFrom = d;
   G.regions = parts.map((p, k) => ({ name: p.R.name, color: p.R.color || ['#6aa9ff', '#f0a050', '#7fd18b', '#d17fd1'][k % 4], nHid: p.g.nHid, off: p.off, outputs: p === outPart, devStats: p.g.devStats }));

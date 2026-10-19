@@ -657,7 +657,8 @@ function juvenilePhase(g, sc, r, spec, jrec) {   // jrec (recorder, optional): s
   const N = g.N, E = net.ws.length, hid0 = g.nIn, hid1 = g.nIn + g.nHid, iL = hid1;
   const blocks = 4, per = 50, spk = new Float32Array(N), tot = new Float32Array(N);
   let wave = null, gap = 0;
-  const inc = Array.from({ length: N }, () => []); for (let k = 0; k < E; k++) inc[net.posts[k]].push(k);
+  const incS = new Int32Array(N + 1), inc = new Int32Array(E); for (let k = 0; k < E; k++) incS[net.posts[k] + 1]++; for (let i = 0; i < N; i++) incS[i + 1] += incS[i];   // incoming CSR (R66: typed, same order)
+  { const f = incS.slice(0, N); for (let k = 0; k < E; k++) inc[f[net.posts[k]]++] = k; }
   for (let b = 0; b < blocks; b++) {
     spk.fill(0);
     for (let t = 0; t < per; t++) {
@@ -683,7 +684,7 @@ function juvenilePhase(g, sc, r, spec, jrec) {   // jrec (recorder, optional): s
         const rate = spk[i] / (per * params.substeps), err = (rate - sc.homeoTarget) / sc.homeoTarget;
         g.thresh[i] = clamp(g.thresh[i] + sc.homeoRate * clamp(err, -1, 1), -65, -45);
         const f = rate < sc.homeoTarget * 0.2 ? 1.15 : rate > sc.homeoTarget * 3 ? 0.87 : 1;
-        if (f !== 1) for (const k of inc[i]) net.ws[k] = clamp(net.ws[k] * f, -params.wMax, params.wMax);
+        if (f !== 1) for (let q = incS[i], q1 = incS[i + 1]; q < q1; q++) { const k = inc[q]; net.ws[k] = clamp(net.ws[k] * f, -params.wMax, params.wMax); }
       }
     }
     if (jrec) { jrec.spikes.push(Float32Array.from(spk)); jrec.thresh.push(Float32Array.from(g.thresh)); jrec.per = per * params.substeps; }

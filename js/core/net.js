@@ -30,31 +30,36 @@ class SpikingNet {
     const N = this.N = g.N + (NG ? NG.R : 0);
     this.v = new Float32Array(N).fill(V_REST); this.syn = new Float32Array(N); this.ext = new Float32Array(N);
     this.spiked = new Uint8Array(N); this.spk = new Int32Array(N); this.trace = new Float32Array(N);
-    const start = new Int32Array(N + 1), posts = [], pres = [], ws = [], plast = [], chs = [], N0 = g.N;
+    const start = new Int32Array(N + 1), N0 = g.N;   // R66: typed CSR built in two passes (count, fill): same synapse order as the old push loop, no large temporary JS arrays
     const S = g.sp && !NG ? g.sp : null;   // R66: sparse synapse list (merged multi-region brains), same order as the dense scan
-    if (S) { let k = 0; for (let pre = 0; pre < N; pre++) { start[pre] = posts.length;
-      for (; k < S.pre.length && S.pre[k] === pre; k++) { posts.push(S.post[k]); pres.push(pre); ws.push(S.w[k]); plast.push(S.p[k]); chs.push(S.c[k] % nCh); } } }
-    else { const GW = g.W, GP = g.P, GC = g.C; for (let pre = 0; pre < N; pre++) {
-      start[pre] = posts.length;
+    const GW = S ? null : g.W, GP = S ? null : g.P, GC = S ? null : g.C;
+    const okD = (pre, post) => !(NG && (NG.dead[pre] || NG.dead[post]));
+    let E = 0;
+    if (S) { E = S.pre.length; for (let k = 0; k < E; k++) start[S.pre[k] + 1]++; for (let i = 0; i < N; i++) start[i + 1] += start[i]; }
+    else { for (let pre = 0; pre < N; pre++) { start[pre] = E;
+      if (pre < N0) { const b = pre * N0; for (let post = 0; post < N0; post++) if (GW[b + post] !== 0 && okD(pre, post)) E++; }
+      if (NG) { const ex = NG.extra[pre]; if (ex) E += ex.length; } } start[N] = E; }
+    const posts = new Int32Array(E), pres = new Int32Array(E), ws = new Float32Array(E), plast = new Uint8Array(E), chs = new Uint8Array(E);
+    if (S) { for (let k = 0; k < E; k++) { posts[k] = S.post[k]; pres[k] = S.pre[k]; ws[k] = S.w[k]; plast[k] = S.p[k]; chs[k] = S.c[k] % nCh; } }
+    else { let k = 0; for (let pre = 0; pre < N; pre++) {
       if (pre < N0) for (let post = 0; post < N0; post++) {
         const i = pre * N0 + post, w = GW[i];
-        if (w !== 0 && !(NG && (NG.dead[pre] || NG.dead[post]))) { posts.push(post); pres.push(pre); ws.push(w); plast.push(GP ? GP[i] : 1); chs.push(GC ? GC[i] % nCh : 0); }
+        if (w !== 0 && okD(pre, post)) { posts[k] = post; pres[k] = pre; ws[k] = w; plast[k] = GP ? GP[i] : 1; chs[k] = GC ? GC[i] % nCh : 0; k++; }
       }
-      if (NG) { const ex = NG.extra[pre]; if (ex) for (const [post, pl] of ex) { posts.push(post); pres.push(pre); ws.push(pl ? 1e-6 : 0); plast.push(pl); chs.push(0); } }
+      if (NG) { const ex = NG.extra[pre]; if (ex) for (const [post, pl] of ex) { posts[k] = post; pres[k] = pre; ws[k] = pl ? 1e-6 : 0; plast[k] = pl; chs[k] = 0; k++; } }
     } }
-    start[N] = posts.length;
-    const E = posts.length;
-    this.start = start; this.posts = Int32Array.from(posts); this.pres = Int32Array.from(pres);
-    this.ws = Float32Array.from(ws); this.w0 = Float32Array.from(ws); this.synCh = Uint8Array.from(chs);
+    this.start = start; this.posts = posts; this.pres = pres;
+    this.ws = ws; this.w0 = Float32Array.from(ws); this.synCh = chs;
     this.pruning = g.prune && g.prune.tick > 0 ? g.prune : null; this.pruned = 0; this.tickNo = 0;
     // plastic synapse list + incoming index (by post) for STDP (all synapses if pruning)
-    const pl = []; for (let k = 0; k < E; k++) if (plast[k]) pl.push(k);
-    this.plastic = Int32Array.from(pl); this.isPlastic = Uint8Array.from(plast);
-    const inLists = Array.from({ length: N }, () => []);
-    for (let k = 0; k < E; k++) if (plast[k] || this.pruning) inLists[posts[k]].push(k);
-    this.inStart = new Int32Array(N + 1); const inE = [];
-    for (let j = 0; j < N; j++) { this.inStart[j] = inE.length; for (const k of inLists[j]) inE.push(k); }
-    this.inStart[N] = inE.length; this.inEdges = Int32Array.from(inE);
+    let nPl = 0; for (let k = 0; k < E; k++) if (plast[k]) nPl++;
+    this.plastic = new Int32Array(nPl); for (let k = 0, q = 0; k < E; k++) if (plast[k]) this.plastic[q++] = k;
+    this.isPlastic = plast;
+    const inS = this.inStart = new Int32Array(N + 1), pr = this.pruning;
+    for (let k = 0; k < E; k++) if (plast[k] || pr) inS[posts[k] + 1]++;
+    for (let j = 0; j < N; j++) inS[j + 1] += inS[j];
+    const fill = inS.slice(0, N), inE = this.inEdges = new Int32Array(inS[N]);
+    for (let k = 0; k < E; k++) if (plast[k] || pr) inE[fill[posts[k]]++] = k;
     this.elig = new Float32Array(E);
     this.use = this.pruning ? new Float32Array(E) : null; this.prunedMask = this.pruning ? new Uint8Array(E) : null;
     this.xPre = new Float32Array(N); this.xPost = new Float32Array(N);
