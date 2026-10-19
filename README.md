@@ -1,4 +1,4 @@
-# Spiking Arena v26: grown spiking brains, any environment
+# BugBrain (Spiking Arena) v39: grown spiking brains, any environment
 
 **Repository:** https://github.com/TravisA9/bugbrain-neurons (private). Collaboration rules for agents: [COLLABORATION.md](COLLABORATION.md).
 
@@ -7,6 +7,55 @@ Brains are networks of leaky integrate-and-fire neurons. Nobody writes them syna
 v7 splits the program into a **task-agnostic engine** and **environments** that plug into it. The bug arena is now just one environment. The long-term aim is other data types, eventually text.
 
 **Design principle:** always work toward the most biologically plausible *and* best-functioning designs: local, developmentally grown mechanisms that also measurably help.
+
+## How BugBrain works now (v39, October 2026)
+This section is the current summary. The sections further down are the reference for files and genes, and the round-by-round history
+(`Where things stand (round ...)`, `Round ...`) is kept as written at the time, so its "default" and "status" lines are out of date. Full numbers: [RESULTS.md](RESULTS.md); what is being tested next: [PRIORITIES.md](PRIORITIES.md).
+
+**What a brain is.** A few thousand leaky integrate-and-fire neurons (about 3,450 on the sequence tasks at normal size), grown from a cellular genome by local development (morphogens, a gene
+network in every cell, axon guidance, trophic competition, juvenile activity and pruning). Nobody wires synapses by hand and there is no backprop.
+
+**The default brain for text and sequences: `deepURSx3`.** One genome (`unifiedR` plus a context chain) grows several regions, depending on the task's signals:
+- **cortex**: the current symbol, conjunction / mixing cells, and the prediction cells that drive the outputs. Its prediction cells are the only cells that learn on sequence tasks.
+- **three context regions** in a chain: each is driven by the one before it, so together they hold older context (two and more symbols back). They feed the cortex mixing cells. Their wiring is grown, not learned.
+- **striatum** (only when the task has a reward / outcome signal, e.g. seqchoice, bandit): action cells that learn from dopamine.
+
+**How it learns during its life (three-factor rules, all local).**
+- *Cortex, teacher-gated rule.* The next input symbol is the teacher: when it arrives, its prediction cell gets a short plateau, and every
+  synapse from a recently active cell onto it is strengthened by lr x pre-trace (cortex lr **0.2** since v39). Each presynaptic cell keeps a fixed
+  total of outgoing plastic weight (`preNorm`), so its weights become "how often did each symbol follow me". Metaplastic consolidation slows the
+  learning of cells that have learned a lot, but only down to a floor (`metaCap` 200), so learning never stops over a long life.
+  There is **no prediction-miss weakening in the cortex** (`predErr` 0; it hurt long text).
+- *Striatum, dopamine rule.* Eligibility traces of pre-before-post timing, turned into weight changes by a dopamine reward prediction error (r - V),
+  plus prediction-miss weakening (`predErr` 0.3), which the reward sequence task needs.
+- *Readout.* The output is a graded decoder over the prediction cells' spikes with a small learned read-in (`readIn` 0.01, sequence tasks).
+- *Optional confidence gate* (`pl.outGate`, off by default): the brain only "speaks" when its winning output is clear enough (share or margin);
+  learning goes on either way. When it is sure, it is right about half the time vs about a third overall, and as a writing policy it gives more real words than always taking the top letter or sampling. It does not raise accuracy.
+
+**Engine.** Since v38 the default is the fast engine (`params.fastEngine` 1): the same model computed more cheaply, not bit-identical, checked by
+scores on 16 growths per task (no task worse; 2-3x faster on book jobs). Use `P.fastEngine=0` for exact-engine identity checks.
+
+**Tasks used for decisions** (all scored on held-out data / fresh growths): `book` (13 public-domain children's books, 3.3M training letters,
+24-symbol alphabet, held-out last 5% of each book; Node / workers only, not loaded by `index.html`), `fables`, `order3` (third-order sequence
+memory), `text` (small corpus), `seqchoice` (symbol-to-action pairings learned from reward).
+
+**Where it stands (held-out next-letter accuracy on book text).** v34 0.27 -> v37 0.32 -> v39 0.325-0.33 (16 fresh growths, 10k / 30k-letter lives). A linear readout
+trained directly on the brain's own activity reaches about 0.40, so the learning rule leaves room. A "last two letters" counter gets 0.43-0.52.
+Generation is babble with some real words (about 56-74% of generated words are real words, depending on the sampling policy).
+
+**Size.** Bigger brains need their wiring scaled to the sheet (`sc.grid`, `sc.maxCells`, and `sc.coneSpeed` / `sc.axonLen`, which are in grid steps):
+"4xS" = grid 120, maxCells 13600, coneSpeed 6, axonLen 80; "2xS" = 85 / 6800 / 4 / 57. 4xS gains about +0.02 on book and fables but loses order3
+(0.96 -> 0.73) and the reward sequence task; most of the order3 loss comes from more cells in the context regions or the cortex. 8x does not grow
+properly yet (cell division and growth time are counted in developmental steps). Longer lives (100k letters vs 30k) add almost nothing at any size.
+Size is therefore a run-time choice, not a default. At 4xS the best cortex rate is 0.1, not 0.2.
+
+**Tried and rejected** (details in IDEAS.md / RESULTS.md): output-side "space bias" fixes, stable letter-pair codes, sparser activity (the cortex
+already fires sparsely, ~2% of cells per step), fewer substeps per letter, staged maturation of a big brain, evolution / racing for text,
+stronger consolidation knobs (metaCap 100, metaN 80: book up, order3 down), tauPre 8 / 18, plateau 6 (order3 down at lr 0.2).
+
+**How experiments run.** Jobs are JSON files on the `queue` branch; always-on workers (the Linux PC `linux-pc`, the laptop `tacobell`) claim them,
+run them and push the results, and update their own code from `neuro/distributed-queue` (see [WORKERS.md](WORKERS.md), [DISTRIBUTED_QUEUE.md](DISTRIBUTED_QUEUE.md)).
+A change becomes the default only when it passes on 16 held-out growths with no task worse.
 
 ## Run it
 Double-click `index.html`. It works offline from `file://`: there's no build step, no server and no module loading. It uses plain `<script src>` files from `js/`. The `js/` folder must sit next to `index.html`.
@@ -349,7 +398,7 @@ PowerShell: `.\run.ps1 ...` with the same arguments; if scripts are blocked, use
 - **Speed:** the runner loads the engine into each thread directly (`run/engine.js`), not through a `vm` context as the tests do; in Node that is ~6× faster. On this 8-thread box Bun was faster than Node 20 (RESULTS R26); run `run.bat bench` on your PC to check. A run should stay with one runtime: results are bit-identical within a runtime, and Node and Bun also matched in all checks so far.
 - `node run/selftest.js` checks that the runner's fitness equals the app's Evolution fitness bit for bit, the RNG / resume, and that free genomes build and grow. `node dashboard_test.js` checks the dashboard in headless Chrome.
 
-## Where things stand (round 24, v23)
+## History: where things stood (round 24, v23)
 - **Two-region actor-critic** (rewardKR / rewardMemKR; RESULTS R24): the cortex region now grows its whole gene program, with no band killed.
   Its action band finds no outputs and dies late, so the state columns develop as in the single tissue.
   - Bandit best arm: 0.546 → **0.620** (single tissue 0.653); 2nd half of blocks 0.831 (single 0.790); silent trials 35 → 24 (single 14).

@@ -122,7 +122,15 @@ SA.registerPlan('deepURSx3v36', 'v36 default (kept): unifiedR + deeper context c
 //      on seqchoice (order2 +0.035 / cycle +0.012 vs v36). The striatum does not grow without an outcome signal, so seq tasks are bit-identical.
 const CORTEX_LR_V37 = 0.1, STRIATUM_PE_V37 = 0.3;
 Object.assign(SA, { CORTEX_LR_V37, STRIATUM_PE_V37 });
-SA.registerPlan('deepURSx3', 'v37 default: unifiedR + deeper context chain x3 (outcome-repressed), no prediction-miss LTD, capped consolidation (metaCap 200; R62), cortex lr 0.1 + striatum predErr 0.3 (R64)', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_V36, R.name === 'cortex' ? { lr: CORTEX_LR_V37 } : {}, R.name === 'striatum' ? { predErr: STRIATUM_PE_V37 } : {}); d.label += ' + capped consolidation + cortex lr 0.1 + striatum prediction-miss LTD'; return d; },
+SA.registerPlan('deepURSx3v37', 'v37 / v38 default (kept): unifiedR + deeper context chain x3 (outcome-repressed), no prediction-miss LTD, capped consolidation (metaCap 200; R62), cortex lr 0.1 + striatum predErr 0.3 (R64)', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_V36, R.name === 'cortex' ? { lr: CORTEX_LR_V37 } : {}, R.name === 'striatum' ? { predErr: STRIATUM_PE_V37 } : {}); d.label += ' + capped consolidation + cortex lr 0.1 + striatum prediction-miss LTD'; return d; },
+  'old default (v37 / v38); grows unifiedR exactly when an outcome signal is present');
+// v39 (R70 adopted under Travis's standing authorisation): the cortex learns at lr 0.2 (v37 / v38: 0.1); nothing else changes.
+//  y02 screen (growths 0-15) + y08 confirmation on FRESH growths k 1200-1215 (fast engine): book10k +0.006 (12/3, t 4.0), book30k +0.009 (15/1, 5.5),
+//  fables4000 +0.007 (15/1, 5.7), order3 -0.002 (8/6, t -0.7), text1000 +0.000 (8/7), seqchoice order2 / cycle identical (cortex rate unused there).
+//  lr 0.3 / 0.5 (y09) win book more but lose order3 (-0.015 t -2.5 / -0.046 0/15). At 4xS lr 0.2 is worse (y11), so scaled runs pin lr@cortex 0.1.
+const CORTEX_LR_V39 = 0.2;
+SA.CORTEX_LR_V39 = CORTEX_LR_V39;
+SA.registerPlan('deepURSx3', 'v39 default: unifiedR + deeper context chain x3 (outcome-repressed), no prediction-miss LTD, capped consolidation (metaCap 200; R62), cortex lr 0.2 (R70) + striatum predErr 0.3 (R64)', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_V36, R.name === 'cortex' ? { lr: CORTEX_LR_V39 } : {}, R.name === 'striatum' ? { predErr: STRIATUM_PE_V37 } : {}); d.label += ' + capped consolidation + cortex lr 0.2 + striatum prediction-miss LTD'; return d; },
   'default for three-phase-clock sequences/text and seqchoice; grows unifiedR exactly when an outcome signal is present');
 for (const M of [3, 4]) SA.registerPlan('wordChainx' + M, 'R44 I57: deep context chain x' + M + ' reset by the predicted space (ordered in-word memory)', () => createDeepUR(M, { wordReset: 30 }), 'experimental, off by default');
 SA.createDeepUR = createDeepUR; })();

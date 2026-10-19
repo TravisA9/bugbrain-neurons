@@ -291,10 +291,21 @@
   <p><b>v33: an evolved reward area.</b> The striatum of <code>unifiedR</code> now comes from a brain evolved on bandits with 3 and 6 arms
     and the symbol-to-arm tasks (rewardE3). Only that area was taken over: the whole evolved brain had lost its sequence skills. Bandit with
     6 arms 5.11 vs 4.31; other tasks unchanged within noise; text and order3 grow the same brains as before.</p>
-  <p>Honest status: predictK3 (cortex + context) is the default for text. The two-region actor-critic (cortex → striatum, rewardKR) is close
-    to the single tissue on the bandit (best arm 0.62 vs 0.65). It is still below on the cue task (0.70 vs 0.86).
-    What made the difference: the cortex now grows its whole gene program, and its action band dies naturally for lack of targets.
-    The earlier version killed that band with a gene, and its state columns came out smaller and less driven.</p>
+  <p><b>v34: a deeper memory for sequences.</b> The text and sequence default is now <code>deepURSx3</code>: <code>unifiedR</code> plus a chain
+    of three context areas. Each context area is driven by the one before it, so the chain holds progressively older context; all of them feed the cortex mixing cells. The chain is repressed by the outcome signal, so reward tasks grow as before.</p>
+  <p><b>v35 to v37: tuning the teacher rule for long lives.</b> v36 removed the prediction-miss weakening in the cortex and capped its
+    metaplastic consolidation (<code>metaCap</code> 200), so learning keeps a floor rate instead of fading out over a long life; the readout became
+    graded (a small trained read-in, <code>readIn</code> 0.01). v37 doubled the cortex learning rate (0.05 to 0.1) and gave the striatum its
+    prediction-miss weakening back (<code>predErr</code> 0.3), which seqchoice needs.</p>
+  <p><b>v38: a faster engine.</b> The same model and rules computed more cheaply (shared-factor traces, teacher updates only for active cells, a leaner membrane loop).
+    It is not bit-identical (rounding differs), so it was checked by scores on 16 growths per task: no task worse, 2 to 3 times faster.</p>
+  <p><b>v39: a faster cortex rate.</b> The cortex learns at 0.2 (was 0.1): about +0.006 to +0.009 on book text and +0.007 on fables, order3
+    and seqchoice unchanged (16 fresh growths). Higher rates (0.3, 0.5) gain more on book but start to forget order3.</p>
+  <p>Honest status (October 2026): <code>deepURSx3</code> is the default for text, sequences and seqchoice. On real book text it predicts the
+    next letter about 33% of the time on held-out text; a readout trained directly on its own activity reaches about 40%, so the learning
+    rule leaves room. Bigger brains (4&times; the cells, with axon reach and growth speed scaled to the bigger sheet) gain about 2 points on
+    book and fables but lose a lot on order3 and the reward sequence task, so size is not part of the default. Longer lives (100,000 letters
+    instead of 30,000) add almost nothing at any size yet. The brain generates babble with some real words, not sentences.</p>
 </section>
 
 <section id="needgrowth">

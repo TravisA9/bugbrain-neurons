@@ -3,8 +3,15 @@
 Set up each machine once. After that it starts at boot, restarts itself, and follows new code, jobs and settings from GitHub within ~10 minutes.
 No arguments and no manual pulls.
 
-You need a GitHub token **once** (fine-grained, repo `TravisA9/bugbrain-neurons`, **Contents: Read and write**; see TERMUX.md step 1).
-The installer asks for it and stores it only on that device in `~/.bugbrain/token` (chmod 600). It is never printed or committed.
+Current workers (Oct 2026): `linux-pc` (Linux PC, systemd service, ~8 parallel runs) and `tacobell` (Windows laptop, Task Scheduler,
+~4 parallel runs, `cpuMax` 75, never on battery). No phone is running at the moment.
+
+You need a GitHub token **once** (fine-grained, repo `TravisA9/bugbrain-neurons`, **Contents: Read and write**). Create it at
+https://github.com/settings/personal-access-tokens/new: *Only select repositories* -> `bugbrain-neurons`; *Permissions* -> *Contents* -> *Read and write*.
+The installer asks for it, **checks it with GitHub before saving it** (`run/token-check.sh`, a dry-run push that creates nothing), and stores it
+only on that device in `~/.bugbrain/token` (chmod 600). It is never printed or committed.
+Never put the token on a command line (`BB_DQ_TOKEN=... bun ...`): the shell then shows it in job listings and logs. If a token is ever shared,
+delete it in the token list (https://github.com/settings/personal-access-tokens) and install a new one.
 
 ## Linux PC (e.g. linux-pc)
 Stop any old worker first (Ctrl+C in its terminal, or `pkill -f run/dq.js`). Then:
@@ -35,7 +42,9 @@ On a laptop the worker never claims a job while on battery, and `cpuMax` (e.g. `
 If dq.js crashes or is killed, its job process tree is killed too (taskkill /T), so no orphaned runs keep computing.
 
 ## Everyday
-- Log: `tail -f ~/.bugbrain/worker.log` (Windows: `%USERPROFILE%\.bugbrain\worker.log`)
+- Is it working? `cat ~/.bugbrain/status.json` (state `running-dq` = fine, `token-refused` = new token needed). The queue branch also shows it: `workers/<name>.json` and the `heartbeat` / `claim` / `result` commits.
+- Only one worker per machine: `pgrep -af dq.js` should list one `dq.js --worker <name>` (started by the service). Old hand-started copies (`dq.js --wait --include-text`) can be stopped with `kill <pid>`; their jobs are re-run.
+- Log: `tail -f ~/.bugbrain/worker.log` (Windows: `Get-Content $HOME\.bugbrain\worker.log -Tail 20 -Wait`)
 - Stop / start (Linux): `systemctl --user stop bugbrain-worker` / `start`. Termux: `pkill -f bugbrain/worker.sh; pkill -f run/supervisor.js`. Windows: Task Scheduler → BugBrainWorker → End.
 - Rename: put the name in `~/.bugbrain/worker-name` and restart. New token: overwrite `~/.bugbrain/token` (the worker retries within a minute).
 - Local edits in the checkout are stashed, not lost (`git stash list`).

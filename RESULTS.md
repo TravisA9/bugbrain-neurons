@@ -2944,3 +2944,76 @@ For exact-engine identity checks (refactors), pass P.fastEngine=0 (r42 / p37 var
 About 76 slot-hours. With linux-pc ~8 parallel runs and tacobell ~4 (measured: y06 16 x 1087 s in 36 min; y07 11.1k slot-s in 46 min) that is ~6-6.5 h of
 wall time on both workers together, perhaps 8-9 h if 4xS runs are memory-bound; short of 12 h on purpose (see PRIORITIES R69). The fast engine plus the 1-growth runs make the workers far faster than the old
 estimates (R64's "21 h" queue drained in ~10 h together with z01-z10).
+
+## R70 — v39 adopted (cortex lr 0.2, DEFAULTS_VERSION 32), size dissection, rate x size (box, Oct 19 morning)
+R69 (7:43 AM CT) had already adopted v38 and queued y08-y22 + z10b; the workers have been busy since 7:44 AM (not idle). R70 reads the jobs finished
+since then (y08a/b, y09, y10a, y11a/b), adopts v39 and refills the queue. Cells: accuracy diff (wins / losses, paired t), paired by growth seed, fast engine.
+
+### 1. Cortex lr 0.2 on FRESH growths k 1200-1215 (y08a/b, 7 tasks, vs the v38 base arm of the same job) — **adopted as v39**
+| arm | book10k | book30k | fables4000 | order3 | text1000 | seqchoice order2 / cycle |
+|---|---|---|---|---|---|---|
+| lr 0.2 | **+0.006 (12/3, 4.0)** | **+0.009 (15/1, 5.5)** | **+0.007 (15/1, 5.7)** | -0.002 (8/6, -0.7) | +0.000 (8/7, 0.5) | identical (0/0) |
+| lr 0.2 + plateau 6 | +0.006 (14/2, 4.5) | +0.008 (14/1, 5.1) | +0.008 (16/0, 6.5) | **-0.020 (4/11, -2.6)** | +0.001 | identical |
+Absolute (lr 0.2): book10k 0.325, book30k 0.328, fables 0.345, order3 0.956, text 0.757; seqchoice order2 6.53, cycle 9.17 (fit). No task worse -> v39 under the
+standing authorisation. plateau 6 is rejected (order3). Together with y02 (growths 0-15): order3 -0.007 / -0.002, both n.s.; y23 (fresh set 2, k 1300-1315) re-checks it.
+
+### 2. Rate ladder at 1x (y09, growths 0-15, vs v38 base)
+| arm | book10k | book30k | fables4000 | order3 | text1000 |
+|---|---|---|---|---|---|
+| lr 0.3 | +0.008 (14/2, 5.6) | +0.011 (14/0, 8.0) | +0.009 (16/0, 7.7) | **-0.015 (5/10, -2.5)** | +0.002 |
+| lr 0.5 | +0.006 (11/2, 3.3) | +0.008 (13/3, 4.9) | +0.010 (15/1, 7.5) | **-0.046 (0/15, -4.6)** | -0.003 (5/11) |
+lr 0.3 vs lr 0.2 (y02, exact engine): book +0.000 / +0.002, fables +0.002, order3 -0.008 (2/9, -3.1). The rate stops paying at ~0.2-0.25: above it,
+book gains flatten and order3 is forgotten. y24 tests 0.25.
+
+### 3. 4xS by region (y10a/b, growths 0-15, vs 1x: x04 / y10 1x arm)
+| arm | book10k | fables4000 | order3 | text1000 | seqchoice cycle / order2 (fit; 1x 9.11 / 6.39) |
+|---|---|---|---|---|---|
+| all regions | +0.020 (14/2, 4.3) | +0.017 (14/2, 3.2) | -0.238 (0/16) | +0.002 | 2.39 / 2.30 (0/16) |
+| cortex only | +0.014 (12/4, 2.9) | +0.013 (12/4, 2.6) | -0.160 (0/16) | **-0.015 (2/13, -4.3)** | 3.26 / 3.23 (0/16) |
+| context only | +0.001 | +0.001 | **-0.219 (0/16)** | +0.002 | 8.81 (-0.29, t -2.3) / 6.49 (n.s.) |
+| all but striatum | - | - | - | - | 3.72 / 3.31 (0/16) |
+- The book / fables gain is carried by the **cortex** (about 70% of it). Scaling the **context** regions buys nothing on text and by itself costs
+  almost the whole order3 loss. The seqchoice collapse comes from the scaled **cortex** (the inflated striatum adds a little).
+- A "cortex 4xS, context 1x" brain keeps most of the book gain but still loses order3 -0.16, text -0.015 and seqchoice. Neither region can simply
+  be scaled; a code fix is needed (I87: normalised fan-in from bigger regions, per-region scaling).
+
+### 4. Rate x size (y11a/b, 4xS, growths 0-15, vs y03 4xS v37)
+| arm | book10k | book30k | fables4000 | order3 | text1000 |
+|---|---|---|---|---|---|
+| 4xS lr 0.2 | **-0.004 (1/15, -3.5)** | **-0.006 (2/13, -3.5)** | -0.002 (2/11, -1.9) | +0.001 (4/0) | **-0.006 (3/13, -3.0)** |
+| 4xS lr 0.05 | +0.002 (10/5) | - | - | -0.002 (1/7, -2.4) | +0.003 (11/5) |
+| 4xS base, fast vs exact (book30k) | - | +0.000 (1/1) | - | - | - |
+- At 4xS the faster rate **hurts**: the best cortex rate falls with size (1x 0.2-0.25, 4xS <= 0.1). 4xS lr 0.2 vs 1x v38: book +0.016, order3 -0.236.
+- A slower rate does not rescue order3 at size (lr 0.05 -0.002). The order3 loss is structural, not a learning-rate effect.
+- So v39 is a 1x default; scaled runs must pin `pl.lr@cortex=0.1` (all R70 jobs pin the cortex rate). y28 / y29 map the rate curve at 2xS / 4xS.
+
+### 4b. v39 second fresh set (y23a/b, k 1300-1315) and fast-engine completion (z10b)
+- y23 lr 0.2 vs lr 0.1: book10k +0.008 (16/0, 4.8), book30k +0.007 (13/3, 3.4), fables +0.007 (16/0, 7.8), order3 -0.005 (5/9, t -1.93), text +0.001,
+  seqchoice identical. Passes again. Pooled 32 fresh growths (y08 + y23): book +0.007 / +0.008 (28/3, 28/4), fables +0.007 (31/1), order3 **-0.004
+  (13/15, t -1.73)**. The order3 cost of the faster rate is small but probably real; watch it (y24 / y25 arms).
+- z10b (4xS, growths 1108-1115, fast vs exact): fables / order3 / text identical, seqchoice cycle -0.03 (t -0.58), order2 +0.11 (t 0.97). With z10 the
+  4xS check is complete at 16 growths: no task worse, the v38 engine default stands.
+
+### 5. v39 code (R70)
+js/envs/reward_evolved.js: plan `deepURSx3` = v37 plan with cortex lr 0.2 (`CORTEX_LR_V39`); the v37 / v38 brain is kept as plan `deepURSx3v37`.
+js/core/base.js: APP_VERSION v39, DEFAULTS_VERSION 32. test_core.js: v39 check (deepURSx3 = deepURSx3v37 + cortex lr 0.2, every other region and gene identical).
+The engine default (fast) is unchanged. Docs: README "How BugBrain works now", growth.html v34-v39 + status, WORKERS / DISTRIBUTED_QUEUE / TERMUX.
+
+### 6. Queue (R70; run/r70_jobs.js y23-y41; every arm sets pl.lr@cortex and P.fastEngine; pending y15-y22 pinned to pl.lr@cortex=0.1)
+| pri | id | what | slot-h |
+|---|---|---|---|
+| 0.99 | y23a/b | v39 vs v38 on fresh set 2 (k 1300-1315), 7 tasks | 0.8 + 0.8 |
+| 0.985 | y24 | lr 0.25 vs 0.2, 5 tasks | 1.4 |
+| 0.98 | y25 | v39 + teachThr 15 / 25, plateau 5, metaCap 400, trustPow 0.5, preNorm 55 | 4.1 |
+| 0.97 | y26 | v39 book100k (16 growths) | 1.2 |
+| 0.965 / 0.955 | y28a/b, y29a/b | 2xS lr 0.05 / 0.1 / 0.2; 4xS lr 0.07 / 0.14 (5 tasks) | 4.8, 11 |
+| 0.96 | y30 | order3 K 4 / 16 at 1x and 4xS (context length vs capacity) | 0.9 |
+| 0.95 | y31 | v39 generation: greedy / T1 / gate margin 0.2 / gate 0.4 + T0.7 at 30k, gates at 100k | 4 |
+| 0.94 | y27 | v39 1x book30k / 100k / 300k / 1M (fresh k 1400-1407) | 8.6 |
+| 0.92 | y33a/b | 4xS cortex-only / context-only on book30k + fables8000 | 8.2 |
+| 0.9 | y32, y34 | 4xS generation after 100k; 2xS fresh 7 tasks | 8.9, 2 |
+| 0.88 | y35a/b | 4xS + teachThr 15 / metaCap 400 | 11 |
+| 0.86 | y36 | 4xS book100k / 300k (fresh k 1400-1407): does 4xS improve past 100k? | 17.8 |
+| 0.82-0.7 | y40, y39a/b, y37a/b, y38, y41 | 2xS 100k / 300k; 3xS fresh; 4xS dissection growths 16-31; y25 on growths 16-31; 4xS lr x 100k | 30 |
+R70 adds ~122 slot-hours; with the ~44 left from R69 that is ~166 slot-hours, about 14 h of wall time on both workers together at the measured
+~12 parallel runs (R69's estimates ran ~0.6-0.7x on the workers, so possibly ~10 h). y19 / y22 (4xS lr 0.2) lowered to priority 0.6 after y11.

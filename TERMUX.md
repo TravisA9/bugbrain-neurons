@@ -1,6 +1,6 @@
 # Running the BugBrain worker on Android (Termux)
 
-> **New (R61):** the always-on setup in [WORKERS.md](WORKERS.md) starts at boot and updates itself. Use it instead of step 2 below; step 1 (the token) is still needed.
+> **Use the always-on setup in [WORKERS.md](WORKERS.md)** (Android section): it starts at boot, updates itself and checks the token before saving it. Step 1 below (the token) is still needed; step 2 is the old manual setup, kept for reference.
 
 Each phone or tablet joins the shared job list (branch `queue`), the same one the PC and the GitHub runners use, so no job is run twice.
 Phone mode uses 1–2 cores. It pauses when the battery is below 30 %, when the device isn't charging, or when the battery reaches 42 °C, and it resumes on its own.
@@ -12,7 +12,7 @@ Phone mode uses 1–2 cores. It pauses when the battery is below 30 %, when the 
 4. Permissions → Repository permissions → **Contents: Read and write** (leave everything else at No access; Metadata read-only is added automatically).
 5. Generate, then copy the token (starts with `github_pat_`). One token can be used on all devices.
 
-## 2. On each device
+## 2. On each device (old manual setup)
 1. Install **Termux** and **Termux:API** from F-Droid (https://f-droid.org/packages/com.termux/ and https://f-droid.org/packages/com.termux.api/). The Play Store version of Termux is outdated, so don't use it.
 2. Android settings → Apps → Termux → Battery → **Unrestricted** (otherwise Android kills it overnight).
 3. Open Termux and paste:

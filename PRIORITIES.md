@@ -1,6 +1,33 @@
-# PRIORITIES (R69, Oct 19 2026, 7:50 AM CT; **v38 / DEFAULTS_VERSION 31** = v37 brains + fast engine default)
+# PRIORITIES (R70, Oct 19 2026, ~9:30 AM CT; **v39 / DEFAULTS_VERSION 32** = v38 + cortex lr 0.2)
 
-## R69 update
+## R70 update
+- **v39 adopted** (standing authorisation): cortex lr 0.2 passed on 16 FRESH growths (y08: book10k +0.006, book30k +0.009, fables +0.007, order3 -0.002 n.s.,
+  text 0, seqchoice identical). Old brain = plan `deepURSx3v37`. y23 (fresh set 2) passes too; pooled 32 fresh growths order3 -0.004 (t -1.7): small, watch it.
+  z10b completes the 4xS fast-engine check (no task worse): v38 engine stands. lr 0.3 / 0.5 forget order3 (-0.015 / -0.046): the rate optimum at 1x is ~0.2-0.25.
+- **Rate x size:** at 4xS lr 0.2 is worse (book -0.004 / -0.006, text -0.006); lr 0.05 does not rescue order3. The best rate falls with size, so scaled runs pin lr 0.1.
+- **Size dissection (y10a/b, 16 growths):** the book gain lives in the cortex (+0.014 of +0.020); scaling the context regions gains nothing and alone costs
+  order3 -0.22; scaling the cortex alone costs order3 -0.16, text -0.015 and collapses seqchoice. A code fix is needed before size can be a default (I87).
+- **Large-run decision:** still **not ready** (order3 / seqchoice lost at size; length flat at 100k). y36 (4xS 100k vs 300k) and y27 (1x to 1M) answer the length half.
+- Rejected: plateau 6 at lr 0.2 (order3 -0.020, t -2.6), lr 0.3 / 0.5.
+
+## Ranked open questions (R70)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I77 | Rule knobs at the new rate (teachThr, plateau 5, metaCap 400, trustPow 0.5, preNorm 55); lr 0.25; does v39 hold on fresh set 2? | y23, y24, y25, y38 |
+| 2 | I87 | Region causes of the size loss (y10b, y16, y33, y37) and order3 K 4 / 16 x size (y30); then a box code fix: per-region scaling, fan-in normalised to source-region size, striatum excluded from sc.* | y10b, y16, y30, y33, y37 |
+| 3 | I78 | Rate x size curve (2xS 0.05 / 0.1 / 0.2, 4xS 0.07 / 0.14); size curve on fresh seeds (2xS / 3xS / 4xS); rule knobs at 4xS | y28, y29, y34, y39, y15, y21, y35 |
+| 4 | I73 | Does length ever pay? 1x v39 to 1M; 2xS / 4xS 100k -> 300k | y26, y27, y36, y40, y41 |
+| 5 | I72 / I81 | Generation with the gate under v39 and at 4xS after 100k | y31, y32, y18 |
+| 6 | I80 | 8x growth needs proliferation / growth time scaled (code, box) | none (code) |
+| low | - | space-bias output fixes, mixing codes, sparser activity, fewer substeps, staged maturation, evolution / racing, plateau 6, lr >= 0.3 | none |
+Decision point (for Travis) unchanged: no large run until a scaled brain keeps order3 within 0.02 of 1x and seqchoice within noise while keeping the book gain,
+and y36 shows 4xS still improving between 100k and 300k.
+
+## Worker notes (R70)
+Both workers were busy on R69 jobs all morning (linux-pc y08a -> z10b, tacobell y08b -> y10b). R70 queued ~122 slot-hours on top of ~44 left (~14 h wall
+together by the estimates, likely less). All R70 jobs `require` only R69 files, so the workers can claim them on their current code.
+
+## Previous update (R69)
 - **v38 adopted** (standing authorisation): params.fastEngine 1 by default after z08 (1x, 16 growths x 7 tasks), z09 (4xS book10k, 16/16 identical) and
   z10 (4xS 5 tasks, 8 growths) showed no task worse. Exact engine = P.fastEngine=0 (identity checks; verify.js BB_ENGINE=0). z10b completes the 4xS check.
 - **Size is not a free win.** 4xS gains book +0.02 and fables +0.017 but loses order3 -0.24 (0/16) and collapses seqchoice; 2xS loses order3 -0.15 and
