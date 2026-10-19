@@ -144,6 +144,7 @@ class SpikingNet {
     const cls = new Uint16Array(N), vals = [], idx = new Map();
     for (let i = 0; i < N; i++) { const l = g.slow && g.slow[i] ? g.leak[i] : L; let c = idx.get(l); if (c === undefined) { c = vals.length; idx.set(l, c); vals.push(l); } cls[i] = c; }
     this.lkCls = cls; this.lkVal = Float64Array.from(vals); this.lkTP = TP; this.lkLeak = L;
+    this.fDense = params.fastEngine !== 2; this.lkC = Float64Array.from(cls, c => vals[c]);   // (1: every membrane updated each substep (faster at the measured ~20% touched cells per substep); 2: only touched cells, lazy leak)
     const pw = this.lkPow = new Float64Array(vals.length * TP); vals.forEach((l, c) => { let x = 1; for (let n = 0; n < TP; n++) { pw[c * TP + n] = x; x *= l; } });
     this.mk = new Uint8Array(2 * N + 4); this.mk32 = new Uint32Array(this.mk.buffer, 0, N >> 2);
     this.trS = Float64Array.from(this.trace); this.trG = 1;
@@ -161,14 +162,15 @@ class SpikingNet {
     if (!this.fastE) return; const N = this.N, v = this.v, t = this.subNo, cls = this.lkCls, lv = this.lkVal;
     for (let i = 0; i < N; i++) { const n = t - this.tv[i]; if (n > 0) { v[i] = V_REST + (v[i] - V_REST) * Math.pow(lv[cls[i]], n); this.tv[i] = t; } this.trace[i] = this.trS[i] * this.trG; }
   }
-  renormF(a, f) { for (let i = 0; i < a.length; i++) a[i] *= f; }
-  stepFast() {
-    const N = this.N, v = this.v, syn = this.syn, ext = this.ext, sp = this.spiked, th = this.thr || this.g.thresh, mk = this.mk, m32 = this.mk32, tv = this.tv;
-    const spk = this.spk, t = ++this.subNo, R = V_REST, FL = V_FLOOR;
-    for (let s = 0; s < this.nSpk; s++) sp[spk[s]] = 0;       // spike flags of the previous substep
-    this.trG *= params.traceDecay; if (this.trG < 1e-100) { this.renormF(this.trS, this.trG); this.trG = 1; }
-    if (this.extAt !== this.tickNo) this.buildExt();
-    { const E = this.extL; for (let q = 0; q < this.nExt; q++) { const i = E[q]; syn[i] += ext[i]; mk[i] = 1; } }
+  neuDense() {                               // R66 (fastEngine 1): every cell, as the exact loop, without the per-cell trace / flag writes
+    const N = this.N, v = this.v, syn = this.syn, sp = this.spiked, th = this.thr || this.g.thresh, spk = this.spk, R = V_REST, FL = V_FLOOR, lk = this.lkC, trS = this.trS, trI = 1 / this.trG;
+    let nSpk = 0;
+    for (let i = 0; i < N; i++) { const x = R + (v[i] + syn[i] - R) * lk[i]; syn[i] = 0;
+      if (x >= th[i]) { v[i] = R; sp[i] = 1; spk[nSpk++] = i; trS[i] += trI; } else v[i] = x < FL ? FL : x; }
+    return nSpk;
+  }
+  neuFast(t) {                               // R66 (fastEngine 2): membrane update of the touched cells (ascending), returns the spike count
+    const N = this.N, v = this.v, syn = this.syn, sp = this.spiked, th = this.thr || this.g.thresh, mk = this.mk, m32 = this.mk32, tv = this.tv, spk = this.spk, R = V_REST, FL = V_FLOOR;
     const cls = this.lkCls, PW = this.lkPow, TP = this.lkTP, lv = this.lkVal, trS = this.trS, trI = 1 / this.trG, nW = N >> 2;
     let nSpk = 0;
     for (let w = 0; w <= nW; w++) {
@@ -181,17 +183,31 @@ class SpikingNet {
         if (x >= th[i]) { v[i] = R; sp[i] = 1; spk[nSpk++] = i; trS[i] += trI; }
         else v[i] = x < FL ? FL : x; }
     }
+    return nSpk;
+  }
+  renormF(a, f) { for (let i = 0; i < a.length; i++) a[i] *= f; }
+  stepFast() {
+    const N = this.N, v = this.v, syn = this.syn, ext = this.ext, sp = this.spiked, th = this.thr || this.g.thresh, mk = this.mk, m32 = this.mk32, tv = this.tv;
+    const spk = this.spk, t = ++this.subNo, R = V_REST, FL = V_FLOOR;
+    for (let s = 0; s < this.nSpk; s++) sp[spk[s]] = 0;       // spike flags of the previous substep
+    this.trG *= params.traceDecay; if (this.trG < 1e-100) { this.renormF(this.trS, this.trG); this.trG = 1; }
+    if (this.extAt !== this.tickNo) this.buildExt();
+    { const E = this.extL; for (let q = 0; q < this.nExt; q++) { const i = E[q]; syn[i] += ext[i]; mk[i] = 1; } }
+    const nSpk = this.fDense ? this.neuDense() : this.neuFast(t);
+
     this.spikeCount += nSpk; this.nSpk = nSpk;
     const start = this.start, posts = this.posts, ws = this.ws;
     if (this.rcv) {                          // receiver pool (as propagateRcv), touched cells marked
       const buf = this.synBuf, tg = this.synTgt, isR = this.isRcv, sP = this.synP, RL = this.rcv, p = this.p; let nR = 0;
-      for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (isR[i]) nR++; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = tg[k]; buf[j] += ws[k]; mk[j] = 1; } }
+      if (this.fDense) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (isR[i]) nR++; for (let k = start[i], e = start[i + 1]; k < e; k++) buf[tg[k]] += ws[k]; }
+      else for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (isR[i]) nR++; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = tg[k]; buf[j] += ws[k]; mk[j] = 1; } }
       let f = 1; if (p.rcvDiv > 0) { let S = 0; for (let q = 0; q < RL.length; q++) S += sP[RL[q]]; f = p.rcvDiv * RL.length / (p.rcvSig + S); }
-      this.poolTr = this.poolTr * this.dPool + nR; const inh = p.rcvInh * this.poolTr, sd = p.rcvNoise, rng = this.rcvRng, all = inh !== 0 || sd > 0;
+      this.poolTr = this.poolTr * this.dPool + nR; const inh = p.rcvInh * this.poolTr, sd = p.rcvNoise, rng = this.rcvRng, all = inh !== 0 || sd > 0 || this.fDense;
       for (let q = 0; q < RL.length; q++) { const j = RL[q]; if (!mk[N + j] && !all) continue; mk[N + j] = 0;
         let x = sP[j] * f - inh; if (sd > 0) { const u = rng() || 1e-12, z = rng(); x += sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185307 * z); }
         syn[j] += x; sP[j] = 0; mk[j] = 1; }
-    } else for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = posts[k]; syn[j] += ws[k]; mk[j] = 1; } }
+    } else if (this.fDense) for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) syn[posts[k]] += ws[k]; }
+    else for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = posts[k]; syn[j] += ws[k]; mk[j] = 1; } }
     if (this.rhList && params.plasticity) { const L = this.rhList, h = this.p.rcvHomeo, r0 = this.p.rcvRate, thr = this.thr; for (let q = 0; q < L.length; q++) { const i = L[q]; thr[i] += h * (sp[i] - r0); if (thr[i] <= (v[i] > R ? v[i] : R)) mk[i] = 1; } }
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];
       if (n) { const d = this.p.mixInh * n, ml = this.mixList; for (let q = 0; q < ml.length; q++) { syn[ml[q]] -= d; mk[ml[q]] = 1; } } }
