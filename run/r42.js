@@ -5,7 +5,7 @@ const [plan, tj, G = 16, variant = 'base', g0 = 0] = process.argv.slice(2), task
 const gc = L.serialize(L.startGenome(plan)), cells = gc.kind === 'regions' ? gc.cell.regions.map(r => r.g) : [gc.cell];
 if (variant !== 'base') for (const kv of variant.split(',')) { const [k0, v] = kv.split('='), [k, sel] = k0.split('@'), [s, f] = k.split('.'); if (s === 'P') SA.params[f] = +v; else for (const C of L.selCells(gc, cells, sel)) C[s][f] = +v; }   // R63: s.f@sel=v targets regions by name prefix (sel 'cortex', 'context', '!striatum'); no @ = every region
 if (process.env.BB_PEDBG) globalThis.__peDbg = { d: 0, p: 0, n: 0 };
-const p = L.seedPlan({ valGrowths: 64, valArenas: 64 }, 0, true), scores = [], st = {};
+const nV = Math.max(64, +g0 + +G), p = L.seedPlan({ valGrowths: nV, valArenas: nV }, 0, true)   // R65: g0 >= 64 = growth / arena seeds never used before (VAL_GROW_SEED + k, VAL_SEED + k; k < 64 unchanged), scores = [], st = {};
 for (let k = +g0; k < +g0 + +G; k++) { const r = L.evaluateGenome(gc, [task], { G: 1, A: 1, growSeeds: [p.growSeeds[k]], arenaSeeds: [p.arenaSeeds[k]] }); if (r.error) throw new Error(r.error);
   scores.push(r.tasks[0].mean); for (const q in r.tasks[0].stats) st[q] = (st[q] || 0) + r.tasks[0].stats[q] / G; st.hidden = (st.hidden || 0) + r.brain.hidden / G; }
 const m = scores.reduce((a, b) => a + b, 0) / scores.length, sd = Math.sqrt(scores.reduce((a, b) => a + (b - m) ** 2, 0) / scores.length);

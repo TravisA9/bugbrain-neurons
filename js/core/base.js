@@ -159,7 +159,14 @@ const PL_DEFAULTS = { lr: 0.03, tauPre: 10, tauPost: 10, aMinus: 0.3, tauElig: 5
   // threshold and its rise when the new cells alive equal the layer in number (metabolic cost); ngHold events above before a recruit, ngRef events between recruits;
   // ngTrial / ngKeep trophic test; ngW start weight of a new cell's axon (x the layer's mean); ngClaw dendrite size (0 = the layer's median);
   // ngReduce: experiment only, fraction of the learning layer removed at birth (the reduced start).
-  ng: 0, ngRes: 256, ngBatch: 8, ngTau: 20, ngThr: 0.3, ngCost: 0.3, ngHold: 20, ngRef: 5, ngTrial: 60, ngKeep: 0.3, ngW: 0.5, ngClaw: 0, ngReduce: 0 };   // trust0: starting trust (-1 = trustRef)
+  ng: 0, ngRes: 256, ngBatch: 8, ngTau: 20, ngThr: 0.3, ngCost: 0.3, ngHold: 20, ngRef: 5, ngTrial: 60, ngKeep: 0.3, ngW: 0.5, ngClaw: 0, ngReduce: 0,
+  // R65 (I81, Travis's passive learner) OUTPUT GATE (0 = off): a basal-ganglia-like gate on the read-out. The brain keeps learning from every
+  // teacher event (silent internal next-symbol prediction); its prediction is EMITTED only when the read-out is confident: confidence =
+  // share of the winning column in the read window (outGateMode 0) or margin of the winner over the runner-up / total (mode 1) >= outGate.
+  // Teacher-forced tasks: an unemitted prediction is an abstention (no reward / punishment event; stats gateCov = share emitted,
+  // gatePrec = accuracy of the emitted ones; accuracy still scores every prediction). Free-running generation: a confident step emits the
+  // winner, an unconfident one samples p ~ counts^(1/T) (T = genTemp, or 1). Read by the env from the output region's pl. Not mutated.
+  outGate: 0, outGateMode: 0 };   // trust0: starting trust (-1 = trustRef)
 // v22 (round 23): the ONE learning-rule set of the default plans predictK3, rewardK, rewardMemK (and the region plans):
 // unified three-factor rule, instructive gain, eligibility, critic (outcome RPE), synaptic scaling setpoint (RESULTS R23)
 const UNIFIED_PL = { uni: 1, lr: 0.05, uniI: 0.4, tauElig: 100, aMinus: 0.3, rpe: 1, rpeMode: 1, rpeLr: 0.3, preNorm: 45, teachThr: 20, plateau: 4 };

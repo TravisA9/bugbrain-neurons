@@ -135,14 +135,21 @@ class SeqTask {
     if (c3 && this.phaseT === 0) for (let i = 0; i < nc; i++) ext[K + 2 * nc + i] = P.goGain;
     ext[K + (c3 ? 3 : 2) * nc] = P.tonicCurrent;
   }
-  act(out) {
+  // R65 output gate (pl.outGate > 0): confidence of the read-out (share of the winner, or winner - runner-up margin, over the total)
+  gateOf(agent) { if (this.gateThr === undefined) { const p = agent && agent.net && agent.net.p; this.gateThr = p && p.outGate > 0 ? p.outGate : 0; this.gateMode = p ? p.outGateMode | 0 : 0; this.gE = 0; this.gH = 0; this.gN = 0; } return this.gateThr; }
+  confOf(c) { let tot = 0, a = 0, b = 0; for (let j = 0; j < c.length; j++) { const v = c[j]; tot += v; if (v > a) { b = a; a = v; } else if (v > b) b = v; }
+    return tot > 0 ? (this.gateMode === 1 ? (a - b) / tot : a / tot) : 0; }
+  act(out, agent) {
     const P = this.P, K = this.K; let ev = null;
     if (this.phaseT >= this.slot - P.readTicks) { const g = P.readIn || 0;   // v13 readIn > 0: graded decoder, adds readIn x the output cells' summed synaptic input
       const nO = Math.min(this.nOut, out.spikes.length); if (g > 0 && out.input) for (let k = 0; k < nO; k++) this.counts[k] += out.spikes[k] + g * Math.max(0, out.input[k]); else for (let k = 0; k < nO; k++) this.counts[k] += out.spikes[k]; }
     this.phaseT++; this.t++;
     if (this.phaseT >= this.slot && this.pos >= this.P.nSyms) {   // R60 free-running generation (book, genSyms): the prediction becomes the next input
       let k = Dec.wta(this.counts), tot = 0; for (let j = 0; j < K; j++) tot += this.counts[j];
-      if (this.P.genTemp > 0 && tot > 0) { const w = new Float64Array(K); let z = 0; for (let j = 0; j < K; j++) z += (w[j] = Math.pow(this.counts[j] + 0.01, 1 / this.P.genTemp)); let u = this.rng() * z; for (k = 0; k < K - 1 && (u -= w[k]) > 0; k++); }   // genTemp > 0: sample p ~ counts^(1/T)
+      const gt = this.gateOf(agent);
+      if (gt > 0) { this.ggN = (this.ggN || 0) + 1; if (tot > 0 && this.confOf(this.counts) >= gt) this.ggE = (this.ggE || 0) + 1;   // gated generation: confident -> the winner, else sample
+        else if (tot > 0) { const T = this.P.genTemp > 0 ? this.P.genTemp : 1, w = new Float64Array(K); let z = 0; for (let j = 0; j < K; j++) z += (w[j] = Math.pow(this.counts[j] + 0.01, 1 / T)); let u = this.rng() * z; for (k = 0; k < K - 1 && (u -= w[k]) > 0; k++); } }
+      else if (this.P.genTemp > 0 && tot > 0) { const w = new Float64Array(K); let z = 0; for (let j = 0; j < K; j++) z += (w[j] = Math.pow(this.counts[j] + 0.01, 1 / this.P.genTemp)); let u = this.rng() * z; for (k = 0; k < K - 1 && (u -= w[k]) > 0; k++); }   // genTemp > 0: sample p ~ counts^(1/T)
       this.gen.push(k); this.genConf = (this.genConf || 0) + (tot > 0 ? this.counts[k] / tot : 0); this.seq[this.pos + 1] = k;
       this.lastCounts.set(this.counts); this.counts.fill(0); this.phaseT = 0; this.pos++; return null; }
     if (this.phaseT >= this.slot) {                 // end of the slot: the prediction of the next symbol
@@ -161,6 +168,7 @@ class SeqTask {
       this.recent.push([this.seq[this.pos], k, ok, target]); if (this.recent.length > 40) this.recent.shift();   // [input, predicted next, right?, actual next]
       this.rewardLog.push([this.t, ok ? 1 : 0]); this.lastCounts.set(this.counts);
       ev = { pos: ok ? 1 : 0, neg: ok ? 0 : P.wrongCost, pain: 0, reward: ok ? 1 : 0 }; if (this.outcomeEv) ev.outcome = true;
+      if (this.gateOf(agent) > 0) { this.gN++; if (this.confOf(this.counts) >= this.gateThr) { this.gE++; if (ok) this.gH++; } else ev = { pos: 0, neg: 0, pain: 0, reward: 0 }; }   // R65 abstention: no outcome
       this.counts.fill(0); this.phaseT = 0; this.pos++;
     }
     return ev;
@@ -177,7 +185,8 @@ class SeqTask {
   get bF1() { const c = this.bc; return this.f1(c.tp, c.fp, c.fn); }
   stats() { const c = this.bc; return { bF1: this.bF1, bP: c.tp + c.fp ? c.tp / (c.tp + c.fp) : 0, bR: c.tp + c.fn ? c.tp / (c.tp + c.fn) : 0, bF1bigram: this.f1(c.itp, c.ifp, c.ifn), symbols: this.n, accuracy: this.accuracy, firstQuarter: this.quarter(0), q1: this.quarter(1), q2: this.quarter(2), lastQuarter: this.quarter(3), bits: this.bps,
                      chance: 1 / this.K, optimal: this.rule.optAcc, idealOnline: this.idealAcc(), idealLast: this.idealAcc(3), optBits: this.rule.optBits, firstOrder: this.rule.firstOrderAcc, unigram: this.rule.unigramAcc,
-                     bitsSoft: this.cal.n ? this.cal.bitsSoft / this.cal.n : 0, bitsCount: this.cal.n ? this.cal.bitsCount / this.cal.n : 0, idealBits: this.n ? this.idealBits / this.n : 0, unigramBits: this.rule.unigramBits, ...this.bookStats() }; }
+                     bitsSoft: this.cal.n ? this.cal.bitsSoft / this.cal.n : 0, bitsCount: this.cal.n ? this.cal.bitsCount / this.cal.n : 0, idealBits: this.n ? this.idealBits / this.n : 0, unigramBits: this.rule.unigramBits, ...this.bookStats(), ...this.gateStats() }; }
+  gateStats() { return this.gateThr > 0 && this.gN ? { gateCov: this.gE / this.gN, gatePrec: this.gE ? this.gH / this.gE : 0 } : {}; }
   bookStats() { const h = this.h0; if (!h) return {}; const n = this.n - h.n, cn = this.cal.n - h.cn;   // R60 held-out stats (book with evalSyms)
     return { heldAcc: this.heldAcc, heldN: n, heldBits: n ? (this.bits - h.b) / n : 0, heldBitsSoft: cn ? (this.cal.bitsSoft - h.bs) / cn : 0, heldBitsCount: cn ? (this.cal.bitsCount - h.bc) / cn : 0, trainAcc: h.n ? h.c / h.n : 0 }; }
   statusLine() { return `symbol ${Math.min(this.pos + 1, this.P.nSyms)}/${this.P.nSyms} · accuracy ${(100 * this.accuracy).toFixed(0)}% · last 100 ${(100 * this.lastAcc(100)).toFixed(0)}% (first quarter ${(100 * this.quarter(0)).toFixed(0)}%, last ${(100 * this.quarter(3)).toFixed(0)}%) · chance ${(100 / this.K).toFixed(0)}% · ideal counter ${(100 * this.idealAcc()).toFixed(0)}% · optimal ${(100 * this.rule.optAcc).toFixed(0)}% · ${this.bps.toFixed(2)} bits (calibrated ${(this.cal.n ? this.cal.bitsSoft / this.cal.n : 0).toFixed(2)})`; }

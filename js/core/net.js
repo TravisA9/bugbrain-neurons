@@ -396,7 +396,7 @@ class SpikingNet {
     const teach = !!this.teachTr && !(this.uni && this.eOn), spk = this.spk, nSpk = this.nSpk;   // v22 unified rule: eligibility traces kept (for dopamine-learning receivers)
     const lz = this.uni && this.eOn && learn, isEl = this.uni ? this.isE : this.isPlastic;   // v22 unified rule: LAZY eligibility decay (each trace is decayed when it is touched; same values, far fewer operations)
     if (lz) { if (!this.eT) { this.eT = new Int32Array(el.length); this.eSub = 0; this.ePow = new Float32Array(8192); for (let n = 0; n < 8192; n++) this.ePow[n] = Math.pow(dE, n); if (dE2) { this.ePow2 = new Float32Array(8192); for (let n = 0; n < 8192; n++) this.ePow2[n] = Math.pow(dE2, n); } } this.eSub++; }
-    const eT = this.eT, eS = this.eSub, eP = this.ePow, eP2 = this.ePow2, eAt = !lz ? null : k => { const n = eS - eT[k]; eT[k] = eS; if (el2) el2[k] *= n < 8192 ? eP2[n] : 0; return el[k] *= n < 8192 ? eP[n] : 0; };
+    const eT = this.eT, eS = this.eSub, eP = this.ePow, eP2 = this.ePow2;   // (R65: the lazy decay eAt(k) is inlined where it is used)
     if (learn && !teach && !lz) for (let q = 0; q < pl.length; q++) { el[pl[q]] *= dE; if (el2) el2[pl[q]] *= dE2; }     // eligibility decays (the teacher rule never uses it: all 0)
     const start = this.start, posts = this.posts, pres = this.pres, isP = this.isPlastic,
           inS = this.inStart, inE = this.inEdges, aM = this.p.aMinus;
@@ -444,10 +444,11 @@ class SpikingNet {
     }
     if ((learn && !teach) || use) for (let s = 0; s < nSpk; s++) { const i = spk[s];   // (teacher rule without pruning: nothing to do here)
       if (learn && !teach) for (let k = start[i], e = start[i + 1]; k < e; k++)    // i is PRE: post fired earlier -> depress
-        if (isEl[k]) { if (lz) eAt(k); const d = aM * xPost[posts[k]]; el[k] -= d; if (el2) el2[k] -= d; }
+        if (isEl[k]) { if (lz) { const n = eS - eT[k]; eT[k] = eS; if (el2) el2[k] *= n < 8192 ? eP2[n] : 0; el[k] *= n < 8192 ? eP[n] : 0; }   // (= eAt(k), inlined)
+          const d = aM * xPost[posts[k]]; el[k] -= d; if (el2) el2[k] -= d; }
       for (let q = inS[i], e = inS[i + 1]; q < e; q++) {      // i is POST: pre fired earlier -> potentiate
         const k = inE[q], x = xPre[pres[k]];
-        if (learn && isEl[k] && !teach) { if (lz) eAt(k); el[k] += x; if (el2) el2[k] += x; }
+        if (learn && isEl[k] && !teach) { if (lz) { const n = eS - eT[k]; eT[k] = eS; if (el2) el2[k] *= n < 8192 ? eP2[n] : 0; el[k] *= n < 8192 ? eP[n] : 0; } el[k] += x; if (el2) el2[k] += x; }
         if (use) use[k] += x;
       }
     }
