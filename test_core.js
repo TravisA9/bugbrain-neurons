@@ -227,4 +227,9 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
     && R.g.pl.lr === (R.name === 'cortex' ? 0.2 : O.regions[i].g.pl.lr)) && O.regions[0].name === 'cortex' && O.regions[0].g.pl.lr === 0.1
     && S.DEFAULTS_VERSION === 32 && S.APP_VERSION === 'v39', 'v39 (R70): deepURSx3 = v37 plan with cortex lr 0.2 (other regions unchanged)');
   console.log('v39 deepURSx3 = v37 + cortex lr 0.2: ok'); }
+{ const S = require('./js/node_load.js')(), E = S.setEnv('seq', S.recommendedEnvParams('seq', { source: 'order3', K: 8 }, ['source'])), D = S.PLANS.deepURSx3.make(), D1 = JSON.parse(JSON.stringify(D));
+  D1.regions.forEach(R => Object.assign(R.g.sc, { sizeF: 1, sizeNorm: 1, divReach: 1, divRep: 1 }));   // R71 size-scaling genes at their neutral values
+  const h = b => { let s = 0, n = 0; for (const k of Object.keys(b)) { const v = b[k]; if (ArrayBuffer.isView(v)) for (let i = 0; i < v.length; i++) { s = (s * 31 + (v[i] * 1000 | 0)) | 0; n++; } } return s + ':' + n + ':' + b.N; };
+  assert.ok(D.regions.every(R => !(R.g.sc.sizeF > 1) && !(R.g.sc.sizeNorm > 1) && !(R.g.sc.divReach > 1) && !(R.g.sc.divRep > 1)) && !(S.params.fanRef > 0) && !(S.params.fanRefR > 0) && h(S.growCell(D, { seed: 5, spec: E.spec })) === h(S.growCell(D1, { seed: 5, spec: E.spec })), 'R71 size genes (sizeF, sizeNorm, divReach, divRep, fanRef, fanRefR) off by default and neutral when 1');
+  console.log('R71 size-scaling genes off by default, neutral values bit-identical: ok'); }
 console.log('ALL OK');

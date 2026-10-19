@@ -537,6 +537,9 @@ class SpikingNet {
     this.p = p; this.dPre = Math.exp(-1 / p.tauPre); this.dPost = Math.exp(-1 / p.tauPost);
     this.dElig = Math.exp(-1 / p.tauElig); this.dElig2 = (p.eligMix > 0 || p.eligGate > 0) ? Math.exp(-1 / p.tauElig2) : 0;   this.dMods = this.chs.map(c => Math.exp(-1 / c.tauMod));
   }
+  fanLrF(fR) { const N = this.N, f = new Float32Array(N).fill(1), ipS = this.ipStart, inS = this.inStart, inE = this.inEdges, isP = this.isPlastic, w0 = this.w0;   // R71 fanRef
+    for (let i = this.g.nIn; i < N; i++) { let n = 0; if (ipS) n = ipS[i + 1] - ipS[i]; else for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (isP[k] && w0[k] > 0) n++; } if (n > fR) f[i] = fR / n; }
+    this.lrFR = fR; return f; }
   get learning() { return params.plasticity && this.plastic.length > 0 && this.p.lr > 0; }
   // One neural sub-step. Uses this.ext as external current.
   step() {
@@ -606,7 +609,7 @@ class SpikingNet {
     const start = this.start, posts = this.posts, pres = this.pres, isP = this.isPlastic,
           inS = this.inStart, inE = this.inEdges, aM = this.p.aMinus;
     if (learn && this.teachTr) {             // teacher-gated rule: a spike during a teacher plateau potentiates
-      const lr = this.p.lr * (this.uni ? this.p.uniI : 1), ws = this.ws, wMax = params.wMax, dirty = this.dirtyList, nd = this.normDirty, xT = this.xLag || xPre, mE = this.metaE, mN = this.p.metaN, mC = this.p.metaCap || 0, tro = this.ng ? this.ng.tro : null;
+      const lr0 = this.p.lr * (this.uni ? this.p.uniI : 1), lr = lr0, ws = this.ws, wMax = params.wMax, dirty = this.dirtyList, nd = this.normDirty, xT = this.xLag || xPre, mE = this.metaE, mN = this.p.metaN, mC = this.p.metaCap || 0, tro = this.ng ? this.ng.tro : null;
       const pe = this.p.predErr || 0;   // R41 predErr (0 = off): prediction-MISMATCH depression. A taught cell that fires with no teacher plateau
       // predicted an input that did not arrive: its recently active plastic inputs are depressed by predErr*lr*x (local, cerebellar-LTD-like).
       // With the plateau potentiation this makes a sign-balanced, error-driven local delta rule: the cell learns to predict its own next input.
@@ -616,6 +619,10 @@ class SpikingNet {
       // with c the cell's own running confirmation rate (confident cells that were usually right are barely depressed by one miss).
       // R53 peMode 16 hybrid LTD: dw = g x (peFix + (1 - peFix) w / wMax), a small fixed-size part plus a weight-proportional part (overrides bit 1)
       const pm = this.p.peMode || 0, PD = globalThis.__peDbg, pf = this.p.peFix || 0, xg = this.fastE ? (this.xLag ? this.xG : this.pG) : 1;   // (R66 fast engine: traces are stored scaled, true value = stored x factor)
+      // R71 fanRef (global param, 0/undefined = off, bit-identical): fan-in-normalised learning rate. A taught cell with n > fanRef plastic
+      // inputs learns at lr x fanRef / n, so the drive one teacher plateau adds stays the same when a bigger source region gives it more inputs
+      // (homeostatic synaptic scaling of the plastic total; local: each cell only needs its own input count).
+      const fR = params.fanRef > 0 ? params.fanRef : 0; if (fR && (!this.lrF || this.lrFR !== fR)) this.lrF = this.fanLrF(fR); const lF = fR ? this.lrF : null;
       if (pe > 0 && (pm & 4) && !this.peDone) this.peDone = new Uint8Array(N);
       if (pe > 0 && (pm & 8) && !this.peConf) this.peConf = new Float32Array(N).fill(0.5);
       const ipS = this.ipStart, ipK = this.ipK, ipP = this.ipPre, w0 = this.w0, plat = this.plat;
@@ -623,21 +630,21 @@ class SpikingNet {
         if (this.plat[i] > 0) { if (this.peConf) this.peConf[i] += 0.02 * (1 - this.peConf[i]); if (this.peDone) this.peDone[i] = 0; continue; }
         if (!this.armed[i]) continue;
         if (this.peDone) { if (this.peDone[i]) continue; this.peDone[i] = 1; }
-        let g = pe * lr; if (this.peConf) { g *= 1 - this.peConf[i]; this.peConf[i] *= 0.98; }
+        let g = pe * lr * (lF ? lF[i] : 1); if (this.peConf) { g *= 1 - this.peConf[i]; this.peConf[i] *= 0.98; }
         if (ipS) { for (let q = ipS[i], e = ipS[i + 1]; q < e; q++) { const j = ipP[q], x = xT[j] * xg; if (x < 0.01) continue; const k = ipK[q];
           const d = Math.min(ws[k], g * x * ((pm & 16) ? pf + (1 - pf) * ws[k] / wMax : (pm & 1) ? ws[k] / wMax : 1)); ws[k] -= d; if (PD) { PD.d += d; PD.n++; }
           if ((pm & 2) && !nd[j]) { nd[j] = 1; dirty.push(j); } } continue; }
         for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]] * xg; if (x < 0.01) continue;
           const d = Math.min(ws[k], g * x * ((pm & 16) ? pf + (1 - pf) * ws[k] / wMax : (pm & 1) ? ws[k] / wMax : 1)); ws[k] -= d; if (PD) { PD.d += d; PD.n++; }
           if ((pm & 2) && !nd[pres[k]]) { nd[pres[k]] = 1; dirty.push(pres[k]); } } }
-      if (ipS) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (plat[i] <= 0) continue;
+      if (ipS) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (plat[i] <= 0) continue; const lr = lF ? lr0 * lF[i] : lr0;
         for (let q = ipS[i], e = ipS[i + 1]; q < e; q++) { const j = ipP[q], x = xT[j] * xg; if (x < 0.01) continue; const k = ipK[q];
           if (mE) { const d = lr * x; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; if (mC > 0 && mE[j] > mC) mE[j] = mC; }
           else ws[k] = Math.min(wMax, ws[k] + lr * x);
           if (PD) PD.p += lr * x;
           if (tro) tro[j] += lr * x;
           if (!nd[j]) { nd[j] = 1; dirty.push(j); } } }
-      else for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (this.plat[i] <= 0) continue;
+      else for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (this.plat[i] <= 0) continue; const lr = lF ? lr0 * lF[i] : lr0;
         for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]] * xg; if (x < 0.01) continue;
           if (mE) { const j = pres[k], d = lr * x; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; if (mC > 0 && mE[j] > mC) mE[j] = mC; }   // R62 metaCap > 0: consolidation stops at metaCap (learning-rate floor lr mN / (mN + metaCap))
           else ws[k] = Math.min(wMax, ws[k] + lr * x);
@@ -703,6 +710,10 @@ class SpikingNet {
     const eT = this.eT, eS = this.eSub, eP = this.ePow, eP2 = this.ePow2, el2 = this.elig2, mx = el2 ? this.p.eligMix : 0, tro = this.ng ? this.ng.tro : null;
     const gm = el2 ? this.p.eligGate : 0; let gI = mx;
     if (gm === 2) { if (outcome) { this.oIsi = this.tickNo - (this.lastOut || 0); this.lastOut = this.tickNo; } const T = this.p.eligGateT, d = (this.oIsi || T) - T; gI = 1 / (1 + Math.exp(d / (0.2 * T + 0.5))); }   // short outcome intervals -> fast tag, long -> slow tag
+    // R71 fanRefR (global param, 0/undefined = off): fan-in-normalised rate for the reward / unified rule (the teacher rule uses fanRef):
+    // a receiver with n > fanRefR plastic inputs learns at lr x fanRefR / n (per receiver; n counted once over this rule's plastic list).
+    const fRR = params.fanRefR > 0 ? params.fanRefR : 0; if (fRR && (!this.lrFr || this.lrFRR !== fRR)) { const f = new Float32Array(this.N), ps = this.posts; for (let q = 0; q < pl.length; q++) f[ps[pl[q]]]++; for (let i = 0; i < this.N; i++) f[i] = f[i] > fRR ? fRR / f[i] : 1; this.lrFr = f; this.lrFRR = fRR; }
+    const lFr = fRR ? this.lrFr : null, pst = this.posts;
     let s = 0;
     for (let q = 0; q < pl.length; q++) {
       const k = pl[q], m = mods[sc[k]]; if (m === 0) continue;
@@ -713,7 +724,7 @@ class SpikingNet {
         if (gm === 1) { const a = Math.abs(e); g = a > 1e-9 ? Math.min(1, Math.abs(el2[k]) / a) : 0; }   // R35 gate 1: the synapse's own recency (fast/slow tag ratio)
         else if (gm === 2) g = gI;                                                                        // R35 gate 2: outcome timing (interval since the previous outcome)
         e = (1 - g) * e + g * el2[k]; }
-      let w = old + lr * m * e;
+      let w = old + (lFr ? lr * lFr[pst[k]] : lr) * m * e;
       if (w0[k] > 0) w = w < 0 ? 0 : w > wMax ? wMax : w;    // sign preserved
       else w = w > 0 ? 0 : w < -wMax ? -wMax : w;
       ws[k] = w; s += Math.abs(w - old);

@@ -205,6 +205,11 @@ function growCell(d, opts) {
   //   int8 gene-expression histories, plus the post-growth stages (selection, trophic competition, juvenile activity, pruning).
   const rec = opts.record ? { v: 2, deaths: [], fixedChem: null, dynQ: [], dynMax: [], synA: [] } : null;
   const r = mulberry32((opts.seed != null ? opts.seed : d.seed) >>> 0), sc = Object.assign(cellDefaults(), d.sc);
+  // R71 (I87 / I80, all off by default, identical when off): sizeF > 1 scales this tissue by an AREA factor relative to its own genes:
+  //   grid, coneSpeed and axonLen x sqrt(f), maxCells x f (sizeF 4 on a grid-60 region = the 4xS variant), so a region can be scaled alone;
+  //   sizeNorm > 1: size-invariant synaptic scaling (see the normE / normI step); divReach > 1: daughter cells may be placed up to
+  //   round(divReach) sites away (proliferation spreads as fast, in sheet units, on a finer grid).
+  if (sc.sizeF > 1) { const q = Math.sqrt(sc.sizeF); sc.grid = (sc.grid > 24.5 ? sc.grid : CG) * q; sc.maxCells *= sc.sizeF; sc.coneSpeed = (sc.coneSpeed || 1) * q; sc.axonLen *= q; }
   const GS = sc.grid > 24.5 ? Math.round(sc.grid) : CG, h = 2 / GS, NS = GS * GS, H = CH_H;
   const sx = i => -1 + (i + 0.5) * h, cidx = v => clamp(Math.floor((v + 1) / h), 0, GS - 1);
   // fixed morphogen fields (analytic steady state of diffusion + decay from the sources)
@@ -253,6 +258,9 @@ function growCell(d, opts) {
   };
   const ZERO_G = new Array(CH_NCHEM).fill(0);
   const N8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+  const DREP = sc.divRep > 1 ? Math.round(sc.divRep) : 1;   // R71 divRep (I80): divisions per dividing cell per developmental step
+  const DR = sc.divReach > 1 ? Math.round(sc.divReach) : 1, NDIV = DR > 1 ? [] : N8;   // R71: division placement neighbourhood
+  if (DR > 1) for (let b2 = -DR; b2 <= DR; b2++) for (let a2 = -DR; a2 <= DR; a2++) if (a2 || b2) NDIV.push([a2, b2]);
   const synSet = new KeySet(), syns = [];      // {pre (cell id or 'sensor index'), post, w, plastic, t}   (R66: typed hash set, same membership as a Set)
   // sensor growth cones (fixed behaviour: grow straight back, fixed tags)
   const cones = [];
@@ -397,12 +405,14 @@ function growCell(d, opts) {
       const o = c.o, tw = mirror ? c.twin : null;
       if (o[CO.DIE] > 0.5 && r() < (o[CO.DIE] - 0.5)) { kill(c, t, 'apoptosis'); apoptosis++; if (tw && tw.alive) { kill(tw, t, 'apoptosis'); apoptosis++; } continue; }
       if (o[CO.DIV] > 0.5 && r() < sc.pDiv * (o[CO.DIV] - 0.5) * 2 && nAlive() < sc.maxCells) {
-        const free = N8.map(([a, b]) => [c.i + a, c.j + b]).filter(([i, j]) => freeSite(i, j));
+        for (let rep = 0; rep < DREP; rep++) {   // R71 divRep: a dividing cell may divide up to divRep times per developmental step (1 = as before)
+        if (rep > 0 && !(r() < sc.pDiv * (o[CO.DIV] - 0.5) * 2 && nAlive() < sc.maxCells)) break;
+        const free = NDIV.map(([a, b]) => [c.i + a, c.j + b]).filter(([i, j]) => freeSite(i, j));
         if (free.length) {
           const [i, j] = free[(r() * free.length) | 0], noise = Array.from({ length: H }, (_, k) => k < 8 ? gauss(r) * 0.02 : 0);   // (8: keeps old genomes' random stream)
           const dc = newCell(i, j, c.s, c.id); dc.born = t; for (let k = 0; k < H; k++) dc.s[k] += noise[k];
           if (tw && tw.alive) { const dt = newCell(mi(i), j, tw.s, tw.id); dt.born = t; for (let k = 0; k < H; k++) dt.s[k] += noise[k]; dc.twin = dt; dt.twin = dc; dt.isTwin = true; }
-        }
+        } else break; }
       } else if (o[CO.MIG] > 0.5) {
         const g = []; for (let k = 0; k < CH_NCHEM; k++) g.push(guideW(o, k));
         let best = null, bp = guideAt(c.j * GS + c.i, g, false);
@@ -577,7 +587,7 @@ function growCell(d, opts) {
   if (sc.normE >= 1 || sc.normI >= 1 || sc.clawNorm > 0 || sc.mixNorm > 0) {
     const h0 = nIn, h1 = nIn + neurons.length, CS = colLists(g.W, N, h0, h1, h0), cS = CS.st, cA = CS.a;   // (R66: hidden inputs of each cell, ascending: the dense column scans without the zeros)
     for (let b = h0; b < N; b++) {
-      let e = 0, i = 0; for (let u = cS[b], z = cS[b + 1]; u < z; u++) { const w = g.W[cA[u] * N + b]; if (w > 0) e += w; else i -= w; }
+      let e = 0, i = 0, ne = 0, ni = 0; for (let u = cS[b], z = cS[b + 1]; u < z; u++) { const w = g.W[cA[u] * N + b]; if (w > 0) { e += w; ne++; } else if (w < 0) { i -= w; ni++; } }
       const claw = sc.clawNorm > 0 && b < h1 && neurons[b - h0].o[CO.CLAW] > 0.5;
       if (claw && g._fib && g._fed.has(b)) {   // claw cell with parallel-fibre input: input from fibre-sending cells and the rest get half of the budget each
         let ef = 0; for (let u = cS[b], z = cS[b + 1]; u < z; u++) { const a = cA[u], q = a * N + b; if (g.W[q] > 0 && g._fib.has(a)) ef += g.W[q]; }
@@ -585,7 +595,11 @@ function growCell(d, opts) {
           for (let u = cS[b], z = cS[b + 1]; u < z; u++) { const a = cA[u], q = a * N + b; if (g.W[q] > 0) g.W[q] *= g._fib.has(a) ? ff : fd; } continue; }
       }
       const mixC = sc.mixNorm > 0 && b < h1 && neurons[b - h0].o[CO.MIX] > 0.5;
-      const fe = claw && e > 0 ? sc.clawNorm / e : mixC && e > 0 ? sc.mixNorm / e : sc.normE >= 1 && e > 0 ? sc.normE / e : 1, fi = sc.normI >= 1 && i > 0 ? sc.normI / i : 1;
+      // R71 sizeNorm s > 1: the normE / normI set point becomes min(set point, n x wMax / s) for a cell with n such inputs. At 1x few-input cells
+      //   are held below the set point by the wMax clamp (e.g. 3 inhibitory inputs x 30 = 90 < normI 200); a brain with s times the cells gives
+      //   them s times the inputs and the full set point (inhibition doubles). With s = the area factor the total stays at its 1x value.
+      const sN = sc.sizeNorm > 1 ? sc.sizeNorm : 0, tE = sN ? Math.min(sc.normE, ne * params.wMax / sN) : sc.normE, tI = sN ? Math.min(sc.normI, ni * params.wMax / sN) : sc.normI;
+      const fe = claw && e > 0 ? sc.clawNorm / e : mixC && e > 0 ? sc.mixNorm / e : sc.normE >= 1 && e > 0 ? tE / e : 1, fi = sc.normI >= 1 && i > 0 ? tI / i : 1;
       if (fe !== 1 || fi !== 1) for (let u = cS[b], z = cS[b + 1]; u < z; u++) { const q = cA[u] * N + b; if (g.W[q] > 0) g.W[q] *= fe; else if (g.W[q] < 0) g.W[q] *= fi; }
     }
   }
