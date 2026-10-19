@@ -474,6 +474,14 @@ class SpikingNet {
   trophicS() {                               // R73 trophic: per-cell 1 / (size factor of the cell's region), 1 for unscaled regions
     const N = this.N, f = new Float32Array(N).fill(1), R = this.g.regions, rg = this.g.region; if (R && rg) for (let i = 0; i < N; i++) { const r = R[rg[i]]; if (r && r.sizeF > 1) f[i] = 1 / r.sizeF; }
     return this.trF = f; }
+  trophicStr() {                             // R74 trophic bit 4: the 1/f budget only for cells with a plastic output onto the striatum (reward-rule path)
+    const t = this.trF || this.trophicS(), N = this.N, f = new Float32Array(N).fill(1), R = this.g.regions, rg = this.g.region, ps = this.posts, pr = this.pres, isP = this.isPlastic;
+    if (R && rg) for (let k = 0; k < ps.length; k++) if (isP[k] && this.w0[k] > 0) { const r = R[rg[ps[k]]]; if (r && r.name === 'striatum') f[pr[k]] = t[pr[k]]; }
+    return this.trStr = f; }
+  fanEqF() {                                 // R74 trophic bit 8: step x min(1, n1x / n), n1x = the cell's 1x-equivalent plastic fan-in (an input from an f x region counts 1/f)
+    const t = this.trF || this.trophicS(), N = this.N, f = new Float32Array(N).fill(1), inS = this.inStart, inE = this.inEdges, isP = this.isPlastic, w0 = this.w0, pr = this.pres;
+    for (let i = this.g.nIn; i < N; i++) { let n = 0, e1 = 0; for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (isP[k] && w0[k] > 0) { n++; e1 += t[pr[k]]; } } if (n > 0 && e1 < n) f[i] = e1 / n; }
+    return this.lrF8 = f; }
   buildPc(pl) {                              // R72 postCap: excitatory plastic inputs of this rule grouped by receiver
     const m = new Map(); for (let q = 0; q < pl.length; q++) { const k = pl[q]; if (!(this.w0[k] > 0)) continue; const i = this.posts[k]; if (!m.has(i)) m.set(i, []); m.get(i).push(k); }
     const st = [0], ix = [], c0 = []; for (const ks of m.values()) { let t = 0; for (const k of ks) { ix.push(k); t += this.w0[k]; } st.push(ix.length); c0.push(t); } this.pcStart = Int32Array.from(st); this.pcIdx = Int32Array.from(ix); this.pcW0 = Float64Array.from(c0); }
@@ -481,7 +489,7 @@ class SpikingNet {
     if (!this.npStart) this.buildNp();
     const ws = this.ws, wMax = params.wMax, st = this.npStart, idx = this.npIdx, a = st[i], e = st[i + 1]; let s = 0;
     for (let q = a; q < e; q++) s += ws[idx[q]];
-    if (s <= 0) return; let f = this.p.preNorm * ((params.trophic & 1) ? (this.trF || this.trophicS())[i] : 1) / s;   // R73 trophic bit 1: a cell of a region grown f x larger has a 1/f outgoing budget (receivers share a fixed trophic supply)
+    if (s <= 0) return; let f = this.p.preNorm * ((params.trophic & 1) ? (this.trF || this.trophicS())[i] : (params.trophic & 4) ? (this.trStr || this.trophicStr())[i] : 1) / s;   // R73 trophic bit 1: a cell of a region grown f x larger has a 1/f outgoing budget (receivers share a fixed trophic supply)
     if (this.p.confPow > 0) { let s2 = 0; for (let q = a; q < e; q++) { const w = ws[idx[q]]; s2 += w * w; }   // v12 confidence gain
       f *= Math.min(this.p.confMax, Math.pow((e - a) * s2 / (s * s) / this.p.confRef, this.p.confPow)); }
     if (this.trust) f *= Math.min(this.p.trustMax, Math.pow(this.trust[i] / this.p.trustRef, this.p.trustPow));   // v12 learned trust
@@ -629,7 +637,7 @@ class SpikingNet {
       // inputs learns at lr x fanRef / n, so the drive one teacher plateau adds stays the same when a bigger source region gives it more inputs
       // (homeostatic synaptic scaling of the plastic total; local: each cell only needs its own input count).
       const tF = (params.trophic & 2) ? (this.trF || this.trophicS()) : null;   // R73 trophic bit 2: the learning step of a synapse x 1 / (size factor of its presynaptic region)
-      const fR = params.fanRef > 0 ? params.fanRef : 0; if (fR && (!this.lrF || this.lrFR !== fR)) this.lrF = this.fanLrF(fR); const lF = fR ? this.lrF : null;
+      const fR = params.fanRef > 0 ? params.fanRef : 0; if (fR && (!this.lrF || this.lrFR !== fR)) this.lrF = this.fanLrF(fR); const lF = fR ? this.lrF : (params.trophic & 8) ? (this.lrF8 || this.fanEqF()) : null;   // (R74 bit 8 when fanRef is off)
       if (pe > 0 && (pm & 4) && !this.peDone) this.peDone = new Uint8Array(N);
       if (pe > 0 && (pm & 8) && !this.peConf) this.peConf = new Float32Array(N).fill(0.5);
       const ipS = this.ipStart, ipK = this.ipK, ipP = this.ipPre, w0 = this.w0, plat = this.plat;
