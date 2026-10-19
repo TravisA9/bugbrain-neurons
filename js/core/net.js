@@ -471,6 +471,9 @@ class SpikingNet {
     for (let c = 0; c < N; c++) { st[c] = idx.length; for (let k = this.start[c], e = this.start[c + 1]; k < e; k++) if (isP[k] && w0[k] > 0) idx.push(k); }
     st[N] = idx.length; this.npStart = st; this.npIdx = Int32Array.from(idx);
   }
+  trophicS() {                               // R73 trophic: per-cell 1 / (size factor of the cell's region), 1 for unscaled regions
+    const N = this.N, f = new Float32Array(N).fill(1), R = this.g.regions, rg = this.g.region; if (R && rg) for (let i = 0; i < N; i++) { const r = R[rg[i]]; if (r && r.sizeF > 1) f[i] = 1 / r.sizeF; }
+    return this.trF = f; }
   buildPc(pl) {                              // R72 postCap: excitatory plastic inputs of this rule grouped by receiver
     const m = new Map(); for (let q = 0; q < pl.length; q++) { const k = pl[q]; if (!(this.w0[k] > 0)) continue; const i = this.posts[k]; if (!m.has(i)) m.set(i, []); m.get(i).push(k); }
     const st = [0], ix = [], c0 = []; for (const ks of m.values()) { let t = 0; for (const k of ks) { ix.push(k); t += this.w0[k]; } st.push(ix.length); c0.push(t); } this.pcStart = Int32Array.from(st); this.pcIdx = Int32Array.from(ix); this.pcW0 = Float64Array.from(c0); }
@@ -478,7 +481,7 @@ class SpikingNet {
     if (!this.npStart) this.buildNp();
     const ws = this.ws, wMax = params.wMax, st = this.npStart, idx = this.npIdx, a = st[i], e = st[i + 1]; let s = 0;
     for (let q = a; q < e; q++) s += ws[idx[q]];
-    if (s <= 0) return; let f = this.p.preNorm / s;
+    if (s <= 0) return; let f = this.p.preNorm * ((params.trophic & 1) ? (this.trF || this.trophicS())[i] : 1) / s;   // R73 trophic bit 1: a cell of a region grown f x larger has a 1/f outgoing budget (receivers share a fixed trophic supply)
     if (this.p.confPow > 0) { let s2 = 0; for (let q = a; q < e; q++) { const w = ws[idx[q]]; s2 += w * w; }   // v12 confidence gain
       f *= Math.min(this.p.confMax, Math.pow((e - a) * s2 / (s * s) / this.p.confRef, this.p.confPow)); }
     if (this.trust) f *= Math.min(this.p.trustMax, Math.pow(this.trust[i] / this.p.trustRef, this.p.trustPow));   // v12 learned trust
@@ -625,6 +628,7 @@ class SpikingNet {
       // R71 fanRef (global param, 0/undefined = off, bit-identical): fan-in-normalised learning rate. A taught cell with n > fanRef plastic
       // inputs learns at lr x fanRef / n, so the drive one teacher plateau adds stays the same when a bigger source region gives it more inputs
       // (homeostatic synaptic scaling of the plastic total; local: each cell only needs its own input count).
+      const tF = (params.trophic & 2) ? (this.trF || this.trophicS()) : null;   // R73 trophic bit 2: the learning step of a synapse x 1 / (size factor of its presynaptic region)
       const fR = params.fanRef > 0 ? params.fanRef : 0; if (fR && (!this.lrF || this.lrFR !== fR)) this.lrF = this.fanLrF(fR); const lF = fR ? this.lrF : null;
       if (pe > 0 && (pm & 4) && !this.peDone) this.peDone = new Uint8Array(N);
       if (pe > 0 && (pm & 8) && !this.peConf) this.peConf = new Float32Array(N).fill(0.5);
@@ -642,15 +646,17 @@ class SpikingNet {
           if ((pm & 2) && !nd[pres[k]]) { nd[pres[k]] = 1; dirty.push(pres[k]); } } }
       if (ipS) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (plat[i] <= 0) continue; const lr = lF ? lr0 * lF[i] : lr0;
         for (let q = ipS[i], e = ipS[i + 1]; q < e; q++) { const j = ipP[q], x = xT[j] * xg; if (x < 0.01) continue; const k = ipK[q];
-          if (mE) { const d = lr * x; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; if (mC > 0 && mE[j] > mC) mE[j] = mC; }
-          else ws[k] = Math.min(wMax, ws[k] + lr * x);
+          const lx = tF ? lr * x * tF[j] : lr * x;
+          if (mE) { const d = lx; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; if (mC > 0 && mE[j] > mC) mE[j] = mC; }
+          else ws[k] = Math.min(wMax, ws[k] + lx);
           if (PD) PD.p += lr * x;
           if (tro) tro[j] += lr * x;
           if (!nd[j]) { nd[j] = 1; dirty.push(j); } } }
       else for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (this.plat[i] <= 0) continue; const lr = lF ? lr0 * lF[i] : lr0;
         for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]] * xg; if (x < 0.01) continue;
-          if (mE) { const j = pres[k], d = lr * x; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; if (mC > 0 && mE[j] > mC) mE[j] = mC; }   // R62 metaCap > 0: consolidation stops at metaCap (learning-rate floor lr mN / (mN + metaCap))
-          else ws[k] = Math.min(wMax, ws[k] + lr * x);
+          const lx = tF ? lr * x * tF[pres[k]] : lr * x;
+          if (mE) { const j = pres[k], d = lx; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; if (mC > 0 && mE[j] > mC) mE[j] = mC; }   // R62 metaCap > 0: consolidation stops at metaCap (learning-rate floor lr mN / (mN + metaCap))
+          else ws[k] = Math.min(wMax, ws[k] + lx);
           if (globalThis.__peDbg) globalThis.__peDbg.p += lr * x;
           if (tro) tro[pres[k]] += lr * x;
           if (!nd[pres[k]]) { nd[pres[k]] = 1; dirty.push(pres[k]); } } }
@@ -716,7 +722,7 @@ class SpikingNet {
     // R71 fanRefR (global param, 0/undefined = off): fan-in-normalised rate for the reward / unified rule (the teacher rule uses fanRef):
     // a receiver with n > fanRefR plastic inputs learns at lr x fanRefR / n (per receiver; n counted once over this rule's plastic list).
     const fRR = params.fanRefR > 0 ? params.fanRefR : 0; if (fRR && (!this.lrFr || this.lrFRR !== fRR)) { const f = new Float32Array(this.N), ps = this.posts; for (let q = 0; q < pl.length; q++) f[ps[pl[q]]]++; for (let i = 0; i < this.N; i++) f[i] = f[i] > fRR ? fRR / f[i] : 1; this.lrFr = f; this.lrFRR = fRR; }
-    const lFr = fRR ? this.lrFr : null, pst = this.posts;
+    const lFr = fRR ? this.lrFr : null, pst = this.posts, tFr = (params.trophic & 2) ? (this.trF || this.trophicS()) : null;
     let s = 0;
     for (let q = 0; q < pl.length; q++) {
       const k = pl[q], m = mods[sc[k]]; if (m === 0) continue;
@@ -727,7 +733,7 @@ class SpikingNet {
         if (gm === 1) { const a = Math.abs(e); g = a > 1e-9 ? Math.min(1, Math.abs(el2[k]) / a) : 0; }   // R35 gate 1: the synapse's own recency (fast/slow tag ratio)
         else if (gm === 2) g = gI;                                                                        // R35 gate 2: outcome timing (interval since the previous outcome)
         e = (1 - g) * e + g * el2[k]; }
-      let w = old + (lFr ? lr * lFr[pst[k]] : lr) * m * e;
+      let w = old + (lFr ? lr * lFr[pst[k]] : lr) * (tFr ? tFr[this.pres[k]] : 1) * m * e;   // (R73 trophic bit 2)
       if (w0[k] > 0) w = w < 0 ? 0 : w > wMax ? wMax : w;    // sign preserved
       else w = w > 0 ? 0 : w < -wMax ? -wMax : w;
       ws[k] = w; s += Math.abs(w - old);

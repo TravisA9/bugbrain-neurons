@@ -129,6 +129,7 @@ function growRegions(d, opts) {
   const og = outPart.g; G.pl = og.pl; G.nCh = og.nCh; G.ch = og.ch.map(c => Object.assign({}, c));
   G.typeInfo = og.typeInfo; G.fixedNames = og.fixedNames; G.specKey = envSpec.key; G.kind = 'direct'; G.grownFrom = d;
   G.regions = parts.map((p, k) => ({ name: p.R.name, color: p.R.color || ['#6aa9ff', '#f0a050', '#7fd18b', '#d17fd1'][k % 4], nHid: p.g.nHid, off: p.off, outputs: p === outPart, devStats: p.g.devStats }));
+  parts.forEach((p, k) => { const f = p.R.g && p.R.g.sc ? p.R.g.sc.sizeF : 0; if (f > 1) G.regions[k].sizeF = f; });   // R73: region size factor kept on the phenotype (trophic scaling)
   G.outRegion = parts.indexOf(outPart);
   { const bn = new Float32Array(N).fill(-1); parts.forEach(p => { if (p.g.born) for (let i = p.g.nIn; i < p.g.nIn + p.g.nHid; i++) bn[node(p, i)] = p.g.born[i]; }); Object.defineProperty(G, 'born', { value: bn, writable: true, configurable: true, enumerable: false }); }   // R65 birth steps (staged maturation)
   G.tracts = tractStats;

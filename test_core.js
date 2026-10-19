@@ -232,6 +232,6 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const h = b => { let s = 0, n = 0; for (const k of Object.keys(b)) { const v = b[k]; if (ArrayBuffer.isView(v)) for (let i = 0; i < v.length; i++) { s = (s * 31 + (v[i] * 1000 | 0)) | 0; n++; } } return s + ':' + n + ':' + b.N; };
   assert.ok(D.regions.every(R => !(R.g.sc.sizeF > 1) && !(R.g.sc.sizeNorm > 1) && !(R.g.sc.divReach > 1) && !(R.g.sc.divRep > 1)) && !(S.params.fanRef > 0) && !(S.params.fanRefR > 0) && h(S.growCell(D, { seed: 5, spec: E.spec })) === h(S.growCell(D1, { seed: 5, spec: E.spec })), 'R71 size genes (sizeF, sizeNorm, divReach, divRep, fanRef, fanRefR) off by default and neutral when 1');
   console.log('R71 size-scaling genes off by default, neutral values bit-identical: ok'); }
-{ const S = require('./js/node_load.js')(); assert.ok(!(S.params.postCap > 0) && !(S.params.postCapRel > 0) && !(S.params.allMax > 0) && !(S.params.postN > 0), 'R72 striatum genes (postCap, postCapRel, postN, allMax) off by default');
+{ const S = require('./js/node_load.js')(); assert.ok(!(S.params.postCap > 0) && !(S.params.postCapRel > 0) && !(S.params.allMax > 0) && !(S.params.postN > 0) && !(S.params.trophic > 0), 'R72 / R73 genes (postCap, postCapRel, postN, allMax, trophic) off by default');
   console.log('R72 postsynaptic cap / convergence limit off by default: ok'); }
 console.log('ALL OK');
