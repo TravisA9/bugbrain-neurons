@@ -79,6 +79,32 @@ class SpikingNet {
       const L = []; for (let i = 0; i < N; i++) if (r[i]) L.push(i); this.rhList = Int32Array.from(L); }
     if (NG) this.initNeed();
     this.initFast();
+    if (this.p.stageF0 > 0 && this.p.stageF0 < 1 && g.nHid > 0 && !(opts && opts.noNeed)) this.initStage();   // (not in the juvenile phase of development)
+  }
+  // R65 (I82) staged maturation (see PL_DEFAULTS stageF0): immature hidden cells are silenced (threshold 1e9, synapses at weight 0, grown
+  // weights kept in w0) and mature in birth order, one wave every stageTicks ticks
+  initStage() {
+    const g = this.g, N = this.N, h0 = g.nIn, h1 = g.nIn + g.nHid, p = this.p, born = g.born, r = mulberry32((0x57a6e ^ g.N * 2654435761) >>> 0);
+    const ids = [], key = new Float64Array(N); for (let i = h0; i < h1; i++) { ids.push(i); key[i] = (born ? born[i] : 0) + 0.5 * r(); }
+    ids.sort((a, b) => key[a] - key[b] || a - b);
+    if (!this.thr) this.thr = Float32Array.from(g.thresh);
+    const n0 = Math.max(1, Math.round(p.stageF0 * ids.length)), W = Math.max(1, Math.round(p.stageWaves));
+    const st = this.stg = { order: Int32Array.from(ids), done: n0, per: Math.ceil((ids.length - n0) / W), at: Math.max(1, Math.round(p.stageTicks)), thr0: Float32Array.from(this.thr), mat: new Uint8Array(N).fill(1), log: [[0, n0]] };
+    for (let q = n0; q < ids.length; q++) { const i = ids[q]; st.mat[i] = 0; this.thr[i] = 1e9; }
+    const ws = this.ws, pres = this.pres, posts = this.posts; for (let k = 0; k < ws.length; k++) if (!st.mat[pres[k]] || !st.mat[posts[k]]) ws[k] = 0;
+    if (this.teachTr && p.preNorm > 0) for (let i = 0; i < N; i++) if (st.mat[i]) this.normPre(i);
+  }
+  stageStep() {                              // called once per tick (modulate): the next maturation wave when it is due
+    const st = this.stg, ord = st.order; if (st.done >= ord.length || this.tickNo % st.at !== 0) return;
+    const e = Math.min(ord.length, st.done + st.per), mat = st.mat, ws = this.ws, w0 = this.w0, thr = this.thr, dirty = new Uint8Array(this.N);
+    for (let q = st.done; q < e; q++) { const i = ord[q]; mat[i] = 1; thr[i] = st.thr0[i]; this.v[i] = V_REST; }
+    if (!st.inS) { const N = this.N, P = this.posts, c = new Int32Array(N + 1); for (let k = 0; k < P.length; k++) c[P[k] + 1]++; for (let j = 0; j < N; j++) c[j + 1] += c[j];   // all incoming synapses by cell
+      const f = c.slice(0, N), K = new Int32Array(P.length); for (let k = 0; k < P.length; k++) K[f[P[k]]++] = k; st.inS = c; st.inK = K; }
+    for (let q = st.done; q < e; q++) { const i = ord[q];   // synapses between mature cells that touch a newly mature one take their grown weight (they were 0, never learned)
+      for (let k = this.start[i], E = this.start[i + 1]; k < E; k++) if (mat[this.posts[k]]) { ws[k] = w0[k]; dirty[i] = 1; }
+      for (let a = st.inS[i], b = st.inS[i + 1]; a < b; a++) { const k = st.inK[a], j = this.pres[k]; if (mat[j]) { ws[k] = w0[k]; dirty[j] = 1; } } }
+    st.done = e; st.log.push([this.tickNo, e]);
+    if (this.teachTr && this.p.preNorm > 0) for (let i = 0; i < this.N; i++) if (dirty[i]) this.normPre(i);
   }
   /* R65 ENGINE SPEED (bit-identical; globalThis.__bbSlow = true before building a net restores the old loops, for A/B checks):
    *  - teacher pass only over the cells an input neuron contacts (the only cells whose teacher drive can be non-zero: every other cell's
@@ -481,6 +507,7 @@ class SpikingNet {
       this.chSpikes[c] = 0;
     }
     this.mod = mods[0]; this.dwSum = 0; this.tickNo++;
+    if (this.stg && params.plasticity) this.stageStep();   // R65 staged maturation
     if (this.use && this.tickNo === this.pruning.tick) this.prune();
     if (!this.learning || (this.teachTr && !(this.uni && this.eOn))) return;   // (teacher rule: the eligibility traces stay 0, so w += lr*M*0 changes nothing)
     const lr = this.p.lr, pl = this.uni ? this.eList : this.plastic, el = this.elig, ws = this.ws, w0 = this.w0, wMax = params.wMax, sc = this.synCh;

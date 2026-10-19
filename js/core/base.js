@@ -166,7 +166,12 @@ const PL_DEFAULTS = { lr: 0.03, tauPre: 10, tauPost: 10, aMinus: 0.3, tauElig: 5
   // Teacher-forced tasks: an unemitted prediction is an abstention (no reward / punishment event; stats gateCov = share emitted,
   // gatePrec = accuracy of the emitted ones; accuracy still scores every prediction). Free-running generation: a confident step emits the
   // winner, an unconfident one samples p ~ counts^(1/T) (T = genTemp, or 1). Read by the env from the output region's pl. Not mutated.
-  outGate: 0, outGateMode: 0 };   // trust0: starting trust (-1 = trustRef)
+  outGate: 0, outGateMode: 0,
+  // R65 (I82) STAGED MATURATION (stageF0 = 0 = off): the brain is grown at full size, but only the earliest-born stageF0 share of its hidden
+  // neurons is mature at birth; the rest mature in stageWaves waves, one every stageTicks ticks, in birth order (ties: seeded random), like
+  // late-born neurons that integrate during the juvenile period. An immature neuron cannot fire and its synapses carry no weight; when it
+  // matures its synapses take their grown weights (learned weights of the mature network are kept) and the presynaptic budgets are re-normalised.
+  stageF0: 0, stageWaves: 2, stageTicks: 110000 };   // trust0: starting trust (-1 = trustRef)
 // v22 (round 23): the ONE learning-rule set of the default plans predictK3, rewardK, rewardMemK (and the region plans):
 // unified three-factor rule, instructive gain, eligibility, critic (outcome RPE), synaptic scaling setpoint (RESULTS R23)
 const UNIFIED_PL = { uni: 1, lr: 0.05, uniI: 0.4, tauElig: 100, aMinus: 0.3, rpe: 1, rpeMode: 1, rpeLr: 0.3, preNorm: 45, teachThr: 20, plateau: 4 };

@@ -28,7 +28,7 @@ function metrics(s) {
 const nV = Math.max(64, +g0 + +G), p = L.seedPlan({ valGrowths: nV, valArenas: nV }, 0, true), scores = [], st = {}, samples = [];   // R65: g0 >= 64 = fresh seeds (k < 64 unchanged)
 const env = L.setupTask(task), nS = env.P.nSyms, nG = env.P.genSyms;
 for (let k = +g0; k < +g0 + +G; k++) {
-  const brain = SA.growCell(L.deserialize(gc).g, { seed: p.growSeeds[k], spec: env.spec }), a = new SA.Agent(L.deserialize(gc).g, p.arenaSeeds[k], brain, env);
+  const brain = SA.growCell(L.deserialize(gc).g, { seed: p.growSeeds[k], spec: env.spec }), a = new SA.Agent(L.deserialize(gc).g, p.arenaSeeds[k], brain, env); L.dropDense(brain);   // R65: dense growth matrices released (net built)
   const was = SA.params.plasticity;
   try { while (!a.done && a.task.pos < nS) a.tick(); if (!process.env.BB_GEN_LEARN) SA.params.plasticity = false; while (!a.done) a.tick(); } finally { SA.params.plasticity = was; }
   const T = a.task, text = T.gen.map(i => A[i]).join(''), prime = T.seq.slice(Math.max(0, nS - 80), nS + 1).map(i => A[i]).join('');

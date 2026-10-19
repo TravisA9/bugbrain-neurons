@@ -55,6 +55,12 @@ function crossover(a, b, r) {
   }
   return { g: SA.crossover(a.g, b.g, r) };
 }
+// R65 memory: a grown brain keeps its dense N x N growth matrices (W float32 + P + C bytes: ~0.85 GB at size 4xS, plus every region's own)
+// for its whole life although the network (CSR) is built from them once. dropDense releases them for a brain that will not be reused
+// (a fresh growth whose last episode's net is built): no computation reads them afterwards, results are unchanged; the per-process
+// footprint of a 4xS life drops from ~1.3 GB to ~0.3 GB, so parallel runs on a worker no longer compete for RAM.
+function dropDense(b) { if (!b) return; for (const x of [b].concat((b.regionParts || []).map(p => p.brain))) if (x && x.W) { x.W = null; x.P = null; x.C = null; }
+  if (typeof Bun !== 'undefined') Bun.gc(true); else if (typeof global.gc === 'function') global.gc(); }   // (a full collection now: lives allocate little, so the GC would not run on its own)
 // ---- evaluation ----
 // returns { tasks: [{ fit, mean, sd, min, stats }], brain: { hidden, synapses }, ticks, ms, error? }
 function evaluateGenome(gc, tasks, plan) {
@@ -68,6 +74,7 @@ function evaluateGenome(gc, tasks, plan) {
         let acc = 0;
         for (let e = 0; e < plan.A; e++) {
           const a = new SA.Agent(g, plan.arenaSeeds[k * plan.A + e], brain, env);
+          if (plan.dropDense && e === plan.A - 1 && plan.growSeeds[k] != null) dropDense(brain);   // R65: the dense growth matrices are not needed once the net is built
           while (!a.done) { a.tick(); out.ticks++; }
           acc += a.fitness; n++;
           const x = a.task.stats ? a.task.stats() : {};
@@ -131,4 +138,4 @@ function selCells(gc, cells, sel) {
   gc.cell.regions.forEach((r, i) => { const hit = alts.some(a => r.name === a || r.name.startsWith(a + ' ') || (a === 'context' && /^context( \d+)?$/.test(r.name))); if (hit !== neg) out.push(cells[i]); });
   if (!out.length) throw new Error('region selector @' + sel + ' matches no region'); return out;
 }
-module.exports = { selCells, SA, makeRng, applyEngine, taskEnvParams, setupTask, seedPlan, serialize, deserialize, startGenome, mutate, crossover, evaluateGenome, normFit, descriptorNames, descriptor, novelty };
+module.exports = { dropDense, selCells, SA, makeRng, applyEngine, taskEnvParams, setupTask, seedPlan, serialize, deserialize, startGenome, mutate, crossover, evaluateGenome, normFit, descriptorNames, descriptor, novelty };

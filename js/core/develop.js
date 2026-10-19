@@ -556,6 +556,7 @@ function growCell(d, opts) {
   g.pl = cleanPl(d.pl); g.nCh = d.nCh || 1; g.ch = (d.ch || [defaultChannel()]).map(c => Object.assign({}, c));
   g.pos = new Array(N); g.cellType = new Int16Array(N);
   const idx = new Map(); neurons.forEach((c, k) => idx.set(c.id, nIn + k));
+  { const bn = new Float32Array(N).fill(-1); neurons.forEach((c, k) => { bn[nIn + k] = c.born; }); Object.defineProperty(g, 'born', { value: bn, writable: true, configurable: true, enumerable: false }); }   // R65: birth step of each neuron (staged maturation; not saved)
   for (let i = 0; i < nIn; i++) { g.pos[i] = IN[i].pos; g.cellType[i] = IN[i].cls; }
   for (let m = 0; m < nOut; m++) { const i = g.nIn + g.nHid + m; g.pos[i] = OUT[m].pos; g.cellType[i] = OUT[m].cls; }
   neurons.forEach((c, k) => { const i = nIn + k; g.pos[i] = [sx(c.i), sx(c.j)]; g.cellType[i] = N_FIXED + cellClass(c.o); g.thresh[i] = -60 + 10 * c.o[CO.THR]; if (c.topo != null) { g.topo = g.topo || new Float32Array(N).fill(NaN); g.topo[i] = c.topo; }

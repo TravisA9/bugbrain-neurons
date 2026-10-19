@@ -93,6 +93,7 @@ function growRegions(d, opts) {
   G.typeInfo = og.typeInfo; G.fixedNames = og.fixedNames; G.specKey = envSpec.key; G.kind = 'direct'; G.grownFrom = d;
   G.regions = parts.map((p, k) => ({ name: p.R.name, color: p.R.color || ['#6aa9ff', '#f0a050', '#7fd18b', '#d17fd1'][k % 4], nHid: p.g.nHid, off: p.off, outputs: p === outPart, devStats: p.g.devStats }));
   G.outRegion = parts.indexOf(outPart);
+  { const bn = new Float32Array(N).fill(-1); parts.forEach(p => { if (p.g.born) for (let i = p.g.nIn; i < p.g.nIn + p.g.nHid; i++) bn[node(p, i)] = p.g.born[i]; }); Object.defineProperty(G, 'born', { value: bn, writable: true, configurable: true, enumerable: false }); }   // R65 birth steps (staged maturation)
   G.tracts = tractStats;
   const sum = k => parts.reduce((s, p) => s + (p.g.devStats[k] || 0), 0);
   G.devStats = { cells: sum('cells'), neurons: sum('neurons'), apoptosis: sum('apoptosis'), trophicDeaths: sum('trophicDeaths'), survivors: nHid, orphanOut: outPart.g.devStats.orphanOut, nOut,
