@@ -730,7 +730,8 @@ class SpikingNet {
     // R71 fanRefR (global param, 0/undefined = off): fan-in-normalised rate for the reward / unified rule (the teacher rule uses fanRef):
     // a receiver with n > fanRefR plastic inputs learns at lr x fanRefR / n (per receiver; n counted once over this rule's plastic list).
     const fRR = params.fanRefR > 0 ? params.fanRefR : 0; if (fRR && (!this.lrFr || this.lrFRR !== fRR)) { const f = new Float32Array(this.N), ps = this.posts; for (let q = 0; q < pl.length; q++) f[ps[pl[q]]]++; for (let i = 0; i < this.N; i++) f[i] = f[i] > fRR ? fRR / f[i] : 1; this.lrFr = f; this.lrFRR = fRR; }
-    const lFr = fRR ? this.lrFr : null, pst = this.posts, tFr = (params.trophic & 2) ? (this.trF || this.trophicS()) : null;
+    if (!fRR && (params.trophic & 16) && !this.lrF16) { const t = this.trF || this.trophicS(), n = new Float32Array(this.N), e1 = new Float32Array(this.N), ps = this.posts, pr = this.pres; for (let q = 0; q < pl.length; q++) { n[ps[pl[q]]]++; e1[ps[pl[q]]] += t[pr[pl[q]]]; } for (let i = 0; i < this.N; i++) n[i] = n[i] > 0 && e1[i] < n[i] ? e1[i] / n[i] : 1; this.lrF16 = n; }   // R74 trophic bit 16: reward-rule step x min(1, 1x-equivalent fan-in / fan-in) per receiver
+    const lFr = fRR ? this.lrFr : (params.trophic & 16) ? this.lrF16 : null, pst = this.posts, tFr = (params.trophic & 2) ? (this.trF || this.trophicS()) : null;
     let s = 0;
     for (let q = 0; q < pl.length; q++) {
       const k = pl[q], m = mods[sc[k]]; if (m === 0) continue;
