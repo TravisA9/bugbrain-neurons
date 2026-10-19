@@ -85,6 +85,7 @@ class SpikingNet {
     if (this.p.actNoise > 0 || this.p.actFb > 0 || this.p.outInh > 0) this.initActNoise();
     if (this.p.rcvHomeo > 0) { if (!this.thr) this.thr = Float32Array.from(g.thresh); const r = new Uint8Array(N); for (const k of this.plastic) if (this.w0[k] > 0) r[this.posts[k]] = 1;
       const L = []; for (let i = 0; i < N; i++) if (r[i]) L.push(i); this.rhList = Int32Array.from(L); }
+    if ((this.p.thrAdd !== 0 || this.p.hidHomeo > 0 || this.p.regInh > 0) && !(opts && opts.noNeed)) this.initSparse();   // R67 sparser-activity genes (off by default)
     if (NG) this.initNeed();
     this.initFast();
     if (params.fastEngine && !globalThis.__bbSlow && !(opts && opts.noNeed)) this.initFastE();   // R66 event-driven engine (selectable; see initFastE)
@@ -194,6 +195,27 @@ class SpikingNet {
     return nSpk;
   }
   renormF(a, f) { for (let i = 0; i < a.length; i++) a[i] *= f; }
+  initSparse() {                             // R67: see PL_DEFAULTS thrAdd / hidHomeo / regInh
+    const g = this.g, p = this.p, N = this.N, h0 = g.nIn, h1 = g.nIn + g.nHid;
+    if (p.thrAdd !== 0 || p.hidHomeo > 0) { if (!this.thr) this.thr = Float32Array.from(g.thresh); }
+    if (p.thrAdd !== 0) for (let i = h0; i < h1; i++) this.thr[i] += p.thrAdd;
+    if (p.hidHomeo > 0) { const inR = new Uint8Array(N); if (this.rhList) for (const i of this.rhList) inR[i] = 1;
+      const L = []; for (let i = h0; i < h1; i++) if (!inR[i]) L.push(i); this.hhList = Int32Array.from(L); this.hhFloor = Float32Array.from(L, i => this.thr[i]); }
+    if (p.regInh > 0) { const reg = g.region, id = new Int32Array(N).fill(-1); let R = 1;
+      for (let i = h0; i < h1; i++) { id[i] = reg && reg[i] !== 255 ? reg[i] : 0; if (id[i] + 1 > R) R = id[i] + 1; }
+      const sz = new Float64Array(R); for (let i = h0; i < h1; i++) sz[id[i]]++;
+      this.riId = id; this.riN = R; this.riInv = Float64Array.from(sz, n => n ? 100 / n : 0); this.riCnt = new Float64Array(R); this.riP = new Float64Array(R);
+      this.riD = p.regInhTau > 0 ? Math.exp(-1 / p.regInhTau) : 0; this.riH0 = h0; this.riH1 = h1; }
+  }
+  sparseStep(sp, spk, nSpk, mk) {            // R67: hidden-cell homeostasis + pooled region inhibition (mk: event-engine marks or null)
+    const p = this.p, v = this.v, R0 = V_REST;
+    if (this.hhList && params.plasticity) { const L = this.hhList, F = this.hhFloor, h = p.hidHomeo, r0 = p.hidRate, thr = this.thr;
+      for (let q = 0; q < L.length; q++) { const i = L[q]; let x = thr[i] + h * (sp[i] - r0); if (x < F[q]) x = F[q]; thr[i] = x; if (mk && x <= (v[i] > R0 ? v[i] : R0)) mk[i] = 1; } }
+    if (this.riId) { const id = this.riId, C = this.riCnt, P = this.riP, inv = this.riInv, n = this.riN, a = p.regInh, k = 100 * p.regK, d = this.riD, syn = this.syn;
+      C.fill(0); for (let s = 0; s < nSpk; s++) { const r = id[spk[s]]; if (r >= 0) C[r]++; }
+      let any = false; for (let r = 0; r < n; r++) { const f = C[r] * inv[r] - k; P[r] = P[r] * d + (f > 0 ? a * f : 0); if (P[r] > 1e-9) any = true; }
+      if (any) for (let i = this.riH0; i < this.riH1; i++) { const x = P[id[i]]; if (x > 1e-9) { syn[i] -= x; if (mk) mk[i] = 1; } } }
+  }
   stepFast() {
     const N = this.N, v = this.v, syn = this.syn, ext = this.ext, sp = this.spiked, th = this.thr || this.g.thresh, mk = this.mk, m32 = this.mk32, tv = this.tv;
     const spk = this.spk, t = ++this.subNo, R = V_REST, FL = V_FLOOR;
@@ -217,6 +239,7 @@ class SpikingNet {
     } else if (this.fDense) for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) syn[posts[k]] += ws[k]; }
     else for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = posts[k]; syn[j] += ws[k]; mk[j] = 1; } }
     if (this.rhList && params.plasticity) { const L = this.rhList, h = this.p.rcvHomeo, r0 = this.p.rcvRate, thr = this.thr; for (let q = 0; q < L.length; q++) { const i = L[q]; thr[i] += h * (sp[i] - r0); if (thr[i] <= (v[i] > R ? v[i] : R)) mk[i] = 1; } }
+    if (this.hhList || this.riId) this.sparseStep(sp, spk, nSpk, this.fDense ? null : mk);
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp);   // v20 action noise / feedback (as the exact engine)
       if (!this.fDense) { const A = this.anList, C = this.acList, o0 = this.g.nIn + this.g.nHid; for (let q = 0; q < A.length; q++) mk[A[q]] = 1; for (let q = 0; q < C.length; q++) mk[C[q]] = 1; for (let m = 0; m < this.g.nOut; m++) mk[o0 + m] = 1; } }
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];
@@ -519,6 +542,7 @@ class SpikingNet {
       for (let k = start[i], e = start[i + 1]; k < e; k++) syn[posts[k]] += ws[k];
     }
     if (this.rhList && params.plasticity) { const L = this.rhList, h = this.p.rcvHomeo, r0 = this.p.rcvRate, thr = this.thr; for (let q = 0; q < L.length; q++) { const i = L[q]; thr[i] += h * (sp[i] - r0); } }
+    if (this.hhList || this.riId) this.sparseStep(sp, spk, nSpk, null);   // R67
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp); }   // v20 exploration noise of the action channels
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];   // v14: feedforward inhibition of mixing cells
       if (n) { const d = this.p.mixInh * n, ml = this.mixList; for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d;

@@ -172,7 +172,15 @@ const PL_DEFAULTS = { lr: 0.03, tauPre: 10, tauPost: 10, aMinus: 0.3, tauElig: 5
   // neurons is mature at birth; the rest mature in stageWaves waves, one every stageTicks ticks, in birth order (ties: seeded random), like
   // late-born neurons that integrate during the juvenile period. An immature neuron cannot fire and its synapses carry no weight; when it
   // matures its synapses take their grown weights (learned weights of the mature network are kept) and the presynaptic budgets are re-normalised.
-  stageF0: 0, stageWaves: 2, stageTicks: 110000 };   // trust0: starting trust (-1 = trustRef)
+  stageF0: 0, stageWaves: 2, stageTicks: 110000,
+  // R67 SPARSER ACTIVITY (all 0 = off): thrAdd: +mV on every hidden cell's grown firing threshold at birth.
+  //   hidHomeo / hidRate: intrinsic homeostatic thresholds of all hidden cells (those without rcvHomeo):
+  //   thr += hidHomeo (spike - hidRate) every substep, never below the grown threshold (+ thrAdd), so busy cells are pushed down
+  //   to ~hidRate spikes per substep while quiet cells keep their threshold.
+  //   regInh / regInhTau / regK: POOLED FEEDBACK INHIBITION per region (basket / chandelier-like interneuron pool, k-winners-take-all
+  //   style): every hidden cell of a region gets -P mV, P = P e^(-1/regInhTau) + regInh x 100 x max(0, f - regK), f = the region's
+  //   fraction of hidden cells spiking this substep (regInh mV per 1 % active above regK).
+  thrAdd: 0, hidHomeo: 0, hidRate: 0.01, regInh: 0, regInhTau: 0, regK: 0 };   // trust0: starting trust (-1 = trustRef)
 // v22 (round 23): the ONE learning-rule set of the default plans predictK3, rewardK, rewardMemK (and the region plans):
 // unified three-factor rule, instructive gain, eligibility, critic (outcome RPE), synaptic scaling setpoint (RESULTS R23)
 const UNIFIED_PL = { uni: 1, lr: 0.05, uniI: 0.4, tauElig: 100, aMinus: 0.3, rpe: 1, rpeMode: 1, rpeLr: 0.3, preNorm: 45, teachThr: 20, plateau: 4 };
