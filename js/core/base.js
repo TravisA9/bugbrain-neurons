@@ -51,6 +51,7 @@ const params = {
   eliteFrac: 0.1,
   crossoverRate: 0.3,
   traceDecay: 0.9,     // output spike-rate smoothing (per substep)
+  fastEngine: 0,       // R66: 1 = event-driven engine (same model computed lazily, not bit-identical; net.js initFastE), 0 = exact engine
   plasticity: true,    // lifetime learning (reward-modulated STDP); false = frozen genome weights
   cellStart: 'env',    // a new population starts from mutants of this body plan ('env' = the environment's default)
   cellMut: 0.02,       // chance per genome number to mutate
