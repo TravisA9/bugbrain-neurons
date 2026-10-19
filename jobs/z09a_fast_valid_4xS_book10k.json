@@ -1,0 +1,81 @@
+{
+  "id": "z09a_fast_valid_4xS_book10k",
+  "question": "I84",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "run/r66_jobs.js"
+  ],
+  "title": "Fast engine validation at 4xS on book10k (growths k 1100-1107): exact vs fast",
+  "priority": 0.974,
+  "estHours": 4.1,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "paired by growth seed (exact vs fast engine, same grown brain): per task mean diff, win / loss, paired t over 16 growths (z08a + z08b; z09a + z09b); wallMs per run gives the speedup on the worker"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "1100",
+        "--force"
+      ],
+      "label": "v37 4xS book10k exact g1100 n4",
+      "env": {
+        "BB_OUT": "results/phone/z09a_fast_valid_4xS_book10k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80",
+        "1104",
+        "--force"
+      ],
+      "label": "v37 4xS book10k exact g1104 n4",
+      "env": {
+        "BB_OUT": "results/phone/z09a_fast_valid_4xS_book10k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,P.fastEngine=1",
+        "1100",
+        "--force"
+      ],
+      "label": "v37 4xS book10k fast g1100 n4",
+      "env": {
+        "BB_OUT": "results/phone/z09a_fast_valid_4xS_book10k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,P.fastEngine=1",
+        "1104",
+        "--force"
+      ],
+      "label": "v37 4xS book10k fast g1104 n4",
+      "env": {
+        "BB_OUT": "results/phone/z09a_fast_valid_4xS_book10k.jsonl"
+      }
+    }
+  ]
+}

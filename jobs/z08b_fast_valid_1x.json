@@ -1,0 +1,441 @@
+{
+  "id": "z08b_fast_valid_1x",
+  "question": "I84",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "run/r66_jobs.js"
+  ],
+  "title": "Fast engine validation at 1x (growths k 1108-1115): exact vs fast on book10k / 30k, fables4000, order3, text1000, seqchoice order2 / cycle",
+  "priority": 0.975,
+  "estHours": 1.4,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "paired by growth seed (exact vs fast engine, same grown brain): per task mean diff, win / loss, paired t over 16 growths (z08a + z08b; z09a + z09b); wallMs per run gives the speedup on the worker"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 book10k exact g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 book10k exact g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "P.fastEngine=1",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 book10k fast g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "4",
+        "P.fastEngine=1",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 book10k fast g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 book30k exact g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "base",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 book30k exact g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "P.fastEngine=1",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 book30k fast g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "4",
+        "P.fastEngine=1",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 book30k fast g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 fables4000 exact g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 fables4000 exact g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "P.fastEngine=1",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 fables4000 fast g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "4",
+        "P.fastEngine=1",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 fables4000 fast g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 order3 exact g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 order3 exact g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "P.fastEngine=1",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 order3 fast g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "4",
+        "P.fastEngine=1",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 order3 fast g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 text1000 exact g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "base",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 text1000 exact g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "P.fastEngine=1",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 text1000 fast g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "4",
+        "P.fastEngine=1",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 text1000 fast g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 seqchoice order2 exact g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 seqchoice order2 exact g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "P.fastEngine=1",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 seqchoice order2 fast g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "4",
+        "P.fastEngine=1",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 seqchoice order2 fast g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 seqchoice cycle exact g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "base",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 seqchoice cycle exact g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "P.fastEngine=1",
+        "1108",
+        "--force"
+      ],
+      "label": "v37 seqchoice cycle fast g1108 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "4",
+        "P.fastEngine=1",
+        "1112",
+        "--force"
+      ],
+      "label": "v37 seqchoice cycle fast g1112 n4",
+      "env": {
+        "BB_OUT": "results/phone/z08b_fast_valid_1x.jsonl"
+      }
+    }
+  ]
+}
