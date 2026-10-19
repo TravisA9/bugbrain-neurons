@@ -1,5 +1,12 @@
 # PRIORITIES (R71, Oct 19 2026, ~11:30 AM CT; **v39 / DEFAULTS_VERSION 32** unchanged; R71 adds size-scaling genes, all off by default)
 
+## R72 update (Oct 19 midday)
+- **Seqchoice collapse diagnosed (I90):** the striatum still sees the state (mixing cells decode the arm at 1.0 at 1x and 4x), but preNorm gives each presynaptic cell the
+  same outgoing budget, so a striatal receiver's plastic total grows 4-6x with a 10x larger mixing population: drive 4x, receivers' own arm code 0.75 -> 0.3, output margin 0.35 -> 0.12.
+- **Fix (genes off by default):** `P.postCapRel` (+ `P.postN`) caps a receiver's plastic total at a multiple of its birth total. Cortex 4x + fanRef + postCapRel 1.5 / postN 130 on seqchoice
+  (8 growths): order2 3.23 -> 5.76, cycle 3.97 -> 7.83 (1x 6.48 / 9.23); an all-receiver cap reaches 6.1 / 8.8 but costs 1x cue -2 (postN keeps 1x bit-identical).
+- **Large-run decision:** still not proposable: order3 -0.07 and seqchoice -0.7 / -1.4 vs 1x remain, 16-growth confirmation (y62-y69) pending.
+
 ## R71 update
 - **New genes** (bit-identical when off; test_core checks it): `sc.sizeF` (per-region size factor), `sc.sizeNorm`, `sc.divReach`, `sc.divRep` (I80),
   `P.fanRef` / `P.fanRefR` (fan-in-normalised rate of the teacher / reward rule).

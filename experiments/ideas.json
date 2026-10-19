@@ -1259,7 +1259,7 @@
       "area": "scaling",
       "title": "Why scaled brains lose order3 / seqchoice: bigger cortex or (non-plastic) context regions dilute sharp sequence context; plan-wide sc.* variants also inflate the 400-cell striatum",
       "status": "open",
-      "evidence": "R69 box (order3 growths 0-1, 1x 9.68 / 9.65): 4xS all 7.28 / 7.28, cortex only 7.75 / 8.13, context only 7.60 / 7.75, context 2xS 8.13 / 8.15, context grid 120 with 1x wiring 7.60 / 7.75, maxCells alone or wiring alone at grid 60 = 1x; seqchoice cycle / order2 all 4xS 2.04 / 0.01, 2.48 / 1.53, striatum kept 3.27 / 6.37, 3.31 / 2.52. Queued y10a/b (4xS by region, 16 growths, 6 tasks), y16 (2xS by region), y17 (long fables x size), y21 (3xS); R70 y10a (4xS by region, growths 0-7, vs 1x): all book10k +0.021 / fables +0.020 / order3 -0.239 / seqchoice cycle 2.09; cortex only +0.014 / +0.014 / -0.168 / 3.97 (text -0.012, t -3.1); context only +0.000 / +0.002 / -0.223 / 8.95; all but striatum seqchoice 4.52 / 3.36 (1x 9.23 / 6.48). The book gain is in the cortex, the order3 loss comes from either region (context alone almost all of it), the seqchoice collapse from the cortex. Next: y10b, y16, y30 (order3 K 4 / 16 x size), y33 (regions on book30k / fables8000), y37 (growths 16-31), then a code fix (normalised fan-in, per-region scaling); y10a/b 16 growths: cortex only order3 -0.160, text -0.015 (t -4.3), seqchoice 3.26 / 3.23 (1x 9.11 / 6.39); context only order3 -0.219, book +0.001, seqchoice cycle -0.29 (t -2.3); all book +0.020, order3 -0.238 R71 box: total drive per cell is already constant at 4x (normE / preNorm); fan-in counts grow (predictor plastic inputs 840 -> 2853 at cortex 4x, unchanged at context 4x). Code: sc.sizeF / sizeNorm / divReach / divRep, P.fanRef / fanRefR (off by default). Screen growths 0-7: cortex 4x + fanRef 450 lr 0.2 order3 0.875 (no fanRef 0.756, 8/0; 1x 0.949), book +0.009, fables +0.005 vs v39 1x, text -0.008; seqchoice collapse unchanged (order2 3.2-3.7, cycle 4.0 vs 6.5 / 9.2); sizeNorm 4 hurts (seqchoice order2 1.02). Decoding (fables): history b1-b3 decodable >= 0.97 from the context chain at every size, so the loss is in learning / use, not in the representation. Next: y42-y61.",
+      "evidence": "R69 box (order3 growths 0-1, 1x 9.68 / 9.65): 4xS all 7.28 / 7.28, cortex only 7.75 / 8.13, context only 7.60 / 7.75, context 2xS 8.13 / 8.15, context grid 120 with 1x wiring 7.60 / 7.75, maxCells alone or wiring alone at grid 60 = 1x; seqchoice cycle / order2 all 4xS 2.04 / 0.01, 2.48 / 1.53, striatum kept 3.27 / 6.37, 3.31 / 2.52. Queued y10a/b (4xS by region, 16 growths, 6 tasks), y16 (2xS by region), y17 (long fables x size), y21 (3xS); R70 y10a (4xS by region, growths 0-7, vs 1x): all book10k +0.021 / fables +0.020 / order3 -0.239 / seqchoice cycle 2.09; cortex only +0.014 / +0.014 / -0.168 / 3.97 (text -0.012, t -3.1); context only +0.000 / +0.002 / -0.223 / 8.95; all but striatum seqchoice 4.52 / 3.36 (1x 9.23 / 6.48). The book gain is in the cortex, the order3 loss comes from either region (context alone almost all of it), the seqchoice collapse from the cortex. Next: y10b, y16, y30 (order3 K 4 / 16 x size), y33 (regions on book30k / fables8000), y37 (growths 16-31), then a code fix (normalised fan-in, per-region scaling); y10a/b 16 growths: cortex only order3 -0.160, text -0.015 (t -4.3), seqchoice 3.26 / 3.23 (1x 9.11 / 6.39); context only order3 -0.219, book +0.001, seqchoice cycle -0.29 (t -2.3); all book +0.020, order3 -0.238 R71 box: total drive per cell is already constant at 4x (normE / preNorm); fan-in counts grow (predictor plastic inputs 840 -> 2853 at cortex 4x, unchanged at context 4x). Code: sc.sizeF / sizeNorm / divReach / divRep, P.fanRef / fanRefR (off by default). Screen growths 0-7: cortex 4x + fanRef 450 lr 0.2 order3 0.875 (no fanRef 0.756, 8/0; 1x 0.949), book +0.009, fables +0.005 vs v39 1x, text -0.008; seqchoice collapse unchanged (order2 3.2-3.7, cycle 4.0 vs 6.5 / 9.2); sizeNorm 4 hurts (seqchoice order2 1.02). Decoding (fables): history b1-b3 decodable >= 0.97 from the context chain at every size, so the loss is in learning / use, not in the representation. Next: y42-y61. R72: seqchoice collapse = striatal plastic budget grows with the mixing population (see I90); fixed mostly by postCapRel.",
       "why": "a large brain that loses higher-order context cannot become a language model; the size track depends on fixing this",
       "rounds": [
         "R69",
@@ -1302,6 +1302,22 @@
       "parents": [
         "I87",
         "I78"
+      ]
+    },
+    {
+      "id": "I90",
+      "area": "scaling",
+      "title": "Striatal plastic budget grows with cortex size: cap each receiver's plastic total (postCapRel / postN)",
+      "status": "promising (box, 8 growths)",
+      "evidence": "R72: at cortex 4x striatal receivers (fan-in 120 -> 280) end with 665-963 plastic weight (1x 162-202); arm code in receivers 0.75 -> 0.3, margin 0.35 -> 0.12; mixing cells still decode everything. postCapRel 1.5 + postN 130 + fanRef 450/R126: seqchoice order2 3.23 -> 5.76, cycle 3.97 -> 7.83 (1x 6.48 / 9.23); all-receiver cap 6.1 / 8.8 but cue -2 at 1x; allMax no help. Queued y62-y78.",
+      "why": "explains and (mostly) fixes the seqchoice collapse at size",
+      "rounds": [
+        "R72"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I87",
+        "I89"
       ]
     }
   ],

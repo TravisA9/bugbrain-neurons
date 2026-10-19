@@ -3062,3 +3062,41 @@ y51 growths 16-31, y57 4xS fanRef 300, y58 rule knobs, y59 context 4x + sizeNorm
 Box follow-up (same growths 0-7, cortex 4x lr 0.2): fanRef ladder order3 200 0.790 / 300 0.835 / **450 0.875** / 840 0.856 (no fanRef 0.756): the optimum is near 450,
 too strong a cut loses again. text1000 0.752 / 0.748 / 0.749. fanRefR 60 (fanRef 450): seqchoice order2 3.42, cycle 4.26 (R126: 3.70 / 4.11; none: 3.23 / 3.97);
 fanRef 200 cycle 4.60. No rate setting brings seqchoice near 1x (6.48 / 9.23): the collapse needs another mechanism (next: diagnose the striatum input from a big cortex).
+
+## R72 — why seqchoice collapses with a 4x cortex, and a fix (box, Oct 19 midday)
+Probe (/workspace/r72/scprobe.js, seqchoice order2, growths 0-1, 1x vs cortex 4x; softmax readouts from spiking cells, striatum receiver stats):
+| | 1x | cortex 4x |
+|---|---|---|
+| mixing cells | 68-93 | 663-694 |
+| striatal receivers: plastic fan-in | 119-126 | 269-283 |
+| receiver plastic weight total: birth -> end of life | 82 -> 162-202 | 82 -> 665-963 |
+| drive from active inputs per slot | 65-81 | 302-307 |
+| decoding of the paying arm from the receivers' own spikes | 0.72-0.76 | 0.26-0.34 |
+| decoding of arm / current symbol from the mixing cells | 1.0 / 1.0 | 1.0 / 1.0 |
+| output margin (top - second spike share) | 0.33-0.37 | 0.12-0.13 |
+| dopamine |delta| mean, critic value | 0.21-0.29, 0.58-0.60 | 0.10-0.22, 0.20-0.31 |
+- **The striatum still sees the needed state** (mixing cells decode everything at either size). What breaks is learning in the receivers: `preNorm` gives every
+  presynaptic cell the same outgoing budget, so a receiver's plastic total grows with the number of projecting cells (10x mixing cells): 4-6x the weight, drive 4x
+  (receivers fire 2x as much), the receivers' own code for the arm collapses, margins fall, the critic values fall (less reward), dopamine shrinks.
+  fanRefR does not address this: it scales the rate, the budget (total weight) is the problem.
+- Genes (off by default; test_core checks): `P.postCap` / `P.postCapRel` cap each receiver's reward-rule excitatory plastic total (absolute, or x its birth total;
+  synaptic scaling), `P.postN` apply only to receivers with more than postN such inputs, `P.allMax` convergence limit of 'all' tracts (fan-in independent of source size).
+Box screen (8 growths, seqchoice; cortex 4x, lr 0.2, fanRef 450 / R126 unless noted; 1x lr 0.1 refs 6.48 order2 / 9.23 cycle):
+| arm | order2 | cycle |
+|---|---|---|
+| cortex 4x (no fix) | 3.23 | 3.97 |
+| allMax 110 | 2.8 / 3.6 (n=2, probe acc 0.24-0.36) | no help |
+| postCapRel 2.5, no fanRef | 5.13 | 7.60 |
+| postCapRel 4, no fanRef | 4.73 | 6.67 |
+| + fanRef, postCapRel 3 / 2.5 / 2 (all receivers) | 5.90 / 5.85 / 6.11 | 7.98 / 8.08 / 8.81 |
+| + fanRef, fanRefR 60, postCapRel 2.5 | 6.19 | 8.26 |
+| **+ fanRef, postCapRel 1.5, postN 130** | **5.76** | **7.83** |
+| + fanRef, postCapRel 2, postN 130 / 170 | 5.55 | 7.46 |
+| striatum kept 1x (sizeF@!striatum 4), postCapRel 2.5 | 5.40 | 8.18 |
+- The cap recovers most of the collapse (order2 3.23 -> 5.8-6.1, cycle 3.97 -> 7.8-8.8; 1x 6.48 / 9.23) but not all, and varies by growth.
+- **Cost at 1x:** a cap that also binds 1x-sized receivers is NOT neutral: cue-then-turn 8.67 -> 6.58 (postCapRel 4), 6.08 (2.5), 0.28 (cap 2 with postN 100);
+  bandit unchanged; seqchoice order2 6.48 -> 6.02 (2.5). postN 130 makes it bit-identical at 1x (cue 8.67 / bandit 3.02 / seqchoice 6.48 / 9.23 verified) but loses the
+  few receivers of 4x brains with 110-130 inputs, hence 5.76 / 7.83 instead of 6.11 / 8.81.
+- Seq tasks have no striatum without an outcome signal, so the postCap genes cannot change them (cortex 4x + fanRef numbers of R71 stand).
+Queued y62-y78 (run/r72_jobs.js, ~102 est slot-h): y62 / y63 / y67 / y69 16-48 growths of the fix, y64 1x neutrality (seqchoice, bandit, cue), y65 striatum-1x whole brain,
+y66 / y72 / y73 sizes 2x / 3x / 8x with the fix, y68 harder seqchoice (order3, 3000 symbols), y70 / y74-y77 long lives, y71 / y78 long text and generation.
