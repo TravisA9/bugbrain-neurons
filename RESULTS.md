@@ -3017,3 +3017,45 @@ The engine default (fast) is unchanged. Docs: README "How BugBrain works now", g
 | 0.82-0.7 | y40, y39a/b, y37a/b, y38, y41 | 2xS 100k / 300k; 3xS fresh; 4xS dissection growths 16-31; y25 on growths 16-31; 4xS lr x 100k | 30 |
 R70 adds ~122 slot-hours; with the ~44 left from R69 that is ~166 slot-hours, about 14 h of wall time on both workers together at the measured
 ~12 parallel runs (R69's estimates ran ~0.6-0.7x on the workers, so possibly ~10 h). y19 / y22 (4xS lr 0.2) lowered to priority 0.6 after y11.
+
+## R71 — size-scaling genes (all off by default), fan-in-normalised learning rate (box, Oct 19 late morning)
+Code (f055bed, pushed as 9787c0f with run/r71_jobs.js; test_core ALL OK incl. a new check that every gene is off by default and bit-identical at its neutral value):
+- `sc.sizeF` (per region): grid / coneSpeed / axonLen x sqrt(f), maxCells x f. `sc.sizeF@cortex=4` = the explicit 4xS-cortex variant bit for bit; `sc.sizeF=4` scales the
+  striatum by its own size (27.6 -> 55 grid, 293 -> 952 cells on seqchoice) instead of inflating it to 120 / 13600; `sc.sizeF@!striatum=4` keeps it 1x.
+- `sc.sizeNorm` (per region): E / I normalisation targets capped at n x wMax / sizeNorm (the 1x wMax-30 clamp binds, so at 4x the inhibitory total onto
+  M / M2 cells doubled, -98 -> -193; sizeNorm 4 restores -105).
+- `sc.divReach` (division reach) and `sc.divRep` (I80: up to divRep divisions per dividing cell per developmental step).
+- `P.fanRef` / `P.fanRefR` (global): fan-in-normalised rate of the teacher / reward rule: a receiver with n > fanRef plastic inputs learns at lr x fanRef / n
+  (homeostatic scaling of the plastic total; local, each cell only needs its own input count).
+Diagnosis (box, 1-2 growths):
+- Total excitatory and plastic drive per cell is already constant at 4x (normE, preNorm); only fan-in COUNTS grow. Plastic fan-in of the cortex predictors:
+  1x ~840 (other taught cells ~38), cortex 4x 2853, context 4x unchanged (~840). Striatum (seqchoice) 1x ~120, cortex 4x ~313.
+- The teacher rule potentiates every active plastic input by lr x x, so one plateau adds drive proportional to the number of active inputs: the
+  effective rate grows with fan-in (why the best cortex lr falls with size, y11).
+- Linear decoding (fables 4000, softmax readouts, held-out 30%): b1-b3 symbols are decodable at >= 0.97 from the context chain at 1x, cortex 4x and
+  context 4x alike; mixing cells lose some history at context 4x (b2 / b3 0.85 vs 0.94). The information is there; the loss is in learning / use.
+  (order3 is a fixed cycle: every group decodes everything there, not informative.)
+- sizeNorm 4: no order3 change; divReach 2: no help. 8x cortex grows only 7.3k of 14.5k cortex cells (5.96k at 4x); divReach 2 / 3: 8.3k / 8.5k;
+  **divRep 2 fills maxCells (14.45k at 8x, 7.22k at 4x)**: I80's growth-timing fix works (growth 260 s for 8x on the box).
+Box screen, growths 0-7, 7 tasks, fast engine (refs: 1x lr 0.1 = y08 / y09 / y10, 1x lr 0.2 = v39 y24 / y08, cortex 4x lr 0.1 = y10, plain 4xS lr 0.1 = y10 / y11;
+seqchoice does not depend on the cortex lr, so its 1x ref is the same for both rates):
+
+| arm (cortex 4x) | book10k | book30k | fables | order3 | text1000 | sc order2 | sc cycle |
+|---|---|---|---|---|---|---|---|
+| 1x v39 (lr 0.2) | 0.3410 | 0.3401 | 0.3499 | 0.9492 | 0.7575 | 6.48 | 9.23 |
+| plain 4xS lr 0.1 | 0.3535 | 0.3548 | 0.3604 | 0.7261 | 0.7589 | 2.79 | 2.09 |
+| cortex 4x lr 0.1 (y10) | 0.3464 | - | 0.3550 | 0.7966 | 0.7449 | 3.23 | 3.97 |
+| cortex 4x lr 0.2 | 0.3417 | 0.3425 | 0.3531 | 0.7562 | 0.7396 | 3.23 | 3.97 |
+| **cortex 4x + fanRef 450, lr 0.2** | 0.3501 | 0.3488 | 0.3546 | **0.8753** | 0.7491 | 3.23 | 3.97 |
+| cortex 4x + fanRef 840 / R126, lr 0.2 | 0.3475 | 0.3483 | 0.3570 | 0.8555 | 0.7471 | 3.70 | 4.11 |
+| cortex 4x + sizeNorm 4 + fanRef 840 / R126, lr 0.1 | 0.3432 | 0.3436 | 0.3444 | 0.8508 | 0.7455 | 1.02 | 1.32 |
+
+- fanRef is a real fix for part of the order3 loss: fanRef 450 vs the same brain without it +0.119 (8/0), vs cortex 4x lr 0.1 +0.079 (8/0, t 4.8), vs plain
+  4xS +0.149 (8/0). It keeps the cortex book / fables gain (vs v39 1x: book10k +0.009, book30k +0.009, fables +0.005, t 1-1.8) but order3 is still -0.074 vs 1x
+  (2/6) and text -0.008. fanRef 450 binds at 1x too (predictors 840 -> lr x 0.54); 840 is 1x-neutral but weaker at 4x.
+- fanRefR 126 lifts seqchoice order2 3.23 -> 3.70 (6/2, n.s.), cycle unchanged: the seqchoice collapse is NOT a rate effect.
+- sizeNorm 4 hurts: fables -0.011 vs cortex 4x, seqchoice collapses (order2 1.02, cycle 1.32). Rejected.
+- Still worse than plain 4xS on book (-0.003 / -0.006) and fables (-0.006): the context regions' size adds a little on text even though it costs order3.
+Queued y42-y61 (run/r71_jobs.js, ~172 slot-h): y42 completes the screen to 16 growths, y43 fanRef ladder (300 / 450, R60 / R126), y44 fresh growths,
+y45 whole-brain + per-region factors with fanRef, y46 / y61 8x cortex divRep 2, y47 fanRef at 1x, y48 lr 0.3 / 0.5 under fanRef, y49 2x cortex, y50 / y52-y56 / y60 long lives,
+y51 growths 16-31, y57 4xS fanRef 300, y58 rule knobs, y59 context 4x + sizeNorm.

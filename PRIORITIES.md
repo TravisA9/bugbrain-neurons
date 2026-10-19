@@ -1,6 +1,32 @@
-# PRIORITIES (R70, Oct 19 2026, ~9:30 AM CT; **v39 / DEFAULTS_VERSION 32** = v38 + cortex lr 0.2)
+# PRIORITIES (R71, Oct 19 2026, ~11:30 AM CT; **v39 / DEFAULTS_VERSION 32** unchanged; R71 adds size-scaling genes, all off by default)
 
-## R70 update
+## R71 update
+- **New genes** (bit-identical when off; test_core checks it): `sc.sizeF` (per-region size factor), `sc.sizeNorm`, `sc.divReach`, `sc.divRep` (I80),
+  `P.fanRef` / `P.fanRefR` (fan-in-normalised rate of the teacher / reward rule).
+- **fanRef is a partial fix (I89):** cortex 4x + fanRef 450 at lr 0.2 recovers order3 0.756 -> 0.875 (8/0; cortex 4x lr 0.1: 0.797; 1x 0.949) and keeps the
+  cortex text gain (book10k / 30k +0.009, fables +0.005 vs v39 1x, 8 growths). Order3 is still -0.07 vs 1x, text1000 -0.008.
+- **Not fixed:** the seqchoice collapse from a bigger cortex (order2 3.2-3.7, cycle ~4.0 vs 6.5 / 9.2); fanRefR helps order2 a little, cycle not at all, so it is not
+  a rate effect. sizeNorm 4 makes it worse (rejected). The context-side order3 loss is untouched by fanRef (predictor fan-in does not change with context size).
+- **I80 growth timing fixed in code:** divRep 2 fills maxCells (8x cortex 14.45k cells vs 7.3k). Whether a full 8x cortex pays is y46 / y61.
+- **Large-run decision: still not proposable.** No scaled brain meets the bar (order3 within 0.02 of 1x, seqchoice within noise, book gain kept).
+
+## Ranked open questions (R71)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I89 | fanRef at 16 growths and fresh seeds; best fanRef (200 / 300 / 450) and fanRefR; does a higher lr pay under fanRef? | y42, y43, y44, y48, y51 |
+| 2 | I87 | Per-region factors with fanRef (plain 4xS, sizeF all-but-striatum, sizeF everywhere); context 4x + sizeNorm; the seqchoice collapse needs a diagnosis (striatum input from a big cortex) | y45, y57, y59 |
+| 3 | I80 | Does a fully grown 8x cortex (divRep 2) add to 4x under fanRef? | y46, y61, y52, y56 |
+| 4 | I73 | Length at size under fanRef (book100k / 300k, k 1400-1415) vs y27 / y36 / y40 | y50, y54, y55, y60 |
+| 5 | I78 / I72 | 2x cortex size curve; rule knobs and generation under fanRef | y49, y58, y53 |
+Decision point (for Travis) unchanged: no large run until a scaled brain keeps order3 within 0.02 of 1x and seqchoice within noise while keeping the book gain,
+and the long-life jobs show size still improving between 100k and 300k.
+
+## Worker notes (R71)
+R71 code pushed 10:57 AM CT (9787c0f); y42-y61 queued 10:57 AM (~172 est slot-h; requires run/r71_jobs.js). y42a was claimed within minutes. Pending
+before R71: ~150 est slot-h. Total ~320 est slot-h, ~200-220 real slot-h at the R69 ratio: ~17-18 h for both workers (12 slots) together, not the
+24 h asked for. The next review needs to add more.
+
+## Previous update (R70)
 - **v39 adopted** (standing authorisation): cortex lr 0.2 passed on 16 FRESH growths (y08: book10k +0.006, book30k +0.009, fables +0.007, order3 -0.002 n.s.,
   text 0, seqchoice identical). Old brain = plan `deepURSx3v37`. y23 (fresh set 2) passes too; pooled 32 fresh growths order3 -0.004 (t -1.7): small, watch it.
   z10b completes the 4xS fast-engine check (no task worse): v38 engine stands. lr 0.3 / 0.5 forget order3 (-0.015 / -0.046): the rate optimum at 1x is ~0.2-0.25.

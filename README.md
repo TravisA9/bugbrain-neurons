@@ -48,6 +48,9 @@ Generation is babble with some real words (about 56-74% of generated words are r
 (0.96 -> 0.73) and the reward sequence task; most of the order3 loss comes from more cells in the context regions or the cortex. 8x does not grow
 properly yet (cell division and growth time are counted in developmental steps). Longer lives (100k letters vs 30k) add almost nothing at any size.
 Size is therefore a run-time choice, not a default. At 4xS the best cortex rate is 0.1, not 0.2.
+R71 added size genes, all off by default: `sc.sizeF` scales one region (`sc.sizeF@cortex=4` = cortex-only 4xS), `sc.divRep` lets a cell divide
+more than once per developmental step (an 8x cortex then grows fully), and `P.fanRef` / `P.fanRefR` scale a cell's learning rate down by
+fanRef / (its plastic input count). With fanRef 450 a 4x cortex keeps lr 0.2 and gets back about half its order3 loss. Seqchoice still collapses at size (RESULTS R71).
 
 **Tried and rejected** (details in IDEAS.md / RESULTS.md): output-side "space bias" fixes, stable letter-pair codes, sparser activity (the cortex
 already fires sparsely, ~2% of cells per step), fewer substeps per letter, staged maturation of a big brain, evolution / racing for text,

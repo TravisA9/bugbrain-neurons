@@ -3,7 +3,7 @@
 //   P.fanRef / P.fanRefR (fan-in-normalised learning rate of the teacher / reward rule: lr x fanRef / n for a receiver with n > fanRef plastic inputs).
 // `requires` lists run/r71_jobs.js, so only workers whose checkout has the R71 code claim them.
 // Box screen (growths 0-7, R71): cortex 4x + fanRef 450 at lr 0.2 order3 0.875 vs cortex 4x lr 0.2 0.756 (8/0) and lr 0.1 0.797 (8/0); 1x 0.95-0.965;
-//   fanRefR 126 lifts seqchoice order2 3.19 -> 3.86 (1x 6.5); sizeNorm 4 kills seqchoice order2 (0.65).
+//   fanRefR 126 lifts seqchoice order2 3.19 -> 3.86 (1x 6.5); sizeNorm 4 kills seqchoice order2 (1.02).
 // Time model: slot-seconds per growth as r70_jobs.js; cortex-only sizes: 4xC = 0.6 x 4xS, 4xCd (divRep 2, 7.2k cortex cells) 0.7 x, 8xC (14.5k) 1.3 x.
 const fs = require('fs'), path = require('path');
 const REQ = ['run/r42.js', 'js/core/net.js', 'js/core/develop.js', 'run/r71_jobs.js'];

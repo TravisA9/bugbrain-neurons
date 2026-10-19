@@ -1149,11 +1149,12 @@
       "id": "I80",
       "area": "scaling",
       "title": "Growth that scales past 4x: proliferation / growth time counted in developmental steps (like coneSpeed / axonLen before R63)",
-      "status": "open",
-      "evidence": "R64 box (1 growth): 8xS (grid 170, maxCells 27200, coneSpeed 8, axonLen 113) grows 15.2k cells, book 1.5k 2.04 / 5k 1.98 vs 4xS 3.62 / 3.80; branchMax 1000 or maxCells 40000: no change; pDiv 1: 22k cells, 3.38 / 3.55 and 3.06 (still < 4xS). Needs a code-level fix (scale division rate / developmental time with the grid) before any 8x run",
+      "status": "code fix in (divRep), being tested",
+      "evidence": "R64 box (1 growth): 8xS (grid 170, maxCells 27200, coneSpeed 8, axonLen 113) grows 15.2k cells, book 1.5k 2.04 / 5k 1.98 vs 4xS 3.62 / 3.80; branchMax 1000 or maxCells 40000: no change; pDiv 1: 22k cells, 3.38 / 3.55 and 3.06 (still < 4xS). Needs a code-level fix (scale division rate / developmental time with the grid) before any 8x run R71: divReach 2 / 3 only 8.3k / 8.5k cortex cells at 8x; sc.divRep 2 (up to 2 divisions per step) fills maxCells (8x cortex 14.45k cells, 4x 7.22k vs 5.96k). Growth-time fix done in code; value tested by y46 / y61 / y52 / y56.",
       "why": "the large-brain run needs brains beyond 4x",
       "rounds": [
-        "R64"
+        "R64",
+        "R71"
       ],
       "theme": "scaling",
       "parents": [
@@ -1258,11 +1259,12 @@
       "area": "scaling",
       "title": "Why scaled brains lose order3 / seqchoice: bigger cortex or (non-plastic) context regions dilute sharp sequence context; plan-wide sc.* variants also inflate the 400-cell striatum",
       "status": "open",
-      "evidence": "R69 box (order3 growths 0-1, 1x 9.68 / 9.65): 4xS all 7.28 / 7.28, cortex only 7.75 / 8.13, context only 7.60 / 7.75, context 2xS 8.13 / 8.15, context grid 120 with 1x wiring 7.60 / 7.75, maxCells alone or wiring alone at grid 60 = 1x; seqchoice cycle / order2 all 4xS 2.04 / 0.01, 2.48 / 1.53, striatum kept 3.27 / 6.37, 3.31 / 2.52. Queued y10a/b (4xS by region, 16 growths, 6 tasks), y16 (2xS by region), y17 (long fables x size), y21 (3xS); R70 y10a (4xS by region, growths 0-7, vs 1x): all book10k +0.021 / fables +0.020 / order3 -0.239 / seqchoice cycle 2.09; cortex only +0.014 / +0.014 / -0.168 / 3.97 (text -0.012, t -3.1); context only +0.000 / +0.002 / -0.223 / 8.95; all but striatum seqchoice 4.52 / 3.36 (1x 9.23 / 6.48). The book gain is in the cortex, the order3 loss comes from either region (context alone almost all of it), the seqchoice collapse from the cortex. Next: y10b, y16, y30 (order3 K 4 / 16 x size), y33 (regions on book30k / fables8000), y37 (growths 16-31), then a code fix (normalised fan-in, per-region scaling); y10a/b 16 growths: cortex only order3 -0.160, text -0.015 (t -4.3), seqchoice 3.26 / 3.23 (1x 9.11 / 6.39); context only order3 -0.219, book +0.001, seqchoice cycle -0.29 (t -2.3); all book +0.020, order3 -0.238",
+      "evidence": "R69 box (order3 growths 0-1, 1x 9.68 / 9.65): 4xS all 7.28 / 7.28, cortex only 7.75 / 8.13, context only 7.60 / 7.75, context 2xS 8.13 / 8.15, context grid 120 with 1x wiring 7.60 / 7.75, maxCells alone or wiring alone at grid 60 = 1x; seqchoice cycle / order2 all 4xS 2.04 / 0.01, 2.48 / 1.53, striatum kept 3.27 / 6.37, 3.31 / 2.52. Queued y10a/b (4xS by region, 16 growths, 6 tasks), y16 (2xS by region), y17 (long fables x size), y21 (3xS); R70 y10a (4xS by region, growths 0-7, vs 1x): all book10k +0.021 / fables +0.020 / order3 -0.239 / seqchoice cycle 2.09; cortex only +0.014 / +0.014 / -0.168 / 3.97 (text -0.012, t -3.1); context only +0.000 / +0.002 / -0.223 / 8.95; all but striatum seqchoice 4.52 / 3.36 (1x 9.23 / 6.48). The book gain is in the cortex, the order3 loss comes from either region (context alone almost all of it), the seqchoice collapse from the cortex. Next: y10b, y16, y30 (order3 K 4 / 16 x size), y33 (regions on book30k / fables8000), y37 (growths 16-31), then a code fix (normalised fan-in, per-region scaling); y10a/b 16 growths: cortex only order3 -0.160, text -0.015 (t -4.3), seqchoice 3.26 / 3.23 (1x 9.11 / 6.39); context only order3 -0.219, book +0.001, seqchoice cycle -0.29 (t -2.3); all book +0.020, order3 -0.238 R71 box: total drive per cell is already constant at 4x (normE / preNorm); fan-in counts grow (predictor plastic inputs 840 -> 2853 at cortex 4x, unchanged at context 4x). Code: sc.sizeF / sizeNorm / divReach / divRep, P.fanRef / fanRefR (off by default). Screen growths 0-7: cortex 4x + fanRef 450 lr 0.2 order3 0.875 (no fanRef 0.756, 8/0; 1x 0.949), book +0.009, fables +0.005 vs v39 1x, text -0.008; seqchoice collapse unchanged (order2 3.2-3.7, cycle 4.0 vs 6.5 / 9.2); sizeNorm 4 hurts (seqchoice order2 1.02). Decoding (fables): history b1-b3 decodable >= 0.97 from the context chain at every size, so the loss is in learning / use, not in the representation. Next: y42-y61.",
       "why": "a large brain that loses higher-order context cannot become a language model; the size track depends on fixing this",
       "rounds": [
         "R69",
-        "R70"
+        "R70",
+        "R71"
       ],
       "theme": "scaling",
       "parents": [
@@ -1284,6 +1286,22 @@
       "parents": [
         "I77",
         "I79"
+      ]
+    },
+    {
+      "id": "I89",
+      "area": "scaling",
+      "title": "Fan-in-normalised learning rate (P.fanRef / fanRefR): a receiver with n > fanRef plastic inputs learns at lr x fanRef / n",
+      "status": "promising (partial fix)",
+      "evidence": "R71 box (growths 0-7): at cortex 4x lr 0.2, fanRef 450 lifts order3 0.756 -> 0.875 (8/0), fanRef 840 + fanRefR 126 0.856; keeps the cortex book / fables gain; still order3 -0.07 vs 1x. fanRefR 126 on seqchoice order2 3.23 -> 3.70 (n.s.), cycle unchanged. Queued y42-y61.",
+      "why": "the teacher rule adds lr x x per active input, so the effective rate grows with fan-in; normalising it lets the rate stay at its 1x value at any size",
+      "rounds": [
+        "R71"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I87",
+        "I78"
       ]
     }
   ],
