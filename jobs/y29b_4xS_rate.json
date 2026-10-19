@@ -1,0 +1,1223 @@
+{
+  "id": "y29b_4xS_rate",
+  "question": "I78",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/envs/book.js",
+    "run/r69_jobs.js"
+  ],
+  "title": "4xS x cortex lr 0.07 / 0.14, 5 tasks, growths 8-15",
+  "priority": 0.955,
+  "estHours": 0.9,
+  "slotHours": 5.5,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "vs 4xS lr 0.1 (y10 all-regions arm, y11 base) and lr 0.2 / 0.05 (y11): the 4xS rate curve"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book10k g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book10k g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book10k g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book10k g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book10k g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book10k g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book10k g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book10k g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book30k g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book30k g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book30k g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book30k g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book30k g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book30k g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book30k g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 book30k g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 fables4000 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 fables4000 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 fables4000 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 fables4000 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 fables4000 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 fables4000 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 fables4000 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 fables4000 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 order3 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 order3 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 order3 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 order3 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 order3 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 order3 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 order3 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 order3 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 text1000 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 text1000 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 text1000 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 text1000 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 text1000 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 text1000 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 text1000 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.07,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "4xS lr 0.07 text1000 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book10k g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book10k g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book10k g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book10k g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book10k g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book10k g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book10k g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book10k g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book30k g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book30k g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book30k g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book30k g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book30k g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book30k g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book30k g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 book30k g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 fables4000 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 fables4000 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 fables4000 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 fables4000 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 fables4000 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 fables4000 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 fables4000 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 fables4000 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 order3 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 order3 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 order3 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 order3 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 order3 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 order3 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 order3 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 order3 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 text1000 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 text1000 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 text1000 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 text1000 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 text1000 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 text1000 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 text1000 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.14,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "4xS lr 0.14 text1000 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y29b_4xS_rate.jsonl"
+      }
+    }
+  ]
+}

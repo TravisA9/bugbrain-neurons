@@ -10,13 +10,13 @@
     "run/r69_jobs.js"
   ],
   "title": "4xS + cortex lr 0.2 at book100k (growths 0-15, 1-growth runs)",
-  "priority": 0.86,
+  "priority": 0.6,
   "estHours": 1.5,
   "slotHours": 8.9,
   "phone": false,
   "flag": "text",
   "accept": {
-    "note": "vs y11 (4xS lr 0.2 at 30k / 10k) and x17 (v36 4xS 100k): does a faster rate turn length into accuracy at size?"
+    "note": "vs y11 (4xS lr 0.2 at 30k / 10k) and x17 (v36 4xS 100k): does a faster rate turn length into accuracy at size? | R70: lowered to 0.6 (y11: lr 0.2 is worse at 4xS)"
   },
   "runs": [
     {
@@ -259,5 +259,6 @@
         "BB_OUT": "results/phone/y19_4xS_lr02_book100k.jsonl"
       }
     }
-  ]
+  ],
+  "pinnedR70": "explicit pl.lr@cortex=0.1 added to arms without a cortex rate (v38 brain), so the v39 default flip does not change this job"
 }

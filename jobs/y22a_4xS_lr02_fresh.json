@@ -10,13 +10,13 @@
     "run/r69_jobs.js"
   ],
   "title": "4xS + cortex lr 0.2 on fresh growths k 1200-1207, all 7 tasks",
-  "priority": 0.83,
+  "priority": 0.6,
   "estHours": 0.6,
   "slotHours": 3.5,
   "phone": false,
   "flag": "text",
   "accept": {
-    "note": "vs y15 (4xS, same seeds) and y08 (1x base / lr 0.2, same seeds)"
+    "note": "vs y15 (4xS, same seeds) and y08 (1x base / lr 0.2, same seeds) | R70: lowered to 0.6 (y11: lr 0.2 is worse at 4xS)"
   },
   "runs": [
     {
@@ -859,5 +859,6 @@
         "BB_OUT": "results/phone/y22a_4xS_lr02_fresh.jsonl"
       }
     }
-  ]
+  ],
+  "pinnedR70": "explicit pl.lr@cortex=0.1 added to arms without a cortex rate (v38 brain), so the v39 default flip does not change this job"
 }

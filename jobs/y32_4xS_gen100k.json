@@ -1,0 +1,263 @@
+{
+  "id": "y32_4xS_gen100k",
+  "question": "I72",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/envs/book.js",
+    "run/r69_jobs.js"
+  ],
+  "title": "4xS (lr 0.1) generation after book100k: gate margin 0.2 and gate 0.4 + T0.7, growths 0-7",
+  "priority": 0.9,
+  "estHours": 1.5,
+  "slotHours": 8.9,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "vs y18 (4xS 30k) and x14 (v36 4xS): does a longer 4xS life write better?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "4xS gate margin 0.2 gen100k greedy g0 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "1",
+        "--force"
+      ],
+      "label": "4xS gate margin 0.2 gen100k greedy g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "4xS gate margin 0.2 gen100k greedy g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "3",
+        "--force"
+      ],
+      "label": "4xS gate margin 0.2 gen100k greedy g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "4xS gate margin 0.2 gen100k greedy g4 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "5",
+        "--force"
+      ],
+      "label": "4xS gate margin 0.2 gen100k greedy g5 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "4xS gate margin 0.2 gen100k greedy g6 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "7",
+        "--force"
+      ],
+      "label": "4xS gate margin 0.2 gen100k greedy g7 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.4,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "4xS gate 0.4 gen100k T0.7 g0 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.4,P.fastEngine=1",
+        "1",
+        "--force"
+      ],
+      "label": "4xS gate 0.4 gen100k T0.7 g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.4,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "4xS gate 0.4 gen100k T0.7 g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.4,P.fastEngine=1",
+        "3",
+        "--force"
+      ],
+      "label": "4xS gate 0.4 gen100k T0.7 g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.4,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "4xS gate 0.4 gen100k T0.7 g4 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.4,P.fastEngine=1",
+        "5",
+        "--force"
+      ],
+      "label": "4xS gate 0.4 gen100k T0.7 g5 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.4,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "4xS gate 0.4 gen100k T0.7 g6 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
+        "1",
+        "sc.grid=120,sc.maxCells=13600,sc.coneSpeed=6,sc.axonLen=80,pl.lr@cortex=0.1,pl.outGate=0.4,P.fastEngine=1",
+        "7",
+        "--force"
+      ],
+      "label": "4xS gate 0.4 gen100k T0.7 g7 n1",
+      "env": {
+        "BB_OUT": "results/phone/y32_4xS_gen100k.jsonl"
+      }
+    }
+  ]
+}
