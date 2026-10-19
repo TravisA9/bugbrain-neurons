@@ -2843,3 +2843,7 @@ Coarser steps therefore do not preserve the dynamics. The trained behaviour depe
 | task on/hold/read 2 (70k ticks) | 5.41 | 1.35 | 35.8 | 1.19 |
 Even at 50% of the substeps the life is only 1.4x faster at 1x (per-tick costs: readout, modulate, task, critic). At 4xS, substeps 2 is slower than base.
 Dense-mode mark trims (ext, receiver pool, mixing inhibition / homeostasis) are identical in results and not measurable (1x 7.31 vs 7.36 s, 4xS 42.8 vs 41.9 s).
+
+### R66 validation update 2 (z09a / z09b done on tacobell, Oct 18 11:53 PM CT): fast engine at 4xS passes
+16 fresh growths (k 1100-1115), 4xS book10k: fast - exact 0.0000 (0 / 0: all 16 scores identical, mean 0.3347 both), worker wall time 1.69 h -> 0.86 h (1.97x).
+z08 + z09 both pass the R66 rule. Adoption (fastEngine 1 default, DEFAULTS_VERSION 31) waits for z10 (4xS other tasks), because z10's exact arm is variant 'base' and would silently turn fast, and running jobs would mix engines between arms.

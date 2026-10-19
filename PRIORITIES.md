@@ -2,6 +2,7 @@
 
 ## R68 update
 - Fewer substeps per symbol (I86) is not a win. 75-82% of the substeps loses 0.02-0.03 on every text task (0/8) for 1.1-1.2x life speed. 50-64% loses 0.05-0.25. Time-constant rescaling (dtRescale) is far worse, because synaptic delay and the spike limit are tied to the substep.
+- Fast engine (I84): z08 (1x) and z09 (4xS book10k, 16/16 identical scores, 1.97x on the worker) pass; flip fastEngine to 1 (DEFAULTS_VERSION 31) once z10 is done so no in-flight comparison mixes engines.
 - Nothing queued from R68. Remaining speed levers: threads (SharedArrayBuffer workers over cells), or per-tick work (readout / modulate / critic), which caps substep savings at ~1.4x.
 
 ## Previous update (R67)
