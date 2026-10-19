@@ -197,13 +197,14 @@ class SpikingNet {
   renormF(a, f) { for (let i = 0; i < a.length; i++) a[i] *= f; }
   initSparse() {                             // R67: see PL_DEFAULTS thrAdd / hidHomeo / regInh
     const g = this.g, p = this.p, N = this.N, h0 = g.nIn, h1 = g.nIn + g.nHid;
+    const msk = p.regMask | 0, inM = i => !msk || ((msk >> (g.region && g.region[i] !== 255 ? g.region[i] : 0)) & 1) === 1;
     if (p.thrAdd !== 0 || p.hidHomeo > 0) { if (!this.thr) this.thr = Float32Array.from(g.thresh); }
-    if (p.thrAdd !== 0) for (let i = h0; i < h1; i++) this.thr[i] += p.thrAdd;
+    if (p.thrAdd !== 0) for (let i = h0; i < h1; i++) if (inM(i)) this.thr[i] += p.thrAdd;
     if (p.hidHomeo > 0) { const inR = new Uint8Array(N); if (this.rhList) for (const i of this.rhList) inR[i] = 1;
-      const L = []; for (let i = h0; i < h1; i++) if (!inR[i]) L.push(i); this.hhList = Int32Array.from(L); this.hhFloor = Float32Array.from(L, i => this.thr[i]); }
+      const L = []; for (let i = h0; i < h1; i++) if (!inR[i] && inM(i)) L.push(i); this.hhList = Int32Array.from(L); this.hhFloor = Float32Array.from(L, i => this.thr[i]); }
     if (p.regInh > 0) { const reg = g.region, id = new Int32Array(N).fill(-1); let R = 1;
-      for (let i = h0; i < h1; i++) { id[i] = reg && reg[i] !== 255 ? reg[i] : 0; if (id[i] + 1 > R) R = id[i] + 1; }
-      const sz = new Float64Array(R); for (let i = h0; i < h1; i++) sz[id[i]]++;
+      for (let i = h0; i < h1; i++) { const r = reg && reg[i] !== 255 ? reg[i] : 0; if (r + 1 > R) R = r + 1; id[i] = inM(i) ? r : -1; }
+      const sz = new Float64Array(R); for (let i = h0; i < h1; i++) if (id[i] >= 0) sz[id[i]]++;
       this.riId = id; this.riN = R; this.riInv = Float64Array.from(sz, n => n ? 100 / n : 0); this.riCnt = new Float64Array(R); this.riP = new Float64Array(R);
       this.riD = p.regInhTau > 0 ? Math.exp(-1 / p.regInhTau) : 0; this.riH0 = h0; this.riH1 = h1; }
   }
@@ -214,7 +215,7 @@ class SpikingNet {
     if (this.riId) { const id = this.riId, C = this.riCnt, P = this.riP, inv = this.riInv, n = this.riN, a = p.regInh, k = 100 * p.regK, d = this.riD, syn = this.syn;
       C.fill(0); for (let s = 0; s < nSpk; s++) { const r = id[spk[s]]; if (r >= 0) C[r]++; }
       let any = false; for (let r = 0; r < n; r++) { const f = C[r] * inv[r] - k; P[r] = P[r] * d + (f > 0 ? a * f : 0); if (P[r] > 1e-9) any = true; }
-      if (any) for (let i = this.riH0; i < this.riH1; i++) { const x = P[id[i]]; if (x > 1e-9) { syn[i] -= x; if (mk) mk[i] = 1; } } }
+      if (any) for (let i = this.riH0; i < this.riH1; i++) { if (id[i] < 0) continue; const x = P[id[i]]; if (x > 1e-9) { syn[i] -= x; if (mk) mk[i] = 1; } } }
   }
   stepFast() {
     const N = this.N, v = this.v, syn = this.syn, ext = this.ext, sp = this.spiked, th = this.thr || this.g.thresh, mk = this.mk, m32 = this.mk32, tv = this.tv;
