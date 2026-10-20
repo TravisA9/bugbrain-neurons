@@ -3234,3 +3234,9 @@ Screen (whole brain, growths 0-7, partial: o3, text1000, seqchoice order2 done; 
 - order3: sizeCone neutral; all4 stays -2.2 vs 1x with or without R72 (the cortex/context E/I drift is not fixed by either).
 - text1000: within ±0.1.
 Jobs y87a/b (fresh growths k 1600-1615, 2x and 4x, all 7 tasks, memGB 0.8) confirm. Proposed next gene: receiver-side inhibitory budget (scale each cell's fixed inhibitory input by its 1x-equivalent fan-in) for the order3 loss.
+
+### R76b: per-receiver budgets (box screen, whole brain + sizeCone, growths 0-7, paired)
+New gene `P.recvBudget` (bitmask, off by default; 1x runs bit-identical with it on, order3 + seqchoice checked):
+- bit 1, per-receiver inhibitory budget (fixed inhibitory inputs x 1x-equivalent fan-in / fan-in): REJECTED. order3 2x -0.73 ±0.23 vs sizeCone, 4x -0.01; text1000 4x -0.21 ±0.04; seqchoice order2 worse. The cortex E/I drift is correlated with the order3 loss but is not its cause (or the brain relies on the extra inhibition).
+- bit 2, the postCapRel cap only on receivers with inputs from a sized region (replaces R72's postN 130 cutoff, exactly neutral at 1x), with fanRef 450 + postCapRel 1.5: at 4x identical to R72; at 2x seqchoice order2 +1.06 ±0.49, cycle +1.58 ±0.50 vs R72, and vs 1x v39: order2 -0.14 ±0.54, cycle -0.01 ±0.26 (full recovery). Teacher tasks are identical to R72 by construction.
+- order3 stays the open size failure: whole-brain 2x -1.0, 4x -2.25 vs 1x with every arm. Full table: experiments/r76/screen_partial.txt. Jobs y88a/b (16 fresh growths, 2x/3x/4x seqchoice, memGB 0.8).

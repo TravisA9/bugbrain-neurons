@@ -42,3 +42,13 @@ for (const [half, k0] of [['a', 1600], ['b', 1608]]) {
   const j = job('y87' + half + '_sizeCone_all', { q: 'I93', pri: 0.985, seeds: K(k0, 8), title: 'R76 whole-brain sizeF 2/4: v39 vs + sizeCone vs + sizeCone + R72 patch, fresh growths k ' + k0 + '-' + (k0 + 7) + ', all 7 tasks', note: 'R76 screen (growths 0-7): sizeCone fixes orphaned seqchoice outputs; adopt sizeCone for sized brains if no task worse over y87a+b', arms });
   j.memGB = 0.8; fs.writeFileSync(path.join(out, j.id + '.json'), JSON.stringify(j, null, 2) + '\n'); J.push(j); }
 console.log(J.map(j => `${j.id} pri ${j.priority} runs ${j.runs.length} slot-h ${j.slotHours} est ${j.estHours} h`).join('\n'));
+
+// R76b: P.recvBudget bit 2 (postCap only on receivers with inputs from a sized region; no postN cutoff) vs the R72 patch, whole brain + sizeCone,
+// seqchoice only (the cap acts on the reward rule; teacher tasks are identical by construction), sizes 2 / 3 / 4, fresh growths k 1620-1635
+const PCB = 'P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2';
+for (const [half, k0] of [['a', 1620], ['b', 1628]]) {
+  const arms = []; for (const [f, sz] of [[2, '2xS'], [3, '3xS'], [4, '4xS']]) arms.push({ variant: v('sc.sizeF=' + f, 'P.sizeCone=1', R72, L2v), tasks: ['so2', 'scy'], size: sz, lbl: 'all' + f + ' sizeCone R72' }, { variant: v('sc.sizeF=' + f, 'P.sizeCone=1', PCB, L2v), tasks: ['so2', 'scy'], size: sz, lbl: 'all' + f + ' sizeCone recvBudget2' });
+  arms.push({ variant: v(L2v), tasks: ['so2', 'scy'], size: '1x', lbl: 'v39 1x' });
+  const j = job('y88' + half + '_recvBudget_cap', { q: 'I93', pri: 0.984, seeds: K(k0, 8), title: 'R76b recvBudget bit 2 (cap without postN cutoff) vs R72 patch, whole brain 2x/3x/4x + sizeCone, seqchoice, fresh growths k ' + k0 + '-' + (k0 + 7), note: 'R76b screen g0-7: 2x so2 +1.06, cycle +1.58 vs R72; 4x identical', arms });
+  j.memGB = 0.8; fs.writeFileSync(path.join(out, j.id + '.json'), JSON.stringify(j, null, 2) + '\n'); J.push(j); }
+console.log(J.map(j => `${j.id} runs ${j.runs.length} slot-h ${j.slotHours}`).join('\n'));
