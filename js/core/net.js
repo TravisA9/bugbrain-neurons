@@ -50,6 +50,13 @@ class SpikingNet {
     } }
     this.start = start; this.posts = posts; this.pres = pres;
     this.ws = ws; this.w0 = Float32Array.from(ws); this.synCh = chs;
+    // R76 recvBudget (global param bitmask, 0/undefined = off, bit-identical; every factor is 1 in a brain without sized regions):
+    //   bit 1: per-receiver INHIBITORY budget. preNorm budgets the plastic excitation per sender, inhibition is not budgeted, so a cell of an
+    //   f x region gets ~f x the inhibitory inputs (R76: cortex E/I ~ f^-0.55). Each cell's fixed inhibitory inputs x n1x / n, n1x = their
+    //   1x-equivalent count (an input from an f x region counts 1/f): the receiver's inhibitory total stays at its 1x value.
+    if ((params.recvBudget & 1) && g.regions && g.regions.some(r => r.sizeF > 1)) { this.N = N; const t = this.trophicS(), n = new Float32Array(N), e1 = new Float32Array(N);
+      for (let k = 0; k < E; k++) if (ws[k] < 0 && !plast[k]) { n[posts[k]]++; e1[posts[k]] += t[pres[k]]; }
+      for (let k = 0; k < E; k++) if (ws[k] < 0 && !plast[k]) { const j = posts[k]; if (e1[j] < n[j]) { ws[k] *= e1[j] / n[j]; this.w0[k] = ws[k]; } } }
     this.pruning = g.prune && g.prune.tick > 0 ? g.prune : null; this.pruned = 0; this.tickNo = 0;
     // plastic synapse list + incoming index (by post) for STDP (all synapses if pruning)
     let nPl = 0; for (let k = 0; k < E; k++) if (plast[k]) nPl++;
@@ -482,6 +489,7 @@ class SpikingNet {
     const t = this.trF || this.trophicS(), N = this.N, f = new Float32Array(N).fill(1), inS = this.inStart, inE = this.inEdges, isP = this.isPlastic, w0 = this.w0, pr = this.pres;
     for (let i = this.g.nIn; i < N; i++) { let n = 0, e1 = 0; for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (isP[k] && w0[k] > 0) { n++; e1 += t[pr[k]]; } } if (n > 0 && e1 < n) f[i] = e1 / n; }
     return this.lrF8 = f; }
+  scaledRecv(st, ix) { const t = this.trophicS(), pr = this.pres, f = new Uint8Array(st.length - 1); for (let r = 0; r < f.length; r++) for (let q = st[r]; q < st[r + 1]; q++) if (t[pr[ix[q]]] < 1) { f[r] = 1; break; } return f; }
   buildPc(pl) {                              // R72 postCap: excitatory plastic inputs of this rule grouped by receiver
     const m = new Map(); for (let q = 0; q < pl.length; q++) { const k = pl[q]; if (!(this.w0[k] > 0)) continue; const i = this.posts[k]; if (!m.has(i)) m.set(i, []); m.get(i).push(k); }
     const st = [0], ix = [], c0 = []; for (const ks of m.values()) { let t = 0; for (const k of ks) { ix.push(k); t += this.w0[k]; } st.push(ix.length); c0.push(t); } this.pcStart = Int32Array.from(st); this.pcIdx = Int32Array.from(ix); this.pcW0 = Float64Array.from(c0); }
@@ -758,7 +766,8 @@ class SpikingNet {
     // a receiver whose excitatory plastic inputs of this rule sum to more than postCap is scaled down to postCap (homeostatic synaptic scaling).
     // postCapRel > 0 instead: the cap is postCapRel x the receiver's own genome (birth) total of those inputs (scale-free).
     if ((params.postCap > 0 || params.postCapRel > 0) && s > 0) { if (!this.pcStart) this.buildPc(pl); const st = this.pcStart, ix = this.pcIdx, c0 = this.pcW0, rel = params.postCapRel > 0 ? params.postCapRel : 0, pN = params.postN > 0 ? params.postN : 0;   // postN: only receivers with more than postN such inputs are capped (1x-sized receivers stay untouched)
-      for (let r = 0, R = st.length - 1; r < R; r++) { if (pN && st[r + 1] - st[r] <= pN) continue; const cap = rel ? rel * c0[r] : params.postCap; let t = 0; for (let q = st[r]; q < st[r + 1]; q++) t += ws[ix[q]]; if (t > cap) { const f = cap / t; for (let q = st[r]; q < st[r + 1]; q++) ws[ix[q]] *= f; } } }
+      const rb = (params.recvBudget & 2) ? (this.rbScaled || (this.rbScaled = this.scaledRecv(st, ix))) : null;   // R76 recvBudget bit 2: only receivers with inputs from a sized region are capped (replaces the postN cutoff; exactly neutral at 1x)
+      for (let r = 0, R = st.length - 1; r < R; r++) { if (rb ? !rb[r] : (pN && st[r + 1] - st[r] <= pN)) continue; const cap = rel ? rel * c0[r] : params.postCap; let t = 0; for (let q = st[r]; q < st[r + 1]; q++) t += ws[ix[q]]; if (t > cap) { const f = cap / t; for (let q = st[r]; q < st[r + 1]; q++) ws[ix[q]] *= f; } } }
     this.dwSum = s;
   }
   prune() {
