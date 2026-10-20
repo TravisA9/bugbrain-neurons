@@ -3205,3 +3205,32 @@ text -0.015 (1/7), seqchoice -3.1 / -1.4. Fresh y80 / y82 pending.
 | 0.85 / 0.72 | y52, y77 | 8x book100k (memGB 4.6) | 5.8, 5.8 |
 | parked | y56, y72 | 8x 300k; 8x fix all7 (redundant) | - |
 Runnable after R75: 65 jobs, ~358 est slot-h (~30 h at 12 slots by the estimates, ~20 h at the R69 ratio; tacobell runs slower than estimated). Deep enough for both workers.
+
+## R76: how brains fail as they grow (measurement study, box, Oct 19 2026)
+
+Probe (`experiments/r76/probe.js`, wraps SpikingNet.step, no code change): v39 brains grown at size factor 1/2/3/4 (whole brain `sc.sizeF=f`, and cortex only `sc.sizeF@cortex=f`), order3 K8, book10k, seqchoice order2, 3 growths each (63 runs). Exponent = log-log slope vs f; r = correlation with the task score. 8x was not run (box had ~3.6 GB free; 8x needs ~4.4 GB/run).
+
+| quantity (per receiving cell) | 1x | 4x | exponent | r with score |
+|---|---|---|---|---|
+| cortex plastic fan-in | 379 | 2284 | **+1.34** | -0.95 (order3, cx) |
+| cortex plastic weight per synapse (preNorm splits a fixed sender budget) | 0.24 | 0.07 | -1.0 | +0.94 |
+| cortex plastic total per receiver | 120 | 163-172 | +0.21..0.31 | -0.86 |
+| cortex learning change per receiver | 90 | 140-158 | +0.30..0.40 | -0.89 |
+| cortex E/I drive ratio (inhibition is not budget-normalised) | 5.7 | 2.6 | **-0.55** | +0.76..0.95 |
+| cortex firing rate | 0.038 | 0.039 | 0.0 | ~0 |
+| output firing / window entropy, order3 | 0.065 / 1.44 | 0.047 / 1.27 | -0.2 / -0.1 | +0.96 / +0.85 |
+| striatum plastic total per receiver (cortex-only scaling, seqchoice) | 170 | 814 | **+1.14** | -0.83 |
+| striatum drive / output drive (same) | 4.8 / 3.9 | 18.9 / 12.5 | +0.98 / +0.85 | -0.84 / -0.81 |
+| output response variance (same) | 0.33 | 0.10 | **-0.96** | +0.91 |
+
+Pattern: the brain keeps per-SENDER budgets (preNorm) but not per-RECEIVER ones, so every receiver's input count grows ~f^1.3, its plastic total and per-step change grow ~f^0.3 (cortex) to ~f^1.1 (striatum), while inhibition grows unnormalised (cortex E/I f^-0.55). Downstream of a bigger cortex the striatum and outputs are over-driven and saturate (response variance f^-1); the cortex itself drifts toward inhibition and its readouts lose responsiveness (order3).
+
+Wiring bug found: whole-brain `sc.sizeF >= 1.5` orphans ALL seqchoice outputs (0 excitatory synapses; seqchoice ~1.5 at every size). The striatum's coneSpeed gene is 0.5 (effective 1 site/step); sizeF scales the raw gene, `round(0.5 sqrt f)` stays 1 site on a finer grid, axons reach 1/sqrt(f) as far, the output-projecting cells get no afferents and die (afferent survival). Earlier 4xS runs set coneSpeed=6 explicitly and were not affected; cortex-only sizeF is not affected.
+
+New gene `P.sizeCone` (off by default, bit-identical off: the off branch is the old expression): sized regions scale the effective speed `max(1, round(coneSpeed))` by sqrt(f), rounded up.
+
+Screen (whole brain, growths 0-7, partial: o3, text1000, seqchoice order2 done; rest in progress), paired diffs:
+- seqchoice order2: 1x 6.48; all4 v39 1.50; all4 + sizeCone 4.23; all4 + sizeCone + R72 patch 6.12 (vs 1x -0.24 ±0.83). all2: 1.69 / 4.06 / 5.20.
+- order3: sizeCone neutral; all4 stays -2.2 vs 1x with or without R72 (the cortex/context E/I drift is not fixed by either).
+- text1000: within ±0.1.
+Jobs y87a/b (fresh growths k 1600-1615, 2x and 4x, all 7 tasks, memGB 0.8) confirm. Proposed next gene: receiver-side inhibitory budget (scale each cell's fixed inhibitory input by its 1x-equivalent fan-in) for the order3 loss.

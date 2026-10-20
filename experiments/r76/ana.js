@@ -1,0 +1,15 @@
+const fs=require('fs'),D='/workspace/r76/out/',files=fs.readdirSync(D).filter(f=>/^[a-z0-9]+_[a-z0-9]+_g\d\.json$/.test(f));
+const rows={}; for(const f of files){const [arm,t,g]=f.replace('.json','').split('_'); let r,p; try{r=JSON.parse(fs.readFileSync(D+f));p=JSON.parse(fs.readFileSync(D+f.replace('.json','.probe.json')));}catch(e){continue;}
+ const scope=arm==='x1'?'both':arm.replace(/\d+$/,''), sz=arm==='x1'?1:+arm.match(/\d+$/)[0]; (rows[t]=rows[t]||[]).push({scope,sz,g,score:r.mean,acc:r.stats.accuracy,p});}
+const Q={ 'cx.rate':p=>p.regions.cortex&&p.regions.cortex.rate,'cx.cells':p=>p.regions.cortex.cells,'cx.plInPerRecv':p=>p.regions.cortex.plInPerRecv,'cx.plRecv':p=>p.regions.cortex.plRecv,
+ 'cx.plWPerRecv':p=>p.regions.cortex.plWPerRecv,'cx.plWperSyn':p=>p.regions.cortex.plWperSyn,'cx.dWperRecv':p=>p.regions.cortex.dWperRecv,'cx.stepPerSyn':p=>p.regions.cortex.stepPerSyn,'cx.exDrive':p=>p.regions.cortex.exD,'cx.EI':p=>p.regions.cortex.EI,
+ 'str.plInPerRecv':p=>p.regions.striatum&&p.regions.striatum.plInPerRecv,'str.plWPerRecv':p=>p.regions.striatum&&p.regions.striatum.plWPerRecv,'str.dWperRecv':p=>p.regions.striatum&&p.regions.striatum.dWperRecv,'str.rate':p=>p.regions.striatum&&p.regions.striatum.rate,'str.exDrive':p=>p.regions.striatum&&p.regions.striatum.exD,'str.EI':p=>p.regions.striatum&&p.regions.striatum.EI,
+ 'ctx.rate':p=>p.regions.context&&p.regions.context.rate,'ctx.EI':p=>p.regions.context&&p.regions.context.EI,
+ 'out.rate':p=>p.regions.output.rate,'out.exDrive':p=>p.regions.output.exD,'out.EI':p=>p.regions.output.EI,'out.winEntropy':p=>p.out.winEntropy,'out.totEntropy':p=>p.out.totEntropy,'out.respVar':p=>p.out.respVar,'out.silentFrac':p=>p.out.silentFrac,'out.spikesPerWin':p=>p.out.spikesPerWin};
+const fit=(xs,ys)=>{const n=xs.length,mx=xs.reduce((a,b)=>a+b)/n,my=ys.reduce((a,b)=>a+b)/n;let sxy=0,sxx=0,syy=0;for(let i=0;i<n;i++){sxy+=(xs[i]-mx)*(ys[i]-my);sxx+=(xs[i]-mx)**2;syy+=(ys[i]-my)**2;}return{b:sxy/sxx,r:sxy/Math.sqrt(sxx*syy)};};
+for(const t in rows){ for(const scope of ['all','cx']){ const R=rows[t].filter(r=>r.scope===scope||r.scope==='both').sort((a,b)=>a.sz-b.sz);
+  const sizes=[...new Set(R.map(r=>r.sz))]; console.log(`\n## ${t} ${scope}  n=${R.length}  score by size: `+sizes.map(s=>{const a=R.filter(r=>r.sz===s);return s+'x '+(a.reduce((x,r)=>x+r.score,0)/a.length).toFixed(3)+'('+a.length+')';}).join('  '));
+  console.log('quantity'.padEnd(18),'mean@1x'.padStart(9),'mean@4x'.padStart(9),'exp'.padStart(7),'r(score)'.padStart(9));
+  for(const q in Q){ const v=R.map(r=>{try{return Q[q](r.p)}catch(e){return null}}); if(v.some(x=>x==null||!isFinite(x))) continue;
+   const pos=v.every(x=>x>0), e=pos?fit(R.map(r=>Math.log(r.sz)),v.map(Math.log)).b:NaN, c=fit(v,R.map(r=>r.score)).r, m=s=>{const a=v.filter((x,i)=>R[i].sz===s);return a.length?a.reduce((x,y)=>x+y)/a.length:NaN};
+   console.log(q.padEnd(18),m(1).toPrecision(4).padStart(9),m(4).toPrecision(4).padStart(9),(isNaN(e)?'  -':e.toFixed(2)).padStart(7),(isFinite(c)?c.toFixed(2):'-').padStart(9)); } } }
