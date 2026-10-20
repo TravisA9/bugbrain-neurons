@@ -2,12 +2,14 @@
   "id": "y56_cx8_book300k",
   "question": "I80",
   "track": "neuro",
-  "kind": "runs",
+  "kind": "blocked",
   "requires": [
     "run/r42.js",
     "js/core/net.js",
     "js/core/develop.js",
-    "run/r71_jobs.js"
+    "run/r71_jobs.js",
+    "run/mempar.js",
+    "run/r75_jobs.js"
   ],
   "title": "cortex 8x divRep 2 + fanRef 450/R126 lr 0.2 at book300k (growths k 1400-1407)",
   "priority": 0.78,
@@ -139,5 +141,8 @@
         "BB_OUT": "results/phone/y56_cx8_book300k.jsonl"
       }
     }
-  ]
+  ],
+  "memGB": 4.6,
+  "r75": "R75: memGB 4.6",
+  "blockedWhy": "R75: parked until y52 shows an 8x cortex still improving at 100k (length is flat at every size so far); ~9 h at 2 parallel runs"
 }

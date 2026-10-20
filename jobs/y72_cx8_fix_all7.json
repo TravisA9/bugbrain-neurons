@@ -2,12 +2,14 @@
   "id": "y72_cx8_fix_all7",
   "question": "I80",
   "track": "neuro",
-  "kind": "runs",
+  "kind": "blocked",
   "requires": [
     "run/r42.js",
     "js/core/net.js",
     "js/core/regions.js",
-    "run/r72_jobs.js"
+    "run/r72_jobs.js",
+    "run/mempar.js",
+    "run/r75_jobs.js"
   ],
   "title": "cortex 8x divRep 2 fix (growths 16-23), all 7 tasks",
   "priority": 0.82,
@@ -859,5 +861,8 @@
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
     }
-  ]
+  ],
+  "memGB": 4.6,
+  "r75": "R75: memGB 4.6",
+  "blockedWhy": "R75: parked: its seq-task arms equal y46/y61 (postCap cannot change seq tasks) and y66 already measured cx8 + fix on seqchoice (2.1 / 2.2)"
 }
