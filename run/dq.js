@@ -79,11 +79,23 @@ const ls = d => { try { return fs.readdirSync(path.join(DIR, d)); } catch (e) { 
 const isDone = id => fs.existsSync(path.join(DIR, 'done', id + '.json'));
 function claimOf(id) { const c = rd(path.join(DIR, 'claims', id + '.json')); return c && Date.parse(c.until) > Date.now() ? c : null; }
 const estH = j => +((j.budget && j.budget.hours) || j.estHours || 1);
+// R75 crash-loop guard: a supervised worker that restarts while holding a job (killed mid-job, e.g. by the out-of-memory guard)
+// counts it in ~/.bugbrain/crashloop.json; the 2nd such restart within 6 h stops this worker claiming that job for 12 h (others still can).
+const CRASH = path.join(WC.STATE, 'crashloop.json');
+function crashSkips() { const c = rd(CRASH) || {}, t = Date.now(); return new Set(Object.keys(c).filter(id => c[id] && c[id].skipUntil && Date.parse(c[id].skipUntil) > t)); }
+function noteRestart(ids) {
+  const c = rd(CRASH) || {}, t = Date.now();
+  for (const id of ids) { const e = c[id] || { t: [] }; e.t = (e.t || []).filter(x => t - Date.parse(x) < 6 * 3600e3).concat(new Date(t).toISOString());
+    if (e.t.length >= 2) { e.skipUntil = new Date(t + 12 * 3600e3).toISOString(); say(`crash-loop guard: ${id} was interrupted ${e.t.length} times in 6 h; this worker will not claim it before ${e.skipUntil}`); }
+    c[id] = e; }
+  try { fs.mkdirSync(path.dirname(CRASH), { recursive: true }); fs.writeFileSync(CRASH, JSON.stringify(c, null, 2) + '\n'); } catch (e) {}
+}
 function candidates() {
   const left = (HOURS * 3600e3 - (Date.now() - T0)) / 3600e3;
   if (S.mode === 'pause') return [];
+  const skip = crashSkips();
   return ls('jobs').filter(f => f.endsWith('.json')).map(f => rd(path.join(DIR, 'jobs', f))).filter(Boolean).map(j => WC.jobView(CFG, j)).filter(Boolean).filter(j => WC.allowed(S, j))
-    .filter(j => !isDone(j.id) && !claimOf(j.id) && j.kind !== 'blocked' && (j.kind !== 'text' || A['include-text']))
+    .filter(j => !skip.has(j.id) && !isDone(j.id) && !claimOf(j.id) && j.kind !== 'blocked' && (j.kind !== 'text' || A['include-text']))
     .filter(j => !(j.requires || []).some(r => !fs.existsSync(path.join(ROOT, r))))   // R49: skip jobs needing code this checkout lacks (self-update pulls it)
     .filter(j => !j.after || (isDone(j.after) && (!j.afterPass || (rd(path.join(DIR, 'done', j.after + '.json')) || {}).pass === true)))
     .filter(j => estH(j) * 1.15 + 0.1 <= left)
@@ -199,7 +211,7 @@ function heartbeat(state, job) {
   if (key === lastHb.key && Date.now() - lastHb.t < +(process.env.BB_DQ_HB_MIN || 30) * 60e3) return;
   let code = ''; try { code = cp.execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch (e) {}
   const f = path.join(DIR, 'workers', WORKER + '.json'); fs.mkdirSync(path.dirname(f), { recursive: true });
-  fs.writeFileSync(f, JSON.stringify({ worker: WORKER, type: TYPE, state, job: job || null, mode: S.mode, configVersion: S.version, code, host: os.hostname(), platform: process.platform, supervised: SUPERVISED, at: new Date().toISOString() }, null, 2) + '\n');
+  fs.writeFileSync(f, JSON.stringify({ worker: WORKER, type: TYPE, state, job: job || null, mode: S.mode, configVersion: S.version, code, host: os.hostname(), platform: process.platform, supervised: SUPERVISED, crashSkip: [...crashSkips()], at: new Date().toISOString() }, null, 2) + '\n');
   const r = commitPush(`heartbeat ${WORKER} (${state}${job ? ' ' + job : ''})`, ['workers/' + WORKER + '.json']); if (r.ok) lastHb = { key, t: Date.now() }; else { try { sync(); } catch (e) {} }
 }
 // R61: a supervised worker has one stable name and one dq.js, so claims it still holds at startup are from a killed run: release them.
@@ -207,7 +219,7 @@ async function releaseOwn() {
   if (!SUPERVISED || OBSERVE || A.dry) return;
   for (let i = 0; i < 5; i++) { sync(); const mine = ls('claims').filter(f => f.endsWith('.json')).map(f => f.slice(0, -5)).filter(id => stillMine(id) && !isDone(id)); if (!mine.length) return;
     const r = commitPush(`release ${mine.join(' ')} by ${WORKER} (restarted)`, mine.map(id => { fs.unlinkSync(path.join(DIR, 'claims', id + '.json')); return 'claims/' + id + '.json'; }));
-    if (r.ok) { say('released own stale claim(s): ' + mine.join(', ')); return; } await handleFail(r, 'release'); }
+    if (r.ok) { say('released own stale claim(s): ' + mine.join(', ')); noteRestart(mine); return; } await handleFail(r, 'release'); }
 }
 async function main() {
   ensureClone(); say(`worker on ${BRANCH} of ${REPO.replace(/\/\/[^@]*@/, '//')}${isFinite(HOURS) ? ', ' + HOURS + ' h' : ''}${SUPERVISED ? ' (supervised, ' + TYPE + ')' : ''}${OBSERVE ? ' [observe: no claims, no pushes]' : ''}`);

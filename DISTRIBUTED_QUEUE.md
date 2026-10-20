@@ -17,6 +17,10 @@ against local + shared registry (the normal dedup in run/queue.js).
 A job is `jobs/<id>.json`: `{ id, title, priority, estHours, slotHours, requires, runs: [{ script: "run/r42.js", args: [plan, taskJSON, G, variant, g0, "--force"], env: { BB_OUT } }] }`.
 Generators live in `run/rNN_jobs.js` (e.g. `node run/r70_jobs.js outdir`); the queue review copies their output to `jobs/` (skipping anything already claimed or done).
 - `requires`: files that must exist in the worker's checkout; a worker on older code skips the job until it self-updates.
+- `memGB` (R75, optional): peak memory of ONE run in GB. `run/mempar.js` then runs at most floor(min(0.7 x total RAM, 0.9 x free RAM) / memGB) of the job's runs at once
+  (an 8x-cortex book run peaks at ~4.4 GB; 8 at once killed linux-pc every 4 min). Jobs using it list `run/mempar.js` in `requires`.
+- Crash-loop guard (R75, run/dq.js): a supervised worker that restarts while holding a job counts it in `~/.bugbrain/crashloop.json`; the 2nd restart within 6 h
+  makes that worker skip the job for 12 h (other workers can still take it). The heartbeat file `workers/<name>.json` lists such jobs under `crashSkip`.
 - `variant`: comma-separated overrides, `sc.<gene>=` (growth), `pl.<gene>=` (plasticity), `@region` to limit one to a region (`pl.lr@cortex=0.2`,
   `sc.grid@context=120`, `@!striatum` = all but), `P.<param>=` (engine / env params, e.g. `P.fastEngine=1`).
 - **Pinning:** when a default is about to change, every arm of a pending job sets the affected value explicitly (e.g. `pl.lr@cortex=0.1`,

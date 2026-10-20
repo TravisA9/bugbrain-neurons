@@ -85,6 +85,12 @@ Edit `worker-config.json` at the root of the queue branch:
 Settings layer as built-in < `defaults` < `types[linux|windows|mac|phone]` < `workers[name]`.
 Exit codes: dq.js 3 = token refused (the launcher waits for a new token file); 10 = update and restart.
 
+## Worker keeps restarting the same job (R75)
+If the queue branch shows `claim X` / `release X (restarted)` every few minutes, the worker is being killed mid-job, usually by the
+out-of-memory guard (Oct 19: y46, 8x cortex, ~8 runs x 4.4 GB). Since R75 dq.js stops claiming such a job after the 2nd restart (`crashSkip` in
+`workers/<name>.json`, local file `~/.bugbrain/crashloop.json`; delete it to retry). Big jobs should carry `memGB` (see DISTRIBUTED_QUEUE.md).
+Check on Linux: `journalctl --user -u bugbrain-worker -n 50` and `journalctl -k | grep -i -E 'oom|killed process'`.
+
 ## Token refused (R61d)
 If `~/.bugbrain/worker.log` says "token refused" / exit 3, the worker cannot push anything (no heartbeat, no claims), so it is
 invisible on the queue branch. Check locally: `cat ~/.bugbrain/status.json` (state `token-refused`). Fix: re-run the installer

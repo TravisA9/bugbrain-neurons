@@ -114,7 +114,8 @@ async function runRuns(j) {
     else if (!paused()) s.results[r.k] = { label: r.label, error: res.out.split('\n').slice(-3).join(' ').slice(0, 300) };
     save(); writeQueueJs(); writeLiveRuns(j, s); };
   const watch = setInterval(() => { if (paused()) for (const ch of live) try { ch.kill(); } catch (e) {} }, 5000);
-  await Promise.all(Array.from({ length: Math.min(WORKERS, todo.length) }, async () => { while (idx < todo.length && !paused()) await one(todo[idx++]); }));
+  const PAR = require('./mempar.js').runParallel(j, WORKERS); if (PAR < WORKERS) say(`${j.id}: memGB ${j.memGB} per run -> ${PAR} parallel runs (of ${WORKERS})`);   // R75
+  await Promise.all(Array.from({ length: Math.min(PAR, todo.length) }, async () => { while (idx < todo.length && !paused()) await one(todo[idx++]); }));
   clearInterval(watch);
   if (Object.keys(s.results).length < j.runs.length) { save(); return; }   // paused: resume later
   s.status = 'done'; s.endedAt = new Date().toISOString();

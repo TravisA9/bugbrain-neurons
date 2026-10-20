@@ -1,4 +1,30 @@
-# PRIORITIES (R71, Oct 19 2026, ~11:30 AM CT; **v39 / DEFAULTS_VERSION 32** unchanged; R71 adds size-scaling genes, all off by default)
+# PRIORITIES (R75, Oct 19 2026, ~7:45 PM CT; **v39 / DEFAULTS_VERSION 32** unchanged; fast engine default since v38)
+
+## R75 update (queue review, evening)
+- **Worker incident:** linux-pc was OOM-killed every ~4 min from 4:42 PM CT on y46 (8x cortex: ~4.4 GB per run x ~8 parallel). Fixed: job `memGB` + run/mempar.js
+  (parallel runs capped by RAM), crash-loop guard in run/dq.js (2nd restart on the same job -> skip it 12 h), 8x jobs split / parked, tacobell skips `*cx8*`.
+- **Next adoption candidate:** preNorm@cortex 55 (I92): no task worse on growths 0-15 (book30k +0.004 14/1). y83a/b (fresh k 1500-1515, all 7 tasks) decides v40.
+- **Size, honest status:** whole-brain 4xS + fanRef book +0.013 but order3 -0.23; cortex 4x + fanRef book +0.009 (growths 0-15) / +0.005 n.s. (fresh), order3 -0.09..-0.11,
+  text -0.012. The striatal cap rescues seqchoice only at cortex 4x (2x / 3x / 8x still collapse, y66). order3 K4 fails completely at 4xS (0.086 vs 0.984, y30): a dynamics bug,
+  not capacity, and probably the same one behind the order3 loss (Q44, y86).
+- **Length still flat** (y26: 1x book100k = 30k = 10k under v39).
+
+## Ranked open questions (R75)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q43 / I92 | preNorm@cortex 55 on fresh growths; optimum 50-80; does it help at cortex 4x? | y83a/b, y84, y85 |
+| 2 | Q44 / I87 | Why short-context order3 (K4) dies at 4xS; which region | y86 + box dissection |
+| 3 | I91 | trophic 28 on fresh growths (text = fix, seqchoice worse so far) | y80, y82 |
+| 4 | I80 | Does a fully grown 8x cortex add anything (memGB jobs) | y46, y61, y52 |
+| 5 | Q42 / I73 | Length at size under fanRef | y50, y54, y55, y60 |
+Decision point (for Travis) unchanged: no large run until a scaled brain keeps order3 within 0.02 of 1x and seqchoice within noise while keeping the book gain.
+
+## Worker notes (R75)
+linux-pc: crash loop on y46 4:42-~7:50 PM CT; after the R75 pushes it skips the memGB jobs until it self-updates, then runs them at ~2 parallel. tacobell: alive, y80;
+it runs 2-3x slower than the slot estimates. Runnable queue after R75 ~358 est slot-h (>= 20 h for both workers).
+
+## Previous header (R71)
+PRIORITIES (R71, Oct 19 2026, ~11:30 AM CT; **v39 / DEFAULTS_VERSION 32** unchanged; R71 adds size-scaling genes, all off by default)
 
 ## R72 update (Oct 19 midday)
 - **Seqchoice collapse diagnosed (I90):** the striatum still sees the state (mixing cells decode the arm at 1.0 at 1x and 4x), but preNorm gives each presynaptic cell the

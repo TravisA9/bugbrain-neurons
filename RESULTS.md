@@ -3134,3 +3134,74 @@ test_core ALL OK on 9f49d81. Box, cortex 4x, lr 0.2, 8 growths:
 
 The combo matches the fix on every sequence task with no cutoff (bit 8 does what fanRef 450 did) and is exactly 1x-neutral (the fix is not), but trails it on
 seqchoice by 0.26 / 0.37. No strict winner; y81 / y82 (16 growths + fresh) queued to decide.
+
+## R75 — queue review (Oct 19, 7:20 PM CT): linux-pc OOM crash loop on y46 (8x cortex) fixed in code, 18 worker results read, preNorm 55 is the next adoption candidate (v39 / 32 unchanged)
+State found: the 7 AM review (R69) did NOT fail: it pushed 763563b (v38 = fast engine, DEFAULTS_VERSION 31) and queued y08-y22 + z10b; R70 (v39, 32) and the box rounds
+R71-R74 followed. Laptop push dir: refs/bb/r69 ... r74 all on GitHub (remote = eafc50a), nothing unpushed, no half-written entry. fastEngine was already the default (z10 + z10b,
+16 growths, no task worse); nothing to adopt or pin for it.
+
+### 1. Workers
+- **linux-pc: stuck since 4:42 PM CT** (code eafc50a, heartbeat current): `claim y46_cx8_divRep` / `release ... (restarted)` every ~4 min, 30+ times, no result.
+  Cause (box measurement): one 8x-cortex book10k run (`sc.sizeF@cortex=8,sc.divRep@cortex=2`) peaks at **4.4 GB RSS** (~3 min into growth; 509 s wall, 16.1k cells, acc 0.333 on g0
+  = cortex 4x g0); linux-pc starts ~8 runs at once -> the out-of-memory guard kills the whole service, systemd restarts it 30 s later, dq.js releases and re-claims. 4xS peaks at 1.1 GB.
+  ~2.7 h of linux-pc lost (4:42-7:30 PM).
+- tacobell: alive (code eafc50a), y79 published 7:06 PM (3.3 h for 4.6 est slot-h at 4 workers: the laptop runs ~2-3x slower than the estimates), now y80. RAM 16 GB, ~0.4 GB free.
+- Fix (code, R75): `run/mempar.js` + queue.js: a job's `memGB` caps its parallel runs at floor(min(0.7 x total, 0.9 x free RAM) / memGB); run/dq.js crash-loop guard: the 2nd
+  restart within 6 h while holding the same job -> that worker skips it for 12 h (`crashSkip` in workers/<name>.json). Tested on the box with a local bare queue (kill -9 twice:
+  2nd restart skips the job and claims the next; memGB 3 -> 1 parallel run). Queue: y46 / y61 split (8x seq tasks keep the id with memGB 4.6; cortex-4x arms -> y46c_cx4_divRep / y61c_cx4_divRep_g8;
+  8x seqchoice dropped, y66 measured it), y52 / y77 memGB 4.6, y56 (8x 300k, ~9 h at 2 parallel) and y72 (redundant with y46 + y66) parked; tacobell skips `*cx8*` (worker-config).
+
+### 2. Results (paired by growth; d = mean diff, W/L of 16 unless noted, t)
+**1x rule knobs vs v39 (y24 / y25, growths 0-15; ref y24 lr 0.2 arm):**
+| arm | book10k | book30k | fables4000 | order3 | text1000 |
+|---|---|---|---|---|---|
+| lr 0.25 | +0.001 (6/6) | +0.004 (12/2, 4.3) | +0.001 (7/8) | -0.004 (4/8, -1.4) | 0.000 |
+| **preNorm@cortex 55** | **+0.003 (9/5, 2.5)** | **+0.004 (14/1, 4.6)** | +0.001 (10/6) | +0.004 (5/5, 1.4) | +0.002 (10/5) |
+| metaCap 400 | -0.005 (1/15) | -0.006 (1/14) | -0.004 (0/16) | +0.007 (8/0, 2.3) | +0.001 |
+| trustPow 0.5 | -0.003 | -0.001 | -0.008 (3/13) | -0.023 (0/15) | -0.020 (0/16) |
+| plateau 5 | -0.001 | 0.000 | -0.001 | identical | 0.000 |
+| teachThr 15 / 25 | identical | identical | identical | identical | identical |
+preNorm 55 is the only arm with no task worse (all 5 positive, 2 significant): queued for adoption on fresh growths (y83a/b, k 1500-1515, all 7 tasks) + ladder (y84) + cortex 4x (y85).
+lr 0.25 trades order3 for book30k (the rate is at its optimum); trustPow 0.5 rejected; teachThr is inert at lr 0.2.
+**Length (y26, 1x v39, 16 growths):** book100k 0.3336 vs 30k 0.3330 (+0.001, 8/8) vs 10k 0.3329. Flat again.
+**Rate at size:** 2xS (y28, 16 growths) lr 0.1 is best (lr 0.2 vs 0.1: book -0.006 (3/12) / -0.004, text -0.008 (1/15); lr 0.05: fables -0.002 (2/13)); 4xS (y29a, 8 growths)
+lr 0.07 / 0.14 = lr 0.1 within noise. 2xS lr 0.1 vs 1x v39: book +0.005 / +0.004 (11/4, n.s.), fables +0.003, **order3 -0.147 (0/16), text -0.017 (1/14)**; 4xS vs 2xS: book +0.007, text +0.019 (13/2), order3 -0.084.
+**order3 context length x size (y30, lr 0.1, 16 growths):** 4xS vs 1x: K4 **0.086 vs 0.984 (0/16)**, K8 0.727 vs 0.958, K16 0.819 vs 0.935. The short cycle is lost almost
+completely at 4xS: not capacity, a dynamics failure (Q44, y86).
+Box probe (growth 0, K4, 200 symbols): 1x 9.82; context 4x only 9.82 (fine); cortex 4x lr 0.1, cortex 4x + fanRef and 4xS: **0.00, bits exactly 2.0 = log2 4**,
+i.e. the outputs never respond at all in 200 symbols (y30 4xS mean 0.082, flat in every quarter). The K4 loss is total output silence caused by the bigger cortex, not
+forgetting; at K8 4xS plateaus at ~0.74 from the 2nd quarter (1x 0.99), so order3 at size is a mixture of this silence and weaker context use. Next: box dissection of the
+cortex -> output drive at K4 (inhibition / normalisation targets with only 4 symbols).
+**Cortex 4x + fanRef (16 growths):** y43 (growths 0-15) fanRef 450/R126 vs 1x v39: book10k +0.009 (11/5, 1.9), book30k +0.009 (10/6, 2.0), fables +0.003, order3 -0.093 (2/14),
+text -0.012 (2/13), seqchoice cycle / order2 -5.5 / -3.0 (0/16); vs cortex 4x lr 0.1 (y10): order3 +0.060 (15/1), book10k +0.003. fanRef 300 vs 450 order3 -0.026 (3/13);
+fanRefR 60 vs 126 seqchoice order2 -0.49 (4/12). y42 (growths 8-15): fanRef 450 vs none order3 +0.088 (8/0), text +0.012 (7/1); sizeNorm 4 (y42b) seqchoice 0.7-0.9: rejected again.
+**Fresh k 1300-1315 (y44):** cortex 4x + fanRef vs 1x v39: book10k +0.006 (10/6, 1.2), book30k +0.005 (9/7, 1.0), fables -0.001 (8/8), order3 -0.110 (1/15), text -0.013 (5/11);
+vs cortex 4x lr 0.1: book identical, order3 +0.066 (14/1). **On fresh seeds the cortex-4x book gain is only +0.005 and not significant.**
+**Whole brain 4xS + fanRef (y45, 16 growths):** vs 1x: book +0.013 / +0.013 (13/3, 12/3), fables +0.004, text 0.000, order3 -0.233 (0/16); vs cortex 4x + fanRef: book +0.004, text
++0.012 (13/2), order3 -0.140; vs 4xS lr 0.1 (y10): book +0.001, fables -0.005 (3/12), order3 -0.003. fanRef does nothing for the context-side order3 loss. Striatum: sizeF@!striatum
+seqchoice 3.56 / 3.43, sizeF=4 1.47 / 1.50, L4 2.42 / 2.44 (1x 9.11 / 6.39).
+**Striatal cap (R72 fix = fanRef 450/R126 + postCapRel 1.5 + postN 130):** growths 8-15 (y62): cycle 7.44 / order2 5.48 vs 1x 8.98 / 6.29 (0/8 each); vs no cap +4.3 / +2.3 (8/0).
+cap 1 / 2 / 3 and cap without fanRef all worse than 1.5 (order2 -0.29..-0.61). Fresh (y63): 8.24 / 5.92 vs 1x 9.13 / 6.38 (-0.90 4/12, -0.47 6/10). 1x neutrality: postN 130
+bit-identical on bandit / cue, seqchoice n.s. (y63 / y64); postCapRel 2.5 without postN costs order2 -0.52 (5/11); 6: cue +1.2 (12/4, t 1.5). sizeF@!striatum + fix (y65): 7.35 / 5.43.
+**The fix does not transfer in size (y66, 16 growths):** cortex 2x / 3x / 8x + fix: cycle 4.59 / 3.47 / 2.13, order2 3.81 / 2.84 / 2.24 (cortex 4x 7.44 / 5.48; 1x 9.11 / 6.39).
+**Trophic (growths 8-15):** trophic 3 / trophic 1 + fanRef vs the fix: book -0.017..-0.022 (0/8), order3 -0.08 / -0.04, text -0.015 (0/8), cycle -1.0 / -1.2: rejected.
+trophic 28 (y81) vs the fix: book 0.000, fables +0.006 (7/1), order3 +0.017 (6/2), text +0.001, seqchoice cycle -1.59 / order2 -0.62 (2/6); vs 1x: book +0.009, order3 -0.095 (0/8),
+text -0.015 (1/7), seqchoice -3.1 / -1.4. Fresh y80 / y82 pending.
+
+### 3. Verdict
+- No adoption (v39 / DEFAULTS_VERSION 32 stands). Candidate: preNorm@cortex 55 (I92), decided by y83a/b.
+- No scaled brain meets the large-run bar: best whole-brain book gain +0.013 (4xS) costs order3 -0.23 and seqchoice; cortex 4x + fanRef keeps text loss small but its book gain is
+  +0.005-0.009 and seqchoice needs a size-specific cap. The large run stays off.
+
+### 4. Queue (run/r75_jobs.js; all arms set P.fastEngine and the cortex rate)
+| pri | id | what | est slot-h |
+|---|---|---|---|
+| 0.99 | y83a/b | v39 vs v39 + preNorm@cortex 55, fresh k 1500-1515, all 7 tasks (adoption check) | 0.8 + 0.8 |
+| 0.97 | y84 | preNorm 50 / 65 / 80, growths 0-15, all 7 tasks | 2.3 |
+| 0.965 | y46, y46c_cx4_divRep | 8x cortex divRep seq tasks (memGB 4.6, ~2 parallel); its cortex-4x arms | 6.1, 1.6 |
+| 0.96 | y85 | cortex 4x + fanRef + preNorm 55 / 70, growths 0-7, 5 tasks | 3.3 |
+| 0.955 | y86 | order3 K4 / K16 at 1x, cortex 4x + fanRef, context 4x, 4xS + fanRef (16 growths) | 1.1 |
+| 0.89 | y61, y61c_cx4_divRep_g8 | 8x / 4x divRep on growths 8-15 | 6.1, 1.6 |
+| 0.85 / 0.72 | y52, y77 | 8x book100k (memGB 4.6) | 5.8, 5.8 |
+| parked | y56, y72 | 8x 300k; 8x fix all7 (redundant) | - |
+Runnable after R75: 65 jobs, ~358 est slot-h (~30 h at 12 slots by the estimates, ~20 h at the R69 ratio; tacobell runs slower than estimated). Deep enough for both workers.
