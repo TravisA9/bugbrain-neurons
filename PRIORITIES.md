@@ -1,4 +1,36 @@
-# PRIORITIES (R75, Oct 19 2026, ~7:45 PM CT; **v39 / DEFAULTS_VERSION 32** unchanged; fast engine default since v38)
+# PRIORITIES (R77, Oct 20 2026, ~8 AM CT; **v40 / DEFAULTS_VERSION 33** — v40 = v39 + cortex preNorm 55; fast engine default since v38)
+
+## R77 update (queue review, morning)
+- **Adopted v40** (standing authorisation): preNorm@cortex 55 passed on 16 fresh growths (y83: no task worse; order3 +0.005 8/0, book / fables +0.001-0.002). Old brain = `deepURSx3v39`.
+  Scaled runs pin `pl.preNorm@cortex=45` (at cortex 4x preNorm 55 costs order3 -0.014, y85). All pending jobs were pinned to 45 (= the v39 brain they were designed for).
+- **Root cause found for the size "silence"** (Travis's compensation idea, applied): each output releases a fixed trophic factor; an f x larger cortex splits it f ways and the
+  output-projecting cells starve below trophMin and die -> outputs with zero afferents (order3 K4 at 4x, order3 K8 at 8x, 8x text 0.57). `sc.trophMin@cortex = 0.005 / f`
+  restores them (box: cx4 K4 0 -> 9.88, cx8 order3 0 -> 7.25, cx8 text 5.71 -> 7.66; book / text at 4x unchanged). It does NOT fix the remaining order3 K8 loss at 4xS
+  (context-side, I87) or the divRep seqchoice collapse.
+- **Best text brain so far:** cortex 4x + divRep 2 (the cortex actually fills): book30k 0.373 vs 1x 0.340 (+0.033, 8/0, growths 0-7), fables +0.033; order3 / seqchoice
+  broken without fixes. Fresh-seed check + trophMin = y89; the compensated 2x / 3x / 4x / 8x curve = y90 / y91.
+- **Length:** flat from 30k to 1M at 1x (y27) and 100k -> 300k at cortex 4x (y50b). The plateau is a learning-rule property, not a size one.
+- **recvBudget 2** fully recovers seqchoice at whole-brain 2x on fresh seeds (vs 1x +0.34 / +0.27, n.s.), = the R72 cap at 4x, partial at 3x.
+- **Bug found:** generation jobs y31 / y32 ran r42.js (no generation metrics); pending y18 / y53 / y78 switched to run/gen.js.
+
+## Ranked open questions (R77)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q45 / I80 | Does the cx4 divRep text gain (+0.03) hold on fresh seeds, with trophMin/4 keeping order3 K4? | y89a/b |
+| 2 | I95 | Compensated size curve: 2x / 3x / 4x / 8x divRep + trophMin 0.005/f — is book monotone in size once nothing starves? | y90a/b, y91 |
+| 3 | Q46 / I87 | Why does divRep collapse seqchoice (0.2-2.7 with every fix), and what is the residual order3 K8 loss at 4xS (context dilution)? | box (receiver probe of the divRep striatum; context-side census) |
+| 4 | I94 | recvBudget 2 at 3x / 4x: what limits seqchoice there? | box |
+| 5 | Q42 | The ~10k plateau (flat to 1M at every size): does the 0.40 readout ceiling itself plateau, or only the rule? | box (readout vs length) |
+| 6 | I72 | Generation, now measured (gen.js) | y18, y53, y78 |
+Decision point (for Travis): no large run until a scaled brain keeps order3 within 0.02 of 1x and seqchoice within noise while keeping the book gain. trophMin / f removes the
+total failures; whether cx4 divRep + trophMin + recvBudget gets there is y89 / y90 plus the seqchoice diagnosis.
+
+## Worker notes (R77)
+linux-pc: healthy, ~10 est slot-h per hour; one unexplained restart at 5:47 AM CT on y33a (not repeated). tacobell: healthy, ~1.75 est slot-h per hour, on y50a (book300k) since 4:04 AM.
+Runnable after R77 ~300 est slot-h (~25 h both workers); the R77 jobs first (~21 slot-h).
+
+## Previous header (R75)
+PRIORITIES (R75, Oct 19 2026, ~7:45 PM CT; **v39 / DEFAULTS_VERSION 32** unchanged; fast engine default since v38)
 
 ## R75 update (queue review, evening)
 - **Worker incident:** linux-pc was OOM-killed every ~4 min from 4:42 PM CT on y46 (8x cortex: ~4.4 GB per run x ~8 parallel). Fixed: job `memGB` + run/mempar.js

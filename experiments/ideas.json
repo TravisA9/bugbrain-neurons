@@ -1150,13 +1150,14 @@
       "id": "I80",
       "area": "scaling",
       "title": "Growth that scales past 4x: proliferation / growth time counted in developmental steps (like coneSpeed / axonLen before R63)",
-      "status": "code fix in (divRep), being tested",
-      "evidence": "R64 box (1 growth): 8xS (grid 170, maxCells 27200, coneSpeed 8, axonLen 113) grows 15.2k cells, book 1.5k 2.04 / 5k 1.98 vs 4xS 3.62 / 3.80; branchMax 1000 or maxCells 40000: no change; pDiv 1: 22k cells, 3.38 / 3.55 and 3.06 (still < 4xS). Needs a code-level fix (scale division rate / developmental time with the grid) before any 8x run R71: divReach 2 / 3 only 8.3k / 8.5k cortex cells at 8x; sc.divRep 2 (up to 2 divisions per step) fills maxCells (8x cortex 14.45k cells, 4x 7.22k vs 5.96k). Growth-time fix done in code; value tested by y46 / y61 / y52 / y56. R75: an 8x-cortex book10k run peaks at 4.4 GB RSS (box; 4xS 1.1 GB): y46 with ~8 parallel 8x runs OOM-killed the linux-pc worker every ~4 min from 4:42 PM CT (30+ claim / release cycles). Fix: job memGB + run/mempar.js (parallel runs capped by RAM), crash-loop guard in run/dq.js; y46 / y61 split (8x seq tasks memGB 4.6, cortex-4x part -> y46c_cx4_divRep / y61c_cx4_divRep_g8), y56 / y72 parked. y66 (seqchoice, 16 growths): 8x cortex + fix 2.13 / 2.24 (collapsed).",
+      "status": "divRep fills the cortex: cx4 divRep is the best text brain so far (book30k 0.373); seq tasks need trophMin / f; seqchoice collapses",
+      "evidence": "R64 box (1 growth): 8xS (grid 170, maxCells 27200, coneSpeed 8, axonLen 113) grows 15.2k cells, book 1.5k 2.04 / 5k 1.98 vs 4xS 3.62 / 3.80; branchMax 1000 or maxCells 40000: no change; pDiv 1: 22k cells, 3.38 / 3.55 and 3.06 (still < 4xS). Needs a code-level fix (scale division rate / developmental time with the grid) before any 8x run R71: divReach 2 / 3 only 8.3k / 8.5k cortex cells at 8x; sc.divRep 2 (up to 2 divisions per step) fills maxCells (8x cortex 14.45k cells, 4x 7.22k vs 5.96k). Growth-time fix done in code; value tested by y46 / y61 / y52 / y56. R75: an 8x-cortex book10k run peaks at 4.4 GB RSS (box; 4xS 1.1 GB): y46 with ~8 parallel 8x runs OOM-killed the linux-pc worker every ~4 min from 4:42 PM CT (30+ claim / release cycles). Fix: job memGB + run/mempar.js (parallel runs capped by RAM), crash-loop guard in run/dq.js; y46 / y61 split (8x seq tasks memGB 4.6, cortex-4x part -> y46c_cx4_divRep / y61c_cx4_divRep_g8), y56 / y72 parked. y66 (seqchoice, 16 growths): 8x cortex + fix 2.13 / 2.24 (collapsed). R77: y46c cx4 divRep (8.9k cells vs 7.7k) vs 1x: book10k +0.029, book30k +0.033, fables +0.033 (8/0 each), text +0.006, order3 -0.40, seqchoice 0.26 / 0.30. y46 cx8 divRep: book +0.021 / +0.024 (below 4x), order3 0.000, text 0.565 (trophic starvation, I95). divRep at 1x: book10k -0.011 (0/4, box): size-only. y89 / y90 / y91 queued.",
       "why": "the large-brain run needs brains beyond 4x",
       "rounds": [
         "R64",
         "R71",
-        "R75"
+        "R75",
+        "R77"
       ],
       "theme": "scaling",
       "parents": [
@@ -1261,13 +1262,14 @@
       "area": "scaling",
       "title": "Why scaled brains lose order3 / seqchoice: bigger cortex or (non-plastic) context regions dilute sharp sequence context; plan-wide sc.* variants also inflate the 400-cell striatum",
       "status": "open",
-      "evidence": "R69 box (order3 growths 0-1, 1x 9.68 / 9.65): 4xS all 7.28 / 7.28, cortex only 7.75 / 8.13, context only 7.60 / 7.75, context 2xS 8.13 / 8.15, context grid 120 with 1x wiring 7.60 / 7.75, maxCells alone or wiring alone at grid 60 = 1x; seqchoice cycle / order2 all 4xS 2.04 / 0.01, 2.48 / 1.53, striatum kept 3.27 / 6.37, 3.31 / 2.52. Queued y10a/b (4xS by region, 16 growths, 6 tasks), y16 (2xS by region), y17 (long fables x size), y21 (3xS); R70 y10a (4xS by region, growths 0-7, vs 1x): all book10k +0.021 / fables +0.020 / order3 -0.239 / seqchoice cycle 2.09; cortex only +0.014 / +0.014 / -0.168 / 3.97 (text -0.012, t -3.1); context only +0.000 / +0.002 / -0.223 / 8.95; all but striatum seqchoice 4.52 / 3.36 (1x 9.23 / 6.48). The book gain is in the cortex, the order3 loss comes from either region (context alone almost all of it), the seqchoice collapse from the cortex. Next: y10b, y16, y30 (order3 K 4 / 16 x size), y33 (regions on book30k / fables8000), y37 (growths 16-31), then a code fix (normalised fan-in, per-region scaling); y10a/b 16 growths: cortex only order3 -0.160, text -0.015 (t -4.3), seqchoice 3.26 / 3.23 (1x 9.11 / 6.39); context only order3 -0.219, book +0.001, seqchoice cycle -0.29 (t -2.3); all book +0.020, order3 -0.238 R71 box: total drive per cell is already constant at 4x (normE / preNorm); fan-in counts grow (predictor plastic inputs 840 -> 2853 at cortex 4x, unchanged at context 4x). Code: sc.sizeF / sizeNorm / divReach / divRep, P.fanRef / fanRefR (off by default). Screen growths 0-7: cortex 4x + fanRef 450 lr 0.2 order3 0.875 (no fanRef 0.756, 8/0; 1x 0.949), book +0.009, fables +0.005 vs v39 1x, text -0.008; seqchoice collapse unchanged (order2 3.2-3.7, cycle 4.0 vs 6.5 / 9.2); sizeNorm 4 hurts (seqchoice order2 1.02). Decoding (fables): history b1-b3 decodable >= 0.97 from the context chain at every size, so the loss is in learning / use, not in the representation. Next: y42-y61. R72: seqchoice collapse = striatal plastic budget grows with the mixing population (see I90); fixed mostly by postCapRel. R75: order3 K4 collapses at 4xS (y30, 16 growths, lr 0.1): 0.086 vs 1x 0.984 (0/16); K16 0.819 vs 0.935; K8 0.727 vs 0.958: the short-context cycle is lost almost entirely, so the loss is not capacity. 2xS (y28) order3 -0.15 (0/16), text -0.017 (1/14), book +0.005 (n.s.). y86 queued (K4 by region, fanRef). R75 box probe (growth 0, K4): context 4x only 9.82 = 1x; cortex 4x (lr 0.1 or + fanRef) and 4xS score 0.00 with bits exactly log2 4: the outputs never respond, so the K4 loss is output silence caused by the bigger cortex.",
+      "evidence": "R69 box (order3 growths 0-1, 1x 9.68 / 9.65): 4xS all 7.28 / 7.28, cortex only 7.75 / 8.13, context only 7.60 / 7.75, context 2xS 8.13 / 8.15, context grid 120 with 1x wiring 7.60 / 7.75, maxCells alone or wiring alone at grid 60 = 1x; seqchoice cycle / order2 all 4xS 2.04 / 0.01, 2.48 / 1.53, striatum kept 3.27 / 6.37, 3.31 / 2.52. Queued y10a/b (4xS by region, 16 growths, 6 tasks), y16 (2xS by region), y17 (long fables x size), y21 (3xS); R70 y10a (4xS by region, growths 0-7, vs 1x): all book10k +0.021 / fables +0.020 / order3 -0.239 / seqchoice cycle 2.09; cortex only +0.014 / +0.014 / -0.168 / 3.97 (text -0.012, t -3.1); context only +0.000 / +0.002 / -0.223 / 8.95; all but striatum seqchoice 4.52 / 3.36 (1x 9.23 / 6.48). The book gain is in the cortex, the order3 loss comes from either region (context alone almost all of it), the seqchoice collapse from the cortex. Next: y10b, y16, y30 (order3 K 4 / 16 x size), y33 (regions on book30k / fables8000), y37 (growths 16-31), then a code fix (normalised fan-in, per-region scaling); y10a/b 16 growths: cortex only order3 -0.160, text -0.015 (t -4.3), seqchoice 3.26 / 3.23 (1x 9.11 / 6.39); context only order3 -0.219, book +0.001, seqchoice cycle -0.29 (t -2.3); all book +0.020, order3 -0.238 R71 box: total drive per cell is already constant at 4x (normE / preNorm); fan-in counts grow (predictor plastic inputs 840 -> 2853 at cortex 4x, unchanged at context 4x). Code: sc.sizeF / sizeNorm / divReach / divRep, P.fanRef / fanRefR (off by default). Screen growths 0-7: cortex 4x + fanRef 450 lr 0.2 order3 0.875 (no fanRef 0.756, 8/0; 1x 0.949), book +0.009, fables +0.005 vs v39 1x, text -0.008; seqchoice collapse unchanged (order2 3.2-3.7, cycle 4.0 vs 6.5 / 9.2); sizeNorm 4 hurts (seqchoice order2 1.02). Decoding (fables): history b1-b3 decodable >= 0.97 from the context chain at every size, so the loss is in learning / use, not in the representation. Next: y42-y61. R72: seqchoice collapse = striatal plastic budget grows with the mixing population (see I90); fixed mostly by postCapRel. R75: order3 K4 collapses at 4xS (y30, 16 growths, lr 0.1): 0.086 vs 1x 0.984 (0/16); K16 0.819 vs 0.935; K8 0.727 vs 0.958: the short-context cycle is lost almost entirely, so the loss is not capacity. 2xS (y28) order3 -0.15 (0/16), text -0.017 (1/14), book +0.005 (n.s.). y86 queued (K4 by region, fanRef). R75 box probe (growth 0, K4): context 4x only 9.82 = 1x; cortex 4x (lr 0.1 or + fanRef) and 4xS score 0.00 with bits exactly log2 4: the outputs never respond, so the K4 loss is output silence caused by the bigger cortex. R77: y16 2xS context-only order3 -0.107 (0/16), cortex-only -0.051; y33 4x context-only book30k +0.001. The residual order3 K8 loss at 4xS is untouched by trophMin / f (box: 7.28 with or without); the total K4 / 8x silence is trophic starvation (I95).",
       "why": "a large brain that loses higher-order context cannot become a language model; the size track depends on fixing this",
       "rounds": [
         "R69",
         "R70",
         "R71",
-        "R75"
+        "R75",
+        "R77"
       ],
       "theme": "scaling",
       "parents": [
@@ -1296,11 +1298,12 @@
       "area": "scaling",
       "title": "Fan-in-normalised learning rate (P.fanRef / fanRefR): a receiver with n > fanRef plastic inputs learns at lr x fanRef / n",
       "status": "partial fix confirmed (order3 only); size gain on book small and not significant on fresh seeds",
-      "evidence": "R71 box (growths 0-7): at cortex 4x lr 0.2, fanRef 450 lifts order3 0.756 -> 0.875 (8/0), fanRef 840 + fanRefR 126 0.856; keeps the cortex book / fables gain; still order3 -0.07 vs 1x. fanRefR 126 on seqchoice order2 3.23 -> 3.70 (n.s.), cycle unchanged. Queued y42-y61. R75 at 16 growths (y43, growths 0-15): cortex 4x + fanRef 450/R126 vs 1x v39 book10k +0.009 (11/5, t 1.9), book30k +0.009 (10/6, 2.0), fables +0.003, order3 -0.093 (2/14), text -0.012 (2/13), seqchoice collapsed (0/16); vs cortex 4x lr 0.1 order3 +0.060 (15/1). Fresh k 1300-1315 (y44): vs 1x book +0.006 / +0.005 (10/6, 9/7, n.s.), fables -0.001, order3 -0.110 (1/15), text -0.013; vs cortex 4x lr 0.1 order3 +0.066 (14/1), book identical. fanRef 300 < 450 (order3 -0.026, 3/13); fanRefR 60 < 126 (seqchoice order2 -0.49, 4/12). sizeNorm 4 (y42b) rejected again. All-regions 4xS + fanRef (y45) vs 1x: book +0.013 (13/3), text equal, order3 -0.233 (0/16).",
+      "evidence": "R71 box (growths 0-7): at cortex 4x lr 0.2, fanRef 450 lifts order3 0.756 -> 0.875 (8/0), fanRef 840 + fanRefR 126 0.856; keeps the cortex book / fables gain; still order3 -0.07 vs 1x. fanRefR 126 on seqchoice order2 3.23 -> 3.70 (n.s.), cycle unchanged. Queued y42-y61. R75 at 16 growths (y43, growths 0-15): cortex 4x + fanRef 450/R126 vs 1x v39 book10k +0.009 (11/5, t 1.9), book30k +0.009 (10/6, 2.0), fables +0.003, order3 -0.093 (2/14), text -0.012 (2/13), seqchoice collapsed (0/16); vs cortex 4x lr 0.1 order3 +0.060 (15/1). Fresh k 1300-1315 (y44): vs 1x book +0.006 / +0.005 (10/6, 9/7, n.s.), fables -0.001, order3 -0.110 (1/15), text -0.013; vs cortex 4x lr 0.1 order3 +0.066 (14/1), book identical. fanRef 300 < 450 (order3 -0.026, 3/13); fanRefR 60 < 126 (seqchoice order2 -0.49, 4/12). sizeNorm 4 (y42b) rejected again. All-regions 4xS + fanRef (y45) vs 1x: book +0.013 (13/3), text equal, order3 -0.233 (0/16). R77: y47 1x fanRef 450 book -0.010 / -0.011 (0/16), fables -0.007 (0/16): not 1x-neutral; 840 identical at 1x. y48 cx4 + fanRef lr 0.3 / 0.5 = lr 0.2. y49 cx2: fanRef 450 costs book -0.005 / -0.009 vs cx2 (too strong at 2x), text +0.012.",
       "why": "the teacher rule adds lr x x per active input, so the effective rate grows with fan-in; normalising it lets the rate stay at its 1x value at any size",
       "rounds": [
         "R71",
-        "R75"
+        "R75",
+        "R77"
       ],
       "theme": "scaling",
       "parents": [
@@ -1313,11 +1316,12 @@
       "area": "scaling",
       "title": "Striatal plastic budget grows with cortex size: cap each receiver's plastic total (postCapRel / postN)",
       "status": "helps a lot at cortex 4x, tuned to that size: not general",
-      "evidence": "R72: at cortex 4x striatal receivers (fan-in 120 -> 280) end with 665-963 plastic weight (1x 162-202); arm code in receivers 0.75 -> 0.3, margin 0.35 -> 0.12; mixing cells still decode everything. postCapRel 1.5 + postN 130 + fanRef 450/R126: seqchoice order2 3.23 -> 5.76, cycle 3.97 -> 7.83 (1x 6.48 / 9.23); all-receiver cap 6.1 / 8.8 but cue -2 at 1x; allMax no help. Queued y62-y78. R75 16 growths: y62 (growths 8-15) R72 fix cycle 7.44 / order2 5.48 vs 1x 8.98 / 6.29 (0/8 each); fresh k 1300-1315 (y63) 8.24 / 5.92 vs 1x 9.13 / 6.38 (-0.90 4/12, -0.47 6/10); vs no cap +3.9 / +2.9 (15/1, 16/0). postN 130 is 1x-neutral (y63/y64 bandit / cue identical, seqchoice n.s.); postCapRel 2.5 without postN costs 1x order2 -0.52 (t -3.0). cap 1 / 2 / 3 all worse than 1.5. **Does not generalise in size** (y66, 16 growths): cortex 2x / 3x / 8x + the same fix: cycle 4.59 / 3.47 / 2.13, order2 3.81 / 2.84 / 2.24 (cortex 4x 7.44 / 5.48). sizeF@!striatum + fix (y65) 7.35 / 5.43.",
+      "evidence": "R72: at cortex 4x striatal receivers (fan-in 120 -> 280) end with 665-963 plastic weight (1x 162-202); arm code in receivers 0.75 -> 0.3, margin 0.35 -> 0.12; mixing cells still decode everything. postCapRel 1.5 + postN 130 + fanRef 450/R126: seqchoice order2 3.23 -> 5.76, cycle 3.97 -> 7.83 (1x 6.48 / 9.23); all-receiver cap 6.1 / 8.8 but cue -2 at 1x; allMax no help. Queued y62-y78. R75 16 growths: y62 (growths 8-15) R72 fix cycle 7.44 / order2 5.48 vs 1x 8.98 / 6.29 (0/8 each); fresh k 1300-1315 (y63) 8.24 / 5.92 vs 1x 9.13 / 6.38 (-0.90 4/12, -0.47 6/10); vs no cap +3.9 / +2.9 (15/1, 16/0). postN 130 is 1x-neutral (y63/y64 bandit / cue identical, seqchoice n.s.); postCapRel 2.5 without postN costs 1x order2 -0.52 (t -3.0). cap 1 / 2 / 3 all worse than 1.5. **Does not generalise in size** (y66, 16 growths): cortex 2x / 3x / 8x + the same fix: cycle 4.59 / 3.47 / 2.13, order2 3.81 / 2.84 / 2.24 (cortex 4x 7.44 / 5.48). sizeF@!striatum + fix (y65) 7.35 / 5.43. R77: y67 growths 16-31 fix vs 1x cycle -1.01 (2/14), order2 -0.27; y68 seqchoice order3 cx4 fix -0.77 (4/12); superseded by recvBudget 2 (I94).",
       "why": "explains and (mostly) fixes the seqchoice collapse at size",
       "rounds": [
         "R72",
-        "R75"
+        "R75",
+        "R77"
       ],
       "theme": "scaling",
       "parents": [
@@ -1329,12 +1333,13 @@
       "id": "I91",
       "area": "scaling",
       "title": "Trophic (region-size) normalization of the presynaptic budget / step (P.trophic)",
-      "status": "testing (trophic 1 / 3 rejected; 28 open)",
-      "evidence": "R72: at cortex 4x striatal receivers (fan-in 120 -> 280) end with 665-963 plastic weight (1x 162-202); arm code in receivers 0.75 -> 0.3, margin 0.35 -> 0.12; mixing cells still decode everything. postCapRel 1.5 + postN 130 + fanRef 450/R126: seqchoice order2 3.23 -> 5.76, cycle 3.97 -> 7.83 (1x 6.48 / 9.23); all-receiver cap 6.1 / 8.8 but cue -2 at 1x; allMax no help. Queued y62-y78. R75 (growths 8-15): trophic 3 and trophic 1 + fanRef lose to the R72 fix on every text task (book -0.017..-0.022 0/8, order3 -0.08 / -0.04, text -0.015 0/8) and on seqchoice cycle (-1.0 / -1.2): rejected. trophic 28 (y81) = fix on text (book 0.000, fables +0.006 7/1, order3 +0.017 6/2, text +0.001) but seqchoice worse (cycle -1.59, order2 -0.62, 2/6); fresh y80 / y82 pending.",
+      "status": "rejected (trophic 1 / 3 / 28)",
+      "evidence": "R72: at cortex 4x striatal receivers (fan-in 120 -> 280) end with 665-963 plastic weight (1x 162-202); arm code in receivers 0.75 -> 0.3, margin 0.35 -> 0.12; mixing cells still decode everything. postCapRel 1.5 + postN 130 + fanRef 450/R126: seqchoice order2 3.23 -> 5.76, cycle 3.97 -> 7.83 (1x 6.48 / 9.23); all-receiver cap 6.1 / 8.8 but cue -2 at 1x; allMax no help. Queued y62-y78. R75 (growths 8-15): trophic 3 and trophic 1 + fanRef lose to the R72 fix on every text task (book -0.017..-0.022 0/8, order3 -0.08 / -0.04, text -0.015 0/8) and on seqchoice cycle (-1.0 / -1.2): rejected. trophic 28 (y81) = fix on text (book 0.000, fables +0.006 7/1, order3 +0.017 6/2, text +0.001) but seqchoice worse (cycle -1.59, order2 -0.62, 2/6); fresh y80 / y82 pending. R77 fresh k 1300-1315: trophic 3 / trophic 1 + fanRef vs cx4 + fanRef book -0.016 / -0.020 (0/24), text -0.017 (0/24): rejected; trophic 28 = cx4 + fanRef on text (n.s.), seqchoice order2 -0.59 vs the R72 fix (t -2.4): no gain, closed.",
       "why": "R73: preNorm budget and/or step x 1/sizeF of the source region; exactly 1x-neutral; at cortex 4x helps seqchoice (trophic 3 cycle 8.16 vs fix 7.83) but costs order3/text/book vs fanRef; jobs y79/y80.",
       "rounds": [
         "R72",
-        "R75"
+        "R75",
+        "R77"
       ],
       "theme": "scaling",
       "parents": [
@@ -1346,15 +1351,64 @@
       "id": "I92",
       "area": "learning",
       "title": "v39 + preNorm@cortex 55 (presynaptic budget of cortex inputs 45 -> 55)",
-      "status": "testing (adoption candidate)",
-      "evidence": "R75 y25 (growths 0-15, vs v39 y24): book10k +0.0032 (9/5, t 2.5), book30k +0.0044 (14/1, t 4.6), fables4000 +0.0007 (10/6), order3 +0.0036 (5/5, t 1.4), text1000 +0.0019 (10/5); seqchoice untested. R64 preNorm 60 under v36 won book / fables but lost order3. Queued y83a/b (fresh k 1500-1515, all 7 tasks: adopt as v40 if no task worse), y84 (50 / 65 / 80), y85 (cortex 4x + fanRef).",
+      "status": "adopted (v40)",
+      "evidence": "R75 y25 (growths 0-15, vs v39 y24): book10k +0.0032 (9/5, t 2.5), book30k +0.0044 (14/1, t 4.6), fables4000 +0.0007 (10/6), order3 +0.0036 (5/5, t 1.4), text1000 +0.0019 (10/5); seqchoice untested. R64 preNorm 60 under v36 won book / fables but lost order3. Queued y83a/b (fresh k 1500-1515, all 7 tasks: adopt as v40 if no task worse), y84 (50 / 65 / 80), y85 (cortex 4x + fanRef). R77: y83a/b fresh k 1500-1515: book10k +0.001 (8/7), book30k +0.001 (9/5), fables +0.002 (10/6, t 1.7), order3 +0.005 (8/0, t 2.4), text 0.000, seqchoice identical: no task worse -> v40 (DEFAULTS_VERSION 33). y84 ladder: 65 / 80 book30k +0.006 / +0.005 vs v39 but fables -0.002 / -0.003 vs 55 (t -2.4 / -3.0); 50 < 55. y85 cortex 4x + fanRef: 55 / 70 order3 -0.014 / -0.018 (0/8): scaled runs pin 45; box: 25 at cortex 4x order3 -0.04 / -0.08 (worse too).",
       "why": "a larger presynaptic budget gives the taught cells more plastic drive without raising the rate (lr 0.25+ forgets order3)",
       "rounds": [
-        "R75"
+        "R75",
+        "R77"
       ],
       "theme": "learning",
       "parents": [
         "I77"
+      ]
+    },
+    {
+      "id": "I93",
+      "area": "scaling",
+      "title": "P.sizeCone: sized regions scale the EFFECTIVE growth-cone speed by sqrt(f) (whole-brain sizeF orphaned the seqchoice outputs)",
+      "status": "confirmed fix for whole-brain sizeF seqchoice wiring (gene off by default)",
+      "evidence": "R76: the striatum coneSpeed 0.5 stayed 1 site per step on a sqrt(f) finer grid; seqchoice outputs had 0 afferents at sizeF >= 1.5. R77 y87 fresh k 1600-1615: sizeCone vs plain 2x / 4x seqchoice cycle +3.0 / +2.1, order2 +2.6 / +1.8 (16/0), teacher tasks identical; no effect at cortex-only divRep (box).",
+      "why": "whole-brain size factors must not orphan small regions",
+      "rounds": [
+        "R76",
+        "R77"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I87"
+      ]
+    },
+    {
+      "id": "I94",
+      "area": "scaling",
+      "title": "P.recvBudget bit 2: the striatal postCapRel cap only on receivers with inputs from a sized region (replaces postN 130; exactly 1x-neutral)",
+      "status": "confirmed at 2x, = R72 at 4x, partial at 3x (off by default)",
+      "evidence": "R76b box; R77 y88 fresh k 1620-1635 (16 growths): vs R72 postN 2x cycle +2.43 (14/1), order2 +1.79 (12/3); vs 1x 2x +0.34 / +0.27 (n.s., full recovery), 3x -0.66 / -1.44 (1/15), 4x -0.65 / -0.39 (n.s.). bit 1 (inhibitory budget) rejected (R76b). Does not rescue the divRep seqchoice collapse (box: 0.2 -> 2.4).",
+      "why": "size-correct striatal synaptic scaling without a fan-in cutoff",
+      "rounds": [
+        "R76",
+        "R77"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I90"
+      ]
+    },
+    {
+      "id": "I95",
+      "area": "scaling",
+      "title": "Trophic starvation at size: compensate the neurotrophic survival threshold, sc.trophMin@cortex = 0.005 / f (Travis: patch varying opposite to the drift)",
+      "status": "testing (box: total K4 / 8x silence fixed)",
+      "evidence": "R77 box: outputs release a fixed trophic factor shared by their inputs; an f x cortex splits it f ways and the output-projecting cells die below trophMin. Census order3 K4 cortex divRep 1x / 2x / 4x: excitatory synapses onto outputs 334 / 673 / 0. trophMin / f: cx4 divRep K4 0 -> 9.88 (1x 9.85); cx4 + fanRef K4 0 / 2.55 -> 9.28 / 6.97; cx4 divRep K8 7.97 / 7.35 -> 8.90 / 8.27; cx8 divRep order3 0 -> 7.25, text 5.71 -> 7.66 (1x 7.54); book / text at 4x identical; no effect on 4xS K8 (7.28) or the divRep seqchoice collapse. Drift study 1x-8x (order3 K8): plastic fan-in f^1.25, weight per synapse f^-1, plastic total per receiver f^0.2, learning change f^0.25, cortex E/I f^-0.4..-0.5, output firing f^-0.35 then 0 at 8x.",
+      "why": "removes the total-failure mode of scaled brains; a candidate size-scaling rule (trophMin x 1/f, or factor x f) for develop.js",
+      "rounds": [
+        "R77"
+      ],
+      "theme": "scaling",
+      "parents": [
+        "I87",
+        "I80"
       ]
     }
   ],
@@ -1674,7 +1728,7 @@
       "likelihood": 0.3,
       "cost": 2,
       "experiment": "y26, y27, y36, y40 (R70); decides whether the staged large run can pay",
-      "answer": "R75: y26 v39 1x book100k 0.3336 vs 30k 0.3330 (+0.0006, 8/8) vs 10k 0.3329: flat again."
+      "answer": "R75: y26 v39 1x book100k 0.3336 vs 30k 0.3330 (+0.0006, 8/8) vs 10k 0.3329: flat again. R77: y27 1x v39 30k 0.329, 100k 0.333, 300k 0.332, 1M 0.332 (1M vs 100k -0.001); y50b cx4 + fanRef 100k 0.357, 300k 0.356: flat at size too."
     },
     {
       "id": "Q43",
@@ -1682,7 +1736,8 @@
       "impact": 3,
       "likelihood": 0.55,
       "cost": 1,
-      "experiment": "y83a/b, y84, y85 (R75)"
+      "experiment": "y83a/b, y84, y85 (R75)",
+      "answer": "R77: passed on fresh growths (no task worse) -> adopted as v40; optimum 55 (65 / 80 trade fables for book); at cortex 4x it costs order3 (pin 45 at size)."
     },
     {
       "id": "Q44",
@@ -1690,7 +1745,24 @@
       "impact": 3,
       "likelihood": 0.5,
       "cost": 1,
-      "experiment": "y86 (R75) + box dissection"
+      "experiment": "y86 (R75) + box dissection",
+      "answer": "R77: trophic starvation. At cortex 4x the output cells end with 0 afferents on K4 (the fixed trophic factor of 4 outputs split over 4x the cells); trophMin / f restores K4 (box 0 -> 9.3-9.9). y90 checks it on 16 growths."
+    },
+    {
+      "id": "Q45",
+      "q": "Does cortex 4x + divRep 2 (+ trophMin/4) keep its +0.03 book / fables gain on fresh growths k 1700-1715, and does trophMin keep order3 K4 at 1x level?",
+      "impact": 5,
+      "likelihood": 0.5,
+      "cost": 1,
+      "experiment": "y89a/b (R77)"
+    },
+    {
+      "id": "Q46",
+      "q": "Why does divRep collapse seqchoice (0.2-2.7 vs 9 at 1x) when cortex 4x without divRep keeps 4-8 with the striatal cap?",
+      "impact": 3,
+      "likelihood": 0.5,
+      "cost": 1,
+      "experiment": "box: receiver / survival census of the divRep striatum and its cortex inputs"
     }
   ]
 }

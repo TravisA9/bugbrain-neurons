@@ -130,7 +130,17 @@ SA.registerPlan('deepURSx3v37', 'v37 / v38 default (kept): unifiedR + deeper con
 //  lr 0.3 / 0.5 (y09) win book more but lose order3 (-0.015 t -2.5 / -0.046 0/15). At 4xS lr 0.2 is worse (y11), so scaled runs pin lr@cortex 0.1.
 const CORTEX_LR_V39 = 0.2;
 SA.CORTEX_LR_V39 = CORTEX_LR_V39;
-SA.registerPlan('deepURSx3', 'v39 default: unifiedR + deeper context chain x3 (outcome-repressed), no prediction-miss LTD, capped consolidation (metaCap 200; R62), cortex lr 0.2 (R70) + striatum predErr 0.3 (R64)', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_V36, R.name === 'cortex' ? { lr: CORTEX_LR_V39 } : {}, R.name === 'striatum' ? { predErr: STRIATUM_PE_V37 } : {}); d.label += ' + capped consolidation + cortex lr 0.2 + striatum prediction-miss LTD'; return d; },
+SA.registerPlan('deepURSx3v39', 'v39 default (kept): unifiedR + deeper context chain x3 (outcome-repressed), no prediction-miss LTD, capped consolidation (metaCap 200; R62), cortex lr 0.2 (R70) + striatum predErr 0.3 (R64)', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_V36, R.name === 'cortex' ? { lr: CORTEX_LR_V39 } : {}, R.name === 'striatum' ? { predErr: STRIATUM_PE_V37 } : {}); d.label += ' + capped consolidation + cortex lr 0.2 + striatum prediction-miss LTD'; return d; },
+  'old default (v39); grows unifiedR exactly when an outcome signal is present');
+// v40 (R77 adopted under Travis's standing authorisation): the cortex's presynaptic budget preNorm 45 -> 55 (inputs onto taught cells keep a
+//  larger fixed outgoing total); nothing else changes. y25 screen (growths 0-15, vs v39): book10k +0.003 (9/5, t 2.5), book30k +0.004 (14/1, 4.6),
+//  fables +0.001, order3 +0.004, text +0.002; y83a/b on FRESH growths k 1500-1515 (7 tasks): book10k +0.001 (8/7), book30k +0.001 (9/5), fables
+//  +0.002 (10/6, t 1.7), order3 +0.005 (8/0, t 2.4), text +0.000, seqchoice identical (the cortex budget is unused there): no task worse.
+//  y84 ladder: 65 / 80 buy book30k (+0.006 / +0.005) but lose fables vs 55 (-0.002 / -0.003, t -2.4 / -3.0); 50 < 55 on book. At cortex 4x + fanRef
+//  (y85) preNorm 55 costs order3 -0.014 (0/8): scaled runs pin pl.preNorm@cortex=45 (like the cortex rate).
+const CORTEX_PRENORM_V40 = 55;
+SA.CORTEX_PRENORM_V40 = CORTEX_PRENORM_V40;
+SA.registerPlan('deepURSx3', 'v40 default: unifiedR + deeper context chain x3 (outcome-repressed), no prediction-miss LTD, capped consolidation (metaCap 200; R62), cortex lr 0.2 (R70) + cortex preNorm 55 (R77) + striatum predErr 0.3 (R64)', () => { const d = createDeepUR(3, { area: { o: -20 } }); for (const R of d.regions) R.g.pl = Object.assign({}, R.g.pl, DEEP_V36, R.name === 'cortex' ? { lr: CORTEX_LR_V39, preNorm: CORTEX_PRENORM_V40 } : {}, R.name === 'striatum' ? { predErr: STRIATUM_PE_V37 } : {}); d.label += ' + capped consolidation + cortex lr 0.2 + cortex preNorm 55 + striatum prediction-miss LTD'; return d; },
   'default for three-phase-clock sequences/text and seqchoice; grows unifiedR exactly when an outcome signal is present');
 for (const M of [3, 4]) SA.registerPlan('wordChainx' + M, 'R44 I57: deep context chain x' + M + ' reset by the predicted space (ordered in-word memory)', () => createDeepUR(M, { wordReset: 30 }), 'experimental, off by default');
 SA.createDeepUR = createDeepUR; })();
