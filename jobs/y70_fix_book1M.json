@@ -10,7 +10,7 @@
     "run/r72_jobs.js"
   ],
   "title": "cortex 4x fix at book1M (growths k 1400-1403)",
-  "priority": 0.85,
+  "priority": 0.55,
   "estHours": 2.2,
   "slotHours": 13.3,
   "phone": false,
@@ -25,7 +25,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "1400",
         "--force"
       ],
@@ -40,7 +40,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "1401",
         "--force"
       ],
@@ -55,7 +55,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "1402",
         "--force"
       ],
@@ -70,7 +70,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "1403",
         "--force"
       ],
@@ -79,5 +79,6 @@
         "BB_OUT": "results/phone/y70_fix_book1M.jsonl"
       }
     }
-  ]
+  ],
+  "r77": "R77: v40 pin (pl.preNorm@cortex=45 = the v39 brain) / re-rank"
 }

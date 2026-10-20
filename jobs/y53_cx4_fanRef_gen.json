@@ -7,10 +7,11 @@
     "run/r42.js",
     "js/core/net.js",
     "js/core/develop.js",
-    "run/r71_jobs.js"
+    "run/r71_jobs.js",
+    "run/gen.js"
   ],
   "title": "cortex 4x + fanRef 450/R126 lr 0.2: generation after book30k (greedy / T0.7), growths 0-15",
-  "priority": 0.84,
+  "priority": 0.69,
   "estHours": 0.6,
   "slotHours": 3.5,
   "phone": false,
@@ -20,12 +21,12 @@
   },
   "runs": [
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "0",
         "--force"
       ],
@@ -35,12 +36,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "1",
         "--force"
       ],
@@ -50,12 +51,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "2",
         "--force"
       ],
@@ -65,12 +66,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "3",
         "--force"
       ],
@@ -80,12 +81,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "4",
         "--force"
       ],
@@ -95,12 +96,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "5",
         "--force"
       ],
@@ -110,12 +111,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "6",
         "--force"
       ],
@@ -125,12 +126,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "7",
         "--force"
       ],
@@ -140,12 +141,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "8",
         "--force"
       ],
@@ -155,12 +156,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "9",
         "--force"
       ],
@@ -170,12 +171,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "10",
         "--force"
       ],
@@ -185,12 +186,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "11",
         "--force"
       ],
@@ -200,12 +201,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "12",
         "--force"
       ],
@@ -215,12 +216,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "13",
         "--force"
       ],
@@ -230,12 +231,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "14",
         "--force"
       ],
@@ -245,12 +246,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "15",
         "--force"
       ],
@@ -260,12 +261,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "0",
         "--force"
       ],
@@ -275,12 +276,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "1",
         "--force"
       ],
@@ -290,12 +291,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "2",
         "--force"
       ],
@@ -305,12 +306,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "3",
         "--force"
       ],
@@ -320,12 +321,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "4",
         "--force"
       ],
@@ -335,12 +336,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "5",
         "--force"
       ],
@@ -350,12 +351,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "6",
         "--force"
       ],
@@ -365,12 +366,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "7",
         "--force"
       ],
@@ -380,12 +381,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "8",
         "--force"
       ],
@@ -395,12 +396,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "9",
         "--force"
       ],
@@ -410,12 +411,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "10",
         "--force"
       ],
@@ -425,12 +426,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "11",
         "--force"
       ],
@@ -440,12 +441,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "12",
         "--force"
       ],
@@ -455,12 +456,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "13",
         "--force"
       ],
@@ -470,12 +471,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "14",
         "--force"
       ],
@@ -485,12 +486,12 @@
       }
     },
     {
-      "script": "run/r42.js",
+      "script": "run/gen.js",
       "args": [
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":0.7}}",
         "1",
-        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,P.fastEngine=1",
+        "sc.sizeF@cortex=4,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
         "15",
         "--force"
       ],
@@ -499,5 +500,7 @@
         "BB_OUT": "results/phone/y53_cx4_fanRef_gen.jsonl"
       }
     }
-  ]
+  ],
+  "r77gen": "R77: script r42.js -> run/gen.js (r42 records no generation metrics)",
+  "r77": "R77: v40 pin (pl.preNorm@cortex=45 = the v39 brain) / re-rank"
 }
