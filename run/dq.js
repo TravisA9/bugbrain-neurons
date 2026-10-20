@@ -99,6 +99,7 @@ function candidates() {
     .filter(j => !(j.requires || []).some(r => !fs.existsSync(path.join(ROOT, r))))   // R49: skip jobs needing code this checkout lacks (self-update pulls it)
     .filter(j => !j.after || (isDone(j.after) && (!j.afterPass || (rd(path.join(DIR, 'done', j.after + '.json')) || {}).pass === true)))
     .filter(j => estH(j) * 1.15 + 0.1 <= left)
+    .filter(j => S.maxMemGB == null || (+j.memGB || 0) <= +S.maxMemGB)   // R78: per-worker cap on declared memGB per run (shared laptop)
     .sort((a, b) => b.priority - a.priority || (a.id < b.id ? -1 : 1));
 }
 function writeClaim(j, prev) {
