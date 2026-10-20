@@ -1,0 +1,4228 @@
+{
+  "id": "y92b_combo_trophMin_recvBudget",
+  "question": "I95",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "run/r75_jobs.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/r76_jobs.js",
+    "run/r77_jobs.js"
+  ],
+  "title": "R78 combo: trophMin 0.005/f (order3) + sizeCone + recvBudget 2 (seqchoice), whole-brain 2x/4x and cortex divRep 2x/4x vs 1x v40, fresh growths k 1808-1815, all 7 tasks [memGB 2.5]",
+  "priority": 0.996,
+  "estHours": 1.6,
+  "slotHours": 9,
+  "phone": false,
+  "flag": "text",
+  "memGB": 2.5,
+  "accept": {
+    "note": "y90: trophMin restores order3 K8 only partly (4x -1.06, 2x -0.77 vs 1x) and seqchoice collapses with cortex divRep; y88: recvBudget2 brings all2 seqchoice to 1x. Bar: order3 within 0.2 (display units) of 1x, seqchoice within noise, book gain kept"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "v40 1x book10k g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "v40 1x book10k g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "v40 1x book10k g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "v40 1x book10k g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "v40 1x book10k g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "v40 1x book10k g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "v40 1x book10k g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "v40 1x book10k g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "v40 1x book30k g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "v40 1x book30k g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "v40 1x book30k g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "v40 1x book30k g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "v40 1x book30k g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "v40 1x book30k g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "v40 1x book30k g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "v40 1x book30k g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "v40 1x fables4000 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "v40 1x fables4000 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "v40 1x fables4000 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "v40 1x fables4000 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "v40 1x fables4000 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "v40 1x fables4000 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "v40 1x fables4000 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "v40 1x fables4000 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "v40 1x order3 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "v40 1x order3 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "v40 1x order3 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "v40 1x order3 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "v40 1x order3 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "v40 1x order3 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "v40 1x order3 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "v40 1x order3 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "v40 1x text1000 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "v40 1x text1000 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "v40 1x text1000 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "v40 1x text1000 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "v40 1x text1000 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "v40 1x text1000 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "v40 1x text1000 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "v40 1x text1000 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice order2 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice order2 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice order2 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice order2 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice order2 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice order2 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice order2 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice order2 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice cycle g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice cycle g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice cycle g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice cycle g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice cycle g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice cycle g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice cycle g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "v40 1x seqchoice cycle g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book10k g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book10k g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book10k g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book10k g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book10k g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book10k g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book10k g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book10k g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book30k g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book30k g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book30k g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book30k g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book30k g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book30k g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book30k g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 book30k g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 fables4000 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 fables4000 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 fables4000 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 fables4000 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 fables4000 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 fables4000 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 fables4000 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 fables4000 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 order3 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 order3 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 order3 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 order3 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 order3 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 order3 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 order3 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 order3 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 text1000 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 text1000 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 text1000 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 text1000 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 text1000 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 text1000 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 text1000 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 text1000 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice order2 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice order2 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice order2 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice order2 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice order2 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice order2 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice order2 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice order2 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice cycle g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice cycle g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice cycle g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice cycle g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice cycle g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice cycle g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice cycle g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=2,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.0025,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all2 sizeCone recvBudget2 trophMin/2 seqchoice cycle g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book10k g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book10k g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book10k g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book10k g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book10k g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book10k g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book10k g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book10k g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book30k g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book30k g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book30k g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book30k g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book30k g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book30k g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book30k g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 book30k g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 fables4000 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 fables4000 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 fables4000 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 fables4000 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 fables4000 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 fables4000 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 fables4000 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 fables4000 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 order3 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 order3 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 order3 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 order3 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 order3 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 order3 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 order3 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 order3 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 text1000 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 text1000 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 text1000 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 text1000 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 text1000 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 text1000 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 text1000 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 text1000 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice order2 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice order2 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice order2 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice order2 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice order2 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice order2 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice order2 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice order2 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice cycle g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice cycle g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice cycle g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice cycle g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice cycle g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice cycle g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice cycle g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF=4,P.sizeCone=1,P.fanRef=450,P.postCapRel=1.5,P.recvBudget=2,sc.trophMin@cortex=0.00125,pl.lr@cortex=0.2,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "all4 sizeCone recvBudget2 trophMin/4 seqchoice cycle g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book10k g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book10k g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book10k g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book10k g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book10k g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book10k g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book10k g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book10k g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book30k g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book30k g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book30k g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book30k g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book30k g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book30k g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book30k g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 book30k g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 fables4000 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 fables4000 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 fables4000 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 fables4000 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 fables4000 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 fables4000 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 fables4000 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 fables4000 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 order3 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 order3 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 order3 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 order3 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 order3 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 order3 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 order3 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 order3 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 text1000 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 text1000 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 text1000 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 text1000 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 text1000 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 text1000 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 text1000 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 text1000 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice order2 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice order2 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice order2 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice order2 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice order2 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice order2 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice order2 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice order2 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice cycle g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice cycle g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice cycle g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice cycle g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice cycle g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice cycle g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice cycle g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=2,sc.divRep@cortex=2,sc.trophMin@cortex=0.0025,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx2 divRep trophMin/2 sizeCone recvBudget2 seqchoice cycle g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book10k g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book10k g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book10k g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book10k g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book10k g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book10k g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book10k g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book10k g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book30k g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book30k g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book30k g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book30k g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book30k g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book30k g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book30k g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 book30k g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 fables4000 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 fables4000 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 fables4000 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 fables4000 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 fables4000 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 fables4000 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 fables4000 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 fables4000 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 order3 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 order3 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 order3 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 order3 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 order3 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 order3 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 order3 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 order3 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 text1000 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 text1000 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 text1000 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 text1000 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 text1000 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 text1000 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 text1000 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 text1000 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice order2 g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice order2 g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice order2 g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice order2 g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice order2 g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice order2 g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice order2 g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice order2 g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1808",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice cycle g1808 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1809",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice cycle g1809 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1810",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice cycle g1810 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1811",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice cycle g1811 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1812",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice cycle g1812 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1813",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice cycle g1813 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1814",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice cycle g1814 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,P.sizeCone=1,P.postCapRel=1.5,P.recvBudget=2,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1815",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 sizeCone recvBudget2 seqchoice cycle g1815 n1",
+      "env": {
+        "BB_OUT": "results/phone/y92b_combo_trophMin_recvBudget.jsonl"
+      }
+    }
+  ]
+}
