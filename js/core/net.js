@@ -88,7 +88,13 @@ class SpikingNet {
     if (this.p.mixInh > 0 && g.mix) {   // v14 feedforward inhibition of mixing cells: their presynaptic cells and the mixing cells
       const mp = new Uint8Array(N), ml = []; for (let i = 0; i < N; i++) if (g.mix[i]) ml.push(i);
       for (let k = 0; k < this.posts.length; k++) if (g.mix[this.posts[k]] && this.ws[k] > 0) mp[this.pres[k]] = 1;
-      this.mixPre = mp; this.mixList = Int32Array.from(ml); }
+      this.mixPre = mp; this.mixList = Int32Array.from(ml);
+      // R78 mixInhRef (global param, 0/undefined = off, bit-identical): the feedforward (APL / Golgi-like) inhibition of mixing cells
+      // reads the MEAN activity of its presynaptic pool, not the raw spike count: with a pool of n > mixInhRef cells each spike
+      // inhibits by mixInh x mixInhRef / n. Without it the pool (and so the inhibition) grows with region size while every mixing
+      // cell's excitation is normalised (mixNorm, claw w / column), so bigger brains silence the mixing layer (R78: order3 at 4x).
+      let np = 0; for (let i = 0; i < N; i++) np += mp[i]; const iR = params.mixInhRef > 0 ? params.mixInhRef : 0;
+      this.mixInhD = iR && np > iR ? this.p.mixInh * Math.pow(iR / np, params.mixInhPow > 0 ? params.mixInhPow : 1) : this.p.mixInh; }   // mixInhPow (default 1 = mean field; 0.5 = inhibition grows with the square root of the pool)
     if (g.mix && (this.p.mixLr > 0 || this.p.mixHomeo > 0)) this.initMixLearn();
     if (this.p.rpe > 0) this.initCritic();
     if (this.p.actNoise > 0 || this.p.actFb > 0 || this.p.outInh > 0) this.initActNoise();
@@ -254,7 +260,7 @@ class SpikingNet {
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp);   // v20 action noise / feedback (as the exact engine)
       if (!this.fDense) { const A = this.anList, C = this.acList, o0 = this.g.nIn + this.g.nHid; for (let q = 0; q < A.length; q++) mk[A[q]] = 1; for (let q = 0; q < C.length; q++) mk[C[q]] = 1; for (let m = 0; m < this.g.nOut; m++) mk[o0 + m] = 1; } }
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];
-      if (n) { const d = this.p.mixInh * n, ml = this.mixList; if (this.fDense) for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d; else for (let q = 0; q < ml.length; q++) { syn[ml[q]] -= d; mk[ml[q]] = 1; } } }
+      if (n) { const d = this.mixInhD * n, ml = this.mixList; if (this.fDense) for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d; else for (let q = 0; q < ml.length; q++) { syn[ml[q]] -= d; mk[ml[q]] = 1; } } }
     if (this.mxStart && params.plasticity && this.thr) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr;
       if (ml) { if (this.fDense) for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); }
         else for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); if (thr[i] <= (v[i] > R ? v[i] : R)) mk[i] = 1; } } }   // (a threshold that adapted down to the potential: the cell must be looked at)
@@ -588,7 +594,7 @@ class SpikingNet {
     if (this.hhList || this.riId) this.sparseStep(sp, spk, nSpk, null);   // R67
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp); }   // v20 exploration noise of the action channels
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];   // v14: feedforward inhibition of mixing cells
-      if (n) { const d = this.p.mixInh * n, ml = this.mixList; for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d;
+      if (n) { const d = this.mixInhD * n, ml = this.mixList; for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d;
         if (this.ng) { const A = this.ng.act; for (let q = 0; q < A.length; q++) syn[A[q]] -= d; } } }   // v28: new cells join the layer's feedforward inhibition
     if (this.ng && this.ng.act.length && params.plasticity) { const A = this.ng.act, h = this.p.mixHomeo > 0 ? this.p.mixHomeo : 0.5, r0 = this.p.mixRate || 0.008, thr = this.thr;   // v28: intrinsic homeostasis of new cells
       for (let q = 0; q < A.length; q++) { const i = A[q]; thr[i] += h * (sp[i] - r0); } }
