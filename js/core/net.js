@@ -95,6 +95,15 @@ class SpikingNet {
       // cell's excitation is normalised (mixNorm, claw w / column), so bigger brains silence the mixing layer (R78: order3 at 4x).
       let np = 0; for (let i = 0; i < N; i++) np += mp[i]; const iR = params.mixInhRef > 0 ? params.mixInhRef : 0;
       this.mixInhD = iR && np > iR ? this.p.mixInh * Math.pow(iR / np, params.mixInhPow > 0 ? params.mixInhPow : 1) : this.p.mixInh; }   // mixInhPow (default 1 = mean field; 0.5 = inhibition grows with the square root of the pool)
+      // R78b mixInhLocal = R (global param, 0/undefined = off, bit-identical off): PER-CELL feedforward inhibition. Each spike of an
+      // afferent inhibits only the mixing cells it contacts, each by mixInh x R / (that cell's excitatory fan-in), so a cell's
+      // inhibition tracks the mean activity of ITS OWN inputs (R = the 1x pool, ~820, gives the 1x mean of the shared pool)
+      // and does not grow with region size.
+      if (params.mixInhLocal > 0 && this.mixPre) { const fi = new Float64Array(N), cnt = new Int32Array(N + 1);
+        for (let k = 0; k < this.posts.length; k++) { const j = this.posts[k]; if (g.mix[j] && this.ws[k] > 0) { fi[j]++; cnt[this.pres[k] + 1]++; } }
+        for (let i = 0; i < N; i++) cnt[i + 1] += cnt[i]; const P = new Int32Array(cnt[N]), D = new Float32Array(cnt[N]), f = cnt.slice();
+        for (let k = 0; k < this.posts.length; k++) { const j = this.posts[k]; if (g.mix[j] && this.ws[k] > 0) { const q = f[this.pres[k]]++; P[q] = j; D[q] = this.p.mixInh * params.mixInhLocal / fi[j]; } }
+        this.mlS = cnt; this.mlP = P; this.mlD = D; }
     if (g.mix && (this.p.mixLr > 0 || this.p.mixHomeo > 0)) this.initMixLearn();
     if (this.p.rpe > 0) this.initCritic();
     if (this.p.actNoise > 0 || this.p.actFb > 0 || this.p.outInh > 0) this.initActNoise();
@@ -260,7 +269,8 @@ class SpikingNet {
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp);   // v20 action noise / feedback (as the exact engine)
       if (!this.fDense) { const A = this.anList, C = this.acList, o0 = this.g.nIn + this.g.nHid; for (let q = 0; q < A.length; q++) mk[A[q]] = 1; for (let q = 0; q < C.length; q++) mk[C[q]] = 1; for (let m = 0; m < this.g.nOut; m++) mk[o0 + m] = 1; } }
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];
-      if (n) { const d = this.mixInhD * n, ml = this.mixList; if (this.fDense) for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d; else for (let q = 0; q < ml.length; q++) { syn[ml[q]] -= d; mk[ml[q]] = 1; } } }
+      if (n && this.mlS) { const S = this.mlS, P = this.mlP, D = this.mlD; for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = S[i], e = S[i + 1]; k < e; k++) { syn[P[k]] -= D[k]; if (!this.fDense) mk[P[k]] = 1; } } }
+      else if (n) { const d = this.mixInhD * n, ml = this.mixList; if (this.fDense) for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d; else for (let q = 0; q < ml.length; q++) { syn[ml[q]] -= d; mk[ml[q]] = 1; } } }
     if (this.mxStart && params.plasticity && this.thr) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr;
       if (ml) { if (this.fDense) for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); }
         else for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); if (thr[i] <= (v[i] > R ? v[i] : R)) mk[i] = 1; } } }   // (a threshold that adapted down to the potential: the cell must be looked at)
@@ -594,7 +604,7 @@ class SpikingNet {
     if (this.hhList || this.riId) this.sparseStep(sp, spk, nSpk, null);   // R67
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp); }   // v20 exploration noise of the action channels
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];   // v14: feedforward inhibition of mixing cells
-      if (n) { const d = this.mixInhD * n, ml = this.mixList; for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d;
+      if (n) { const d = this.mixInhD * n, ml = this.mixList; if (this.mlS) { const S = this.mlS, P = this.mlP, D = this.mlD; for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = S[i], e = S[i + 1]; k < e; k++) syn[P[k]] -= D[k]; } } else for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d;
         if (this.ng) { const A = this.ng.act; for (let q = 0; q < A.length; q++) syn[A[q]] -= d; } } }   // v28: new cells join the layer's feedforward inhibition
     if (this.ng && this.ng.act.length && params.plasticity) { const A = this.ng.act, h = this.p.mixHomeo > 0 ? this.p.mixHomeo : 0.5, r0 = this.p.mixRate || 0.008, thr = this.thr;   // v28: intrinsic homeostasis of new cells
       for (let q = 0; q < A.length; q++) { const i = A[q]; thr[i] += h * (sp[i] - r0); } }
