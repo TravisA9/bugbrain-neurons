@@ -503,6 +503,21 @@ class SpikingNet {
       for (let q = 0; q < L.length; q++) { const i = L[q]; T[i] += h * (sp[i] - r0); if (mk) mk[i] = 1; } }
     if (!(params.granInh > 0) || !n) return;
     const d = params.granInh * n, L = this.granL; for (let q = 0; q < L.length; q++) { syn[L[q]] -= d; if (mk) mk[L[q]] = 1; } }
+  /* R83b CEREBELLAR READOUT (global granLr > 0; needs granN): only the granule -> prediction synapses, once per teaching event
+   * (a substep with >= 1 prediction-cell onset): each prediction cell i has graded granule drive y_i = min(1, sum_k w_k x_j / granRef)
+   * over its granule inputs (x_j = the granule's lagged trace); target t_i = 1 if i's teacher arrives now, else 0 (climbing fibre);
+   * dw_k = granLr x x_j x (t_i - y_i), w bounded to [0, wMax]: LTP onto the correct cells until they predict, LTD onto the wrongly driven
+   * ones. Granules with x < 0.01 (silent) are untouched, so on the sparse granule code each event changes only a few hundred synapses. */
+  granStep(xT, xg, plat) {
+    if (!this.dList) this.deltaInit();
+    const L = this.dList, plN = this.p.plateau; let ev = false; for (let q = 0; q < L.length; q++) if (plat[L[q]] === plN) { ev = true; break; } if (!ev) return;
+    if (!this.gIn) { const S = [0], K = []; for (let q = 0; q < L.length; q++) { const i = L[q]; for (let r = this.inStart[i], e = this.inStart[i + 1]; r < e; r++) { const k = this.inEdges[r]; if (this.g.gran[this.pres[k]] && this.isPlastic[k]) K.push(k); } S.push(K.length); } this.gIn = { S: Int32Array.from(S), K: Int32Array.from(K) }; }
+    const S = this.gIn.S, K = this.gIn.K, ws = this.ws, pr = this.pres, wMax = params.wMax, lr = params.granLr, ref = params.granRef > 0 ? params.granRef : 10, D = globalThis.__granDbg;
+    for (let q = 0; q < L.length; q++) { const i = L[q], t = plat[i] === plN ? 1 : 0; let d = 0;
+      for (let r = S[q]; r < S[q + 1]; r++) { const k = K[r], x = xT[pr[k]] * xg; if (x >= 0.01) d += ws[k] * x; }
+      const y = Math.min(1, d / ref), er = t - y; if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
+      for (let r = S[q]; r < S[q + 1]; r++) { const k = K[r], x = xT[pr[k]] * xg; if (x < 0.01) continue; const w = ws[k] + lr * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
+  }
   deltaInit() {
     const N = this.N, nIn = this.g.nIn, rc = new Uint8Array(N), inS = this.inStart, inE = this.inEdges, isP = this.isPlastic, w0 = this.w0, iI = this.instrIn;
     const pl = new Uint8Array(N); for (let i = nIn; i < N; i++) for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (isP[k] && w0[k] > 0) { pl[i] = 1; break; } }
@@ -573,6 +588,7 @@ class SpikingNet {
     const m = new Map(); for (let q = 0; q < pl.length; q++) { const k = pl[q]; if (!(this.w0[k] > 0)) continue; const i = this.posts[k]; if (!m.has(i)) m.set(i, []); m.get(i).push(k); }
     const st = [0], ix = [], c0 = []; for (const ks of m.values()) { let t = 0; for (const k of ks) { ix.push(k); t += this.w0[k]; } st.push(ix.length); c0.push(t); } this.pcStart = Int32Array.from(st); this.pcIdx = Int32Array.from(ix); this.pcW0 = Float64Array.from(c0); }
   normPre(i) {                               // plastic outgoing weights of cell i sum to preNorm
+    if (this.g.gran && this.g.gran[i] && params.granLr > 0) return;   // R83b: granule outputs are outside the presynaptic budget (cerebellar rule bounds them)
     if (!this.npStart) this.buildNp();
     const ws = this.ws, wMax = params.wMax, st = this.npStart, idx = this.npIdx, a = st[i], e = st[i + 1]; let s = 0;
     for (let q = a; q < e; q++) s += ws[idx[q]];
@@ -734,6 +750,8 @@ class SpikingNet {
       if (pe > 0 && (pm & 4) && !this.peDone) this.peDone = new Uint8Array(N);
       if (pe > 0 && (pm & 8) && !this.peConf) this.peConf = new Float32Array(N).fill(0.5);
       const ipS = this.ipStart, ipK = this.ipK, ipP = this.ipPre, w0 = this.w0, plat = this.plat;
+      const gX = this.g.gran && params.granLr > 0 ? this.g.gran : null;   // R83b: granule -> prediction synapses learn only by the cerebellar rule (granStep)
+      if (gX) this.granStep(xT, xg, plat);
       if (pe > 0) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (i < this.g.nIn) continue;
         if (this.plat[i] > 0) { if (this.peConf) this.peConf[i] += 0.02 * (1 - this.peConf[i]); if (this.peDone) this.peDone[i] = 0; continue; }
         if (!this.armed[i]) continue;
@@ -755,7 +773,7 @@ class SpikingNet {
       if (dL && !this.p.deltaKeep) {}   // (delta replaces the per-spike plateau potentiation unless pl.deltaKeep=1)
       else if (ipS) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (plat[i] <= 0) continue; const lr = lF ? lr0 * lF[i] : lr0;
         if (aR) { aN.fill(0); for (let q = ipS[i], e = ipS[i + 1]; q < e; q++) { const j = ipP[q]; if (xT[j] * xg >= 0.01) aN[aC[j]]++; } for (let c = 0; c < aN.length; c++) aN[c] = aN[c] > aR ? aR / aN[c] : 1; }
-        for (let q = ipS[i], e = ipS[i + 1]; q < e; q++) { const j = ipP[q], x = xT[j] * xg; if (x < 0.01) continue; const k = ipK[q];
+        for (let q = ipS[i], e = ipS[i + 1]; q < e; q++) { const j = ipP[q], x = xT[j] * xg; if (x < 0.01 || (gX && gX[j])) continue; const k = ipK[q];
           const lx = (tF ? lr * x * tF[j] : lr * x) * (aR ? aN[aC[j]] : 1);
           if (mE) { const d = lx; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; if (mC > 0 && mE[j] > mC) mE[j] = mC; }
           else ws[k] = Math.min(wMax, ws[k] + lx);
@@ -764,7 +782,7 @@ class SpikingNet {
           if (!nd[j]) { nd[j] = 1; dirty.push(j); } } }
       else for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (this.plat[i] <= 0) continue; const lr = lF ? lr0 * lF[i] : lr0;
         if (aR) { aN.fill(0); for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (isP[k] && this.w0[k] > 0 && xT[pres[k]] * xg >= 0.01) aN[aC[pres[k]]]++; } for (let c = 0; c < aN.length; c++) aN[c] = aN[c] > aR ? aR / aN[c] : 1; }
-        for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]] * xg; if (x < 0.01) continue;
+        for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]] * xg; if (x < 0.01 || (gX && gX[pres[k]])) continue;
           const lx = (tF ? lr * x * tF[pres[k]] : lr * x) * (aR ? aN[aC[pres[k]]] : 1);
           if (mE) { const j = pres[k], d = lx; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; if (mC > 0 && mE[j] > mC) mE[j] = mC; }   // R62 metaCap > 0: consolidation stops at metaCap (learning-rate floor lr mN / (mN + metaCap))
           else ws[k] = Math.min(wMax, ws[k] + lx);
