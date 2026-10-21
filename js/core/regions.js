@@ -81,6 +81,12 @@ function growRegions(d, opts) {
     const g = growCell(R.g, { spec, seed: (seed + 7919 * k) >>> 0, record: !!opts.record }); gcHint(); return { R, spec, map, g }; });
   const nIn = envSpec.nIn, nOut = envSpec.nOut, outPart = parts.find(p => p.R.outputs) || parts[0];
   let off = nIn; for (const p of parts) { p.off = off; off += p.g.nHid; }
+  // R80 thinF (global param, bitmask, 0/undefined = off, bit-identical off and at sizeF <= 1; I98): a projection from a region grown f x keeps
+  // each synapse at its 1x strength and thins the connections ~1/f, so receivers get a 1x-like afferent count and synapse strength
+  // (instead of f x more synapses each f x weaker). bit 1: 'all' tracts (cortex mixing / M2 / M3 -> striatum): pair probability p / f_src;
+  // bit 2: claw / topo tracts (context columns -> mixing, M2 -> context): each target keeps ~S / f of the column's cells at f x weight;
+  // bit 4: plastic synapses inside a sized region (C / mixing -> prediction) kept with probability 1 / f at f x strength.
+  const thF = params.thinF | 0, hash01 = (a, b, s) => { let h = (Math.imul(a, 0x9e3779b1) ^ Math.imul(b + 0x632be5ab, 0x85ebca6b) ^ (s | 0)) >>> 0; h = Math.imul(h ^ (h >>> 16), 0x7feb352d) >>> 0; h = Math.imul(h ^ (h >>> 15), 0x846ca68b) >>> 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
   const nHid = off - nIn, G = createNetGenome(nIn, nHid, nOut, true), N = G.N, acc = new SynAcc(1 << 16);
   const node = (p, i) => i < p.g.nIn ? (typeof p.map[i] === 'number' ? p.map[i] : -1) : i < p.g.nIn + p.g.nHid ? p.off + i - p.g.nIn : ((p === outPart || p.R.vote) ? nIn + nHid + i - p.g.nIn - p.g.nHid : -1);   // R43 (I53) vote: a module's own output copy sums onto the shared outputs
   G.pos = new Array(N); G.cellType = new Int16Array(N); G.region = new Uint8Array(N); G.topo = new Float32Array(N).fill(NaN);
@@ -91,10 +97,13 @@ function growRegions(d, opts) {
       G.thresh[b] = g.thresh[i]; G.leak[b] = g.leak[i]; if (g.topo) G.topo[b] = g.topo[i];
       if (g.slow && g.slow[i]) { G.slow = G.slow || new Uint8Array(N); G.slow[b] = 1; } if (g.mix && g.mix[i]) { G.mix = G.mix || new Uint8Array(N); G.mix[b] = 1; } }
     if (p === outPart) for (let m = 0; m < nOut; m++) { const b = nIn + nHid + m, i = g.nIn + g.nHid + m; G.thresh[b] = g.thresh[i]; G.leak[b] = g.leak[i]; }
+    const pF = p.R.g && p.R.g.sc ? +p.R.g.sc.sizeF || 1 : 1;
     for (let a = 0; a < n; a++) { const A = node(p, a), tr = a < g.nIn && typeof p.map[a] !== 'number' ? p.map[a] : null;
       for (let b = 0; b < n; b++) { const w = g.W[a * n + b]; if (!w) continue; const B = node(p, b); if (B < 0) continue;
         if (tr) { (p.arrivals = p.arrivals || []).push([tr.tract, tr.label, B, w]); continue; }
-        if (A < 0) continue; acc.add(A, B, (p.R.vote && B >= nIn + nHid) ? w * (p.R.voteScale || 1) : w, g.P[a * n + b] ? 1 : 0, g.C[a * n + b]); } } });
+        if (A < 0) continue; let wv = w;
+        if (thF & 4 && pF > 1 && g.P[a * n + b] && w > 0) { if (hash01(A, B, seed) >= 1 / pF) continue; wv = w * pF; }   // R80 thinF bit 4: plastic in-region synapses of a sized region kept with p 1/f at f x strength
+        acc.add(A, B, (p.R.vote && B >= nIn + nHid) ? wv * (p.R.voteScale || 1) : wv, g.P[a * n + b] ? 1 : 0, g.C[a * n + b]); } } });
   // tracts
   const tractStats = [];
   for (const T of d.tracts || []) {
@@ -104,18 +113,21 @@ function growRegions(d, opts) {
       const key = Math.round(l * 1e4); if (!cols.has(key)) cols.set(key, []); cols.get(key).push(b); }
     let nSyn = 0;
     if (T.map === 'topo') {
-      for (const [name, label, B, w] of dst.arrivals || []) { if (name !== T.to.tract) continue; const S = cols.get(Math.round(label * 1e4)); if (!S || !S.length) continue;
+      const fT = (thF & 2) && src.R.g && src.R.g.sc && src.R.g.sc.sizeF > 1 ? src.R.g.sc.sizeF : 1;
+      for (const [name, label, B, w] of dst.arrivals || []) { if (name !== T.to.tract) continue; const S0 = cols.get(Math.round(label * 1e4)); if (!S0 || !S0.length) continue;
+        let S = S0; if (fT > 1) { S = S0.filter(A => hash01(A, B, seed ^ 0x5d) < 1 / fT); if (!S.length) S = [S0[0]]; }
         const ws = w * (T.gain || 1) / S.length; for (const A of S) { acc.add(A, B, ws, 0, 0); nSyn++; } }
     } else if (T.map === 'claw') {
       const r = mulberry32((seed ^ 0x51ed27 ^ (T.salt || 0)) >>> 0), keys = [...cols.keys()].sort((a, b) => a - b), tg = [];
       for (let i = dst.g.nIn; i < dst.g.nIn + dst.g.nHid; i++) if (T.to.mix ? dst.g.mix && dst.g.mix[i] : dst.g.cellType[i] === N_FIXED + T.to.cls) tg.push(node(dst, i));
       let order = []; if (keys.length) for (const B of tg) { if (!order.length) { order = keys.slice(); for (let k = order.length - 1; k > 0; k--) { const j = (r() * (k + 1)) | 0; [order[k], order[j]] = [order[j], order[k]]; } }
-        const S = cols.get(order.pop()); const ws = T.to.w / S.length; for (const A of S) { acc.add(A, B, ws, 0, 0); nSyn++; } }   // v25: a mutant whose source region grew no cells of the class gets no tract (it used to throw)
+        const S0 = cols.get(order.pop()), fS = (thF & 2) && src.R.g && src.R.g.sc && src.R.g.sc.sizeF > 1 ? src.R.g.sc.sizeF : 1, S = fS > 1 ? S0.filter(A => hash01(A, B, seed ^ 0x3c) < 1 / fS) : S0; if (!S.length) S.push(S0[0]);
+        const ws = T.to.w / S.length; for (const A of S) { acc.add(A, B, ws, 0, 0); nSyn++; } }   // v25: a mutant whose source region grew no cells of the class gets no tract (it used to throw)
     } else if (T.map === 'all') {   // parallel fibres: every source cell -> every excitatory receiver of the target region, plastic (P = 1)
       const tg = []; for (let i = dst.g.nIn; i < dst.g.nIn + dst.g.nHid; i++) if (dst.g.recv && dst.g.recv[i]) tg.push(node(dst, i));
       // R72 allMax (global param, 0/undefined = off): convergence limit. Each target receives from at most ~allMax source cells (the pair
       // probability falls to allMax / sources when p x sources > allMax), with the weight per synapse of that count: fan-in no longer grows with the source size.
-      const src0 = [].concat(...cols.values()), aM = params.allMax > 0 ? params.allMax : 0, pc = aM && (T.p || 1) * src0.length > aM ? aM / src0.length : (T.p || 1), src = src0, ws = T.to.wTot / Math.max(1, pc * src.length), r = mulberry32((seed ^ 0x2c1b3c6d ^ (T.salt || 0)) >>> 0);   // total weight ~wTot per target
+      const src0 = [].concat(...cols.values()), aM = params.allMax > 0 ? params.allMax : 0, fA = (thF & 1) && parts[T.from.region].R.g && parts[T.from.region].R.g.sc && parts[T.from.region].R.g.sc.sizeF > 1 ? parts[T.from.region].R.g.sc.sizeF : 1, pc = (1 / fA) * (aM && (T.p || 1) * src0.length > aM ? aM / src0.length : (T.p || 1)), src = src0, ws = T.to.wTot / Math.max(1, pc * src.length), r = mulberry32((seed ^ 0x2c1b3c6d ^ (T.salt || 0)) >>> 0);   // total weight ~wTot per target
       for (const A of src) for (const B of tg) { if (pc < 1 && r() >= pc) continue; acc.add(A, B, ws, T.plastic ? 1 : 0, 0); nSyn++; }   // p < 1: each pair connects with probability p
     }
     else if (T.map === 'outReset') {   // R43 (I55): the output (prediction) cell named T.from.out inhibits every cell of class T.to.cls of the target region (a predicted word boundary resets it)
