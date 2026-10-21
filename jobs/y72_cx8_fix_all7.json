@@ -11,8 +11,8 @@
     "run/mempar.js",
     "run/r75_jobs.js"
   ],
-  "title": "cortex 8x divRep 2 fix (growths 16-23), all 7 tasks",
-  "priority": 0.82,
+  "title": "cortex 8x divRep 2 fix (growths 16-23), all 7 tasks + trophMin/8 (R79: without it 8x outputs starve: order3 0.000)",
+  "priority": 0.9,
   "estHours": 0.7,
   "slotHours": 4.5,
   "phone": false,
@@ -27,11 +27,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "16",
         "--force"
       ],
-      "label": "cx8 fix book10k g16 n1",
+      "label": "cx8 fix trophMin/8 book10k g16 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -42,11 +42,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "17",
         "--force"
       ],
-      "label": "cx8 fix book10k g17 n1",
+      "label": "cx8 fix trophMin/8 book10k g17 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -57,11 +57,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "18",
         "--force"
       ],
-      "label": "cx8 fix book10k g18 n1",
+      "label": "cx8 fix trophMin/8 book10k g18 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -72,11 +72,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "19",
         "--force"
       ],
-      "label": "cx8 fix book10k g19 n1",
+      "label": "cx8 fix trophMin/8 book10k g19 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -87,11 +87,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "20",
         "--force"
       ],
-      "label": "cx8 fix book10k g20 n1",
+      "label": "cx8 fix trophMin/8 book10k g20 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -102,11 +102,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "21",
         "--force"
       ],
-      "label": "cx8 fix book10k g21 n1",
+      "label": "cx8 fix trophMin/8 book10k g21 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -117,11 +117,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "22",
         "--force"
       ],
-      "label": "cx8 fix book10k g22 n1",
+      "label": "cx8 fix trophMin/8 book10k g22 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -132,11 +132,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "23",
         "--force"
       ],
-      "label": "cx8 fix book10k g23 n1",
+      "label": "cx8 fix trophMin/8 book10k g23 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -147,11 +147,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "16",
         "--force"
       ],
-      "label": "cx8 fix book30k g16 n1",
+      "label": "cx8 fix trophMin/8 book30k g16 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -162,11 +162,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "17",
         "--force"
       ],
-      "label": "cx8 fix book30k g17 n1",
+      "label": "cx8 fix trophMin/8 book30k g17 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -177,11 +177,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "18",
         "--force"
       ],
-      "label": "cx8 fix book30k g18 n1",
+      "label": "cx8 fix trophMin/8 book30k g18 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -192,11 +192,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "19",
         "--force"
       ],
-      "label": "cx8 fix book30k g19 n1",
+      "label": "cx8 fix trophMin/8 book30k g19 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -207,11 +207,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "20",
         "--force"
       ],
-      "label": "cx8 fix book30k g20 n1",
+      "label": "cx8 fix trophMin/8 book30k g20 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -222,11 +222,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "21",
         "--force"
       ],
-      "label": "cx8 fix book30k g21 n1",
+      "label": "cx8 fix trophMin/8 book30k g21 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -237,11 +237,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "22",
         "--force"
       ],
-      "label": "cx8 fix book30k g22 n1",
+      "label": "cx8 fix trophMin/8 book30k g22 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -252,11 +252,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "23",
         "--force"
       ],
-      "label": "cx8 fix book30k g23 n1",
+      "label": "cx8 fix trophMin/8 book30k g23 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -267,11 +267,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "16",
         "--force"
       ],
-      "label": "cx8 fix fables4000 g16 n1",
+      "label": "cx8 fix trophMin/8 fables4000 g16 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -282,11 +282,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "17",
         "--force"
       ],
-      "label": "cx8 fix fables4000 g17 n1",
+      "label": "cx8 fix trophMin/8 fables4000 g17 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -297,11 +297,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "18",
         "--force"
       ],
-      "label": "cx8 fix fables4000 g18 n1",
+      "label": "cx8 fix trophMin/8 fables4000 g18 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -312,11 +312,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "19",
         "--force"
       ],
-      "label": "cx8 fix fables4000 g19 n1",
+      "label": "cx8 fix trophMin/8 fables4000 g19 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -327,11 +327,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "20",
         "--force"
       ],
-      "label": "cx8 fix fables4000 g20 n1",
+      "label": "cx8 fix trophMin/8 fables4000 g20 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -342,11 +342,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "21",
         "--force"
       ],
-      "label": "cx8 fix fables4000 g21 n1",
+      "label": "cx8 fix trophMin/8 fables4000 g21 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -357,11 +357,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "22",
         "--force"
       ],
-      "label": "cx8 fix fables4000 g22 n1",
+      "label": "cx8 fix trophMin/8 fables4000 g22 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -372,11 +372,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "23",
         "--force"
       ],
-      "label": "cx8 fix fables4000 g23 n1",
+      "label": "cx8 fix trophMin/8 fables4000 g23 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -387,11 +387,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "16",
         "--force"
       ],
-      "label": "cx8 fix order3 g16 n1",
+      "label": "cx8 fix trophMin/8 order3 g16 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -402,11 +402,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "17",
         "--force"
       ],
-      "label": "cx8 fix order3 g17 n1",
+      "label": "cx8 fix trophMin/8 order3 g17 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -417,11 +417,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "18",
         "--force"
       ],
-      "label": "cx8 fix order3 g18 n1",
+      "label": "cx8 fix trophMin/8 order3 g18 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -432,11 +432,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "19",
         "--force"
       ],
-      "label": "cx8 fix order3 g19 n1",
+      "label": "cx8 fix trophMin/8 order3 g19 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -447,11 +447,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "20",
         "--force"
       ],
-      "label": "cx8 fix order3 g20 n1",
+      "label": "cx8 fix trophMin/8 order3 g20 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -462,11 +462,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "21",
         "--force"
       ],
-      "label": "cx8 fix order3 g21 n1",
+      "label": "cx8 fix trophMin/8 order3 g21 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -477,11 +477,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "22",
         "--force"
       ],
-      "label": "cx8 fix order3 g22 n1",
+      "label": "cx8 fix trophMin/8 order3 g22 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -492,11 +492,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "23",
         "--force"
       ],
-      "label": "cx8 fix order3 g23 n1",
+      "label": "cx8 fix trophMin/8 order3 g23 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -507,11 +507,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "16",
         "--force"
       ],
-      "label": "cx8 fix text1000 g16 n1",
+      "label": "cx8 fix trophMin/8 text1000 g16 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -522,11 +522,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "17",
         "--force"
       ],
-      "label": "cx8 fix text1000 g17 n1",
+      "label": "cx8 fix trophMin/8 text1000 g17 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -537,11 +537,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "18",
         "--force"
       ],
-      "label": "cx8 fix text1000 g18 n1",
+      "label": "cx8 fix trophMin/8 text1000 g18 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -552,11 +552,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "19",
         "--force"
       ],
-      "label": "cx8 fix text1000 g19 n1",
+      "label": "cx8 fix trophMin/8 text1000 g19 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -567,11 +567,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "20",
         "--force"
       ],
-      "label": "cx8 fix text1000 g20 n1",
+      "label": "cx8 fix trophMin/8 text1000 g20 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -582,11 +582,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "21",
         "--force"
       ],
-      "label": "cx8 fix text1000 g21 n1",
+      "label": "cx8 fix trophMin/8 text1000 g21 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -597,11 +597,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "22",
         "--force"
       ],
-      "label": "cx8 fix text1000 g22 n1",
+      "label": "cx8 fix trophMin/8 text1000 g22 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -612,11 +612,11 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "23",
         "--force"
       ],
-      "label": "cx8 fix text1000 g23 n1",
+      "label": "cx8 fix trophMin/8 text1000 g23 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -627,11 +627,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "16",
         "--force"
       ],
-      "label": "cx8 fix seqchoice order2 g16 n1",
+      "label": "cx8 fix trophMin/8 seqchoice order2 g16 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -642,11 +642,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "17",
         "--force"
       ],
-      "label": "cx8 fix seqchoice order2 g17 n1",
+      "label": "cx8 fix trophMin/8 seqchoice order2 g17 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -657,11 +657,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "18",
         "--force"
       ],
-      "label": "cx8 fix seqchoice order2 g18 n1",
+      "label": "cx8 fix trophMin/8 seqchoice order2 g18 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -672,11 +672,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "19",
         "--force"
       ],
-      "label": "cx8 fix seqchoice order2 g19 n1",
+      "label": "cx8 fix trophMin/8 seqchoice order2 g19 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -687,11 +687,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "20",
         "--force"
       ],
-      "label": "cx8 fix seqchoice order2 g20 n1",
+      "label": "cx8 fix trophMin/8 seqchoice order2 g20 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -702,11 +702,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "21",
         "--force"
       ],
-      "label": "cx8 fix seqchoice order2 g21 n1",
+      "label": "cx8 fix trophMin/8 seqchoice order2 g21 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -717,11 +717,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "22",
         "--force"
       ],
-      "label": "cx8 fix seqchoice order2 g22 n1",
+      "label": "cx8 fix trophMin/8 seqchoice order2 g22 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -732,11 +732,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "23",
         "--force"
       ],
-      "label": "cx8 fix seqchoice order2 g23 n1",
+      "label": "cx8 fix trophMin/8 seqchoice order2 g23 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -747,11 +747,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "16",
         "--force"
       ],
-      "label": "cx8 fix seqchoice cycle g16 n1",
+      "label": "cx8 fix trophMin/8 seqchoice cycle g16 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -762,11 +762,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "17",
         "--force"
       ],
-      "label": "cx8 fix seqchoice cycle g17 n1",
+      "label": "cx8 fix trophMin/8 seqchoice cycle g17 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -777,11 +777,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "18",
         "--force"
       ],
-      "label": "cx8 fix seqchoice cycle g18 n1",
+      "label": "cx8 fix trophMin/8 seqchoice cycle g18 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -792,11 +792,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "19",
         "--force"
       ],
-      "label": "cx8 fix seqchoice cycle g19 n1",
+      "label": "cx8 fix trophMin/8 seqchoice cycle g19 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -807,11 +807,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "20",
         "--force"
       ],
-      "label": "cx8 fix seqchoice cycle g20 n1",
+      "label": "cx8 fix trophMin/8 seqchoice cycle g20 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -822,11 +822,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "21",
         "--force"
       ],
-      "label": "cx8 fix seqchoice cycle g21 n1",
+      "label": "cx8 fix trophMin/8 seqchoice cycle g21 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -837,11 +837,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "22",
         "--force"
       ],
-      "label": "cx8 fix seqchoice cycle g22 n1",
+      "label": "cx8 fix trophMin/8 seqchoice cycle g22 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -852,11 +852,11 @@
         "deepURSx3",
         "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
         "1",
-        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "sc.sizeF@cortex=8,sc.divRep@cortex=2,P.fanRef=450,P.fanRefR=126,P.postCapRel=1.5,P.postN=130,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.trophMin@cortex=0.000625,P.fastEngine=1",
         "23",
         "--force"
       ],
-      "label": "cx8 fix seqchoice cycle g23 n1",
+      "label": "cx8 fix trophMin/8 seqchoice cycle g23 n1",
       "env": {
         "BB_OUT": "results/phone/y72_cx8_fix_all7.jsonl"
       }
@@ -865,5 +865,6 @@
   "memGB": 4.6,
   "r75": "R75: memGB 4.6",
   "blockedWhy": "R75: parked: its seq-task arms equal y46/y61 (postCap cannot change seq tasks) and y66 already measured cx8 + fix on seqchoice (2.1 / 2.2)",
-  "r77": "R77: v40 pin (pl.preNorm@cortex=45 = the v39 brain) / re-rank"
+  "r77": "R77: v40 pin (pl.preNorm@cortex=45 = the v39 brain) / re-rank",
+  "r79": "R79: re-rank + trophMin/8 added"
 }

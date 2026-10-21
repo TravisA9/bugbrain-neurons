@@ -1,0 +1,266 @@
+{
+  "id": "y103_cx4dT_book100k",
+  "question": "I93",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/r79_jobs.js"
+  ],
+  "title": "cortex 4x divRep 2 + trophMin/4 and 1x v40 at book100k, growths 0-7: does the divRep size gain grow with text length?",
+  "priority": 0.94,
+  "estHours": 0.8,
+  "slotHours": 4.8,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "length is flat for 1x (y27: 30k 0.329 -> 1M 0.332) and for cx4 + fanRef (y50: +0.005 / +0.008 vs 1x at 100k / 300k); divRep is the bigger, better brain"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "v40 1x book100k g0 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "1",
+        "--force"
+      ],
+      "label": "v40 1x book100k g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "v40 1x book100k g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "3",
+        "--force"
+      ],
+      "label": "v40 1x book100k g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "v40 1x book100k g4 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "5",
+        "--force"
+      ],
+      "label": "v40 1x book100k g5 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "v40 1x book100k g6 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.fastEngine=1",
+        "7",
+        "--force"
+      ],
+      "label": "v40 1x book100k g7 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 book100k g0 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "1",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 book100k g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 book100k g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "3",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 book100k g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 book100k g4 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "5",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 book100k g5 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 book100k g6 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.fastEngine=1",
+        "7",
+        "--force"
+      ],
+      "label": "cx4 divRep trophMin/4 book100k g7 n1",
+      "env": {
+        "BB_OUT": "results/phone/y103_cx4dT_book100k.jsonl"
+      }
+    }
+  ],
+  "memGB": 2.5
+}
