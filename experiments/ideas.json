@@ -1402,12 +1402,13 @@
       "id": "I95",
       "area": "scaling",
       "title": "Trophic starvation at size: compensate the neurotrophic survival threshold, sc.trophMin@cortex = 0.005 / f (Travis: patch varying opposite to the drift)",
-      "status": "confirmed fix (16 fresh growths); not yet a develop.js rule",
-      "evidence": "R77 box: outputs release a fixed trophic factor shared by their inputs; an f x cortex splits it f ways and the output-projecting cells die below trophMin. Census order3 K4 cortex divRep 1x / 2x / 4x: excitatory synapses onto outputs 334 / 673 / 0. trophMin / f: cx4 divRep K4 0 -> 9.88 (1x 9.85); cx4 + fanRef K4 0 / 2.55 -> 9.28 / 6.97; cx4 divRep K8 7.97 / 7.35 -> 8.90 / 8.27; cx8 divRep order3 0 -> 7.25, text 5.71 -> 7.66 (1x 7.54); book / text at 4x identical; no effect on 4xS K8 (7.28) or the divRep seqchoice collapse. Drift study 1x-8x (order3 K8): plastic fan-in f^1.25, weight per synapse f^-1, plastic total per receiver f^0.2, learning change f^0.25, cortex E/I f^-0.4..-0.5, output firing f^-0.35 then 0 at 8x. R79: y89 fresh k 1700-1715 cx4 divRep + trophMin/4 K4 0.981 vs 1x 0.986 (untreated cx4 0.090); y91 8x order3 0 -> 0.766, text 0.565 -> 0.777 (8/0); book / fables / text bit-identical with or without it. Compensated curve vs 1x (y90, growths 0-15) book30k cx2 +0.003, cx3 +0.025, cx4 +0.031 (16/0), cx8 book10k +0.023 (n 8, below 4x: fables -0.012 0/8); order3 K8 still -0.08..-0.19, seqchoice collapsed under cortex divRep.",
+      "status": "confirmed fix; curve peaks at 4x",
+      "evidence": "R77 box: outputs release a fixed trophic factor shared by their inputs; an f x cortex splits it f ways and the output-projecting cells die below trophMin. Census order3 K4 cortex divRep 1x / 2x / 4x: excitatory synapses onto outputs 334 / 673 / 0. trophMin / f: cx4 divRep K4 0 -> 9.88 (1x 9.85); cx4 + fanRef K4 0 / 2.55 -> 9.28 / 6.97; cx4 divRep K8 7.97 / 7.35 -> 8.90 / 8.27; cx8 divRep order3 0 -> 7.25, text 5.71 -> 7.66 (1x 7.54); book / text at 4x identical; no effect on 4xS K8 (7.28) or the divRep seqchoice collapse. Drift study 1x-8x (order3 K8): plastic fan-in f^1.25, weight per synapse f^-1, plastic total per receiver f^0.2, learning change f^0.25, cortex E/I f^-0.4..-0.5, output firing f^-0.35 then 0 at 8x. R79: y89 fresh k 1700-1715 cx4 divRep + trophMin/4 K4 0.981 vs 1x 0.986 (untreated cx4 0.090); y91 8x order3 0 -> 0.766, text 0.565 -> 0.777 (8/0); book / fables / text bit-identical with or without it. Compensated curve vs 1x (y90, growths 0-15) book30k cx2 +0.003, cx3 +0.025, cx4 +0.031 (16/0), cx8 book10k +0.023 (n 8, below 4x: fables -0.012 0/8); order3 K8 still -0.08..-0.19, seqchoice collapsed under cortex divRep. R86: y99 (growths 0-15) vs cx4: cx6 book -0.005, cx8 -0.010 (0-2/14-16), order3 -0.06 / -0.10, text +0.010 (14/2); cx3 fresh (y98 k 1900-1915) book +0.028 16/0, text +0.010, order3 -0.128. lr 0.1/0.3, preNorm 55, divRep 3 at cx4: no gain.",
       "why": "removes the total-failure mode of scaled brains; a candidate size-scaling rule (trophMin x 1/f, or factor x f) for develop.js",
       "rounds": [
         "R77",
-        "R79"
+        "R79",
+        "R86"
       ],
       "theme": "scaling",
       "parents": [
@@ -1419,12 +1420,13 @@
       "id": "I96",
       "area": "learning",
       "title": "1x mixing-cell feedforward inhibition below the default (pl.mixInh@cortex 0.5 -> 0.3-0.45)",
-      "status": "testing",
-      "evidence": "R78 / R79 y95a/b (1x, k 1816-1831, 16 growths): mixInh 0.35 vs 0.5 order3 +0.006 (7/3, t 2.0), text -0.002 (5/10), book +0.001, fables 0; 0.7 order3 -0.063 (0/16). Ladder 0.3 / 0.4 / 0.45 on 32 fresh growths = y105a-d.",
+      "status": "rejected (too small; 0.3 costs text)",
+      "evidence": "R78 / R79 y95a/b (1x, k 1816-1831, 16 growths): mixInh 0.35 vs 0.5 order3 +0.006 (7/3, t 2.0), text -0.002 (5/10), book +0.001, fables 0; 0.7 order3 -0.063 (0/16). Ladder 0.3 / 0.4 / 0.45 on 32 fresh growths = y105a-d. R86: y105 24 fresh growths: 0.3 order3 +0.010 (t 3.2) but text -0.003 (7/17); 0.4 / 0.45 order3 +0.006 / +0.004, others 0. y120 de-ranked.",
       "why": "the same knob is the size-sensitive one for order3; a v41 candidate only if no task is worse on fresh growths",
       "rounds": [
         "R78",
-        "R79"
+        "R79",
+        "R86"
       ],
       "theme": "learning",
       "parents": [
@@ -1435,12 +1437,13 @@
       "id": "I97",
       "area": "scaling",
       "title": "P.mixInhRef / P.mixInhPow: mixing feedforward inhibition reads the pool MEAN activity above a reference pool size (size-compensated; ref 850 bit-identical at 1x)",
-      "status": "testing (trade-off: order3 back, text cost)",
-      "evidence": "R78 box (k 1800-1807) vs the all-region combo: 4x order3 +0.18 (8/0) but text -0.033 (0/8), fables -0.010, book -0.006; 2x order3 +0.06, text -0.012; pow 0.5 order3 +0.08, text -0.023. Per-cell local inhibition (mixInhLocal, R78b) hurt 1x text at every setting. y96 (combos, 16 growths), y97 (cx4 divRep + trophMin, all 7 tasks) queued.",
+      "status": "trade-off confirmed on the best book brain",
+      "evidence": "R78 box (k 1800-1807) vs the all-region combo: 4x order3 +0.18 (8/0) but text -0.033 (0/8), fables -0.010, book -0.006; 2x order3 +0.06, text -0.012; pow 0.5 order3 +0.08, text -0.023. Per-cell local inhibition (mixInhLocal, R78b) hurt 1x text at every setting. y96 (combos, 16 growths), y97 (cx4 divRep + trophMin, all 7 tasks) queued. R86: y97 (cx4 divRep + trophMin, k 1800-1815, 16g): order3 +0.140 (16/0, 0.963 vs 1x 0.953), text -0.012 (0/16), book -0.004, fables -0.006; pow 0.5 order3 +0.110, text -0.005.",
       "why": "inhibition that grows with the raw pool count silences the mixing cells in a larger brain",
       "rounds": [
         "R78",
-        "R79"
+        "R79",
+        "R86"
       ],
       "theme": "scaling",
       "parents": [
@@ -1451,16 +1454,35 @@
       "id": "I98",
       "area": "scaling",
       "title": "Sized source -> fixed receiver: keep the per-synapse strength / afferent count at 1x (thin the projection ~1/f) instead of normalising totals",
-      "status": "open (proposed, not coded)",
-      "evidence": "R79 box census (seqchoice cycle, g0): striatal plastic input from the cortex 487 synapses at 1x vs 6905 at cx4 divRep with the same total weight (1461): each synapse ~14x weaker; the fixed input path unchanged; cx4 divRep accuracy 0.029 < chance 0.167 (echoes the input). Not fixed by sc.normE@striatum 30-200 (0.77-0.87 vs 9.05) or by sizing the striatum 2x / 4x (1.3-1.7). The order3 K8 loss (I97) is the same pattern on the mixing-inhibition pool. y110 dissects which regions must grow with the cortex.",
+      "status": "testing (coded as P.thinF; helps at 3x-4x)",
+      "evidence": "R79 box census (seqchoice cycle, g0): striatal plastic input from the cortex 487 synapses at 1x vs 6905 at cx4 divRep with the same total weight (1461): each synapse ~14x weaker; the fixed input path unchanged; cx4 divRep accuracy 0.029 < chance 0.167 (echoes the input). Not fixed by sc.normE@striatum 30-200 (0.77-0.87 vs 9.05) or by sizing the striatum 2x / 4x (1.3-1.7). The order3 K8 loss (I97) is the same pattern on the mixing-inhibition pool. y110 dissects which regions must grow with the cortex. R86: y121 (k 1800-1807) thinF 5 at all-4x: book +0.015-0.017, text +0.012, seqchoice +1.1 / +1.7 (8/0); 3x seqchoice +0.9 / +1.7. y110: cx4 divRep seqchoice cycle 0.29 -> 6.0 with a 4x striatum + context, sizeCone, recvBudget 2 (striatum alone 1.4). Next y136.",
       "why": "one compensating rule for both remaining size failures, in the spirit of Travis's opposite-varying patch (trophMin / f)",
       "rounds": [
-        "R79"
+        "R79",
+        "R86"
       ],
       "theme": "scaling",
       "parents": [
         "I87",
         "I95"
+      ]
+    },
+    {
+      "id": "I99",
+      "area": "learning",
+      "title": "Cerebellum-like granule layer: sparse combination cells with claws on letters t / t-1 / t-2 projecting onto the output cells, cerebellar NLMS rule on read-window activity, learned self-silencing gain",
+      "status": "adopted v41 (DEFAULTS_VERSION 34); worker held-out pending (y133)",
+      "evidence": "R82 diagnosis: regions hold t..t-4 (decodable >= 0.97) but own accuracy = bigram (~0.29); conjunction capacity is the limit. R83-R85 box: granule ceiling 0.41 (= 3-gram) with granK 3; own 0.334 / 0.312 vs v40 0.297 / 0.289. 16 fresh growths k 1940-1955 vs v40: book10k / book30k +0.038 (16/0), fables +0.009 (16/0), order3 / text unchanged, seqchoice identical. IR1k (granRef 1000 + granIso) book +0.048 but text -0.0008 (3/11). R86 box g0: granules on cx4 divRep: book10k +0.022, order3 +0.028 over cx4dT. Queued y133 (held-out), y134 (granRef), y135 (x size), y137 (generation), y138 (length).",
+      "why": "adds the missing nonlinear letter-combination capacity (mushroom-body / cerebellar granule expansion) instead of more memory",
+      "rounds": [
+        "R83",
+        "R84",
+        "R85",
+        "R86"
+      ],
+      "theme": "learning",
+      "parents": [
+        "I72"
       ]
     }
   ],

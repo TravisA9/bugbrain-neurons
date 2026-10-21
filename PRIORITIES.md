@@ -1,3 +1,31 @@
+# PRIORITIES (R86, Oct 21 2026, ~7:45 AM CT; **v41 / DEFAULTS_VERSION 34** — v41 = v40 + 2000-cell granule layer onto the outputs (R84); old brain = deepURSx3v40)
+
+## R86 update (queue review, morning)
+- **v41 pushed** (adopted by the R83-R85 box session under Travis's standing authorisation; 16 fresh growths k 1940-1955: book +0.038 16/0, fables +0.009 16/0, order3 / text
+  unchanged, seqchoice identical). All pending queue runs pinned to v40 (P.granN=0). Second held-out on the workers = y133 (must hold, else revert).
+- **Size curve peaks at 4x** (cx6 -0.005, cx8 -0.010 book vs cx4; text +0.010 keeps rising). cx3 holds on fresh seeds (+0.028 book). lr / preNorm / divRep 3 at cx4: no gain.
+- **seqchoice at size is a receiver problem:** cx4 divRep + 4x striatum + context with sizeCone + recvBudget 2: cycle 0.29 -> 6.0 (1x 9.1). I98 thinF 5 adds +1.1 / +1.7 at
+  all-4x and helps book / text there. mixInhRef restores order3 (+0.14) on the cx4 brain for text -0.012.
+- tacobell was killed silently overnight (~9 PM-5:45 AM); the watchdog restarted it. linux-pc healthy.
+
+## Ranked open questions (R86)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I99 | Does v41 hold on worker hardware / new seeds (all 7 + K4)? | y133a/b |
+| 2 | I99 | v42: granRef 300 / 1000 / 1000+iso — more book without the text cost? | y134a/b |
+| 3 | I99 x I95 | Do granules stack with cortex size (cx3 / cx4 divRep)? box g0: book10k +0.022, order3 +0.028 over cx4dT | y135 |
+| 4 | Q42 | Plateau: does the granule readout gain grow with length (book100k, fables12000)? | y138 |
+| 5 | I98 | One sized brain for all tasks: cx4dT + sized receivers + thinF (+ mixInhRef) | y136 |
+| 6 | I99 | Close the granule readout gap (own 0.33 vs ceiling 0.41): readout rule, granule sparsity, more claws | box |
+| 7 | I72 | Generation with granules | y137, y104, y106 |
+Low: analogy / evolution. Rejected ideas stay rejected (deeper chains / slow layers R60, delta rules R82, clawKeep / clawWF R82, mixFreeze R82).
+Decision point (for Travis) unchanged: no large run until a scaled brain keeps order3 within 0.02 of 1x and seqchoice within noise while keeping the book gain.
+
+## Worker notes (R86)
+linux-pc: healthy, on y103; updates to v41 code before its next claim. tacobell: back since 5:45 AM (watchdog), light-only (2 slots, cpuMax 60, maxMemGB 1).
+Queue after R86: linux-pc ~45-50 h, tacobell ~18-20 h (light) by estimate.
+
+## Previous header (R79)
 # PRIORITIES (R79, Oct 20 2026, ~7:45 PM CT; **v40 / DEFAULTS_VERSION 33** unchanged — v40 = v39 + cortex preNorm 55; fast engine default since v38)
 
 ## R79 update (queue review, evening)

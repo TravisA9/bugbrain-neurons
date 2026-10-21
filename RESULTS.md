@@ -3471,3 +3471,67 @@ lower-priority jobs (several long lives that run longer than their estimate) -> 
 
 - v41 = K3n2: plan gene d.gran.N = 2000 in deepURSx3 (old = deepURSx3v40), granule settings in params (used only by brains with a granule layer). IR1k is stronger on book but fails no-task-worse on text by a small consistent margin (-0.008, 3/11); queued for further work.
 - R85 text side effect: the granule->output plastic synapses made the outputs 'receivers' of the prediction-cell machinery (AHP / trust / pool); P.granIso=1 removes it (text = v40 exactly) but also removes part of the book gain.
+
+(Units note for the R83-R85 table above: box screens report the task score on the 0-10 scale, i.e. 10 x accuracy for the sequence tasks; +0.379 = +0.038 accuracy.
+Queue tables below use accuracy for sequence tasks and fitness 0-10 for seqchoice, as in R77 / R79.)
+
+## R86 — queue review (Oct 21, 7:20 AM CT): **v41 pushed** (granule layer, DEFAULTS_VERSION 34); 18 worker results since R79; size curve peaks at 4x; sized receivers bring seqchoice back
+State found: the R83-R85 box session (notes /workspace/r83/PROGRESS.md on the box) adopted v41 under Travis's standing authorisation (16 fresh growths k 1940-1955, no task
+worse; table above) and committed it locally (f1a961d) but could not push: the laptop was offline at ~6:30 AM. This review re-checked the evidence, pinned the pending
+queue to the v40 brain, then pushed queue and code (queue first).
+18 jobs finished since R79: y96, y36, y105a/b/c, y121a/b/c, y97a/b, y98a/b, y99a/b, y110, y100, y101, y102. Cells: accuracy diff (wins / losses, paired t), paired by growth.
+
+### 1. Workers (7:25 AM CT)
+- linux-pc (ExplodingRumba, supervised, code cb0b4c3): alive, heartbeat 7:16 AM; 15 jobs since R79, no release / restart, crashSkip empty. Now on y103 (cx4dT book100k).
+- tacobell (TacoBell, supervised, code cb0b4c3): alive, heartbeat 7:06 AM, on y105d. **Silent overnight:** claimed y105c at 9:04 PM, then no heartbeat or renew until
+  5:45 AM ('release y105c (restarted)'), i.e. the worker was killed for ~8.5 h; the new BugBrainWatchdog task brought it back (y105c done 7:06 AM). One restart, not a
+  crash loop. Consequence: y130-y132 were never claimed, so R85 ran the 16-growth granule checks on the box. No phone worker.
+
+### 2. v41 adoption (granule layer) — evidence re-checked
+- Box 16 fresh growths k 1940-1955, v41 (K3n2: granN 2000, claws t / t-1 / t-2, NLMS rule onto the outputs, learned gain) vs v40: book10k +0.038 (16/0), book30k +0.038
+  (16/0), fables +0.009 (16/0), order3 +0.0003 (4/3), text +0.0004 (9/7); seqchoice identical by construction (no granules on outcome tasks). Passes no-task-worse.
+- Bit-identity rechecked here on the v41 code: deepURSx3 + P.granN=0 = deepURSx3v40 (order3 g1801 9.7 both). Pending queue pinned (P.granN=0 on every pending deepURSx3 run;
+  y130 M3 arms +P.granK=2), pushed before the code.
+- Worker-side second held-out (k 2000-2015, all 7 tasks + order3 K4) = y133a/b, top priority. v42 candidates (granRef 300 / 1000 / 1000+iso) = y134a/b.
+- Box smoke (1 growth, g0): granules on the cx4 divRep + trophMin brain run fine (~1.2 GB RSS): book10k 0.366 vs 0.3445 without, order3 0.918 vs 0.890. Full test = y135.
+
+### 3. Size: the compensated curve peaks at 4x; 6x / 8x fall back (y99, growths 0-15)
+| arm vs cx4 divRep + trophMin/4 | book10k | book30k | fables | order3 | text |
+|---|---|---|---|---|---|
+| cx6 divRep + trophMin/6 | -0.005 (2/14) | -0.005 (5/11) | -0.008 (0/16) | -0.064 (1/15) | +0.010 (14/2) |
+| cx8 divRep + trophMin/8 | -0.010 (2/14) | -0.010 (1/15) | -0.013 (0/16) | -0.095 (0/16) | +0.010 (14/2) |
+vs 1x (v39 preNorm 50, same growths): cx4 book +0.031, cx6 +0.026-0.027, cx8 +0.021 (all ~16/0). Text keeps rising slowly with size; book / fables / order3 do not.
+- cx3 fresh (y98, k 1900-1915) vs v40 1x: book10k +0.028, book30k +0.029, fables +0.027 (16/0 each), text +0.010 (13/3); order3 -0.128 (0/16), seqchoice 1.6 / 1.9 vs 6.5 / 9.1.
+  Holds on fresh seeds; cx3 = ~90 % of the cx4 book gain.
+- Knobs at cx4 divRep (y100-y102, growths 0-15): cortex lr 0.1 / 0.3, preNorm 55, divRep 3: all within +/-0.003 on book; divRep 3 order3 -0.025, lr 0.3 order3 -0.044.
+  preNorm 55 K4 -0.004 (1/10): keep the scaled-run pin at 45. Nothing to gain from these knobs.
+- Length at size (y36, 4xS, k 1400-1407): book100k 0.342, book300k 0.342 vs v39 1x 0.333 / 0.332: the size gain is kept but there is still no length gain (plateau).
+
+### 4. Order3 and seqchoice at size
+- mixInhRef 850 on cx4 divRep + trophMin (y97, k 1800-1815, 16g): order3 0.823 -> 0.963 (+0.140, 16/0; 1x 0.953) but text -0.012 (0/16), book -0.004, fables -0.006 (0/16).
+  pow 0.5: order3 +0.110, text -0.005 (2/14). The order3 / text trade-off of R78 holds on the best book brain.
+- y110 (growths 0-15) seqchoice cycle on cx4 divRep + trophMin (0.29): + striatum 4x 1.44, + context 4x 0.30, + both 1.42, + both with sizeCone + recvBudget 2 **6.01**
+  (16/0), all-region 4x divRep + cone + rb2 6.11 (1x ~9.1). Book10k unchanged. The collapse is on the receiver side (the striatum must grow with the cortex AND its
+  per-receiver budget must be capped); I98 thinning is the remaining piece.
+- I98 thinning (y121, P.thinF 5, k 1800-1807, 8g): at all-4x 'T' (sizeCone + trophMin/f) book +0.015-0.017, fables +0.011, text +0.012, seqchoice +1.1 / +1.7 (8/0 each),
+  order3 unchanged; at 3x book +0.008, seqchoice +0.9 / +1.7; at 2x seqchoice +0.7 / +0.9, fables -0.008. Best whole brain vs 1x: all4 combo thin5 ref850 book +0.014-0.016,
+  fables +0.011, order3 -0.002, but text -0.026 (2/6) and seqchoice -0.6 / -1.6. Combos at 2x (y96) gain nothing on book. -> y136 combines cx4 divRep with sized receivers +
+  thinning (+/- mixInhRef) on all 7 tasks.
+
+### 5. 1x mixing inhibition (y105, 24 fresh growths k 1900-1923, v40)
+mixInh 0.3: order3 +0.010 (16/5, t 3.2) but text -0.003 (7/17, t -2.1); 0.4: order3 +0.006 (t 1.8), others 0; 0.45: order3 +0.004. Too small to matter and 0.3 fails
+no-task-worse; not a candidate. y120 (0.35 confirm) de-ranked to 0.5.
+
+### 6. Queue changes (R86, run/r86_jobs.js)
+New: y133a/b (v41 vs v40 held-out k 2000-2015, all 7 + K4; light), y134a/b (v42: granRef 300 / 1000 / 1000+granIso vs v41, k 2016-2031; light), y137 (generation v41 vs v40;
+light), y135 (granules x cx3 / cx4 divRep, k 1900-1915; heavy), y136 (cx4dT + 4x receivers cone rb2 +/- thinF 5 +/- mixInhRef 850, growths 0-15, all 7; heavy),
+y138 (v41 vs v40 book100k / fables12000, k 1400-1407; linux-pc). Parked y130-y132 (done on the box). Pinned all pending deepURSx3 runs to v40 (P.granN=0).
+Depth (estimate): linux-pc ~45 h of pending work (new ~6 h at the top); tacobell ~18-20 h of light work (y105d, y133, y134, y137, y106-y109, y120).
+
+### 7. Assessment
+- The granule layer is the first mechanism since size scaling that moves book by several points at 1x (+0.038), and it attacks the diagnosed bottleneck (no conjunction
+  capacity for letter pairs / triples) rather than tuning around it. Its readout ceiling is ~3-gram (0.41) and the brain gets ~0.33: the remaining gap is the readout rule.
+- Worry: v41 rests on box runs only (one machine, one seed block). y133 must hold before anything is built on top; if it does not, revert to deepURSx3v40.
+- Worry: the scaling track still has no single brain that keeps order3 and seqchoice at 1x level while keeping the +0.03 book gain; the pieces (trophMin / f,
+  sized receivers + recvBudget, thinF, mixInhRef) each fix one task and cost another a little.
+- Length is still flat from 10k to 300k at every size; y138 asks whether the granule NLMS readout (a different learning rule) changes that.
