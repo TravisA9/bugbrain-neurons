@@ -532,6 +532,9 @@ class SpikingNet {
     //  false alarms, so the pathway self-silences when it does not reduce the outputs' error; local: one gain per granule->output projection)
     if (gA) gA.fill(0);
   }
+  // R85 granIso (global param, 0/undefined = off): with granTgt 1, the granule -> output synapses do not make the output cells
+  // 'receivers' of the prediction-cell machinery (teacher AHP, trust, receiver pool): the output cells keep their v40 dynamics
+  granIsoK(k) { return params.granIso > 0 && params.granTgt === 1 && this.g.gran ? this.g.gran[this.pres[k]] === 1 : false; }
   deltaInit() {
     const N = this.N, nIn = this.g.nIn, rc = new Uint8Array(N), inS = this.inStart, inE = this.inEdges, isP = this.isPlastic, w0 = this.w0, iI = this.instrIn;
     const pl = new Uint8Array(N); for (let i = nIn; i < N; i++) for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (isP[k] && w0[k] > 0) { pl[i] = 1; break; } }
@@ -569,9 +572,9 @@ class SpikingNet {
       this.isE = new Uint8Array(this.posts.length); const L = []; const gE = this.g.gran && params.granLr > 0 ? this.g.gran : null; for (const k of this.plastic) if (!ic[this.posts[k]] && !(gE && gE[this.pres[k]])) { this.isE[k] = 1; L.push(k); } this.eList = Int32Array.from(L); this.eOn = L.length > 0; }
     this.normDirty = new Uint8Array(N); this.dirtyList = [];
     if (this.p.teachAHP > 0) {   // v16: receivers (cells with plastic inputs) get an afterhyperpolarisation when their teacher input ends
-      this.ahp = new Int16Array(N); this.ahpRecv = new Uint8Array(N); for (let k = 0; k < this.posts.length; k++) if (this.isPlastic[k] && this.w0[k] > 0) this.ahpRecv[this.posts[k]] = 1; }
+      this.ahp = new Int16Array(N); this.ahpRecv = new Uint8Array(N); for (let k = 0; k < this.posts.length; k++) if (this.isPlastic[k] && this.w0[k] > 0 && !this.granIsoK(k)) this.ahpRecv[this.posts[k]] = 1; }
     if (this.p.trustPow > 0) { this.trust = new Float32Array(N).fill(this.p.trust0 >= 0 ? this.p.trust0 : this.p.trustRef); this.trustW = new Float32Array(N); this.trustT = -1;
-      this.trustRecv = new Uint8Array(N); for (let k = 0; k < this.posts.length; k++) if (this.isPlastic[k] && this.w0[k] > 0) this.trustRecv[this.posts[k]] = 1; }   // cells with plastic inputs
+      this.trustRecv = new Uint8Array(N); for (let k = 0; k < this.posts.length; k++) if (this.isPlastic[k] && this.w0[k] > 0 && !this.granIsoK(k)) this.trustRecv[this.posts[k]] = 1; }   // cells with plastic inputs
     if (this.p.preNorm > 0 && !(this.uni && !this.instrReach())) for (let i = 0; i < N; i++) this.normPre(i);   // (v22: a brain without instructive inputs starts from its grown weights, as under the reward rule)
     if (this.p.metaN > 0) this.metaE = new Float32Array(N);   // v12 metaplasticity: potentiation received per presynaptic cell
     if (this.p.preLag > 0) { this.lagBuf = new Uint8Array(N * this.p.preLag); this.lagPos = 0; this.xLag = new Float32Array(N); }
@@ -626,7 +629,7 @@ class SpikingNet {
   // v13: propagation with the receiver pool: plastic input to receivers gets divisive normalisation, receiver spikes feed
   // a shared inhibitory pool, receivers get membrane noise. Non-receiver input is propagated exactly as usual.
   initRcv() {
-    const N = this.N, isR = new Uint8Array(N); for (let k = 0; k < this.posts.length; k++) if (this.isPlastic[k] && this.w0[k] > 0) isR[this.posts[k]] = 1;
+    const N = this.N, isR = new Uint8Array(N); for (let k = 0; k < this.posts.length; k++) if (this.isPlastic[k] && this.w0[k] > 0 && !this.granIsoK(k)) isR[this.posts[k]] = 1;
     const list = []; for (let i = 0; i < N; i++) if (isR[i]) list.push(i);
     this.rcv = Int32Array.from(list); this.isRcv = isR; this.synP = new Float32Array(N); this.poolTr = 0;
     const P = this.posts, isP = this.isPlastic, toR = new Uint8Array(P.length); for (let k = 0; k < P.length; k++) toR[k] = isP[k] && isR[P[k]] ? 1 : 0;
