@@ -575,6 +575,9 @@ class SpikingNet {
     this.p = p; this.dPre = Math.exp(-1 / p.tauPre); this.dPost = Math.exp(-1 / p.tauPost);
     this.dElig = Math.exp(-1 / p.tauElig); this.dElig2 = (p.eligMix > 0 || p.eligGate > 0) ? Math.exp(-1 / p.tauElig2) : 0;   this.dMods = this.chs.map(c => Math.exp(-1 / c.tauMod));
   }
+  actClsF() { const g = this.g, N = this.N, m = new Map(), c = new Uint16Array(N);   // R78c: presynaptic class id (region x cell type; mixing cells their own class)
+    for (let i = 0; i < N; i++) { const key = (g.region ? g.region[i] : 0) * 4096 + (g.mix && g.mix[i] ? 4095 : (g.cellType ? g.cellType[i] : 0)); if (!m.has(key)) m.set(key, m.size); c[i] = m.get(key); }
+    this.actNC = m.size; this.actCls = c; return c; }
   fanLrF(fR) { const N = this.N, f = new Float32Array(N).fill(1), ipS = this.ipStart, inS = this.inStart, inE = this.inEdges, isP = this.isPlastic, w0 = this.w0;   // R71 fanRef
     for (let i = this.g.nIn; i < N; i++) { let n = 0; if (ipS) n = ipS[i + 1] - ipS[i]; else for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (isP[k] && w0[k] > 0) n++; } if (n > fR) f[i] = fR / n; }
     this.lrFR = fR; return f; }
@@ -676,17 +679,24 @@ class SpikingNet {
         for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]] * xg; if (x < 0.01) continue;
           const d = Math.min(ws[k], g * x * ((pm & 16) ? pf + (1 - pf) * ws[k] / wMax : (pm & 1) ? ws[k] / wMax : 1)); ws[k] -= d; if (PD) { PD.d += d; PD.n++; }
           if ((pm & 2) && !nd[pres[k]]) { nd[pres[k]] = 1; dirty.push(pres[k]); } } }
+      // R78c actRef (global param, 0/undefined = off, bit-identical): per taught cell and per presynaptic class (region x cell type),
+      // the step of each active input x min(1, actRef / (active inputs of that class at this plateau)): every input population adds
+      // at most the drive of actRef active cells per teacher event, so a population that grows with brain size (the current-symbol
+      // conjunctions C onto P) does not swamp a sparse informative one (the context-mixing cells).
+      const aR = params.actRef > 0 ? params.actRef : 0, aC = aR ? (this.actCls || this.actClsF()) : null, aN = aR ? (this.actN || (this.actN = new Float32Array(this.actNC))) : null;
       if (ipS) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (plat[i] <= 0) continue; const lr = lF ? lr0 * lF[i] : lr0;
+        if (aR) { aN.fill(0); for (let q = ipS[i], e = ipS[i + 1]; q < e; q++) { const j = ipP[q]; if (xT[j] * xg >= 0.01) aN[aC[j]]++; } for (let c = 0; c < aN.length; c++) aN[c] = aN[c] > aR ? aR / aN[c] : 1; }
         for (let q = ipS[i], e = ipS[i + 1]; q < e; q++) { const j = ipP[q], x = xT[j] * xg; if (x < 0.01) continue; const k = ipK[q];
-          const lx = tF ? lr * x * tF[j] : lr * x;
+          const lx = (tF ? lr * x * tF[j] : lr * x) * (aR ? aN[aC[j]] : 1);
           if (mE) { const d = lx; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; if (mC > 0 && mE[j] > mC) mE[j] = mC; }
           else ws[k] = Math.min(wMax, ws[k] + lx);
           if (PD) PD.p += lr * x;
           if (tro) tro[j] += lr * x;
           if (!nd[j]) { nd[j] = 1; dirty.push(j); } } }
       else for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (this.plat[i] <= 0) continue; const lr = lF ? lr0 * lF[i] : lr0;
+        if (aR) { aN.fill(0); for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (isP[k] && this.w0[k] > 0 && xT[pres[k]] * xg >= 0.01) aN[aC[pres[k]]]++; } for (let c = 0; c < aN.length; c++) aN[c] = aN[c] > aR ? aR / aN[c] : 1; }
         for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (!isP[k] || this.w0[k] <= 0) continue; const x = xT[pres[k]] * xg; if (x < 0.01) continue;
-          const lx = tF ? lr * x * tF[pres[k]] : lr * x;
+          const lx = (tF ? lr * x * tF[pres[k]] : lr * x) * (aR ? aN[aC[pres[k]]] : 1);
           if (mE) { const j = pres[k], d = lx; ws[k] = Math.min(wMax, ws[k] + d * mN / (mN + mE[j])); mE[j] += d; if (mC > 0 && mE[j] > mC) mE[j] = mC; }   // R62 metaCap > 0: consolidation stops at metaCap (learning-rate floor lr mN / (mN + metaCap))
           else ws[k] = Math.min(wMax, ws[k] + lx);
           if (globalThis.__peDbg) globalThis.__peDbg.p += lr * x;
