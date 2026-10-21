@@ -289,7 +289,7 @@ class SpikingNet {
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];
       if (n && this.mlS) { const S = this.mlS, P = this.mlP, D = this.mlD; for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = S[i], e = S[i + 1]; k < e; k++) { syn[P[k]] -= D[k]; if (!this.fDense) mk[P[k]] = 1; } } }
       else if (n) { const d = this.mixInhD * n, ml = this.mixList; if (this.fDense) for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d; else for (let q = 0; q < ml.length; q++) { syn[ml[q]] -= d; mk[ml[q]] = 1; } } }
-    if (this.mxStart && params.plasticity && this.thr) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr;
+    if (this.mxStart && params.plasticity && this.thr && !this.mixFrozen()) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr;
       if (ml) { if (this.fDense) for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); }
         else for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); if (thr[i] <= (v[i] > R ? v[i] : R)) mk[i] = 1; } } }   // (a threshold that adapted down to the potential: the cell must be looked at)
     if (this.teachTr) {                      // teacher events: only hot cells are stepped
@@ -484,6 +484,43 @@ class SpikingNet {
       for (let q = a; q < e; q++) { const k = idx[q]; if (ws[k] > 0 && ws[k] < lim && n > 1) { ws[k] = 0; n--; } else s2 += ws[k]; }
       if (s2 > 0) for (let q = a; q < e; q++) { const k = idx[q]; if (ws[k] > 0) ws[k] *= W / s2; } }
   }
+  /* R82 DELTA RULE for the taught (prediction) cells, once per teaching event (pl.deltaLr > 0; off = bit-identical).
+   * Receivers R = cells with plastic excitatory inputs that an (instructive) input neuron contacts. Each receiver counts its own
+   * PREDICTIVE spikes: spikes while it is armed and outside a teacher plateau (teacher-driven spikes excluded). At a teaching
+   * event (substep with >= 1 receiver onset, plat = plateau) every receiver i gets prediction y = min(1, count / deltaRef) and
+   * target t = 1 (onset now) or 0, and each plastic excitatory input k (pre j) changes once:
+   *   dw = deltaLr x lrScale_i x x_j x (t - y), x_j = the (lagged) pre-trace = eligibility of the recent input,
+   * bounded to [0, wMax] (excitatory weights stay excitatory); inputs touched are re-normalised by preNorm (budget kept);
+   * all counts reset. deltaKeep 1: the old per-spike plateau potentiation runs as well. */
+  // R82 mixFreeze (pl.mixFreeze substeps, 0 = off, bit-identical off): the mixing cells' adaptive (homeostatic) thresholds stop
+  // adapting after mixFreeze learning substeps (warm-up); every other rule, including the prediction synapses, keeps learning.
+  mixFrozen() { const F = this.p.mixFreeze; if (!(F > 0)) return false; this.mfT = (this.mfT || 0) + 1; return this.mfT > F; }
+  deltaInit() {
+    const N = this.N, nIn = this.g.nIn, rc = new Uint8Array(N), inS = this.inStart, inE = this.inEdges, isP = this.isPlastic, w0 = this.w0, iI = this.instrIn;
+    const pl = new Uint8Array(N); for (let i = nIn; i < N; i++) for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (isP[k] && w0[k] > 0) { pl[i] = 1; break; } }
+    for (let i = 0; i < nIn; i++) { if (iI && !iI[i]) continue; for (let k = this.start[i], e = this.start[i + 1]; k < e; k++) if (this.ws[k] > 0 && pl[this.posts[k]]) rc[this.posts[k]] = 1; }
+    const L = []; for (let i = 0; i < N; i++) if (rc[i]) L.push(i);
+    this.dRc = rc; this.dList = Int32Array.from(L); this.dCnt = new Float32Array(N);
+    if (globalThis.__deltaDbg) globalThis.__deltaDbg.nR = L.length;
+    if (typeof process !== "undefined" && process.env.BB_DDBG && !globalThis.__deltaDbg) { const D = globalThis.__deltaDbg = { ev: 0, y: 0, fa: 0, nR: L.length, nev: 0 }; process.on("exit", () => console.error("deltaDbg", JSON.stringify(D), "mean y at target", (D.y / D.ev).toFixed(3), "false-alarm y per event", (D.fa / Math.max(1, D.nev)).toFixed(3))); }
+  }
+  deltaStep(dL, xT, xg, lF, plat, spk, nSpk) {
+    if (!this.dList) this.deltaInit();
+    const dM = this.p.deltaMode | 0, rc = this.dRc, cnt = this.dCnt, armed = this.armed, L = this.dList, plN = this.p.plateau, ref = this.p.deltaRef > 0 ? this.p.deltaRef : 1;
+    let ev = false; if (this.p.deltaTau > 0) { const dq = this.dDec || (this.dDec = Math.exp(-1 / this.p.deltaTau)); for (let q = 0; q < L.length; q++) cnt[L[q]] *= dq; }   // deltaTau: the prediction is a decaying trace of the predictive spikes (recent = just before the input)
+    if (dM & 4) { const sy = this.syn, sP = this.rcv ? this.synP : null; for (let q = 0; q < L.length; q++) { const i = L[q]; if (plat[i] <= 0 && armed[i]) { const v = sy[i] + (sP ? sP[i] : 0); if (v > 0) cnt[i] += v; } }   // deltaMode 4: graded prediction = the cell's (positive) synaptic drive, not its spikes
+      for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (rc[i] && plat[i] === plN) ev = true; } }
+    else for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (!rc[i]) continue; if (plat[i] === plN) ev = true; else if (plat[i] <= 0 && armed[i]) cnt[i]++; }
+    if (!ev) for (let q = 0; q < L.length; q++) if (plat[L[q]] === plN) { ev = true; break; }
+    if (!ev) return; if (globalThis.__deltaDbg) globalThis.__deltaDbg.nev++;
+    const ws = this.ws, wMax = params.wMax, inS = this.inStart, inE = this.inEdges, isP = this.isPlastic, w0 = this.w0, pres = this.pres, nd = this.normDirty, dirty = this.dirtyList, D = globalThis.__deltaDbg;
+    for (let q = 0; q < L.length; q++) { const i = L[q], t = plat[i] === plN ? 1 : 0, y = Math.min(1, cnt[i] / ref), er = t - y; cnt[i] = 0;
+      if (D) { D.ev += t; D.y += t ? y : 0; D.fa += t ? 0 : y; }
+      if (er === 0 || ((dM & 1) && er < 0) || ((dM & 2) && er > 0)) continue; const g = dL * er * (lF ? lF[i] : 1);   // deltaMode 1: targets only (no depression of non-targets), 2: depression only
+      for (let r = inS[i], e = inS[i + 1]; r < e; r++) { const k = inE[r]; if (!isP[k] || !(w0[k] > 0)) continue; const j = pres[k], x = xT[j] * xg; if (x < 0.01) continue;
+        let w = ws[k] + g * x; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w;
+        if (!nd[j]) { nd[j] = 1; dirty.push(j); } } }
+  }
   // v9 teacher-gated plasticity: per-cell teacher trace / plateau, presynaptic weight normalisation.
   initTeach() {
     const N = this.N; this.teachTr = new Float32Array(N); this.plat = new Int16Array(N); this.armed = new Uint8Array(N).fill(1); this.drv = new Float32Array(N);
@@ -632,7 +669,7 @@ class SpikingNet {
       for (let q = 0; q < A.length; q++) { const i = A[q]; thr[i] += h * (sp[i] - r0); } }
     if (this.mxStart && params.plasticity) {   // v15 learned mixing (unsupervised competitive rule + homeostatic threshold)
       const mx = this.g.mix; if (this.p.mixLr > 0) for (let s = 0; s < nSpk; s++) if (mx[spk[s]]) this.mixLearn(spk[s]);
-      if (this.thr) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr; for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); } } }
+      if (this.thr && !this.mixFrozen()) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr; for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); } } }
     if (this.ng) this.needTrace(spk, nSpk);   // v28 need-growth source traces
     if (this.teachTr) {                     // teacher events: smoothed drive from sensory (input) neurons
       const drv = this.drv, nIn = this.g.nIn, tT = this.teachTr, thr = this.p.teachThr, q7 = this.dtF ? this.t7 : 0.7;
@@ -703,7 +740,10 @@ class SpikingNet {
       // at most the drive of actRef active cells per teacher event, so a population that grows with brain size (the current-symbol
       // conjunctions C onto P) does not swamp a sparse informative one (the context-mixing cells).
       const aR = params.actRef > 0 ? params.actRef : 0, aC = aR ? (this.actCls || this.actClsF()) : null, aN = aR ? (this.actN || (this.actN = new Float32Array(this.actNC))) : null;
-      if (ipS) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (plat[i] <= 0) continue; const lr = lF ? lr0 * lF[i] : lr0;
+      const dL = this.p.deltaLr > 0 ? this.p.deltaLr : 0;   // R82 delta rule (pl.deltaLr, 0/undefined = off, bit-identical off): see deltaStep()
+      if (dL) this.deltaStep(dL, xT, xg, lF, plat, spk, nSpk);
+      if (dL && !this.p.deltaKeep) {}   // (delta replaces the per-spike plateau potentiation unless pl.deltaKeep=1)
+      else if (ipS) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (plat[i] <= 0) continue; const lr = lF ? lr0 * lF[i] : lr0;
         if (aR) { aN.fill(0); for (let q = ipS[i], e = ipS[i + 1]; q < e; q++) { const j = ipP[q]; if (xT[j] * xg >= 0.01) aN[aC[j]]++; } for (let c = 0; c < aN.length; c++) aN[c] = aN[c] > aR ? aR / aN[c] : 1; }
         for (let q = ipS[i], e = ipS[i + 1]; q < e; q++) { const j = ipP[q], x = xT[j] * xg; if (x < 0.01) continue; const k = ipK[q];
           const lx = (tF ? lr * x * tF[j] : lr * x) * (aR ? aN[aC[j]] : 1);
