@@ -122,7 +122,9 @@ function growRegions(d, opts) {
       for (let i = dst.g.nIn; i < dst.g.nIn + dst.g.nHid; i++) if (T.to.mix ? dst.g.mix && dst.g.mix[i] : dst.g.cellType[i] === N_FIXED + T.to.cls) tg.push(node(dst, i));
       let order = []; if (keys.length) for (const B of tg) { if (!order.length) { order = keys.slice(); for (let k = order.length - 1; k > 0; k--) { const j = (r() * (k + 1)) | 0; [order[k], order[j]] = [order[j], order[k]]; } }
         const S0 = cols.get(order.pop()), fS = (thF & 2) && src.R.g && src.R.g.sc && src.R.g.sc.sizeF > 1 ? src.R.g.sc.sizeF : 1, S = fS > 1 ? S0.filter(A => hash01(A, B, seed ^ 0x3c) < 1 / fS) : S0; if (!S.length) S.push(S0[0]);
-        const ws = T.to.w / S.length; for (const A of S) { acc.add(A, B, ws, 0, 0); nSyn++; } }   // v25: a mutant whose source region grew no cells of the class gets no tract (it used to throw)
+        const cK = T.to.mix && params.clawKeep > 0 && params.clawKeep < 1 ? params.clawKeep : 0;   // R82 clawKeep (global param, 0/undefined = off, bit-identical off): each mixing cell keeps each context claw with probability clawKeep (lower-order conjunctions: fewer delays per mixing cell)
+        if (cK && hash01(B, (T.salt || 0) + 7, seed ^ 0x82c1) >= cK) continue;
+        const ws = T.to.w * (T.to.mix && params.clawWF > 0 ? params.clawWF : 1) / S.length; for (const A of S) { acc.add(A, B, ws, 0, 0); nSyn++; } }   // R82 clawWF (global, 0/undefined = off): context-claw weight onto mixing cells x clawWF. v25: a mutant whose source region grew no cells of the class gets no tract (it used to throw)
     } else if (T.map === 'all') {   // parallel fibres: every source cell -> every excitatory receiver of the target region, plastic (P = 1)
       const tg = []; for (let i = dst.g.nIn; i < dst.g.nIn + dst.g.nHid; i++) if (dst.g.recv && dst.g.recv[i]) tg.push(node(dst, i));
       // R72 allMax (global param, 0/undefined = off): convergence limit. Each target receives from at most ~allMax source cells (the pair
