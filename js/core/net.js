@@ -510,13 +510,27 @@ class SpikingNet {
    * ones. Granules with x < 0.01 (silent) are untouched, so on the sparse granule code each event changes only a few hundred synapses. */
   granStep(xT, xg, plat) {
     if (!this.dList) this.deltaInit();
-    const L = this.dList, plN = this.p.plateau; let ev = false; for (let q = 0; q < L.length; q++) if (plat[L[q]] === plN) { ev = true; break; } if (!ev) return;
+    const oT = params.granTgt === 1, nO = this.g.nOut, o0 = this.g.nIn + this.g.nHid;
+    if (oT) { const spk = this.spk; for (let s = 0; s < this.nSpk; s++) { const i = spk[s]; if (i < nO) this.gSym = i; else break; } }   // R83c: the symbol input that just arrived = the output that was right (seq tasks: output m <-> symbol m)
+    const gw = oT && params.granWin > 0, gA = gw ? (this.gAcc || (this.gAcc = new Float32Array(this.N))) : null;   // R83c granWin: the presynaptic activity is each granule's spike count since the last teaching event (the window the outputs were read in), not its decayed trace at the event
+    const gG = gw && params.granGain > 0, o1 = o0 + nO;   // R83d granGain: learned output gain psi of the granule pathway (ws = psi x learned weight u), see below
+    if (gA) { const spk = this.spk, gr = this.g.gran; for (let s = 0; s < this.nSpk; s++) { const i = spk[s]; if (gr[i]) gA[i]++; else if (gG && i >= o0 && i < o1) gA[i]++; } }
+    const L0 = this.dList, plN = this.p.plateau; let ev = false; for (let q = 0; q < L0.length; q++) if (plat[L0[q]] === plN) { ev = true; break; } if (!ev) return;
+    const L = oT ? (this.gOutL || (this.gOutL = Int32Array.from({ length: nO }, (_, m) => o0 + m))) : L0;
     if (!this.gIn) { const S = [0], K = []; for (let q = 0; q < L.length; q++) { const i = L[q]; for (let r = this.inStart[i], e = this.inStart[i + 1]; r < e; r++) { const k = this.inEdges[r]; if (this.g.gran[this.pres[k]] && this.isPlastic[k]) K.push(k); } S.push(K.length); } this.gIn = { S: Int32Array.from(S), K: Int32Array.from(K) }; }
     const S = this.gIn.S, K = this.gIn.K, ws = this.ws, pr = this.pres, wMax = params.wMax, lr = params.granLr, ref = params.granRef > 0 ? params.granRef : 10, D = globalThis.__granDbg;
-    for (let q = 0; q < L.length; q++) { const i = L[q], t = plat[i] === plN ? 1 : 0; let d = 0;
-      for (let r = S[q]; r < S[q + 1]; r++) { const k = K[r], x = xT[pr[k]] * xg; if (x >= 0.01) d += ws[k] * x; }
-      const y = Math.min(1, d / ref), er = t - y; if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
-      for (let r = S[q]; r < S[q + 1]; r++) { const k = K[r], x = xT[pr[k]] * xg; if (x < 0.01) continue; const w = ws[k] + lr * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
+    let U = null; if (gG) { if (!this.gU) { this.gU = new Float32Array(K.length); for (let r = 0; r < K.length; r++) this.gU[r] = ws[K[r]]; this.gPsi = params.granGain0 > 0 ? params.granGain0 : 0; } U = this.gU; }
+    let oS = 0, dPs = 0; if (gG) for (let q = 0; q < nO; q++) oS += gA[o0 + q];
+    for (let q = 0; q < L.length; q++) { const i = L[q], t = oT ? (q === this.gSym ? 1 : 0) : plat[i] === plN ? 1 : 0; let d = 0;
+      let xx = 0; for (let r = S[q]; r < S[q + 1]; r++) { const k = K[r], x = gA ? gA[pr[k]] / params.granWin : xT[pr[k]] * xg; if (x >= 0.01) { d += (U ? U[r] : ws[k]) * x; xx += x * x; } }
+      const y = Math.min(1, d / ref), er = t - y, g = oT ? (xx > 0 ? lr * ref / xx : 0) : lr;   // R83c output mode: normalised LMS (step / input power: stable for granLr < 1 at any granule count)
+      if (gG) { const n = oS > 0 ? gA[i] / oS : 1 / nO, c = n + this.gPsi * (y - n); dPs += (t - c) * (y - n); }   // mixture gain: d/dpsi of the squared error of (1-psi) x the outputs' own prediction (window spike share) + psi x the granule prediction
+      if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
+      for (let r = S[q]; r < S[q + 1]; r++) { const k = K[r], x = gA ? gA[pr[k]] / params.granWin : xT[pr[k]] * xg; if (x < 0.01) continue; if (U) { const u = U[r] + g * x * er; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; continue; } const w = ws[k] + g * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
+    if (gG) { const ps = this.gPsi = Math.min(1, Math.max(0, this.gPsi + params.granGain * dPs)); for (let r = 0; r < K.length; r++) ws[K[r]] = ps * U[r]; if (D) { D.psi = ps; D.pn = (D.pn || 0) + 1; D.ps = (D.ps || 0) + ps; } }
+    // (granGain: psi rises while the granule prediction points where the outputs under-predict the arriving symbol and falls where it adds
+    //  false alarms, so the pathway self-silences when it does not reduce the outputs' error; local: one gain per granule->output projection)
+    if (gA) gA.fill(0);
   }
   deltaInit() {
     const N = this.N, nIn = this.g.nIn, rc = new Uint8Array(N), inS = this.inStart, inE = this.inEdges, isP = this.isPlastic, w0 = this.w0, iI = this.instrIn;
@@ -552,7 +566,7 @@ class SpikingNet {
       // a cell contacted by an instructive sensor (climbing fibre) learns from its instructive signal; every other plastic receiver
       // learns from the global dopamine through its eligibility traces (only those synapses keep traces: isE / eList)
       const ic = this.instrCell = new Uint8Array(N); for (let i = 0; i < nIn; i++) if (this.instrIn[i]) for (let k = this.start[i], e = this.start[i + 1]; k < e; k++) if (this.ws[k] > 0) ic[this.posts[k]] = 1;
-      this.isE = new Uint8Array(this.posts.length); const L = []; for (const k of this.plastic) if (!ic[this.posts[k]]) { this.isE[k] = 1; L.push(k); } this.eList = Int32Array.from(L); this.eOn = L.length > 0; }
+      this.isE = new Uint8Array(this.posts.length); const L = []; const gE = this.g.gran && params.granLr > 0 ? this.g.gran : null; for (const k of this.plastic) if (!ic[this.posts[k]] && !(gE && gE[this.pres[k]])) { this.isE[k] = 1; L.push(k); } this.eList = Int32Array.from(L); this.eOn = L.length > 0; }
     this.normDirty = new Uint8Array(N); this.dirtyList = [];
     if (this.p.teachAHP > 0) {   // v16: receivers (cells with plastic inputs) get an afterhyperpolarisation when their teacher input ends
       this.ahp = new Int16Array(N); this.ahpRecv = new Uint8Array(N); for (let k = 0; k < this.posts.length; k++) if (this.isPlastic[k] && this.w0[k] > 0) this.ahpRecv[this.posts[k]] = 1; }

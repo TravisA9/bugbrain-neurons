@@ -85,7 +85,8 @@ function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed) {
   // taught prediction cells: cells of the output region with plastic inputs that an env input contacts
   const pl = new Uint8Array(G.N), ins = new Uint8Array(G.N);
   for (let k = 0; k < acc.n; k++) { const b = acc.b[k]; if (b < nIn || b >= nIn + nHid || G.region[b] !== oi) continue; if (acc.p[k]) pl[b] = 1; if (acc.a[k] < nIn && acc.w[k] > 0) ins[b] = 1; }
-  const P = []; for (let b = nIn; b < nIn + nHid; b++) if (pl[b] && ins[b] && !G.gran[b]) P.push(b);
+  const P = []; if (params.granTgt === 1) { for (let m = 0; m < G.nOut; m++) P.push(nIn + nHid + m); }   // R83c granTgt 1: granules -> the output cells (Purkinje analogue), bypassing the prediction cells
+  else for (let b = nIn; b < nIn + nHid; b++) if (pl[b] && ins[b] && !G.gran[b]) P.push(b);
   const wo = params.granOut > 0 ? params.granOut : 0.1;
   for (let j = 0; j < nG; j++) for (const b of P) acc.add(gOff + j, b, wo, 1, 0);
   G.granStats = { cells: nG, K, thr: th, pred: P.length };
