@@ -241,6 +241,23 @@ class SpikingNet {
       let any = false; for (let r = 0; r < n; r++) { const f = C[r] * inv[r] - k; P[r] = P[r] * d + (f > 0 ? a * f : 0); if (P[r] > 1e-9) any = true; }
       if (any) for (let i = this.riH0; i < this.riH1; i++) { if (id[i] < 0) continue; const x = P[id[i]]; if (x > 1e-9) { syn[i] -= x; if (mk) mk[i] = 1; } } }
   }
+  // R81 FIRING FATIGUE (global params, 0/undefined = off, bit-identical off; Travis: avoid generation loops):
+  //  sfa > 0: spike-frequency adaptation. Each spike of a hidden / output cell adds sfa (mV) to its adaptation current a, which
+  //   decays with sfaTau substeps (default 20) and is subtracted from the cell's input every substep. sfaOut 1 = output cells only.
+  //  fatGen 1: fatigue only while plasticity is off (free-running generation / frozen eval).
+  //  stdU > 0: short-term synaptic depression (Tsodyks-Markram, per presynaptic cell): a spike transmits ws x r (r = available
+  //   resource, starts 1), then r -= stdU r; r recovers toward 1 with stdTau substeps (default 50). Excitatory hidden cells only.
+  fatigue(spk, nSpk, syn, mk) { const N = this.N, o0 = this.g.nIn + this.g.nHid;
+    if (params.sfa > 0) { if (!this.sfA) { this.sfA = new Float32Array(N); this.sfL = []; } const a = this.sfA, d = Math.exp(-1 / (params.sfaTau > 0 ? params.sfaTau : 20)), lo = params.sfaOut > 0 ? o0 : this.g.nIn;
+      const L = this.sfL; let n = 0; for (let q = 0; q < L.length; q++) { const i = L[q]; a[i] *= d; if (a[i] > 1e-3) L[n++] = i; else a[i] = 0; } L.length = n;
+      for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (i < lo) continue; if (a[i] === 0) L.push(i); a[i] += params.sfa; }
+      for (let q = 0; q < L.length; q++) { const i = L[q]; syn[i] -= a[i]; if (mk) mk[i] = 1; } }
+    if (params.stdU > 0) { if (!this.stR) { this.stR = new Float32Array(N).fill(1); this.stL = []; } const r = this.stR, U = params.stdU, dR = 1 - Math.exp(-1 / (params.stdTau > 0 ? params.stdTau : 50));
+      const L = this.stL; let n = 0; for (let q = 0; q < L.length; q++) { const i = L[q]; r[i] += (1 - r[i]) * dR; if (r[i] < 0.999) L[n++] = i; else r[i] = 1; } L.length = n;
+      const st = this.start, ps = this.posts, ws = this.ws, nI = this.g.nIn;
+      for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (i < nI || i >= o0) continue; const lost = 1 - r[i];
+        if (lost > 0) for (let k = st[i], e = st[i + 1]; k < e; k++) { const w = ws[k]; if (w > 0) { const j = ps[k]; syn[j] -= w * lost; if (mk) mk[j] = 1; } }
+        if (r[i] === 1) L.push(i); r[i] -= U * r[i]; } } }
   stepFast() {
     const N = this.N, v = this.v, syn = this.syn, ext = this.ext, sp = this.spiked, th = this.thr || this.g.thresh, mk = this.mk, m32 = this.mk32, tv = this.tv;
     const spk = this.spk, t = ++this.subNo, R = V_REST, FL = V_FLOOR;
@@ -251,6 +268,7 @@ class SpikingNet {
     const nSpk = this.fDense ? this.neuDense() : this.neuFast(t);
 
     this.spikeCount += nSpk; this.nSpk = nSpk;
+    if ((params.sfa > 0 || params.stdU > 0) && !(params.fatGen > 0 && params.plasticity)) this.fatigue(spk, nSpk, syn, this.fDense ? null : this.mk);   // R81 firing fatigue (off by default)
     const start = this.start, posts = this.posts, ws = this.ws;
     if (this.rcv) {                          // receiver pool (as propagateRcv), touched cells marked
       const buf = this.synBuf, tg = this.synTgt, isR = this.isRcv, sP = this.synP, RL = this.rcv, p = this.p; let nR = 0;
@@ -598,6 +616,7 @@ class SpikingNet {
       syn[i] = 0;
     }
     this.spikeCount += nSpk; this.nSpk = nSpk;
+    if ((params.sfa > 0 || params.stdU > 0) && !(params.fatGen > 0 && params.plasticity)) this.fatigue(spk, nSpk, syn, this.fDense ? null : this.mk);   // R81 firing fatigue (off by default)
     const start = this.start, posts = this.posts, ws = this.ws;
     if (this.rcv) this.propagateRcv(spk, nSpk);   // v13 receiver-pool mechanisms (off by default)
     else for (let s = 0; s < nSpk; s++) { const i = spk[s];
