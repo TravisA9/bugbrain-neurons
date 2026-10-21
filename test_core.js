@@ -222,15 +222,16 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   console.log('v37 deepURSx3 = v36 + cortex lr 0.1 + striatum predErr 0.3: ok'); }
 { const S = require('./js/node_load.js')(); assert.ok(S.PARAM_DEFAULTS && S.params.fastEngine === 1 && S.DEFAULTS_VERSION >= 31, 'v38 (R69): fast engine (params.fastEngine 1) is the default');
   console.log('v38 fast engine default: ok'); }
+{ const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3.make(), O = S.PLANS.deepURSx3v40.make(); assert.ok(D.gran && D.gran.N === 2000 && !O.gran && S.params.granK === 3 && S.params.granTgt === 1 && S.APP_VERSION === 'v41' && S.DEFAULTS_VERSION >= 34, 'v41 (R84): deepURSx3 grows a 2000-cell granule layer; deepURSx3v40 kept'); console.log('v41 deepURSx3 granule layer: ok'); }
 { const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3v39.make(), O = S.PLANS.deepURSx3v37.make();
   assert.ok(D.regions.length === O.regions.length && D.regions.every((R, i) => JSON.stringify(Object.assign({}, R.g.pl, { lr: 0 })) === JSON.stringify(Object.assign({}, O.regions[i].g.pl, { lr: 0 }))
     && R.g.pl.lr === (R.name === 'cortex' ? 0.2 : O.regions[i].g.pl.lr)) && O.regions[0].name === 'cortex' && O.regions[0].g.pl.lr === 0.1
     && S.DEFAULTS_VERSION >= 32, 'v39 (R70, kept as deepURSx3v39): v37 plan with cortex lr 0.2 (other regions unchanged)');
   console.log('v39 deepURSx3v39 = v37 + cortex lr 0.2: ok'); }
-{ const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3.make(), O = S.PLANS.deepURSx3v39.make();
+{ const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3v40.make(), O = S.PLANS.deepURSx3v39.make();
   assert.ok(D.regions.length === O.regions.length && D.regions.every((R, i) => JSON.stringify(Object.assign({}, R.g.pl, { preNorm: 0 })) === JSON.stringify(Object.assign({}, O.regions[i].g.pl, { preNorm: 0 }))
     && R.g.pl.preNorm === (R.name === 'cortex' ? 55 : O.regions[i].g.pl.preNorm) && JSON.stringify(R.g.sc) === JSON.stringify(O.regions[i].g.sc)) && O.regions[0].name === 'cortex' && O.regions[0].g.pl.preNorm === 45
-    && S.DEFAULTS_VERSION === 33 && S.APP_VERSION === 'v40', 'v40 (R77): deepURSx3 = v39 plan with cortex preNorm 55 (other regions unchanged)');
+    && S.DEFAULTS_VERSION >= 33, 'v40 (R77, kept as deepURSx3v40): v39 plan with cortex preNorm 55 (other regions unchanged)');
   console.log('v40 deepURSx3 = v39 + cortex preNorm 55: ok'); }
 { const S = require('./js/node_load.js')(), E = S.setEnv('seq', S.recommendedEnvParams('seq', { source: 'order3', K: 8 }, ['source'])), D = S.PLANS.deepURSx3.make(), D1 = JSON.parse(JSON.stringify(D));
   D1.regions.forEach(R => Object.assign(R.g.sc, { sizeF: 1, sizeNorm: 1, divReach: 1, divRep: 1 }));   // R71 size-scaling genes at their neutral values

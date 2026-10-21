@@ -3455,3 +3455,19 @@ Whole-brain sizing keeps seqchoice (close to 1x) but has almost no book gain; co
 | <= 0.78 | rest (R77) | y38 blocked; long lives (flat), 8x without trophMin, rejected-knob arms | ~40 |
 Light jobs (ids with `_1x_`, memGB 0.6) are the ones tacobell can take (~13 slot-h, ~7-9 h at its 2 slots); linux-pc has ~17 est h of new heavy work plus ~45 est h older
 lower-priority jobs (several long lives that run longer than their estimate) -> ~6-9 h on linux-pc by estimate: the next review must add work.
+
+## R83-R85 — granule layer onto the outputs; **v41 adopted** (Oct 21, CT)
+- Diagnosis: the context areas hold t..t-4 (decodable >= 0.97) but the brain's own next-letter accuracy stayed at the bigram level (~0.29); prediction cells and outputs in the read window code the CURRENT letter.
+- R83 granule layer (P.granN, claws t / t-1) -> prediction cells: readout ceiling 0.33, own accuracy unchanged. Cerebellar rule onto prediction cells: no gain.
+- R83c granules -> OUTPUT cells (P.granTgt=1), NLMS cerebellar rule; fixed: those synapses were also learning by the eligibility rule (saturated). Info was lost by a timing mismatch (learned at letter onset, read earlier): P.granWin=1 uses the read-window spike counts. P.granGain: learned mixture gain (self-silences: psi ~0.03 on text, ~0.5 on book).
+- R84 P.granK=3 (adds t-2 claw), granN 2000: granule ceiling 0.41/0.42 (= 3-gram), own accuracy 0.334/0.312 (v40 0.297/0.289).
+- 16 fresh growths k 1940-1955 (box; y130-y132 were never claimed, tacobell worker stale), vs v40:
+
+| arm | order3 | text | fables | book10k | book30k |
+|---|---|---|---|---|---|
+| M3 (granK 2, 1000) | -0.052 (2/6) | -0.001 | +0.058 (13/3) | +0.137 (16/0) | +0.180 (16/0) |
+| **K3n2 (granK 3, 2000) = v41** | +0.003 (4/3) | +0.004 (9/7) | +0.087 (16/0) | +0.379 (16/0) | +0.381 (16/0) |
+| IR1k (K3n2 + granRef 1000 + granIso) | +0.019 (3/0) | -0.008 (3/11) | +0.104 (16/0) | +0.489 (16/0) | +0.477 (16/0) |
+
+- v41 = K3n2: plan gene d.gran.N = 2000 in deepURSx3 (old = deepURSx3v40), granule settings in params (used only by brains with a granule layer). IR1k is stronger on book but fails no-task-worse on text by a small consistent margin (-0.008, 3/11); queued for further work.
+- R85 text side effect: the granule->output plastic synapses made the outputs 'receivers' of the prediction-cell machinery (AHP / trust / pool); P.granIso=1 removes it (text = v40 exactly) but also removes part of the book gain.

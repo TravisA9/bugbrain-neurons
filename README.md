@@ -1,4 +1,4 @@
-# BugBrain (Spiking Arena) v40: grown spiking brains, any environment
+# BugBrain (Spiking Arena) v41: grown spiking brains, any environment
 
 **Repository:** https://github.com/TravisA9/bugbrain-neurons (private). Collaboration rules for agents: [COLLABORATION.md](COLLABORATION.md).
 
@@ -8,7 +8,7 @@ v7 splits the program into a **task-agnostic engine** and **environments** that 
 
 **Design principle:** always work toward the most biologically plausible *and* best-functioning designs: local, developmentally grown mechanisms that also measurably help.
 
-## How BugBrain works now (v40, October 2026)
+## How BugBrain works now (v41, October 2026)
 This section is the current summary. The sections further down are the reference for files and genes, and the round-by-round history
 (`Where things stand (round ...)`, `Round ...`) is kept as written at the time, so its "default" and "status" lines are out of date. Full numbers: [RESULTS.md](RESULTS.md); what is being tested next: [PRIORITIES.md](PRIORITIES.md).
 
@@ -39,7 +39,7 @@ scores on 16 growths per task (no task worse; 2-3x faster on book jobs). Use `P.
 24-symbol alphabet, held-out last 5% of each book; Node / workers only, not loaded by `index.html`), `fables`, `order3` (third-order sequence
 memory), `text` (small corpus), `seqchoice` (symbol-to-action pairings learned from reward).
 
-**Where it stands (held-out next-letter accuracy on book text).** v34 0.27 -> v37 0.32 -> v39 0.325-0.33 -> v40 about +0.001 more on book, +0.005 on order3 (16 fresh growths, 10k / 30k-letter lives). A linear readout
+**Where it stands (held-out next-letter accuracy on book text).** v34 0.27 -> v37 0.32 -> v39 0.325-0.33 -> v40 about +0.001 more on book, +0.005 on order3 (16 fresh growths, 10k / 30k-letter lives). v41 adds a cerebellum-like granule layer (2000 cells, each a sparse conjunction of the letters t, t-1, t-2) wired onto the output cells and learned by a cerebellar error rule with a self-silencing gain: book +0.38 points, fables +0.09, order3 / text unchanged, seqchoice identical (16 fresh growths); the brain's own book accuracy rises to about 0.33-0.36 (the granule layer's own readout ceiling is about 0.41, the 3-gram level). A linear readout
 trained directly on the brain's own activity reaches about 0.40, so the learning rule leaves room. A "last two letters" counter gets 0.43-0.52.
 Generation is babble with some real words (about 56-74% of generated words are real words, depending on the sampling policy).
 

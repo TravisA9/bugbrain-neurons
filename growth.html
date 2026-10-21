@@ -304,6 +304,11 @@
   <p><b>v40: a larger presynaptic budget in the cortex.</b> Each cell projecting onto the cortex keeps a fixed total of outgoing plastic weight;
     v40 raises it from 45 to 55. Small but clean: on 16 fresh growths no task was worse (order3 +0.005 on 8 of 8 changed growths, book and fables +0.001 to +0.002).
     Larger budgets (65, 80) trade fables for book. In a 4&times; cortex the larger budget costs order3, so scaled runs keep 45.</p>
+  <p><b>v41: a granule layer (cerebellum analogue).</b> 2000 extra cells, each taking one letter column from the current letter, the previous one and the one
+    before (a sparse three-letter conjunction), project onto the output cells. Those synapses learn by a cerebellar error rule (normalised delta rule) at each
+    new letter, using each granule's activity during the read window, and a learned gain turns the whole pathway down when it does not reduce the outputs' error
+    (so it stays near zero on small or simple tasks). On 16 fresh growths: book +0.38 points (16/16), fables +0.09 (16/16), order3 and text unchanged, seqchoice
+    identical (no granules on reward tasks). Old brain: plan <code>deepURSx3v40</code>.</p>
   <p>Honest status (October 2026): <code>deepURSx3</code> is the default for text, sequences and seqchoice. On real book text it predicts the
     next letter about 33% of the time on held-out text; a readout trained directly on its own activity reaches about 40%, so the learning
     rule leaves room. Bigger brains (4&times; the cells, with axon reach and growth speed scaled to the bigger sheet) gain about 2 points on

@@ -112,7 +112,8 @@ function growRegions(d, opts) {
   // granK sources (the output region's current-symbol memory cells cls 0 = t at read time (granC0), its M2 cells cls 2 = t-1, the first other region's cls 2 = t-2),
   // total weight granW, threshold / leak of a mixing cell (needs the coincidence), its own feedforward inhibition (granInh mV per granule
   // spike onto every granule cell, net.js), and plastic synapses onto every taught prediction cell (normalised like the other plastic inputs).
-  const nG = params.granN > 0 && parts.length > 1 && !envSpec.outcome ? Math.round(params.granN) : 0, gOff = off;   // (outcome tasks: no granule layer, like the outcome-repressed context areas)
+  const gN = params.granN != null ? params.granN : d.gran && d.gran.N > 0 ? d.gran.N : 0;   // v41: plan gene d.gran.N (deepURSx3), P.granN overrides
+  const nG = gN > 0 && parts.length > 1 && !envSpec.outcome ? Math.round(gN) : 0, gOff = off;   // (outcome tasks: no granule layer, like the outcome-repressed context areas)
   const nHid = off - nIn + nG, G = createNetGenome(nIn, nHid, nOut, true), N = G.N, acc = new SynAcc(1 << 16);
   const node = (p, i) => i < p.g.nIn ? (typeof p.map[i] === 'number' ? p.map[i] : -1) : i < p.g.nIn + p.g.nHid ? p.off + i - p.g.nIn : ((p === outPart || p.R.vote) ? nIn + nHid + i - p.g.nIn - p.g.nHid : -1);   // R43 (I53) vote: a module's own output copy sums onto the shared outputs
   G.pos = new Array(N); G.cellType = new Int16Array(N); G.region = new Uint8Array(N); G.topo = new Float32Array(N).fill(NaN);
@@ -212,7 +213,7 @@ function growAreal(d, opts) {
   if (idx.length === 1 && d.regions[idx[0]].whole) {
     G = growCell(scaled(d.regions[idx[0]], idx[0]).g, opts);
   } else {
-    const sub = { kind: 'regions', label: d.label, seed: d.seed,
+    const sub = { kind: 'regions', label: d.label, seed: d.seed, ...(d.gran ? { gran: d.gran } : {}),
       regions: idx.map(k => Object.assign({}, scaled(d.regions[k], k), { outputs: k === own })),
       tracts: (d.tracts || []).filter(T => on[T.from.region] && on[T.to.region]).map(T => { const t = JSON.parse(JSON.stringify(T)); t.from.region = idx.indexOf(T.from.region); t.to.region = idx.indexOf(T.to.region); return t; }) };
     G = growRegions(sub, Object.assign({}, opts, { noAreal: true }));
@@ -223,7 +224,7 @@ function growAreal(d, opts) {
 function cloneRegions(d) {
   return { kind: 'regions', label: d.label || '', seed: d.seed, fitness: null, tracts: JSON.parse(JSON.stringify(d.tracts || [])),
            regions: d.regions.map(R => Object.assign({ name: R.name, color: R.color, inputs: JSON.parse(JSON.stringify(R.inputs)), outputs: !!R.outputs, g: cloneCell(R.g) }, R.area ? { area: Object.assign({}, R.area) } : {}, R.whole ? { whole: true } : {})),
-           ...(d.areal ? { areal: 1 } : {}), ...(d.graded ? { graded: 1, gMin: d.gMin } : {}) };
+           ...(d.areal ? { areal: 1 } : {}), ...(d.graded ? { graded: 1, gMin: d.gMin } : {}), ...(d.gran ? { gran: Object.assign({}, d.gran) } : {}) };
 }
 function regionsOf(d) { return d && d.kind === 'regions' ? d.regions : null; }
 Object.assign(SpikingArena, { SynAcc, attachSparse, arealSignals, areaExpr, growAreal, cloneRegions, growRegions, regionSpec, regionsOf });
