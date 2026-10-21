@@ -34,7 +34,9 @@ R.native = +(tst.reduce((s, e) => s + T.hits[e.t], 0) / tst.length).toFixed(4);
 for (const n of [1, 2, 3, 4]) { const tab = new Map(), key = t => seq.slice(t - n + 1, t + 1).join(','); for (let t = n; t < N + RN - 1; t++) { const kk = key(t); if (!tab.has(kk)) tab.set(kk, new Float64Array(K)); tab.get(kk)[seq[t + 1]]++; }
   (R.tabs = R.tabs || [])[n] = tab; let h = 0; for (const e of tst) { let bk = -1; for (let m = n; m >= 1 && bk < 0; m--) { const r = R.tabs[m].get(seq.slice(e.t - m + 1, e.t + 1).join(',')); if (r) { bk = 0; for (let j = 1; j < K; j++) if (r[j] > r[bk]) bk = j; } } if (bk === seq[e.t + 1]) h++; } R['gram' + (n + 1)] = +(h / tst.length).toFixed(4); }
 delete R.tabs;
-const groups = { all: i => true, mixing: i => !!(mix && mix[nIn + i]) }; names.forEach((nm, r) => { groups[nm] = i => rg[nIn + i] === r && !(mix && mix[nIn + i]); });
+const gr = brain.gran, isG = i => !!(gr && gr[nIn + i]); R.granStats = brain.granStats || null;
+const groups = { all: i => true, noGran: i => !isG(i), mixing: i => !!(mix && mix[nIn + i]) }; if (gr) groups.gran = isG; if (process.env.BB_CLS) { const ct = brain.cellType; for (const r of [0, 1]) for (let c = 0; c < 16; c++) groups['r' + r + 'c' + c] = i => rg[nIn + i] === r && ct[nIn + i] === 16 + c && !(mix && mix[nIn + i]) && !isG(i); }
+names.forEach((nm, r) => { groups[nm] = i => rg[nIn + i] === r && !(mix && mix[nIn + i]) && !isG(i); });
 for (const g in groups) { const sel = new Uint8Array(nHid); let nc = 0; for (let i = 0; i < nHid; i++) if (groups[g](i)) { sel[i] = 1; nc++; } if (!nc) continue;
   const o = R.regions[g] = { cells: nc, act: +(tst.reduce((s, e) => s + e.c.reduce((x, i) => x + sel[i], 0), 0) / tst.length).toFixed(1) };
   o.next = oracle(sel, t => seq[t + 1]); for (let lag = 0; lag <= 6; lag++) o['b' + lag] = oracle(sel, t => seq[t - lag]); }

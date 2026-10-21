@@ -72,6 +72,24 @@ function attachSparse(G, sp) {              // G.W / P / C: dense on first read 
     get() { mat(); return M[key]; }, set(v) { M.done = true; M[key] = v; if (v === null) G.sp = null; } });
   return G;
 }
+function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed) {
+  const oi = parts.indexOf(outPart), og = outPart.g, K = Math.max(1, Math.min(3, Math.round(params.granK || 2))), W = params.granW > 0 ? params.granW : 80;
+  let mi = -1; for (let i = og.nIn; i < og.nIn + og.nHid; i++) if (og.mix && og.mix[i]) { mi = i; break; }
+  const th = params.granThr > 0 ? params.granThr : mi >= 0 ? og.thresh[mi] : 20, lk = mi >= 0 ? og.leak[mi] : 0.9;
+  const other = parts.find(p => p !== outPart), srcs = [[outPart, params.granC0 >= 0 ? params.granC0 : 0], [outPart, 2], [other, 2]].slice(0, K);
+  const colsOf = ([p, c]) => { const m = new Map(); for (let i = p.g.nIn; i < p.g.nIn + p.g.nHid; i++) if (p.g.cellType[i] === N_FIXED + c && p.g.topo && !isNaN(p.g.topo[i])) { const k = Math.round(p.g.topo[i] * 1e4); if (!m.has(k)) m.set(k, []); m.get(k).push(node(p, i)); } return m; };
+  const C = srcs.map(colsOf), r = mulberry32((seed ^ 0x6a7a11) >>> 0);
+  G.gran = new Uint8Array(G.N);
+  for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk;
+    for (const m of C) { const keys = [...m.keys()]; if (!keys.length) continue; const S = m.get(keys[(r() * keys.length) | 0]), ws = W / K / S.length; for (const A of S) acc.add(A, b, ws, 0, 0); } }
+  // taught prediction cells: cells of the output region with plastic inputs that an env input contacts
+  const pl = new Uint8Array(G.N), ins = new Uint8Array(G.N);
+  for (let k = 0; k < acc.n; k++) { const b = acc.b[k]; if (b < nIn || b >= nIn + nHid || G.region[b] !== oi) continue; if (acc.p[k]) pl[b] = 1; if (acc.a[k] < nIn && acc.w[k] > 0) ins[b] = 1; }
+  const P = []; for (let b = nIn; b < nIn + nHid; b++) if (pl[b] && ins[b] && !G.gran[b]) P.push(b);
+  const wo = params.granOut > 0 ? params.granOut : 0.1;
+  for (let j = 0; j < nG; j++) for (const b of P) acc.add(gOff + j, b, wo, 1, 0);
+  G.granStats = { cells: nG, K, thr: th, pred: P.length };
+}
 const inhib = (g, i) => { const n = g.N; for (let b = 0; b < n; b++) if (g.W[i * n + b] < 0) return true; return false; };   // a cell with an inhibitory synapse
 function growRegions(d, opts) {
   opts = opts || {};
@@ -87,7 +105,13 @@ function growRegions(d, opts) {
   // bit 2: claw / topo tracts (context columns -> mixing, M2 -> context): each target keeps ~S / f of the column's cells at f x weight;
   // bit 4: plastic synapses inside a sized region (C / mixing -> prediction) kept with probability 1 / f at f x strength.
   const thF = params.thinF | 0, hash01 = (a, b, s) => { let h = (Math.imul(a, 0x9e3779b1) ^ Math.imul(b + 0x632be5ab, 0x85ebca6b) ^ (s | 0)) >>> 0; h = Math.imul(h ^ (h >>> 16), 0x7feb352d) >>> 0; h = Math.imul(h ^ (h >>> 15), 0x846ca68b) >>> 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
-  const nHid = off - nIn, G = createNetGenome(nIn, nHid, nOut, true), N = G.N, acc = new SynAcc(1 << 16);
+  // R83 GRANULE LAYER (global param granN, 0/undefined = off, bit-identical off): a dedicated combination population of granN cells
+  // (cerebellar-granule-like), appended after the grown hidden cells. Each granule cell takes a sparse claw: ONE letter column from each of
+  // granK sources (the output region's current-symbol memory cells cls 0 = t at read time (granC0), its M2 cells cls 2 = t-1, the first other region's cls 2 = t-2),
+  // total weight granW, threshold / leak of a mixing cell (needs the coincidence), its own feedforward inhibition (granInh mV per granule
+  // spike onto every granule cell, net.js), and plastic synapses onto every taught prediction cell (normalised like the other plastic inputs).
+  const nG = params.granN > 0 && parts.length > 1 && !envSpec.outcome ? Math.round(params.granN) : 0, gOff = off;   // (outcome tasks: no granule layer, like the outcome-repressed context areas)
+  const nHid = off - nIn + nG, G = createNetGenome(nIn, nHid, nOut, true), N = G.N, acc = new SynAcc(1 << 16);
   const node = (p, i) => i < p.g.nIn ? (typeof p.map[i] === 'number' ? p.map[i] : -1) : i < p.g.nIn + p.g.nHid ? p.off + i - p.g.nIn : ((p === outPart || p.R.vote) ? nIn + nHid + i - p.g.nIn - p.g.nHid : -1);   // R43 (I53) vote: a module's own output copy sums onto the shared outputs
   G.pos = new Array(N); G.cellType = new Int16Array(N); G.region = new Uint8Array(N); G.topo = new Float32Array(N).fill(NaN);
   for (let i = 0; i < nIn; i++) { G.pos[i] = envSpec.inputs[i].pos; G.cellType[i] = envSpec.inputs[i].cls; G.region[i] = 255; }
@@ -138,6 +162,7 @@ function growRegions(d, opts) {
     }
     tractStats.push({ name: T.name, from: src.R.name, to: dst.R.name, columns: cols.size, synapses: nSyn });
   }
+  if (nG) granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed);
   attachSparse(G, acc.finish(N, params.wMax));   // (+ the wMax cap of the old dense merge)
   gcHint();
   const og = outPart.g; G.pl = og.pl; G.nCh = og.nCh; G.ch = og.ch.map(c => Object.assign({}, c));

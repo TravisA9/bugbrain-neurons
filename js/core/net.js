@@ -289,6 +289,7 @@ class SpikingNet {
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];
       if (n && this.mlS) { const S = this.mlS, P = this.mlP, D = this.mlD; for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = S[i], e = S[i + 1]; k < e; k++) { syn[P[k]] -= D[k]; if (!this.fDense) mk[P[k]] = 1; } } }
       else if (n) { const d = this.mixInhD * n, ml = this.mixList; if (this.fDense) for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d; else for (let q = 0; q < ml.length; q++) { syn[ml[q]] -= d; mk[ml[q]] = 1; } } }
+    if (this.g.gran) this.granInh(spk, nSpk, syn, this.fDense ? null : mk);   // R83 granule feedforward inhibition
     if (this.mxStart && params.plasticity && this.thr && !this.mixFrozen()) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr;
       if (ml) { if (this.fDense) for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); }
         else for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); if (thr[i] <= (v[i] > R ? v[i] : R)) mk[i] = 1; } } }   // (a threshold that adapted down to the potential: the cell must be looked at)
@@ -495,6 +496,13 @@ class SpikingNet {
   // R82 mixFreeze (pl.mixFreeze substeps, 0 = off, bit-identical off): the mixing cells' adaptive (homeostatic) thresholds stop
   // adapting after mixFreeze learning substeps (warm-up); every other rule, including the prediction synapses, keeps learning.
   mixFrozen() { const F = this.p.mixFreeze; if (!(F > 0)) return false; this.mfT = (this.mfT || 0) + 1; return this.mfT > F; }
+  granInh(spk, nSpk, syn, mk) {              // R83: every granule spike inhibits every granule cell by granInh (shared Golgi-like pool)
+    if (!this.granL) { const L = []; for (let i = 0; i < this.N; i++) if (this.g.gran[i]) L.push(i); this.granL = Int32Array.from(L); }
+    const gr = this.g.gran; let n = 0; for (let s = 0; s < nSpk; s++) n += gr[spk[s]];
+    if (params.granRate > 0 && params.plasticity) { const sp = this.spiked, h = params.granHomeo > 0 ? params.granHomeo : 0.5, r0 = params.granRate, T = this.thr || this.g.thresh, L = this.granL;   // R83 granule homeostatic threshold
+      for (let q = 0; q < L.length; q++) { const i = L[q]; T[i] += h * (sp[i] - r0); if (mk) mk[i] = 1; } }
+    if (!(params.granInh > 0) || !n) return;
+    const d = params.granInh * n, L = this.granL; for (let q = 0; q < L.length; q++) { syn[L[q]] -= d; if (mk) mk[L[q]] = 1; } }
   deltaInit() {
     const N = this.N, nIn = this.g.nIn, rc = new Uint8Array(N), inS = this.inStart, inE = this.inEdges, isP = this.isPlastic, w0 = this.w0, iI = this.instrIn;
     const pl = new Uint8Array(N); for (let i = nIn; i < N; i++) for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (isP[k] && w0[k] > 0) { pl[i] = 1; break; } }
@@ -569,6 +577,7 @@ class SpikingNet {
     const ws = this.ws, wMax = params.wMax, st = this.npStart, idx = this.npIdx, a = st[i], e = st[i + 1]; let s = 0;
     for (let q = a; q < e; q++) s += ws[idx[q]];
     if (s <= 0) return; let f = this.p.preNorm * ((params.trophic & 1) ? (this.trF || this.trophicS())[i] : (params.trophic & 4) ? (this.trStr || this.trophicStr())[i] : 1) / s;   // R73 trophic bit 1: a cell of a region grown f x larger has a 1/f outgoing budget (receivers share a fixed trophic supply)
+    if (this.g.gran && this.g.gran[i] && params.granBud > 0) f *= params.granBud;   // R83 granBud: granule cells' plastic output budget x granBud (gentle addition to the prediction cells' input)
     if (this.p.confPow > 0) { let s2 = 0; for (let q = a; q < e; q++) { const w = ws[idx[q]]; s2 += w * w; }   // v12 confidence gain
       f *= Math.min(this.p.confMax, Math.pow((e - a) * s2 / (s * s) / this.p.confRef, this.p.confPow)); }
     if (this.trust) f *= Math.min(this.p.trustMax, Math.pow(this.trust[i] / this.p.trustRef, this.p.trustPow));   // v12 learned trust
@@ -670,6 +679,7 @@ class SpikingNet {
     if (this.mxStart && params.plasticity) {   // v15 learned mixing (unsupervised competitive rule + homeostatic threshold)
       const mx = this.g.mix; if (this.p.mixLr > 0) for (let s = 0; s < nSpk; s++) if (mx[spk[s]]) this.mixLearn(spk[s]);
       if (this.thr && !this.mixFrozen()) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr; for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); } } }
+    if (this.g.gran) this.granInh(spk, nSpk, syn, null);   // R83 granule feedforward inhibition
     if (this.ng) this.needTrace(spk, nSpk);   // v28 need-growth source traces
     if (this.teachTr) {                     // teacher events: smoothed drive from sensory (input) neurons
       const drv = this.drv, nIn = this.g.nIn, tT = this.teachTr, thr = this.p.teachThr, q7 = this.dtF ? this.t7 : 0.7;
