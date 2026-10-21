@@ -1,4 +1,36 @@
-# PRIORITIES (R77, Oct 20 2026, ~8 AM CT; **v40 / DEFAULTS_VERSION 33** — v40 = v39 + cortex preNorm 55; fast engine default since v38)
+# PRIORITIES (R79, Oct 20 2026, ~7:45 PM CT; **v40 / DEFAULTS_VERSION 33** unchanged — v40 = v39 + cortex preNorm 55; fast engine default since v38)
+
+## R79 update (queue review, evening)
+- **No adoption.** v40 held its second fresh check (y89 k 1700-1715: no task significantly worse). Weak 1x candidate: mixInh 0.35 (order3 +0.006, t 2.0; text -0.002 n.s.) -> y105 ladder (32 fresh growths).
+- **Size, Travis's opposite-varying patch confirmed:** trophMin@cortex = 0.005 / f keeps order3 K4 at 1x level on 16 FRESH growths (0.981 vs 0.986; untreated 0.090) and turns 8x
+  order3 0 -> 0.766, text 0.565 -> 0.777; book / text are bit-identical with or without it (a pure fix).
+- **The compensated size curve peaks at 3x-4x:** book30k vs 1x cx2 +0.003, cx3 +0.025, cx4 +0.031 (16/0; fresh +0.034 16/0), cx8 +0.023 (book10k, n 8) — 8x is below 4x (fables -0.012, 0/8).
+  cx3 is the efficient point (= cx4 on book within 0.006, text +0.017 14/2, ~70 % of the cost). Fresh cx3 check = y98.
+- **Two failures remain, and they look like one fault:** order3 K8 -0.08..-0.19 at every size and seqchoice collapsed under cortex-only divRep. R78: order3 = pooled mixing inhibition grows ~f
+  (P.mixInhRef restores order3 but costs text). R79 census: seqchoice = the striatum's cortex input spread over 14x more, 14x weaker synapses (487 -> 6905, same total), so the striatum
+  echoes its input (accuracy below chance). In both, a sized region projects onto a fixed-size receiver and normalising the TOTAL makes each synapse f-times weaker.
+  Proposed patch (I98, not yet coded): keep per-synapse strength / afferent count at the 1x value (thin the projection ~1/f).
+- **Generation measured for the first time:** greedy = ~95 % spaces; T0.7 ~70 % valid words, 33 % non-space (real ~80 %), trigram surprise 6 bits vs 2.4; gates trade content for validity.
+- **Length:** still flat at size (book100k / 300k +0.005 / +0.008 vs 1x; fables 8000 / 12000 = the 4000 gain).
+
+## Ranked open questions (R79)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I98 / Q46 | Sized-source -> fixed-receiver dilution: which region must grow with the cortex for seqchoice; does thinning the projection ~1/f (code) fix seqchoice and order3 without the text cost of mixInhRef? | y110, y97, y96; box: write the gene |
+| 2 | I97 | mixInhRef on the best book brain (cx4 divRep + trophMin): order3 back, text cost? | y97a/b |
+| 3 | I95 | Where does the curve peak (cx6), is 8x really below 4x (24 growths), cx3 on fresh seeds, lr / preNorm / divRep 3 at size | y98, y99, y100-y102, y112 |
+| 4 | Q42 | The ~10k plateau / 0.40 oracle: readIn, metaN, length with the divRep brain | y107, y109, y103, y111 |
+| 5 | I96 | 1x mixInh below 0.5 as v41 | y105a-d |
+| 6 | I72 | Generation: 1x and cx4 divRep with T0.7 / gate | y106, y104 |
+Decision point (for Travis) unchanged: no large run until a scaled brain keeps order3 within 0.02 of 1x and seqchoice within noise while keeping the book gain. Today's best: cx4 divRep +
+trophMin has the book gain (+0.034 fresh) but order3 -0.12 and seqchoice ~0.1-2 of 9.
+
+## Worker notes (R79)
+linux-pc: healthy (26 jobs since 7:37 AM, no restarts), on y36 (4xS book300k) since 6:25 PM; updates to the R79 code before its next claim. tacobell: healthy, light-only since R78
+(2 slots, cpuMax 60, maxMemGB 1); it sat idle from 7:21 PM until the R79 light jobs (y105-y109, ~13 slot-h). Queue after R79: linux-pc ~6-9 h, tacobell ~7-9 h by estimate.
+
+## Previous header (R77)
+PRIORITIES (R77, Oct 20 2026, ~8 AM CT; **v40 / DEFAULTS_VERSION 33** — v40 = v39 + cortex preNorm 55; fast engine default since v38)
 
 ## R77 update (queue review, morning)
 - **Adopted v40** (standing authorisation): preNorm@cortex 55 passed on 16 fresh growths (y83: no task worse; order3 +0.005 8/0, book / fables +0.001-0.002). Old brain = `deepURSx3v39`.

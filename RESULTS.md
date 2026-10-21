@@ -3341,3 +3341,117 @@ generation jobs y18 / y53 / y78 now run `run/gen.js` (R77).
 | <= 0.67 | rest | 16-48-growth repeats of established arms, long lives (y36 / y54 / y55 / y70 / y74-y76: length is flat), 8x without trophMin (y61 0.6, y52 0.55, y77 0.5), rejected-knob arms (0.45-0.5) | ~240 |
 | blocked | y38 | rule knobs on growths 16-31 (all settled) | - |
 Runnable after R77: ~44 jobs, ~300 est slot-h; linux-pc ~10 and tacobell ~1.75 est slot-h per hour -> ~25 h together; the R77 jobs (~21 slot-h) first, ~2 h on linux-pc.
+
+## R79 — queue review (Oct 20, 7:20 PM CT): no adoption (v40 / 33 stays); **trophMin / f holds on 16 fresh growths**, the compensated size curve peaks at 3x-4x (book30k +0.031, 32/0), 8x falls back
+State found: R77 (7:52 AM) pushed afb4f3. A box work session R78 (5:30-7:30 PM CT, notes in /workspace/r78/PROGRESS.md on the box) pushed code 1f587db (worker-config `maxMemGB`) and
+040cf14 (`P.mixInhRef` / `P.mixInhPow`, off by default) plus queue jobs y92a/b, y93, y95a/b, y96, and set tacobell to light jobs only (2 slots, cpuMax 60, maxMemGB 1,
+skips 3x+ / cx4 / cx8 / long / y92). R78 wrote no RESULTS entry; its box findings are summarised in section 4. At this review a further R78b box screen (`P.mixInhLocal`,
+uncommitted in the box worktree) was still running; it is not touched or reported here beyond the notes.
+31 jobs finished since R77: y34, y51a/b, y89a/b, y90a/b, y91, y50a, y73, y39a/b, y61c, y18, y53, y78, y92a/b, y21, y69a/b, y37a/b, y57, y59, y61, y71, y93, y95a/b.
+Cells: accuracy diff (wins / losses, paired t), paired by growth; seqchoice in fitness units (0-10).
+
+### 1. Workers (7:30 PM CT)
+- linux-pc (ExplodingRumba, supervised, code 1f587db): alive. Running y36_4xS_book300k (claimed 6:25 PM, renewed 6:55 and 7:25 PM); 26 jobs since 7:37 AM, no release / restart,
+  crashSkip empty. It updates to the newest code before its next claim (dq.js codeCheck), so it picks up 040cf14 / the R79 commit after y36.
+- tacobell (TacoBell, supervised, code 040cf14): alive, **idle since 7:21 PM** — y95b (its last eligible job) finished and every other pending job matches its light-only skip
+  list. One `release y92b (restarted)` at 5:35 PM: that was R78's deliberate forceVersion bump moving y92b to linux-pc, not a crash. No crash loops on either worker. No phone.
+
+### 2. Size: Travis's opposite-varying patch (trophMin = 0.005 / f) holds up; the size curve peaks at 3x-4x
+**Fresh seeds (y89, k 1700-1715, 16 growths), cortex 4x divRep 2 + trophMin/4 (preNorm 45) vs 1x v40:**
+| book10k | book30k | fables4000 | order3 | text1000 | seqchoice order2 / cycle | order3 K4 (vs v39) |
+|---|---|---|---|---|---|---|
+| **+0.034 (16/0, 9.8)** | **+0.034 (16/0, 15.5)** | **+0.037 (16/0, 13.8)** | -0.119 (0/16, -9.4) | +0.001 (10/6) | 0.12 / 0.12 vs 6.1 / 8.9 | 0.981 vs 0.986 (1/14; untreated cx4 0.090) |
+The divRep book gain replicates exactly on fresh seeds (growths 0-7 had +0.033). Book30k 0.367 (1x 0.332).
+**Compensated curve (y90 growths 0-15, y91 growths 0-7), cortex divRep 2 + trophMin 0.005/f, vs 1x (v39 preNorm 50 refs, y84):**
+| size | book10k | book30k | fables4000 | order3 | text1000 | K4 | seqchoice cycle (1x 9.1) |
+|---|---|---|---|---|---|---|---|
+| 2x | +0.006 (10/6) | +0.003 (8/8) | +0.013 (15/1) | -0.077 (0/16) | -0.003 | 0.983 | 1.64 |
+| 3x | **+0.027 (16/0)** | **+0.025 (16/0)** | **+0.027 (16/0)** | -0.093 (0/16) | **+0.017 (14/2, 4.4)** | 0.984 | 1.69 |
+| 4x | **+0.031 (16/0)** | **+0.031 (16/0)** | **+0.033 (16/0)** | -0.106 (0/16) | +0.004 (10/6) | 0.982 | 0.29 |
+| 8x (n 8) | +0.023 (8/0) | - | +0.020 (8/0) | -0.188 (0/8) | +0.018 (6/2) | - | - |
+- 4x vs 3x: book +0.004 / +0.006 (10/5, 13/3), fables +0.006 (14/2), text **-0.013 (2/14)**. 8x vs 4x (growths 0-7): book10k -0.006 (2/6), **fables -0.012 (0/8)**, order3 -0.084,
+  text +0.014 (8/0). So **4x (and 3x) beat 1x and 2x clearly on book; 8x beats 1x but not 4x**. The curve is not monotone past 4x even with nothing starving.
+- trophMin is a pure fix: at cx4 divRep book / fables / text are **bit-identical** with and without it (0/0 changes), order3 +0.239 (16/0), cx4 (no divRep) K4 0.798 vs 0.090 (16/0),
+  8x order3 0.000 -> 0.766 and text 0.565 -> 0.777 (8/0 each). It removes the starvation failure; it does not touch the residual order3 K8 loss or seqchoice.
+- Still failing at every size: **order3 K8 (-0.08 to -0.19)** and **seqchoice under cortex-only divRep (0.1-1.7 of 9)**.
+
+**Combinations (y92, k 1800-1815, vs 1x v40):**
+| arm | book10k | book30k | fables | order3 | text | so2 | cycle |
+|---|---|---|---|---|---|---|---|
+| all-region 2x + sizeCone + recvBudget2 + trophMin/2 | +0.005 | +0.003 | -0.001 | -0.143 (0/16) | -0.015 (5/11) | -0.04 | +0.09 |
+| all-region 4x + same | +0.006 | +0.005 | +0.005 | **-0.230 (0/16)** | +0.006 | -1.28 (5/11) | -1.35 (6/10) |
+| cortex 2x divRep + trophMin + sizeCone + recvBudget2 | +0.007 (12/4) | +0.005 | +0.007 (12/4) | -0.082 (2/14) | -0.007 | -3.90 | -6.99 |
+| cortex 4x divRep + trophMin + sizeCone + recvBudget2 | **+0.031 (16/0)** | **+0.030 (16/0)** | **+0.033 (16/0)** | -0.130 (0/16) | +0.002 | -3.98 | -6.90 |
+Whole-brain sizing keeps seqchoice (close to 1x) but has almost no book gain; cortex divRep has the book gain but loses seqchoice. Nobody has both yet.
+
+**Other size results**
+- 2xS fresh (y34, k 1200-1215, lr 0.1) vs 1x (n 8 paired): book +0.026 / +0.027 (7/1), fables +0.018, order3 -0.177, text -0.023 (1/7), seqchoice 1.6. 3xS fresh (y39 + y21, 32 growths): book
+  only +0.008-0.010 vs 1x (n 8, n.s.), -0.010 vs 2xS, -0.017 vs 4xS (1/15), order3 -0.23: the grid-scaled 3x point is oddly weak; cortex divRep is the better size route anyway.
+- Cortex 4x + fanRef, growths 16-31 (y51) vs 1x lr 0.2: book +0.014 / +0.013 (14/2, 13/3), fables +0.008, order3 -0.116 (0/16), seqchoice 2.9 / 3.6. Growths 32-47 R72 fix (y69): book
+  +0.007 / +0.004 (n.s.), order3 -0.120, text -0.018 (3/12), cycle -1.98 (0/16). cx3 fix (y73): book -0.006, text -0.014, seqchoice 2.8 / 3.5 (fix does not transfer to 3x, as y66).
+- 4xS by region, growths 16-31 (y37): all book +0.019 (14/2), order3 -0.237; cortex only book +0.018, order3 -0.174, seqchoice 2.7 / 3.3; context only book -0.002, **order3 -0.221**,
+  seqchoice = 1x. Same picture as growths 0-15 (y10).
+- 4xS fanRef 300 / R60 (y57) = 4xS lr 0.2 (order3 +0.005, fables -0.004): stronger fan-in normalisation does nothing for the whole-brain loss. Context 4x + fanRef (y59): book -0.010 /
+  -0.012 (1/15), order3 -0.228; + sizeNorm 4 worse again (text -0.023 0/16): **sizeNorm rejected a third time.**
+- cx8 divRep without trophMin, growths 8-15 (y61): order3 0.000 (8/8), text 0.566: the starvation failure replicated (and fixed by y91).
+- cx4 divRep2 fanRef growths 8-15 (y61c, no trophMin): book +0.032 (8/0), fables +0.035, order3 -0.284 vs 1x — with y46c: 16 growths, book +0.031.
+
+### 3. Length and generation
+- cx4 + fanRef long (y50a + y50b, k 1400-1407, 8 growths) vs 1x v39 same growths: book100k +0.005, book300k +0.008. cx4 fix fables 8000 / 12000 (y71) vs 1x (y17, growths 0-7): +0.011 / +0.012
+  (= the 4000-symbol gain). **No length effect** at size either.
+- **Generation (first real numbers; run/gen.js metrics are in registry/<id>.jsonl `stats`, the queue `mean` is only teacher-forced accuracy):** after book30k, cx4 + fanRef (y53,
+  16 growths) greedy = 94 % spaces (word-valid 0.19, distinct 4-grams 0.008); T0.7 word-valid 0.74, distinct4 0.29, 33 % non-space (real text ~80 %), trigram surprise 6.0 bits vs 2.4 for real
+  text, longest copied run 9 chars. R72 fix (y78) the same (greedy 95 % spaces; T0.7 0.69 / 0.32). 4xS (y18): T1 word-valid 0.60, distinct4 0.70, 58 % non-space; gate 0.2 (mode 1)
+  word-valid 0.84 but 66 % spaces; gate 0.4 + T0.7 0.86 / 77 % spaces. **Generation is space-dominated babble with some real short words**: the model's most likely next symbol is
+  almost always a space, so sampling is needed, and the gate trades content for validity. Teacher-forced accuracy (~0.34-0.35) is unchanged by all of these.
+
+### 4. R78 box session (5:30-7:30 PM CT; summary of /workspace/r78/PROGRESS.md, not re-run here)
+- **Root cause of the order3 K8 size loss:** mixing-cell feedforward inhibition = mixInh x the raw count of presynaptic spikes in the pool; the pool grows ~f (live net 1x / 2x / 4x:
+  ~810 / 1589 / 2880) while mixing excitation is normalised, so the mixing cells go quiet (4x: 10 % active vs 49 % at 1x) and the context signal no longer reaches the predictor readout,
+  although it is fully decodable in the mixing cells (4x decode 100 %). Gene `P.mixInhRef` (per-spike inhibition x ref / pool when the pool > ref; ref 850 = bit-identical at 1x),
+  pushed as 040cf14. Box 8-growth screen (k 1800-1807) vs the y92 combo: 4x order3 +0.18 (8/0) but **text -0.033 (0/8)**, fables -0.010, book -0.006; 2x order3 +0.06, text -0.012.
+  pow 0.5: order3 +0.08, text -0.023. A per-cell local version (R78b) hurt 1x text at every setting: text seems to need layer-wide competition. -> trade-off, not yet a fix.
+- y95a/b (1x, k 1816-1831, 16 growths): mixInh 0.35 vs 0.5 order3 +0.006 (7/3, t 2.0), text -0.002 (5/10), book / fables 0; mixInh 0.7 order3 -0.063 (0/16). y96 (16-growth
+  mixInhRef completion on the combos) is queued.
+
+### 5. R79 box probes (seqchoice under cortex divRep, growth 0, seqchoice cycle; tool /workspace/r79/census)
+- The outputs are fed only by the striatum (32 synapses, identical at 1x and cx4 divRep). The striatum's plastic input from the cortex: **487 synapses at 1x vs 6905 at cx4 divRep, with
+  the same total weight (1461)** -> each cortex->striatum synapse is ~14x weaker; the fixed input->striatum path (405 synapses, 3211) is unchanged. cx4 divRep scores 0.33 with accuracy
+  0.029, **below chance (0.167)**: consistent with the striatum echoing the current input symbol (the cycle never repeats) because the diluted cortex drive no longer makes striatal cells fire.
+- Not fixes (g0, cycle, 1x 9.05): sc.normE@striatum 30 / 80 / 200 -> 0.87 / 0.77 / 0.80 (1x with 30: 8.82); striatum also 4x (sizeF@striatum 4, +/- trophMin@striatum/4) or 2x -> 1.69 /
+  1.33 / 1.46 (chance level). y110 dissects which region must grow with the cortex (y92: all-region sizing keeps seqchoice).
+- Interpretation: the two remaining size failures are the same kind of fault — **a projection from a sized region onto a fixed-size receiver is spread over f-times more, f-times weaker
+  synapses** (mixing inhibition pool for order3, cortex->striatum for seqchoice). The opposite-varying patch would keep the per-synapse strength / count at its 1x value (thin the
+  projection ~1/f, or let the receiver sample a fixed number of afferents), rather than normalising totals. Proposed as I98 (code, not yet written).
+
+### 6. Decisions
+- **No adoption.** No 1x arm passed 16 held-out growths with no task worse. v40 second fresh check (y89, k 1700-1715) vs v39: book10k +0.003 (12/4), text +0.002 (11/4), order3 -0.002 (3/7,
+  t -1.4, n.s.): v40 holds. mixInh 0.35 is a weak candidate (order3 +0.006, t 2.0) -> y105 ladder on 32 fresh growths.
+- No full-task confirmation queued from a 16-growth win: the only 16/0 winners (cortex 3x / 4x divRep + trophMin on book / fables) lose order3 / seqchoice; their all-task fresh check
+  is y89 (done, above) and y98 (cx3, queued).
+- Pending job fixes: y72 (8x R72 fix, all 7 tasks) gets trophMin/8 (without it order3 = 0) and priority 0.9; y56 (8x book300k, unaffected by trophMin) down to 0.6.
+
+### 7. Queue (R79; run/r79_jobs.js; size arms pin preNorm 45 and lr 0.2, trophMin 0.005/f)
+| pri | id | what | est h (6 slots) |
+|---|---|---|---|
+| 0.997 | y96 (R78) | mixInhRef 850 on the all-region combos, k 1808-1815 | 2.5 |
+| 0.996 | y97a/b | cx4 divRep + trophMin/4 with / without mixInhRef 850 (+ pow 0.5), k 1800-1815, all 7 tasks (refs y92) | 1.3 + 1.3 |
+| 0.99 | y98a/b | cx3 divRep + trophMin/3 vs v40 on FRESH k 1900-1915, all 7 tasks + K4 | 0.4 + 0.4 |
+| 0.985 / 0.98 | y99a / y99b | cx6 divRep + trophMin/6 (growths 0-15, 5 tasks, memGB 3.6); cx8 growths 8-15 + book30k 0-15 (memGB 4.6) | 1.5 / 4.6 |
+| 0.975 | y110 | seqchoice dissection: cx4 divRep + trophMin with striatum / context / both 4x (+ sizeCone, recvBudget 2), all-region 4x + divRep | 1.8 |
+| 0.97 | y100 | cx4 divRep + trophMin at cortex lr 0.1 / 0.3 | 1.5 |
+| 0.96 | y101 | cx4 divRep + trophMin at preNorm 55 (can size arms drop the 45 pin?) | 0.8 |
+| 0.95 | y102 | cx3 / cx4 divRep 3 (more cells) | 1.3 |
+| 0.94 | y103 | cx4 divRep + trophMin and 1x at book100k (growths 0-7) | 0.8 (long runs) |
+| 0.93 | y104 | generation with cx4 divRep: T0.7, gate 0.2, gate 0.2 + T0.7 (run/gen.js) | 1.4 |
+| 0.9 | y72 | cx8 R72 fix + trophMin/8, growths 16-23, all 7 tasks | 0.7 |
+| 0.9 | y111 | cx4 divRep + trophMin fables 8000 / 12000 | 0.4 |
+| 0.89 | y112 | cx8 / cx4 divRep + trophMin and 1x, growths 16-23, 5 tasks (memGB 4.6) | 4.3 |
+| 0.9 | y105a-d (light) | 1x mixInh 0.3 / 0.4 / 0.45 vs v40, k 1900-1931 (32 fresh growths), all 7 tasks | 4 x 0.3 |
+| 0.88 | y106 (light) | 1x generation: greedy / T0.7 / T1 / gate 0.2 / gate 0.2 + T0.7 | 0.3 |
+| 0.86 | y107a/b (light) | 1x readIn 0.005 / 0.02 (readout path), k 1900-1915 | 0.2 |
+| 0.84 | y108a/b (light) | 1x trophMin@cortex 0.0025 / 0.00125 (does trophic death prune useful cells at 1x?) | 0.2 |
+| 0.8 | y109 (light) | 1x cortex metaN 40 / 80 / 160 (consolidation vs the ~10k plateau) | 0.3 |
+| <= 0.78 | rest (R77) | y38 blocked; long lives (flat), 8x without trophMin, rejected-knob arms | ~40 |
+Light jobs (ids with `_1x_`, memGB 0.6) are the ones tacobell can take (~13 slot-h, ~7-9 h at its 2 slots); linux-pc has ~17 est h of new heavy work plus ~45 est h older
+lower-priority jobs (several long lives that run longer than their estimate) -> ~6-9 h on linux-pc by estimate: the next review must add work.
