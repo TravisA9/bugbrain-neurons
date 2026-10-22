@@ -3535,3 +3535,78 @@ Depth (estimate): linux-pc ~45 h of pending work (new ~6 h at the top); tacobell
 - Worry: the scaling track still has no single brain that keeps order3 and seqchoice at 1x level while keeping the +0.03 book gain; the pieces (trophMin / f,
   sized receivers + recvBudget, thinF, mixInhRef) each fix one task and cost another a little.
 - Length is still flat from 10k to 300k at every size; y138 asks whether the granule NLMS readout (a different learning rule) changes that.
+
+## R87 (Oct 21, 7 PM CT; analysis done, never pushed) + R88 — queue review (Oct 22, 7 AM CT): **no adoption** (v41 / DEFAULTS_VERSION 34 stays); v41 holds its worker held-out; granRef 600 is the v42 candidate
+State found: the R87 run (Oct 21, 7:13 PM) is marked FAILED. It had analysed y133-y138 + the R79-R86 backlog, first drafted v42 = granRef 1000 (patch kept on the box at
+/workspace/r87/v42.patch), then withdrew it on a small but consistent text1000 cost, rewrote its job file to keep v41 (run/r87_jobs.js, here run/r88_jobs.js) and started a
+granRef 600 box block (k 2144-2159). Nothing was committed or pushed (both workers then ran the queue dry). R88 finished the box block, re-read every result
+(1340 labels, 0 conflicts), wrote this entry and the jobs. Cells: accuracy diff (wins / losses, paired t, n growths), paired by growth.
+
+### 1. Workers (7:20 AM CT)
+- linux-pc (ExplodingRumba, supervised, code 256e32c = v41): alive, heartbeat 6:55 AM, **idle since 6:25 AM: queue empty** (the only unclaimed jobs are kind 'blocked' or 8x).
+  Ran 18 jobs since R86 without a release / restart; crashSkip empty.
+- tacobell (TacoBell, supervised, code 256e32c): **silent since Oct 21 5:19 PM** (last heartbeat 'idle'; last job y120b done 1:39 PM, then nothing it was allowed to take).
+  TacoBell itself is offline (not connected to Grok Bot), so the laptop is off / asleep, not a crashed worker; the watchdog cannot help while it is off.
+  This also blocked R87's push and blocks R88's (push goes through the laptop).
+
+### 2. v41 second held-out (y133, workers, k 2000-2015, all 7 + K4) — **v41 holds**
+| v41 vs v40 | book10k | book30k | fables | order3 | text | K4 | seqchoice |
+|---|---|---|---|---|---|---|---|
+| y133 (16) | +0.038 (16/0) | +0.039 (16/0) | +0.010 (16/0) | +0.002 (4/2) | +0.000 (8/6) | +0.000 (4/2) | identical |
+| all fresh blocks 1900-2031 (32) | +0.037 (32/0) | +0.041 (32/0) | +0.010 (31/1) | +0.003 (13/3) | +0.000 (17/11) | | |
+
+### 3. v42 candidates: granule drive granRef (granule -> output synapse strength per unit prediction)
+| vs v41 (granRef 100) | block | book10k | book30k | fables | order3 | text |
+|---|---|---|---|---|---|---|
+| granRef 300 | y134 k 2016-2031 | +0.014 (16/0) | +0.013 (16/0) | +0.003 (12/4) | +0.001 | -0.000 (8/5) |
+| granRef 1000 | y134 k 2016-2031 | +0.020 (16/0) | +0.018 (16/0) | +0.003 (11/5) | -0.001 | +0.000 (8/5) |
+| granRef 1000 | box k 2032-2047 | +0.021 (16/0) | +0.022 (16/0) | +0.000 (9/7) | +0.003 | **-0.0017 (4/10, t -3.1)** |
+| granRef 3000 | box k 2032-2047 | +0.012 (14/2) | +0.007 (14/2) | -0.006 (4/12) | +0.005 | -0.003 (4/12) |
+| **granRef 600** | box k 2144-2159 | +0.017 (16/0) | +0.021 (16/0) | +0.002 (11/5) | +0.002 (2/0) | -0.0003 (7/8, t -0.5) |
+| granRef 1000 + granIso | y134 | +0.012 (16/0) | +0.009 (14/2) | +0.002 | +0.005 | -0.000 |
+- granRef 1000 over 32 fresh growths: text -0.0008 (12/15, t -2.4) -> fails no-task-worse by a hair; not adopted. 3000 is past the peak.
+- granRef 600 keeps ~90 % of the book gain with no text cost on its first fresh block. Not adopted yet: chosen after seeing 300 / 1000 / 3000, so it gets one more
+  fresh block on the workers (y139a/b, k 2048-2063, which also re-tests 1000). If y139 shows no task worse -> v42 = granRef 600 (DEFAULTS_VERSION 35); pin pending v41
+  runs to P.granRef=100 first.
+- **granIso (fencing the outputs off from the prediction-cell machinery, the R85 text-dip fix) is not adopted:** vs granRef 1000 it costs book -0.008 / -0.009 (1/15, 0/16)
+  for order3 +0.006 (n.s.), text 0. Off by default stays.
+
+### 4. Granules x size (y135, k 1900-1915) and the all-round sized brain (y136, growths 0-15)
+- Granules stack with size: v41 cx3 divRep + trophMin/3 vs the same brain without granules: book10k +0.029, book30k +0.035 (16/0), fables +0.008 (14/2), text -0.003 (4/10);
+  cx4: +0.026 / +0.033 (16/0), fables +0.004. vs v41 1x: cx3 book +0.020 / +0.021, fables +0.025, text +0.006 (12/4), but order3 -0.133 (0/16); cx4 the same (order3 -0.129).
+  cx3 = cx4 on book at ~70 % of the cost -> cx3 is the size to build on.
+- y136 (no granules) vs cx4 divRep + trophMin/4: + 4x striatum / context (cone, rb2): book 0, order3 -0.129 (0/16); + thinF 5: book30k +0.005, text +0.006, seqchoice cycle
+  0.29 -> 6.07 (16/0); + mixInhRef 850: order3 0.727 -> 0.967 (+0.240, 16/0; 1x 0.957) for book -0.005 / -0.006, fables -0.004, text -0.009 (4/12). seqchoice 4.66 / 6.07 vs
+  1x 6.39 / 9.11 is still below.
+- y112 cx8 vs cx4 (24 growths): book -0.010, fables -0.013, order3 -0.096, text +0.012: the curve peaks at 4x (as R86).
+
+### 5. Length / plateau
+- y138 (k 1400-1407): v41 vs v40 book100k +0.033 (8/0), fables12000 +0.028 (8/0); v41 book100k 0.368 = its book10k / 30k level: the granule gain is kept, the plateau is not lifted.
+- Size at length, no granules: cx4 fix vs 1x v39 (y74 / y76, k 1416-1431) book100k +0.0015 (10/6, n.s.), book300k -0.0008; book1M (y70 / y75, k 1400-1407) +0.008 (6/2, t 2.8).
+  4xS lr 0.2 at book100k (y19) 0.341 vs v39 1x 0.334; lr 0.07 / 0.14 (y41) +0.004 / +0.002 vs lr 0.2 (n.s.). y77 cx8 fix book100k ran (k 1408-1415) without a same-growth ref.
+  -> size adds a constant and length adds nothing from 10k to 300k at any size or rate: the plateau is a learning-rule limit, not capacity.
+
+### 6. Generation (y137, growths 0-7)
+v41 greedy gen book30k: trigram surprise 4.5 bits vs v40 6.1 (real text 2.6) — much closer to real text — but greedy output still loops; T0.7 5.3 vs 5.6. y142 tests
+granRef 600 / 1000 and the outGate loop breaker on v41.
+
+### 7. Old-era backlog finished overnight (v38-v40 brains, low value now)
+- 4xS lr 0.2 fresh (y22, k 1200-1215) vs v38 4xS (lr 0.1): book10k -0.008 (0/16), text -0.009 (2/14): lr 0.2 stays 1x-only (as R70).
+- 4xS plateau 6 / metaN 80 (y20): book30k -0.003 / -0.004; teachThr 15 (y35, y58) = bit-identical to the base (no-op); metaCap 400 at 4xS book +0.002-0.003, text +0.003 (n.s.).
+  cx4 fanRef + plateau 6 / metaCap 400 (y58): fables +0.006 (15/1) / order3 +0.013 (t 2.0); all small, pre-granule, not pursued.
+- 1x (v40): readIn 0.005 / 0.02, trophMin 0.00125 / 0.0025 = identical or ~0; metaN 80 / 160 order3 -0.012 / -0.042 (rejected); mixInh 0.35 (y120) order3 +0.011 (11/2, t 3.2),
+  others 0 -> y153 tests it on v41.
+
+### 8. Queue changes (R88, run/r88_jobs.js; nothing pushed by R87)
+Light (1x, memGB <= 1, tacobell-eligible): y139a/b granRef 600 / 1000 decision (pri 0.995), y141a/b readout rule (granLr / granGain), y146a/b granRef 450 / 750,
+y147a/b granule code (granRate / granW), y148a/b cortex preNorm 45 / 65 with granules (output-drive normalisation), y153a/b mixInh 0.35 (+granRef 600), y142 generation.
+Heavy (linux-pc): y140 granule capacity (granN 4000 / granK 4), y143 granRef 1000 x cx3 / cx4, y144 one sized brain with granules (cx4dT + receivers + thin5 +/- ref850, all 7),
+y152 cx3 + granules + mixInhRef 850 (+/- thinF 5) for order3 at size, y150 seqchoice at size (thinF 8, rb 1.5, striatum 6x), y145 granRef 1000 at book100k,
+y151 v41 cx3 at book100k / fables12000, y149 granN 4000 / 8000 at cx4. ~79.5 slot-hours (~13 h on linux-pc's 6 slots; ~23 slot-h light).
+Fresh seed blocks: y139 2048-2063, y140 2064-2079, y141 2080-2095, y146 2096-2111, y147 2112-2127, y148 2128-2143, box granRef 600 2144-2159, y153 2160-2175.
+
+### 9. Assessment
+- v41 is now solid (two independent 16-growth blocks, two machines). The next 1x gain is small: granRef is worth ~+0.02 book and the text cost decides 600 vs 1000.
+- The real problems are unchanged: (a) no length gain from 10k to 1M at any size, rate or with granules -> the rule, not capacity; (b) at size, order3 needs mixInhRef and
+  that costs text / book a little; (c) seqchoice at size is ~70 % of 1x. y152 / y144 ask whether granules pay for mixInhRef at cx3 / cx4.
+- Worry: the queue ran dry twice in a row because a failed review left nothing pushed and pushing depends on the laptop being awake.

@@ -1,4 +1,33 @@
-# PRIORITIES (R86, Oct 21 2026, ~7:45 AM CT; **v41 / DEFAULTS_VERSION 34** — v41 = v40 + 2000-cell granule layer onto the outputs (R84); old brain = deepURSx3v40)
+# PRIORITIES (R88, Oct 22 2026, ~7:45 AM CT; **v41 / DEFAULTS_VERSION 34** unchanged — v41 = v40 + 2000-cell granule layer onto the outputs (R84); old brain = deepURSx3v40)
+
+## R88 update (queue review, morning; R87 evening review failed before pushing)
+- **No adoption.** v41 holds its worker held-out (y133 k 2000-2015: book +0.038 16/0, fables +0.010 16/0, order3 / text / K4 0, seqchoice identical).
+- **v42 candidate = granRef 600** (box k 2144-2159: book +0.019 16/0, text -0.0003 n.s.). granRef 1000 (32 fresh growths) book +0.020 but text -0.0008 (12/15, t -2.4).
+  Decision = y139a/b (16 more fresh growths, 600 and 1000). granIso (output fencing) costs book -0.008: rejected.
+- Granules stack with size (cx3 / cx4 +0.03 book over the same brains without them); order3 at size still -0.13 without mixInhRef.
+- Plateau confirmed as a rule limit: no gain from 10k to 300k (to 1M +0.008) at 1x, 4x, 8x, any cortex rate, with or without granules.
+- linux-pc idle since 6:25 AM (queue empty); tacobell / TacoBell offline since Oct 21 5:19 PM -> nothing could be pushed this run.
+
+## Ranked open questions (R88)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I99 | v42: granRef 600 or 1000 — which passes no-task-worse on a second fresh block? | y139a/b |
+| 2 | I99 x I95 | Does granRef 1000 add at cx3 / cx4? | y143 |
+| 3 | I98 | One sized brain for all tasks with granules (cx4dT + receivers + thin5 +/- ref850); cx3 + ref850 for order3 | y144, y152 |
+| 4 | I99 | Granule capacity / readout rule / code (granN 4000, granK 4, granLr, granGain, granRate, granW) toward the 0.41 ceiling | y140, y141, y147 |
+| 5 | Q46 | Output-drive normalisation with granules: cortex preNorm 45 / 65 | y148 |
+| 6 | Q42 | Plateau: granRef 1000 at 100k; v41 cx3 at 100k — capacity or rule? | y145, y151 |
+| 7 | I98 | seqchoice at size: thinF 8, recvBudget 1.5, striatum 6x | y150 |
+| 8 | I72 | Generation with granules (+ outGate loop breaker) | y142 |
+| 9 | I95 | Scale the granule layer with the cortex (granN 4000 / 8000 at cx4) | y149 |
+Low: analogy / evolution. Rejected ideas stay rejected (deeper chains / slow layers R60, delta rules R82, clawKeep / clawWF R82, mixFreeze R82, granIso R88, metaN 80+ R88).
+
+## Worker notes (R88)
+linux-pc: healthy, idle (no eligible jobs) since 6:25 AM; takes the R88 jobs once pushed. tacobell: laptop offline since Oct 21 5:19 PM CT (not a crash loop).
+Queue after R88 (once pushed): ~79.5 slot-h = linux-pc ~13 h; light pool ~23 slot-h for tacobell when it is back.
+
+## Previous header (R86)
+# (R86 header) PRIORITIES (R86, Oct 21 2026, ~7:45 AM CT; **v41 / DEFAULTS_VERSION 34** — v41 = v40 + 2000-cell granule layer onto the outputs (R84); old brain = deepURSx3v40)
 
 ## R86 update (queue review, morning)
 - **v41 pushed** (adopted by the R83-R85 box session under Travis's standing authorisation; 16 fresh growths k 1940-1955: book +0.038 16/0, fables +0.009 16/0, order3 / text
