@@ -1,0 +1,89 @@
+# Queue log (run/queue.js)
+
+## 10/22/2026, 2:25:45 AM · y35b_4xS_rule · DONE
+4xS (lr 0.1) + teachThr 15 / metaCap 400, 5 tasks, growths 8-15 (question I78).
+
+| run | mean | sd | growths | note |
+|---|---|---|---|---|
+| 4xS teachThr 15 book10k g8 n1 | 3.42 | 0 | 1 |  |
+| 4xS teachThr 15 book10k g9 n1 | 3.32 | 0 | 1 |  |
+| 4xS teachThr 15 book10k g10 n1 | 3.055 | 0 | 1 |  |
+| 4xS teachThr 15 book10k g11 n1 | 3.61 | 0 | 1 |  |
+| 4xS teachThr 15 book10k g12 n1 | 3.015 | 0 | 1 |  |
+| 4xS teachThr 15 book10k g13 n1 | 3.67 | 0 | 1 |  |
+| 4xS teachThr 15 book10k g14 n1 | 3.395 | 0 | 1 |  |
+| 4xS teachThr 15 book10k g15 n1 | 3.45 | 0 | 1 |  |
+| 4xS teachThr 15 book30k g8 n1 | 3.625 | 0 | 1 |  |
+| 4xS teachThr 15 book30k g9 n1 | 3.235 | 0 | 1 |  |
+| 4xS teachThr 15 book30k g10 n1 | 2.94 | 0 | 1 |  |
+| 4xS teachThr 15 book30k g11 n1 | 3.58 | 0 | 1 |  |
+| 4xS teachThr 15 book30k g12 n1 | 2.98 | 0 | 1 |  |
+| 4xS teachThr 15 book30k g13 n1 | 3.64 | 0 | 1 |  |
+| 4xS teachThr 15 book30k g14 n1 | 3.41 | 0 | 1 |  |
+| 4xS teachThr 15 book30k g15 n1 | 3.6 | 0 | 1 |  |
+| 4xS teachThr 15 fables4000 g8 n1 | 3.749 | 0 | 1 |  |
+| 4xS teachThr 15 fables4000 g9 n1 | 3.602 | 0 | 1 |  |
+| 4xS teachThr 15 fables4000 g10 n1 | 3.106 | 0 | 1 |  |
+| 4xS teachThr 15 fables4000 g11 n1 | 3.674 | 0 | 1 |  |
+| 4xS teachThr 15 fables4000 g12 n1 | 3.193 | 0 | 1 |  |
+| 4xS teachThr 15 fables4000 g13 n1 | 3.529 | 0 | 1 |  |
+| 4xS teachThr 15 fables4000 g14 n1 | 3.614 | 0 | 1 |  |
+| 4xS teachThr 15 fables4000 g15 n1 | 3.656 | 0 | 1 |  |
+| 4xS teachThr 15 order3 g8 n1 | 7.275 | 0 | 1 |  |
+| 4xS teachThr 15 order3 g9 n1 | 7.275 | 0 | 1 |  |
+| 4xS teachThr 15 order3 g10 n1 | 7.275 | 0 | 1 |  |
+| 4xS teachThr 15 order3 g11 n1 | 7.25 | 0 | 1 |  |
+| 4xS teachThr 15 order3 g12 n1 | 7.275 | 0 | 1 |  |
+| 4xS teachThr 15 order3 g13 n1 | 7.275 | 0 | 1 |  |
+| 4xS teachThr 15 order3 g14 n1 | 7.275 | 0 | 1 |  |
+| 4xS teachThr 15 order3 g15 n1 | 7.275 | 0 | 1 |  |
+| 4xS teachThr 15 text1000 g8 n1 | 7.455 | 0 | 1 |  |
+| 4xS teachThr 15 text1000 g9 n1 | 7.84 | 0 | 1 |  |
+| 4xS teachThr 15 text1000 g10 n1 | 7.275 | 0 | 1 |  |
+| 4xS teachThr 15 text1000 g11 n1 | 7.835 | 0 | 1 |  |
+| 4xS teachThr 15 text1000 g12 n1 | 7.375 | 0 | 1 |  |
+| 4xS teachThr 15 text1000 g13 n1 | 7.875 | 0 | 1 |  |
+| 4xS teachThr 15 text1000 g14 n1 | 7.7 | 0 | 1 |  |
+| 4xS teachThr 15 text1000 g15 n1 | 7.465 | 0 | 1 |  |
+| 4xS metaCap 400 book10k g8 n1 | 3.48 | 0 | 1 |  |
+| 4xS metaCap 400 book10k g9 n1 | 3.335 | 0 | 1 |  |
+| 4xS metaCap 400 book10k g10 n1 | 3.135 | 0 | 1 |  |
+| 4xS metaCap 400 book10k g11 n1 | 3.6 | 0 | 1 |  |
+| 4xS metaCap 400 book10k g12 n1 | 3.065 | 0 | 1 |  |
+| 4xS metaCap 400 book10k g13 n1 | 3.65 | 0 | 1 |  |
+| 4xS metaCap 400 book10k g14 n1 | 3.55 | 0 | 1 |  |
+| 4xS metaCap 400 book10k g15 n1 | 3.485 | 0 | 1 |  |
+| 4xS metaCap 400 book30k g8 n1 | 3.64 | 0 | 1 |  |
+| 4xS metaCap 400 book30k g9 n1 | 3.295 | 0 | 1 |  |
+| 4xS metaCap 400 book30k g10 n1 | 3.07 | 0 | 1 |  |
+| 4xS metaCap 400 book30k g11 n1 | 3.63 | 0 | 1 |  |
+| 4xS metaCap 400 book30k g12 n1 | 3.025 | 0 | 1 |  |
+| 4xS metaCap 400 book30k g13 n1 | 3.65 | 0 | 1 |  |
+| 4xS metaCap 400 book30k g14 n1 | 3.475 | 0 | 1 |  |
+| 4xS metaCap 400 book30k g15 n1 | 3.515 | 0 | 1 |  |
+| 4xS metaCap 400 fables4000 g8 n1 | 3.749 | 0 | 1 |  |
+| 4xS metaCap 400 fables4000 g9 n1 | 3.64 | 0 | 1 |  |
+| 4xS metaCap 400 fables4000 g10 n1 | 3.203 | 0 | 1 |  |
+| 4xS metaCap 400 fables4000 g11 n1 | 3.701 | 0 | 1 |  |
+| 4xS metaCap 400 fables4000 g12 n1 | 3.171 | 0 | 1 |  |
+| 4xS metaCap 400 fables4000 g13 n1 | 3.549 | 0 | 1 |  |
+| 4xS metaCap 400 fables4000 g14 n1 | 3.51 | 0 | 1 |  |
+| 4xS metaCap 400 fables4000 g15 n1 | 3.75 | 0 | 1 |  |
+| 4xS metaCap 400 order3 g8 n1 | 7.275 | 0 | 1 |  |
+| 4xS metaCap 400 order3 g9 n1 | 7.275 | 0 | 1 |  |
+| 4xS metaCap 400 order3 g10 n1 | 7.275 | 0 | 1 |  |
+| 4xS metaCap 400 order3 g11 n1 | 7.25 | 0 | 1 |  |
+| 4xS metaCap 400 order3 g12 n1 | 7.275 | 0 | 1 |  |
+| 4xS metaCap 400 order3 g13 n1 | 7.275 | 0 | 1 |  |
+| 4xS metaCap 400 order3 g14 n1 | 7.275 | 0 | 1 |  |
+| 4xS metaCap 400 order3 g15 n1 | 7.275 | 0 | 1 |  |
+| 4xS metaCap 400 text1000 g8 n1 | 7.475 | 0 | 1 |  |
+| 4xS metaCap 400 text1000 g9 n1 | 7.765 | 0 | 1 |  |
+| 4xS metaCap 400 text1000 g10 n1 | 7.27 | 0 | 1 |  |
+| 4xS metaCap 400 text1000 g11 n1 | 7.855 | 0 | 1 |  |
+| 4xS metaCap 400 text1000 g12 n1 | 7.46 | 0 | 1 |  |
+| 4xS metaCap 400 text1000 g13 n1 | 7.8 | 0 | 1 |  |
+| 4xS metaCap 400 text1000 g14 n1 | 7.79 | 0 | 1 |  |
+| 4xS metaCap 400 text1000 g15 n1 | 7.45 | 0 | 1 |  |
+
+Criteria: vs the 4xS base (y10 / y11); teachThr / metaCap are the two y25 knobs most likely to interact with size
