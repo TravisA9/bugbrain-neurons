@@ -1472,8 +1472,8 @@
       "id": "I99",
       "area": "learning",
       "title": "Cerebellum-like granule layer: sparse combination cells with claws on letters t / t-1 / t-2 projecting onto the output cells, cerebellar NLMS rule on read-window activity, learned self-silencing gain",
-      "status": "adopted v41 (DEFAULTS_VERSION 34), held on worker held-out (y133); v42 candidate granRef 600 pending y139",
-      "evidence": "R82 diagnosis: regions hold t..t-4 (decodable >= 0.97) but own accuracy = bigram (~0.29); conjunction capacity is the limit. R83-R85 box: granule ceiling 0.41 (= 3-gram) with granK 3; own 0.334 / 0.312 vs v40 0.297 / 0.289. 16 fresh growths k 1940-1955 vs v40: book10k / book30k +0.038 (16/0), fables +0.009 (16/0), order3 / text unchanged, seqchoice identical. IR1k (granRef 1000 + granIso) book +0.048 but text -0.0008 (3/11). R86 box g0: granules on cx4 divRep: book10k +0.022, order3 +0.028 over cx4dT. Queued y133 (held-out), y134 (granRef), y135 (x size), y137 (generation), y138 (length). R87/R88: y133 workers k 2000-2015 book +0.038 / +0.039, fables +0.010 (16/0), order3 / text / K4 0. granRef 1000 (y134 + box, 32 fresh) book +0.020 (32/0) but text -0.0008 (12/15, t -2.4); granRef 600 box k 2144-2159 book +0.019 (16/0), text -0.0003 n.s.; granRef 3000 past the peak; granIso -0.008 book vs granRef 1000 (rejected). y135: granules add +0.03 book at cx3 / cx4. y138: +0.033 book100k but no length slope.",
+      "status": "adopted v41 (DEFAULTS_VERSION 34); granRef 600 adopted as v42 (DEFAULTS_VERSION 35, R89); worker held-out of v42 pending (y154)",
+      "evidence": "R82 diagnosis: regions hold t..t-4 (decodable >= 0.97) but own accuracy = bigram (~0.29); conjunction capacity is the limit. R83-R85 box: granule ceiling 0.41 (= 3-gram) with granK 3; own 0.334 / 0.312 vs v40 0.297 / 0.289. 16 fresh growths k 1940-1955 vs v40: book10k / book30k +0.038 (16/0), fables +0.009 (16/0), order3 / text unchanged, seqchoice identical. IR1k (granRef 1000 + granIso) book +0.048 but text -0.0008 (3/11). R86 box g0: granules on cx4 divRep: book10k +0.022, order3 +0.028 over cx4dT. Queued y133 (held-out), y134 (granRef), y135 (x size), y137 (generation), y138 (length). R87/R88: y133 workers k 2000-2015 book +0.038 / +0.039, fables +0.010 (16/0), order3 / text / K4 0. granRef 1000 (y134 + box, 32 fresh) book +0.020 (32/0) but text -0.0008 (12/15, t -2.4); granRef 600 box k 2144-2159 book +0.019 (16/0), text -0.0003 n.s.; granRef 3000 past the peak; granIso -0.008 book vs granRef 1000 (rejected). y135: granules add +0.03 book at cx3 / cx4. y138: +0.033 book100k but no length slope. R89: y139 run on the box (fresh k 2048-2063, 16 growths) granRef 600 vs v41: book10k +0.019, book30k +0.022 (16/0), fables +0.003 (10/6), order3 +0.002 (2/1), text -0.0005 (4/6, t -1.1), seqchoice identical; pooled with R88 block (32): text -0.0004 (11/14, t -1.0) -> adopted v42. granRef 1000 same block: book +0.019 / +0.022, text -0.0007 (5/9, t -1.5); 600 vs 1000: no difference on any task.",
       "why": "adds the missing nonlinear letter-combination capacity (mushroom-body / cerebellar granule expansion) instead of more memory",
       "rounds": [
         "R83",
@@ -1481,7 +1481,8 @@
         "R85",
         "R86",
         "R87",
-        "R88"
+        "R88",
+        "R89"
       ],
       "theme": "learning",
       "parents": [

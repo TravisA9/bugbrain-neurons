@@ -1,4 +1,30 @@
-# PRIORITIES (R88, Oct 22 2026, ~7:45 AM CT; **v41 / DEFAULTS_VERSION 34** unchanged — v41 = v40 + 2000-cell granule layer onto the outputs (R84); old brain = deepURSx3v40)
+# PRIORITIES (R89, Oct 22 2026, ~8 PM CT; **v42 / DEFAULTS_VERSION 35** — v42 = v41 + params.granRef 600; v41 = deepURSx3 + P.granRef=100; v40 brain = deepURSx3v40)
+
+## R89 update (queue review, evening)
+- **v42 adopted: granRef 600.** y139 (run on the box, fresh k 2048-2063): book10k +0.019, book30k +0.022 (16/0), fables +0.003, order3 +0.002, text -0.0005 (4/6, n.s.),
+  seqchoice identical; pooled with R88's block (32 growths) text -0.0004 (11/14, t -1.0). granRef 1000 stays rejected (text negative on all 3 blocks). Worker held-out = y154.
+- Nothing pushed again: TacoBell (push path) offline since Oct 21 5:19 PM CT; linux-pc alive but idle since 6:25 AM (queue empty). Bundles ready on the box (/workspace/r89).
+- Pending R88 jobs pinned to v41 (P.granRef=100) except arms that set granRef; y139 dropped (done on box); y154a/b added.
+
+## Ranked open questions (R89)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I99 | v42 worker held-out (watch text1000) | y154a/b |
+| 2 | I99 x I95 | Does a stronger granule drive (1000) add at cx3 / cx4? | y143 |
+| 3 | I98 | One sized brain for all tasks with granules; cx3 + ref850 for order3 | y144, y152 |
+| 4 | I99 | Close the brain's accuracy (v42 held-out book ~0.38-0.39) to the granule readout ceiling (~0.41): capacity (granN 4000, granK 4), readout rule (granLr, granGain), code (granRate, granW) | y140, y141, y147 |
+| 5 | Q46 | Output-drive normalisation with granules (cortex preNorm 45 / 65); mixInh 0.35 on v41 | y148, y153 |
+| 6 | Q42 | Plateau after ~10k symbols: granRef 1000 at 100k; cx3 at 100k (capacity vs rule) | y145, y151 |
+| 7 | I98 | seqchoice at size (thinF 8, recvBudget 1.5, striatum 6x) | y150 |
+| 8 | I72 | Generation with granules + outGate loop breaker | y142 |
+| 9 | I95 | Scale the granule layer with the cortex (granN 4000 / 8000 at cx4) | y149 |
+Low: analogy / evolution. Rejected ideas stay rejected (deeper chains / slow layers R60, delta rules R82, clawKeep / clawWF R82, mixFreeze R82, granIso R88, metaN 80+ R88, granRef 1000 / 3000 R88-R89).
+
+## Worker notes (R89)
+linux-pc: healthy, idle (starved) since 6:25 AM CT. tacobell: laptop offline since Oct 21 5:19 PM CT. Queue after R89 (once pushed): ~78.9 slot-h = linux-pc ~13 h; light ~21 slot-h.
+
+## Previous header (R88)
+# (R88 header) PRIORITIES (R88, Oct 22 2026, ~7:45 AM CT; **v41 / DEFAULTS_VERSION 34** unchanged — v41 = v40 + 2000-cell granule layer onto the outputs (R84); old brain = deepURSx3v40)
 
 ## R88 update (queue review, morning; R87 evening review failed before pushing)
 - **No adoption.** v41 holds its worker held-out (y133 k 2000-2015: book +0.038 16/0, fables +0.010 16/0, order3 / text / K4 0, seqchoice identical).

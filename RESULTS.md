@@ -3610,3 +3610,39 @@ Fresh seed blocks: y139 2048-2063, y140 2064-2079, y141 2080-2095, y146 2096-211
 - The real problems are unchanged: (a) no length gain from 10k to 1M at any size, rate or with granules -> the rule, not capacity; (b) at size, order3 needs mixInhRef and
   that costs text / book a little; (c) seqchoice at size is ~70 % of 1x. y152 / y144 ask whether granules pay for mixInhRef at cx3 / cx4.
 - Worry: the queue ran dry twice in a row because a failed review left nothing pushed and pushing depends on the laptop being awake.
+
+## R89 — queue review (Oct 22, 7:15 PM CT): **v42 adopted** (= v41 + params.granRef 600, DEFAULTS_VERSION 35); y139 run on the box; still nothing pushed (TacoBell offline)
+State found: R88's code commit (fc6d052) and queue commit (y139-y153) were never pushed (TacoBell, the push path, offline since Oct 21 5:19 PM CT). origin still at
+code 256e32c (R86) / queue = heartbeats only. No worker result since R88 (last: y22b, 6:25 AM CT, already in R88).
+
+### 1. Workers (7:15 PM CT)
+- linux-pc (ExplodingRumba, supervised, code 256e32c = v41): alive (heartbeat 7:06 PM, every ~30 min), **idle since 6:25 AM: queue empty** (only 'blocked' / 8x leftovers). No releases / restarts, crashSkip empty. Not stuck: starved.
+- tacobell: **silent since Oct 21 5:19 PM CT** (~26 h); TacoBell is not connected to Grok Bot either, so the laptop is off / asleep (not a crash loop).
+- Moto G: not seen.
+
+### 2. y139 = the v42 decision, run on the box (fresh k 2048-2063, 16 growths, exact R88 job runs, same code 256e32c engine)
+| vs v41 (granRef 100) | book10k | book30k | fables4000 | order3 | text1000 | seqchoice order2 / cycle |
+|---|---|---|---|---|---|---|
+| **granRef 600** (16) | +0.019 (16/0, t 8.7) | +0.022 (16/0, t 9.4) | +0.003 (10/6, t 1.7) | +0.002 (2/1) | -0.0005 (4/6, t -1.1) | identical (16/16) |
+| granRef 600 pooled with box R88 k 2144-2159 (32) | +0.018 (32/0) | +0.021 (32/0) | +0.003 (21/11, t 2.4) | +0.002 (4/1) | -0.0004 (11/14, t -1.0) | identical |
+| granRef 1000 (16) | +0.019 (16/0) | +0.022 (16/0) | +0.002 (11/5) | +0.002 (4/2) | -0.0007 (5/9, t -1.5) | |
+| 600 vs 1000 (16) | -0.000 (6/8) | +0.000 (10/5) | +0.002 (9/7) | -0.000 (1/3) | +0.000 (7/7) | |
+Means (granRef 600 / v41): book10k 0.381 / 0.362, book30k 0.389 / 0.367, fables 0.360 / 0.356, order3 0.948 / 0.947, text 0.761 / 0.762, seqchoice 6.17 / 8.90 both arms.
+- **granRef 600 passes no-task-worse on its second fresh block -> v42** (adopted under Travis's standing authorisation): js/core/base.js params.granRef 600, APP_VERSION v42,
+  DEFAULTS_VERSION 35; v41 = deepURSx3 + P.granRef=100 (no new plan needed). Box check: default deepURSx3 = P.granRef=600 run (text g2050 7.56 = 7.56).
+- granRef 1000 (48 fresh growths now): text1000 -0.0008 / -0.0017 / -0.0007 on its three blocks -> stays rejected; 600 = 1000 on book, so 600 is the safe value.
+- Honest caveat: text1000 is negative in both 600 blocks (-0.0003, -0.0005), n.s. each and pooled. y154 (worker held-out, 16 more fresh growths) is the tie-breaker:
+  if text reaches significance over 48 growths, revert to 100 or try 300-450 (y146 tests 450 / 750 anyway).
+
+### 3. Queue changes (R89, run/r89_jobs.js = run/r88_jobs.js output, then pin / drop / add)
+- y139a/b dropped (done on the box). Every remaining R88 run whose variant sets no P.granRef is pinned to P.granRef=100 so it keeps its v41 meaning and stays comparable
+  with the v41 refs it was designed against (y133-y138); labels unchanged ('v41 ...').
+- New y154a/b (pri 0.99, light): v42 vs v41 worker held-out, fresh k 2176-2191, all 7 tasks + order3 K4.
+- Total ~78.9 slot-h: linux-pc ~13 h on 6 slots; light pool (tacobell-eligible) ~21 slot-h. Fresh seed blocks used: 2048-2191 (y154 2176-2191).
+- Push: blocked (TacoBell offline); bundles prepared on the box (/workspace/r89).
+
+### 4. Assessment
+- v42 is a small, clean win (~+0.02 book, nothing else moves). The granule line at 1x is near its knob-tuning end; the remaining 1x headroom to the 0.41 granule ceiling is
+  in the readout rule / code / capacity jobs (y140, y141, y147), not in granRef.
+- The bigger worry is operational: the queue has now been dry for ~13 h on linux-pc and two reviews could not push because the only push path is the laptop.
+  A push path that does not depend on TacoBell being awake (e.g. let linux-pc's dq.js fetch review bundles, or give the box a write token) would stop this recurring.
