@@ -1,4 +1,31 @@
-# PRIORITIES (R89, Oct 22 2026, ~8 PM CT; **v42 / DEFAULTS_VERSION 35** — v42 = v41 + params.granRef 600; v41 = deepURSx3 + P.granRef=100; v40 brain = deepURSx3v40)
+# PRIORITIES (R90, Oct 23 2026, ~7:45 AM CT; **v42 / DEFAULTS_VERSION 35** unchanged — v42 = v41 + params.granRef 600; v41 = deepURSx3 + P.granRef=100; v40 brain = deepURSx3v40)
+
+## R90 update (queue review, morning)
+- **No adoption; v42 holds** its worker held-out (y154 k 2176-2191: book10k +0.020, book30k +0.019 (16/0), fables +0.004, text / order3 / seqchoice / K4 0).
+- 1x granule tuning is exhausted: granLr 0.05 / 0.2, granGain 0.001 / 0.01, granRate 0.00015 / 0.0006, granW 90 flat or worse; granRef 450 = 750 = 600; only granW 40
+  (fables +0.006, 15/1) is worth a v42 retest. preNorm 45 (y148a+b, 16) book +0.002 (11/5, 11/4), text 0: too small to adopt, retest on v42 (y157).
+- linux-pc silent since Oct 22 9:45 PM CT (claimed y143; lease expired) -> Travis to check. tacobell healthy.
+
+## Ranked open questions (R90)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I99 | Granule capacity on v42 (granN 4000, granK 4): the remaining lever toward the ~0.41 ceiling | y159a/b (light), y149 (cx4) |
+| 2 | I99 | granW 40 on v42 (fables +0.006 on v41) | y155a/b |
+| 3 | Q42 | Plateau: does a slower readout step win with length? (granLr 0.05 / 0.025 at 10k-100k) | y156a/b, y158 |
+| 4 | I99 x I95 | granRef 1000 at cx3 / cx4 | y143 (linux-pc) |
+| 5 | I98 | One sized brain for all tasks with granules; cx3 + ref850 for order3 | y144, y152 |
+| 6 | Q46 | Output-drive normalisation: preNorm 45 / 50 on v42; mixInh 0.35 | y148b, y157a/b, y153a/b |
+| 7 | Q42 | cx3 at 100k; granRef 1000 at 100k | y151, y145 |
+| 8 | I98 | seqchoice at size | y150 |
+| 9 | I72 | Generation with granules + outGate | y142 |
+Low: analogy / evolution. Rejected ideas stay rejected (deeper chains / slow layers R60, delta rules R82, clawKeep / clawWF R82, mixFreeze R82, granIso R88, metaN 80+ R88,
+granRef 1000 / 3000 R88-R89, granGain 0.001 / granRate 0.0006 / granW 90 R90).
+
+## Worker notes (R90)
+linux-pc: silent since 9:45 PM CT Oct 22 (needs a check); ~55 slot-h of heavy work waiting. tacobell: healthy, ~18-19 slot-h light work (~10 h). Box probe: 1x jobs <= ~0.4 GB, cx4 granule ~1.3 GB.
+
+## Previous header (R89)
+# (R89 header) PRIORITIES (R89, Oct 22 2026, ~8 PM CT; **v42 / DEFAULTS_VERSION 35** — v42 = v41 + params.granRef 600; v41 = deepURSx3 + P.granRef=100; v40 brain = deepURSx3v40)
 
 ## R89 update (queue review, evening)
 - **v42 adopted: granRef 600.** y139 (run on the box, fresh k 2048-2063): book10k +0.019, book30k +0.022 (16/0), fables +0.003, order3 +0.002, text -0.0005 (4/6, n.s.),

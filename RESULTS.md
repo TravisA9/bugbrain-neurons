@@ -3646,3 +3646,67 @@ Means (granRef 600 / v41): book10k 0.381 / 0.362, book30k 0.389 / 0.367, fables 
   in the readout rule / code / capacity jobs (y140, y141, y147), not in granRef.
 - The bigger worry is operational: the queue has now been dry for ~13 h on linux-pc and two reviews could not push because the only push path is the laptop.
   A push path that does not depend on TacoBell being awake (e.g. let linux-pc's dq.js fetch review bundles, or give the box a write token) would stop this recurring.
+
+## R90 — queue review (Oct 23, 7:15 AM CT): no adoption; **v42 holds its worker held-out** (y154 book +0.020 16/0, text 0); 1x granule knob tuning exhausted; linux-pc silent since 9:45 PM CT
+State found: R89 code (acb391b) and queue were pushed. Another R90 agent pushed a linux-pc safety commit at 7:16 AM (fbaec0d: y143 memGB 3 -> 3.5, linux-pc maxMemGB 4).
+
+### 1. Workers (7:28 AM CT)
+- linux-pc (ExplodingRumba, code acb391b = v42): **no heartbeat since Oct 22 9:45 PM CT** (~9.5 h), when it claimed y143 (cx granRef stack); lease expired 1:45 AM, so y143
+  can be claimed again. Not reachable from Grok Bot. A box probe shows a cx4 granule book30k run peaks at **1287 MB** (314 s), so 6 parallel 3-GB slots should not run out of RAM.
+  Most likely a power / sleep / network freeze rather than the job. **Needs a physical check / reboot.**
+- tacobell (TacoBell, code acb391b, on AC 100%, crashSkip empty): healthy; overnight ran y154b, y141a/b, y146a/b, y147a/b, y148a, y148b (claimed 5:21 AM, published 7:28 AM), now y153a.
+  Laptop apparently slept ~5:30-7:09 AM (one git fetch ETIMEDOUT at 7:09, then renewed). No crash loops.
+- Moto G: not seen.
+
+### 2. Results (worker runs, same-growth comparisons; n = growths; (wins/losses, paired t))
+**y154 v42 worker held-out, fresh k 2176-2191 (v42 vs v41):** book10k 0.385 / 0.365 +0.020 (16/0, t 11.9), book30k 0.389 / 0.370 +0.019 (16/0, t 12.0), fables 0.357 / 0.353
++0.004 (13/3, t 2.3), order3 -0.000 (0/1), text1000 0.756 / 0.756 +0.000 (9/4, t 0.1), seqchoice order2 / cycle and order3 K4 identical. **v42 holds; the text1000 worry is gone** (48 growths over 3 blocks, no consistent sign).
+
+| y141 granule rule, v41, k 2080-2095 (16) vs v41 | book10k | book30k | fables4000 | order3 | text1000 |
+|---|---|---|---|---|---|
+| granGain 0.001 | -0.005 (0/16) | +0.000 (8/8) | -0.003 (4/12) | -0.000 | -0.001 (4/8) |
+| granGain 0.01 | -0.001 (6/10) | -0.001 (6/8) | +0.002 (11/5) | -0.000 | -0.000 |
+| granLr 0.05 | -0.005 (2/14) | -0.002 (5/11) | -0.002 (6/10) | 0 | -0.000 |
+| granLr 0.2 | +0.001 (9/6) | -0.002 (5/10) | +0.003 (11/5) | +0.001 | -0.000 |
+
+| y146 granRef fine, v41, k 2096-2111 (16) vs v41 (100) | book10k | book30k | fables4000 | order3 | text1000 |
+|---|---|---|---|---|---|
+| granRef 450 | +0.015 (16/0) | +0.021 (16/0) | +0.005 (14/1) | +0.001 | -0.000 (6/9) |
+| granRef 750 | +0.018 (16/0) | +0.025 (16/0) | +0.004 (11/5) | +0.001 | -0.000 (6/8) |
+
+| y147 granule code, v41, k 2112-2127 (16) vs v41 | book10k | book30k | fables4000 | order3 | text1000 |
+|---|---|---|---|---|---|
+| granRate 0.00015 | +0.001 (10/4) | +0.001 (7/9) | +0.001 (10/6) | 0 | +0.000 |
+| granRate 0.0006 | -0.006 (4/12) | -0.005 (4/11) | -0.002 (4/12) | 0 | -0.000 |
+| granW 40 | +0.001 (11/4) | -0.002 (6/10) | **+0.006 (15/1, t 6.6)** | 0 | -0.000 (5/5) |
+| granW 90 | -0.006 (3/13) | -0.000 (8/6) | -0.005 (1/15) | 0 | -0.000 |
+
+| y148a+b preNorm, v41, k 2128-2143 (16) vs v41 (55) | book10k | book30k | fables4000 | order3 | text1000 |
+|---|---|---|---|---|---|
+| preNorm 45 | +0.002 (11/5, t 1.9) | +0.002 (11/4, t 2.8) | +0.000 (8/8) | +0.001 (7/5) | -0.000 (7/9) |
+| preNorm 65 | -0.001 (6/8) | -0.002 (3/12) | -0.000 | -0.001 (2/7) | +0.001 (10/4) |
+(y148b alone, k 2136-2143: preNorm 45 book +0.002 (5/3, 5/2), text +0.001: the y148a text dip did not repeat.)
+
+Reading: the granule readout's rule constants (granLr, granGain) and code density (granRate) are at their optimum; granRef is flat from 450 to 1000 (600 stays). Only granW 40
+(weaker claws) helps fables clearly, and that is on v41; y155 retests it on v42. granLr 0.05's cost shrinks from 10k to 30k (-0.005 -> -0.002): y156 / y158 ask whether
+a slower readout step wins with length (the plateau question).
+
+### 3. Box memory probe (VmHWM; for memGB)
+cx4 granule book30k (granRef 1000, preNorm 45) **1287 MB** peak, 314 s; v42 1x book100k ~**335 MB** (peak reached in growth, flat afterwards); v42 1x granN 4000 + granK 4
+book30k ~**385 MB**. So every 1x job fits tacobell's maxMemGB 1, and the 3-3.5 GB memGB on cx jobs is generous (kept: R90 safety commit).
+
+### 4. Queue changes (run/r90_jobs.js; all on v42, fresh k 2192-2255, require only existing code)
+- y155a/b (pri 0.97, 3.8 slot-h): v42 granW 40, granW 40 + granLr 0.2, granW 40 + granRate 0.00015.
+- y156a/b (pri 0.965, 2.8): slower readout step granLr 0.05 / 0.025 (plateau).
+- y157a/b (pri 0.95, 2.8): preNorm 45 / 50 on v42.
+- y158 (pri 0.955, 2.0, memGB 1.5, linux-pc; id-pattern *long* keeps it off tacobell): v42 / granLr 0.05 at book100k + fables12000 on growths 1400-1407 (refs y138 / y145).
+- y159a/b (pri 0.975, 3.8 by the 1x estimate; granN 4000 runs are slower): granule capacity on v42 (granN 4000, granK 4, both); **replaces y140** (v41 version), which is parked.
+- Parked (kind 'blocked'): y140 (superseded by y159), y130-y132 (R86 said "box only"; never set blocked; ideas tested since).
+- Light pool for tacobell: ~13.2 new + y142 2.2 + y153a/b 2.8 + rest of y148b ~= 18-19 slot-h ~= 10 h at ~1.9 slot-h per wall hour (plus laptop sleep).
+  linux-pc: heavy jobs y143 / y144 / y149-y152 / y145 / y158 ~= 55 slot-h ~= 9+ h on 6 slots, waiting for it to come back.
+
+### 5. Assessment
+- v42 is now confirmed on 48 fresh growths. Every 1x granule knob tried since R88 is either flat or worse, so the brain's ~0.385-0.39 book accuracy against the ~0.41 3-gram
+  ceiling will not close by tuning: the next real levers are capacity (y159, y149) and the learning rule at length (y156, y158).
+- Worry: stacking +0.002-0.006 wins tested on 16 growths is where false adoptions come from; anything that small must pass a second fresh block (y155b etc.) before adoption.
+- Operational worry: linux-pc (the heavy worker) has gone silent for the first time; nothing heavy runs until Travis checks it.
