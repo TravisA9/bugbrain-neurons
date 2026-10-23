@@ -1,0 +1,1467 @@
+{
+  "id": "y150_cx4dT_seqchoice_fix",
+  "question": "I98",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/r88_jobs.js",
+    "run/r89_jobs.js"
+  ],
+  "title": "the last size failure: seqchoice on cx4dT + 4x receivers (cone, rb2) + thinF 5 + mixInhRef 850 (y136 best brain), with thinF 8, recvBudget 1.5, or the striatum 6x, growths 0-15 (ref y136) [R89: pinned to v41 = P.granRef=100]",
+  "priority": 0.975,
+  "estHours": 0.3,
+  "slotHours": 2,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "y136 ref850 brain vs 1x (same growths): book +0.030, fables +0.029 (16/0), order3 +0.007, text +0.001 -- every seq task at or above 1x; seqchoice order2 4.66 / cycle 6.07 vs 6.39 / 9.11 is the only task left below"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g0 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "1",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "3",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g4 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "5",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g5 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g6 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "7",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g7 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice order2 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g0 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "1",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "3",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g4 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "5",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g5 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g6 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "7",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g7 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=8,P.mixInhRef=850,P.granRef=100,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb2 thin8 ref850 seqchoice cycle g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g0 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "1",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "3",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g4 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "5",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g5 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g6 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "7",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g7 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice order2 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g0 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "1",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "3",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g4 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "5",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g5 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g6 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "7",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g7 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,P.recvBudget=1.5,P.granRef=100,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4dT recv4 cone rb1.5 thin5 ref850 seqchoice cycle g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g0 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "1",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "3",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g4 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "5",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g5 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g6 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "7",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g7 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice order2 g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "0",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g0 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "1",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g1 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "2",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g2 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "3",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g3 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "4",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g4 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "5",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g5 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "6",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g6 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "7",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g7 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "8",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g8 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "9",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g9 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "10",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g10 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "11",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g11 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "12",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g12 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "13",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g13 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "14",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g14 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,sc.sizeF@context=4,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.sizeCone=1,P.recvBudget=2,P.postCapRel=1.5,P.thinF=5,P.mixInhRef=850,sc.sizeF@striatum=6,P.granRef=100,P.fastEngine=1",
+        "15",
+        "--force"
+      ],
+      "label": "cx4dT recv4 str6 cone rb2 thin5 ref850 seqchoice cycle g15 n1",
+      "env": {
+        "BB_OUT": "results/phone/y150_cx4dT_seqchoice_fix.jsonl"
+      }
+    }
+  ],
+  "memGB": 3
+}

@@ -1,0 +1,2427 @@
+{
+  "id": "y143_cx_granRef_stack",
+  "question": "I95",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/r88_jobs.js",
+    "run/r89_jobs.js"
+  ],
+  "title": "granRef 1000 at cortex 3x / 4x divRep + trophMin, growths k 1900-1915 (refs y135: v41 cx3 / cx4 on the same growths, same worker), 5 seq tasks [R89: pinned to v41 = P.granRef=100]",
+  "priority": 0.985,
+  "estHours": 1.8,
+  "slotHours": 10.6,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "y135: v41 cx3 / cx4 book30k 0.398 / 0.397 vs v41 1x 0.376; does granRef 1000 add on top at size, or does the larger cortex already saturate the outputs?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book10k g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 book30k g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 fables4000 g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 order3 g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx3 divRep trophMin/3 text1000 g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book10k g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 book30k g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 fables4000 g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 order3 g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=4,sc.divRep@cortex=2,sc.trophMin@cortex=0.00125,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granRef=1000,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v41 granRef1000 cx4 divRep trophMin/4 text1000 g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y143_cx_granRef_stack.jsonl"
+      }
+    }
+  ],
+  "memGB": 3
+}

@@ -1,0 +1,267 @@
+{
+  "id": "y145_1x_granRef_book100k",
+  "question": "Q42",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/r88_jobs.js",
+    "run/r89_jobs.js"
+  ],
+  "title": "the plateau with granRef 1000: book100k and fables12000, growths k 1400-1407 (refs y138: v40 / v41 on the same growths) [R89: pinned to v41 = P.granRef=100]",
+  "priority": 0.95,
+  "estHours": 0.2,
+  "slotHours": 1,
+  "phone": false,
+  "flag": "text",
+  "accept": {
+    "note": "y138: v41 book100k 0.368 (= its book10k-30k level), fables12000 0.397; does a stronger granule drive change the slope with length?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1400",
+        "--force"
+      ],
+      "label": "v41 granRef1000 book100k g1400 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1401",
+        "--force"
+      ],
+      "label": "v41 granRef1000 book100k g1401 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1402",
+        "--force"
+      ],
+      "label": "v41 granRef1000 book100k g1402 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1403",
+        "--force"
+      ],
+      "label": "v41 granRef1000 book100k g1403 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1404",
+        "--force"
+      ],
+      "label": "v41 granRef1000 book100k g1404 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1405",
+        "--force"
+      ],
+      "label": "v41 granRef1000 book100k g1405 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1406",
+        "--force"
+      ],
+      "label": "v41 granRef1000 book100k g1406 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1407",
+        "--force"
+      ],
+      "label": "v41 granRef1000 book100k g1407 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1400",
+        "--force"
+      ],
+      "label": "v41 granRef1000 fables12000 g1400 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1401",
+        "--force"
+      ],
+      "label": "v41 granRef1000 fables12000 g1401 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1402",
+        "--force"
+      ],
+      "label": "v41 granRef1000 fables12000 g1402 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1403",
+        "--force"
+      ],
+      "label": "v41 granRef1000 fables12000 g1403 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1404",
+        "--force"
+      ],
+      "label": "v41 granRef1000 fables12000 g1404 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1405",
+        "--force"
+      ],
+      "label": "v41 granRef1000 fables12000 g1405 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1406",
+        "--force"
+      ],
+      "label": "v41 granRef1000 fables12000 g1406 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granRef=1000,P.fastEngine=1",
+        "1407",
+        "--force"
+      ],
+      "label": "v41 granRef1000 fables12000 g1407 n1",
+      "env": {
+        "BB_OUT": "results/phone/y145_1x_granRef_book100k.jsonl"
+      }
+    }
+  ],
+  "memGB": 1.5
+}
