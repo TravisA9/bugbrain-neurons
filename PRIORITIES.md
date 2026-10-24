@@ -1,4 +1,32 @@
-# PRIORITIES (R90, Oct 23 2026, ~7:45 AM CT; **v42 / DEFAULTS_VERSION 35** unchanged — v42 = v41 + params.granRef 600; v41 = deepURSx3 + P.granRef=100; v40 brain = deepURSx3v40)
+# PRIORITIES (R91, Oct 23 2026, ~7:30 PM CT; **v43 / DEFAULTS_VERSION 36** — v43 = v42 with a 4000-cell granule layer; v42 = plan deepURSx3v42 (2000 cells, granRef 600); v41 = deepURSx3v42 + P.granRef=100; v40 brain = deepURSx3v40)
+
+## R91 update (queue review, evening)
+- **v43 adopted: granule layer 4000 cells.** y159 (k 2240-2255) + box confirmation (k 2256-2271, all 8 tasks): book10k +0.008 (28/4), book30k +0.011 (29/1),
+  fables +0.001-0.002, text / order3 / K4 / seqchoice not worse. Cost ~1.4x runtime. Worker held-out = y160a/b.
+- New code: granAnneal (per-granule step annealing, for the plateau) and gen.js BB_GEN_MEAN (publishable generation stats).
+- linux-pc back since 9:38 AM CT, idle since 3:23 PM (queue empty). tacobell silent since 5:00 PM CT. Push blocked (TacoBell offline); bundles on the box.
+
+## Ranked open questions (R91)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I99 | v43 worker held-out (all 8 tasks) | y160a/b |
+| 2 | Q42 / I100 | Plateau: per-granule step annealing (granAnneal 5000 / 20000) at 10k, 100k, 300k | y161a/b, y162a/b, y172 |
+| 3 | I99 | Granule capacity II: granN 8000, mixed claws K3-4, granW 40 on v43 (brain ~0.38 vs ceiling ~0.41) | y163a/b |
+| 4 | I99 x I95 | Size the granules with the cortex: cx3 granN 2000/6000 x granRef 600/1800; at 100k | y165, y173 |
+| 5 | I98 | One sized brain for all tasks (cx3 ref850 +/- granN 6000, 7 tasks) | y166 |
+| 6 | Q46 / I98 | seqchoice at size: striatum x6 / x8 replication (growths 16-31) | y167 |
+| 7 | I99 | cx4dT granN 8000 | y168 |
+| 8 | I72 | Generation with v43 + outGate, published stats | y169 |
+| 9 | I99 | granRef 400 / 900 on v43 | y171a/b |
+Growth-phase memory / speed: v43 adds ~2000 cells and ~1.4x runtime; no new speed work this round (next candidate: a sparse granule update path).
+Low: analogy / evolution. Rejected ideas stay rejected (deeper chains / slow layers R60, delta rules R82, clawKeep / clawWF R82, mixFreeze R82, granIso R88, metaN 80+ R88,
+granRef 1000 / 3000 at 1x R88-R89, granGain 0.001 / granRate 0.0006 / granW 90 R90, slower granLr R91, preNorm R91, mixInh 0.35 R91).
+
+## Worker notes (R91)
+linux-pc: back, idle since 3:23 PM CT; ~62 slot-h heavy work queued (waits on the push). tacobell: silent since 5:00 PM CT; ~20 slot-h light work (~10 h). Moto G never seen.
+
+## Previous header (R90)
+# (R90 header) PRIORITIES (R90, Oct 23 2026, ~7:45 AM CT; **v42 / DEFAULTS_VERSION 35** unchanged — v42 = v41 + params.granRef 600; v41 = deepURSx3 + P.granRef=100; v40 brain = deepURSx3v40)
 
 ## R90 update (queue review, morning)
 - **No adoption; v42 holds** its worker held-out (y154 k 2176-2191: book10k +0.020, book30k +0.019 (16/0), fables +0.004, text / order3 / seqchoice / K4 0).

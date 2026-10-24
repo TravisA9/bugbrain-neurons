@@ -5,7 +5,7 @@
 // back as the next input. Sample quality: train-vocabulary word rate, distinct 4-grams, copying (share of sample 8 / 16-grams found
 // verbatim in TRAIN, longest copied run), and bits/char of the sample under a trigram model of TRAIN (vs real HELD text of the same length).
 // BB_GEN_LEARN=1 keeps learning on while free-running; task param genTemp > 0 samples instead of winner-take-all.
-// Prints one JSON line like run/r42.js (mean = teacher-forced held-out fitness) plus gen stats and the samples; recorded in the registry.
+// Prints one JSON line like run/r42.js (mean = teacher-forced held-out fitness, or the BB_GEN_MEAN stat) plus gen stats and the samples; recorded in the registry.
 const L = require('./lib.js'), SA = L.SA;
 const [plan, tj, G = 4, variant = 'base', g0 = 0] = process.argv.slice(2), task = Object.assign({ name: 'gen' }, JSON.parse(tj));
 if (task.params.source !== 'book' || !(task.params.genSyms > 0)) throw new Error('gen.js needs a seq task with source book and genSyms > 0');
@@ -42,6 +42,7 @@ for (let k = +g0; k < +g0 + +G; k++) {
 const mean = scores.reduce((x, y) => x + y, 0) / scores.length, sd = Math.sqrt(scores.reduce((x, y) => x + (y - mean) ** 2, 0) / scores.length);
 for (const q in st) st[q] = +st[q].toFixed(4);
 const OUT = { plan, task: tj, variant, G: +G, g0: +g0, mean: +mean.toFixed(3), sd: +sd.toFixed(3), scores: scores.map(x => +x.toFixed(2)), stats: st, samples };
+{ const mk = process.env.BB_GEN_MEAN; if (mk && st[mk] != null) { OUT.fitMean = OUT.mean; OUT.mean = st[mk]; OUT.meanKey = mk; } }   // R91: BB_GEN_MEAN=<stat> publishes a generation stat as `mean` (the queue keeps only mean per run; teacher-forced fitness moves to fitMean)
 if (process.env.BB_OUT) { const fs = require('fs'), path = require('path'), f = path.resolve(process.env.BB_OUT); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.appendFileSync(f, JSON.stringify(Object.assign({ at: new Date().toISOString(), defaults: SA.DEFAULTS_VERSION }, OUT)) + '\n'); }
 try { const REG = require('./registry.js'); REG.record(REG.describeAblation(plan, tj, variant + '|gen g0=' + g0, G, null, SA.DEFAULTS_VERSION), { status: 'finished', result: OUT }); } catch (e) {}
 console.log(JSON.stringify(OUT));

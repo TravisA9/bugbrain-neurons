@@ -520,16 +520,18 @@ class SpikingNet {
     if (!this.gIn) { const S = [0], K = []; for (let q = 0; q < L.length; q++) { const i = L[q]; for (let r = this.inStart[i], e = this.inStart[i + 1]; r < e; r++) { const k = this.inEdges[r]; if (this.g.gran[this.pres[k]] && this.isPlastic[k]) K.push(k); } S.push(K.length); } this.gIn = { S: Int32Array.from(S), K: Int32Array.from(K) }; }
     const S = this.gIn.S, K = this.gIn.K, ws = this.ws, pr = this.pres, wMax = params.wMax, lr = params.granLr, ref = params.granRef > 0 ? params.granRef : 10, D = globalThis.__granDbg;
     let U = null; if (gG) { if (!this.gU) { this.gU = new Float32Array(K.length); for (let r = 0; r < K.length; r++) this.gU[r] = ws[K[r]]; this.gPsi = params.granGain0 > 0 ? params.granGain0 : 0; } U = this.gU; }
+    const aT = params.granAnneal > 0 ? params.granAnneal : 0, aMn = params.granAnnealMin > 0 ? params.granAnnealMin : 0, gC = aT ? (this.gCnt || (this.gCnt = new Float32Array(this.N))) : null;   // R91 granAnneal: per-granule step decays with the granule's use count (a count-based / consolidating estimate: rare combinations learn fast, common ones average finely); floor granAnnealMin x granLr
     let oS = 0, dPs = 0; if (gG) for (let q = 0; q < nO; q++) oS += gA[o0 + q];
     for (let q = 0; q < L.length; q++) { const i = L[q], t = oT ? (q === this.gSym ? 1 : 0) : plat[i] === plN ? 1 : 0; let d = 0;
       let xx = 0; for (let r = S[q]; r < S[q + 1]; r++) { const k = K[r], x = gA ? gA[pr[k]] / params.granWin : xT[pr[k]] * xg; if (x >= 0.01) { d += (U ? U[r] : ws[k]) * x; xx += x * x; } }
       const y = Math.min(1, d / ref), er = t - y, g = oT ? (xx > 0 ? lr * ref / xx : 0) : lr;   // R83c output mode: normalised LMS (step / input power: stable for granLr < 1 at any granule count)
       if (gG) { const n = oS > 0 ? gA[i] / oS : 1 / nO, c = n + this.gPsi * (y - n); dPs += (t - c) * (y - n); }   // mixture gain: d/dpsi of the squared error of (1-psi) x the outputs' own prediction (window spike share) + psi x the granule prediction
       if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
-      for (let r = S[q]; r < S[q + 1]; r++) { const k = K[r], x = gA ? gA[pr[k]] / params.granWin : xT[pr[k]] * xg; if (x < 0.01) continue; if (U) { const u = U[r] + g * x * er; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; continue; } const w = ws[k] + g * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
+      for (let r = S[q]; r < S[q + 1]; r++) { const k = K[r], x = gA ? gA[pr[k]] / params.granWin : xT[pr[k]] * xg; if (x < 0.01) continue; const ga = gC ? g * Math.max(aMn, aT / (aT + gC[pr[k]])) : g; if (U) { const u = U[r] + ga * x * er; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; continue; } const w = ws[k] + ga * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
     if (gG) { const ps = this.gPsi = Math.min(1, Math.max(0, this.gPsi + params.granGain * dPs)); for (let r = 0; r < K.length; r++) ws[K[r]] = ps * U[r]; if (D) { D.psi = ps; D.pn = (D.pn || 0) + 1; D.ps = (D.ps || 0) + ps; } }
     // (granGain: psi rises while the granule prediction points where the outputs under-predict the arriving symbol and falls where it adds
     //  false alarms, so the pathway self-silences when it does not reduce the outputs' error; local: one gain per granule->output projection)
+    if (gC) { if (!this.granL) { const L = []; for (let i = 0; i < this.N; i++) if (this.g.gran[i]) L.push(i); this.granL = Int32Array.from(L); } const Lg = this.granL; for (let q = 0; q < Lg.length; q++) { const j = Lg[q], x = gA ? gA[j] / params.granWin : xT[j] * xg; if (x >= 0.01) gC[j]++; } }   // R91: count this teaching event for every granule active in the read window
     if (gA) gA.fill(0);
   }
   // R85 granIso (global param, 0/undefined = off): with granTgt 1, the granule -> output synapses do not make the output cells

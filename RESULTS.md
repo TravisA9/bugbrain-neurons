@@ -3710,3 +3710,53 @@ book30k ~**385 MB**. So every 1x job fits tacobell's maxMemGB 1, and the 3-3.5 G
   ceiling will not close by tuning: the next real levers are capacity (y159, y149) and the learning rule at length (y156, y158).
 - Worry: stacking +0.002-0.006 wins tested on 16 growths is where false adoptions come from; anything that small must pass a second fresh block (y155b etc.) before adoption.
 - Operational worry: linux-pc (the heavy worker) has gone silent for the first time; nothing heavy runs until Travis checks it.
+
+## R91 — queue review (Oct 23, 7 PM CT): **v43 adopted** (= v42 with a 4000-cell granule layer, DEFAULTS_VERSION 36); linux-pc back; new code granAnneal + BB_GEN_MEAN; push blocked (TacoBell offline)
+
+### Workers (CDT)
+- **linux-pc is back**: restarted 9:38 AM CT, ran y143, y144, y149-y152, y156, y158, y145, y157; last result 3:23 PM, then idle (queue empty). Last heartbeat 6:55 PM CT. No crash loop.
+- **tacobell**: ran y153, y155, y159, y142; idle since 3:58 PM, last heartbeat 5:00 PM CT (silent since; probably asleep / off). Moto G: never seen.
+- TacoBell disconnected in ListMachines at 7 PM -> the R91 push is blocked; bundles on the box (/workspace/R91). linux-pc idles until they land.
+
+### Results (growth-by-growth, mean deltas vs the reference arm on the same growths)
+| job | test | result | verdict |
+|---|---|---|---|
+| y159a/b (tacobell, k 2240-2255) | v42 granN 4000 vs v42 (2000) | book10k +0.008 (15/1), book30k +0.011 (14/1), fables +0.002, order3 0, text 0 | wins on 16 held-out -> full-set confirmation |
+| **box confirm (k 2256-2271, 8 tasks, 256 runs)** | granN 4000 vs v42 | book10k +0.0080 (13/3, t 4.6), book30k +0.0109 (15/0, t 9.3), fables +0.0010 (9/6), text1000 +0.0004 (5/5), order3 0, K4 +0.0002, seqchoice order2 / cycle identical | **passes, no task worse -> v43** |
+| y159 | granK 4; granN 4000 + K 4 | K4: fables +0.012, book30k -0.014; N4000+K4: book 0, fables +0.013 | trade-off, not adoptable; mixed claws tested in y163 |
+| y155 (tacobell) | v42 granW 40 | fables +0.013, book30k -0.003 (5/11) | no (book worse) |
+| y156 | slower granLr 0.05 / 0.025 at 10k-30k | loses at 10k | no |
+| y158 | book100k | v42 0.384 vs v41 0.368; granLr 0.05 +0.0023 (5/1) at 100k, -0.0028 on fables12000 | plateau persists; step size is not the lever -> per-granule annealing (y161/y162) |
+| y157 | preNorm on v42 | text -0.002 | rejected |
+| y153 | mixInh 0.35 | order3 +0.009, book / text -0.002 | no |
+| y143 | granRef 1000 at cx3 / cx4 | cx3: book +0.012 / +0.017, order3 +0.029; cx4: text -0.008, fables -0.008 | cx3-only signal -> y165 |
+| y149 | cx4 granN 4000 / 8000 | book +0.008 / +0.011 | granule capacity helps at size too -> y168 |
+| y152 | cx3 + ref850 | order3 0.960, text -0.011 vs cx3 | order3 fix costs text |
+| y144 | granules at cx4dT | +0.025 book; ref850 order3 0.966 at a text / book cost | size + granules good on book |
+| y150 | seqchoice at size | only striatum x6 helps cycle (+0.645, 11/5); size still 4.66 vs ~6.4 at 1x | still failing -> y167 replication |
+| y145, y151 | cx3 / granRef at 100k | see per-job results | consistent with the plateau |
+| y142 | generation with granules | stats not published (only mean/sd/n) | rerun as y169 with BB_GEN_MEAN |
+
+Runtime cost of v43: ~1.3-1.5x per run (book30k 110 s vs 73 s, fables 19 vs 14 s on the box); hidden cells 5483 -> 7483.
+
+### Adoption: v43 / DEFAULTS_VERSION 36
+- Plan deepURSx3 now grows `d.gran = { N: 4000 }` (constant GRAN_N_V43); the v41/v42 2000-cell brain is kept as plan **deepURSx3v42** (or P.granN=2000).
+  No global params.granN (that would add granules to other plans). Check: default deepURSx3 text1000 g2256 = 7.48 / 7483 cells = the box granN4000 run exactly; deepURSx3v42 = 7.45 / 5483 = the v42 run.
+- No pending job needed pinning (all leftover jobs are blocked; every R91 1x arm pins P.granN). Worker held-out = y160a/b (k 2272-2287, all 8 tasks).
+- test_core.js: v41 test now uses deepURSx3v42; new v43 test.
+
+### New code (R91)
+- **granAnneal** (js/core/net.js granStep; params.granAnneal, granAnnealMin; 0 = off, bit-identical): each granule's NLMS step is scaled by max(min, A / (A + n)), n = the granule's count of active (x >= 0.01) teaching steps — a per-synapse "learn fast while new, settle when experienced" rule aimed at the plateau. Box g2256 book10k: base 3.84, A200 3.62, A1000 3.78, A5000 3.845, A20000 3.80 -> worker tests at A 5000 / 20000 (y161, y162 at 100k / 300k).
+- **run/gen.js BB_GEN_MEAN=<stat>**: publishes one generation statistic as the queue mean (fitness kept as fitMean), so generation jobs give comparable numbers (y169: wordValid, triBits).
+- run/r91_jobs.js: R91 job generator.
+
+### Queue (R91; ~82 slot-h)
+Light (tacobell, 1x, memGB 1; ~20 slot-h ≈ 10 h): y160a/b v43 held-out (0.99), y161a/b granAnneal (0.98), y163a/b granule capacity II: granN 8000 / mixed claws K3-4 / granW 40 (0.97), y172 fables12k (0.935), y169 generation (0.94), y171a/b granRef on v43 (0.93).
+Heavy (linux-pc; ~62 slot-h): y162a/b granAnneal at book100k / 300k (0.975 / 0.945), y165 cx3 granN x granRef (0.965), y166 cx3 all-round 7 tasks (0.96), y167 seqchoice-at-size replication growths 16-31 (0.955), y168 cx4dT granN 8000 (0.95), y173 cx3 granule size at 100k (0.94).
+Light-job hours may be ~15% high (1x seqchoice runs take ~5-8 s, the table assumes 30 s).
+
+### Assessment
+- Real but modest: +0.01 book for ~1.4x runtime. The brain is still ~0.38 vs the ~0.41 granule ceiling; capacity is a lever, not the answer. If granN 8000 (y163/y168) gives another +0.01, capacity is the story; if flat, the readout / learning-rule side is.
+- Plateau after ~10k persists (v42 0.384 at 100k); granAnneal is the first structurally new test of it; slower global steps did not work.
+- seqchoice at size still fails (4.66 vs 6.4); striatum x6 is the only lead and needs y167 replication.
+- Worries: tacobell silence + TacoBell being the only push path means another round of starved workers; v43 makes every run slower.
