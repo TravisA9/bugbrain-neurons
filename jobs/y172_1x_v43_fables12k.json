@@ -1,0 +1,386 @@
+{
+  "id": "y172_1x_v43_fables12k",
+  "question": "Q42",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/r91_jobs.js"
+  ],
+  "title": "length on a second corpus: v42 / v43 / v43 anneal20000 at fables12000, fresh k 2344-2351",
+  "priority": 0.935,
+  "estHours": 0.1,
+  "slotHours": 0.6,
+  "phone": false,
+  "flag": "text",
+  "memGB": 1,
+  "accept": {
+    "note": "y158: granLr 0.05 cost fables12000 -0.003 (1/7) while helping book100k; does the decaying step avoid that cost?"
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "2344",
+        "--force"
+      ],
+      "label": "v42 1x fables12000 g2344 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "2345",
+        "--force"
+      ],
+      "label": "v42 1x fables12000 g2345 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "2346",
+        "--force"
+      ],
+      "label": "v42 1x fables12000 g2346 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "2347",
+        "--force"
+      ],
+      "label": "v42 1x fables12000 g2347 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "2348",
+        "--force"
+      ],
+      "label": "v42 1x fables12000 g2348 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "2349",
+        "--force"
+      ],
+      "label": "v42 1x fables12000 g2349 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "2350",
+        "--force"
+      ],
+      "label": "v42 1x fables12000 g2350 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "2351",
+        "--force"
+      ],
+      "label": "v42 1x fables12000 g2351 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "2344",
+        "--force"
+      ],
+      "label": "v43 1x fables12000 g2344 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "2345",
+        "--force"
+      ],
+      "label": "v43 1x fables12000 g2345 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "2346",
+        "--force"
+      ],
+      "label": "v43 1x fables12000 g2346 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "2347",
+        "--force"
+      ],
+      "label": "v43 1x fables12000 g2347 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "2348",
+        "--force"
+      ],
+      "label": "v43 1x fables12000 g2348 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "2349",
+        "--force"
+      ],
+      "label": "v43 1x fables12000 g2349 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "2350",
+        "--force"
+      ],
+      "label": "v43 1x fables12000 g2350 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "2351",
+        "--force"
+      ],
+      "label": "v43 1x fables12000 g2351 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granAnneal=20000,P.granAnnealMin=0.25,P.fastEngine=1",
+        "2344",
+        "--force"
+      ],
+      "label": "v43 anneal20000 fables12000 g2344 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granAnneal=20000,P.granAnnealMin=0.25,P.fastEngine=1",
+        "2345",
+        "--force"
+      ],
+      "label": "v43 anneal20000 fables12000 g2345 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granAnneal=20000,P.granAnnealMin=0.25,P.fastEngine=1",
+        "2346",
+        "--force"
+      ],
+      "label": "v43 anneal20000 fables12000 g2346 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granAnneal=20000,P.granAnnealMin=0.25,P.fastEngine=1",
+        "2347",
+        "--force"
+      ],
+      "label": "v43 anneal20000 fables12000 g2347 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granAnneal=20000,P.granAnnealMin=0.25,P.fastEngine=1",
+        "2348",
+        "--force"
+      ],
+      "label": "v43 anneal20000 fables12000 g2348 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granAnneal=20000,P.granAnnealMin=0.25,P.fastEngine=1",
+        "2349",
+        "--force"
+      ],
+      "label": "v43 anneal20000 fables12000 g2349 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granAnneal=20000,P.granAnnealMin=0.25,P.fastEngine=1",
+        "2350",
+        "--force"
+      ],
+      "label": "v43 anneal20000 fables12000 g2350 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granAnneal=20000,P.granAnnealMin=0.25,P.fastEngine=1",
+        "2351",
+        "--force"
+      ],
+      "label": "v43 anneal20000 fables12000 g2351 n1",
+      "env": {
+        "BB_OUT": "results/phone/y172_1x_v43_fables12k.jsonl"
+      }
+    }
+  ]
+}
