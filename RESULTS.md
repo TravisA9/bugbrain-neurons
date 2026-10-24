@@ -3760,3 +3760,37 @@ Light-job hours may be ~15% high (1x seqchoice runs take ~5-8 s, the table assum
 - Plateau after ~10k persists (v42 0.384 at 100k); granAnneal is the first structurally new test of it; slower global steps did not work.
 - seqchoice at size still fails (4.66 vs 6.4); striatum x6 is the only lead and needs y167 replication.
 - Worries: tacobell silence + TacoBell being the only push path means another round of starved workers; v43 makes every run slower.
+
+## R92 — queue review (Oct 24, 7:15 AM CT): no adoption; **v43 holds its worker held-out** (y160 book +0.008 / +0.011, 16/0 and 15/1); granAnneal flat at 1x; granN 8000 + mixed claws is the next candidate; linux-pc silent again since 8:26 PM CT
+State found: the R91 code (90c2f43) and queue (bae0760) were already on origin (pushed 8:55 PM CT Oct 23, after TacoBell came back), so the R91 bundles were not needed.
+
+### Workers (CDT)
+- **linux-pc** (ExplodingRumba, code 5509666 = R90): idle heartbeats until **8:26 PM Oct 23, silent since** (~11 h). The R91 jobs landed 29 min later, so it never claimed any; no lease is held.
+  Second evening outage in two days (Oct 22 ~9:45 PM, Oct 23 ~8:30 PM): looks like the machine is powered off / sleeping / losing network at night, not a job crash. All heavy work (y162, y165-y168, y173; ~40 slot-h) waits for it.
+- **tacobell** (code 90c2f43, AC 100%, crashSkip empty): healthy since 8:58 PM; ran y160a/b, y161a/b, y163a; y163b running (135/200 runs at 7:15 AM). No crash loop.
+  Note: its log says "memGB 1 per run -> 1 parallel runs (of 2)": with maxMemGB 1 every memGB-1 job runs single-file although 1x runs peak at ~0.36 GB (granN 4000) / ~0.57 GB (granN 16000, box).
+- Moto G: not seen.
+
+### Results (growth-by-growth vs the reference arm; (wins/losses, paired t, n))
+| job | test | result | verdict |
+|---|---|---|---|
+| y160a/b (k 2272-2287, 8 tasks) | v43 vs v42 | book10k 0.392 / 0.384 +0.008 (16/0, t 10.5), book30k 0.400 / 0.389 +0.011 (15/1, t 8.7), fables +0.000 (10/6), order3 -0.000 (0/1), text1000 -0.0013 (4/9, t -2.0), seqchoice order2 / cycle identical | **v43 holds** |
+| text pooled with box block (32) | v43 vs v42 | text1000 -0.00045 (9/14, t -1.0) | n.s.; v42 had the same pooled dip (-0.0004, 11/14) -> y175 measures cumulative drift |
+| y161a/b (k 2288-2303, 5 tasks) | granAnneal 5000 / 20000 | 5000: book10k -0.001 (6/8), book30k +0.001 (10/6), fables -0.001 (5/11); 20000: 0.000 / +0.001 / +0.001; order3 / text identical; 5000 min0.5 == 5000 (floor never binds) | **flat at 1x**; length test y162 pending (linux-pc) |
+| y163a (k 2304-2311) + y163b partial (k 2312-2319, unpublished, 135/200 runs read from TacoBell) | granule capacity II on v43 | granN 8000: book10k +0.001 (8/8), book30k +0.006 (15/1, t 7.7), fables -0.001 (7/9), text 0; Kmix34 @4000: fables +0.005 (13/3), book 0; **granN 8000 + Kmix34: book10k +0.004 (9/6), book30k +0.007 (12/3), fables +0.0065 (8/0, n8), text +0.001 (4/3)**; granW 40 (n8): fables +0.014 (8/0) but book30k -0.002 | N8000+Kmix34 -> held-out y174 after y163b publishes; granW 40 still a book/fables trade |
+
+Smoke (box, fables4000 g2416): granN 16000 + Kmix34 runs, peak RSS 572 MB, 56 s vs v43 20 s / 359 MB.
+
+### Adoption: none. v43 stays (DEFAULTS_VERSION 36). No pending job changes meaning (every 1x arm pins P.granN).
+
+### Queue (R92; run/r92_jobs.js; existing code only; fresh k 2352-2423)
+- y174a/b (0.985, 2.7 slot-h each): granN 8000 + Kmix34 vs v43 on all 8 tasks (+ that with granW 40 on 5 tasks), k 2352-2367. Adoption test for v44 if y163b holds.
+- y175 (0.98, 0.7): text1000 v41 / v42 / v43 on 48 fresh growths (cumulative text drift).
+- y176 (0.95, 3.4): capacity curve granN 4000 / 8000 / 16000 (+16000 Kmix34) on book10k / book30k / fables.
+- tacobell light pool: y163b rest (~1 h) + y169 1.9 + y171a/b 3.4 + y172 0.6 + R92 9.5 ≈ 16 slot-h ≈ 11 h at the observed ~1.5 slot-h per wall hour.
+- linux-pc heavy pool unchanged (~40 slot-h: y162a/b, y165, y166, y167, y168, y173).
+
+### Assessment
+- v43 is real on book (+0.008 / +0.011 on 48 growths over 3 blocks) and costs nothing measurable elsewhere except a possible ~0.0005 text drift, which is now the second adoption in a row with that sign.
+- The capacity story is diminishing: 2000 -> 4000 gave book30k +0.011, 4000 -> 8000 about +0.006. The mixed-claw 8000 layer is the first granule arm that lifts fables and book together; y176 tells whether 16000 is worth its ~2.8x runtime.
+- granAnneal is a clean negative at 1x: the plateau is not readout step noise at 10k-30k. If y162 is also flat at 100k / 300k, the plateau belongs to the cortex rule, not the readout.

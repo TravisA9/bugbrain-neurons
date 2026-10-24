@@ -1,4 +1,32 @@
-# PRIORITIES (R91, Oct 23 2026, ~7:30 PM CT; **v43 / DEFAULTS_VERSION 36** — v43 = v42 with a 4000-cell granule layer; v42 = plan deepURSx3v42 (2000 cells, granRef 600); v41 = deepURSx3v42 + P.granRef=100; v40 brain = deepURSx3v40)
+# PRIORITIES (R92, Oct 24 2026, ~7:30 AM CT; **v43 / DEFAULTS_VERSION 36** unchanged — v43 = v42 with a 4000-cell granule layer; v42 = plan deepURSx3v42 (2000 cells, granRef 600); v41 = deepURSx3v42 + P.granRef=100)
+
+## R92 update (queue review, morning)
+- **No adoption; v43 holds** its worker held-out (y160 k 2272-2287: book10k +0.008 (16/0), book30k +0.011 (15/1), fables / order3 / seqchoice 0, text -0.0013 (4/9); pooled 32 text -0.00045, n.s.).
+- granAnneal (I100) flat at 10k-30k -> rejected at 1x; y162 (100k / 300k) still pending.
+- Granule capacity II (y163a + y163b partial): granN 8000 + mixed 3/4 claws up on book10k / book30k / fables / text; held-out y174a/b queued (all 8 tasks).
+- linux-pc silent since 8:26 PM CT Oct 23 (second evening outage); tacobell healthy, single-file on memGB-1 jobs.
+
+## Ranked open questions (R92)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I99 | granN 8000 + Kmix34 held-out on 8 tasks (v44 candidate) | y163b (running), y174a/b |
+| 2 | I99 | Cumulative text1000 drift v41 -> v42 -> v43 (48 growths) | y175 |
+| 3 | Q42 / I100 | Plateau at length: granAnneal at 100k / 300k, fables12k | y162a/b (linux-pc), y172 |
+| 4 | I99 | Capacity curve 4000 / 8000 / 16000 | y176 |
+| 5 | I99 x I95 | Granules sized with the cortex (cx3) | y165, y173 |
+| 6 | I98 | One sized brain for all tasks | y166 |
+| 7 | Q46 | seqchoice at size: striatum x6 / x8 replication | y167 |
+| 8 | I99 | cx4dT granN 8000 | y168 |
+| 9 | I72 | Generation with published stats | y169 |
+| 10 | I99 | granRef 400 / 900 on v43 | y171a/b |
+Growth-phase memory / speed: granN 8000 costs ~1.45x v43, 16000 ~2.8x; a sparse granule update path becomes worth writing if v44 uses 8000.
+Low: analogy / evolution. Rejected ideas stay rejected (as R91, plus granAnneal at 1x R92).
+
+## Worker notes (R92)
+linux-pc: silent since 8:26 PM CT Oct 23 (~40 slot-h heavy work waiting; needs a physical check, and maybe a no-sleep / power setting). tacobell: healthy; ~16 slot-h light (~11 h). Moto G never seen.
+
+## Previous header (R91)
+# (R91 header) PRIORITIES (R91, Oct 23 2026, ~7:30 PM CT; **v43 / DEFAULTS_VERSION 36** — v43 = v42 with a 4000-cell granule layer; v42 = plan deepURSx3v42 (2000 cells, granRef 600); v41 = deepURSx3v42 + P.granRef=100; v40 brain = deepURSx3v40)
 
 ## R91 update (queue review, evening)
 - **v43 adopted: granule layer 4000 cells.** y159 (k 2240-2255) + box confirmation (k 2256-2271, all 8 tasks): book10k +0.008 (28/4), book30k +0.011 (29/1),
