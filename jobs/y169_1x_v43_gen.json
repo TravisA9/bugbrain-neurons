@@ -12,7 +12,7 @@
     "run/r91_jobs.js",
     "run/gen.js"
   ],
-  "title": "generation on v42 / v43 (+ output gate 0.2): book30k life then 500 free-run symbols, published stat = train-vocabulary word rate / trigram bits per char (BB_GEN_MEAN), fresh k 2320-2327",
+  "title": "generation on v42 / v43 (+ output gate 0.2): book30k life then 500 free-run symbols, published stat = train-vocabulary word rate / trigram bits per char (BB_GEN_MEAN), fresh k 2320-2327 [R94: pinned to v43 claws = P.granK=3]",
   "priority": 0.94,
   "estHours": 0.3,
   "slotHours": 1.9,
@@ -29,7 +29,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2320",
         "--force"
       ],
@@ -45,7 +45,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2321",
         "--force"
       ],
@@ -61,7 +61,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2322",
         "--force"
       ],
@@ -77,7 +77,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2323",
         "--force"
       ],
@@ -93,7 +93,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2324",
         "--force"
       ],
@@ -109,7 +109,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2325",
         "--force"
       ],
@@ -125,7 +125,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2326",
         "--force"
       ],
@@ -141,7 +141,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2327",
         "--force"
       ],
@@ -157,7 +157,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2320",
         "--force"
       ],
@@ -173,7 +173,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2321",
         "--force"
       ],
@@ -189,7 +189,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2322",
         "--force"
       ],
@@ -205,7 +205,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2323",
         "--force"
       ],
@@ -221,7 +221,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2324",
         "--force"
       ],
@@ -237,7 +237,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2325",
         "--force"
       ],
@@ -253,7 +253,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2326",
         "--force"
       ],
@@ -269,7 +269,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2327",
         "--force"
       ],
@@ -285,7 +285,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2320",
         "--force"
       ],
@@ -301,7 +301,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2321",
         "--force"
       ],
@@ -317,7 +317,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2322",
         "--force"
       ],
@@ -333,7 +333,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2323",
         "--force"
       ],
@@ -349,7 +349,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2324",
         "--force"
       ],
@@ -365,7 +365,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2325",
         "--force"
       ],
@@ -381,7 +381,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2326",
         "--force"
       ],
@@ -397,7 +397,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2327",
         "--force"
       ],
@@ -413,7 +413,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2320",
         "--force"
       ],
@@ -429,7 +429,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2321",
         "--force"
       ],
@@ -445,7 +445,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2322",
         "--force"
       ],
@@ -461,7 +461,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2323",
         "--force"
       ],
@@ -477,7 +477,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2324",
         "--force"
       ],
@@ -493,7 +493,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2325",
         "--force"
       ],
@@ -509,7 +509,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2326",
         "--force"
       ],
@@ -525,7 +525,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=2000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=2000,P.granK=3,P.fastEngine=1",
         "2327",
         "--force"
       ],
@@ -541,7 +541,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2320",
         "--force"
       ],
@@ -557,7 +557,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2321",
         "--force"
       ],
@@ -573,7 +573,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2322",
         "--force"
       ],
@@ -589,7 +589,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2323",
         "--force"
       ],
@@ -605,7 +605,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2324",
         "--force"
       ],
@@ -621,7 +621,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2325",
         "--force"
       ],
@@ -637,7 +637,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2326",
         "--force"
       ],
@@ -653,7 +653,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,P.granK=3,P.fastEngine=1",
         "2327",
         "--force"
       ],
@@ -669,7 +669,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2320",
         "--force"
       ],
@@ -685,7 +685,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2321",
         "--force"
       ],
@@ -701,7 +701,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2322",
         "--force"
       ],
@@ -717,7 +717,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2323",
         "--force"
       ],
@@ -733,7 +733,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2324",
         "--force"
       ],
@@ -749,7 +749,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2325",
         "--force"
       ],
@@ -765,7 +765,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2326",
         "--force"
       ],
@@ -781,7 +781,7 @@
         "deepURSx3",
         "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
         "1",
-        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.fastEngine=1",
+        "pl.lr@cortex=0.2,P.granN=4000,pl.outGate=0.2,pl.outGateMode=1,P.granK=3,P.fastEngine=1",
         "2327",
         "--force"
       ],
