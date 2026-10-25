@@ -3826,3 +3826,41 @@ Pooled N8000+Kmix34 vs v43 over 24 growths (y163a/b + y174a): book10k +0.003 (13
 - book30k at 1x is now ~0.41, i.e. at the old granule-readout "ceiling" (the 3-gram level). The ceiling was a property of a 2000-cell, 3-claw layer, not a hard limit; the next target is the 4-gram level.
 - The length result changes the plateau story: the layer's size sets how much extra text helps. y177 / y178 test whether that keeps compounding (then size the granule layer with the training length) or saturates (then the cortex rule is the limit).
 - Worry: both workers dark at once means nothing is being measured; the queue is deep but idle.
+
+## R94 — queue review (Oct 25, ~7:15 AM CT): **v44 adopted** (DEFAULTS_VERSION 37: 8000-cell granule layer, mixed 3/4-letter claws); y177 run on the box: **more granules = steeper fables 4k -> 12k gain**; cumulative text1000 drift now significant (small); granAnneal flat at length; push blocked again (TacoBell offline)
+State found: origin code still a83beaa and the queue lacks the R93 commit (R93 push never happened: TacoBell offline). linux-pc came back at 7:53 PM Oct 24 after ~23 h, published y174b (8:16 PM), y175 (8:21 PM) and y162a (8:56 PM), claimed y165 and went silent after its 9:56 PM renewal (lease expired 3:20 AM).
+
+### Workers (CDT)
+- **linux-pc** (code a83beaa): last renewal 9:56 PM Oct 24, **silent ~10 h**; 4th night-time outage in 4 days (pattern: up in the evening for an hour or two, then dark). Not a crash loop (completed 3 jobs cleanly). Needs a physical check of sleep / power / network.
+- **tacobell**: last heartbeat 9:50 AM Oct 24, **silent ~22 h**; the laptop is also disconnected from the assistant app (off / asleep), so the watchdog cannot help. worker-config gives it cpuMax 60 (standing order says 75; unchanged).
+- Moto G: not seen.
+
+### Results (growth-by-growth vs the reference arm; (wins/losses, paired t, n))
+| job | test | result | verdict |
+|---|---|---|---|
+| y174b (linux-pc, k 2360-2367, all 8 tasks) | N8000 + Kmix34 vs v43 (held-out 2/2) | book10k -0.001 (4/4, t -0.5), book30k +0.006 (6/2, t 1.9), fables +0.006 (6/2, t 2.4), text1000 -0.001 (2/6, t -1.0), K4 -0.0003 (0/1), order3 / seqchoice order2 / cycle bit-identical | holds |
+| y174a + y174b (16 fresh) | v44 decision | book10k +0.000 (8/8), **book30k +0.009 (14/2, t 4.8)**, **fables +0.007 (14/2, t 5.1)**, text1000 -0.0003 (6/8, t -0.8), K4 0/1, order3 / seqchoice identical | **no task worse -> v44** |
+| y174a + y174b | + granW 40 (6 seq tasks) | book10k +0.006 (12/4, t 3.3), book30k +0.008 (16/0), **fables +0.020 (16/0, t 13)**, text1000 -0.0007 (3/11, t -1.7) | v45 candidate (text sign worries) -> y179 |
+| y175 (linux-pc, 48 fresh k 2368-2415, text1000) | cumulative drift | v42 vs v41 -0.0003 (16/27, t -1.3); **v43 vs v41 -0.0011 (11/33, t -2.4)** (0.758 -> 0.757) | small but real text cost from the granule adoptions -> y180 guard |
+| y162a (linux-pc, k 1400-1407) | granAnneal at length (v43) | anneal 5000: book100k -0.002 (3/4), fables12000 -0.000; anneal 20000: book100k +0.001 (5/3), fables12000 -0.000 | **rejected at length too** |
+| y177 (run on the box, k 2424-2439, 16) | granule capacity x length, fables 4000 -> 12000 | v43 0.3585 -> 0.4325 (slope +0.074); N8000 Kmix34 +0.0078 (15/1) / **+0.0116 (16/0)**, slope +0.0038 vs v43 (11/5, t 3.2); N16000 Kmix34 +0.0074 / **+0.0133 (16/0)**, slope +0.0059 (14/2, t 4.2); N8000 Kmix34 granW 40 +0.0196 / +0.0205 (16/0), slope +0.0009 (9/7, n.s.) | **the layer's size sets how much longer training pays** (book R93 + fables now); granW 40 is a level shift, not a slope |
+
+The y177 job was run on the box (128 runs, a box-side parallel runner, ~29 min with 6 in parallel; results_box/r94_y177_granLen_f12.jsonl) and so was not queued.
+
+### Adoption: **v44 (APP_VERSION v44, DEFAULTS_VERSION 37)** = plan deepURSx3 with gene d.gran = {N 8000, K 4, Kmin 3}; v43 kept as plan deepURSx3v43 (= P.granN=4000,P.granK=3).
+- granK left the global params: unset = the plan gene (d.gran.K / Kmin; older plans 3); P.granK set without P.granKmin gives every granule granK claws (as before).
+- Checked bit-identical on the box (text1000 g2360): pinned v43 = 7.655 (= y174b v43), new default = explicit N8000/Kmin3/K4 = 7.625 (= y174b N8000 Kmix34). test_core.js ALL OK.
+- Pending jobs pinned so they keep their meaning (run/r94_pin.js): every deepURSx3 run without P.granK gets P.granK=3, without P.granN gets P.granN=4000; y140's no-granN arms get P.granN=2000 (their v41 meaning, which had silently become 4000 after R91). Pinned: y140, y162b, y165-y169, y171a/b, y172, y173, y176, y178.
+
+### Queue (R94; run/r94_jobs.js; every arm pins V43 / V44 explicitly, so old worker code runs them identically; fresh k 2448-2519)
+- y179a/b_1x_v44_heldout (0.98, light, 2.8 slot-h each): v43 / v44 on all 8 tasks, v44 + granW 40 on the 6 seq tasks; k 2448-2463. Worker confirmation of v44 + the v45 (granW 40) held-out.
+- y180a_1x_v44_textGuard (0.955, light, 1.3): text1000 on 48 growths k 2464-2511: v43 / v44 / v44 granGain 0.001 / 0.01. y180b (0.95, light, 1.8): book10k + fables4000 cost check of the same arms on k 2464-2479.
+- y181_1x_v44_book300k (0.93, heavy memGB 1.5, 7.5): v43 / v44 at book300k, k 2512-2519 (with y178's 30k / 100k).
+- De-ranked: y140 0.975 -> 0.6 (superseded), y162b 0.945 -> 0.7 (anneal flat at 100k). y178 queued (pinned) with this push.
+- Light pool ≈ 18 slot-h meaningful (y179 5.6, y180 3.1, y176 3.4, y169 1.9, y171a/b 3.4, y172 0.6) ≈ 11 h at ~1.6 slot-h per wall hour, plus ~29 slot-h filler; heavy ≈ 98 slot-h. Both well over 12 h for any worker that comes back.
+
+### Assessment
+- v44 is a clean but moderate step: about +0.008 on book30k / fables, nothing else moves. Each granule adoption now costs runtime (v44 ~1.45x v43, ~2x v42): the sparse granule update path is the main engineering need before 16000 cells or cx3 x granules are affordable.
+- y177 is the most interesting result this round: on fables too, a bigger layer gains more from 3x more text (+0.0038 at 8000, +0.0059 at 16000 on a +0.074 base slope). With R93's book result this is consistent: the "plateau after ~10k" is largely granule capacity. Next: size the layer with the training length (y178 / y181 test book 100k / 300k).
+- Worry: text1000 is slowly getting worse with each granule step (-0.0011 by v43, significant at n 48). Each step passed its own test, but small costs add up; y180 tests whether the self-silencing gain (granGain) is too slow on short text.
+- Worry: no worker has been reliably up for ~36 h; the measured-results rate is now limited by uptime, not by queue depth. The box ran y177 in ~30 min; small box runs can keep the main thread moving.

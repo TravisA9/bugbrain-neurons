@@ -1,4 +1,33 @@
-# PRIORITIES (R93, Oct 24 2026, ~7:30 PM CT; **v43 / DEFAULTS_VERSION 36** unchanged — v43 = v42 with a 4000-cell granule layer; v42 = plan deepURSx3v42 (2000 cells, granRef 600); v41 = deepURSx3v42 + P.granRef=100)
+# PRIORITIES (R94, Oct 25 2026, ~7:45 AM CT; **v44 / DEFAULTS_VERSION 37** — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws (gene d.gran K 4 / Kmin 3); v43 = deepURSx3v43 = P.granN=4000,P.granK=3; v42 = deepURSx3v42 (2000 cells, granRef 600))
+
+## R94 update (queue review, morning)
+- **v44 adopted** (granN 8000 + Kmix34) on 16 fresh held-out growths y174a+b (k 2352-2367, 8 tasks): book30k +0.009 (14/2), fables +0.007 (14/2), book10k 0 (8/8), text1000 -0.0003 (6/8, n.s.), order3 / K4 / seqchoice not worse. Cost ~1.45x runtime.
+- granK is no longer a global default: unset = plan gene. All pending jobs pinned (P.granK=3; y140 no-granN arms back to their v41 meaning P.granN=2000). New jobs pin V43 / V44 explicitly, so old worker code (a83beaa) runs them identically.
+- Cumulative text1000 drift is now significant but small: v43 vs v41 -0.0011 (11/33, t -2.4, n 48). Guard job y180.
+- granAnneal flat at book100k / fables12000 (y162a) -> rejected at length; y162b de-ranked.
+- linux-pc ran y174b / y175 / y162a after a ~23 h outage, then went silent again at ~10 PM (4th night outage). tacobell offline since 9:50 AM Oct 24. Push blocked again (TacoBell not connected); bundles in /workspace/R94 carry R93 + R94.
+
+## Ranked open questions (R94)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I99 | v44 worker confirmation + granW 40 held-out (v45 candidate: fables +0.020 16/0, text 3/11) | y179a/b |
+| 2 | I99 | text1000 guard: granGain 0.001 / 0.01 on v44 (48 growths) | y180a/b |
+| 3 | Q42 x I99 | Plateau x granule capacity: y177 (box) fables 4k -> 12k slope steeper with cells (+0.004 at 8000, +0.006 at 16000); book 30k / 100k / 300k next | y178, y181 (linux-pc) |
+| 4 | I99 | Capacity curve 4000 / 8000 / 16000 (3 claws) | y176 |
+| 5 | I99 x I95 | Granules sized with the cortex (cx3) | y165, y173 |
+| 6 | I98 | One sized brain for all tasks | y166 |
+| 7 | Q46 | seqchoice at size: striatum x6 / x8 replication | y167 |
+| 8 | I99 | cx4dT granN 8000 | y168 |
+| 9 | I72 | Generation with published stats | y169 |
+| 10 | I99 | granRef 400 / 900 (on v43; retest on v44 if it moves) | y171a/b |
+Growth-phase memory / speed: v44 = 8000 granules now costs ~1.45x v43 on every run; the sparse granule update path is the top engineering item (needed before 16000 or cx3 x granules are affordable).
+Low: analogy / evolution. Rejected ideas stay rejected (as R92, plus granAnneal at length R94). De-ranked: y140 (0.6, superseded), y162b (0.7).
+
+## Worker notes (R94)
+linux-pc: back 7:53 PM - ~9:56 PM Oct 24, silent since (lease on y165 expired 3:20 AM); 4 night outages in 4 days — needs a physical check of sleep / power / network. tacobell: offline since 9:50 AM Oct 24 (laptop off / asleep); its worker-config has cpuMax 60 (the standing order says 75). Moto G never seen. Queue: light ~18 slot-h meaningful (~11 h at ~1.6 slot-h per wall hour) + ~29 slot-h filler; heavy ~98 slot-h (linux-pc can also take all light jobs).
+
+## Previous header (R93)
+# (R93 header) PRIORITIES (R93, Oct 24 2026, ~7:30 PM CT; **v43 / DEFAULTS_VERSION 36** unchanged — v43 = v42 with a 4000-cell granule layer; v42 = plan deepURSx3v42 (2000 cells, granRef 600); v41 = deepURSx3v42 + P.granRef=100)
 
 ## R93 update (queue review, evening)
 - **No adoption; v44 candidate (granN 8000 + Kmix34) holds its first 8 held-out growths** (y174a: book30k +0.012 8/0, fables +0.009 8/0, book10k +0.002, text 0, order3 / K4 / seqchoice identical). y174b (other 8) decides.
