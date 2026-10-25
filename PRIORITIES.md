@@ -1,4 +1,33 @@
-# PRIORITIES (R92, Oct 24 2026, ~7:30 AM CT; **v43 / DEFAULTS_VERSION 36** unchanged — v43 = v42 with a 4000-cell granule layer; v42 = plan deepURSx3v42 (2000 cells, granRef 600); v41 = deepURSx3v42 + P.granRef=100)
+# PRIORITIES (R93, Oct 24 2026, ~7:30 PM CT; **v43 / DEFAULTS_VERSION 36** unchanged — v43 = v42 with a 4000-cell granule layer; v42 = plan deepURSx3v42 (2000 cells, granRef 600); v41 = deepURSx3v42 + P.granRef=100)
+
+## R93 update (queue review, evening)
+- **No adoption; v44 candidate (granN 8000 + Kmix34) holds its first 8 held-out growths** (y174a: book30k +0.012 8/0, fables +0.009 8/0, book10k +0.002, text 0, order3 / K4 / seqchoice identical). y174b (other 8) decides.
+- Pooled 24 growths: book30k +0.008 (20/4), fables +0.007 (24/0), book10k +0.003, text +0.0005. granW 40 on top: fables +0.021, book no longer worse, text -0.0006 (1/5).
+- Length: bigger granule layer gains more from 10k -> 30k (+0.016 vs +0.011) -> plateau is partly capacity; y177 (fables 4k/12k, light) and y178 (book 30k/100k, heavy) queued.
+- **Both workers silent**: linux-pc since 8:26 PM Oct 23 (~23 h), tacobell since 10:50 AM (laptop offline; y174b lease expired 2:50 PM). Push blocked; bundles on the box (/workspace/R93).
+
+## Ranked open questions (R93)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I99 | granN 8000 + Kmix34 held-out half 2 (v44 decision) | y174b |
+| 2 | I99 | Cumulative text1000 drift v41 -> v42 -> v43 (48 growths) | y175 |
+| 3 | Q42 x I99 | Plateau x granule capacity: does the length slope keep growing with cells? | y178 (linux-pc), y177 |
+| 4 | Q42 / I100 | granAnneal at 100k / 300k, fables12k | y162a/b (linux-pc), y172 |
+| 5 | I99 | Capacity curve 4000 / 8000 / 16000 | y176 |
+| 6 | I99 x I95 | Granules sized with the cortex (cx3) | y165, y173 |
+| 7 | I98 | One sized brain for all tasks | y166 |
+| 8 | Q46 | seqchoice at size: striatum x6 / x8 replication | y167 |
+| 9 | I99 | cx4dT granN 8000 | y168 |
+| 10 | I72 | Generation with published stats | y169 |
+| 11 | I99 | granRef 400 / 900 on v43 | y171a/b |
+Growth-phase memory / speed: granN 8000 costs ~1.45x v43, 16000 ~2.8x; write the sparse granule update path if v44 = 8000 (needed before 16000 is affordable at size).
+Low: analogy / evolution. Rejected ideas stay rejected (as R92).
+
+## Worker notes (R93)
+linux-pc: silent ~23 h (third night outage; needs a physical check + no-sleep / power settings). tacobell: laptop offline since ~10:50 AM CT; watchdog cannot help while the machine is off/asleep. Queue: light ~16 slot-h meaningful (~10-11 h) + ~29 slot-h filler; heavy ~94 slot-h. Moto G never seen.
+
+## Previous header (R92)
+# (R92 header) PRIORITIES (R92, Oct 24 2026, ~7:30 AM CT; **v43 / DEFAULTS_VERSION 36** unchanged — v43 = v42 with a 4000-cell granule layer; v42 = plan deepURSx3v42 (2000 cells, granRef 600); v41 = deepURSx3v42 + P.granRef=100)
 
 ## R92 update (queue review, morning)
 - **No adoption; v43 holds** its worker held-out (y160 k 2272-2287: book10k +0.008 (16/0), book30k +0.011 (15/1), fables / order3 / seqchoice 0, text -0.0013 (4/9); pooled 32 text -0.00045, n.s.).

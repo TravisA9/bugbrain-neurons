@@ -3794,3 +3794,35 @@ Smoke (box, fables4000 g2416): granN 16000 + Kmix34 runs, peak RSS 572 MB, 56 s 
 - v43 is real on book (+0.008 / +0.011 on 48 growths over 3 blocks) and costs nothing measurable elsewhere except a possible ~0.0005 text drift, which is now the second adoption in a row with that sign.
 - The capacity story is diminishing: 2000 -> 4000 gave book30k +0.011, 4000 -> 8000 about +0.006. The mixed-claw 8000 layer is the first granule arm that lifts fables and book together; y176 tells whether 16000 is worth its ~2.8x runtime.
 - granAnneal is a clean negative at 1x: the plateau is not readout step noise at 10k-30k. If y162 is also flat at 100k / 300k, the plateau belongs to the cortex rule, not the readout.
+
+## R93 — queue review (Oct 24, 7:15 PM CT): no adoption (v43 stays); **granN 8000 + mixed claws holds on its first 8 held-out growths** (y174a); y174b unpublished; **both workers silent**; push blocked (TacoBell offline)
+State found: R92 code (a83beaa) and queue (5c06fd6) are on origin (the morning push worked). Since then only tacobell published: y163b (8:10 AM) and y174a (9:49 AM); it claimed y174b at 9:50 AM and has been silent since its 10:50 AM lease renewal (lease expired 2:50 PM).
+
+### Workers (CDT)
+- **linux-pc** (ExplodingRumba, code 5509666 = R90): last heartbeat 8:26 PM Oct 23 (idle), **silent ~23 h**. Holds no lease. Third night-time outage in three days (Oct 22 ~9:45 PM, Oct 23 8:26 PM, never came back today). Needs a physical check (power / sleep / network); it will update its code on the next claim.
+- **tacobell** (code a83beaa): last renewal 10:50 AM, **silent ~8.5 h**; the TacoBell laptop is also disconnected from the assistant app, so the laptop is off / asleep / offline, not a crash loop (crashSkip empty, no repeated claim/release).
+- Moto G: not seen.
+
+### Results (growth-by-growth vs the reference arm; (wins/losses, paired t, n))
+| job | test | result | verdict |
+|---|---|---|---|
+| y163b (k 2312-2319), pooled with y163a (16) | granule capacity II on v43 | granN 8000 + Kmix34: book10k +0.0037 (9/6, t 2.0), book30k +0.0063 (12/4, t 3.4), fables +0.0064 (16/0, t 5.6), text +0.0007 (7/6), order3 +0.0002 (1/0). granN 8000 alone: book30k +0.0064 (15/1), fables -0.0010 (7/9). Kmix34 @4000: fables +0.0046 (13/3), book10k -0.0012. granW 40: fables +0.0145 (16/0) but book30k -0.0009 (9/6), text -0.0003 (6/9) | screen confirmed; only N8000+Kmix34 is up everywhere |
+| y174a (k 2352-2359, all 8 tasks) | granN 8000 + Kmix34 vs v43 (held-out 1/2) | book10k 0.391 / 0.389 +0.002 (4/4), **book30k 0.413 / 0.401 +0.012 (8/0, t 6.8)**, **fables 0.365 / 0.357 +0.009 (8/0, t 6.1)**, text1000 -0.0000 (4/2), order3 / K4 / seqchoice order2 / cycle bit-identical | holds so far; needs y174b (k 2360-2367) |
+| y174a | + granW 40 (5 seq tasks) | book10k +0.006 (6/2), book30k +0.011 (8/0), **fables +0.021 (8/0, t 9.9)**, text -0.0006 (1/5, t -1.3), order3 0 | on the big mixed layer granW 40 no longer costs book; text sign still negative |
+| y163 + y174a (24 paired) | length slope (book30k - book10k, same growth) | v43 +0.011; granN 8000 (+Kmix34) +0.016; granW 40 alone +0.0075 | **more granules = more gain from more text**: part of the 10k plateau is granule capacity |
+
+Pooled N8000+Kmix34 vs v43 over 24 growths (y163a/b + y174a): book10k +0.003 (13/10), book30k +0.008 (20/4, t 5.6), fables +0.007 (24/0, t 7.9), text +0.0005 (11/8), order3 0.
+
+### Adoption: none. v43 stays (DEFAULTS_VERSION 36). The v44 test (16 fresh held-out growths, no task worse) has 8/16 growths in; y174b decides. No pending job changes meaning.
+
+### Queue (R93; run/r93_jobs.js; existing code only; fresh k 2424-2447)
+- y177_1x_v43_granLen_f12 (0.97, light, 3.6 slot-h): v43 / N8000 Kmix34 / + granW 40 / N16000 Kmix34 on fables4000 + fables12000, 16 growths k 2424-2439.
+- y178_1x_v43_granLen_book100k (0.972, heavy, memGB 1.5, 6.1 slot-h): v43 / N8000 Kmix34 / N16000 Kmix34 on book30k + book100k, k 2440-2447.
+- tacobell light pool: y174b 2.7 (re-claim after lease expiry) + y175 0.7 + y176 3.4 + y177 3.6 + y169 1.9 + y172 0.6 + y171a/b 3.4 ≈ 16 slot-h ≈ 10-11 h at ~1.6 slot-h per wall hour, plus ~29 slot-h of older low-priority filler (y130-y132, y38).
+- linux-pc heavy pool ≈ 94 slot-h (y162a/b, y165-y168, y173, y178, y140, y72, y56) — well over 12 h once it is back; it can also take the light jobs.
+
+### Assessment
+- N8000+Kmix34 looks like the next real step (book30k +0.008 and fables +0.007 over 24 growths, nothing worse, cost ~1.45x runtime). If y174b holds it becomes v44; granW 40 on top is the follow-up (fables +0.021 but text 1/5).
+- book30k at 1x is now ~0.41, i.e. at the old granule-readout "ceiling" (the 3-gram level). The ceiling was a property of a 2000-cell, 3-claw layer, not a hard limit; the next target is the 4-gram level.
+- The length result changes the plateau story: the layer's size sets how much extra text helps. y177 / y178 test whether that keeps compounding (then size the granule layer with the training length) or saturates (then the cortex rule is the limit).
+- Worry: both workers dark at once means nothing is being measured; the queue is deep but idle.
