@@ -1,4 +1,31 @@
-# PRIORITIES (R94, Oct 25 2026, ~7:45 AM CT; **v44 / DEFAULTS_VERSION 37** — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws (gene d.gran K 4 / Kmin 3); v43 = deepURSx3v43 = P.granN=4000,P.granK=3; v42 = deepURSx3v42 (2000 cells, granRef 600))
+# PRIORITIES (R96, Oct 26 2026, ~7:30 AM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws (gene d.gran K 4 / Kmin 3); v43 = deepURSx3v43 = P.granN=4000,P.granK=3; v42 = deepURSx3v42 (2000 cells, granRef 600))
+
+## R96 update (queue review, morning; R95 evening run failed unpushed, folded in here)
+- **v44 confirmed** on fresh k 2448-2463 (y179, box): book30k +0.009 (14/2), fables +0.005 (14/2), nothing worse.
+- **granW 40 not adopted**: fables +0.013 (16/0), text +0.001 (9/1), but book30k -0.0033 (5/11, t -1.6). Length trade; retested at book100k (y185a) and at 16000 cells (y189).
+- **1x gets worse past 100k** (y162b: 300k 0.394 < 100k 0.398, same growths): the rule at length is now the top question (y185).
+- At size, capacity pays more with length (cx3 granN 6000 + granRef 1800 book100k +0.014, 8/0); granRef 1800 fixes much of order3 at cx3 (+0.027) at a small fables cost.
+- Seqchoice at size is still broken (cx4dT 4.5 vs 6.4; striatum x8 worse; cx3 1.6). Cause = divRep cortex sizing; y187 tries cone + receive budget on cx3.
+- Rejected this round: output gate 0.2 (generation), granRef 400, granRef 900 (flat), granAnneal at 300k, striatum x8.
+
+## Ranked open questions (R96)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q42 | Rule at length: does a smaller cortex step (0.1) or granule step (granLr 0.05) stop the 1x decline past 100k? | y185a/b, y181 |
+| 2 | Q42 x I99 | Capacity x length: 8000 / 16000 Kmix at book100k / 300k, 1x and cx3 | y178, y184, y190 |
+| 3 | I99 | Claws vs cells at 1x (box) and the next step: 16000 Kmix +/- granW 40 | y182 (box), y189a/b |
+| 4 | I99 x I95 | cx3 with v44-style granules (8000 / 16000 Kmix, ref 1800), 5 tasks | y183 |
+| 5 | Q46 x I98 | seqchoice at size: cx3 + sizeCone + recvBudget 2 (+/- striatum x3) | y187 |
+| 6 | I99 | 4x: cx4dT 16000 Kmix, granRef 600 / 1800 (order3 at size) | y191 |
+| 7 | I99 | text1000 guard: granGain 0.001 / 0.01 on v44 | y180a/b |
+Growth-phase memory / speed: 16000 granules ~3x v43 runtime; the sparse granule update path stays the top engineering item. Generation loops: gate rejected; next generation test waits for a length-rule result.
+Low: analogy / evolution. Rejected ideas stay rejected (as R94, plus output gate 0.2, granRef 400 / 900, striatum x8, granW 40 as a constant).
+
+## Worker notes (R96)
+linux-pc: alive, idle since 5:08 PM CT Oct 25 (queue drained; R93-R95 jobs never reached origin); heartbeats every ~30 min, last 7:18 AM CT Oct 26; no crash loop. tacobell: silent since 9:50 AM CT Oct 24 (~46 h); its workers file still says "running y174b" (stale; y174b finished on linux-pc); worker-config cpuMax 60 (order says 75; not changed here because the push path is down). Moto G not seen. Queue after push: linux-pc ≈ 99 slot-h meaningful (~10 h); light ≈ 10 slot-h (~6 h on tacobell) + older filler.
+
+## Previous header (R94)
+# (R94 header) PRIORITIES (R94, Oct 25 2026, ~7:45 AM CT; **v44 / DEFAULTS_VERSION 37** — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws (gene d.gran K 4 / Kmin 3); v43 = deepURSx3v43 = P.granN=4000,P.granK=3; v42 = deepURSx3v42 (2000 cells, granRef 600))
 
 ## R94 update (queue review, morning)
 - **v44 adopted** (granN 8000 + Kmix34) on 16 fresh held-out growths y174a+b (k 2352-2367, 8 tasks): book30k +0.009 (14/2), fables +0.007 (14/2), book10k 0 (8/8), text1000 -0.0003 (6/8, n.s.), order3 / K4 / seqchoice not worse. Cost ~1.45x runtime.

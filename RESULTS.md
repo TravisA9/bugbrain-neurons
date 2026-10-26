@@ -3864,3 +3864,44 @@ The y177 job was run on the box (128 runs, a box-side parallel runner, ~29 min w
 - y177 is the most interesting result this round: on fables too, a bigger layer gains more from 3x more text (+0.0038 at 8000, +0.0059 at 16000 on a +0.074 base slope). With R93's book result this is consistent: the "plateau after ~10k" is largely granule capacity. Next: size the layer with the training length (y178 / y181 test book 100k / 300k).
 - Worry: text1000 is slowly getting worse with each granule step (-0.0011 by v43, significant at n 48). Each step passed its own test, but small costs add up; y180 tests whether the self-silencing gain (granGain) is too slow on short text.
 - Worry: no worker has been reliably up for ~36 h; the measured-results rate is now limited by uptime, not by queue depth. The box ran y177 in ~30 min; small box runs can keep the main thread moving.
+
+## R96 — queue review (Oct 26, ~7:20 AM CT): no adoption (v44 stays; **granW 40 fails on book30k**); **v44 confirmed on fresh growths** (y179, box); linux-pc ran 11 jobs Oct 25 and then sat idle on an empty queue for ~14 h; tacobell silent ~46 h; push blocked again (TacoBell offline; R93-R96 all unpushed)
+R95 (Oct 25 evening) failed before pushing; its work was local only (y179 on the box, r95_jobs.js y182-y184 written). R96 carries R93 + R94 + R95 + R96 in one bundle.
+
+### y179a+b (box, fresh k 2448-2463, n 16, 8 tasks): v44 vs v43 — confirmed
+| task | v44 - v43 | wins/losses | t |
+|---|---|---|---|
+| book10k | +0.0035 | 9/7 | 1.9 |
+| book30k | +0.0092 | 14/2 | 4.1 |
+| fables4000 | +0.0054 | 14/2 | 4.5 |
+| order3 / K4 | 0 / +0.0002 | 0/0, 1/0 | |
+| text1000 | +0.0005 | 7/6 | 1.2 |
+| seqchoice order2 / cycle | identical | | |
+
+### y179 granW 40 on v44 (same growths, n 16, 6 seq tasks): **not adopted**
+book10k +0.0025 (10/5, t 1.7), **book30k -0.0033 (5/11, t -1.6)**, fables4000 +0.0129 (16/0, t 12.7), text1000 +0.0010 (9/1, t 2.9), order3 +0.0008 (1/0), K4 -0.0002 (0/1). A weaker granule drive is a strong win on the short texts but costs the longest text: a length trade, not a free gain. It fails the no-task-worse rule on the core task. Tested further at book100k (y185a) and with 16000 cells (y189) before reconsidering.
+
+### linux-pc results (Oct 25, 10:48 AM - 5:08 PM CT; references = same growths)
+- **y176** (1x, v43 3 claws, k 2416-2423): granN 8000 flat (fables -0.003, 2/6); 16000 book10k +0.004 (7/0), fables -0.002; 16000 + Kmix34 fables +0.005 (7/1). At 1x the claw mix matters more than the cell count. Split test y182 (box, running).
+- **y165** (cx3, growths 1900-1915, vs v42 cx3): granN 6000 book10k +0.007 (13/2), book30k +0.011 (15/1), fables +0.001, text -0.001; granRef 1800 order3 **+0.027 (14/1)**, fables -0.002 (5/11, t -2.2); both: book10k +0.010, book30k +0.011, order3 +0.028, fables -0.002, text -0.001.
+- **y173** (cx3 book100k, 1400-1407): granN 6000 + granRef 1800 **+0.014 (8/0)** — capacity pays more at size and length.
+- **y166** (cx3 ref850 + granN 6000 granRef 1000): book10k +0.010, book30k +0.012 (15/1), fables 0, order3 0, text -0.001 (5/8); seqchoice identical but still very low (1.61 / 1.87 vs 1x ~6.3).
+- **y167** (cx4dT ref850 seqchoice, 16-31): order2 4.53 vs 1x 6.43 (1/15), cycle 6.79 vs 8.97 (1/15); striatum x6 flat; striatum x8 worse (order2 -0.75 3/13, cycle -2.11 1/15). Seqchoice at size is still broken; sizing the striatum is not the fix.
+- **y168** (cx4dT, 0-7): granN 8000 book10k +0.006 (7/1), book30k +0.010 (8/0), rest flat.
+- **y169** (generation): v43 word rate 0.099 vs v42 0.098; output gate 0.2 halves it (0.052, 0/8) -> **gate rejected**.
+- **y171a/b** (granRef): 400 worse (book -0.003 to -0.005, 0/8, 1/6); 900 flat (text -0.002, 2/5) -> granRef stays 600 at 1x.
+- **y172** (fables12000): v43 +0.006 over v42 (8/0); anneal 20000 nothing.
+- **y162b** (book300k, 1400-1407): granAnneal +0.0003 (6/2) -> stays rejected. **Key: v43 1x book300k 0.394 < book100k 0.398 on the same growths** — past 100k symbols the 1x brain gets slightly worse. Rule-at-length test y185.
+- Historical seqchoice (all runs): 1x 6.2-6.4; all2 sizeCone recvBudget2 6.4-6.7; ctx4 6.5; cx3 / cx4 with divRep + trophMin 0.25-2.8. Sizing the cortex by division is what breaks seqchoice; y187 puts the cone + receive budget onto the cx3 recipe.
+
+### Queue (R96)
+- Pinned: y178 / y180a / y180b / y181 / y183 / y184 (all use P.granKmin) now also require run/r94_jobs.js, so a worker on old code (a83beaa, no granKmin) cannot run them with the wrong claws. New R96 jobs require run/r96_jobs.js and pin P.granW=60.
+- Removed y179a/b (ran on the box; results in results_box/r96_y179*). y182a/b run on the box (not queued).
+- New: y185a/b (1x learning rule at length: cortex step 0.1, granLr 0.05, granW 40 at book100k / 300k; heavy), y187 (cx3 seqchoice + cone / receive budget), y190 (cx3 16000 Kmix at book300k), y191 (cx4dT 16000 Kmix, granRef 600 / 1800), y189a/b (1x 16000 Kmix +/- granW 40, light). Added from R95: y183 (cx3 8000 / 16000 Kmix, ref 1800), y184 (cx3 16000 Kmix book100k).
+- Depth: linux-pc ≈ 99 slot-h meaningful (~10 h at ~10 slot-h per wall hour); tacobell light ≈ 10 slot-h (y180a/b, y189a/b; ~6 h at ~1.6 slot-h per hour) plus older filler.
+
+### Assessment
+- v44 is real and replicates (book30k +0.009 twice, on two independent fresh sets). granW 40 shows the cost of chasing one task: +0.013 fables is the biggest single gain in days, but book30k drops. The granule drive likely wants to depend on how much the layer has learned (or on training length), not be a constant — a possible rule, not a new constant.
+- The most important result is y162b: at 1x, 300k symbols is worse than 100k. That is a learning-rule problem (no consolidation / step too large late), and no granule tweak has fixed it. y185 tests the two step sizes directly.
+- Sizing helps more and more with length (cx3 book100k +0.014), which supports "size with data". But seqchoice at size is broken by divRep, and that blocks a single all-round sized brain.
+- Worry: linux-pc sat idle ~14 h because the queue drained and the R93-R95 jobs never reached origin. Results are now limited by the push path (one laptop being on), not by compute. A box-side push path (a token with write access to the two branches) would remove this.
