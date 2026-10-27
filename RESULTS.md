@@ -3905,3 +3905,33 @@ book10k +0.0025 (10/5, t 1.7), **book30k -0.0033 (5/11, t -1.6)**, fables4000 +0
 - The most important result is y162b: at 1x, 300k symbols is worse than 100k. That is a learning-rule problem (no consolidation / step too large late), and no granule tweak has fixed it. y185 tests the two step sizes directly.
 - Sizing helps more and more with length (cx3 book100k +0.014), which supports "size with data". But seqchoice at size is broken by divRep, and that blocks a single all-round sized brain.
 - Worry: linux-pc sat idle ~14 h because the queue drained and the R93-R95 jobs never reached origin. Results are now limited by the push path (one laptop being on), not by compute. A box-side push path (a token with write access to the two branches) would remove this.
+
+## R97 — queue review (Oct 26, ~7:45 PM CT): no adoption (v44 stays); **y182 (box): claws carry the fables gain, cells carry the book30k gain** — the cheaper 4000-cell + mixed-claw brain does not replace v44; v44 holds a third fresh block; push still blocked (TacoBell offline; R93-R97 unpushed)
+R97 carries R93 + R94 + R96 + R97 in one bundle (R95 never made bundles). Box results: results_box/r97_y182a_1x_v44_KmixSplit.jsonl, results_box/r97_y182b_1x_v44_KmixSplit.jsonl.
+
+### y182a+b (box, fresh k 2520-2535, n 16, 5 seq tasks): which half of v44 carries the gain
+Arms: v43 (4000 cells, 3 claws) / v43 Kmix34 (4000 cells, mixed 3/4 claws) / v44 (8000 cells, mixed 3/4 claws). Same growths, paired. y182a = k 2520-2527, y182b = k 2528-2535 (both blocks agree).
+| task | Kmix34@4000 - v43 | v44 - v43 | Kmix34@4000 - v44 |
+|---|---|---|---|
+| book10k | +0.0022 (9/6, t 1.1) | +0.0022 (12/4, t 1.5) | 0.0000 (9/7) |
+| book30k | -0.0013 (10/6, t -0.6) | **+0.0064 (13/2, t 3.8)** | **-0.0078 (1/15, t -4.8)** |
+| fables4000 | **+0.0055 (16/0, t 4.8)** | **+0.0055 (15/1, t 4.6)** | 0.0000 (6/10) |
+| order3 | identical | identical | identical |
+| text1000 | +0.0001 (8/5) | +0.0005 (8/6) | -0.0004 (5/5) |
+Per block: book30k Kmix@4000 vs v44 -0.0084 (1/7) in y182a, -0.0072 (0/8) in y182b; fables Kmix@4000 vs v43 +0.0045 (8/0) and +0.0064 (8/0).
+- The mixed 3/4-letter claws alone give **all** of v44's fables gain; the doubled cell count gives **all** of its book30k gain; with y176 (8000 / 16000 cells on 3 claws: flat) neither half alone gives both. It is an interaction: 4-letter claws make rarer combination cells, which pay on the long text only when there are enough cells to cover them (y159: all-4 claws at 2000 cells fables +0.012 but book30k -0.014).
+- The y182 accept note (4000 + Kmix replaces v44 at 1x if it matches on 16 growths, no task worse) **fails**: book30k -0.008 (1/15). v44 stays; nothing is a candidate.
+- v44 vs v43 on this third independent fresh block: book30k +0.0064 (13/2), fables +0.0055 (15/1), nothing worse — v44 replicates again.
+
+### Queue (R97)
+- Box runs y185b (rule at length, self-contained incl. v44 1x book300k ref), then y180a, y180b (text1000 guard) — removed from the queue (outputs /workspace/R97/box on the box; published next round).
+- New (run/r97_jobs.js, pin every granule setting incl. P.granW=60, require run/r97_jobs.js): **y192a/b** (1x, fresh k 2568-2583: v44 / 16000 cells + mixed 3/4 claws / 16000 cells all 4-letter claws, 7 seq tasks incl. book100k + fables12000; 11.4 slot-h each) — does the best claw mix shift toward 4 letters as the layer grows? **y193** (16000 Kmix at book100k / 300k on the y185b growths k 2536-2543; 9.8 slot-h) — capacity vs rule at length on the same growths.
+- Depth after push: linux-pc ≈ 109 slot-h meaningful (~11 h at ~10 slot-h per wall hour) + ~54 slot-h older filler; light (tacobell) y189a/b only.
+
+### Workers (R97)
+linux-pc alive and idle on a83beaa (heartbeat 6:59 PM CT Oct 26), queue drained since 5:08 PM CT Oct 25 (~26 h idle) because R93-R96 never reached origin. tacobell silent since 9:50 AM CT Oct 24 (~58 h; stale "running y174b"). The box ran y182a+b (240 runs; wall time inflated by box pauses) and is now the only machine producing results.
+
+### Assessment
+- y182 is a clean mechanistic result, the most informative granule result since v44: claw length and cell count are not interchangeable knobs; they buy different tasks. That suggests a sizing rule (claw length / mix grows with cell count and with training length), not a new constant — y192 tests it directly.
+- Worry: every gain since v42 is ~0.005-0.01 per step on 1x text; the ceiling of the 1x brain at length (y162b: 300k < 100k) is the real limit, and y185b / y193 on the same growths now separate "rule" from "capacity".
+- Worry: the push path. Linux-pc has been idle for over a day while the box (shared, ~2 GB free) does all the work at ~1/3 of linux-pc's throughput.
