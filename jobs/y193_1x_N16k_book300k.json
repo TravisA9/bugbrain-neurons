@@ -1,0 +1,268 @@
+{
+  "id": "y193_1x_N16k_book300k",
+  "question": "Q42",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/r91_jobs.js",
+    "run/r96_jobs.js",
+    "run/r97_jobs.js"
+  ],
+  "title": "1x capacity at length: 16000 granule cells + mixed 3/4 claws at book100k / book300k on the y185b growths k 2536-2543 (refs: y185b v44 1x, cxlr0.1, granLr0.05, same growths)",
+  "priority": 0.965,
+  "estHours": 1.6,
+  "slotHours": 9.8,
+  "phone": false,
+  "flag": "text",
+  "memGB": 2,
+  "accept": {
+    "note": "y162b: the 1x brain is worse at 300k than at 100k. y185b tests the step sizes; this tests capacity on the same growths. If 16000 cells rise past 100k while v44 does not, the 1x plateau is capacity, not the rule."
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2536",
+        "--force"
+      ],
+      "label": "v44 N16000 book100k g2536 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2537",
+        "--force"
+      ],
+      "label": "v44 N16000 book100k g2537 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2538",
+        "--force"
+      ],
+      "label": "v44 N16000 book100k g2538 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2539",
+        "--force"
+      ],
+      "label": "v44 N16000 book100k g2539 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2540",
+        "--force"
+      ],
+      "label": "v44 N16000 book100k g2540 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2541",
+        "--force"
+      ],
+      "label": "v44 N16000 book100k g2541 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2542",
+        "--force"
+      ],
+      "label": "v44 N16000 book100k g2542 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2543",
+        "--force"
+      ],
+      "label": "v44 N16000 book100k g2543 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2536",
+        "--force"
+      ],
+      "label": "v44 N16000 book300k g2536 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2537",
+        "--force"
+      ],
+      "label": "v44 N16000 book300k g2537 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2538",
+        "--force"
+      ],
+      "label": "v44 N16000 book300k g2538 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2539",
+        "--force"
+      ],
+      "label": "v44 N16000 book300k g2539 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2540",
+        "--force"
+      ],
+      "label": "v44 N16000 book300k g2540 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2541",
+        "--force"
+      ],
+      "label": "v44 N16000 book300k g2541 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2542",
+        "--force"
+      ],
+      "label": "v44 N16000 book300k g2542 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2543",
+        "--force"
+      ],
+      "label": "v44 N16000 book300k g2543 n1",
+      "env": {
+        "BB_OUT": "results/phone/y193_1x_N16k_book300k.jsonl"
+      }
+    }
+  ]
+}
