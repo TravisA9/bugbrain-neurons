@@ -1,0 +1,105 @@
+# Queue log (run/queue.js)
+
+## 10/28/2026, 7:36:06 AM · y194a_1x_granLenCurve · DONE
+granule capacity x training length below 30k (the ~10k plateau): 4000 / 8000 (v44) / 16000 cells, all mixed 3/4 claws, book 5k / 10k / 20k / 30k, fresh k 2584-2591 (question I99).
+
+| run | mean | sd | growths | note |
+|---|---|---|---|---|
+| N4000 Kmix book5k g2584 n1 | 3.97 | 0 | 1 |  |
+| N4000 Kmix book5k g2585 n1 | 3.72 | 0 | 1 |  |
+| N4000 Kmix book5k g2586 n1 | 4.07 | 0 | 1 |  |
+| N4000 Kmix book5k g2587 n1 | 3.535 | 0 | 1 |  |
+| N4000 Kmix book5k g2588 n1 | 3.535 | 0 | 1 |  |
+| N4000 Kmix book5k g2589 n1 | 3.715 | 0 | 1 |  |
+| N4000 Kmix book5k g2590 n1 | 3.485 | 0 | 1 |  |
+| N4000 Kmix book5k g2591 n1 | 3.86 | 0 | 1 |  |
+| N4000 Kmix book10k g2584 n1 | 4.15 | 0 | 1 |  |
+| N4000 Kmix book10k g2585 n1 | 4.23 | 0 | 1 |  |
+| N4000 Kmix book10k g2586 n1 | 4.6 | 0 | 1 |  |
+| N4000 Kmix book10k g2587 n1 | 3.77 | 0 | 1 |  |
+| N4000 Kmix book10k g2588 n1 | 3.825 | 0 | 1 |  |
+| N4000 Kmix book10k g2589 n1 | 3.975 | 0 | 1 |  |
+| N4000 Kmix book10k g2590 n1 | 3.71 | 0 | 1 |  |
+| N4000 Kmix book10k g2591 n1 | 4.175 | 0 | 1 |  |
+| N4000 Kmix book20k g2584 n1 | 4.26 | 0 | 1 |  |
+| N4000 Kmix book20k g2585 n1 | 4.255 | 0 | 1 |  |
+| N4000 Kmix book20k g2586 n1 | 4.66 | 0 | 1 |  |
+| N4000 Kmix book20k g2587 n1 | 3.95 | 0 | 1 |  |
+| N4000 Kmix book20k g2588 n1 | 4 | 0 | 1 |  |
+| N4000 Kmix book20k g2589 n1 | 4.11 | 0 | 1 |  |
+| N4000 Kmix book20k g2590 n1 | 3.855 | 0 | 1 |  |
+| N4000 Kmix book20k g2591 n1 | 4.225 | 0 | 1 |  |
+| N4000 Kmix book30k g2584 n1 | 4.33 | 0 | 1 |  |
+| N4000 Kmix book30k g2585 n1 | 4.1 | 0 | 1 |  |
+| N4000 Kmix book30k g2586 n1 | 4.625 | 0 | 1 |  |
+| N4000 Kmix book30k g2587 n1 | 4.055 | 0 | 1 |  |
+| N4000 Kmix book30k g2588 n1 | 4.08 | 0 | 1 |  |
+| N4000 Kmix book30k g2589 n1 | 4.29 | 0 | 1 |  |
+| N4000 Kmix book30k g2590 n1 | 3.905 | 0 | 1 |  |
+| N4000 Kmix book30k g2591 n1 | 4.235 | 0 | 1 |  |
+| v44 1x book5k g2584 n1 | 3.945 | 0 | 1 |  |
+| v44 1x book5k g2585 n1 | 3.72 | 0 | 1 |  |
+| v44 1x book5k g2586 n1 | 4.13 | 0 | 1 |  |
+| v44 1x book5k g2587 n1 | 3.54 | 0 | 1 |  |
+| v44 1x book5k g2588 n1 | 3.55 | 0 | 1 |  |
+| v44 1x book5k g2589 n1 | 3.75 | 0 | 1 |  |
+| v44 1x book5k g2590 n1 | 3.455 | 0 | 1 |  |
+| v44 1x book5k g2591 n1 | 3.89 | 0 | 1 |  |
+| v44 1x book10k g2584 n1 | 4.23 | 0 | 1 |  |
+| v44 1x book10k g2585 n1 | 4.23 | 0 | 1 |  |
+| v44 1x book10k g2586 n1 | 4.56 | 0 | 1 |  |
+| v44 1x book10k g2587 n1 | 3.785 | 0 | 1 |  |
+| v44 1x book10k g2588 n1 | 3.76 | 0 | 1 |  |
+| v44 1x book10k g2589 n1 | 4.075 | 0 | 1 |  |
+| v44 1x book10k g2590 n1 | 3.755 | 0 | 1 |  |
+| v44 1x book10k g2591 n1 | 4.135 | 0 | 1 |  |
+| v44 1x book20k g2584 n1 | 4.345 | 0 | 1 |  |
+| v44 1x book20k g2585 n1 | 4.355 | 0 | 1 |  |
+| v44 1x book20k g2586 n1 | 4.745 | 0 | 1 |  |
+| v44 1x book20k g2587 n1 | 3.985 | 0 | 1 |  |
+| v44 1x book20k g2588 n1 | 4.155 | 0 | 1 |  |
+| v44 1x book20k g2589 n1 | 4.225 | 0 | 1 |  |
+| v44 1x book20k g2590 n1 | 3.835 | 0 | 1 |  |
+| v44 1x book20k g2591 n1 | 4.205 | 0 | 1 |  |
+| v44 1x book30k g2584 n1 | 4.32 | 0 | 1 |  |
+| v44 1x book30k g2585 n1 | 4.225 | 0 | 1 |  |
+| v44 1x book30k g2586 n1 | 4.745 | 0 | 1 |  |
+| v44 1x book30k g2587 n1 | 4 | 0 | 1 |  |
+| v44 1x book30k g2588 n1 | 4.18 | 0 | 1 |  |
+| v44 1x book30k g2589 n1 | 4.36 | 0 | 1 |  |
+| v44 1x book30k g2590 n1 | 3.955 | 0 | 1 |  |
+| v44 1x book30k g2591 n1 | 4.265 | 0 | 1 |  |
+| N16000 Kmix book5k g2584 n1 | 3.96 | 0 | 1 |  |
+| N16000 Kmix book5k g2585 n1 | 3.655 | 0 | 1 |  |
+| N16000 Kmix book5k g2586 n1 | 4.14 | 0 | 1 |  |
+| N16000 Kmix book5k g2587 n1 | 3.555 | 0 | 1 |  |
+| N16000 Kmix book5k g2588 n1 | 3.585 | 0 | 1 |  |
+| N16000 Kmix book5k g2589 n1 | 3.71 | 0 | 1 |  |
+| N16000 Kmix book5k g2590 n1 | 3.505 | 0 | 1 |  |
+| N16000 Kmix book5k g2591 n1 | 3.895 | 0 | 1 |  |
+| N16000 Kmix book10k g2584 n1 | 4.245 | 0 | 1 |  |
+| N16000 Kmix book10k g2585 n1 | 4.175 | 0 | 1 |  |
+| N16000 Kmix book10k g2586 n1 | 4.6 | 0 | 1 |  |
+| N16000 Kmix book10k g2587 n1 | 3.745 | 0 | 1 |  |
+| N16000 Kmix book10k g2588 n1 | 3.825 | 0 | 1 |  |
+| N16000 Kmix book10k g2589 n1 | 4.08 | 0 | 1 |  |
+| N16000 Kmix book10k g2590 n1 | 3.83 | 0 | 1 |  |
+| N16000 Kmix book10k g2591 n1 | 4.095 | 0 | 1 |  |
+| N16000 Kmix book20k g2584 n1 | 4.285 | 0 | 1 |  |
+| N16000 Kmix book20k g2585 n1 | 4.33 | 0 | 1 |  |
+| N16000 Kmix book20k g2586 n1 | 4.76 | 0 | 1 |  |
+| N16000 Kmix book20k g2587 n1 | 3.96 | 0 | 1 |  |
+| N16000 Kmix book20k g2588 n1 | 4.115 | 0 | 1 |  |
+| N16000 Kmix book20k g2589 n1 | 4.26 | 0 | 1 |  |
+| N16000 Kmix book20k g2590 n1 | 3.83 | 0 | 1 |  |
+| N16000 Kmix book20k g2591 n1 | 4.175 | 0 | 1 |  |
+| N16000 Kmix book30k g2584 n1 | 4.355 | 0 | 1 |  |
+| N16000 Kmix book30k g2585 n1 | 4.215 | 0 | 1 |  |
+| N16000 Kmix book30k g2586 n1 | 4.79 | 0 | 1 |  |
+| N16000 Kmix book30k g2587 n1 | 3.955 | 0 | 1 |  |
+| N16000 Kmix book30k g2588 n1 | 4.225 | 0 | 1 |  |
+| N16000 Kmix book30k g2589 n1 | 4.315 | 0 | 1 |  |
+| N16000 Kmix book30k g2590 n1 | 3.885 | 0 | 1 |  |
+| N16000 Kmix book30k g2591 n1 | 4.23 | 0 | 1 |  |
+
+Criteria: y182: cells carry the book30k gain, claws the fables gain; R93: 8000 cells gain more from 10k -> 30k than 4000. If the held-out curve flattens after ~10k at 4000 but keeps rising at 16000, the plateau is capacity (more cells per symbol seen); if all three flatten at the same length, it is the rule.
