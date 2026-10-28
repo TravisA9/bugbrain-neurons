@@ -1,4 +1,29 @@
-# PRIORITIES (R97, Oct 26 2026, ~7:45 PM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws (gene d.gran K 4 / Kmin 3); v43 = deepURSx3v43 = P.granN=4000,P.granK=3; v42 = deepURSx3v42 (2000 cells, granRef 600))
+# PRIORITIES (R98, Oct 27 2026, ~7:30 PM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws (gene d.gran K 4 / Kmin 3); v43 = deepURSx3v43 = P.granN=4000,P.granK=3; v42 = deepURSx3v42 (2000 cells, granRef 600))
+
+## R98 update (queue review, evening)
+- **y180a (box, 48 fresh growths k 2464-2511, text1000): granGain guard rejected.** granGain 0.001 vs v44 -0.0004 (16/26), 0.01 -0.0003 (17/24); neither recovers text. v44 vs v43 text +0.0007 (24/19, t 2.0): the y175 text dip was a v43 cost that v44 already undoes. y180b dropped (partial).
+- **y185b interim (book100k, n 8):** cortex lr 0.1 +0.0019 (6/2), granLr 0.05 +0.0009 (4/4), granW 40 -0.0013 (3/5) vs v44; book300k arms still running on the box.
+- R93-R97 reached origin (6:36 PM CT); both workers back on aa99b62 and running (y178 linux-pc, y189a tacobell).
+- New jobs (run/r98_jobs.js): y194a/b capacity x length curve 5k-30k (light), y195a/b cortex step x length (light), y196 cx3 granRef 1800 held-out incl. order3 / seqchoice (heavy), y197 cortex lr 0.15 at 100k / 300k on the y185b growths (heavy).
+
+## Ranked open questions (R98)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q42 | Rule at length: does a smaller cortex step help past 100k, and does the best step fall with length (case for an annealed cortex step)? | y185b (box, running), y185a, y181, y197, y195a/b |
+| 2 | Q42 x I99 | Capacity vs length: where does each granule layer size flatten (5k-30k; 100k / 300k)? | y194a/b, y193, y178, y184, y190 |
+| 3 | I99 | Claw mix x cell count at 1x (16000 mixed vs all-4 claws; 16000 +/- granW 40) | y192a/b, y189a/b |
+| 4 | I99 x I95 | cx3 with v44-style granules; granRef 1800 order3 fix on fresh growths | y183, y196 |
+| 5 | Q46 x I98 | seqchoice at size: cx3 + sizeCone + recvBudget 2 (+/- striatum x3) | y187, y196 |
+| 6 | I99 | 4x: cx4dT 16000 Kmix, granRef 600 / 1800 | y191 |
+Answered R98: text1000 guard (y180a: granGain 0.001 / 0.01 do not help; v44 already near v41 on text) -> rejected.
+Growth-phase memory / speed: the sparse granule update path stays the top engineering item (16000-cell arms ~3x v43 runtime in y189 / y192 / y193 / y194). Generation loops wait for a length-rule result (y185 / y195 / y197).
+Low: analogy / evolution. Rejected ideas stay rejected (as R97; plus granGain 0.001 / 0.01 as a text guard).
+
+## Worker notes (R98)
+linux-pc: alive on aa99b62, running y178 (claimed 6:38 PM CT, lease renewed 7:08 PM CT); 13 h heartbeat gap while idle (10:01 PM CT Oct 26 -> 11:09 AM CT Oct 27). tacobell: back after ~3 days silent, running y189a on aa99b62 (claimed 6:37 PM CT, renewed 7:08 PM CT). No crash-loop skips. Box: y180a done, y180b dropped, y185b book300k arms running (chain98.sh, par 5). Depth after push: light 20.4 slot-h ≈ 12.7 h for tacobell; heavy 115.4 slot-h ≈ 11.5 h for linux-pc (+ light leftovers).
+
+## Previous header (R97)
+# (R97 header) PRIORITIES (R97, Oct 26 2026, ~7:45 PM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws (gene d.gran K 4 / Kmin 3); v43 = deepURSx3v43 = P.granN=4000,P.granK=3; v42 = deepURSx3v42 (2000 cells, granRef 600))
 
 ## R97 update (queue review, evening)
 - **y182a+b (box, fresh k 2520-2535, n 16): claws vs cells at 1x.** Mixed 3/4 claws at 4000 cells = all of v44's fables gain (+0.0055, 16/0) but none of its book30k gain (vs v44 -0.0078, 1/15, t -4.8). The cells carry book30k (+0.0064 13/2 for v44 vs v43). The cheaper brain does **not** replace v44; nothing is a candidate.

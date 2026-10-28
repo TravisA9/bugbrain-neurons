@@ -3935,3 +3935,42 @@ linux-pc alive and idle on a83beaa (heartbeat 6:59 PM CT Oct 26), queue drained 
 - y182 is a clean mechanistic result, the most informative granule result since v44: claw length and cell count are not interchangeable knobs; they buy different tasks. That suggests a sizing rule (claw length / mix grows with cell count and with training length), not a new constant — y192 tests it directly.
 - Worry: every gain since v42 is ~0.005-0.01 per step on 1x text; the ceiling of the 1x brain at length (y162b: 300k < 100k) is the real limit, and y185b / y193 on the same growths now separate "rule" from "capacity".
 - Worry: the push path. Linux-pc has been idle for over a day while the box (shared, ~2 GB free) does all the work at ~1/3 of linux-pc's throughput.
+
+## R98 — queue review (Oct 27, ~7:30 PM CT): no adoption (v44 stays); **y180 (box): the granGain guard does not fix text1000** — both rates slightly worse than v44; v44 itself is already +0.0007 over v43 on text (48 fresh growths); R93-R97 landed on origin at 6:36 PM CT, both workers back
+Box results: results_box/r98_y180a_1x_v44_textGuard.jsonl (192 runs, done 7:58 AM CT), results_box/r98_y180b_1x_v44_textGuard_partial.jsonl (38 of 96 runs; the run stopped when the box restarted ~7:58 AM CT and was not resumed).
+
+### y180a (box, 48 fresh growths k 2464-2511, text1000): does the granule gain rate (granGain, default 0.003) cost short text?
+| arm vs ref | text1000 means | diff | wins/losses | t |
+|---|---|---|---|---|
+| granGain 0.001 vs v44 | 0.7588 / 0.7592 | -0.0004 | 16/26 | -0.9 |
+| granGain 0.01 vs v44 | 0.7588 / 0.7592 | -0.0003 | 17/24 | -1.0 |
+| v44 vs v43 | 0.7592 / 0.7585 | **+0.0007** | 24/19 | 2.0 |
+| granGain 0.001 vs v43 | 0.7588 / 0.7585 | +0.0003 | 22/18 | 0.8 |
+| granGain 0.01 vs v43 | 0.7588 / 0.7585 | +0.0003 | 26/16 | 0.7 |
+- Accept note (recover >= +0.0008 on text vs v44 without a book / fables cost): **fails for both rates** (both point the wrong way). granGain 0.001 / 0.01 are rejected (with R90 y141 on v41, the gain rate is now rejected twice).
+- The text dip that motivated y180 (y175: v43 vs v41 -0.0011) is mostly undone by v44: v44 vs v43 +0.0007 (t 2.0). The granule pathway's text cost is a v43 property, not a growing one.
+- y180b (book10k / fables4000 cost check) dropped: only the v44 reference and 6 granGain 0.001 book10k runs finished (granGain 0.001 book10k -0.0031, 2/3, n 6). With y180a negative it no longer decides anything.
+
+### y185b interim (box, k 2536-2543, book100k block done, book300k arms running)
+| arm vs v44 1x | book100k |
+|---|---|
+| cortex lr 0.1 | +0.0019 (6/2, t 1.4) |
+| granLr 0.05 | +0.0009 (4/4, t 0.7) |
+| granW 40 | -0.0013 (3/5, t -0.7) |
+v44 1x book100k = 0.4033 (n 8). Not a result yet (n 8, book300k pending); the smaller cortex step is the only arm pointing up at length.
+
+### Queue (R98; run/r98_jobs.js, requires run/r98_jobs.js, every granule setting pinned incl. P.granW=60)
+- **y194a/b** (light, 0.925; fresh k 2584-2599): granule capacity x training length below 30k — 4000 / 8000 (v44) / 16000 cells, all mixed 3/4 claws, book 5k / 10k / 20k / 30k; 3.6 slot-h each. Where does each capacity flatten (the ~10k plateau)?
+- **y195a/b** (light, 0.92; fresh k 2600-2615): cortex step x length — v44 / lr 0.15 / lr 0.1 on book10k, book30k, fables12000, text1000; 3.0 slot-h each. Does the best step fall with length (the case for an annealed cortex step)?
+- **y196** (heavy, 0.945, memGB 4; fresh k 2616-2631): held-out order3 / seqchoice at size — cx3 + 8000 Kmix granules, granRef 600 vs 1800, 8 tasks; 7.5 slot-h. First fresh-growth test of the cx3 order3 fix (y165 +0.027 on growths 1900-1915).
+- **y197** (heavy, 0.93; y185b growths k 2536-2543): v44 cortex lr 0.15 at book100k / 300k, completing the 0.2 / 0.15 / 0.1 dose curve on the same growths; 5.9 slot-h.
+- Not queued (already pending or running): y178, y181, y183, y184, y185a, y187, y189a/b, y190, y191, y192a/b, y193; box keeps y185b. Generation loops still wait for a length-rule result; analogy / evolution stay low.
+- Depth (from job slot-hours; linux-pc ~10 slot-h per wall hour, tacobell ~1.6): light pool (tacobell-eligible) 20.4 slot-h ≈ 12.7 h (y189a running, y189b, y194a/b, y195a/b); heavy pool for linux-pc 115.4 slot-h ≈ 11.5 h, then it takes light leftovers. Whole queue 135.8 slot-h ≈ 11.7 h at both workers' combined rate.
+
+### Workers (R98)
+Both alive on aa99b62 since the R97 merge (6:36 PM CT Oct 27): linux-pc claimed y178 at 6:38 PM CT, tacobell claimed y189a at 6:37 PM CT; both renewed their leases at ~7:08 PM CT. tacobell came back after ~3 days silent (last before: 10:50 AM CT Oct 24, stale y174b which linux-pc finished). linux-pc had a 13 h heartbeat gap (10:01 PM CT Oct 26 -> 11:09 AM CT Oct 27) while idle. No crash-loop entries (crashSkip empty on both). No worker results published since R97 (both jobs mid-run).
+
+### Assessment
+- y180 closes a worry cleanly: the slow text drift was a v43 cost and v44 has already paid most of it back; tuning the gain rate is not the lever.
+- The real open question remains length: 1x gains past ~10k are small and past 100k slightly negative; y185b (rule), y193 (capacity) and the new y194 / y195 / y197 (curves) should tell rule from capacity within a day.
+- Worry: the light worker's throughput (~1.6 slot-h per hour) means each 16-growth light test takes most of a night; the 16000-cell arms (~3x v43 runtime) make the sparse granule update path the most valuable engineering item.
