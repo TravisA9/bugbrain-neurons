@@ -1,0 +1,268 @@
+{
+  "id": "y197_1x_v44_cxlr015_book300k",
+  "question": "Q42",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/r91_jobs.js",
+    "run/r96_jobs.js",
+    "run/r98_jobs.js"
+  ],
+  "title": "the learning rule at length, dose: v44 with cortex lr 0.15 at book100k / book300k on the y185b growths k 2536-2543 (refs y185b v44 1x / cxlr0.1, same growths)",
+  "priority": 0.93,
+  "estHours": 1,
+  "slotHours": 5.9,
+  "phone": false,
+  "flag": "text",
+  "memGB": 1.5,
+  "accept": {
+    "note": "Completes the cortex-step dose curve 0.2 / 0.15 / 0.1 at 100k and 300k on the same growths; a monotone curve that favours smaller steps at 300k but not at 10k (y195) argues for an annealed step."
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2536",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book100k g2536 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2537",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book100k g2537 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2538",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book100k g2538 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2539",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book100k g2539 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2540",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book100k g2540 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2541",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book100k g2541 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2542",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book100k g2542 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":100000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2543",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book100k g2543 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2536",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book300k g2536 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2537",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book300k g2537 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2538",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book300k g2538 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2539",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book300k g2539 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2540",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book300k g2540 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2541",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book300k g2541 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2542",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book300k g2542 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.15,P.granN=8000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2543",
+        "--force"
+      ],
+      "label": "v44 cxlr0.15 book300k g2543 n1",
+      "env": {
+        "BB_OUT": "results/phone/y197_1x_v44_cxlr015_book300k.jsonl"
+      }
+    }
+  ]
+}
