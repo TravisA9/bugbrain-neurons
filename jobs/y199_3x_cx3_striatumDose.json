@@ -1,0 +1,1949 @@
+{
+  "id": "y199_3x_cx3_striatumDose",
+  "question": "Q46",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/r91_jobs.js",
+    "run/r96_jobs.js",
+    "run/r98_jobs.js",
+    "run/r99_jobs.js"
+  ],
+  "title": "seqchoice at size, striatum dose: cx3 ref850 (v42 granules) with striatum x3 without cone / rb2, and cone + rb2 with striatum x2 / x4 / x5, seqchoice only, growths 1900-1915 (refs y166 cx3 ref850, y187 cone rb2 +/- str3, same growths)",
+  "priority": 0.945,
+  "estHours": 0.5,
+  "slotHours": 3.2,
+  "phone": false,
+  "flag": "text",
+  "memGB": 4,
+  "accept": {
+    "note": "y187: cone + recvBudget 2 alone leaves cx3 seqchoice at 1.5 / 2.0; + striatum x3 lifts it to 3.83 / 4.23 (16/0) vs 1x ~6.3; striatum x8 was worse at cx4dT (R96). Is the cone needed, and where does the striatum dose peak? If a dose reaches >= 5.5 on both seqchoice tasks, it goes into the sized all-round recipe."
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice order2 g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,sc.sizeF@striatum=3,sc.trophMin@striatum=0.001667,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 str3 seqchoice cycle g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice order2 g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=2,sc.trophMin@striatum=0.0025,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str2 seqchoice cycle g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice order2 g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=4,sc.trophMin@striatum=0.00125,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str4 seqchoice cycle g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice order2 g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1900",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1900 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1901",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1901 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1902",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1902 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1903",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1903 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1904",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1904 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1905",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1905 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1906",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1906 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1907",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1907 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1908",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1908 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1909",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1909 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1910",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1910 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1911",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1911 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1912",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1912 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1913",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1913 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1914",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1914 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.mixInhRef=850,P.granN=2000,P.granRef=600,P.granK=3,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "1915",
+        "--force"
+      ],
+      "label": "v42 cx3 ref850 cone rb2 str5 seqchoice cycle g1915 n1",
+      "env": {
+        "BB_OUT": "results/phone/y199_3x_cx3_striatumDose.jsonl"
+      }
+    }
+  ]
+}

@@ -1,0 +1,989 @@
+{
+  "id": "y204b_1x_N16k_granLr_len",
+  "question": "Q42",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/r91_jobs.js",
+    "run/r96_jobs.js",
+    "run/r98_jobs.js",
+    "run/r99_jobs.js"
+  ],
+  "title": "granule step x capacity x length (light): 16000 cells +/- granLr 0.05 on book10k, book30k, fables12000, text1000, fresh k 2688-2695",
+  "priority": 0.915,
+  "estHours": 0.6,
+  "slotHours": 3.4,
+  "phone": false,
+  "flag": "text",
+  "memGB": 1,
+  "accept": {
+    "note": "y185a: granLr 0.05 is the only arm that rises from 100k to 300k (+0.0043, 5/2, n 8); at 100k it is +0.0014 (10/6). With 16000 cells the capacity ceiling is higher, so a smaller granule step may pay sooner. If granLr 0.05 is not worse at 10k / 30k and better at fables12000 / 30k, a length-annealed granule step (granLr falling with symbols seen) is the next design."
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2688",
+        "--force"
+      ],
+      "label": "v44 N16000 book10k g2688 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2689",
+        "--force"
+      ],
+      "label": "v44 N16000 book10k g2689 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2690",
+        "--force"
+      ],
+      "label": "v44 N16000 book10k g2690 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2691",
+        "--force"
+      ],
+      "label": "v44 N16000 book10k g2691 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2692",
+        "--force"
+      ],
+      "label": "v44 N16000 book10k g2692 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2693",
+        "--force"
+      ],
+      "label": "v44 N16000 book10k g2693 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2694",
+        "--force"
+      ],
+      "label": "v44 N16000 book10k g2694 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2695",
+        "--force"
+      ],
+      "label": "v44 N16000 book10k g2695 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2688",
+        "--force"
+      ],
+      "label": "v44 N16000 book30k g2688 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2689",
+        "--force"
+      ],
+      "label": "v44 N16000 book30k g2689 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2690",
+        "--force"
+      ],
+      "label": "v44 N16000 book30k g2690 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2691",
+        "--force"
+      ],
+      "label": "v44 N16000 book30k g2691 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2692",
+        "--force"
+      ],
+      "label": "v44 N16000 book30k g2692 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2693",
+        "--force"
+      ],
+      "label": "v44 N16000 book30k g2693 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2694",
+        "--force"
+      ],
+      "label": "v44 N16000 book30k g2694 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2695",
+        "--force"
+      ],
+      "label": "v44 N16000 book30k g2695 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2688",
+        "--force"
+      ],
+      "label": "v44 N16000 fables12000 g2688 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2689",
+        "--force"
+      ],
+      "label": "v44 N16000 fables12000 g2689 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2690",
+        "--force"
+      ],
+      "label": "v44 N16000 fables12000 g2690 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2691",
+        "--force"
+      ],
+      "label": "v44 N16000 fables12000 g2691 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2692",
+        "--force"
+      ],
+      "label": "v44 N16000 fables12000 g2692 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2693",
+        "--force"
+      ],
+      "label": "v44 N16000 fables12000 g2693 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2694",
+        "--force"
+      ],
+      "label": "v44 N16000 fables12000 g2694 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2695",
+        "--force"
+      ],
+      "label": "v44 N16000 fables12000 g2695 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2688",
+        "--force"
+      ],
+      "label": "v44 N16000 text1000 g2688 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2689",
+        "--force"
+      ],
+      "label": "v44 N16000 text1000 g2689 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2690",
+        "--force"
+      ],
+      "label": "v44 N16000 text1000 g2690 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2691",
+        "--force"
+      ],
+      "label": "v44 N16000 text1000 g2691 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2692",
+        "--force"
+      ],
+      "label": "v44 N16000 text1000 g2692 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2693",
+        "--force"
+      ],
+      "label": "v44 N16000 text1000 g2693 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2694",
+        "--force"
+      ],
+      "label": "v44 N16000 text1000 g2694 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2695",
+        "--force"
+      ],
+      "label": "v44 N16000 text1000 g2695 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2688",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book10k g2688 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2689",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book10k g2689 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2690",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book10k g2690 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2691",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book10k g2691 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2692",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book10k g2692 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2693",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book10k g2693 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2694",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book10k g2694 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2695",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book10k g2695 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2688",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book30k g2688 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2689",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book30k g2689 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2690",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book30k g2690 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2691",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book30k g2691 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2692",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book30k g2692 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2693",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book30k g2693 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2694",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book30k g2694 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2695",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 book30k g2695 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2688",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 fables12000 g2688 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2689",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 fables12000 g2689 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2690",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 fables12000 g2690 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2691",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 fables12000 g2691 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2692",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 fables12000 g2692 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2693",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 fables12000 g2693 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2694",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 fables12000 g2694 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":12000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2695",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 fables12000 g2695 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2688",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 text1000 g2688 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2689",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 text1000 g2689 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2690",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 text1000 g2690 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2691",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 text1000 g2691 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2692",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 text1000 g2692 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2693",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 text1000 g2693 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2694",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 text1000 g2694 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=16000,P.granKmin=3,P.granK=4,P.granW=60,P.granLr=0.05,P.fastEngine=1",
+        "2695",
+        "--force"
+      ],
+      "label": "v44 N16000 granLr0.05 text1000 g2695 n1",
+      "env": {
+        "BB_OUT": "results/phone/y204b_1x_N16k_granLr_len.jsonl"
+      }
+    }
+  ]
+}
