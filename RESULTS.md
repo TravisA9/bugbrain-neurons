@@ -3974,3 +3974,74 @@ Both alive on aa99b62 since the R97 merge (6:36 PM CT Oct 27): linux-pc claimed 
 - y180 closes a worry cleanly: the slow text drift was a v43 cost and v44 has already paid most of it back; tuning the gain rate is not the lever.
 - The real open question remains length: 1x gains past ~10k are small and past 100k slightly negative; y185b (rule), y193 (capacity) and the new y194 / y195 / y197 (curves) should tell rule from capacity within a day.
 - Worry: the light worker's throughput (~1.6 slot-h per hour) means each 16-growth light test takes most of a night; the 16000-cell arms (~3x v43 runtime) make the sparse granule update path the most valuable engineering item.
+
+## R99 — queue review (Oct 28, ~7:30 AM CT): no adoption (v44 stays); **16000 granule cells (mixed 3/4 claws) = v45 candidate** — 32 fresh growths, no task worse, gain grows with text length (book100k +0.008, 16/0); full-task confirmation y198a/b queued; **all-4 claws rejected at 16000**; **cx3 + cone + rb2 + striatum x3 lifts seqchoice 1.5 -> 3.8 / 4.2 (16/0)**; chromium joined (claims y196, then went offline)
+Sources: worker results y183, y184, y185a, y187, y189a/b, y192a/b, y193 (linux-pc / tacobell, overnight Oct 27-28), y178; box y185b interim (42 of 56 runs; still running). All numbers are paired growth-by-growth (wins/losses, t).
+
+### y189a+b (tacobell, 16 fresh growths k 2552-2567): 16000 Kmix vs v44, and granW 40 on top
+| arm vs ref | book10k | book30k | fables4000 | order3 | text1000 |
+|---|---|---|---|---|---|
+| N16000 vs v44 | +0.0020 (8/6) | +0.0023 (9/7) | +0.0004 | +0.0002 | +0.0008 |
+| N16000 granW 40 vs N16000 | +0.0041 (13/3) | **-0.0022 (5/11)** | +0.0119 (16/0) | -0.0017 (0/3) | -0.0009 |
+- granW 40 repeats its length trade a third time (helps short texts, costs book30k) -> stays rejected as a constant; a schedule (40 early -> 60 later) is recorded as a new idea in IDEAS.md (I-row under I99).
+
+### y192a+b (linux-pc, 16 fresh growths k 2568-2583): 16000 cells, mixed vs all-4 claws, incl. book100k / fables12000
+| arm vs ref | book10k | book30k | book100k | fables4000 | fables12000 | order3 | text1000 |
+|---|---|---|---|---|---|---|---|
+| N16000 Kmix vs v44 | +0.0009 (7/7) | **+0.0049 (13/3, t 2.8)** | **+0.0078 (16/0, t 6.6)** | -0.0003 (8/8) | +0.0021 (13/3) | -0.0002 (0/1) | 0 |
+| N16000 all-4 claws vs N16000 Kmix | | -0.0090 (2/14) | -0.0067 (2/13) | +0.0049 | | | |
+- The 16000-cell gain grows with training length (10k ~0, 30k +0.005, 100k +0.008). All-4 claws rejected (the R97 "claws should grow with cells" hypothesis is wrong at 16000).
+- Pooled y189 + y192 (32 fresh growths): N16000 Kmix vs v44 — no task worse; book30k +0.0036, book10k +0.0015, fables / order3 / text within +/-0.0008. **v45 candidate**; by the standing rule it now needs the full-task confirmation (incl. K4 / seqchoice): y198a/b.
+
+### Length (capacity vs rule): y178, y185a, y185b (box, interim), y193 — same growths within each block
+| block | arm vs ref | 30k | 100k | 300k |
+|---|---|---|---|---|
+| y178 (v43 base, 8 g) | N8000 Kmix vs v43 | +0.0070 (7/1) | +0.0145 (8/0) | |
+| y178 | N16000 Kmix vs v43 | +0.0091 (8/0) | +0.0201 (8/0) | |
+| y178 | N16000 vs N8000 | | +0.0056 (6/2) | |
+| y193 (k 2536-2543) | N16000 vs v44 | | +0.0082 (8/0) | +0.0083 (8/0) |
+| y185a + y185b (n 16 at 100k) | cortex lr 0.1 vs v44 | | +0.0017 (11/4, t 1.9) | |
+| y185a + y185b | granLr 0.05 vs v44 | | +0.0014 (10/6) | |
+| y185a + y185b | granW 40 vs v44 | | +0.0003 | |
+- Slope 30k -> 100k (y178): v43 -0.010 (1/7), N8000 -0.0025, N16000 +0.001: capacity carries the plateau to 100k.
+- Slope 100k -> 300k (k 2536-2543): v44 -0.0029 (2/5), N16000 -0.0028 (3/5), cortex lr 0.1 -0.0008 (n 10), **granLr 0.05 +0.0043 (5/2, n 8; the only arm still rising)**. Past 100k capacity no longer helps the slope; a smaller granule step does -> length-annealed granLr is the next rule test (y201, y204a/b).
+
+### cx3 (linux-pc): y183 (k 1900-1915), y184 (k 1400-1407, book100k)
+| arm vs ref | book10k | book30k | book100k | fables4000 | order3 | text1000 |
+|---|---|---|---|---|---|---|
+| cx3 N16000 ref1800 vs cx3 N8000 ref1800 | ~0 | +0.0037 (11/2) | | ~0 | ~0 | ~0 |
+| cx3 N8000 ref1800 vs y165 cx3 granN6000 ref1800 | | +0.0070 | | +0.0072 (14/2) | | |
+| cx3 N16000 ref1800 vs v42 cx3 | +0.013 (15/1) | +0.022 (16/0) | | +0.0046 | +0.030 (15/1) | -0.0012 (6/10) |
+| y184 cx3 N16000 ref1800 vs v42 cx3 | | | +0.0276 (8/0; 0.4285 vs 0.4009) | | | |
+| y184 vs cx3 granN6000 ref1800 | | | +0.0137 (8/0) | | | |
+- The sized brain gains most from granules at length (book100k 0.4285, best seen). The small text1000 cost at cx3 remains.
+
+### y187 (linux-pc, cx3 ref850, k 1900-1915): seqchoice at size
+| arm vs y166 cx3 ref850 | seqchoice order2 | seqchoice cycle | text1000 | order3 | book30k |
+|---|---|---|---|---|---|
+| sizeCone + recvBudget 2 | 1.53 vs 1.61 (n.s.) | 1.98 vs 1.87 (n.s.) | +0.0047 (12/4) | +0.0075 (5/6) | -0.0009 |
+| + striatum x3 | **3.83 (+2.22, 16/0)** | **4.23 (+2.36, 16/0)** | (= cone) | (= cone) | (= cone) |
+- The receiver (striatum) size is what restores seqchoice at cx3; still below 1x ~6.3. Dose curve and cone-vs-no-cone = y199.
+
+### Queue (R99; run/r99_jobs.js; 10 jobs, 72.1 slot-h; smoke-tested on the box: y205 text1000 N32000 61 s, y199 str3 seqchoice 18 s, both OK)
+- **y198a/b** (light, 0.965; fresh k 2632-2647): v45 confirmation — v44 vs N16000 Kmix on all 8 tasks (book10k/30k, fables4000, order3, text1000, K4, seqchoice order2/cycle); 3.0 slot-h each.
+- **y199** (heavy, 0.945, memGB 4; k 1900-1915): cx3 striatum dose — str3 without cone, cone rb2 with str2 / str4 / str5, seqchoice only; 3.2 slot-h.
+- **y200** (heavy, 0.94; k 2536-2543): N32000 Kmix at book100k / 300k on the y185b growths; 19.5 slot-h, memGB 3.
+- **y201** (heavy, 0.94; k 2536-2543): N16000 + granLr 0.05 at book100k / 300k; 9.8 slot-h.
+- **y202** (heavy, 0.935; k 2648-2663): cx3 all-round — N8000 ref600 vs N16000 ref1800 + cone rb2 str3, 8 tasks; 8.7 slot-h.
+- **y203** (heavy, 0.925; fresh k 2664-2679): cx3 N8000 vs N16000 (ref1800) at book100k; 11.4 slot-h.
+- **y204a/b** (light, 0.915; fresh k 2680-2695): N16000 +/- granLr 0.05 on book10k / 30k, fables12000, text1000; 3.4 slot-h each.
+- **y205** (heavy, 0.92; y192 growths k 2568-2583): N32000 Kmix on book10k / 30k, fables12000, text1000; 6.7 slot-h.
+- Pending from R98 kept: y190, y191 (running), y194a (running) / y194b, y195a/b, y196 (held by chromium's lease), y197.
+- Depth (linux-pc ~10 slot-h per wall hour, tacobell ~1.6, chromium unknown): whole queue ~130 slot-h ≈ 12-13 h for linux-pc alone, ~7-8 h if chromium runs all day; light pool for tacobell ~26 slot-h ≈ 16 h.
+
+### Workers (R99, ~7:25 AM CT)
+- linux-pc: alive on 48387fe, running y191 (claimed 7:04 AM CT); finished y185a, y183, y192a, y193, y192b, y184, y187 overnight. No evening outage this time.
+- tacobell: alive on 48387fe, running y194a since 3:24 AM CT (finished y189a 12:24 AM, y189b 3:24 AM CT). Missed lease renewals ~5:54-7:20 AM CT (git fetch ETIMEDOUT / "Could not resolve host: github.com" at 7:12 AM CT): a network blip, job kept running, on AC.
+- chromium (new since R98): first claim 8:02 PM CT Oct 27 (y193), released "restarted" then twice "running" by 8:23 PM CT (a short claim/release loop, likely double Start clicks); silent overnight (PC off); claimed y196 at 5:41 AM CT, no lease renewal since, machine offline -> y196 blocked until its lease expires (~9:41 AM CT). No jobs completed yet.
+- crashSkip empty on all workers.
+
+### Assessment
+- Capacity is the clearest lever left at 1x: 16000 cells add nothing at 10k but +0.008 at 100k, and the gain keeps rising with length up to 100k; past 100k only a smaller granule step still rises, which points to step annealing tied to symbols seen.
+- Worry: the 16000-cell brain costs ~1.7x v44 runtime and 32000 more; without the sparse granule update path, the light worker cannot keep up with capacity tests.
+- Worry: chromium holds the top heavy job and disappears; if that repeats, it should be limited to light jobs or a shorter lease.

@@ -1,4 +1,30 @@
-# PRIORITIES (R98, Oct 27 2026, ~7:30 PM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws (gene d.gran K 4 / Kmin 3); v43 = deepURSx3v43 = P.granN=4000,P.granK=3; v42 = deepURSx3v42 (2000 cells, granRef 600))
+# PRIORITIES (R99, Oct 28 2026, ~7:30 AM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws (gene d.gran K 4 / Kmin 3); **v45 candidate = v44 + P.granN=16000** (pending full-task confirmation y198a/b))
+
+## R99 update (queue review, morning)
+- **v45 candidate: 16000 granule cells (mixed 3/4 claws).** 32 fresh growths (y189a+b k 2552-2567, y192a+b k 2568-2583) vs v44: no task worse; book30k +0.002 / +0.005, book100k +0.0078 (16/0, t 6.6), fables12000 +0.002 (13/3). Full-task confirmation y198a/b (8 tasks incl. K4 / seqchoice, fresh k 2632-2647). Not adopted yet.
+- **Rejected:** all-4 claws at 16000 (book30k -0.009, 2/14); granW 40 at 16000 (book30k -0.0022, 5/11; third time the same length trade).
+- **Length:** capacity carries the plateau to 100k (y178 slopes 30k->100k: v43 -0.010, 8000 -0.0025, 16000 +0.001); past 100k only granLr 0.05 still rises (+0.0043, 5/2, n 8; y185b interim). Next: y201 (16000 + granLr 0.05 at 100k/300k), y204a/b (granLr 0.05 at short length), y200 / y205 (32000 cells).
+- **cx3:** N16000 ref1800 book100k 0.4285 (+0.028 vs v42 cx3, 8/0); striatum x3 + cone + rb2 lifts cx3 seqchoice to 3.8 / 4.2 (16/0; 1x ~6.3). Next: y199 striatum dose, y202 all-round cx3 recipe, y203 fresh book100k.
+- chromium joined (new worker), claimed y196 at 5:41 AM CT then went offline.
+
+## Ranked open questions (R99)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I99 | v45 confirmation: 16000 Kmix vs v44 on all 8 tasks, fresh growths | y198a/b |
+| 2 | Q42 x I99 | Capacity vs length: 32000 cells at 10k-300k; where does each size flatten (5k-30k) | y200, y205, y194a/b, y190 |
+| 3 | Q42 | Rule at length: granule step 0.05 on 16000 cells (100k / 300k and short), cortex step dose (case for annealing tied to symbols seen) | y201, y204a/b, y195a/b, y197, y185b (box) |
+| 4 | Q46 x I98 | seqchoice at size: striatum dose (x2-x5), is the cone needed | y199, y202 |
+| 5 | I99 x I95 | cx3 all-round recipe with 16000 granules; granRef 1800 order3 fix held-out; cx3 book100k fresh | y202, y196, y203 |
+| 6 | I99 | 4x: cx4dT 16000 Kmix | y191 (running) |
+Answered R99: all-4 claws at 16000 (rejected); granW 40 as a constant (rejected again; a length schedule is a new idea); "claws should grow with cells" (wrong at 16000).
+Growth-phase memory / speed: the sparse granule update path is the top engineering item (16000 cells ~1.7x v44 runtime; 32000 more). Generation loops wait for a length-rule result.
+Low: analogy / evolution. Rejected ideas stay rejected.
+
+## Worker notes (R99)
+linux-pc: alive on 48387fe, running y191 (7:04 AM CT); 7 jobs finished overnight, no evening outage. tacobell: alive on 48387fe, running y194a (3:24 AM CT); network blip ~5:54-7:20 AM CT (GitHub DNS failure), job kept running, on AC. chromium: new; short claim/release loop 8:02-8:23 PM CT Oct 27 (probably double Start), off overnight, claimed y196 at 5:41 AM CT and went offline (lease to ~9:41 AM CT); no results yet; no worker-config entry. crashSkip empty everywhere. Box: y185b book300k arms (42 of 56). Depth after push: ~130 slot-h ≈ 12-13 h for linux-pc alone (~7-8 h if chromium is on all day); light pool ~26 slot-h ≈ 16 h for tacobell.
+
+## Previous header (R98)
+# (R98 header) PRIORITIES (R98, Oct 27 2026, ~7:30 PM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws (gene d.gran K 4 / Kmin 3); v43 = deepURSx3v43 = P.granN=4000,P.granK=3; v42 = deepURSx3v42 (2000 cells, granRef 600))
 
 ## R98 update (queue review, evening)
 - **y180a (box, 48 fresh growths k 2464-2511, text1000): granGain guard rejected.** granGain 0.001 vs v44 -0.0004 (16/26), 0.01 -0.0003 (17/24); neither recovers text. v44 vs v43 text +0.0007 (24/19, t 2.0): the y175 text dip was a v43 cost that v44 already undoes. y180b dropped (partial).
