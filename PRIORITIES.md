@@ -1,4 +1,31 @@
-# PRIORITIES (R99, Oct 28 2026, ~7:30 AM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws (gene d.gran K 4 / Kmin 3); **v45 candidate = v44 + P.granN=16000** (pending full-task confirmation y198a/b))
+# PRIORITIES (R100, Oct 28 2026, ~7:40 PM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws; v45 candidate (v44 + P.granN=16000) **not adopted**: fables4000 -0.0015 (3/11) on its 16 fresh confirmation growths; tie-break y209)
+
+## R100 update (queue review, evening)
+- **No adoption.** y198a+b (k 2632-2647): book10k +0.0028 (10/5), book30k +0.0016 (10/5), order3 / K4 / text1000 not worse, seqchoice identical, **fables4000 -0.0015 (3/11, t -1.9)**. Pooled 48 growths fables4000 -0.0005 (21/25, t -1.0). Pre-registered tie-break: y209 (32 fresh growths) + y210 (fresh length).
+- **Length:** 16000 cells + granLr 0.05 (y201) = best 1x at book300k, 0.4111 (+0.0107 over v44, 8/0) but -0.0014 at 100k vs 16000 alone: smaller granule step costs early, pays late. **New code P.granLrT / granLrLate / granLrShape** (global granule step schedule by symbols seen; bit-identical off) -> y206. granLr 0.05 at 1x vs v44 300k +0.0044 (13/3, n 16).
+- **y200 crash fixed** (run/lib.js synapse count built the dense N x N matrix: Out of memory at 32000 cells; now counts the sparse list, bit-identical, peak memory at 16000 cells 550 -> 238 MB). Requeued y207 / y208; y205 blocked.
+- **Granule count vs length (y194a):** 4000 cells fall behind past 10k (book20k -0.0067, 2/6); 16000 = 8000 below 30k on those growths.
+- **cx3:** granRef 1800 passes held-out (y196 order3 +0.018, 11/2; nothing worse) -> cx3 settings. Full recipe (y202, 16000 + ref1800 + cone rb2 str3): book +0.0045 (12-13/3), seqchoice 3.9 / 4.1 vs 1.6 / 2.1, K4 / text / fables dips n.s. Striatum dose plateaus above x2 (x5 best, n.s.); cone required (y199). cx3 also falls 100k -> 300k (-0.0031).
+- **cx4dT order3 ~0.726** whatever the granules (1x 0.9675 on the same growths) -> y213 ablation.
+- Workers: linux-pc healthy (27133b4); tacobell offline since ~5:13 PM CT (lease on y194b to 9:13 PM CT); chromium silent since 5:41 AM CT on old code 48387fe (stays heavy-eligible).
+
+## Ranked open questions (R100)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q42 | Rule at length: granule step schedule tied to symbols seen (0.1 -> 0.05 at 30k / 100k / smooth) on 16000 cells; fresh-growth length block; does it carry to cx3 | y206, y210, y212, y204a/b, y195a/b |
+| 2 | I99 | v45 tie-break: fables4000 on 32 more fresh growths (+ y210 length leg) | y209, y210 |
+| 3 | Q42 x I99 | Capacity vs length: 32000 cells at 10k-300k (on the fixed code); size curve 5k-30k | y207, y208, y194b |
+| 4 | I98 x Q46 | cx3 sized recipe held-out (16000 + ref1800 + cone rb2 str5 vs ref1800); cx3 at book100k fresh | y211, y203 |
+| 5 | Q46 | Sized order3 gap: which cx4dT extra costs order3 | y213 |
+Answered R100: v45 not adopted on its confirmation (fables4000 3/11; tie-break pending); granRef 1800 passes held-out at cx3; cone required for the striatum seqchoice gain; 4000 cells too few past 10k.
+Growth-phase memory / speed: the lib.js dense-matrix fix is the first win (peak memory -57% at 16000 cells); the sparse granule update path is still the top engineering item. Generation loops wait for a length-rule result.
+Low: analogy / evolution. Rejected ideas stay rejected (granAnneal per-cell count stays rejected; the R100 schedule is a different, global mechanism).
+
+## Worker notes (R100)
+linux-pc: alive on 27133b4, running y203 (claimed 7:14 PM CT); 9 jobs finished today. tacobell: worker file stale since 11:43 AM CT but lease renewals until 5:13 PM CT; laptop offline now; finished y194a, y198a. chromium: silent since 5:41 AM CT (old code 48387fe), never finished a job; heavy-eligible, check its Task Scheduler / git pull when the PC is next on.
+
+## Previous header (R99)
+# (R99 header) PRIORITIES (R99, Oct 28 2026, ~7:30 AM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws (gene d.gran K 4 / Kmin 3); **v45 candidate = v44 + P.granN=16000** (pending full-task confirmation y198a/b))
 
 ## R99 update (queue review, morning)
 - **v45 candidate: 16000 granule cells (mixed 3/4 claws).** 32 fresh growths (y189a+b k 2552-2567, y192a+b k 2568-2583) vs v44: no task worse; book30k +0.002 / +0.005, book100k +0.0078 (16/0, t 6.6), fables12000 +0.002 (13/3). Full-task confirmation y198a/b (8 tasks incl. K4 / seqchoice, fresh k 2632-2647). Not adopted yet.

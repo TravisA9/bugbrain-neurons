@@ -70,7 +70,7 @@ function evaluateGenome(gc, tasks, plan) {
       const env = setupTask(t), scores = [], st = {}; let n = 0;
       for (let k = 0; k < plan.G; k++) {
         const brain = plan.growSeeds[k] == null ? SA.phenotype(g, env.spec) : SA.growCell(g, { seed: plan.growSeeds[k], spec: env.spec });
-        if (!out.brain) { let s = 0; for (let i = 0; i < brain.W.length; i++) if (brain.W[i] !== 0) s++; out.brain = { hidden: brain.nHid, synapses: s }; }
+        if (!out.brain) { let s = 0; const sp = brain.sp; if (sp) { for (let i = 0; i < sp.w.length; i++) if (sp.w[i] !== 0) s++; } else for (let i = 0; i < brain.W.length; i++) if (brain.W[i] !== 0) s++; out.brain = { hidden: brain.nHid, synapses: s }; }   // R100: synapse count from the sparse list (reading brain.W built the dense N x N matrix, ~6 bytes x N^2: Out of memory at 32000 granule cells)
         let acc = 0;
         for (let e = 0; e < plan.A; e++) {
           const a = new SA.Agent(g, plan.arenaSeeds[k * plan.A + e], brain, env);

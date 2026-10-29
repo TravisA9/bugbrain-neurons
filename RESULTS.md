@@ -4045,3 +4045,73 @@ Sources: worker results y183, y184, y185a, y187, y189a/b, y192a/b, y193 (linux-p
 - Capacity is the clearest lever left at 1x: 16000 cells add nothing at 10k but +0.008 at 100k, and the gain keeps rising with length up to 100k; past 100k only a smaller granule step still rises, which points to step annealing tied to symbols seen.
 - Worry: the 16000-cell brain costs ~1.7x v44 runtime and 32000 more; without the sparse granule update path, the light worker cannot keep up with capacity tests.
 - Worry: chromium holds the top heavy job and disappears; if that repeats, it should be limited to light jobs or a shorter lease.
+
+## R100 — queue review (Oct 28, ~7:40 PM CT): **no adoption — v45 (16000 granule cells) fails its own confirmation on fables4000 (3/11)**, tie-break y209 queued; **16000 cells + granLr 0.05 = best 1x at book300k (0.4111, +0.0107 over v44, 8/0)** with the annealing signature (costs at 100k, pays at 300k) -> new granule step schedule (P.granLrT); **y200 32000-cell crash found and fixed** (run/lib.js densified N x N matrices); cx3 granRef 1800 passes held-out (order3 +0.018, 11/2)
+Sources: worker results y190, y191, y194a, y196, y197, y198a/b, y199, y200 (crashed), y201, y202 (linux-pc / tacobell, Oct 28); box y185b (complete, 56 runs). All numbers paired growth-by-growth (wins/losses, t).
+
+### y198a+b (16 fresh growths k 2632-2647): v45 candidate confirmation, v44 N16000 vs v44
+| book10k | book30k | fables4000 | order3 | K4 | text1000 | seqchoice order2 / cycle |
+|---|---|---|---|---|---|---|
+| +0.0028 (10/5, t 2.4) | +0.0016 (10/5, t 1.4; 0.4062 vs 0.4046) | **-0.0015 (3/11, t -1.9; 0.3675 vs 0.3690; both halves 2/5, 1/6)** | +0.0011 (3/1) | +0.0031 (2/0) | +0.0003 (9/6) | identical |
+- Rule "no task worse on the 16 fresh growths" is not met (fables4000 lost on 11 of 14 decided growths). **v44 stays.**
+- Pooled y189 + y192 + y198 (48 growths): book10k +0.0019 (25/18, t 2.8), book30k +0.0029 (32/15, t 3.6), fables4000 -0.0005 (21/25, t -1.0), order3 / text1000 +0.0004; book100k +0.0078 (16/0), fables12000 +0.0021 (13/3). The fables4000 cost is small and may be noise, but it is consistent with "more cells learn short texts slightly slower".
+- Tie-break **y209** (32 more fresh growths, fables4000 / book10k / text1000). Pre-registered: adopt v45 if y198 + y209 (48 fresh growths) fables4000 is not worse (t > -2, losses <= 60%) and y210 confirms length on fresh growths.
+
+### y194a (tacobell, k 2584-2591): granule count x text length
+| arm | book5k | book10k | book20k | book30k |
+|---|---|---|---|---|
+| N4000 | 0.3736 | 0.4054 | 0.4164 | 0.4202 |
+| v44 (8000) | 0.3748 | 0.4066 | 0.4231 | 0.4256 |
+| N16000 | 0.3751 | 0.4074 | 0.4214 | 0.4246 |
+- N4000 vs v44: book20k -0.0067 (2/6, t -3.0), book30k -0.0054 (2/6): 4000 cells run out of room past 10k. N16000 vs v44 on these 8 growths: 20k -0.0017 (2/6), 30k -0.0010 (3/5) — no 16000 benefit below 30k here (unlike y192). y194b (k 2592-2599) still running on tacobell.
+
+### Length: book100k / book300k (k 2536-2543 unless noted)
+| arm vs v44 | 100k | 300k | slope 100k -> 300k |
+|---|---|---|---|
+| v44 (n 16) | | | -0.0005 (6/9) |
+| granLr 0.05 (n 16 at 100k) | +0.0014 (10/6) | **+0.0044 (13/3, t 3.2)** | +0.0025 |
+| cortex lr 0.1 | +0.0017 | +0.0017 | -0.0006 |
+| cortex lr 0.15 (y197) | -0.0011 (2/6) | +0.0019 (5/3) | +0.0002 |
+| N16000 (y193) | +0.0082 (8/0) | +0.0083 (8/0) | -0.0028 |
+| **N16000 + granLr 0.05 (y201)** | +0.0068 | **+0.0107 (8/0, t 8.3; 0.4111 = best 1x at 300k)** | +0.0011 |
+| y201 vs N16000 | -0.0014 (2/5) | +0.0024 (5/3) | |
+- Classic annealing signature: the smaller granule step costs early and pays late. R94's granAnneal (per-cell use count) was flat; this asks for a global step tied to symbols seen. **New code R100: P.granLrT / P.granLrLate / P.granLrShape** (net.js granStep; granLr until granLrT teaching events ~ symbols, then granLrLate, or smoothly; off = bit-identical, verified; granLrT=1 with late 0.05 == granLr 0.05, verified). Test = y206.
+- y181: v44 vs v43 at 300k +0.0137 (8/0).
+
+### y200: 32000 granule cells crashed (16/16 runs, Out of memory in 23 s) -> fixed
+- Cause: run/lib.js counted synapses through brain.W, which materialises the dense N x N weight matrix (~6 bytes x N^2; >6 GB at 32000 cells). Fix: count from the sparse synapse list. Bit-identical (N16000 book 3000 g2600: same mean 3.16, same md5); peak memory at 16000 cells 550 -> 238 MB (also a growth-phase memory win); 32000 cells now run (49 s for 3000 symbols). Requeued as y207 (length) and y208 (= y205; y205 blocked because it would crash on pre-R100 code).
+
+### cx3 (linux-pc)
+| block | arm vs ref | book10k | book30k | book300k | fables4000 | order3 | K4 | text1000 | seqchoice order2 / cycle |
+|---|---|---|---|---|---|---|---|---|---|
+| y196 (16 held-out) | cx3 N8000 ref1800 vs cx3 N8000 | +0.0027 (10/5) | -0.0003 | | -0.0004 | **+0.0180 (11/2, t 4.0)** | +0.0016 | +0.0012 | equal |
+| y202 (16 fresh, k 2648-2663) | cx3 N16000 ref1800 cone rb2 str3 vs cx3 N8000 | +0.0044 (12/3) | +0.0045 (13/3) | | -0.0011 (7/9) | +0.0127 (11/5) | -0.0047 (4/5) | -0.0028 (8/8) | **3.91 vs 1.59 (16/0); 4.05 vs 2.14 (15/1)** |
+| y190 (k 1400-1407) | cx3 N16000 ref1800 vs v42 cx3 | | | +0.0284 (8/0; 0.4254 vs 0.3970) | | | | | |
+- granRef 1800 passes held-out at cx3 (no task clearly worse) -> part of the cx3 sized-brain settings (not the 1x default). The full cx3 recipe (y202) wins book and seqchoice clearly; K4 / text1000 / fables dips are not significant -> y211 replicates with striatum x5 against the ref1800 reference.
+- cx3 at length plateaus too: 100k 0.4285 -> 300k 0.4254 (3/5). y212: does granLr 0.05 fix the sized slope?
+
+### y199 (cx3 ref850, k 1900-1915): striatum dose for seqchoice (order2 / cycle)
+- striatum x3 without cone collapses to 1.47 / 1.45 (0/16 vs str3 + cone): the cone is required.
+- cone rb2 + striatum x2 3.62 / 3.32, x3 3.83 / 4.23, x4 3.76 / 3.59, x5 4.10 / 4.61 (x5 vs x3 +0.27 / +0.37, n.s.). Plateau above x2, still below 1x (~6.3).
+
+### y191 (cx4dT N16000, growths 0-7) vs y168
+- vs v42 cx4dT granN8000: book30k +0.0080 (8/0), fables +0.0038 (7/1), text +0.0027 (7/1), order3 -0.0006.
+- ref1800 vs ref600: book10k +0.0051 (8/0), fables -0.0029 (2/6), text -0.0009 (1/6), order3 +0.0003.
+- **cx4dT order3 is stuck at ~0.726 regardless of granule settings**; the 1x brain scores 0.9675 on the same growths 0 and 1 (box check), so the gap is real, not task difficulty -> y213 ablation.
+
+### Workers (at ~7:25 PM CT)
+- linux-pc: healthy, code 27133b4, running y203 (claimed 7:14 PM CT); finished y190, y191, y196, y197, y198b, y199, y200 (crashed: code bug, now fixed), y201, y202 today.
+- tacobell: worker file last written 11:43 AM CT but its y194b lease was renewed at 5:13 PM CT (lease to 9:13 PM CT); the laptop is offline now. Finished y194a, y198a.
+- chromium: silent since 5:41 AM CT (worker file), old code 48387fe, 0 jobs finished; its stale y196 hold is moot (linux-pc finished y196). Stays heavy-eligible.
+
+### Queue (R100; run/r100_jobs.js; 8 jobs, 107.9 slot-h; smoke-tested on the box: y206 schedule arm and y213 ablation arm both run)
+- **y206** (heavy, 0.96, memGB 2; k 2536-2543): N16000 granule step schedule — step 0.1 -> 0.05 at 30k, at 100k, smooth T 30k; book100k / 300k; 29.3 slot-h.
+- **y207** (heavy, 0.95, memGB 3): N32000 at book100k / 300k (y200 requeue); 19.5 slot-h.
+- **y209** (light, 0.95; fresh k 2696-2727): v45 tie-break on fables4000 / book10k / text1000; 3.8 slot-h.
+- **y210** (heavy, 0.94, memGB 2; fresh k 2728-2735): v44 vs N16000 vs N16000 + granLr 0.05 at book100k / 300k; 25.4 slot-h.
+- **y212** (heavy, 0.935, memGB 4; growths 1400-1407): cx3 N16000 ref1800 + granLr 0.05 at book100k / 300k; 13.0 slot-h.
+- **y211** (heavy, 0.93, memGB 4; fresh k 2736-2751): cx3 N8000 ref1800 vs cx3 N16000 ref1800 cone rb2 str5, 8 tasks; 9.0 slot-h.
+- **y208** (heavy, 0.93, memGB 3; k 2568-2583): N32000 on book10k / 30k, fables12000, text1000 (y205 requeue); 6.7 slot-h.
+- **y213** (heavy, 0.92, memGB 4; growths 0-7): cx4dT order3 / K4 ablation (minus thinF, postCapRel, context x4, striatum x4, cone + rb2); 1.2 slot-h.
+- Kept: y194b (tacobell, running), y195a/b, y203 (linux-pc, running), y204a/b. Blocked: y205.
+- Depth: linux-pc / chromium pool 135.7 slot-h (≈ 13-14 h for linux-pc alone at ~10 slot-h per hour); tacobell light pool 20.2 slot-h (≈ 12 h at ~1.6).
