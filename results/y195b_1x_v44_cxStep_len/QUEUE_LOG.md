@@ -1,0 +1,105 @@
+# Queue log (run/queue.js)
+
+## 10/28/2026, 11:05:15 PM · y195b_1x_v44_cxStep_len · DONE
+cortex step x length at 1x (light): v44 / cortex lr 0.15 / 0.1 on book10k, book30k, fables12000, text1000, fresh k 2608-2615 (question Q42).
+
+| run | mean | sd | growths | note |
+|---|---|---|---|---|
+| v44 1x book10k g2608 n1 | 3.805 | 0 | 1 |  |
+| v44 1x book10k g2609 n1 | 3.93 | 0 | 1 |  |
+| v44 1x book10k g2610 n1 | 4.295 | 0 | 1 |  |
+| v44 1x book10k g2611 n1 | 3.89 | 0 | 1 |  |
+| v44 1x book10k g2612 n1 | 4.06 | 0 | 1 |  |
+| v44 1x book10k g2613 n1 | 3.785 | 0 | 1 |  |
+| v44 1x book10k g2614 n1 | 3.725 | 0 | 1 |  |
+| v44 1x book10k g2615 n1 | 3.68 | 0 | 1 |  |
+| v44 1x book30k g2608 n1 | 3.905 | 0 | 1 |  |
+| v44 1x book30k g2609 n1 | 4.135 | 0 | 1 |  |
+| v44 1x book30k g2610 n1 | 4.725 | 0 | 1 |  |
+| v44 1x book30k g2611 n1 | 4.175 | 0 | 1 |  |
+| v44 1x book30k g2612 n1 | 4.25 | 0 | 1 |  |
+| v44 1x book30k g2613 n1 | 3.945 | 0 | 1 |  |
+| v44 1x book30k g2614 n1 | 3.87 | 0 | 1 |  |
+| v44 1x book30k g2615 n1 | 3.84 | 0 | 1 |  |
+| v44 1x fables12000 g2608 n1 | 4.534 | 0 | 1 |  |
+| v44 1x fables12000 g2609 n1 | 4.493 | 0 | 1 |  |
+| v44 1x fables12000 g2610 n1 | 4.514 | 0 | 1 |  |
+| v44 1x fables12000 g2611 n1 | 4.263 | 0 | 1 |  |
+| v44 1x fables12000 g2612 n1 | 4.381 | 0 | 1 |  |
+| v44 1x fables12000 g2613 n1 | 4.421 | 0 | 1 |  |
+| v44 1x fables12000 g2614 n1 | 4.179 | 0 | 1 |  |
+| v44 1x fables12000 g2615 n1 | 4.5 | 0 | 1 |  |
+| v44 1x text1000 g2608 n1 | 7.585 | 0 | 1 |  |
+| v44 1x text1000 g2609 n1 | 7.7 | 0 | 1 |  |
+| v44 1x text1000 g2610 n1 | 7.545 | 0 | 1 |  |
+| v44 1x text1000 g2611 n1 | 7.5 | 0 | 1 |  |
+| v44 1x text1000 g2612 n1 | 7.605 | 0 | 1 |  |
+| v44 1x text1000 g2613 n1 | 7.59 | 0 | 1 |  |
+| v44 1x text1000 g2614 n1 | 7.625 | 0 | 1 |  |
+| v44 1x text1000 g2615 n1 | 7.625 | 0 | 1 |  |
+| v44 cxlr0.15 book10k g2608 n1 | 3.825 | 0 | 1 |  |
+| v44 cxlr0.15 book10k g2609 n1 | 3.945 | 0 | 1 |  |
+| v44 cxlr0.15 book10k g2610 n1 | 4.415 | 0 | 1 |  |
+| v44 cxlr0.15 book10k g2611 n1 | 3.835 | 0 | 1 |  |
+| v44 cxlr0.15 book10k g2612 n1 | 4.1 | 0 | 1 |  |
+| v44 cxlr0.15 book10k g2613 n1 | 3.79 | 0 | 1 |  |
+| v44 cxlr0.15 book10k g2614 n1 | 3.685 | 0 | 1 |  |
+| v44 cxlr0.15 book10k g2615 n1 | 3.725 | 0 | 1 |  |
+| v44 cxlr0.15 book30k g2608 n1 | 3.895 | 0 | 1 |  |
+| v44 cxlr0.15 book30k g2609 n1 | 4.17 | 0 | 1 |  |
+| v44 cxlr0.15 book30k g2610 n1 | 4.765 | 0 | 1 |  |
+| v44 cxlr0.15 book30k g2611 n1 | 4.19 | 0 | 1 |  |
+| v44 cxlr0.15 book30k g2612 n1 | 4.27 | 0 | 1 |  |
+| v44 cxlr0.15 book30k g2613 n1 | 3.97 | 0 | 1 |  |
+| v44 cxlr0.15 book30k g2614 n1 | 3.855 | 0 | 1 |  |
+| v44 cxlr0.15 book30k g2615 n1 | 3.87 | 0 | 1 |  |
+| v44 cxlr0.15 fables12000 g2608 n1 | 4.528 | 0 | 1 |  |
+| v44 cxlr0.15 fables12000 g2609 n1 | 4.488 | 0 | 1 |  |
+| v44 cxlr0.15 fables12000 g2610 n1 | 4.541 | 0 | 1 |  |
+| v44 cxlr0.15 fables12000 g2611 n1 | 4.286 | 0 | 1 |  |
+| v44 cxlr0.15 fables12000 g2612 n1 | 4.389 | 0 | 1 |  |
+| v44 cxlr0.15 fables12000 g2613 n1 | 4.437 | 0 | 1 |  |
+| v44 cxlr0.15 fables12000 g2614 n1 | 4.181 | 0 | 1 |  |
+| v44 cxlr0.15 fables12000 g2615 n1 | 4.523 | 0 | 1 |  |
+| v44 cxlr0.15 text1000 g2608 n1 | 7.595 | 0 | 1 |  |
+| v44 cxlr0.15 text1000 g2609 n1 | 7.635 | 0 | 1 |  |
+| v44 cxlr0.15 text1000 g2610 n1 | 7.51 | 0 | 1 |  |
+| v44 cxlr0.15 text1000 g2611 n1 | 7.57 | 0 | 1 |  |
+| v44 cxlr0.15 text1000 g2612 n1 | 7.625 | 0 | 1 |  |
+| v44 cxlr0.15 text1000 g2613 n1 | 7.58 | 0 | 1 |  |
+| v44 cxlr0.15 text1000 g2614 n1 | 7.64 | 0 | 1 |  |
+| v44 cxlr0.15 text1000 g2615 n1 | 7.53 | 0 | 1 |  |
+| v44 cxlr0.1 book10k g2608 n1 | 3.795 | 0 | 1 |  |
+| v44 cxlr0.1 book10k g2609 n1 | 3.975 | 0 | 1 |  |
+| v44 cxlr0.1 book10k g2610 n1 | 4.36 | 0 | 1 |  |
+| v44 cxlr0.1 book10k g2611 n1 | 3.925 | 0 | 1 |  |
+| v44 cxlr0.1 book10k g2612 n1 | 4.1 | 0 | 1 |  |
+| v44 cxlr0.1 book10k g2613 n1 | 3.78 | 0 | 1 |  |
+| v44 cxlr0.1 book10k g2614 n1 | 3.695 | 0 | 1 |  |
+| v44 cxlr0.1 book10k g2615 n1 | 3.695 | 0 | 1 |  |
+| v44 cxlr0.1 book30k g2608 n1 | 3.935 | 0 | 1 |  |
+| v44 cxlr0.1 book30k g2609 n1 | 4.18 | 0 | 1 |  |
+| v44 cxlr0.1 book30k g2610 n1 | 4.81 | 0 | 1 |  |
+| v44 cxlr0.1 book30k g2611 n1 | 4.135 | 0 | 1 |  |
+| v44 cxlr0.1 book30k g2612 n1 | 4.295 | 0 | 1 |  |
+| v44 cxlr0.1 book30k g2613 n1 | 3.895 | 0 | 1 |  |
+| v44 cxlr0.1 book30k g2614 n1 | 3.795 | 0 | 1 |  |
+| v44 cxlr0.1 book30k g2615 n1 | 3.89 | 0 | 1 |  |
+| v44 cxlr0.1 fables12000 g2608 n1 | 4.512 | 0 | 1 |  |
+| v44 cxlr0.1 fables12000 g2609 n1 | 4.484 | 0 | 1 |  |
+| v44 cxlr0.1 fables12000 g2610 n1 | 4.539 | 0 | 1 |  |
+| v44 cxlr0.1 fables12000 g2611 n1 | 4.326 | 0 | 1 |  |
+| v44 cxlr0.1 fables12000 g2612 n1 | 4.393 | 0 | 1 |  |
+| v44 cxlr0.1 fables12000 g2613 n1 | 4.425 | 0 | 1 |  |
+| v44 cxlr0.1 fables12000 g2614 n1 | 4.192 | 0 | 1 |  |
+| v44 cxlr0.1 fables12000 g2615 n1 | 4.547 | 0 | 1 |  |
+| v44 cxlr0.1 text1000 g2608 n1 | 7.545 | 0 | 1 |  |
+| v44 cxlr0.1 text1000 g2609 n1 | 7.715 | 0 | 1 |  |
+| v44 cxlr0.1 text1000 g2610 n1 | 7.47 | 0 | 1 |  |
+| v44 cxlr0.1 text1000 g2611 n1 | 7.54 | 0 | 1 |  |
+| v44 cxlr0.1 text1000 g2612 n1 | 7.565 | 0 | 1 |  |
+| v44 cxlr0.1 text1000 g2613 n1 | 7.585 | 0 | 1 |  |
+| v44 cxlr0.1 text1000 g2614 n1 | 7.505 | 0 | 1 |  |
+| v44 cxlr0.1 text1000 g2615 n1 | 7.52 | 0 | 1 |  |
+
+Criteria: R70 chose lr 0.2 on short tasks; y185b (partial) lr 0.1 at book100k +0.0019 (6/2). If the gap of the smaller step vs 0.2 rises from book10k to book30k / fables12000 on 16 growths, the best step falls with length -> an annealed cortex step (new code) is the next design; if it stays negative, the 100k effect is noise.
