@@ -4115,3 +4115,44 @@ Sources: worker results y190, y191, y194a, y196, y197, y198a/b, y199, y200 (cras
 - **y213** (heavy, 0.92, memGB 4; growths 0-7): cx4dT order3 / K4 ablation (minus thinF, postCapRel, context x4, striatum x4, cone + rb2); 1.2 slot-h.
 - Kept: y194b (tacobell, running), y195a/b, y203 (linux-pc, running), y204a/b. Blocked: y205.
 - Depth: linux-pc / chromium pool 135.7 slot-h (≈ 13-14 h for linux-pc alone at ~10 slot-h per hour); tacobell light pool 20.2 slot-h (≈ 12 h at ~1.6).
+
+## R101 — queue review (Oct 29, ~7:30 AM CT): **no adoption (v44 stays); R100 was never pushed, so no R100 job (y206-y213) has run**; cx3 16000 cells beat 8000 at book100k on fresh growths (+0.0063, 14/1); 4000 cells fall behind past 10k (book30k 2/14); cortex lr 0.15 passes 16 held-out growths (nothing worse) -> full-task confirmation y214; y205 (32000 cells) crashed again on pre-R100 code
+Sources: worker results y194b, y195a/b, y203, y205 (crashed) (linux-pc, Oct 28 7:14-11:06 PM CT). All numbers paired growth-by-growth (wins/losses, t).
+
+### Push / code state
+- TacoBell and CHROMIUM both offline (cursor machines list, 7:22 AM CT): R100 bundles (c100 / q100) could not be pushed. origin still has code 27133b4 (R99) and lacks run/r100_jobs.js, so every R100 job (all `requires` run/r100_jobs.js) is invisible to the workers, and y205 (marked blocked in the unpushed R100 queue commit) ran on old code and failed all 64 runs with the y200 out-of-memory crash.
+- R101 bundles (c101 = R100 + R101 code, q101 = R100 + R101 queue merged on current origin/queue) supersede all earlier bundles.
+
+### y194a+b (16 growths k 2584-2599): granule count x text length (vs v44 8000 cells)
+| arm vs v44 | book5k | book10k | book20k | book30k |
+|---|---|---|---|---|
+| N4000 | -0.0008 (7/8) | -0.0029 (5/10, t -2.2) | -0.0052 (2/14, t -4.1) | **-0.0079 (2/14, t -5.6)** |
+| N16000 | +0.0007 (11/5) | +0.0010 (10/6) | +0.0009 (8/7) | +0.0013 (10/6, t 1.1) |
+- y194b alone (k 2592-2599): N16000 book20k / 30k +0.0035 (6/1, 7/1) — y194a had -0.0017 / -0.0010 on its 8; pooled the 16000 gain below 30k is small and not significant. 4000 cells run out of room past 10k, 8000 holds to 30k; 16000 earns its cost only at 100k+ (y192 / y193).
+
+### y195a+b (16 fresh growths k 2600-2615): cortex teacher step x length (vs v44, cortex lr 0.2)
+| arm vs v44 | book10k | book30k | fables12000 | text1000 |
+|---|---|---|---|---|
+| cortex lr 0.15 | +0.0014 (10/6) | +0.0008 (11/5) | +0.0011 (12/4, t 3.4) | -0.0003 (9/7, t -0.3) |
+| cortex lr 0.1 | +0.0017 (10/6) | +0.0009 (10/6) | +0.0014 (13/3, t 2.5) | **-0.0036 (5/11, t -2.5)** |
+- cortex lr 0.15: nothing worse on 16 held-out growths, small consistent gains -> full-task confirmation **y214** (fresh k 2752-2767, 8 tasks). With y197 (300k +0.0019 5/3, 100k -0.0011 2/6) it is a small step, not a length fix.
+- cortex lr 0.1 costs text1000 -> rejected at 1x (it stays only as the R98 length arm).
+
+### y203 (cx3, 16 fresh growths k 2664-2679): 16000 vs 8000 granule cells at book100k (both granRef 1800)
+- cx3 N16000 ref1800 0.4327 vs cx3 N8000 ref1800 0.4264: **+0.0063 (14/1, t 5.8)**. Fresh-growth confirmation of y184 (0.4285 on 1400-1407): sized brains also want more granule cells at length.
+
+### y205: crashed (all 64 runs, Bun out of memory) — expected, pre-R100 code (same as y200). Requeue y208 still waiting for the R100 push.
+
+### v45 decision
+- Pending: tie-break y209 and length leg y210 have not run (not on origin). v44 stays (DEFAULTS_VERSION 37).
+
+### Workers (at ~7:25 AM CT, Oct 29)
+- linux-pc: last activity 11:06 PM CT Oct 28 (claimed y204a, code 27133b4); no lease renewals since, lease expired 3:06 AM CT -> **silent ~8 h overnight** (known evening / overnight outage pattern). Finished y203, y194b, y195a, y195b, y205 (crash) last evening.
+- tacobell: last lease renewal 5:13 PM CT Oct 28 (y194b, later finished by linux-pc); worker file 11:43 AM CT Oct 28, code 27133b4; laptop offline (~14 h).
+- chromium: worker file 5:41 AM CT Oct 28, old code 48387fe, still shows y196 (finished by linux-pc); offline ~26 h, 0 jobs finished. Heavy-eligible.
+
+### Queue (R101; run/r101_jobs.js; 3 new jobs, 9.1 slot-h; smoke-tested on the box: N32000 order3 g2776 runs in 13 s, 9.675)
+- **y214** (light, 0.925; fresh k 2752-2767): v44 vs cortex lr 0.15, 8 tasks; 4.5 slot-h.
+- **y215** (light, 0.91; fresh k 2768-2775): 16000 cells vs 16000 + smooth granule schedule (T 30k) on book10k / 30k, fables4000, text1000; 2.6 slot-h.
+- **y216** (heavy by memGB 3, 0.915; fresh k 2776-2783): v44 vs 16000 vs 32000 cells on order3 / K4 / seqchoice order2 / cycle; 2.0 slot-h.
+- Kept all R100 jobs (y206-y213) and y204a/b. Once pushed: heavy pool (linux-pc / chromium) 123.8 slot-h ≈ 12 h of linux-pc alone; tacobell light pool 17.7 slot-h ≈ 11 h. Until pushed, only y204a/b (6.8 slot-h, < 1 h of linux-pc) are runnable.
