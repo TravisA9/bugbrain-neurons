@@ -1,6 +1,6 @@
 # Queue log (run/queue.js)
 
-## 10/28/2026, 10:12:03 PM · y194b_1x_granLenCurve · DONE
+## 10/29/2026, 8:41:00 AM · y194b_1x_granLenCurve · DONE
 granule capacity x training length below 30k (the ~10k plateau): 4000 / 8000 (v44) / 16000 cells, all mixed 3/4 claws, book 5k / 10k / 20k / 30k, fresh k 2592-2599 (question I99).
 
 | run | mean | sd | growths | note |
