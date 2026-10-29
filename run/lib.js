@@ -78,6 +78,7 @@ function evaluateGenome(gc, tasks, plan) {
           while (!a.done) { a.tick(); out.ticks++; }
           acc += a.fitness; n++;
           const x = a.task.stats ? a.task.stats() : {};
+          if (a.net && a.net.granDemandStats) { const z = a.net.granDemandStats(); if (z) { x.granAsg = z.assigned; x.granRec = z.recycled; x.granPend = z.pending; } }   // R102: demand-grown claw counts (absent when P.granDemand is off)
           if (x.silent != null && x.trials) x.silentFrac = x.silent / x.trials;
           for (const q in x) if (typeof x[q] === 'number' && isFinite(x[q])) st[q] = (st[q] || 0) + x[q];
         }

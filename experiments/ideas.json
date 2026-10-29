@@ -1584,6 +1584,21 @@
         "I95",
         "I98"
       ]
+    },
+    {
+      "id": "I105",
+      "area": "representation",
+      "title": "Demand-grown granule claws from repeated letter co-occurrence (Play Code motif birth), same pool size as v44 random claws",
+      "status": "testing (coded R102 as P.granDemand, off by default; y217, y218). Not a default. v44 / DEFAULTS_VERSION 37 unchanged",
+      "evidence": "No worker results yet. Mechanism: granN cells are reserved with no random claws; a lag window seen granCo times (default 2) in a capped LRU table takes an unused cell, or the least-used cell past granHold when granRecycle=1. Pool cap is granN (matched to 8000 in y217). Counts are not a dense n-gram matrix.",
+      "why": "random sparse claws spend cells on combinations the text never repeats; claws born from repeated co-occurrence might put the same N on the combinations that actually recur",
+      "rounds": [
+        "R102"
+      ],
+      "theme": "representation",
+      "parents": [
+        "I99"
+      ]
     }
   ],
   "questions": [
