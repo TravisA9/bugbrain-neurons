@@ -1,0 +1,3870 @@
+{
+  "id": "y211_3x_cx3_str5_allround",
+  "question": "I98",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/r91_jobs.js",
+    "run/r96_jobs.js",
+    "run/r98_jobs.js",
+    "run/r99_jobs.js",
+    "run/r100_jobs.js"
+  ],
+  "title": "cx3 sized recipe, held-out: cx3 8000 cells granRef 1800 (y196 winner) vs cx3 16000 cells + ref1800 + cone + rb2 + striatum x5, 8 tasks, fresh k 2736-2751",
+  "priority": 0.93,
+  "estHours": 1.5,
+  "slotHours": 9,
+  "phone": false,
+  "flag": "text",
+  "memGB": 4,
+  "accept": {
+    "note": "y196: ref1800 order3 +0.018 (11/2), nothing worse; y202: 16000 + ref1800 + cone rb2 str3 book +0.0045, seqchoice 3.9 / 4.1 vs 1.6 / 2.1 but K4 -0.0047, text -0.0028 (n.s.); y199: str5 best dose (n.s.). If nothing is worse than the ref1800 reference, this is the cx3 base."
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book10k g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 book30k g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 fables4000 g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 order3 g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 K4 g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 text1000 g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice order2 g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=8000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "v44c cx3 N8000 ref1800 seqchoice cycle g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":10000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book10k g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 book30k g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"fables\",\"nSyms\":4000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 fables4000 g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":8,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 order3 g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"order3\",\"K\":4,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 K4 g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"text\",\"nSyms\":1000,\"readIn\":0.01}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 text1000 g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"order2\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice order2 g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2736",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2736 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2737",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2737 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2738",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2738 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2739",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2739 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2740",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2740 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2741",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2741 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2742",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2742 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2743",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2743 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2744",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2744 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2745",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2745 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2746",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2746 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2747",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2747 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2748",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2748 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2749",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2749 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2750",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2750 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seqchoice\",\"params\":{\"source\":\"cycle\",\"nSyms\":1000}}",
+        "1",
+        "sc.sizeF@cortex=3,sc.divRep@cortex=2,sc.trophMin@cortex=0.001667,P.fanRef=450,P.fanRefR=126,pl.lr@cortex=0.2,pl.preNorm@cortex=45,P.granN=16000,P.granKmin=3,P.granK=4,P.granRef=1800,P.granW=60,P.sizeCone=1,P.recvBudget=2,sc.sizeF@striatum=5,sc.trophMin@striatum=0.001,P.fastEngine=1",
+        "2751",
+        "--force"
+      ],
+      "label": "cx3 N16000 ref1800 cone rb2 str5 seqchoice cycle g2751 n1",
+      "env": {
+        "BB_OUT": "results/phone/y211_3x_cx3_str5_allround.jsonl"
+      }
+    }
+  ]
+}
