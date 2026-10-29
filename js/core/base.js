@@ -58,6 +58,12 @@ const params = {
   // R91 granAnneal (0 = off): per-granule NLMS step x max(granAnnealMin, granAnneal / (granAnneal + the granule's teaching-event count)).
   // Granules (t, t-1, t-2 claws) -> output cells, cerebellar NLMS rule on the read-window activity, learned self-silencing gain. Old v40 brain: plan deepURSx3v40 or P.granN=0.
   granW: 60, granRate: 0.0003, granTgt: 1, granOut: 0.01, granWin: 1, granLr: 0.1,   /* granK / granKmin: unset = plan gene d.gran.K / Kmin (v44 deepURSx3: 4 / 3; older plans 3); P.granK / P.granKmin override */ granRef: 600, granGain: 0.003,   // v42 (R89): granRef 600 (was 100; v41 = P.granRef=100)
+  // R102 granDemand (0 = off, bit-identical): granules are born with no claws. A lag window (t .. t-k+1, k from granKmin to granK)
+  // that has co-occurred granCo times (default 2) in a capped recent table takes an unused granule, or (granRecycle > 0) the
+  // least-used granule older than granHold teaching events (0 = 32). The pool cannot exceed granN. granMap 0 = max(4096, 4*granN)
+  // distinct recent patterns (LRU; not a dense n-gram matrix). Hypothesis: demand-grown claws from repeated co-occurrence vs
+  // random sparse claws at the same N. Not a default — v44 stays random claws, DEFAULTS_VERSION unchanged.
+  granDemand: 0, granCo: 2, granRecycle: 1, granMap: 0, granHold: 0,
   plasticity: true,    // lifetime learning (reward-modulated STDP); false = frozen genome weights
   cellStart: 'env',    // a new population starts from mutants of this body plan ('env' = the environment's default)
   cellMut: 0.02,       // chance per genome number to mutate

@@ -114,6 +114,7 @@ class SpikingNet {
     this.initFast();
     if (params.fastEngine && !globalThis.__bbSlow && !(opts && opts.noNeed)) this.initFastE();   // R66 event-driven engine (selectable; see initFastE)
     if (this.p.stageF0 > 0 && this.p.stageF0 < 1 && g.nHid > 0 && !(opts && opts.noNeed)) this.initStage();   // (not in the juvenile phase of development)
+    if (params.granDemand > 0 && g.granDemand) this.initGranDemand();   // R102: off unless the brain was grown with P.granDemand (no random claws)
   }
   // R65 (I82) staged maturation (see PL_DEFAULTS stageF0): immature hidden cells are silenced (threshold 1e9, synapses at weight 0, grown
   // weights kept in w0) and mature in birth order, one wave every stageTicks ticks
@@ -289,6 +290,7 @@ class SpikingNet {
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];
       if (n && this.mlS) { const S = this.mlS, P = this.mlP, D = this.mlD; for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = S[i], e = S[i + 1]; k < e; k++) { syn[P[k]] -= D[k]; if (!this.fDense) mk[P[k]] = 1; } } }
       else if (n) { const d = this.mixInhD * n, ml = this.mixList; if (this.fDense) for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d; else for (let q = 0; q < ml.length; q++) { syn[ml[q]] -= d; mk[ml[q]] = 1; } } }
+    if (this.gd) this.granDemandDrive(spk, nSpk, syn, this.fDense ? null : mk);   // R102: demand-grown claws
     if (this.g.gran) this.granInh(spk, nSpk, syn, this.fDense ? null : mk);   // R83 granule feedforward inhibition
     if (this.mxStart && params.plasticity && this.thr && !this.mixFrozen()) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr;
       if (ml) { if (this.fDense) for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); }
@@ -499,10 +501,11 @@ class SpikingNet {
   granInh(spk, nSpk, syn, mk) {              // R83: every granule spike inhibits every granule cell by granInh (shared Golgi-like pool)
     if (!this.granL) { const L = []; for (let i = 0; i < this.N; i++) if (this.g.gran[i]) L.push(i); this.granL = Int32Array.from(L); }
     const gr = this.g.gran; let n = 0; for (let s = 0; s < nSpk; s++) n += gr[spk[s]];
-    if (params.granRate > 0 && params.plasticity) { const sp = this.spiked, h = params.granHomeo > 0 ? params.granHomeo : 0.5, r0 = params.granRate, T = this.thr || this.g.thresh, L = this.granL;   // R83 granule homeostatic threshold
-      for (let q = 0; q < L.length; q++) { const i = L[q]; T[i] += h * (sp[i] - r0); if (mk) mk[i] = 1; } }
+    const L = this.granL, nL = this.granLn != null ? this.granLn : L.length;   // R102: demand mode keeps granLn = assigned granules only (unset = every granule, bit-identical)
+    if (params.granRate > 0 && params.plasticity) { const sp = this.spiked, h = params.granHomeo > 0 ? params.granHomeo : 0.5, r0 = params.granRate, T = this.thr || this.g.thresh;   // R83 granule homeostatic threshold
+      for (let q = 0; q < nL; q++) { const i = L[q]; T[i] += h * (sp[i] - r0); if (mk) mk[i] = 1; } }
     if (!(params.granInh > 0) || !n) return;
-    const d = params.granInh * n, L = this.granL; for (let q = 0; q < L.length; q++) { syn[L[q]] -= d; if (mk) mk[L[q]] = 1; } }
+    const d = params.granInh * n; for (let q = 0; q < nL; q++) { syn[L[q]] -= d; if (mk) mk[L[q]] = 1; } }
   /* R83b CEREBELLAR READOUT (global granLr > 0; needs granN): only the granule -> prediction synapses, once per teaching event
    * (a substep with >= 1 prediction-cell onset): each prediction cell i has graded granule drive y_i = min(1, sum_k w_k x_j / granRef)
    * over its granule inputs (x_j = the granule's lagged trace); target t_i = 1 if i's teacher arrives now, else 0 (climbing fibre);
@@ -532,12 +535,101 @@ class SpikingNet {
     if (gG) { const ps = this.gPsi = Math.min(1, Math.max(0, this.gPsi + params.granGain * dPs)); for (let r = 0; r < K.length; r++) ws[K[r]] = ps * U[r]; if (D) { D.psi = ps; D.pn = (D.pn || 0) + 1; D.ps = (D.ps || 0) + ps; } }
     // (granGain: psi rises while the granule prediction points where the outputs under-predict the arriving symbol and falls where it adds
     //  false alarms, so the pathway self-silences when it does not reduce the outputs' error; local: one gain per granule->output projection)
-    if (gC) { if (!this.granL) { const L = []; for (let i = 0; i < this.N; i++) if (this.g.gran[i]) L.push(i); this.granL = Int32Array.from(L); } const Lg = this.granL; for (let q = 0; q < Lg.length; q++) { const j = Lg[q], x = gA ? gA[j] / params.granWin : xT[j] * xg; if (x >= 0.01) gC[j]++; } }   // R91: count this teaching event for every granule active in the read window
+    if (gC) { if (!this.granL) { const L = []; for (let i = 0; i < this.N; i++) if (this.g.gran[i]) L.push(i); this.granL = Int32Array.from(L); } const Lg = this.granL, nLg = this.granLn != null ? this.granLn : Lg.length; for (let q = 0; q < nLg; q++) { const j = Lg[q], x = gA ? gA[j] / params.granWin : xT[j] * xg; if (x >= 0.01) gC[j]++; } }   // R91: count this teaching event for every granule active in the read window
     if (gA) gA.fill(0);
+    if (this.gd) this.granDemandEvent();   // R102: once per teaching event, after this window's spikes have been counted
   }
   // R85 granIso (global param, 0/undefined = off): with granTgt 1, the granule -> output synapses do not make the output cells
   // 'receivers' of the prediction-cell machinery (teacher AHP, trust, receiver pool): the output cells keep their v40 dynamics
   granIsoK(k) { return params.granIso > 0 && params.granTgt === 1 && this.g.gran ? this.g.gran[this.pres[k]] === 1 : false; }
+  /* R102 DEMAND-GROWN CLAWS (P.granDemand > 0, brain grown with it; otherwise this.gd is unset and nothing here runs).
+   * Hypothesis: claws chosen from letter windows that have co-occurred at least granCo times (default 2), versus v44's random
+   * sparse claws, at the same pool size granN. Play Code births a motif cell the second time a pair appears; here the motif
+   * is the current lag window (t .. t-k+1, k from granKmin to granK) and the cell is one reserved granule.
+   * Counts live in a capped LRU map (granMap), not a dense n-gram tensor. The granule count cannot exceed granN; when the
+   * pool is full and granRecycle > 0, the least-used granule older than granHold teaching events is rewritten (weights reset).
+   * Claw current is added beside the CSR (same weight split as a grown claw, W/k per column) so the synapse list never grows
+   * and no N x N matrix is built. */
+  initGranDemand() {
+    const d = this.g.granDemand, N = this.N, nG = d.nG, src = d.src, nS = src.length;
+    const colOf = new Int32Array(N).fill(-1), loc = new Int32Array(N).fill(-1), hOff = new Int32Array(nS + 1);
+    let h = 0, maxC = 1;
+    for (let s = 0; s < nS; s++) { hOff[s] = h; const nC = src[s].keys.length; if (nC > maxC) maxC = nC; h += nC; }
+    let bits = 1; while ((1 << bits) <= maxC && bits < 20) bits++;
+    const wide = bits * Math.max(1, d.K) > 50 || maxC > 65535, base = wide ? 0 : (1 << bits);
+    hOff[nS] = h;
+    for (let s = 0; s < nS; s++) { const off = src[s].off, cells = src[s].cells, nC = src[s].keys.length;
+      for (let c = 0; c < nC; c++) for (let p = off[c]; p < off[c + 1]; p++) { const id = cells[p]; if (id >= 0 && id < N) colOf[id] = (s << 16) | c; } }
+    for (let j = 0; j < nG; j++) loc[d.gOff + j] = j;
+    const outS = new Int32Array(nG + 1), tmp = [], stt = this.start, isP = this.isPlastic;
+    for (let j = 0; j < nG; j++) { outS[j] = tmp.length; const b = d.gOff + j; for (let k = stt[b], e = stt[b + 1]; k < e; k++) if (isP[k]) tmp.push(k); }
+    outS[nG] = tmp.length;
+    const free = []; for (let j = nG - 1; j >= 0; j--) free.push(j);
+    if (!this.thr) this.thr = Float32Array.from(this.g.thresh);
+    this.granL = new Int32Array(nG); this.granLn = 0;
+    this.gd = { K: d.K, Km: d.Km, W: d.W, wo: d.wo, nG, gOff: d.gOff, src, colOf, loc, hOff, hits: new Int32Array(h), wide,
+      lists: src.map(s => Array.from({ length: s.keys.length }, () => [])), gen: new Int32Array(nG), alive: new Uint8Array(nG),
+      use: new Float32Array(nG), born: new Int32Array(nG), clawK: new Int32Array(nG), keyBy: new Array(nG).fill(null), inL: new Uint8Array(nG),
+      owned: new Map(), pending: new Map(), free, outS, outK: Int32Array.from(tmp), win: new Int32Array(Math.max(1, d.K)), waste: 0, uAt: null,
+      base, co: params.granCo > 0 ? Math.round(params.granCo) : 2, hold: params.granHold > 0 ? Math.round(params.granHold) : 32,
+      cap: params.granMap > 0 ? Math.round(params.granMap) : Math.max(4096, nG * 4), thr0: this.g.thresh[d.gOff],
+      st: { assigned: 0, recycled: 0, cap: nG, events: 0 } };
+  }
+  granDemandStats() { const gd = this.gd; if (!gd) return null; const s = gd.st; return { assigned: s.assigned, recycled: s.recycled, cap: s.cap, pending: gd.pending.size, events: s.events }; }
+  granDemandDrive(spk, nSpk, syn, mk) {
+    const gd = this.gd, colOf = gd.colOf, hits = gd.hits, hOff = gd.hOff, lists = gd.lists, gen = gd.gen, loc = gd.loc, alive = gd.alive, use = gd.use, gOff = gd.gOff;
+    for (let s = 0; s < nSpk; s++) { const i = spk[s], p = colOf[i];
+      if (p >= 0) { const src = p >>> 16, col = p & 65535, Ls = lists[src][col]; hits[hOff[src] + col]++;
+        for (let q = 0; q < Ls.length; q++) { const e = Ls[q]; if (e.gen !== gen[e.j]) continue; const b = gOff + e.j; syn[b] += e.w; if (mk) mk[b] = 1; } }
+      const j = loc[i]; if (j >= 0 && alive[j]) use[j]++; }
+  }
+  granDemandEvent() {
+    const gd = this.gd, hits = gd.hits, hOff = gd.hOff, win = gd.win, K = gd.K; gd.st.events++;
+    let n = 0;
+    for (let s = 0; s < K; s++) { const a = hOff[s], b = hOff[s + 1]; let best = -1, bv = 0;
+      for (let c = a; c < b; c++) if (hits[c] > bv) { bv = hits[c]; best = c - a; }
+      if (best < 0) break; win[n++] = best; }
+    hits.fill(0);
+    for (let k = gd.Km; k <= n; k++) this.gdObserve(k);
+  }
+  gdKey(k) { const gd = this.gd, win = gd.win; if (gd.wide) { let s = String(k); for (let i = 0; i < k; i++) s += ',' + win[i]; return s; }
+    let x = k; for (let i = 0; i < k; i++) x = x * gd.base + win[i]; return x; }
+  gdObserve(k) {
+    const gd = this.gd, key = this.gdKey(k), pend = gd.pending;
+    if (gd.owned.has(key)) return;
+    let n = pend.get(key) || 0; if (n) pend.delete(key); n++;
+    if (n >= gd.co) { if (!this.gdAssign(key, k)) pend.set(key, n - 1); }
+    else { pend.set(key, n); while (pend.size > gd.cap) pend.delete(pend.keys().next().value); }
+  }
+  gdClear(j) {
+    const gd = this.gd, b = gd.gOff + j;
+    if (gd.keyBy[j] != null) gd.owned.delete(gd.keyBy[j]);
+    gd.keyBy[j] = null; gd.alive[j] = 0; gd.gen[j]++; gd.st.assigned--; gd.waste += gd.clawK[j] || 0;
+    const ws = this.ws, U = this.gU, wo = gd.wo, psi = this.gPsi || 0;
+    if (U && !gd.uAt && this.gIn) { const K = this.gIn.K, m = new Int32Array(ws.length).fill(-1); for (let r = 0; r < K.length; r++) m[K[r]] = r; gd.uAt = m; }
+    const map = gd.uAt;
+    for (let q = gd.outS[j]; q < gd.outS[j + 1]; q++) { const e = gd.outK[q]; if (U && map && map[e] >= 0) U[map[e]] = wo; ws[e] = U ? psi * wo : wo; }
+    if (this.thr) this.thr[b] = gd.thr0; this.v[b] = V_REST; if (this.gCnt) this.gCnt[b] = 0; if (this.gAcc) this.gAcc[b] = 0;
+  }
+  gdAssign(key, k) {
+    const gd = this.gd, st = gd.st; let j;
+    if (gd.free.length) j = gd.free.pop();
+    else if (!(params.granRecycle > 0)) return false;
+    else { const ev = st.events, hold = gd.hold; let best = -1, br = Infinity, bb = Infinity;
+      for (let i = 0; i < gd.nG; i++) if (gd.alive[i] && ev - gd.born[i] >= hold) { const rate = gd.use[i] / (ev - gd.born[i]); if (rate < br || (rate === br && gd.born[i] < bb)) { best = i; br = rate; bb = gd.born[i]; } }
+      if (best < 0) return false; this.gdClear(best); st.recycled++; j = best; }
+    const gv = gd.gen[j], win = gd.win, W = gd.W, src = gd.src, lists = gd.lists;
+    gd.alive[j] = 1; gd.use[j] = 0; gd.born[j] = st.events; gd.clawK[j] = k; gd.keyBy[j] = key; gd.owned.set(key, j); st.assigned++;
+    for (let c = 0; c < k; c++) { const col = win[c], sl = src[c].off[col + 1] - src[c].off[col]; if (sl > 0) lists[c][col].push({ j, w: W / k / sl, gen: gv }); }
+    if (!gd.inL[j]) { this.granL[this.granLn++] = gd.gOff + j; gd.inL[j] = 1; }
+    if (gd.waste > 2048 && gd.waste > st.assigned * 4) this.gdCompact();
+    return true;
+  }
+  gdCompact() {
+    const gd = this.gd, gen = gd.gen, lists = gd.lists;
+    for (let s = 0; s < lists.length; s++) for (let c = 0; c < lists[s].length; c++) { const L = lists[s][c]; let w = 0; for (let q = 0; q < L.length; q++) if (L[q].gen === gen[L[q].j]) L[w++] = L[q]; L.length = w; }
+    gd.waste = 0;
+  }
   deltaInit() {
     const N = this.N, nIn = this.g.nIn, rc = new Uint8Array(N), inS = this.inStart, inE = this.inEdges, isP = this.isPlastic, w0 = this.w0, iI = this.instrIn;
     const pl = new Uint8Array(N); for (let i = nIn; i < N; i++) for (let q = inS[i], e = inS[i + 1]; q < e; q++) { const k = inE[q]; if (isP[k] && w0[k] > 0) { pl[i] = 1; break; } }
@@ -715,6 +807,7 @@ class SpikingNet {
     if (this.mxStart && params.plasticity) {   // v15 learned mixing (unsupervised competitive rule + homeostatic threshold)
       const mx = this.g.mix; if (this.p.mixLr > 0) for (let s = 0; s < nSpk; s++) if (mx[spk[s]]) this.mixLearn(spk[s]);
       if (this.thr && !this.mixFrozen()) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr; for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); } } }
+    if (this.gd) this.granDemandDrive(spk, nSpk, syn, null);   // R102: demand-grown claws (no-op unless P.granDemand grew this brain)
     if (this.g.gran) this.granInh(spk, nSpk, syn, null);   // R83 granule feedforward inhibition
     if (this.ng) this.needTrace(spk, nSpk);   // v28 need-growth source traces
     if (this.teachTr) {                     // teacher events: smoothed drive from sensory (input) neurons

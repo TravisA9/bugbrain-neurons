@@ -243,4 +243,27 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   console.log('R71 size-scaling genes off by default, neutral values bit-identical: ok'); }
 { const S = require('./js/node_load.js')(); assert.ok(!(S.params.postCap > 0) && !(S.params.postCapRel > 0) && !(S.params.allMax > 0) && !(S.params.postN > 0) && !(S.params.trophic > 0), 'R72 / R73 genes (postCap, postCapRel, postN, allMax, trophic) off by default');
   console.log('R72 postsynaptic cap / convergence limit off by default: ok'); }
+// R102: demand-grown granule claws (off by default). Repeated letter windows take claws; the pool cannot exceed granN.
+{ const S = require('./js/node_load.js')();
+  assert.ok(S.APP_VERSION === 'v44' && S.DEFAULTS_VERSION === 37 && !(S.params.granDemand > 0) && S.params.granCo === 2, 'R102 granDemand off; v44 / DEFAULTS_VERSION unchanged');
+  const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 160 });
+  const E = S.setEnv('seq', envP), plan = () => S.PLANS.deepURSx3.make();
+  assert.ok(plan().gran.N === 8000 && plan().gran.K === 4 && plan().gran.Kmin === 3, 'demand mode does not change the v44 granule gene');
+  const clawIn = b => { const sp = b.sp, g = b.gran; let n = 0; for (let k = 0; k < sp.pre.length; k++) if (g[sp.post[k]] && !g[sp.pre[k]]) n++; return n; };
+  S.params.granN = 48;
+  const b0 = S.growCell(plan(), { seed: 5, spec: E.spec }), b1 = S.growCell(plan(), { seed: 5, spec: E.spec });
+  assert.ok(!b0.granDemand && b0.granStats.demand === 0 && clawIn(b0) > 0 && clawIn(b0) === clawIn(b1) && b0.sp.w.length === b1.sp.w.length, 'granDemand off: random claws, repeatable, no demand table');
+  S.params.granDemand = 0; const bZ = S.growCell(plan(), { seed: 5, spec: E.spec });
+  assert.ok(bZ.sp.w.length === b0.sp.w.length && bZ.sp.w.every((w, i) => w === b0.sp.w[i]), 'P.granDemand=0 matches the unset default (bit-identical claws)');
+  S.params.granDemand = 1; S.params.granN = 12; S.params.granMap = 64; S.params.granHold = 4;
+  const D = plan(), bD = S.growCell(D, { seed: 5, spec: E.spec });
+  assert.ok(bD.granDemand && bD.granStats.demand === 1 && bD.granStats.cells === 12 && clawIn(bD) === 0 && !Object.keys(bD).includes('granDemand'), 'granDemand on: cap granN, no random claws, table not enumerable');
+  const desc = Object.getOwnPropertyDescriptor(bD, 'W'); assert.ok(desc && desc.get && bD.sp && bD.sp.pre, 'demand growth keeps the sparse synapse list (no dense N x N read)');
+  const a = S.runEpisode(D, 7, bD, E);
+  const st = a.net.granDemandStats(), use = a.net.gd.use.reduce((s, v) => s + v, 0);
+  assert.ok(st && st.assigned > 0 && st.assigned <= 12 && st.pending <= 64 && use > 0, 'repeated windows birth claws inside the cap and those granules fire: ' + JSON.stringify(st) + ' use ' + use);
+  S.params.granN = 3; S.params.granHold = 2; S.params.granMap = 48;
+  const bR = S.growCell(plan(), { seed: 9, spec: E.spec }), aR = S.runEpisode(plan(), 9, bR, E), stR = aR.net.granDemandStats();
+  assert.ok(stR.assigned <= 3 && stR.recycled > 0 && stR.pending <= 48, 'full pool recycles the least-used granule and the pattern table stays capped: ' + JSON.stringify(stR));
+  console.log(`R102 granDemand (off by default): born ${st.assigned}/${st.cap} (fired ${use}), recycle ${stR.recycled} at cap ${stR.cap}: ok`); }
 console.log('ALL OK');

@@ -15,6 +15,7 @@
 | 3 | I101 | Capacity vs length: 32000 cells at 10k-300k and on order3 / seqchoice | y207, y208, y216 |
 | 4 | I77 | cortex lr 0.15 full-task confirmation | y214 |
 | 5 | I98 x Q46 | cx3 sized recipe held-out; sized order3 gap ablation | y211, y213 |
+| — | I105 | Demand-grown granule claws vs random claws at granN 8000 (off by default; do not adopt from the queue) | y217, y218 |
 Answered R101: 4000 cells too few past 10k (16 growths); 16000 cells pay at length at cx3 too (fresh); cortex lr 0.1 rejected at 1x.
 Growth-phase memory / speed: lib.js dense-matrix fix (R100) is still unpushed; the sparse granule update path remains the top engineering item. Generation loops wait for a length-rule result.
 Low: analogy / evolution. Rejected ideas stay rejected.

@@ -82,9 +82,18 @@ function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, g
   const colsOf = ([p, c]) => { const m = new Map(); for (let i = p.g.nIn; i < p.g.nIn + p.g.nHid; i++) if (p.g.cellType[i] === N_FIXED + c && p.g.topo && !isNaN(p.g.topo[i])) { const k = Math.round(p.g.topo[i] * 1e4); if (!m.has(k)) m.set(k, []); m.get(k).push(node(p, i)); } return m; };
   const C = srcs.map(colsOf), r = mulberry32((seed ^ 0x6a7a11) >>> 0);
   G.gran = new Uint8Array(G.N);
+  // R102 granDemand (P.granDemand > 0): do not draw random claws. The same granN cells stay reserved (the cap) and net.js
+  // wires a claw when that lag window has co-occurred granCo times. Off: the loop below is the v41–v44 random claw, unchanged.
+  if (!(params.granDemand > 0)) {
   for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk;
     const k = Km === K ? K : Km + ((r() * (K - Km + 1)) | 0);   // R84 granKmin: each granule takes k in [granKmin, granK] claws from the first k sources (lags t .. t-k+1; a mixture of n-gram orders)
     for (let c = 0; c < k; c++) { const m = C[c], keys = [...m.keys()]; if (!keys.length) continue; const S = m.get(keys[(r() * keys.length) | 0]), ws = W / k / S.length; for (const A of S) acc.add(A, b, ws, 0, 0); } }
+  } else {
+    for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk; }
+    const src = C.map(m => { const keys = [...m.keys()].sort((a, b) => a - b), off = new Int32Array(keys.length + 1); let n = 0; for (const k of keys) n += m.get(k).length; const cells = new Int32Array(n); let p = 0;
+      for (let i = 0; i < keys.length; i++) { off[i] = p; const S = m.get(keys[i]); for (let t = 0; t < S.length; t++) cells[p++] = S[t]; } off[keys.length] = p; return { keys: Int32Array.from(keys), off, cells }; });
+    Object.defineProperty(G, 'granDemand', { value: { K, Km, W, nG, gOff, src }, writable: true, configurable: true, enumerable: false });
+  }
   // taught prediction cells: cells of the output region with plastic inputs that an env input contacts
   const pl = new Uint8Array(G.N), ins = new Uint8Array(G.N);
   for (let k = 0; k < acc.n; k++) { const b = acc.b[k]; if (b < nIn || b >= nIn + nHid || G.region[b] !== oi) continue; if (acc.p[k]) pl[b] = 1; if (acc.a[k] < nIn && acc.w[k] > 0) ins[b] = 1; }
@@ -92,7 +101,8 @@ function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, g
   else for (let b = nIn; b < nIn + nHid; b++) if (pl[b] && ins[b] && !G.gran[b]) P.push(b);
   const wo = params.granOut > 0 ? params.granOut : 0.1;
   for (let j = 0; j < nG; j++) for (const b of P) acc.add(gOff + j, b, wo, 1, 0);
-  G.granStats = { cells: nG, K, Km, thr: th, pred: P.length };
+  if (G.granDemand) G.granDemand.wo = wo;
+  G.granStats = { cells: nG, K, Km, thr: th, pred: P.length, demand: G.granDemand ? 1 : 0 };
 }
 const inhib = (g, i) => { const n = g.N; for (let b = 0; b < n; b++) if (g.W[i * n + b] < 0) return true; return false; };   // a cell with an inhibitory synapse
 function growRegions(d, opts) {
