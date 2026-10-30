@@ -4156,3 +4156,59 @@ Sources: worker results y194b, y195a/b, y203, y205 (crashed) (linux-pc, Oct 28 7
 - **y215** (light, 0.91; fresh k 2768-2775): 16000 cells vs 16000 + smooth granule schedule (T 30k) on book10k / 30k, fables4000, text1000; 2.6 slot-h.
 - **y216** (heavy by memGB 3, 0.915; fresh k 2776-2783): v44 vs 16000 vs 32000 cells on order3 / K4 / seqchoice order2 / cycle; 2.0 slot-h.
 - Kept all R100 jobs (y206-y213) and y204a/b. Once pushed: heavy pool (linux-pc / chromium) 123.8 slot-h ≈ 12 h of linux-pc alone; tacobell light pool 17.7 slot-h ≈ 11 h. Until pushed, only y204a/b (6.8 slot-h, < 1 h of linux-pc) are runnable.
+
+## R102r — queue review (Oct 29, ~7:15-9 PM CT): **no adoption (v44 stays, DEFAULTS_VERSION 37)**; **cortex lr 0.15 rejected** (y214 full-task: K4 -0.0016, 1/10, t -3.5); **v45 (16000 cells) passes its fables4000 tie-break** (y209, 32 fresh growths, 16/16) and now waits only for its length leg y210 (running on linux-pc); **granule step schedule sched100k = best 1x at book300k (0.4122)** on 8 growths -> held-out y219a/b + book1M y221 queued; 8000 / 16000 / 32000 cells identical on order3 / K4 / seqchoice (y216, box)
+Sources: worker results y206, y209 (linux-pc, Oct 29 ~11 AM-5:40 PM CT); box runs y214 (256 runs; 21 seeded from tacobell's partial results), y216 (96 runs), y213 (80 runs) in results_box/r102r_*.jsonl. The "R102" commit 91501d6 (granDemand, I105, y217 / y218) is a separate change by another agent; this review is labelled R102r. All numbers paired growth-by-growth (wins/losses, t).
+
+### Push / code state
+- R100 + R101 were pushed through TacoBell at ~8:02 AM CT; all R100 / R101 jobs became visible and the workers picked them up (y206, y209 done; y207, y210, y214 running).
+
+### y206 (16000 cells, k 2536-2543, n 8): granule step schedule (refs: y193 fixed granLr 0.1, y201 fixed 0.05)
+| arm | book100k | vs 0.1 | vs 0.05 | book300k | vs 0.1 | vs 0.05 |
+|---|---|---|---|---|---|---|
+| sched100k (0.1 -> 0.05 at 100k) | = 0.1 (bit-identical) | 0 | — | **0.4122** | +0.0036 (5/3, t 1.6) | +0.0011 (4/2) |
+| sched30k | 0.4135 | +0.0021 (6/2) | +0.0035 (7/1, t 2.8) | 0.4108 | +0.0022 (5/3) | -0.0003 |
+| smooth30k (late + (a-b) T/(T+n)) | | +0.0005 | | 0.4110 | | -0.0001 |
+- sched100k meets y206's acceptance note (best of both: 0.1's early learning, 0.05's late gain) and is the best 1x score at 300k yet, but n 8 -> held-out y219a (y210's growths) + y219b (16 fresh-growth arms at 300k) before it can become the length rule; y221 asks whether 1M symbols still climb (late 0.05 vs 0.025 vs smooth).
+
+### y209 (32 fresh growths k 2696-2727): v45 tie-break, N16000 vs v44 (8000)
+| task | delta | W/L | t |
+|---|---|---|---|
+| book10k | +0.0020 | 23/8 | 2.1 |
+| fables4000 | -0.0002 | 16/16 | -0.4 |
+| text1000 | +0.0001 | 17/10 | |
+- Pooled with y198 (48 growths): fables4000 -0.0007 (19/27, t -1.2; 59% losses, inside the pre-registered 60% / t > -2 bar); book10k +0.0023 (33/13, t 3.1); text1000 +0.0002. **Tie-break passed.** Pre-registered rule still needs y210 (fresh length leg, linux-pc, est. done ~10 PM CT); adopt v45 next round if N16000 is not worse than v44 at 100k / 300k there.
+
+### y214 (box, 16 fresh growths k 2752-2767): cortex lr 0.15 vs v44 (0.2), full-task confirmation
+| task | delta | W/L | t |
+|---|---|---|---|
+| book10k | +0.0000 | 8/7 | |
+| book30k | +0.0006 | 9/7 | |
+| order3 | +0.0013 | 4/3 | |
+| seqchoice order2 / cycle | identical | 0/0 | |
+| fables4000 | -0.0013 | 5/11 | |
+| text1000 | -0.0015 | 4/10 | -1.7 |
+| **K4** | **-0.0016** | **1/10** | **-3.5** |
+- **Rejected** (K4 clearly worse, fables / text lean worse). The y195 held-out gains (fables12000 +0.0011) did not survive the full task set. v44 keeps cortex lr 0.2. I77 lr knob closed at 1x.
+
+### y216 (box, k 2776-2783): 8000 vs 16000 vs 32000 granule cells on short tasks
+- order3 0.9575 / 0.9575 / 0.9572; K4 0.9863 / 0.9863 / 0.9866; seqchoice order2 0.6346 all three; cycle 0.9051 all three. 16000 is bit-identical to 8000 here; 32000 differs on one growth each (order3 0/1, K4 1/0). Granule count does not touch the short / reward tasks — v45 cannot cost them.
+
+### y213 (box, cx4dT N16000, growths 0-7): which cx4dT extra costs order3
+| ablation | order3 vs full cx4dT N16000 (0.7256) |
+|---|---|
+| minus context x4 | **0.9094, +0.184 (8/0, t 10.9)** |
+| minus thinF | 0.7400, +0.014 (4/2, t 2.1) |
+| minus postCapRel / striatum x4 / cone + rb2 | identical or -0.0003 |
+- The 4x context chain is the whole order3 gap (1x scores ~0.96 on these growths). Next: a cx4dT with a 1x / 2x context chain.
+
+### Workers (at ~7:15-8 PM CT, Oct 29; heartbeats = lease-renewal commits on origin/queue)
+- linux-pc: healthy on 91501d6; last renewal 7:40 PM CT. Back from its 11:06 PM-11:06 AM CT outage; finished y206 (5:07 PM), y209 (5:40 PM); running y210 (claimed 5:40 PM, est 4.2 h).
+- tacobell: alive on 91501d6, last renewal 7:20 PM CT; pushed R101 at ~8 AM, finished y194b (8:41 AM). **Memory-starved**: ~300 MB physical RAM free (ChatGPT, Codex, dev servers, Viber, Steam open); worker.log shows "paging file is too small" / git "Out of memory" and 6 native crashes on y214 book10k; ~27 runs in 5 h at one run at a time; y209 hit its crash-loop guard (skipped to 2:20 AM CT Oct 30). Watchdog logs "worker not running; restarting" every 15 min since 4:21 PM CT but supervisor + dq.js are both up (a harmless false alarm). y214 was finished on the box; R102r blocks y214 and bumps tacobell forceVersion 1 -> 2 so it drops the claim and moves to y204a/b / y215.
+- chromium: alive on 91501d6 (cursor machine shows disconnected but the worker pushes renewals); last renewal 7:14 PM CT; first real job y207 (32000 cells, book100k / 300k) claimed 12:49 PM, running ~6.5 h vs est 3.3 h.
+
+### Queue (R102r; run/r102r_jobs.js; smoke-tested: N16000 granLrT 1000 late 0.025 on book3000 = 38 s)
+- **y219a** (heavy, 0.955; k 2728-2735 = y210 growths): N16000 sched100k @300k, sched30k @100k + 300k, v44 + sched100k @300k; 32 runs, 21.5 slot-h.
+- **y219b** (heavy, 0.95; fresh k 2808-2815): N16000 fixed 0.1 / fixed 0.05 / sched100k / sched30k @ book300k; 32 runs, 29.3 slot-h.
+- **y221** (heavy, 0.9; k 2536-2539): book1M sched100k late 0.05 / late 0.025 / smooth30k; 12 runs, 36.7 slot-h.
+- Blocked (answered on the box): y214, y216, y213. Heavy pool after this round ≈ 22 est-h (linux-pc + chromium ≈ 11 h each, plus running y207 / y210); tacobell light pool y204a/b + y215 (~9 slot-h ≈ 10+ h at its memory-limited pace).

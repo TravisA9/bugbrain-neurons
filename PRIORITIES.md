@@ -1,4 +1,29 @@
-# PRIORITIES (R101, Oct 29 2026, ~7:30 AM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws; v45 candidate (16000 cells) still undecided: its tie-break y209 / y210 has not run because R100 was never pushed)
+# PRIORITIES (R102r, Oct 29 2026, ~8 PM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2; v45 candidate (16000 cells) **passed its fables4000 tie-break (y209)** and waits only for the y210 length leg (running on linux-pc))
+
+## R102r update (queue review, evening; the "R102" commit 91501d6 = granDemand I105 by another agent is separate)
+- **No adoption.** v45: y209 (32 fresh) fables4000 -0.0002 (16/16), book10k +0.0020 (23/8); pooled 48 growths fables4000 -0.0007 (19/27, t -1.2) — inside the bar. Adopt next round if y210 shows N16000 not worse than v44 at 100k / 300k. y216: 8000 / 16000 / 32000 cells identical on order3 / K4 / seqchoice.
+- **cortex lr 0.15 rejected** (y214, box, 16 fresh, 8 tasks): K4 -0.0016 (1/10, t -3.5), text1000 -0.0015 (4/10), fables4000 -0.0013 (5/11). Cortex lr stays 0.2.
+- **Granule step schedule (Q42 / I102):** y206 sched100k = best 1x at book300k 0.4122 (+0.0036 vs fixed 0.1, +0.0011 vs fixed 0.05; n 8); sched30k wins at 100k (+0.0035 vs 0.05, 7/1). Held-out y219a/b, book1M y221 queued.
+- Workers: all three alive on 91501d6. tacobell is memory-starved (~300 MB free; crashes / paging-file errors) -> y214 finished on the box, y214 blocked, tacobell forceVersion bump to drop its claim. chromium's first job y207 is ~2x over its estimate.
+
+## Ranked open questions (R102r)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q42 / I102 | Length rule: granule step schedule held-out on 16 fresh growths at 300k; does 1M still climb | y210 (running), y219a, y219b, y221, y212, y204a/b, y215 |
+| 2 | I99 | v45 (16000 cells) adoption — only the y210 length leg left | y210 |
+| 3 | I101 | Capacity vs length: 32000 cells at 100k-300k (short tasks answered: no effect) | y207 (running), y208 |
+| 4 | I98 | cx3 sized recipe held-out | y211, y212 |
+| 5 | I104 / Q46 | Sized order3 gap: which cx4dT extra costs order3 | y213 (box, R102r) |
+| — | I105 | Demand-grown granule claws vs random at granN 8000 (off by default; do not adopt from the queue) | y217, y218 |
+Answered R102r: cortex lr 0.15 rejected (K4); granule count does not move order3 / K4 / seqchoice; v45 fables4000 tie-break passed.
+Engineering: the sparse granule update path remains the top item (16000-32000 cells at 300k-1M are slow; tacobell cannot run them).
+Low: analogy / evolution. Rejected ideas stay rejected.
+
+## Worker notes (R102r)
+linux-pc: healthy, last renewal 7:40 PM CT (y210). tacobell: alive, last renewal 7:20 PM CT, memory-starved (close apps or cap to 1 run; watchdog "restarting" every 15 min is a false alarm — supervisor and dq.js are up). chromium: alive, last renewal 7:14 PM CT on y207 (claimed 12:49 PM CT), cursor machine shows disconnected but the worker runs; heavy-eligible.
+
+## Previous header (R101)
+# (R101 header) PRIORITIES (R101, Oct 29 2026, ~7:30 AM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws; v45 candidate (16000 cells) still undecided: its tie-break y209 / y210 has not run because R100 was never pushed)
 
 ## R101 update (queue review, morning)
 - **Blocker: R100 + R101 are unpushed** (TacoBell and CHROMIUM offline; box token is read-only). origin code is still R99 (27133b4), so no job that requires run/r100_jobs.js (y206-y216) is visible to workers; only y204a/b can run. y205 crashed again on old code (out of memory, 64/64).
