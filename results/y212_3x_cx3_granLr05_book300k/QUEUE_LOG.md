@@ -1,0 +1,25 @@
+# Queue log (run/queue.js)
+
+## 10/30/2026, 5:31:51 AM · y212_3x_cx3_granLr05_book300k · DONE
+granule step at length at size: cx3 16000 cells ref1800 + granLr 0.05 at book100k / book300k on growths 1400-1407 (refs y184 / y190 cx3 N16000 ref1800, same growths) (question Q42).
+
+| run | mean | sd | growths | note |
+|---|---|---|---|---|
+| v44c cx3 N16000 ref1800 granLr0.05 book100k g1400 n1 | 4.3 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book100k g1401 n1 | 4.095 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book100k g1402 n1 | 4.095 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book100k g1403 n1 | 3.995 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book100k g1404 n1 | 4.705 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book100k g1405 n1 | 4.105 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book100k g1406 n1 | 4.485 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book100k g1407 n1 | 4.715 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book300k g1400 n1 | 4.185 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book300k g1401 n1 | 3.925 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book300k g1402 n1 | 3.945 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book300k g1403 n1 | 4.04 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book300k g1404 n1 | 4.895 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book300k g1405 n1 | 4.265 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book300k g1406 n1 | 4.405 | 0 | 1 |  |
+| v44c cx3 N16000 ref1800 granLr0.05 book300k g1407 n1 | 4.515 | 0 | 1 |  |
+
+Criteria: y184 -> y190: cx3 16000 ref1800 falls 100k 0.4285 -> 300k 0.4254 (3/5), like the 1x brain. If granLr 0.05 turns the cx3 slope positive as it does at 1x (+0.0025), the length rule carries to sized brains.
