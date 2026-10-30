@@ -1,3 +1,23 @@
+# PRIORITIES (R103, Oct 30 2026, ~7 AM CT; **v45 / DEFAULTS_VERSION 38 adopted** — v45 = plan deepURSx3 with a 16000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2; v44 kept as deepURSx3v44)
+
+## R103 update (queue review, morning)
+- **v45 adopted:** y210 book300k +0.0084 (8/0), book100k +0.0029 (4/4); 48-growth short-task bar met (fables4000 -0.0007, 19/27, borderline). ~1.7x runtime.
+- **Constant granLr 0.05 rejected** (y204a/b: book10k -0.0158 0/16). Only a step schedule remains (y219a/b).
+- **32000 cells best at 300k** (y207: +0.0075 vs 16000, 8/0; +0.0039 vs 16000 sched100k) and neutral on short tasks (y208). Held-out y222 queued.
+- **cx4dT order3 gap = the 4x context chain** (y213: removing it +0.184, 8/0). cx3 recipe wins seqchoice by +0.22-0.26 (y211).
+- Push blocked: TacoBell + CHROMIUM disconnected; bundles in /workspace/R103 (push_r103.bat). tacobell worker silent since 10:09 PM CT Oct 29.
+
+## Ranked open questions (R103)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I101 | Capacity vs length: 32000 cells held-out at 100k/300k (next v46 candidate) | y222 |
+| 2 | Q42 / I102 | Length rule: granule step schedule held-out at 300k; does 1M still climb | y219a, y219b, y221, y215 |
+| 3 | I104 / Q46 | Sized order3: cx4dT with a 1x/2x context chain on the full set | (next round) |
+| 4 | I98 | cx3 sized recipe held-out (y211 passed except book10k -0.003) | (next round) |
+| — | I105 | Demand-grown granule claws (off by default) | y217, y218 |
+Engineering: sparse granule update path is now urgent (v45 is 1.7x slower; 32000 cells ~2x more).
+Low: analogy / evolution. Rejected ideas stay rejected.
+
 # PRIORITIES (R102r, Oct 29 2026, ~8 PM CT; **v44 / DEFAULTS_VERSION 37** unchanged — v44 = plan deepURSx3 with an 8000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2; v45 candidate (16000 cells) **passed its fables4000 tie-break (y209)** and waits only for the y210 length leg (running on linux-pc))
 
 ## R102r update (queue review, evening; the "R102" commit 91501d6 = granDemand I105 by another agent is separate)

@@ -225,7 +225,8 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
 { const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3v42.make(), O = S.PLANS.deepURSx3v40.make(); assert.ok(D.gran && D.gran.N === 2000 && !O.gran && S.params.granTgt === 1 && /^v4[1-9]$/.test(S.APP_VERSION) && S.DEFAULTS_VERSION >= 34, 'v41 (R84): the 2000-cell granule layer (kept as deepURSx3v42); deepURSx3v40 kept'); console.log('v41 deepURSx3 granule layer: ok'); }
 { const S = require('./js/node_load.js')(); assert.ok(/^v4[2-9]$/.test(S.APP_VERSION) && S.DEFAULTS_VERSION >= 35 && S.params.granRef === 600, 'v42 (R89): granRef 600 by default (v41 = P.granRef=100)'); console.log('v42 granRef 600: ok'); }
 { const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3v43.make(), O = S.PLANS.deepURSx3v42.make(); assert.ok(/^v4[3-9]$/.test(S.APP_VERSION) && S.DEFAULTS_VERSION >= 36 && D.gran.N === 4000 && D.gran.K === 3 && O.gran.N === 2000 && JSON.stringify(D.regions) === JSON.stringify(O.regions) && !(S.params.granAnneal > 0), 'v43 (R91): deepURSx3 grows a 4000-cell granule layer (v42 = deepURSx3v42); granAnneal off'); console.log('v43 granule layer 4000: ok'); }
-{ const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3.make(), O = S.PLANS.deepURSx3v43.make(); assert.ok(S.APP_VERSION === 'v44' && S.DEFAULTS_VERSION === 37 && D.gran.N === 8000 && D.gran.K === 4 && D.gran.Kmin === 3 && JSON.stringify(D.regions) === JSON.stringify(O.regions) && S.params.granK == null && S.params.granKmin == null, 'v44 (R94): deepURSx3 grows an 8000-cell granule layer with mixed 3/4-letter claws (v43 = deepURSx3v43)'); console.log('v44 granule layer 8000 Kmix34: ok'); }
+{ const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3v44.make(), O = S.PLANS.deepURSx3v43.make(); assert.ok(/^v4[4-9]$/.test(S.APP_VERSION) && S.DEFAULTS_VERSION >= 37 && D.gran.N === 8000 && D.gran.K === 4 && D.gran.Kmin === 3 && JSON.stringify(D.regions) === JSON.stringify(O.regions) && S.params.granK == null && S.params.granKmin == null, 'v44 (R94): deepURSx3 grows an 8000-cell granule layer with mixed 3/4-letter claws (v43 = deepURSx3v43)'); console.log('v44 granule layer 8000 Kmix34: ok'); }
+{ const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3.make(), O = S.PLANS.deepURSx3v44.make(); assert.ok(S.APP_VERSION === 'v45' && S.DEFAULTS_VERSION === 38 && D.gran.N === 16000 && D.gran.K === 4 && D.gran.Kmin === 3 && JSON.stringify(D.regions) === JSON.stringify(O.regions), 'v45 (R103): deepURSx3 grows a 16000-cell granule layer (v44 = deepURSx3v44)'); console.log('v45 granule layer 16000: ok'); }
 { const S = require('./js/node_load.js')(), D = S.PLANS.deepURSx3v39.make(), O = S.PLANS.deepURSx3v37.make();
   assert.ok(D.regions.length === O.regions.length && D.regions.every((R, i) => JSON.stringify(Object.assign({}, R.g.pl, { lr: 0 })) === JSON.stringify(Object.assign({}, O.regions[i].g.pl, { lr: 0 }))
     && R.g.pl.lr === (R.name === 'cortex' ? 0.2 : O.regions[i].g.pl.lr)) && O.regions[0].name === 'cortex' && O.regions[0].g.pl.lr === 0.1
@@ -245,10 +246,10 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   console.log('R72 postsynaptic cap / convergence limit off by default: ok'); }
 // R102: demand-grown granule claws (off by default). Repeated letter windows take claws; the pool cannot exceed granN.
 { const S = require('./js/node_load.js')();
-  assert.ok(S.APP_VERSION === 'v44' && S.DEFAULTS_VERSION === 37 && !(S.params.granDemand > 0) && S.params.granCo === 2, 'R102 granDemand off; v44 / DEFAULTS_VERSION unchanged');
+  assert.ok(/^v4[4-9]$/.test(S.APP_VERSION) && S.DEFAULTS_VERSION >= 37 && !(S.params.granDemand > 0) && S.params.granCo === 2, 'R102 granDemand off; v44 / DEFAULTS_VERSION unchanged');
   const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 160 });
   const E = S.setEnv('seq', envP), plan = () => S.PLANS.deepURSx3.make();
-  assert.ok(plan().gran.N === 8000 && plan().gran.K === 4 && plan().gran.Kmin === 3, 'demand mode does not change the v44 granule gene');
+  assert.ok(plan().gran.N === 16000 && plan().gran.K === 4 && plan().gran.Kmin === 3, 'demand mode does not change the v45 granule gene');
   const clawIn = b => { const sp = b.sp, g = b.gran; let n = 0; for (let k = 0; k < sp.pre.length; k++) if (g[sp.post[k]] && !g[sp.pre[k]]) n++; return n; };
   S.params.granN = 48;
   const b0 = S.growCell(plan(), { seed: 5, spec: E.spec }), b1 = S.growCell(plan(), { seed: 5, spec: E.spec });

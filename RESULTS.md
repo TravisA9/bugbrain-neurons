@@ -4212,3 +4212,27 @@ Sources: worker results y206, y209 (linux-pc, Oct 29 ~11 AM-5:40 PM CT); box run
 - **y219b** (heavy, 0.95; fresh k 2808-2815): N16000 fixed 0.1 / fixed 0.05 / sched100k / sched30k @ book300k; 32 runs, 29.3 slot-h.
 - **y221** (heavy, 0.9; k 2536-2539): book1M sched100k late 0.05 / late 0.025 / smooth30k; 12 runs, 36.7 slot-h.
 - Blocked (answered on the box): y214, y216, y213. Heavy pool after this round ≈ 22 est-h (linux-pc + chromium ≈ 11 h each, plus running y207 / y210); tacobell light pool y204a/b + y215 (~9 slot-h ≈ 10+ h at its memory-limited pace).
+
+## R103 (Oct 30 2026, 7 AM CT queue review) — **v45 ADOPTED (DEFAULTS_VERSION 38): plan deepURSx3 grows 16000 granule cells** (v44 kept as deepURSx3v44)
+### y210 (linux-pc, fresh k 2728-2735): the v45 length leg
+| task | N16000 vs v44 (8000) |
+|---|---|
+| book100k | +0.0029 (4/4) |
+| book300k | **+0.0084 (8/0, t 6.7)** |
+- With y198a+b + y209 (48 fresh growths): book10k +0.0023 (33/13, t 3.1), fables4000 -0.0007 (19/27, t -1.2; 59% losses, inside the pre-registered bar), text1000 +0.0002; order3 / K4 / seqchoice identical (y216). Rule met -> adopted. Worries: the fables4000 pass is borderline, and runtime is ~1.7x v44. Pending jobs all pin P.granN, so no pinning needed.
+### y204a+b (16 growths): constant granLr 0.05 at 16000 cells
+- book10k -0.0158 (0/16), book30k -0.0081 (2/14), fables12000 -0.0096 (0/16), text1000 0. **Rejected as a constant**: the smaller step only helps late in long texts, so only a schedule (y219a/b) can carry it.
+### y207 (k 2536-2543, n 8): 32000 granule cells at length
+- book300k 0.4161 = +0.0158 vs v44 (8/0), **+0.0075 vs 16000 (8/0, t 4.6)**, +0.0039 vs 16000 sched100k (5/2, t 2.9): best 1x brain at 300k so far. book100k -0.0018 vs 16000 (3/4).
+- y208 (16 growths): 32000 vs 16000 on book10k / 30k / fables / text all inside noise (book30k +0.0061 vs v44, 15/1).
+- Reading: capacity keeps paying at 300k, i.e. the "plateau after 10k" is mostly a cell-count limit, not a learning-rule limit. Held-out y222 queued (fresh k 2816-2823).
+### y211 (cx3 recipe: N16000 ref1800 cone rb2 str5 vs cx3 N8000 ref1800, 16 growths)
+- seqchoice order2 +0.257 (16/0), cycle +0.216 (15/1); order3 +0.0084 (8/8), K4 +0.0009, text +0.0023; book10k -0.0029 (4/12, t -2.3) = small cost. Big win for sized brains on choice tasks; not a default question (cx3 is a sized plan).
+### y212 (cx3 granLr 0.05): +0.0027 at 100k, +0.0017 at 300k (n.s.); cx3 still drops 100k -> 300k (-0.0040).
+### Workers (R103)
+- linux-pc: healthy (6:57 AM CT, y215); did nearly all overnight work (y210, y208, y211, y212, y213 logs, y204a/b, y216).
+- chromium: healthy (7:12 AM CT, y217) on 91501d6.
+- tacobell: **silent since 10:09 PM CT Oct 29**, crashSkip y209, memory-starved. TacoBell and CHROMIUM both disconnected from the box -> no push this round.
+### Queue (R103; run/r103_jobs.js + R102r's run/r102r_jobs.js, both unpushed)
+- y219a / y219b / y221 (R102r, 87.5 slot-h) + **y222** (0.94, fresh k 2816-2823: N32000 @100k+300k, N32000 sched100k @300k, N16000, N16000 sched100k @300k; 48 runs, 48.5 slot-h, memGB 4).
+- Origin now holds only y215 / y217 (running) and y218: workers run dry in a few hours until the bundles land.
