@@ -110,6 +110,27 @@ The readout is lateral inhibition over the cells that fired. Inside one span, th
 
 `predictFine(text, sub)` is the same discrete circuit on a finer clock. Delays are multiplied by `sub`. The character is an input spike on the first substep only. Later substeps in that character stay silent, and the returned predictions match `predict`. That is a different check from `continuous.js`: there the window can be wider than one bin, so late arrivals still count.
 
+## Triangulation: grow a letter layer toward the export
+
+```
+node experiments/toy-port/triangulate.js
+```
+
+Writes `triangulate-report.json`. The target subgraph is the 32 highest-count cells whose taps are only input letters. In this export every one of those is a delay-0 letter plus the previous letter (a bigram such as `e `, `he`, `th`, `u:`).
+
+Growth runs on the first 70% of `sample-dialogue.txt` (2396 characters). A cell is born for every pair of letters that co-occur at least twice. Trophic competition keeps the 32 with the best predictive score on that prefix. One adaptation round then tries single-letter substitutions and accepts a change only when the score rises. Votes for the grown cells are fit on the prefix only. The last 1027 characters are held out. This is not `growCell` on a tissue: those synapses are spatial, not `(letter, delay)` taps, so they are not in the same coordinates as this subgraph.
+
+Held-out next-letter accuracy:
+
+| set | anatomy recall vs the 32 export motifs | next-letter accuracy | agreement with the full frozen net |
+|---|---|---|---|
+| full frozen net | — | 77.78% | — |
+| export's 32 motifs, frozen votes | 100% | 27.78% | 36.71% |
+| 32 most frequent bigrams on the prefix | **71.88%** (23/32) | 34.11% | 37.68% |
+| 32 kept by predictive score | 40.63% (13/32) | 31.09% | 35.93% |
+
+No substitution raised a score: every better pair was already in the trophic set. The export's letter layer is closer to "keep the bigrams that fire often" than to "keep the sharpest predictors." Those 32 motifs, even with the export's own votes, are far below the full net (27.78% vs 77.78%). The rest of the accuracy sits in the deeper cell-to-cell taps, which this wave does not grow.
+
 ## What still differs from a grown BugBrain
 
 `SpikingNet` is unchanged. A spike there is current on the next substep, `preLag` only builds the teacher trace, and CLAW coincidence is input on the current substep. Delay 0 in this export is a same-character chain (depth 10), which that synapse update does not carry. This folder keeps its own delay line.

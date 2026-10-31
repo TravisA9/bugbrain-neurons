@@ -1889,3 +1889,16 @@ Stabilized rule: project each cell's taps onto `sum(w) = 1` inside a band `[0.5,
 | taps + vote smoothing (`voteLr` 0.01) | **86.03%** | 94.92% | 90.86% |
 
 1133 taps move in the taps-only pass (mean |Δw| 0.0021, max 0.246). `partnersHold` is true. The script selects vote smoothing because it stays within 2 points of the pre-plastic accuracy and beats taps-only. `verify.js` is still the discrete path and is unchanged by vote updates (they are restored on the shared net after each continuous run).
+
+## R28c [text] Triangulate a grown letter layer against the export
+
+`node experiments/toy-port/triangulate.js`. Target: 32 highest-count letter-only cells (all delay-0 + delay-1 bigrams). Birth from co-active letters on the first 70% of `sample-dialogue.txt`, trophic keep 32, one letter-substitution round (0 accepted). Held-out tail: 1027 characters. Not `growCell` (tissue synapses are not letter-delay taps).
+
+| set | recall of the 32 motifs | held-out next-letter | agree with full net |
+|---|---|---|---|
+| full frozen net | — | **77.78%** | — |
+| export motifs, frozen votes | 100% | 27.78% | 36.71% |
+| frequent bigrams | **71.88%** (23/32) | 34.11% | 37.68% |
+| predictive trophic | 40.63% (13/32) | 31.09% | 35.93% |
+
+The export letter layer resembles frequency more than sharpness. The 32 motifs do not carry the full net's accuracy; that gap is the deeper taps. `js/` and `run/` unchanged.

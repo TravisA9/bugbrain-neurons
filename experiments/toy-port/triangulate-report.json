@@ -1,0 +1,154 @@
+{
+  "sample": "sample-dialogue.txt",
+  "chars": 3423,
+  "split": {
+    "grow": 2396,
+    "test": 1027
+  },
+  "target": {
+    "k": 32,
+    "rule": "32 highest-count cells with only letter taps; all are a delay-0 letter plus a delay-1 letter",
+    "examples": [
+      "\"e\"\" \" n=20368→\"d\"",
+      "\"h\"\"e\" n=18267→\" \"",
+      "\" \"\"t\" n=17171→\"h\"",
+      "\"t\"\"h\" n=15392→\"e\"",
+      "\"u\"\":\" n=15203→\"w\"",
+      "\"\\n\"\"a\" n=15203→\":\"",
+      "\"a\"\":\" n=15203→\"o\"",
+      "\"_\"\"\\n\" n=15203→\"u\""
+    ]
+  },
+  "births": 118,
+  "fullNet": {
+    "testNextPct": 77.78
+  },
+  "exportSubgraph": {
+    "note": "frozen votes from the original corpus, not refit on this sample",
+    "testNextPct": 27.78,
+    "agreeFullPct": 36.71
+  },
+  "frequencyControl": {
+    "note": "top 32 bigrams by count on the growth prefix, votes fit there",
+    "recallPct": 71.88,
+    "precisionPct": 71.88,
+    "jaccardPct": 56.1,
+    "shared": 23,
+    "recovered": [
+      "\"e\"\" \"",
+      "\"h\"\"e\"",
+      "\" \"\"t\"",
+      "\"t\"\"h\"",
+      "\"u\"\":\"",
+      "\"\\n\"\"a\"",
+      "\"a\"\":\"",
+      "\"_\"\"\\n\""
+    ],
+    "missed": [
+      "\"d\"\" \"",
+      "\"e\"\"d\"",
+      "\"o\"\"k\"",
+      "\"y\"\" \"",
+      "\"o\"\" \"",
+      "\"t\"\"e\"",
+      "\"i\"\"s\"",
+      "\":\"\"o\""
+    ],
+    "testNextPct": 34.11,
+    "agreeExportPct": 76.63,
+    "agreeFullPct": 37.68,
+    "examples": [
+      "\"e\"\" \" n=102→\"d\"",
+      "\"h\"\"e\" n=77→\" \"",
+      "\"t\"\"h\" n=77→\"e\"",
+      "\" \"\"t\" n=66→\"h\"",
+      "\"s\"\" \" n=56→\"n\"",
+      "\"o\"\"r\" n=56→\".\"",
+      "\"a\"\"r\" n=55→\" \"",
+      "\"t\"\" \" n=46→\"w\""
+    ]
+  },
+  "grown": {
+    "note": "born from co-active letters, kept by predictive score, votes fit on the growth prefix",
+    "recallPct": 40.63,
+    "precisionPct": 40.63,
+    "jaccardPct": 25.49,
+    "shared": 13,
+    "recovered": [
+      "\"h\"\"e\"",
+      "\" \"\"t\"",
+      "\"t\"\"h\"",
+      "\"\\n\"\"a\"",
+      "\"_\"\"\\n\"",
+      "\"\\n\"\"u\"",
+      "\" \"\"d\"",
+      "\"o\"\"o\""
+    ],
+    "missed": [
+      "\"e\"\" \"",
+      "\"u\"\":\"",
+      "\"a\"\":\"",
+      "\"d\"\" \"",
+      "\" \"\"a\"",
+      "\"a\"\" \"",
+      "\"a\"\"r\"",
+      "\"o\"\"r\""
+    ],
+    "testNextPct": 31.09,
+    "agreeExportPct": 63.1,
+    "agreeFullPct": 35.93,
+    "examples": [
+      "\"\\n\"\"u\" n=46→\":\"",
+      "\"\\n\"\"a\" n=45→\":\"",
+      "\"e\"\"a\" n=44→\"r\"",
+      "\"h\"\"e\" n=77→\" \"",
+      "\"t\"\"h\" n=77→\"e\"",
+      "\"_\"\"\\n\" n=35→\"u\"",
+      "\"h\"\"a\" n=34→\"t\"",
+      "\" \"\"t\" n=66→\"h\""
+    ]
+  },
+  "adapted": {
+    "note": "one round of single-letter substitution accepted only when the growth-prefix score rises",
+    "substitutions": 0,
+    "recallPct": 40.63,
+    "precisionPct": 40.63,
+    "jaccardPct": 25.49,
+    "shared": 13,
+    "recovered": [
+      "\"h\"\"e\"",
+      "\" \"\"t\"",
+      "\"t\"\"h\"",
+      "\"\\n\"\"a\"",
+      "\"_\"\"\\n\"",
+      "\"\\n\"\"u\"",
+      "\" \"\"d\"",
+      "\"o\"\"o\""
+    ],
+    "missed": [
+      "\"e\"\" \"",
+      "\"u\"\":\"",
+      "\"a\"\":\"",
+      "\"d\"\" \"",
+      "\" \"\"a\"",
+      "\"a\"\" \"",
+      "\"a\"\"r\"",
+      "\"o\"\"r\""
+    ],
+    "testNextPct": 31.09,
+    "agreeExportPct": 63.1,
+    "agreeFullPct": 35.93,
+    "examples": [
+      "\"\\n\"\"u\" n=46→\":\"",
+      "\"\\n\"\"a\" n=45→\":\"",
+      "\"e\"\"a\" n=44→\"r\"",
+      "\"h\"\"e\" n=77→\" \"",
+      "\"t\"\"h\" n=77→\"e\"",
+      "\"_\"\"\\n\" n=35→\"u\"",
+      "\"h\"\"a\" n=34→\"t\"",
+      "\" \"\"t\" n=66→\"h\""
+    ]
+  },
+  "readoutCheckMisses": 0,
+  "secs": 2.27
+}
