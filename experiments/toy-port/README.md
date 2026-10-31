@@ -110,6 +110,72 @@ The readout is lateral inhibition over the cells that fired. Inside one span, th
 
 `predictFine(text, sub)` is the same discrete circuit on a finer clock. Delays are multiplied by `sub`. The character is an input spike on the first substep only. Later substeps in that character stay silent, and the returned predictions match `predict`. That is a different check from `continuous.js`: there the window can be wider than one bin, so late arrivals still count.
 
+## Triangulation: grow a letter layer toward the export
+
+```
+node experiments/toy-port/triangulate.js
+```
+
+Writes `triangulate-report.json`. The target subgraph is the 32 highest-count cells whose taps are only input letters. In this export every one of those is a delay-0 letter plus the previous letter (a bigram such as `e `, `he`, `th`, `u:`).
+
+Growth runs on the first 70% of `sample-dialogue.txt` (2396 characters). A cell is born for every pair of letters that co-occur at least twice. Trophic competition keeps the 32 with the best predictive score on that prefix. One adaptation round then tries single-letter substitutions and accepts a change only when the score rises. Votes for the grown cells are fit on the prefix only. The last 1027 characters are held out. This is not `growCell` on a tissue: those synapses are spatial, not `(letter, delay)` taps, so they are not in the same coordinates as this subgraph.
+
+Held-out next-letter accuracy:
+
+| set | anatomy recall vs the 32 export motifs | next-letter accuracy | agreement with the full frozen net |
+|---|---|---|---|
+| full frozen net | — | 77.78% | — |
+| export's 32 motifs, frozen votes | 100% | 27.78% | 36.71% |
+| 32 most frequent bigrams on the prefix | **71.88%** (23/32) | 34.11% | 37.68% |
+| 32 kept by predictive score | 40.63% (13/32) | 31.09% | 35.93% |
+
+No substitution raised a score: every better pair was already in the trophic set. The export's letter layer is closer to "keep the bigrams that fire often" than to "keep the sharpest predictors." Those 32 motifs, even with the export's own votes, are far below the full net (27.78% vs 77.78%). Most of that gap is the rest of the letter layer, not the deeper taps. All 314 letter cells, with their frozen votes, score **62.96%** on the same held-out tail and agree with the full net on 77.80% of positions.
+
+## Second wave: delay-0 plus delay-2
+
+The common depth-1 cell has two taps: the letter-cell that fires now (delay 0) and either a raw letter or another letter-cell from two steps back (delay 2). On this sample at most one letter cell fires at a time, so each such cell is a trigram. `triangulate.js` also grows that layer on top of the 314 export letter cells. A pair is born whenever it co-occurs at least twice on the growth prefix (357 births). Competition keeps 32.
+
+| set, on the held-out tail | recall of the 32 highest-count depth-1 cells | next-letter | agreement with the full net |
+|---|---|---|---|
+| 314 letter cells only | — | 62.96% | 77.80% |
+| letters + those 32 export cells, frozen votes | 100% | 62.38% | 77.60% |
+| letters + all 341 eligible depth-1 cells | — | **66.96%** | **83.06%** |
+| letters + 32 most co-occurring pairs | 34.38% (11/32) | 65.01% | 77.22% |
+| letters + 32 best predictive pairs | 25.00% (8/32) | 63.94% | 77.31% |
+
+The export's own top 32 depth-1 cells do not help this snippet: their frozen votes slightly override the letter layer (62.38% vs 62.96%). The whole depth-1 layer adds about 4 points (62.96% → 66.96%) and moves agreement with the full net from 77.80% to 83.06%. Counting every depth-1 cell, not only that two-tap shape, reaches **68.23%**.
+
+## Third wave: depth-2 taps
+
+Depth 2 is mostly a cell from the previous layer firing now, plus another shallower cell or a letter a few steps back (`C0@0+C1@2`, `C1@0+L@4`, and similar 2–4 tap shapes). `triangulate.js` births those patterns when the taps co-occur on the growth prefix (1497 candidates) and keeps 32. Held-out tail, full net **77.78%**:
+
+| set | recall of the 32 busiest depth-2 cells | next-letter | agreement with the full net |
+|---|---|---|---|
+| all depth ≤ 1 (769 cells) | — | 68.23% | 84.91% |
+| depth ≤ 1 + export's top 32 depth-2, frozen votes | 100% | 69.98% | 87.44% |
+| depth ≤ 1 + 669 grown-style depth-2 cells | — | 71.93% | 91.43% |
+| every cell of depth ≤ 2 (1512) | — | **74.07%** | **93.67%** |
+| depth ≤ 1 + 32 most co-occurring patterns | 9.38% (3/32) | 69.49% | 86.56% |
+| depth ≤ 1 + 32 best predictive patterns | 9.38% (3/32) | 69.20% | 85.88% |
+
+Depth 2 is worth about **6 points** (68.23% → 74.07%). A budget of 32 recovers only 3 of the export's busiest depth-2 motifs and about 1 point of behavior, close to what those 32 export cells themselves add (69.98%).
+
+## Fourth wave: depth 3 and 4
+
+The same birth rule, one layer deeper: a cell is born when its 2–4 taps onto shallower cells co-occur on the growth prefix. Competition keeps 32. Full net on the held-out tail remains **77.78%**.
+
+| set | next-letter | agreement with the full net |
+|---|---|---|
+| every cell of depth ≤ 2 (1512) | 74.07% | 93.67% |
+| depth ≤ 2 + the export’s 32 busiest depth-3 cells | 75.24% | 95.42% |
+| every cell of depth ≤ 3 (2842) | **75.93%** | **96.88%** |
+| depth ≤ 3 + the export’s 32 busiest depth-4 cells | 76.32% | 97.27% |
+| every cell of depth ≤ 4 (4350) | **77.19%** | **98.73%** |
+| depth ≤ 2 + 32 grown depth-3 patterns | 74.07% | 93.67% |
+| depth ≤ 3 + 32 grown depth-4 patterns | 75.93% | 96.88% |
+
+Depth 3 adds about **2 points** (74.07% → 75.93%). Depth 4 adds about **1 point** (75.93% → 77.19%). The full net is 0.6 points past depth 4. The export’s own top 32 cells do most of each layer’s work. Patterns born from co-occurrence on this snippet recover 2 of the 32 depth-3 motifs and 1 of the 32 depth-4 motifs, and they do not change a held-out prediction. Those export cells are long-delay combinations this dialogue does not rehearse often enough for the grown votes to take the readout.
+
 ## What still differs from a grown BugBrain
 
 `SpikingNet` is unchanged. A spike there is current on the next substep, `preLag` only builds the teacher trace, and CLAW coincidence is input on the current substep. Delay 0 in this export is a same-character chain (depth 10), which that synapse update does not carry. This folder keeps its own delay line.

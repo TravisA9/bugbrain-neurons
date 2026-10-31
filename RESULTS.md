@@ -1889,3 +1889,61 @@ Stabilized rule: project each cell's taps onto `sum(w) = 1` inside a band `[0.5,
 | taps + vote smoothing (`voteLr` 0.01) | **86.03%** | 94.92% | 90.86% |
 
 1133 taps move in the taps-only pass (mean |Δw| 0.0021, max 0.246). `partnersHold` is true. The script selects vote smoothing because it stays within 2 points of the pre-plastic accuracy and beats taps-only. `verify.js` is still the discrete path and is unchanged by vote updates (they are restored on the shared net after each continuous run).
+
+## R28c [text] Triangulate a grown letter layer against the export
+
+`node experiments/toy-port/triangulate.js`. Target: 32 highest-count letter-only cells (all delay-0 + delay-1 bigrams). Birth from co-active letters on the first 70% of `sample-dialogue.txt`, trophic keep 32, one letter-substitution round (0 accepted). Held-out tail: 1027 characters. Not `growCell` (tissue synapses are not letter-delay taps).
+
+| set | recall of the 32 motifs | held-out next-letter | agree with full net |
+|---|---|---|---|
+| full frozen net | — | **77.78%** | — |
+| export motifs, frozen votes | 100% | 27.78% | 36.71% |
+| frequent bigrams | **71.88%** (23/32) | 34.11% | 37.68% |
+| predictive trophic | 40.63% (13/32) | 31.09% | 35.93% |
+
+The export letter layer resembles frequency more than sharpness. The 32 motifs do not carry the full net's accuracy. All 314 letter cells score 62.96% on the same tail (agree with the full net 77.80%), so most of the 28%→78% gap was the rest of the letter layer.
+
+## R28d [text] Depth-1 taps: delay 0 plus delay 2
+
+Same script. Eligible target: 341 depth-1 cells with exactly those two delays, onto letter cells or raw letters (top 32: 22 cell+letter, 10 cell+cell). At most one letter cell fires at a time on this sample, so each cell is a trigram. Birth from co-occurrence on the growth prefix (357), keep 32. Held-out tail unchanged.
+
+| set | recall of top 32 depth-1 | held-out next-letter | agree with full net |
+|---|---|---|---|
+| 314 letter cells | — | 62.96% | 77.80% |
+| letters + export top 32, frozen votes | 100% | 62.38% | 77.60% |
+| letters + all 341 eligible | — | **66.96%** | **83.06%** |
+| letters + 32 most co-occurring | 34.38% (11/32) | 65.01% | 77.22% |
+| letters + 32 predictive | 25.00% (8/32) | 63.94% | 77.31% |
+
+The whole delay-2 layer adds about 4 points. All depth ≤ 1 cells, not only that shape, reach 68.23%.
+
+## R28e [text] Depth-2 cell-to-cell taps
+
+Same script, same split. Depth 2 is a shallower cell now plus another tap a few steps back. Birth when those taps co-occur (1497), keep 32. Held-out full net 77.78%.
+
+| set | recall of top 32 depth-2 | held-out next-letter | agree with full net |
+|---|---|---|---|
+| depth ≤ 1 (769) | — | 68.23% | 84.91% |
+| + export top 32 depth-2 | 100% | 69.98% | 87.44% |
+| + 669 shallower-tap depth-2 cells | — | 71.93% | 91.43% |
+| all depth ≤ 2 (1512) | — | **74.07%** | **93.67%** |
+| + 32 most co-occurring | 9.38% (3/32) | 69.49% | 86.56% |
+| + 32 predictive | 9.38% (3/32) | 69.20% | 85.88% |
+
+Depth ≤ 2 is worth about 6 points over depth ≤ 1. A 32-cell budget matches the export's own top 32 (about +1 point) and recovers 3 of those motifs. About 4 points remain to the full net.
+
+## R28f [text] Depth 3 and 4
+
+Same script and split. Birth 2–4 tap cells whose taps land on shallower cells, when those taps co-occur. Keep 32. Full net on the held-out tail: 77.78%.
+
+| set | next-letter | agree with full net |
+|---|---|---|
+| depth ≤ 2 (1512) | 74.07% | 93.67% |
+| + export top 32 depth-3 | 75.24% | 95.42% |
+| depth ≤ 3 (2842) | **75.93%** | **96.88%** |
+| + export top 32 depth-4 | 76.32% | 97.27% |
+| depth ≤ 4 (4350) | **77.19%** | **98.73%** |
+| + 32 grown depth-3 patterns | 74.07% | 93.67% |
+| + 32 grown depth-4 patterns | 75.93% | 96.88% |
+
+Depth 3 is about 2 points, depth 4 about 1 point, and 0.6 points remain after depth 4. The grown 32-cell budgets recover 2/32 and 1/32 of the busiest motifs and do not change held-out predictions. `js/` and `run/` unchanged.
