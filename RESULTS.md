@@ -1849,3 +1849,43 @@ v25 in `legacy/v25/`. multitask.json now starts from predictK3 / rewardE / rewar
 
 **Tests.** test_core ALL OK (new: rewardE default, bandit last quarter 1.00 vs rewardK 0.72, cue random 1.00), browser_test ALL OK
 (F: bandit and cue-random default plan rewardE), seq_test OK, run selftest ALL OK (new balanced-fitness check).
+
+## R28 [text] Feature–Time toy port (fixed anatomy)
+
+Frozen Play Code Toy export, run as delay-line coincidence in `experiments/toy-port/`. Learning off. Default plans and `run/` are unchanged. `SpikingNet` stays next-substep delivery with no per-tap delay; this export's delay-0 taps are a same-character chain (depth 10), so the port keeps its own ring and BugBrain's 15 mV tap quantum (rest −70, threshold −55).
+
+`node experiments/toy-port/verify.js` on `sample-dialogue.txt` (3423 characters; the full corpus is not in the repo):
+
+| check | result |
+|---|---|
+| next-letter agreement vs `snn-sim.cjs` | **100%** (3423/3423) |
+| hard-spike set each step | **100%** |
+| next-letter accuracy (port and reference) | 85.83% |
+| summed readout weights vs the Toy readout | 96.35% |
+| 2 and 3 substeps per character | same predictions, 0 idle spikes |
+
+The 85.83% is on a snippet in the toy's `u:` / `a:` format that repeats cell-label lines, not a held-out corpus score. `test_core.js` ALL OK (no change under `js/` or `run/`).
+
+## R28b [text] Fine-time window and three-factor plasticity on the same graph
+
+`node experiments/toy-port/continuous.js`. Anatomy stays the export (7313 cells, 21547 synapses). Character = 25 ms, 8 bins, dt = 3.125 ms. A tap adds 15 mV while its axonal arrival is inside `window` bins. `window = 1` is the discrete boolean.
+
+| setting | agreement vs discrete predictions | hard-spike sets | next-letter accuracy |
+|---|---|---|---|
+| 1 bin, window 1 | **100%** | **100%** | 85.83% |
+| 8 bins, window 1 | **100%** | **100%** | 85.83% |
+| window 4 bins (12.5 ms) | **100%** | **100%** | 85.83% |
+| window 12 bins (37.5 ms) | 94.04% | 27.55% | 83.11% |
+
+Phase-locked delays: a window shorter than one character does not change this net. A window past one character still counts the previous character's tap.
+
+Plasticity: STDP eligibility × per-cell teacher (fired cell's vote vs the next character). `lr` 0.03, `tauPre`/`tauPost` 10, `tauElig` 50, `aMinus` 0.3. Weights were first clamped to `[0, 2/nTaps]`, which let one tap meet the whole hard threshold; replay accuracy fell to 43.42%.
+
+Stabilized rule: project each cell's taps onto `sum(w) = 1` inside a band `[0.5, sMax] * w0`, with `sMax = 1 + 0.9 * (need/(need-1) - 1)` and `need = ceil(0.75 * n)`. A missing partner then drops the hard-path charge below `n * 15` mV, and the heaviest `need-1` taps stay under the soft threshold. No new synapses.
+
+| plasticity on the 37.5 ms window | replay next-letter | vs frozen wide window | vs discrete |
+|---|---|---|---|
+| taps only | **83.11%** (same as pre-plastic) | 99.59% | 94.04% |
+| taps + vote smoothing (`voteLr` 0.01) | **86.03%** | 94.92% | 90.86% |
+
+1133 taps move in the taps-only pass (mean |Δw| 0.0021, max 0.246). `partnersHold` is true. The script selects vote smoothing because it stays within 2 points of the pre-plastic accuracy and beats taps-only. `verify.js` is still the discrete path and is unchanged by vote updates (they are restored on the shared net after each continuous run).
