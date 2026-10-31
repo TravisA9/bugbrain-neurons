@@ -1865,3 +1865,18 @@ Frozen Play Code Toy export, run as delay-line coincidence in `experiments/toy-p
 | 2 and 3 substeps per character | same predictions, 0 idle spikes |
 
 The 85.83% is on a snippet in the toy's `u:` / `a:` format that repeats cell-label lines, not a held-out corpus score. `test_core.js` ALL OK (no change under `js/` or `run/`).
+
+## R28b [text] Fine-time window and three-factor plasticity on the same graph
+
+`node experiments/toy-port/continuous.js`. Anatomy stays the export (7313 cells, 21547 synapses). Character = 25 ms, 8 bins, dt = 3.125 ms. A tap adds 15 mV while its axonal arrival is inside `window` bins. `window = 1` is the discrete boolean.
+
+| setting | agreement vs discrete predictions | hard-spike sets | next-letter accuracy |
+|---|---|---|---|
+| 1 bin, window 1 | **100%** | **100%** | 85.83% |
+| 8 bins, window 1 | **100%** | **100%** | 85.83% |
+| window 4 bins (12.5 ms) | **100%** | **100%** | 85.83% |
+| window 12 bins (37.5 ms) | 94.04% | 27.55% | 83.11% |
+
+Phase-locked delays: a window shorter than one character does not change this net. A window past one character still counts the previous character's tap.
+
+Plasticity: STDP eligibility × per-cell teacher (fired cell's frozen vote vs the next character). `lr` 0.03, `tauPre`/`tauPost` 10, `tauElig` 50, `aMinus` 0.3. Weights clamped to `[0, 2/nTaps]`. No new synapses. On the 37.5 ms window, 921 synapses move (mean |Δw| 0.0053, max 0.5). Replay with learning off: next-letter 43.42%, agreement with discrete 45.19%. The rule adapts weights; on this snippet the doubled taps fire too easily and accuracy falls. `verify.js` discrete path still 100% vs `snn-sim.cjs`.

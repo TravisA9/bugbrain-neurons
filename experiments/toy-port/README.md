@@ -1,6 +1,11 @@
 # Feature–Time toy port
 
-A fixed-anatomy spike runner for one frozen Play Code Toy export. It predicts the next character. It does not grow cells, and it does not learn. Evolved brains and the headless runner (`run/`) are untouched.
+A fixed-anatomy spike runner for one frozen Play Code Toy export. It predicts the next character. The graph stays the exported cells and synapses: nothing grows a new cell. Evolved brains and the headless runner (`run/`) are untouched.
+
+Two clocks:
+
+- `verify.js` is the discrete regression. One bin per character, membrane reset, learning off. It matches `snn-sim.cjs`.
+- `continuous.js` is the fine-time path. Axonal delays use the export's delay steps, coincidence is a timing window, and a three-factor rule can change weights on those same synapses.
 
 ## Run
 
@@ -38,6 +43,41 @@ a:i heard that.
 
 `snn-sim.cjs` is the unmodified reference simulator. Its command-line mode expects the Toy harness, which is not in this repo. Load it through `verify.js` (it exports `loadSNN` and `run`).
 
+## Continuous time and plasticity
+
+```
+node experiments/toy-port/continuous.js
+```
+
+Same default model and sample. The process exits 0 when the one-bin window still matches the discrete runner at 99% or better (predictions and hard spikes) and the plasticity pass moves at least one weight. It writes `continuous-report.json`.
+
+Each character is 25 ms, split into 8 bins (3.125 ms). An export delay of `d` characters is an axon of `d * 25` ms. A tap contributes its 15 mV charge while that arrival sits inside the last `window` bins. Hard fire means every tap is inside the window; soft fire is the export's soft count, with a delay-0 tap in the window and at least 3 taps. After a spike the cell is quiet for `window` bins. `window = 1` is a single bin, which is the discrete boolean.
+
+On `sample-dialogue.txt` (3423 characters):
+
+| setting | next-letter agreement vs discrete | hard-spike sets | next-letter accuracy |
+|---|---|---|---|
+| 1 bin/character, window 1 | **100%** | **100%** | 85.83% |
+| 8 bins/character, window 1 (3.125 ms) | **100%** | **100%** | 85.83% |
+| window 4 bins (12.5 ms, shorter than a character) | **100%** | **100%** | 85.83% |
+| window 12 bins (37.5 ms, past one character) | 94.04% | 27.55% | 83.11% |
+
+Taps in this export are phase-locked: letters arrive at the start of a character and delays are whole characters. A window shorter than one character still sees the same coincidence. A window of 37.5 ms still counts a tap from the previous character, so different cells fire (spike sets agree on 27.55% of steps) and 5.96% of the predicted letters change.
+
+Plasticity is BugBrain's three-factor shape (`lr` 0.03, `tauPre`/`tauPost` 10, `tauElig` 50, `aMinus` 0.3, from `PL_DEFAULTS` in `js/core/base.js`). A presynaptic arrival after the axonal delay and a postsynaptic spike write an eligibility trace. At the end of the character the next input is the teacher for each cell that fired: `M = +1` when that cell's frozen vote is the next character, and `M = -1` otherwise. `w += lr * M * e`, clamped to `[0, 2/nTaps]`. The synapse list does not grow or shrink. Readout votes stay frozen.
+
+With the 37.5 ms window, one pass changes 921 of 21547 synapses (mean |Δw| 0.0053, max 0.5). Replay with those weights, learning off, scores 43.42% next-letter accuracy and agrees with the discrete runner on 45.19% of characters. The rule does adapt the fixed taps. On this snippet it does not improve the readout: doubling a tap lets a cell fire without its partner, and the coincidence gets looser.
+
+```javascript
+const { loadFeatureTime } = require('./toy_net');
+const { ContinuousToy } = require('./continuous');
+const net = loadFeatureTime('./baseline-frozen.snn.json');
+const sim = new ContinuousToy(net, { sub: 8, window: 12, plasticity: true });
+const online = sim.run(text);   // weights move after each character
+sim.plasticity = false;
+const replay = sim.run(text);   // same weights, no further updates
+```
+
 ## API
 
 ```javascript
@@ -61,8 +101,17 @@ The export field `threshold` is the soft count, `ceil(0.75 * nTaps)`. A soft spi
 
 The readout is lateral inhibition over the cells that fired. Inside one span, the cell with the higher training count wins. Across spans, the longest cell that has a vote wins. If that winner's confidence is below `outrankConf` (0.8), a longer soft or abstract cell can take the character when its own confidence is at least 0.8 and at least 0.1 higher. The vote on a cell is its majority character among counts of 2 or more. `_` is an ordinary output character. The reference simulator has no separate silence neuron, and neither does this port. One input id is the token `speak`; it has no synapses.
 
-`predictFine(text, sub)` is the same circuit on a finer clock. Delays are multiplied by `sub`. The character is an input spike on the first substep only. Later substeps in that character stay silent, and the returned predictions match `predict`.
+`predictFine(text, sub)` is the same discrete circuit on a finer clock. Delays are multiplied by `sub`. The character is an input spike on the first substep only. Later substeps in that character stay silent, and the returned predictions match `predict`. That is a different check from `continuous.js`: there the window can be wider than one bin, so late arrivals still count.
 
-`SpikingNet` is unchanged. A spike there is current on the next substep, `preLag` only builds the teacher trace, and CLAW coincidence is input on the current substep. Delay 0 in this export is a same-character chain (depth 10), which that synapse update does not carry. This folder is the place for that delay line.
+## What still differs from a grown BugBrain
 
-Learning is off. Weights stay at the export. There is no STDP, no dopamine, and no cell birth. Continuous time, a membrane that leaks between characters, and timing-dependent plasticity are the next steps, once this snapshot stays aligned with the reference.
+`SpikingNet` is unchanged. A spike there is current on the next substep, `preLag` only builds the teacher trace, and CLAW coincidence is input on the current substep. Delay 0 in this export is a same-character chain (depth 10), which that synapse update does not carry. This folder keeps its own delay line.
+
+The continuous path is still not a grown brain:
+
+- The cells and synapses are the Toy export. There is no genome, no morphogen, and no new cell.
+- It is not on the evolution loop or the worker queue. Default plans (`predictK3`, `rewardE`) are unchanged.
+- The teacher is the next character compared with that cell's frozen vote. It is not dopamine from the bug arena or the bandit, and it is not the sequence plan's column teacher.
+- Readout votes do not learn. There is no presynaptic normalisation, no metaplasticity, and no homeostatic threshold.
+- Time is the export's character step (25 ms, 8 bins here), not four substeps of a tissue tick.
+- The coincidence window is a rectangle on axonal arrival times. A grown CLAW cell is a fast membrane over inputs that are already simultaneous.

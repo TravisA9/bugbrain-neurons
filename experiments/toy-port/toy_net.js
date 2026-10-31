@@ -40,7 +40,10 @@
  *     output spike, which Dec.wta reads back.
  *   - Learning is off. No STDP, no dopamine, no cell birth.
  *
- * snn-sim.cjs is the behavioral oracle (unmodified). This file is the port.
+ * snn-sim.cjs is the behavioral oracle (unmodified). This file is the discrete port.
+ * continuous.js is the fine-time membrane on the same frozen graph: axonal delays,
+ * a leaky coincidence window, and three-factor plasticity on the existing synapses.
+ * With one bin per character and no membrane memory it matches this discrete runner.
  */
 const fs = require('fs');
 

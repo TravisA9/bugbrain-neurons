@@ -297,7 +297,7 @@ Each tick of `Agent.tick()` does five things:
 - `node results_v12/eqv11.js`: bit-identity check of v12 vs `legacy/v11` (same checks, including predictK2XL). `[TUNE='{...}'] [NG=2] node results_v12/feat.js` / `wread.js`: record the C-cell spike sets and score idealised readouts on them (feature counters, sharpness / trust weighting, pattern key; linear readout of the net's own weights vs its spiking output).
 - `node results_v11/eqv10.js`: bit-identity check of v11 vs `legacy/v10` (growth, thresholds, episode stats, spike counts, final weights and potentials). `node results_v11/bench.js` / `bench_xl.js`: growth time and ticks/s (`ROOT=legacy/v10` for the old version).
 - `[NG=30] [NE=2] [CASES=bug:v3,recall8:memoryK,cue:brain.json] [VARS='{"off":{},"h":{"hunger":1}}'] node hunger_test.js`: orphan outputs, silent inputs, failed growths and score, with hunger/request variants.
-- `node experiments/toy-port/verify.js`: frozen Play Code Toy Feature–Time net. Predicts the next character of a bundled dialogue and checks agreement with the reference discrete simulator (pass at ≥ 99%). Does not evolve and does not use the runner queue. Details under **Feature–Time toy port** below.
+- `node experiments/toy-port/verify.js`: frozen Play Code Toy Feature–Time net, one bin per character. Predicts the bundled dialogue and checks agreement with the reference discrete simulator (pass at ≥ 99%). `node experiments/toy-port/continuous.js` is the same graph on a fine clock (axonal delays, a coincidence window, three-factor plasticity on the existing synapses) and checks that a one-bin window still matches. Neither evolves nor uses the runner queue. Details under **Feature–Time toy port** below.
 
 Results are in `RESULTS.md`. Evolved brains are in `champions/`: `v8/` evolved from the memory and memoryK plans, `v7/` cue-then-turn (`cue-*`) and symbol recall (`recall-*`), `v6/` bug flash, `v5/` bug hard, `v4/` bug normal.
 
@@ -317,7 +317,11 @@ The membrane uses the engine constants in `js/core/base.js`: rest −70 mV, thre
 
 `SpikingNet` delivers each spike on the next substep. It has no per-synapse delay. Its `preLag` ring feeds the teacher trace, and CLAW coincidence is "enough input on this substep". In this export a delay of 0 has to count in the same character, along a chain of depth 10, so the experiment keeps its own delay ring and does not route the toy through `SpikingNet`.
 
-The clock is still discrete. One tick is one character. `predictFine(text, sub)` divides each character into `sub` substeps and scales every delay by `sub`. The predictions stay the same, because the membrane is recomputed from the delay line and reset every step, with no leak into the next character. Learning is off: no STDP, no dopamine, no cell birth. Continuous time and timing plasticity are later. More on the files and the API: [experiments/toy-port/README.md](experiments/toy-port/README.md).
+`node experiments/toy-port/verify.js` stays the discrete regression: one tick per character, membrane reset, learning off, **100%** agreement with `snn-sim.cjs` on the bundled dialogue.
+
+`node experiments/toy-port/continuous.js` keeps that graph and runs it in time. Each character is 25 ms in 8 bins. An export delay is an axonal delay in those bins. A tap contributes 15 mV while its arrival sits in a window of `window` bins. `window = 1` matches the discrete runner at **100%** (predictions and hard spikes), including on the 8-bin grid. A 12.5 ms window, shorter than one character, still matches, because these taps are phase-locked. A 37.5 ms window still counts the previous character, so hard-spike sets agree on 27.55% of steps and next-letter predictions agree on 94.04% (accuracy 83.11% against the snippet, discrete 85.83%).
+
+Plasticity uses BugBrain's three-factor constants (`lr` 0.03, traces of 10 and eligibility of 50, `aMinus` 0.3). The next character is the teacher for each cell that fired, against that cell's frozen vote. Weights stay on the existing synapses, clamped to twice their start value. One pass on the 37.5 ms window moves 921 synapses. Replay accuracy on the snippet is 43.42%: the taps adapt, and the looser coincidences are a worse readout here. The synapse list does not grow. More detail: [experiments/toy-port/README.md](experiments/toy-port/README.md).
 
 ## Running long experiments locally (v25)
 

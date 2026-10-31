@@ -1,0 +1,152 @@
+{
+  "sample": "sample-dialogue.txt",
+  "chars": 3423,
+  "msPerChar": 25,
+  "discreteNextPct": 85.83,
+  "match": {
+    "sub": 1,
+    "window": 1,
+    "note": "window of one bin; same boolean as the discrete runner",
+    "agreePct": 100,
+    "spikeAgreePct": 100,
+    "misses": []
+  },
+  "fineGrid": {
+    "sub": 8,
+    "window": 1,
+    "dtMs": 3.125,
+    "note": "axonal delays on a 3.125 ms grid; window is still one bin",
+    "agreePct": 100,
+    "spikeSetAgreePct": 100,
+    "secs": 12.16
+  },
+  "narrowWindow": {
+    "note": "12.5 ms window, shorter than one character, so phase-locked taps still meet on one bin",
+    "sub": 8,
+    "window": 4,
+    "dtMs": 3.125,
+    "windowMs": 12.5,
+    "agreePct": 100,
+    "nextPct": 85.83,
+    "spikeSetAgreePct": 100,
+    "secs": 12.13,
+    "misses": []
+  },
+  "wideWindow": {
+    "note": "37.5 ms window, longer than one character: a tap from the previous character can still coincide",
+    "sub": 8,
+    "window": 12,
+    "dtMs": 3.125,
+    "windowMs": 37.5,
+    "agreePct": 94.04,
+    "nextPct": 83.11,
+    "spikeSetAgreePct": 27.55,
+    "secs": 13.51,
+    "misses": [
+      {
+        "at": 62,
+        "ctx": " story again\na:th",
+        "a": "u",
+        "b": "e"
+      },
+      {
+        "at": 63,
+        "ctx": "story again\na:the",
+        "a": "l",
+        "b": " "
+      },
+      {
+        "at": 111,
+        "ctx": "e to visit._\nu:wh",
+        "a": "u",
+        "b": "e"
+      },
+      {
+        "at": 116,
+        "ctx": "visit._\nu:what ob",
+        "a": "e",
+        "b": "j"
+      },
+      {
+        "at": 145,
+        "ctx": "r the door\na:a ha",
+        "a": " ",
+        "b": "t"
+      },
+      {
+        "at": 147,
+        "ctx": "the door\na:a hat ",
+        "a": "m",
+        "b": "o"
+      }
+    ]
+  },
+  "plasticity": {
+    "rule": "three-factor: STDP eligibility x per-cell teacher (vote vs next character)",
+    "lr": 0.03,
+    "tauPre": 10,
+    "tauPost": 10,
+    "tauElig": 50,
+    "aMinus": 0.3,
+    "sub": 8,
+    "window": 12,
+    "onlineNextPct": 43.45,
+    "replayNextPct": 43.42,
+    "replayAgreeVsDiscretePct": 45.19,
+    "onlineAgreeVsDiscretePct": 46.6,
+    "drift": {
+      "synapses": 21547,
+      "changed": 921,
+      "meanAbsDw": 0.005302494680245282,
+      "maxAbsDw": 0.5,
+      "largest": [
+        {
+          "cell": "h2",
+          "delay": 1,
+          "letter": true,
+          "w0": 0.5,
+          "w": 1
+        },
+        {
+          "cell": "h6",
+          "delay": 1,
+          "letter": true,
+          "w0": 0.5,
+          "w": 1
+        },
+        {
+          "cell": "h7",
+          "delay": 1,
+          "letter": true,
+          "w0": 0.5,
+          "w": 1
+        },
+        {
+          "cell": "h17",
+          "delay": 0,
+          "letter": true,
+          "w0": 0.5,
+          "w": 1
+        },
+        {
+          "cell": "h90",
+          "delay": 0,
+          "letter": true,
+          "w0": 0.5,
+          "w": 1
+        },
+        {
+          "cell": "h100",
+          "delay": 1,
+          "letter": true,
+          "w0": 0.5,
+          "w": 1
+        }
+      ]
+    },
+    "secs": 34.51
+  },
+  "deterministic": true,
+  "secs": 78.59,
+  "pass": true
+}
