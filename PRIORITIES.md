@@ -1,3 +1,26 @@
+# PRIORITIES (R104, Oct 30 2026, ~7:30 PM CT; **v45 / DEFAULTS_VERSION 38** unchanged — v45 = plan deepURSx3 with a 16000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2; v44 kept as deepURSx3v44)
+
+## R104 update (queue review, evening)
+- **No adoption.** Nothing finished a 16-growth held-out this round: y222 (32000 cells) still running on linux-pc, y219b (step schedule) still running on chromium.
+- **Demand-grown claws (I105) rejected as built** (y217 + y218, 24 fresh growths): book10k -0.046, book30k -0.031, fables4000 -0.022, all 0/24. The pool never fills (granAsg ~3000 of 8000), so recycling never runs.
+- **Step schedule:** y219a sched100k +0.0029 vs fixed 0.1 at 300k (6/2, n 8), +0.0005 vs 0.05; waits for y219b. **Smooth schedule rejected** (y215 book10k -0.0029 1/6, book30k -0.0027 1/6).
+- Runtime is linear in granule cells (16000 / 32000 / 64000 = 1 / 2 / 4x); 64000 fits in ~0.5 GB.
+- Cortex lr 0.15: stays rejected (R102r full-set confirmation y214 K4 -0.0016, 1/10).
+
+## Ranked open questions (R104)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I101 | Capacity vs length: 32000 cells held-out at 100k/300k (v46 candidate) + full-set confirmation; does 64000 add again at 300k | y222 (running), y223, y227 |
+| 2 | Q42 / I102 | Length rule: step schedule held-out at 300k; 1M with 16000 vs 32000 cells (capacity or rule?) | y219b (running), y221, y224 |
+| 3 | I104 / Q46 | Sized order3: cx4dT context x4 vs x2 vs x1 on the full set | y226 |
+| 4 | I98 | cx3 sized recipe (y211 passed except book10k -0.003 4/12) | (later) |
+| — | I105 | Demand-grown claws: rejected as built; only a redesigned birth rule | — |
+Engineering: sparse granule update path is now the main lever (runtime is linear in cells; 64000 cells = 4x v45). Generation loops wait for the length rule.
+Low: analogy / evolution. Rejected ideas stay rejected (plus R104: smooth granule schedule, demand claws as built).
+
+## Worker notes (R104)
+linux-pc: healthy on 609911c, y222 (renewed 7:06 PM CT). chromium: on 609911c, y219b since 9:09 AM CT, renewal gap 10:39 AM - 6:50 PM CT (PC off / asleep), heavy-eligible. tacobell: worker Disabled on purpose (Travis); laptop = push route only.
+
 # PRIORITIES (R103, Oct 30 2026, ~7 AM CT; **v45 / DEFAULTS_VERSION 38 adopted** — v45 = plan deepURSx3 with a 16000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2; v44 kept as deepURSx3v44)
 
 ## R103 update (queue review, morning)

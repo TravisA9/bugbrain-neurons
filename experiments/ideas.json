@@ -1524,12 +1524,13 @@
       "area": "scaling",
       "title": "Granule cell count scaled with training length (bigger combination layer only when the brain will see more text)",
       "status": "testing (y222 held-out)",
-      "evidence": "R99: 16000 vs 8000 cells: book10k ~0, book30k +0.005, book100k +0.008 (y192, 16/0); y178 16000 vs 8000 at 100k +0.0056 (6/2). Gain grows with length; at 10k the extra cells only cost runtime (~1.7x). Tests: y200 / y205 (32000). R100: y194a (k 2584-2591) N4000 vs v44 book20k -0.0067 (2/6), book30k -0.0054; N16000 vs v44 20k -0.0017, 30k -0.0010 on those growths. y200 (32000) crashed: run/lib.js dense N x N synapse count, fixed (bit-identical, peak memory at 16000 cells 550 -> 238 MB). R101: y194a+b pooled (16 growths k 2584-2599) N4000 vs v44 book10k -0.0029 (5/10), book20k -0.0052 (2/14), book30k -0.0079 (2/14, t -5.6); N16000 vs v44 book5k..30k +0.0007..+0.0013 (n.s.): 16000 pays mainly at 100k+. y203 (cx3, 16 fresh k 2664-2679) N16000 vs N8000 (both ref1800) book100k +0.0063 (14/1, t 5.8; 0.4327): the size-with-length rule holds at cx3. y205 (32000, pre-R100 code) crashed again (all 64 runs); y208 / y207 still wait for the R100 push. New y216: 32000 cells on order3 / K4 / seqchoice. R102r: y216 (box, 8 growths): order3 / K4 / seqchoice order2 / cycle identical across 8000 / 16000 / 32000 cells (32000 order3 -0.0003 0/1, K4 +0.0003 1/0). R103: y207 32000 cells book300k +0.0075 vs 16000 (8/0), +0.0039 vs 16000 sched100k (5/2); 100k -0.0018 (3/4); y208 short tasks within noise.",
+      "evidence": "R99: 16000 vs 8000 cells: book10k ~0, book30k +0.005, book100k +0.008 (y192, 16/0); y178 16000 vs 8000 at 100k +0.0056 (6/2). Gain grows with length; at 10k the extra cells only cost runtime (~1.7x). Tests: y200 / y205 (32000). R100: y194a (k 2584-2591) N4000 vs v44 book20k -0.0067 (2/6), book30k -0.0054; N16000 vs v44 20k -0.0017, 30k -0.0010 on those growths. y200 (32000) crashed: run/lib.js dense N x N synapse count, fixed (bit-identical, peak memory at 16000 cells 550 -> 238 MB). R101: y194a+b pooled (16 growths k 2584-2599) N4000 vs v44 book10k -0.0029 (5/10), book20k -0.0052 (2/14), book30k -0.0079 (2/14, t -5.6); N16000 vs v44 book5k..30k +0.0007..+0.0013 (n.s.): 16000 pays mainly at 100k+. y203 (cx3, 16 fresh k 2664-2679) N16000 vs N8000 (both ref1800) book100k +0.0063 (14/1, t 5.8; 0.4327): the size-with-length rule holds at cx3. y205 (32000, pre-R100 code) crashed again (all 64 runs); y208 / y207 still wait for the R100 push. New y216: 32000 cells on order3 / K4 / seqchoice. R102r: y216 (box, 8 growths): order3 / K4 / seqchoice order2 / cycle identical across 8000 / 16000 / 32000 cells (32000 order3 -0.0003 0/1, K4 +0.0003 1/0). R103: y207 32000 cells book300k +0.0075 vs 16000 (8/0), +0.0039 vs 16000 sched100k (5/2); 100k -0.0018 (3/4); y208 short tasks within noise. R104: box timing 16000 / 32000 / 64000 cells = 37 / 73 / 144 s at 3000 symbols (runtime ~linear in cells), 64000 peak RSS ~490 MB. Queued y223 (32000 full-set, pre-staged after y222), y227 (64000 at 100k / 300k, k 2536-2543), y224 (32000 sched100k at 1M).",
       "why": "combination capacity is only used once enough rare letter combinations have been seen; matching layer size to experience saves runtime on short tasks",
       "rounds": [
         "R99",
         "R100",
-        "R101"
+        "R101",
+        "R104"
       ],
       "theme": "scaling",
       "parents": [
@@ -1540,13 +1541,14 @@
       "id": "I102",
       "area": "learning",
       "title": "Length-annealed granule step: granLr falling with symbols seen (global schedule, not per-granule like I100)",
-      "status": "testing (y206 positive on 8 growths; held-out y219a/b; book1M y221)",
-      "evidence": "R99: past 100k only granLr 0.05 still rises (100k->300k +0.0043, 5/2, n 8) while v44 / N16000 fall ~-0.003; granLr 0.05 cost at 10k (R90 -0.005). Tests: y201 (16000 + granLr 0.05 at 100k/300k), y204a/b (short length). R100: y201 16000 + granLr 0.05 at book300k 0.4111 = +0.0107 over v44 (8/0, t 8.3), +0.0024 over 16000 (5/3), but -0.0014 at 100k (2/5); 1x granLr 0.05 vs v44 300k +0.0044 (13/3, n 16). Smaller step costs early, pays late -> global schedule by symbols seen coded (bit-identical off; granLrT=1 == granLr 0.05). R101: no new data (y206 / y210 / y212 never reached the workers because R100 is unpushed). New y215: short-task safety of the smooth schedule. R102r: y206 (16000 cells, k 2536-2543, n 8): sched100k (0.1 -> 0.05 at 100k) book300k 0.4122 = best 1x yet (+0.0036 vs fixed 0.1 5/3 t 1.6; +0.0011 vs fixed 0.05 4/2), identical at 100k by construction; sched30k book100k +0.0021 vs 0.1 (6/2), +0.0035 vs 0.05 (7/1, t 2.8), 300k = fixed 0.05 (-0.0003); smooth30k 100k +0.0005, 300k -0.0001 vs 0.05. Held-out: y219a (y210 growths 2728-2735), y219b (fresh 2808-2815, all four rules at 300k); y221 book1M plateau (sched100k late 0.05 / 0.025, smooth30k). R103: constant granLr 0.05 at 16000 cells rejected (y204a/b book10k -0.0158 0/16); schedule only.",
+      "status": "testing (y219a: sched100k +0.0029 vs fixed 0.1 at 300k, 6/2, n 8; y219b running; smooth shape out (y215))",
+      "evidence": "R99: past 100k only granLr 0.05 still rises (100k->300k +0.0043, 5/2, n 8) while v44 / N16000 fall ~-0.003; granLr 0.05 cost at 10k (R90 -0.005). Tests: y201 (16000 + granLr 0.05 at 100k/300k), y204a/b (short length). R100: y201 16000 + granLr 0.05 at book300k 0.4111 = +0.0107 over v44 (8/0, t 8.3), +0.0024 over 16000 (5/3), but -0.0014 at 100k (2/5); 1x granLr 0.05 vs v44 300k +0.0044 (13/3, n 16). Smaller step costs early, pays late -> global schedule by symbols seen coded (bit-identical off; granLrT=1 == granLr 0.05). R101: no new data (y206 / y210 / y212 never reached the workers because R100 is unpushed). New y215: short-task safety of the smooth schedule. R102r: y206 (16000 cells, k 2536-2543, n 8): sched100k (0.1 -> 0.05 at 100k) book300k 0.4122 = best 1x yet (+0.0036 vs fixed 0.1 5/3 t 1.6; +0.0011 vs fixed 0.05 4/2), identical at 100k by construction; sched30k book100k +0.0021 vs 0.1 (6/2), +0.0035 vs 0.05 (7/1, t 2.8), 300k = fixed 0.05 (-0.0003); smooth30k 100k +0.0005, 300k -0.0001 vs 0.05. Held-out: y219a (y210 growths 2728-2735), y219b (fresh 2808-2815, all four rules at 300k); y221 book1M plateau (sched100k late 0.05 / 0.025, smooth30k). R103: constant granLr 0.05 at 16000 cells rejected (y204a/b book10k -0.0158 0/16); schedule only. R104: y219a (y210 growths 2728-2735, n 8) sched100k vs fixed 0.1 at 300k +0.0029 (6/2, t 1.2), vs fixed 0.05 +0.0005 (5/3); sched30k 300k +0.0022 vs 0.1 (5/3), 100k = 0.1 (+0.0003 4/4); 8000 cells + sched100k vs v44 300k +0.0029 (4/4). y215 (k 2768-2775, n 8): smooth30k costs short texts (book10k -0.0029 1/6, t -2.5; book30k -0.0027 1/6) -> smooth shape rejected; only a step that is bit-identical below the switch stays. y219b (fresh, chromium) still running.",
       "why": "a fixed step that suits 10k overwrites learned combinations at 300k; a schedule keeps both",
       "rounds": [
         "R99",
         "R100",
-        "R101"
+        "R101",
+        "R104"
       ],
       "theme": "learning",
       "parents": [
@@ -1574,10 +1576,11 @@
       "area": "scaling",
       "title": "Sized-brain order3 gap: one of the cx4dT extras (thinF, postCapRel, context x4, striatum x4, cone + rb2) costs order3",
       "status": "open (y213)",
-      "evidence": "R100: cx4dT order3 ~0.726 regardless of granule count / granRef (y191); 1x 0.9675 on the same growths 0 / 1 (box), cx3 0.85-0.88 (granRef 1800 at cx3 +0.018, y196). R103: y213 removing context x4 restores order3 +0.184 (8/0); thinF +0.014; postCap/str4/cone no effect.",
+      "evidence": "R100: cx4dT order3 ~0.726 regardless of granule count / granRef (y191); 1x 0.9675 on the same growths 0 / 1 (box), cx3 0.85-0.88 (granRef 1800 at cx3 +0.018, y196). R103: y213 removing context x4 restores order3 +0.184 (8/0); thinF +0.014; postCap/str4/cone no effect. R104: queued y226 (cx4dT context x4 vs x2 vs x1 on all 8 tasks, 16 fresh k 2840-2855); box smoke ctx2 order3 g2840 0.7375.",
       "why": "order3 is the one task the sized brains still lose badly; an ablation finds whether a fixable piece or the cortex size itself is responsible",
       "rounds": [
-        "R100"
+        "R100",
+        "R104"
       ],
       "theme": "scaling",
       "parents": [
@@ -1589,11 +1592,12 @@
       "id": "I105",
       "area": "representation",
       "title": "Demand-grown granule claws from repeated letter co-occurrence (Play Code motif birth), same pool size as v44 random claws",
-      "status": "testing (coded R102 as P.granDemand, off by default; y217, y218). Not a default. v44 / DEFAULTS_VERSION 37 unchanged",
-      "evidence": "No worker results yet. Mechanism: granN cells are reserved with no random claws; a lag window seen granCo times (default 2) in a capped LRU table takes an unused cell, or the least-used cell past granHold when granRecycle=1. Pool cap is granN (matched to 8000 in y217). Counts are not a dense n-gram matrix.",
+      "status": "rejected as built (R104: pool never fills; book -0.03 to -0.05, 0/24)",
+      "evidence": "No worker results yet. Mechanism: granN cells are reserved with no random claws; a lag window seen granCo times (default 2) in a capped LRU table takes an unused cell, or the least-used cell past granHold when granRecycle=1. Pool cap is granN (matched to 8000 in y217). Counts are not a dense n-gram matrix. R104: y217 (16 fresh k 2784-2799) granDemand co2 vs v44 random claws (both granN 8000): book10k -0.0461 (0/16), book30k -0.0298 (0/16), fables4000 -0.0214 (0/16), order3 -0.0031 (2/6), K4 -0.0006, text1000 -0.0003 (7/8), seqchoice identical. y218 (k 2800-2807): recycle on == off bit-for-bit; box re-run g2800 book10k: granAsg 2972 of 8000, granRec 0 -> the pool never fills, so cells are not matched and recycling never runs. Worse even than 4000 random cells. Not worth more queue time unless the birth rule is redesigned (e.g. pre-seed random claws, replace by demand).",
       "why": "random sparse claws spend cells on combinations the text never repeats; claws born from repeated co-occurrence might put the same N on the combinations that actually recur",
       "rounds": [
-        "R102"
+        "R102",
+        "R104"
       ],
       "theme": "representation",
       "parents": [

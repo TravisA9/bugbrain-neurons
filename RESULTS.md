@@ -4236,3 +4236,39 @@ Sources: worker results y206, y209 (linux-pc, Oct 29 ~11 AM-5:40 PM CT); box run
 ### Queue (R103; run/r103_jobs.js + R102r's run/r102r_jobs.js, both unpushed)
 - y219a / y219b / y221 (R102r, 87.5 slot-h) + **y222** (0.94, fresh k 2816-2823: N32000 @100k+300k, N32000 sched100k @300k, N16000, N16000 sched100k @300k; 48 runs, 48.5 slot-h, memGB 4).
 - Origin now holds only y215 / y217 (running) and y218: workers run dry in a few hours until the bundles land.
+
+## R104 (Oct 30 2026, 7 PM CT queue review) — **no adoption (v45 / DEFAULTS_VERSION 38 stay)**; demand-grown claws (I105) rejected as built; smooth granule schedule rejected (costs short texts); step schedule sched100k still positive, waits for y219b
+### y217 + y218 (24 fresh growths k 2784-2807, granN 8000 both arms): demand-grown claws vs random claws
+| task | granDemand co2 vs v44 |
+|---|---|
+| book10k | **-0.0460 (0/24, t -32)** |
+| book30k | **-0.0311 (0/24, t -11)** |
+| fables4000 | **-0.0215 (0/24, t -15)** |
+| order3 | -0.0031 (2/6, n 16) |
+| K4 | -0.0006 (0/3, n 16) |
+| text1000 | -0.0001 (11/11) |
+| seqchoice order2 / cycle | identical |
+- y218: recycle on == recycle off, bit-for-bit. Box re-run (g2800 book10k, same score 3.35): granAsg 2972 of 8000, granRec 0 -> the pool never fills, so recycling never runs and the arm has ~3000 working cells. It is far worse than even 4000 random cells (-0.008 at book30k in y194). **Rejected as built**; only a redesigned birth rule (e.g. start with random claws and let demand replace them) would justify queue time.
+### y219a (y210 growths k 2728-2735, n 8; refs from y210): granule step schedule at length
+| arm | vs N16000 fixed 0.1 | vs N16000 fixed 0.05 |
+|---|---|---|
+| N16000 sched100k book300k (0.4201) | +0.0029 (6/2, t 1.2) | +0.0005 (5/3) |
+| N16000 sched30k book300k (0.4194) | +0.0022 (5/3) | -0.0002 (5/3) |
+| N16000 sched30k book100k (0.4191) | +0.0003 (4/4) | +0.0002 (5/3) |
+- 8000 cells + sched100k vs v44 (8000) at 300k: +0.0029 (4/4); vs N16000 -0.0056 (2/6): cells matter more than the step.
+- Same direction as y206 (sched100k +0.0036 vs 0.1), smaller. The held-out pool needs y219b (fresh k 2808-2815; running on chromium since 9:09 AM CT).
+### y215 (k 2768-2775, n 8): smooth schedule on short texts
+- smooth30k vs N16000: book10k -0.0029 (1/6, t -2.5), book30k -0.0027 (1/6, t -2.6), fables4000 -0.0013 (3/4), text1000 identical. **Smooth shape rejected** (it lowers the step before 30k); step schedules are bit-identical below the switch and stay the only candidate.
+### Box checks (R104)
+- Runtime at 3000 symbols: 16000 / 32000 / 64000 cells = 37 / 73 / 144 s (linear in cells); 64000 peak RSS ~490 MB, so 64000 is feasible on linux-pc / chromium (memGB 3).
+- Smoke: cx4dT ctx2 order3 g2840 = 0.7375 (runs; one growth only).
+### Workers (R104, ~7:15 PM CT)
+- linux-pc: healthy on 609911c, running y222 (claimed 12:06 PM CT, renewing every 30 min, last 7:06 PM CT). Finished y218, y219a today.
+- chromium: on 609911c, running y219b (claimed 9:09 AM CT; est 4.9 h, now 10 h). **Renewal gap 10:39 AM -> 6:50 PM CT** (PC probably asleep / off; the cursor machine shows disconnected now). One harmless release/re-claim at 7:16 AM CT (restart), not a crash loop. Finished y217. Stays heavy-eligible.
+- tacobell: worker left Disabled as Travis asked (silent since 10:09 PM CT Oct 29, expected). Laptop connected; used only as the push route.
+### Queue (R104; run/r104_jobs.js)
+- **y223** (0.935, after y222; fresh k 2824-2839, 16 growths): 32000 vs 16000 on all 8 tasks (pre-staged full-set confirmation; counts only if y222 passes); 11.2 slot-h.
+- **y226** (0.93, memGB 4; fresh k 2840-2855): cx4dT context x4 vs x2 vs x1 on all 8 tasks (sized order3 fix, I104); 18.7 slot-h.
+- **y227** (0.925, memGB 3; k 2536-2543): 64000 cells at book100k / book300k (capacity curve; refs y193 / y207 same growths); 39.1 slot-h.
+- **y224** (0.91, memGB 3; k 2536-2539): 32000 + sched100k at book1M (pairs with y221); 22.4 slot-h.
+- With y221 (36.7 slot-h) the unclaimed heavy pool is ~128 slot-h ≈ 21 h at linux-pc's pace, ≈ 10-11 h per heavy worker plus the running y222 / y219b (chromium runs ~2x slower).
