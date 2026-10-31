@@ -1930,4 +1930,20 @@ Same script, same split. Depth 2 is a shallower cell now plus another tap a few 
 | + 32 most co-occurring | 9.38% (3/32) | 69.49% | 86.56% |
 | + 32 predictive | 9.38% (3/32) | 69.20% | 85.88% |
 
-Depth ≤ 2 is worth about 6 points over depth ≤ 1. A 32-cell budget matches the export's own top 32 (about +1 point) and recovers 3 of those motifs. About 4 points remain to the full net. `js/` and `run/` unchanged.
+Depth ≤ 2 is worth about 6 points over depth ≤ 1. A 32-cell budget matches the export's own top 32 (about +1 point) and recovers 3 of those motifs. About 4 points remain to the full net.
+
+## R28f [text] Depth 3 and 4
+
+Same script and split. Birth 2–4 tap cells whose taps land on shallower cells, when those taps co-occur. Keep 32. Full net on the held-out tail: 77.78%.
+
+| set | next-letter | agree with full net |
+|---|---|---|
+| depth ≤ 2 (1512) | 74.07% | 93.67% |
+| + export top 32 depth-3 | 75.24% | 95.42% |
+| depth ≤ 3 (2842) | **75.93%** | **96.88%** |
+| + export top 32 depth-4 | 76.32% | 97.27% |
+| depth ≤ 4 (4350) | **77.19%** | **98.73%** |
+| + 32 grown depth-3 patterns | 74.07% | 93.67% |
+| + 32 grown depth-4 patterns | 75.93% | 96.88% |
+
+Depth 3 is about 2 points, depth 4 about 1 point, and 0.6 points remain after depth 4. The grown 32-cell budgets recover 2/32 and 1/32 of the busiest motifs and do not change held-out predictions. `js/` and `run/` unchanged.

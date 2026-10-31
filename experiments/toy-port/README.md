@@ -158,7 +158,23 @@ Depth 2 is mostly a cell from the previous layer firing now, plus another shallo
 | depth ≤ 1 + 32 most co-occurring patterns | 9.38% (3/32) | 69.49% | 86.56% |
 | depth ≤ 1 + 32 best predictive patterns | 9.38% (3/32) | 69.20% | 85.88% |
 
-Depth 2 is worth about **6 points** (68.23% → 74.07%). A budget of 32 recovers only 3 of the export's busiest depth-2 motifs and about 1 point of behavior, close to what those 32 export cells themselves add (69.98%). About **4 points** remain after every depth-2 cell (74.07% vs 77.78%), in depth 3 and 4.
+Depth 2 is worth about **6 points** (68.23% → 74.07%). A budget of 32 recovers only 3 of the export's busiest depth-2 motifs and about 1 point of behavior, close to what those 32 export cells themselves add (69.98%).
+
+## Fourth wave: depth 3 and 4
+
+The same birth rule, one layer deeper: a cell is born when its 2–4 taps onto shallower cells co-occur on the growth prefix. Competition keeps 32. Full net on the held-out tail remains **77.78%**.
+
+| set | next-letter | agreement with the full net |
+|---|---|---|
+| every cell of depth ≤ 2 (1512) | 74.07% | 93.67% |
+| depth ≤ 2 + the export’s 32 busiest depth-3 cells | 75.24% | 95.42% |
+| every cell of depth ≤ 3 (2842) | **75.93%** | **96.88%** |
+| depth ≤ 3 + the export’s 32 busiest depth-4 cells | 76.32% | 97.27% |
+| every cell of depth ≤ 4 (4350) | **77.19%** | **98.73%** |
+| depth ≤ 2 + 32 grown depth-3 patterns | 74.07% | 93.67% |
+| depth ≤ 3 + 32 grown depth-4 patterns | 75.93% | 96.88% |
+
+Depth 3 adds about **2 points** (74.07% → 75.93%). Depth 4 adds about **1 point** (75.93% → 77.19%). The full net is 0.6 points past depth 4. The export’s own top 32 cells do most of each layer’s work. Patterns born from co-occurrence on this snippet recover 2 of the 32 depth-3 motifs and 1 of the 32 depth-4 motifs, and they do not change a held-out prediction. Those export cells are long-delay combinations this dialogue does not rehearse often enough for the grown votes to take the readout.
 
 ## What still differs from a grown BugBrain
 

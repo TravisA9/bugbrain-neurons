@@ -548,6 +548,148 @@ function waveDepth2(doc, text, split, fullPred) {
   };
 }
 
+function fireTo(index, text, end, maxD) {
+  const fires = [];
+  for (let d = 0; d <= maxD; d++) fires.push(Array.from({ length: end }, () => []));
+  for (const c of index.recs) {
+    if (c.depth !== 0 || c.taps.length !== 2) continue;
+    const a = c.taps.find(t => t.delay === 0 && t.kind === 'L');
+    const b = c.taps.find(t => t.delay === 1 && t.kind === 'L');
+    if (!a || !b) continue;
+    for (let t = 1; t < end; t++) if (text[t] === a.ch && text[t - 1] === b.ch) fires[0][t].push(c.id);
+  }
+  const sets = [fires[0].map(ids => new Set(ids))];
+  for (let d = 1; d <= maxD; d++) {
+    for (let t = 0; t < end; t++) {
+      for (const c of index.recs) {
+        if (c.depth !== d) continue;
+        let ok = c.taps.length > 0;
+        for (const tp of c.taps) {
+          const src = t - tp.delay;
+          if (src < 0) { ok = false; break; }
+          if (tp.kind === 'L') { if (text[src] !== tp.ch) { ok = false; break; } }
+          else if (!sets[tp.preDepth][src].has(tp.id)) { ok = false; break; }
+        }
+        if (ok) fires[d][t].push(c.id);
+      }
+    }
+    sets.push(fires[d].map(ids => new Set(ids)));
+  }
+  return fires;
+}
+
+function waveFromDepth(doc, text, split, fullPred, D) {
+  const index = netIndex(doc);
+  const fires = fireTo(index, text, split, D - 1);
+  const byShape = new Map();
+  const layer = [];
+  for (const c of index.recs) {
+    if (c.depth !== D) continue;
+    if (c.taps.length < 2 || c.taps.length > 4) continue;
+    if (c.taps.some(t => t.kind === 'C' && t.preDepth >= D)) continue;
+    const key = shapeKey(c.taps);
+    if (!byShape.has(key)) byShape.set(key, { key, taps: c.taps.map(t => ({ kind: t.kind, delay: t.delay, preDepth: t.preDepth })), n: 0 });
+    byShape.get(key).n++;
+    layer.push(c);
+  }
+  layer.sort((a, b) => b.count - a.count || (a.id < b.id ? -1 : 1));
+  const top = layer.slice(0, K);
+  const topKeys = new Set(top.map(c => shapeKey(c.taps)));
+  const templates = [...byShape.values()].filter(s => s.n >= 15 || topKeys.has(s.key));
+  const map = new Map();
+  for (let t = 0; t + 1 < split; t++) {
+    for (const shape of templates) {
+      if (shape.taps.some(tp => t < tp.delay)) continue;
+      for (const taps of expandTaps(shape.taps, t, text, fires)) {
+        const sig = deepSig(taps);
+        let row = map.get(sig);
+        if (!row) map.set(sig, row = { taps, fires: 0, counts: new Map(), sig });
+        row.fires++;
+        row.counts.set(text[t + 1], (row.counts.get(text[t + 1]) || 0) + 1);
+      }
+    }
+  }
+  const pool = [];
+  for (const row of map.values()) {
+    const vote = voteFrom(row.counts);
+    if (vote.total < 2) continue;
+    const score = (vote.hits + 0.5) / (vote.total + 1) * Math.log(1 + row.fires);
+    pool.push(Object.assign(row, { rows: [...row.counts.entries()], vote: vote.char, score }));
+  }
+  pool.sort(byScore);
+  const grown = pool.slice(0, K);
+  const freq = pool.slice().sort((a, b) => b.fires - a.fires || (a.sig < b.sig ? -1 : 1)).slice(0, K);
+  const keep = new Set();
+  for (const c of index.recs) if (c.depth < D) keep.add(c.id);
+  const base = subsetDoc(doc, keep);
+  const testFrom = split, testTo = text.length;
+  const predictDoc = d => new FeatureTimeNet(d).predict(text);
+  const basePred = predictDoc(base);
+  const withTop = new Set(keep);
+  for (const c of top) withTop.add(c.id);
+  const topPred = predictDoc(subsetDoc(doc, withTop));
+  const withAll = new Set(keep);
+  for (const c of layer) withAll.add(c.id);
+  const eligiblePred = predictDoc(subsetDoc(doc, withAll));
+  const all = new Set();
+  let nAll = 0;
+  for (const c of index.recs) if (c.depth <= D) { all.add(c.id); nAll++; }
+  const allPred = predictDoc(subsetDoc(doc, all));
+  function grownDoc(list) {
+    const d = {
+      neuronModel: base.neuronModel, ftConfig: base.ftConfig,
+      neurons: base.neurons.slice(), synapses: base.synapses.slice(), readout: base.readout.slice(),
+    };
+    list.forEach((g, i) => {
+      const id = 'q' + D + '_' + i, n = g.taps.length, span = Math.max(...g.taps.map(t => t.delay)) + 1;
+      d.neurons.push({ id, type: 'cell', span, count: g.fires, abstract: false, nTaps: n, threshold: Math.ceil(0.75 * n), role: 'pattern' });
+      for (const tp of g.taps) {
+        const pre = tp.kind === 'C' ? tp.id : hexId('in:', tp.ch);
+        d.synapses.push({ pre, post: id, delay: tp.delay, weight: +(1 / n).toFixed(4) });
+      }
+      for (const [ch, votes] of g.rows) d.readout.push({ pre: id, post: hexId('out:', ch), char: ch, votes, weight: 0 });
+    });
+    return d;
+  }
+  const grownPred = predictDoc(grownDoc(grown));
+  const freqPred = predictDoc(grownDoc(freq));
+  const targetSigs = top.map(c => ({ sig: deepSig(c.taps), taps: c.taps }));
+  const below = 'depth ≤ ' + (D - 1);
+  return {
+    rule: 'depth-' + D + ' cells with 2–4 taps onto shallower cells or letters; born when those taps co-occur',
+    templates: templates.length,
+    eligible: layer.length,
+    births: pool.length,
+    base: { note: 'every export cell of ' + below + ', frozen votes', ...behavior(basePred, text, fullPred, testFrom, testTo) },
+    exportTop32: {
+      note: below + ' plus the 32 highest-count depth-' + D + ' cells of this shape, frozen votes',
+      ...behavior(topPred, text, fullPred, testFrom, testTo),
+      examples: top.slice(0, 6).map(c => deepShow(c.taps)),
+    },
+    exportEligible: {
+      note: below + ' plus every eligible depth-' + D + ' cell',
+      n: layer.length,
+      ...behavior(eligiblePred, text, fullPred, testFrom, testTo),
+    },
+    allToDepth: {
+      note: 'every export cell of depth ≤ ' + D + ', frozen votes',
+      n: nAll,
+      ...behavior(allPred, text, fullPred, testFrom, testTo),
+    },
+    frequency: {
+      note: below + ' plus the 32 co-occurring depth-' + D + ' patterns seen most often',
+      ...deepOverlap(freq, targetSigs),
+      ...behavior(freqPred, text, fullPred, testFrom, testTo),
+    },
+    grown: {
+      note: below + ' plus the 32 co-occurring depth-' + D + ' patterns with the best predictive score',
+      ...deepOverlap(grown, targetSigs),
+      ...behavior(grownPred, text, fullPred, testFrom, testTo),
+      examples: grown.slice(0, 6).map(c => deepShow(c.taps) + ' n=' + c.fires),
+    },
+  };
+}
+
 function main() {
   const modelPath = process.argv[2] || path.join(__dirname, 'baseline-frozen.snn.json');
   const samplePath = process.argv[3] || path.join(__dirname, 'sample-dialogue.txt');
@@ -689,6 +831,8 @@ function main() {
       },
     },
     depth2: waveDepth2(doc, text, split, fullPred),
+    depth3: waveFromDepth(doc, text, split, fullPred, 3),
+    depth4: waveFromDepth(doc, text, split, fullPred, 4),
     secs: +((Date.now() - t0) / 1000).toFixed(2),
   };
   const outFile = path.join(__dirname, 'triangulate-report.json');
@@ -696,7 +840,8 @@ function main() {
   console.log(JSON.stringify(report, null, 2));
   const ok = target.length === K && fastMiss === 0 && pool.length > K
     && layers.deep.length >= K && deepPool.length > K && report.deeper.letterLayer.testNextPct > 0
-    && report.depth2.births > K && report.depth2.base.testNextPct > 0;
+    && report.depth2.births > K && report.depth2.base.testNextPct > 0
+    && report.depth3.births > K && report.depth4.births > K;
   console.log(ok ? 'TRIANGULATION DONE' : 'TRIANGULATION FAIL');
   process.exitCode = ok ? 0 : 1;
 }

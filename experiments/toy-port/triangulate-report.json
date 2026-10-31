@@ -332,5 +332,175 @@
       ]
     }
   },
-  "secs": 3.6
+  "depth3": {
+    "rule": "depth-3 cells with 2–4 taps onto shallower cells or letters; born when those taps co-occur",
+    "templates": 34,
+    "eligible": 1091,
+    "births": 1569,
+    "base": {
+      "note": "every export cell of depth ≤ 2, frozen votes",
+      "testNextPct": 74.07,
+      "agreeFullPct": 93.67
+    },
+    "exportTop32": {
+      "note": "depth ≤ 2 plus the 32 highest-count depth-3 cells of this shape, frozen votes",
+      "testNextPct": 75.24,
+      "agreeFullPct": 95.42,
+      "examples": [
+        "h45@0 + h2@7",
+        "h2613@0 + \"d\"@5",
+        "h2613@0 + h205@5",
+        "h59@0 + h2524@2",
+        "h210@0 + h2524@3",
+        "h2482@0 + h2521@4"
+      ]
+    },
+    "exportEligible": {
+      "note": "depth ≤ 2 plus every eligible depth-3 cell",
+      "n": 1091,
+      "testNextPct": 75.15,
+      "agreeFullPct": 95.81
+    },
+    "allToDepth": {
+      "note": "every export cell of depth ≤ 3, frozen votes",
+      "n": 2842,
+      "testNextPct": 75.93,
+      "agreeFullPct": 96.88
+    },
+    "frequency": {
+      "note": "depth ≤ 2 plus the 32 co-occurring depth-3 patterns seen most often",
+      "recallPct": 6.25,
+      "precisionPct": 6.25,
+      "jaccardPct": 3.23,
+      "shared": 2,
+      "recovered": [
+        "h210@0 + h2524@3",
+        "h2482@0 + h2521@4"
+      ],
+      "missed": [
+        "h45@0 + h2@7",
+        "h2613@0 + \"d\"@5",
+        "h2613@0 + h205@5",
+        "h59@0 + h2524@2",
+        "h2506@0 + h2576@3",
+        "h2704@0 + h2524@5"
+      ],
+      "testNextPct": 74.07,
+      "agreeFullPct": 93.67
+    },
+    "grown": {
+      "note": "depth ≤ 2 plus the 32 co-occurring depth-3 patterns with the best predictive score",
+      "recallPct": 6.25,
+      "precisionPct": 6.25,
+      "jaccardPct": 3.23,
+      "shared": 2,
+      "recovered": [
+        "h210@0 + h2524@3",
+        "h2482@0 + h2521@4"
+      ],
+      "missed": [
+        "h45@0 + h2@7",
+        "h2613@0 + \"d\"@5",
+        "h2613@0 + h205@5",
+        "h59@0 + h2524@2",
+        "h2506@0 + h2576@3",
+        "h2704@0 + h2524@5"
+      ],
+      "testNextPct": 74.07,
+      "agreeFullPct": 93.67,
+      "examples": [
+        "h100@0 + h2521@2 n=33",
+        "h100@0 + h2521@2 + h49@7 + h576@9 n=33",
+        "h36@0 + h100@2 + h2521@4 n=33",
+        "h105@0 + h59@2 + h2524@4 n=33",
+        "h2703@0 + h125@7 n=33",
+        "h71@0 + h2703@2 + h596@7 + h125@9 n=33"
+      ]
+    }
+  },
+  "depth4": {
+    "rule": "depth-4 cells with 2–4 taps onto shallower cells or letters; born when those taps co-occur",
+    "templates": 30,
+    "eligible": 1105,
+    "births": 599,
+    "base": {
+      "note": "every export cell of depth ≤ 3, frozen votes",
+      "testNextPct": 75.93,
+      "agreeFullPct": 96.88
+    },
+    "exportTop32": {
+      "note": "depth ≤ 3 plus the 32 highest-count depth-4 cells of this shape, frozen votes",
+      "testNextPct": 76.32,
+      "agreeFullPct": 97.27,
+      "examples": [
+        "h105@0 + h2525@2",
+        "h1513@0 + \"t\"@11",
+        "h95@0 + h2606@2",
+        "h138@0 + h2607@2",
+        "h32@0 + h2654@3",
+        "h49@0 + h2932@2"
+      ]
+    },
+    "exportEligible": {
+      "note": "depth ≤ 3 plus every eligible depth-4 cell",
+      "n": 1105,
+      "testNextPct": 76.32,
+      "agreeFullPct": 97.37
+    },
+    "allToDepth": {
+      "note": "every export cell of depth ≤ 4, frozen votes",
+      "n": 4350,
+      "testNextPct": 77.19,
+      "agreeFullPct": 98.73
+    },
+    "frequency": {
+      "note": "depth ≤ 3 plus the 32 co-occurring depth-4 patterns seen most often",
+      "recallPct": 3.13,
+      "precisionPct": 3.13,
+      "jaccardPct": 1.59,
+      "shared": 1,
+      "recovered": [
+        "h105@0 + h2525@2"
+      ],
+      "missed": [
+        "h1513@0 + \"t\"@11",
+        "h95@0 + h2606@2",
+        "h138@0 + h2607@2",
+        "h32@0 + h2654@3",
+        "h49@0 + h2932@2",
+        "h173@0 + h2864@2 + h2946@6"
+      ],
+      "testNextPct": 75.93,
+      "agreeFullPct": 96.88
+    },
+    "grown": {
+      "note": "depth ≤ 3 plus the 32 co-occurring depth-4 patterns with the best predictive score",
+      "recallPct": 3.13,
+      "precisionPct": 3.13,
+      "jaccardPct": 1.59,
+      "shared": 1,
+      "recovered": [
+        "h105@0 + h2525@2"
+      ],
+      "missed": [
+        "h1513@0 + \"t\"@11",
+        "h95@0 + h2606@2",
+        "h138@0 + h2607@2",
+        "h32@0 + h2654@3",
+        "h49@0 + h2932@2",
+        "h173@0 + h2864@2 + h2946@6"
+      ],
+      "testNextPct": 75.93,
+      "agreeFullPct": 96.88,
+      "examples": [
+        "h105@0 + h2525@2 n=33",
+        "h2525@0 + h165@7 + \"n\"@9 n=33",
+        "h2526@0 + h165@8 n=33",
+        "h2526@0 + h2495@7 n=33",
+        "h2582@0 + h2518@11 n=33",
+        "h2525@0 + h2518@12 n=33"
+      ]
+    }
+  },
+  "secs": 10.57
 }
