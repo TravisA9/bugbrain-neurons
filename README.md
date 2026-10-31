@@ -297,8 +297,27 @@ Each tick of `Agent.tick()` does five things:
 - `node results_v12/eqv11.js`: bit-identity check of v12 vs `legacy/v11` (same checks, including predictK2XL). `[TUNE='{...}'] [NG=2] node results_v12/feat.js` / `wread.js`: record the C-cell spike sets and score idealised readouts on them (feature counters, sharpness / trust weighting, pattern key; linear readout of the net's own weights vs its spiking output).
 - `node results_v11/eqv10.js`: bit-identity check of v11 vs `legacy/v10` (growth, thresholds, episode stats, spike counts, final weights and potentials). `node results_v11/bench.js` / `bench_xl.js`: growth time and ticks/s (`ROOT=legacy/v10` for the old version).
 - `[NG=30] [NE=2] [CASES=bug:v3,recall8:memoryK,cue:brain.json] [VARS='{"off":{},"h":{"hunger":1}}'] node hunger_test.js`: orphan outputs, silent inputs, failed growths and score, with hunger/request variants.
+- `node experiments/toy-port/verify.js`: frozen Play Code Toy Feature–Time net. Predicts the next character of a bundled dialogue and checks agreement with the reference discrete simulator (pass at ≥ 99%). Does not evolve and does not use the runner queue. Details under **Feature–Time toy port** below.
 
 Results are in `RESULTS.md`. Evolved brains are in `champions/`: `v8/` evolved from the memory and memoryK plans, `v7/` cue-then-turn (`cue-*`) and symbol recall (`recall-*`), `v6/` bug flash, `v5/` bug hard, `v4/` bug normal.
+
+## Feature–Time toy port
+
+A frozen Play Code Toy network lives in `experiments/toy-port/`. Each feature cell has taps, which are synapses with a delay in characters. The cell fires when those taps coincide, and a readout vote names the next character. This is a fixed anatomy, so later work can add timing plasticity and compare it with growth. Evolved brains, default plans, and the headless runner are unchanged.
+
+```
+node experiments/toy-port/verify.js
+```
+
+The script loads `baseline-frozen.snn.json`, runs `sample-dialogue.txt`, and compares next-character predictions with the reference simulator `snn-sim.cjs`. It exits 0 when agreement is at least 99%. The measured run is `experiments/toy-port/agreement.json`.
+
+On that dialogue (3423 characters) agreement is **100%**, and the hard-spike set matches at every step. Both the port and the reference score **85.83%** next-letter accuracy here. The full training corpus is not in this repo. The snippet uses the toy's `u:` / `a:` turns and repeats lines that are cell labels in the export (`let us pause for a moment`, `the garden sounds like a good place to visit`, `i heard that`). Summing the exported readout weights and taking the max character agrees with that readout on 96.35% of steps. The port keeps the Toy rule: within a span the most-used cell wins, the longest cell with a vote wins across spans, and a longer confident soft or abstract cell can outrank a short winner below `outrankConf` (0.8).
+
+The membrane uses the engine constants in `js/core/base.js`: rest −70 mV, threshold −55 mV, so one coincident tap is 15 mV. `verify.js` checks that those two constants still match. The winning character is a single output spike, which `Dec.wta` reads back.
+
+`SpikingNet` delivers each spike on the next substep. It has no per-synapse delay. Its `preLag` ring feeds the teacher trace, and CLAW coincidence is "enough input on this substep". In this export a delay of 0 has to count in the same character, along a chain of depth 10, so the experiment keeps its own delay ring and does not route the toy through `SpikingNet`.
+
+The clock is still discrete. One tick is one character. `predictFine(text, sub)` divides each character into `sub` substeps and scales every delay by `sub`. The predictions stay the same, because the membrane is recomputed from the delay line and reset every step, with no leak into the next character. Learning is off: no STDP, no dopamine, no cell birth. Continuous time and timing plasticity are later. More on the files and the API: [experiments/toy-port/README.md](experiments/toy-port/README.md).
 
 ## Running long experiments locally (v25)
 

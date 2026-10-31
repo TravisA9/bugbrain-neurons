@@ -1849,3 +1849,19 @@ v25 in `legacy/v25/`. multitask.json now starts from predictK3 / rewardE / rewar
 
 **Tests.** test_core ALL OK (new: rewardE default, bandit last quarter 1.00 vs rewardK 0.72, cue random 1.00), browser_test ALL OK
 (F: bandit and cue-random default plan rewardE), seq_test OK, run selftest ALL OK (new balanced-fitness check).
+
+## R28 [text] Feature–Time toy port (fixed anatomy)
+
+Frozen Play Code Toy export, run as delay-line coincidence in `experiments/toy-port/`. Learning off. Default plans and `run/` are unchanged. `SpikingNet` stays next-substep delivery with no per-tap delay; this export's delay-0 taps are a same-character chain (depth 10), so the port keeps its own ring and BugBrain's 15 mV tap quantum (rest −70, threshold −55).
+
+`node experiments/toy-port/verify.js` on `sample-dialogue.txt` (3423 characters; the full corpus is not in the repo):
+
+| check | result |
+|---|---|
+| next-letter agreement vs `snn-sim.cjs` | **100%** (3423/3423) |
+| hard-spike set each step | **100%** |
+| next-letter accuracy (port and reference) | 85.83% |
+| summed readout weights vs the Toy readout | 96.35% |
+| 2 and 3 substeps per character | same predictions, 0 idle spikes |
+
+The 85.83% is on a snippet in the toy's `u:` / `a:` format that repeats cell-label lines, not a held-out corpus score. `test_core.js` ALL OK (no change under `js/` or `run/`).
