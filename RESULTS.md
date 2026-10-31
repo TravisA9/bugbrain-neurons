@@ -4272,3 +4272,26 @@ Sources: worker results y206, y209 (linux-pc, Oct 29 ~11 AM-5:40 PM CT); box run
 - **y227** (0.925, memGB 3; k 2536-2543): 64000 cells at book100k / book300k (capacity curve; refs y193 / y207 same growths); 39.1 slot-h.
 - **y224** (0.91, memGB 3; k 2536-2539): 32000 + sched100k at book1M (pairs with y221); 22.4 slot-h.
 - With y221 (36.7 slot-h) the unclaimed heavy pool is ~128 slot-h ≈ 21 h at linux-pc's pace, ≈ 10-11 h per heavy worker plus the running y222 / y219b (chromium runs ~2x slower).
+
+## R105 (Oct 31 2026, 7 AM CT queue review) — **no adoption (v45 / DEFAULTS_VERSION 38 stay)**; **32000 granule cells pass the 16-growth length bar** (y207 + y222 vs 16000 sched100k at 300k +0.0042, 11/4, t 2.9) -> full-set confirmation y223 is now unblocked (v46 candidate); step schedule weakens (24 growths +0.0019, 14/10)
+Sources: y222 (linux-pc, finished 3:31 AM CT Oct 31, 48 runs, 0 errors); y219b partial (chromium, 16 of 32 runs: fixed 0.1 and fixed 0.05 arms; schedule arms now on linux-pc). Paired growth-by-growth (cmp.py).
+### y222 (fresh k 2816-2823, n 8): 32000 granule cells at length
+| comparison | delta | W/L | t | per growth (2816..2823) |
+|---|---|---|---|---|
+| N32000 vs N16000, book300k (0.4324 vs 0.4287) | +0.0037 | 5/3 | 1.6 | -.0070 +.0060 -.0015 -.0025 +.0045 +.0090 +.0115 +.0100 |
+| N32000 vs N16000 sched100k, book300k | **+0.0044** | 6/2 | 1.7 | -.0085 +.0035 +.0055 -.0020 +.0015 +.0100 +.0140 +.0110 |
+| N32000 sched100k vs N16000 sched100k, 300k | +0.0046 | 6/2 | 1.6 | -.0095 +.0090 +.0050 +.0060 +.0040 -.0040 +.0170 +.0090 |
+| N32000 sched100k vs N32000, 300k | +0.0002 | 4/4 | 0.1 | |
+| N16000 sched100k vs N16000, 300k | -0.0006 | 3/5 | -0.6 | +.0015 +.0025 -.0070 -.0005 +.0030 -.0010 -.0025 -.0010 |
+| N32000 vs N16000, book100k | +0.0011 | 4/2 | 0.9 | -.0010 -.0035 .0000 +.0010 +.0025 +.0075 +.0020 .0000 |
+- **Pooled with y207 (16 growths):** 32000 vs 16000 at 300k **+0.0056 (13/3, t 3.8)**; vs 16000 sched100k **+0.0042 (11/4, t 2.9)**; book100k -0.0003 (7/6). The pre-registered y222 bar (beat 16000 sched100k at 300k, losses not > 60%, t > -2, mean > 0) is met. Caveat: y207 was the discovery set; on the fresh half alone the gain is +0.0044 (6/2, t 1.7), same sign and size.
+- 100k -> 300k gain per growth: 16000 +0.0064 mean, 32000 +0.0091 mean; the extra cells pay later in the text, not at 100k. The plateau after ~10k still reads as a capacity limit.
+- **Verdict:** 32000 cells (v46 candidate) go to the full-set confirmation **y223** (16 fresh k 2824-2839, 8 tasks; already queued with after = y222, now runnable). Adopt only if no task is worse there; runtime ~2x v45 is the cost.
+### Step schedule (Q42 / I102), pooled
+- sched100k vs fixed 0.1 at 16000 cells, book300k: y206 + y219a + y222 = **24 growths +0.0019 (14/10, t 1.6)**; at 32000 cells (y222) +0.0002 (4/4). y219b half (fresh k 2808-2815): fixed 0.05 vs fixed 0.1 at 300k -0.0006 (5/3, t -0.3; g2811 -0.0105).
+- The step is a small, unproven effect, about one third of the 16000 -> 32000 capacity effect, and it vanishes at 32000 cells. Final verdict waits for y219b's schedule arms (linux-pc).
+### Workers (R105, ~7:20 AM CT; heartbeats = lease-renewal commits on origin/queue)
+- linux-pc: healthy on 9086a23 (R104 code); finished y222 at 3:31 AM CT, claimed y219b (released by chromium) at 3:31 AM CT, renewing every 30 min (last 7:01 AM CT). Resumes from chromium's 16 registered runs.
+- chromium: **silent since 9:34 PM CT Oct 30** (clean "release ... (running)" of y219b = worker stopped / PC shut down, after 16 of 32 runs); worker file still 609911c. ~10 h. Not crash-looping. Cursor machine disconnected.
+- tacobell: worker Disabled on purpose (Travis); laptop disconnected this morning -> no push route.
+### Queue (R105): no new jobs. Unclaimed heavy pool = y223 (11.2 slot-h), y226 (18.7), y227 (39.1), y224 (22.4), y221 (36.7) = 128 slot-h + ~15 slot-h left of y219b. At linux-pc's observed pace (y222: 48.5 slot-h in 15.4 h ≈ 3.1 slot-h per hour) that is ~45 h of linux-pc alone, ~25-30 h if chromium returns. Order already right: y219b -> y223 (confirmation) -> y226 -> y227 -> y224 -> y221.

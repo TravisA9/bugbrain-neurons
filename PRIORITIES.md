@@ -1,3 +1,24 @@
+# PRIORITIES (R105, Oct 31 2026, ~7:20 AM CT; **v45 / DEFAULTS_VERSION 38** unchanged — v45 = plan deepURSx3 with a 16000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2; v44 kept as deepURSx3v44; **v46 candidate = 32000 cells**, waiting for y223)
+
+## R105 update (queue review, morning)
+- **32000 cells passed the 16-growth length bar:** y207 + y222 vs 16000 sched100k at book300k +0.0042 (11/4, t 2.9); vs fixed 16000 +0.0056 (13/3, t 3.8); fresh half (y222) +0.0044 (6/2). book100k neutral (-0.0003, 7/6). Next: full-set confirmation y223 (now unblocked); adopt v46 only if no task is worse.
+- **Step schedule weakens:** sched100k vs fixed 0.1 pooled 24 growths +0.0019 (14/10, t 1.6); none at 32000 cells (+0.0002, 4/4). y219b schedule arms running on linux-pc decide it.
+- chromium silent since 9:34 PM CT Oct 30 (clean stop); linux-pc carries the queue alone. TacoBell + Chromium disconnected -> R105 docs not pushed (bundle in /workspace/R105). Queue unchanged, so workers lose nothing.
+
+## Ranked open questions (R105)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I101 | v46 = 32000 cells: full-set confirmation (8 tasks, 16 fresh) | y223 (next on linux-pc) |
+| 2 | Q42 / I102 | Step schedule held-out at 300k; 1M with 16000 vs 32000 (capacity or rule?) | y219b (running), y224, y221 |
+| 3 | I101 | Is 32000 the knee? 64000 at 100k / 300k | y227 |
+| 4 | I104 / Q46 | Sized order3: cx4dT context x4 vs x2 vs x1 on the full set | y226 |
+| 5 | I98 | cx3 sized recipe (y211 passed except book10k -0.003 4/12) | (later) |
+Engineering: sparse granule update path (runtime linear in cells; v46 would be ~2x v45, 64000 ~4x). Generation loops wait for the length rule.
+Low: analogy / evolution. Rejected ideas stay rejected (incl. smooth granule schedule, demand claws as built, cortex lr 0.15, constant granLr 0.05).
+
+## Worker notes (R105)
+linux-pc: healthy on 9086a23, y219b since 3:31 AM CT (last renewal 7:01 AM CT). chromium: silent since 9:34 PM CT Oct 30 (released y219b cleanly after 16/32 runs), code 609911c. tacobell: Disabled on purpose; laptop offline this morning.
+
 # PRIORITIES (R104, Oct 30 2026, ~7:30 PM CT; **v45 / DEFAULTS_VERSION 38** unchanged — v45 = plan deepURSx3 with a 16000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2; v44 kept as deepURSx3v44)
 
 ## R104 update (queue review, evening)
