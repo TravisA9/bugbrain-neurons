@@ -18,7 +18,7 @@
     "note": "axonal delays on a 3.125 ms grid; window is still one bin",
     "agreePct": 100,
     "spikeSetAgreePct": 100,
-    "secs": 12.16
+    "secs": 12.94
   },
   "narrowWindow": {
     "note": "12.5 ms window, shorter than one character, so phase-locked taps still meet on one bin",
@@ -29,7 +29,7 @@
     "agreePct": 100,
     "nextPct": 85.83,
     "spikeSetAgreePct": 100,
-    "secs": 12.13,
+    "secs": 10.58,
     "misses": []
   },
   "wideWindow": {
@@ -82,7 +82,7 @@
     ]
   },
   "plasticity": {
-    "rule": "three-factor: STDP eligibility x per-cell teacher (vote vs next character)",
+    "rule": "three-factor eligibility, then project taps onto sum=1 inside a partner-preserving band",
     "lr": 0.03,
     "tauPre": 10,
     "tauPost": 10,
@@ -90,63 +90,132 @@
     "aMinus": 0.3,
     "sub": 8,
     "window": 12,
-    "onlineNextPct": 43.45,
-    "replayNextPct": 43.42,
-    "replayAgreeVsDiscretePct": 45.19,
-    "onlineAgreeVsDiscretePct": 46.6,
-    "drift": {
-      "synapses": 21547,
-      "changed": 921,
-      "meanAbsDw": 0.005302494680245282,
-      "maxAbsDw": 0.5,
-      "largest": [
-        {
-          "cell": "h2",
-          "delay": 1,
-          "letter": true,
-          "w0": 0.5,
-          "w": 1
-        },
-        {
-          "cell": "h6",
-          "delay": 1,
-          "letter": true,
-          "w0": 0.5,
-          "w": 1
-        },
-        {
-          "cell": "h7",
-          "delay": 1,
-          "letter": true,
-          "w0": 0.5,
-          "w": 1
-        },
-        {
-          "cell": "h17",
-          "delay": 0,
-          "letter": true,
-          "w0": 0.5,
-          "w": 1
-        },
-        {
-          "cell": "h90",
-          "delay": 0,
-          "letter": true,
-          "w0": 0.5,
-          "w": 1
-        },
-        {
-          "cell": "h100",
-          "delay": 1,
-          "letter": true,
-          "w0": 0.5,
-          "w": 1
-        }
-      ]
+    "prePlasticNextPct": 83.11,
+    "chosen": "taps+readout",
+    "tapsOnly": {
+      "readoutLearn": false,
+      "voteLr": 0,
+      "partnersHold": true,
+      "onlineNextPct": 83.11,
+      "replayNextPct": 83.11,
+      "replayAgreeVsWidePct": 99.59,
+      "replayAgreeVsDiscretePct": 94.04,
+      "onlineAgreeVsDiscretePct": 94.04,
+      "drift": {
+        "synapses": 21547,
+        "changed": 1133,
+        "meanAbsDw": 0.002114822621637502,
+        "maxAbsDw": 0.24600994024918627,
+        "largest": [
+          {
+            "cell": "h2701",
+            "delay": 0,
+            "letter": true,
+            "w0": 0.5,
+            "w": 0.254
+          },
+          {
+            "cell": "h2701",
+            "delay": 1,
+            "letter": true,
+            "w0": 0.5,
+            "w": 0.746
+          },
+          {
+            "cell": "h133",
+            "delay": 0,
+            "letter": true,
+            "w0": 0.5,
+            "w": 0.254
+          },
+          {
+            "cell": "h133",
+            "delay": 1,
+            "letter": true,
+            "w0": 0.5,
+            "w": 0.746
+          },
+          {
+            "cell": "h7103",
+            "delay": 1,
+            "letter": true,
+            "w0": 0.5,
+            "w": 0.746
+          },
+          {
+            "cell": "h7103",
+            "delay": 0,
+            "letter": true,
+            "w0": 0.5,
+            "w": 0.254
+          }
+        ]
+      },
+      "secs": 34.12
     },
-    "secs": 34.51
+    "withVotes": {
+      "readoutLearn": true,
+      "voteLr": 0.01,
+      "partnersHold": true,
+      "onlineNextPct": 84.51,
+      "replayNextPct": 86.03,
+      "replayAgreeVsWidePct": 94.92,
+      "replayAgreeVsDiscretePct": 90.86,
+      "onlineAgreeVsDiscretePct": 92,
+      "drift": {
+        "synapses": 21547,
+        "changed": 1125,
+        "meanAbsDw": 0.0020375819864073908,
+        "maxAbsDw": 0.24600962045806246,
+        "largest": [
+          {
+            "cell": "h133",
+            "delay": 0,
+            "letter": true,
+            "w0": 0.5,
+            "w": 0.254
+          },
+          {
+            "cell": "h133",
+            "delay": 1,
+            "letter": true,
+            "w0": 0.5,
+            "w": 0.746
+          },
+          {
+            "cell": "h7103",
+            "delay": 1,
+            "letter": true,
+            "w0": 0.5,
+            "w": 0.746
+          },
+          {
+            "cell": "h7103",
+            "delay": 0,
+            "letter": true,
+            "w0": 0.5,
+            "w": 0.254
+          },
+          {
+            "cell": "h3764",
+            "delay": 0,
+            "letter": false,
+            "w0": 0.5,
+            "w": 0.254
+          },
+          {
+            "cell": "h3764",
+            "delay": 2,
+            "letter": true,
+            "w0": 0.5,
+            "w": 0.746
+          }
+        ]
+      },
+      "secs": 32.4
+    }
   },
   "deterministic": true,
-  "secs": 78.59,
+  "secs": 109.87,
   "pass": true
 }

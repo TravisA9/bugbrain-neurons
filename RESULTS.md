@@ -1879,4 +1879,13 @@ The 85.83% is on a snippet in the toy's `u:` / `a:` format that repeats cell-lab
 
 Phase-locked delays: a window shorter than one character does not change this net. A window past one character still counts the previous character's tap.
 
-Plasticity: STDP eligibility × per-cell teacher (fired cell's frozen vote vs the next character). `lr` 0.03, `tauPre`/`tauPost` 10, `tauElig` 50, `aMinus` 0.3. Weights clamped to `[0, 2/nTaps]`. No new synapses. On the 37.5 ms window, 921 synapses move (mean |Δw| 0.0053, max 0.5). Replay with learning off: next-letter 43.42%, agreement with discrete 45.19%. The rule adapts weights; on this snippet the doubled taps fire too easily and accuracy falls. `verify.js` discrete path still 100% vs `snn-sim.cjs`.
+Plasticity: STDP eligibility × per-cell teacher (fired cell's vote vs the next character). `lr` 0.03, `tauPre`/`tauPost` 10, `tauElig` 50, `aMinus` 0.3. Weights were first clamped to `[0, 2/nTaps]`, which let one tap meet the whole hard threshold; replay accuracy fell to 43.42%.
+
+Stabilized rule: project each cell's taps onto `sum(w) = 1` inside a band `[0.5, sMax] * w0`, with `sMax = 1 + 0.9 * (need/(need-1) - 1)` and `need = ceil(0.75 * n)`. A missing partner then drops the hard-path charge below `n * 15` mV, and the heaviest `need-1` taps stay under the soft threshold. No new synapses.
+
+| plasticity on the 37.5 ms window | replay next-letter | vs frozen wide window | vs discrete |
+|---|---|---|---|
+| taps only | **83.11%** (same as pre-plastic) | 99.59% | 94.04% |
+| taps + vote smoothing (`voteLr` 0.01) | **86.03%** | 94.92% | 90.86% |
+
+1133 taps move in the taps-only pass (mean |Δw| 0.0021, max 0.246). `partnersHold` is true. The script selects vote smoothing because it stays within 2 points of the pre-plastic accuracy and beats taps-only. `verify.js` is still the discrete path and is unchanged by vote updates (they are restored on the shared net after each continuous run).

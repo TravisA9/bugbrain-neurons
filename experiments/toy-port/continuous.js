@@ -18,9 +18,13 @@
  *   BugBrain's three-factor shape. Each tap keeps a pre trace and an eligibility e.
  *   A presynaptic arrival (after the axonal delay) depresses e by aMinus * xPost;
  *   a postsynaptic spike potentiates e by xPre. At the end of the character the
- *   next input is the teacher, per cell: if that cell fired and its frozen vote
- *   equals the next character, M = +1, otherwise M = -1, and w += lr * M * e.
- *   Weights stay in [0, 2/nTaps]. Readout votes are not plastic.
+ *   next input is the teacher, per cell: if that cell fired and its vote equals
+ *   the next character, M = +1, otherwise M = -1, and w += lr * M * e.
+ *   Then each cell's taps are projected back into a band around 1/nTaps and
+ *   rescaled so they still sum to 1. A missing partner therefore always drops
+ *   the hard-path charge below threshold, and the heaviest (need-1) taps stay
+ *   short of the soft threshold. Optional readout smoothing (readoutLearn)
+ *   mixes the cell's vote toward the same teacher; it is off unless it helps.
  *
  *   node experiments/toy-port/continuous.js [model.snn.json] [sample.txt]
  * Exit 0 when the no-memory settings still match the discrete runner at >= 99%.
@@ -38,6 +42,8 @@ class ContinuousToy {
     if (this.sub < 1) throw new Error('sub must be >= 1');
     if (this.window < 1) throw new Error('window must be >= 1');
     this.plasticity = !!opts.plasticity;
+    this.readoutLearn = !!opts.readoutLearn;
+    this.voteLr = opts.voteLr != null ? opts.voteLr : 0.01;
     this.lr = opts.lr != null ? opts.lr : LR;
     this.aMinus = opts.aMinus != null ? opts.aMinus : A_MINUS;
     this.tauPre = opts.tauPre || TAU_PRE;
@@ -76,9 +82,27 @@ class ContinuousToy {
       }
       this.groups[i] = list;
     }
+    this.readoutState = net.cells.map(c => {
+      if (!c.vote) return null;
+      const counts = new Map();
+      let total = 0;
+      for (const [ch, n] of c.votes) { counts.set(ch, n); total += n; }
+      return { counts, total: total || 1, vote: { char: c.vote.char, conf: c.vote.conf, total: c.vote.total } };
+    });
     this.pred = null;
     this.hardTrace = null;
     this.resetDynamics();
+  }
+
+  _installVotes() {
+    if (!this.readoutLearn) return;
+    if (!this._voteSnap) this._voteSnap = this.cells.map(c => c.vote);
+    for (let i = 0; i < this.cells.length; i++) if (this.readoutState[i]) this.cells[i].vote = this.readoutState[i].vote;
+  }
+
+  _restoreVotes() {
+    if (!this._voteSnap) return;
+    for (let i = 0; i < this.cells.length; i++) this.cells[i].vote = this._voteSnap[i];
   }
 
   resetDynamics() {
@@ -120,6 +144,12 @@ class ContinuousToy {
   run(text, opts) {
     if (typeof text !== 'string') throw new Error('text must be a string');
     this.resetDynamics();
+    this._installVotes();
+    try { return this._run(text, opts); }
+    finally { this._restoreVotes(); }
+  }
+
+  _run(text, opts) {
     const trace = opts && opts.trace;
     const sub = this.sub, win = this.window, frac = this.frac, learn = this.plasticity;
     const N = this.N;
@@ -185,9 +215,10 @@ class ContinuousToy {
           if (quiet) continue;
           const hardTh = V_REST + n * SPIKE_MV;
           const softTh = V_REST + c.threshold * SPIKE_MV;
+          // 1e-6 keeps a full coincidence that sums to 1 from missing the threshold on float dust.
           let kind = 0;
-          if (V_REST + gH >= hardTh) kind = 1;
-          else if (frac < 1 && trig && n >= 3 && V_REST + gS >= softTh) kind = 2;
+          if (V_REST + gH >= hardTh - 1e-6) kind = 1;
+          else if (frac < 1 && trig && n >= 3 && V_REST + gS >= softTh - 1e-6) kind = 2;
           if (!kind) continue;
           refUntil[ci] = t + win;
           if (learn) { xPost[ci] += 1; for (const tp of taps) tp.e += tp.xPre; }
@@ -217,6 +248,98 @@ class ContinuousToy {
     return preds;
   }
 
+  // Band relative to w0 = 1/n. sMax stays under need/(need-1), so the heaviest
+  // (need-1) taps cannot meet the soft threshold. sMin keeps every partner alive.
+  // After the step the taps are mixed back onto the simplex sum(w) = 1, so a
+  // missing spike always drops the hard-path charge below n * 15 mV.
+  _band(n, need) {
+    const sMin = 0.5;
+    const raw = need > 1 ? need / (need - 1) : 1;
+    const sMax = 1 + 0.9 * (raw - 1);
+    return { sMin, sMax };
+  }
+
+  _project(taps, need) {
+    const n = taps.length;
+    if (n <= 1) {
+      for (const tp of taps) { tp.w = tp.w0; tp.amp = SPIKE_MV; }
+      return;
+    }
+    const { sMin, sMax } = this._band(n, need);
+    for (const tp of taps) {
+      const lo = sMin * tp.w0, hi = sMax * tp.w0;
+      if (tp.w < lo) tp.w = lo;
+      else if (tp.w > hi) tp.w = hi;
+    }
+    let s = 0;
+    for (const tp of taps) s += tp.w;
+    if (!(s > 0)) s = 1;
+    const scaled = taps.map(tp => tp.w / s);
+    const inside = alpha => {
+      for (let i = 0; i < n; i++) {
+        const w = (1 - alpha) * scaled[i] + alpha * taps[i].w0;
+        if (w < sMin * taps[i].w0 - 1e-12 || w > sMax * taps[i].w0 + 1e-12) return false;
+      }
+      return true;
+    };
+    let alpha = 0;
+    if (!inside(0)) {
+      let lo = 0, hi = 1;
+      for (let k = 0; k < 24; k++) {
+        const mid = (lo + hi) / 2;
+        if (inside(mid)) hi = mid; else lo = mid;
+      }
+      alpha = hi;
+    }
+    for (let i = 0; i < n; i++) {
+      const tp = taps[i];
+      tp.w = (1 - alpha) * scaled[i] + alpha * tp.w0;
+      tp.amp = Math.abs(tp.w - tp.w0) < 1e-12 ? SPIKE_MV : SPIKE_MV * (tp.w / tp.w0);
+    }
+  }
+
+  _nudgeVote(ci, next) {
+    const st = this.readoutState[ci];
+    if (!st) return;
+    const keep = 1 - this.voteLr;
+    for (const [ch, n] of st.counts) st.counts.set(ch, n * keep);
+    st.counts.set(next, (st.counts.get(next) || 0) + this.voteLr * st.total);
+    let best = st.vote.char, bv = -1;
+    for (const [ch, n] of st.counts) if (n > bv) { bv = n; best = ch; }
+    st.vote.char = best;
+    st.vote.conf = st.total ? bv / st.total : 0;
+  }
+
+  // True when no cell can hard-fire without one of its taps, and the heaviest
+  // (need-1) taps stay under the soft threshold.
+  partnersHold() {
+    for (let ci = 0; ci < this.cells.length; ci++) {
+      const taps = this.groups[ci];
+      const n = taps.length;
+      if (n < 2) continue;
+      const need = this.cells[ci].threshold;
+      const { sMin } = this._band(n, need);
+      let sumW = 0, minW = Infinity;
+      const ws = [];
+      for (const tp of taps) {
+        sumW += tp.w; ws.push(tp.w);
+        if (tp.w < minW) minW = tp.w;
+        if (tp.w < sMin * tp.w0 - 1e-8) return false;
+      }
+      if (Math.abs(sumW - 1) > 1e-6) return false;
+      if (minW <= 0) return false;
+      const without = n * SPIKE_MV * (sumW - minW);
+      if (without >= n * SPIKE_MV - 1e-6) return false;
+      if (n >= 3 && need > 1) {
+        ws.sort((a, b) => b - a);
+        let top = 0;
+        for (let i = 0; i < need - 1 && i < ws.length; i++) top += ws[i];
+        if (n * SPIKE_MV * top >= need * SPIKE_MV - 1e-6) return false;
+      }
+    }
+    return true;
+  }
+
   _teach(next, fired) {
     const lr = this.lr;
     for (let ci = 0; ci < this.cells.length; ci++) {
@@ -224,13 +347,9 @@ class ContinuousToy {
       const vote = this.cells[ci].vote;
       if (!vote) continue;
       const M = vote.char === next ? 1 : -1;
-      for (const tp of this.groups[ci]) {
-        let w = tp.w + lr * M * tp.e;
-        const cap = 2 * tp.w0;
-        if (w < 0) w = 0; else if (w > cap) w = cap;
-        tp.w = w;
-        tp.amp = w === tp.w0 ? SPIKE_MV : SPIKE_MV * (w / tp.w0);
-      }
+      for (const tp of this.groups[ci]) tp.w += lr * M * tp.e;
+      this._project(this.groups[ci], this.cells[ci].threshold);
+      if (this.readoutLearn) this._nudgeVote(ci, next);
     }
   }
 }
@@ -337,23 +456,43 @@ function main() {
       spikeSetAgreePct: pct(setAgree(sim.hardTrace, dTrace), text.length),
       secs: +((Date.now() - t1) / 1000).toFixed(2),
       misses: firstMiss(preds, discrete, text, 6),
+      preds,
     };
   }
   const narrow = vsDiscrete({ sub: 8, window: 4, plasticity: false });
   const wide = vsDiscrete({ sub: 8, window: 12, plasticity: false });
+  const widePreds = wide.preds;
+  delete narrow.preds; delete wide.preds;
 
-  const learnNet = new ContinuousToy(discNet, { sub: 8, window: 12, plasticity: true, msPerChar: 25 });
-  const tLearn = Date.now();
-  const online = learnNet.run(text);
-  const drift = learnNet.weightDrift();
-  learnNet.plasticity = false;
-  const replay = learnNet.run(text);
-  const learnSecs = +((Date.now() - tLearn) / 1000).toFixed(2);
+  function learnPass(readoutLearn) {
+    const sim = new ContinuousToy(discNet, { sub: 8, window: 12, plasticity: true, readoutLearn, msPerChar: 25 });
+    const t1 = Date.now();
+    const online = sim.run(text);
+    const drift = sim.weightDrift();
+    const held = sim.partnersHold();
+    sim.plasticity = false;
+    const replay = sim.run(text);
+    return {
+      readoutLearn, voteLr: readoutLearn ? sim.voteLr : 0,
+      partnersHold: held,
+      onlineNextPct: nextPct(online, text),
+      replayNextPct: nextPct(replay, text),
+      replayAgreeVsWidePct: pct(replay.filter((p, i) => p === widePreds[i]).length, text.length),
+      replayAgreeVsDiscretePct: pct(replay.filter((p, i) => p === discrete[i]).length, text.length),
+      onlineAgreeVsDiscretePct: pct(online.filter((p, i) => p === discrete[i]).length, text.length),
+      drift, secs: +((Date.now() - t1) / 1000).toFixed(2),
+    };
+  }
+  const tapsOnly = learnPass(false);
+  const withVotes = learnPass(true);
+  const near = r => r.partnersHold && r.replayNextPct >= wide.nextPct - 2;
+  const chosen = near(withVotes) && withVotes.replayNextPct > tapsOnly.replayNextPct + 0.3 ? withVotes : tapsOnly;
 
   const again = new ContinuousToy(discNet, { sub: 1, window: 1, plasticity: false }).run(text);
   const deterministic = samePreds(again, matched);
 
-  const ok = matchPred >= 99 && matchSpike >= 99 && finePred >= 99 && fineSpike >= 99 && deterministic && drift.changed > 0;
+  const ok = matchPred >= 99 && matchSpike >= 99 && finePred >= 99 && fineSpike >= 99 && deterministic
+    && chosen.drift.changed > 0 && chosen.partnersHold && chosen.replayNextPct >= wide.nextPct - 2 && chosen.replayNextPct > 60;
   const report = {
     sample: path.basename(samplePath),
     chars: text.length,
@@ -378,14 +517,12 @@ function main() {
       ...wide,
     },
     plasticity: {
-      rule: 'three-factor: STDP eligibility x per-cell teacher (vote vs next character)',
+      rule: 'three-factor eligibility, then project taps onto sum=1 inside a partner-preserving band',
       lr: LR, tauPre: TAU_PRE, tauPost: TAU_POST, tauElig: TAU_ELIG, aMinus: A_MINUS,
       sub: 8, window: 12,
-      onlineNextPct: nextPct(online, text),
-      replayNextPct: nextPct(replay, text),
-      replayAgreeVsDiscretePct: pct(replay.filter((p, i) => p === discrete[i]).length, text.length),
-      onlineAgreeVsDiscretePct: pct(online.filter((p, i) => p === discrete[i]).length, text.length),
-      drift, secs: learnSecs,
+      prePlasticNextPct: wide.nextPct,
+      chosen: chosen.readoutLearn ? 'taps+readout' : 'taps',
+      tapsOnly, withVotes,
     },
     deterministic,
     secs: +((Date.now() - t0) / 1000).toFixed(2),
@@ -393,7 +530,9 @@ function main() {
   };
   fs.writeFileSync(path.join(__dirname, 'continuous-report.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report, null, 2));
-  console.log(ok ? 'CONTINUOUS PORT PASS (discrete match >= 99%, weights moved)' : 'CONTINUOUS PORT FAIL');
+  console.log(ok
+    ? `CONTINUOUS PORT PASS (discrete match >= 99%, replay ${chosen.replayNextPct}% vs pre-plastic ${wide.nextPct}%)`
+    : 'CONTINUOUS PORT FAIL');
   process.exitCode = ok ? 0 : 1;
 }
 

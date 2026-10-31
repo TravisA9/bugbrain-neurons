@@ -64,18 +64,25 @@ On `sample-dialogue.txt` (3423 characters):
 
 Taps in this export are phase-locked: letters arrive at the start of a character and delays are whole characters. A window shorter than one character still sees the same coincidence. A window of 37.5 ms still counts a tap from the previous character, so different cells fire (spike sets agree on 27.55% of steps) and 5.96% of the predicted letters change.
 
-Plasticity is BugBrain's three-factor shape (`lr` 0.03, `tauPre`/`tauPost` 10, `tauElig` 50, `aMinus` 0.3, from `PL_DEFAULTS` in `js/core/base.js`). A presynaptic arrival after the axonal delay and a postsynaptic spike write an eligibility trace. At the end of the character the next input is the teacher for each cell that fired: `M = +1` when that cell's frozen vote is the next character, and `M = -1` otherwise. `w += lr * M * e`, clamped to `[0, 2/nTaps]`. The synapse list does not grow or shrink. Readout votes stay frozen.
+Plasticity is BugBrain's three-factor shape (`lr` 0.03, `tauPre`/`tauPost` 10, `tauElig` 50, `aMinus` 0.3, from `PL_DEFAULTS` in `js/core/base.js`). A presynaptic arrival after the axonal delay writes the pre trace and depresses eligibility by `aMinus * xPost`. A postsynaptic spike adds the pre trace to eligibility. At the end of the character the next input is the teacher for each cell that fired: `M = +1` when that cell's vote is the next character, and `M = -1` otherwise, and `w += lr * M * e`.
 
-With the 37.5 ms window, one pass changes 921 of 21547 synapses (mean |Δw| 0.0053, max 0.5). Replay with those weights, learning off, scores 43.42% next-letter accuracy and agrees with the discrete runner on 45.19% of characters. The rule does adapt the fixed taps. On this snippet it does not improve the readout: doubling a tap lets a cell fire without its partner, and the coincidence gets looser.
+The weights are then projected so partners cannot drop out:
+
+- Every tap stays in a band around `w0 = 1/nTaps`. The floor is `0.5 * w0`. The ceiling is `w0 * (1 + 0.9 * (need/(need-1) - 1))`, with `need = ceil(0.75 * nTaps)`. That ceiling sits under `need/(need-1)`, so the heaviest `need - 1` taps cannot meet the soft threshold.
+- The cell's taps are rescaled to sum to 1 (mixed with the original equal weights if a pure rescale would leave the band). A full coincidence is still exactly `n * 15` mV. Leaving any one tap out drops the hard-path charge strictly below that, so a heavy tap cannot fire alone.
+
+The synapse list does not grow or shrink. With only that projection, replay on the 37.5 ms window stays at the pre-plastic accuracy, **83.11%**, and 99.59% of predicted letters match the frozen wide-window run. 1133 synapses move (mean |Δw| 0.0021, max 0.246). `partnersHold` is true.
+
+Readout votes can learn too (`readoutLearn: true`, `voteLr` 0.01). For a cell that fired, its count distribution is mixed toward the next character: `p <- (1 - voteLr) * p + voteLr * onehot(next)`. The vote character is the new mode. On this snippet that raises replay accuracy from 83.11% to **86.03%** (discrete baseline 85.83%). `continuous.js` reports vote smoothing when it stays within 2 points of the pre-plastic accuracy and beats taps-only; otherwise it reports taps-only. The class leaves `readoutLearn` off unless you pass it. Votes on the shared discrete net are restored after each run, so `verify.js` still sees the export.
 
 ```javascript
 const { loadFeatureTime } = require('./toy_net');
 const { ContinuousToy } = require('./continuous');
 const net = loadFeatureTime('./baseline-frozen.snn.json');
-const sim = new ContinuousToy(net, { sub: 8, window: 12, plasticity: true });
-const online = sim.run(text);   // weights move after each character
+const sim = new ContinuousToy(net, { sub: 8, window: 12, plasticity: true, readoutLearn: true });
+const online = sim.run(text);   // weights and votes move after each character
 sim.plasticity = false;
-const replay = sim.run(text);   // same weights, no further updates
+const replay = sim.run(text);   // learned weights and votes, no further updates
 ```
 
 ## API
@@ -111,7 +118,7 @@ The continuous path is still not a grown brain:
 
 - The cells and synapses are the Toy export. There is no genome, no morphogen, and no new cell.
 - It is not on the evolution loop or the worker queue. Default plans (`predictK3`, `rewardE`) are unchanged.
-- The teacher is the next character compared with that cell's frozen vote. It is not dopamine from the bug arena or the bandit, and it is not the sequence plan's column teacher.
-- Readout votes do not learn. There is no presynaptic normalisation, no metaplasticity, and no homeostatic threshold.
+- The teacher is the next character compared with that cell's vote. It is not dopamine from the bug arena or the bandit, and it is not the sequence plan's column teacher.
+- Readout learning, when on, only smooths that cell's existing vote. There is no presynaptic normalisation across cells, no metaplasticity, and no homeostatic threshold.
 - Time is the export's character step (25 ms, 8 bins here), not four substeps of a tissue tick.
 - The coincidence window is a rectangle on axonal arrival times. A grown CLAW cell is a fast membrane over inputs that are already simultaneous.
