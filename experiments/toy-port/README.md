@@ -143,7 +143,22 @@ The common depth-1 cell has two taps: the letter-cell that fires now (delay 0) a
 | letters + 32 most co-occurring pairs | 34.38% (11/32) | 65.01% | 77.22% |
 | letters + 32 best predictive pairs | 25.00% (8/32) | 63.94% | 77.31% |
 
-The export's own top 32 depth-1 cells do not help this snippet: their frozen votes slightly override the letter layer (62.38% vs 62.96%). The whole depth-1 layer adds about 4 points (62.96% → 66.96%) and moves agreement with the full net from 77.80% to 83.06%. About 11 points remain to the full net's 77.78%, in cells deeper than this two-tap shape. A budget of 32 grown pairs, chosen by how often they co-occur, picks up most of the gain that 32 cells can (65.01%) and recovers 11 of the export's top 32. Predictive competition recovers 8 and scores 63.94%.
+The export's own top 32 depth-1 cells do not help this snippet: their frozen votes slightly override the letter layer (62.38% vs 62.96%). The whole depth-1 layer adds about 4 points (62.96% → 66.96%) and moves agreement with the full net from 77.80% to 83.06%. Counting every depth-1 cell, not only that two-tap shape, reaches **68.23%**.
+
+## Third wave: depth-2 taps
+
+Depth 2 is mostly a cell from the previous layer firing now, plus another shallower cell or a letter a few steps back (`C0@0+C1@2`, `C1@0+L@4`, and similar 2–4 tap shapes). `triangulate.js` births those patterns when the taps co-occur on the growth prefix (1497 candidates) and keeps 32. Held-out tail, full net **77.78%**:
+
+| set | recall of the 32 busiest depth-2 cells | next-letter | agreement with the full net |
+|---|---|---|---|
+| all depth ≤ 1 (769 cells) | — | 68.23% | 84.91% |
+| depth ≤ 1 + export's top 32 depth-2, frozen votes | 100% | 69.98% | 87.44% |
+| depth ≤ 1 + 669 grown-style depth-2 cells | — | 71.93% | 91.43% |
+| every cell of depth ≤ 2 (1512) | — | **74.07%** | **93.67%** |
+| depth ≤ 1 + 32 most co-occurring patterns | 9.38% (3/32) | 69.49% | 86.56% |
+| depth ≤ 1 + 32 best predictive patterns | 9.38% (3/32) | 69.20% | 85.88% |
+
+Depth 2 is worth about **6 points** (68.23% → 74.07%). A budget of 32 recovers only 3 of the export's busiest depth-2 motifs and about 1 point of behavior, close to what those 32 export cells themselves add (69.98%). About **4 points** remain after every depth-2 cell (74.07% vs 77.78%), in depth 3 and 4.
 
 ## What still differs from a grown BugBrain
 

@@ -1915,4 +1915,19 @@ Same script. Eligible target: 341 depth-1 cells with exactly those two delays, o
 | letters + 32 most co-occurring | 34.38% (11/32) | 65.01% | 77.22% |
 | letters + 32 predictive | 25.00% (8/32) | 63.94% | 77.31% |
 
-The whole delay-2 layer adds about 4 points. About 11 points remain to the full net (77.78%). Frequency again beats predictive score on anatomy. `js/` and `run/` unchanged.
+The whole delay-2 layer adds about 4 points. All depth ≤ 1 cells, not only that shape, reach 68.23%.
+
+## R28e [text] Depth-2 cell-to-cell taps
+
+Same script, same split. Depth 2 is a shallower cell now plus another tap a few steps back. Birth when those taps co-occur (1497), keep 32. Held-out full net 77.78%.
+
+| set | recall of top 32 depth-2 | held-out next-letter | agree with full net |
+|---|---|---|---|
+| depth ≤ 1 (769) | — | 68.23% | 84.91% |
+| + export top 32 depth-2 | 100% | 69.98% | 87.44% |
+| + 669 shallower-tap depth-2 cells | — | 71.93% | 91.43% |
+| all depth ≤ 2 (1512) | — | **74.07%** | **93.67%** |
+| + 32 most co-occurring | 9.38% (3/32) | 69.49% | 86.56% |
+| + 32 predictive | 9.38% (3/32) | 69.20% | 85.88% |
+
+Depth ≤ 2 is worth about 6 points over depth ≤ 1. A 32-cell budget matches the export's own top 32 (about +1 point) and recovers 3 of those motifs. About 4 points remain to the full net. `js/` and `run/` unchanged.
