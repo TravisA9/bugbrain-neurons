@@ -1,0 +1,90 @@
+{
+  "id": "y224_1x_N32k_sched_book1M",
+  "question": "Q42",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/lib.js",
+    "run/r100_jobs.js",
+    "run/r102r_jobs.js",
+    "run/r103_jobs.js",
+    "run/r104_jobs.js"
+  ],
+  "title": "capacity vs rule at 1M symbols: 32000 cells + sched100k at book1M on k 2536-2539 (16000-cell 1M arms in y221, same growths)",
+  "priority": 0.91,
+  "estHours": 3.7,
+  "slotHours": 22.4,
+  "phone": false,
+  "flag": "text",
+  "memGB": 3,
+  "accept": {
+    "note": "Pairs with y221: if 32000 sched100k beats 16000 sched100k at 1M by more than at 300k, capacity is the long-text limit; if equal, the step rule is. Runs are long (~5.6 h each on linux-pc)."
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2536",
+        "--force"
+      ],
+      "label": "v44 N32000 sched100k book1M g2536 n1",
+      "env": {
+        "BB_OUT": "results/phone/y224_1x_N32k_sched_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2537",
+        "--force"
+      ],
+      "label": "v44 N32000 sched100k book1M g2537 n1",
+      "env": {
+        "BB_OUT": "results/phone/y224_1x_N32k_sched_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2538",
+        "--force"
+      ],
+      "label": "v44 N32000 sched100k book1M g2538 n1",
+      "env": {
+        "BB_OUT": "results/phone/y224_1x_N32k_sched_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2539",
+        "--force"
+      ],
+      "label": "v44 N32000 sched100k book1M g2539 n1",
+      "env": {
+        "BB_OUT": "results/phone/y224_1x_N32k_sched_book1M.jsonl"
+      }
+    }
+  ]
+}
