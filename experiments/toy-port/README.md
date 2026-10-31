@@ -129,7 +129,21 @@ Held-out next-letter accuracy:
 | 32 most frequent bigrams on the prefix | **71.88%** (23/32) | 34.11% | 37.68% |
 | 32 kept by predictive score | 40.63% (13/32) | 31.09% | 35.93% |
 
-No substitution raised a score: every better pair was already in the trophic set. The export's letter layer is closer to "keep the bigrams that fire often" than to "keep the sharpest predictors." Those 32 motifs, even with the export's own votes, are far below the full net (27.78% vs 77.78%). The rest of the accuracy sits in the deeper cell-to-cell taps, which this wave does not grow.
+No substitution raised a score: every better pair was already in the trophic set. The export's letter layer is closer to "keep the bigrams that fire often" than to "keep the sharpest predictors." Those 32 motifs, even with the export's own votes, are far below the full net (27.78% vs 77.78%). Most of that gap is the rest of the letter layer, not the deeper taps. All 314 letter cells, with their frozen votes, score **62.96%** on the same held-out tail and agree with the full net on 77.80% of positions.
+
+## Second wave: delay-0 plus delay-2
+
+The common depth-1 cell has two taps: the letter-cell that fires now (delay 0) and either a raw letter or another letter-cell from two steps back (delay 2). On this sample at most one letter cell fires at a time, so each such cell is a trigram. `triangulate.js` also grows that layer on top of the 314 export letter cells. A pair is born whenever it co-occurs at least twice on the growth prefix (357 births). Competition keeps 32.
+
+| set, on the held-out tail | recall of the 32 highest-count depth-1 cells | next-letter | agreement with the full net |
+|---|---|---|---|
+| 314 letter cells only | — | 62.96% | 77.80% |
+| letters + those 32 export cells, frozen votes | 100% | 62.38% | 77.60% |
+| letters + all 341 eligible depth-1 cells | — | **66.96%** | **83.06%** |
+| letters + 32 most co-occurring pairs | 34.38% (11/32) | 65.01% | 77.22% |
+| letters + 32 best predictive pairs | 25.00% (8/32) | 63.94% | 77.31% |
+
+The export's own top 32 depth-1 cells do not help this snippet: their frozen votes slightly override the letter layer (62.38% vs 62.96%). The whole depth-1 layer adds about 4 points (62.96% → 66.96%) and moves agreement with the full net from 77.80% to 83.06%. About 11 points remain to the full net's 77.78%, in cells deeper than this two-tap shape. A budget of 32 grown pairs, chosen by how often they co-occur, picks up most of the gain that 32 cells can (65.01%) and recovers 11 of the export's top 32. Predictive competition recovers 8 and scores 63.94%.
 
 ## What still differs from a grown BugBrain
 

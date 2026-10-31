@@ -12,9 +12,13 @@
  *   one adaptation round — substitute one letter when that strictly raises the score.
  * The readout counts are taken only on that prefix. The last 30% is held out.
  *
- * Distance: anatomy is the overlap of (letter, delay) pairs with the export's
- * 32 motifs. Behavior is next-letter agreement on the held-out slice, read with
- * the same FeatureTimeNet readout as the toy port.
+ * Distance: anatomy is the overlap of tap signatures with the export. Behavior
+ * is next-letter agreement on the held-out slice, read with the same
+ * FeatureTimeNet readout as the toy port.
+ *
+ * Second wave: depth-1 cells. In this export the common shape is two taps,
+ * a letter-cell at delay 0 plus either a letter or a letter-cell at delay 2.
+ * Those are born from co-activity on top of the export's 314 letter cells.
  *
  *   node experiments/toy-port/triangulate.js [model.snn.json] [sample.txt]
  * Deterministic. Does not touch js/ or run/.
@@ -199,6 +203,146 @@ function brief(cells) {
   return cells.slice(0, 8).map(c => show(c.c1) + show(c.c0) + ' n=' + c.fires + (c.vote ? '→' + show(c.vote) : ''));
 }
 
+function readoutRows(readout, id) {
+  const counts = new Map();
+  for (const r of readout) if (r.pre === id) counts.set(r.char, (counts.get(r.char) || 0) + r.votes);
+  return [...counts.entries()];
+}
+
+function deepSig(taps) {
+  return taps.map(t => (t.kind === 'C' ? 'C:' + t.id : 'L:' + hexId('', t.ch)) + '@' + t.delay).sort().join('|');
+}
+function deepShow(taps) {
+  return taps.slice().sort((a, b) => a.delay - b.delay).map(t => (t.kind === 'C' ? t.id : show(t.ch)) + '@' + t.delay).join(' + ');
+}
+
+// Letter cells, plus depth-1 cells whose two taps are delay 0 and delay 2 onto
+// those letter cells or onto raw letters.
+function loadLayers(doc) {
+  const inputs = new Map(doc.neurons.filter(n => n.type === 'input').map(n => [n.id, n.char]));
+  const byPost = new Map();
+  for (const s of doc.synapses) {
+    if (!byPost.has(s.post)) byPost.set(s.post, []);
+    byPost.get(s.post).push(s);
+  }
+  const letters = [];
+  const letterIds = new Set();
+  for (const c of doc.neurons) {
+    if (c.type !== 'cell') continue;
+    const taps = byPost.get(c.id) || [];
+    if (taps.length !== 2 || !taps.every(t => inputs.has(t.pre))) continue;
+    const byDelay = new Map(taps.map(t => [t.delay, inputs.get(t.pre)]));
+    if (!byDelay.has(0) || !byDelay.has(1)) continue;
+    letters.push({ id: c.id, c0: byDelay.get(0), c1: byDelay.get(1), fires: c.count, rows: readoutRows(doc.readout, c.id), taps: null });
+    letterIds.add(c.id);
+  }
+  const deep = [];
+  for (const c of doc.neurons) {
+    if (c.type !== 'cell') continue;
+    const raw = byPost.get(c.id) || [];
+    if (raw.length !== 2) continue;
+    const delays = raw.map(t => t.delay).sort((a, b) => a - b);
+    if (delays[0] !== 0 || delays[1] !== 2) continue;
+    const taps = [];
+    let ok = true;
+    for (const t of raw) {
+      if (letterIds.has(t.pre)) taps.push({ kind: 'C', id: t.pre, delay: t.delay });
+      else if (inputs.has(t.pre)) taps.push({ kind: 'L', ch: inputs.get(t.pre), delay: t.delay });
+      else ok = false;
+    }
+    if (!ok) continue;
+    const rows = readoutRows(doc.readout, c.id);
+    deep.push({ id: c.id, fires: c.count, rows, taps, sig: deepSig(taps), abstract: !!c.abstract });
+  }
+  deep.sort((a, b) => b.fires - a.fires || (a.id < b.id ? -1 : 1));
+  return { letters, deep };
+}
+
+function letterFires(letters, text) {
+  const at = Array.from({ length: text.length }, () => []);
+  for (const L of letters) {
+    for (let t = 1; t < text.length; t++) if (text[t] === L.c0 && text[t - 1] === L.c1) at[t].push(L.id);
+  }
+  return at;
+}
+
+function finishDeep(row) {
+  const vote = voteFrom(row.counts);
+  const score = vote.total ? (vote.hits + 0.5) / (vote.total + 1) * Math.log(1 + row.fires) : 0;
+  return Object.assign(row, { rows: [...row.counts.entries()], vote: vote.char, hits: vote.hits, total: vote.total, score, sig: deepSig(row.taps) });
+}
+
+function collectDeep(at, text, end) {
+  const map = new Map();
+  function add(taps, t) {
+    const sig = deepSig(taps);
+    let row = map.get(sig);
+    if (!row) map.set(sig, row = { taps, fires: 0, counts: new Map() });
+    row.fires++;
+    const nxt = text[t + 1];
+    row.counts.set(nxt, (row.counts.get(nxt) || 0) + 1);
+  }
+  for (let t = 2; t + 1 < end; t++) {
+    const now = at[t], past = at[t - 2], ch = text[t - 2];
+    for (const a of now) {
+      add([{ kind: 'C', id: a, delay: 0 }, { kind: 'L', ch, delay: 2 }], t);
+      for (const b of past) add([{ kind: 'C', id: a, delay: 0 }, { kind: 'C', id: b, delay: 2 }], t);
+    }
+  }
+  return [...map.values()].map(finishDeep).filter(c => c.total >= 2);
+}
+
+function layerDoc(letters, deep) {
+  const chars = new Set();
+  for (const L of letters) { chars.add(L.c0); chars.add(L.c1); for (const [ch] of L.rows) chars.add(ch); }
+  for (const d of deep) for (const t of d.taps) if (t.kind === 'L') chars.add(t.ch);
+  for (const d of deep) for (const [ch] of d.rows) chars.add(ch);
+  const neurons = [];
+  for (const ch of chars) neurons.push({ id: hexId('in:', ch), type: 'input', char: ch });
+  for (const ch of chars) neurons.push({ id: hexId('out:', ch), type: 'output', char: ch });
+  const synapses = [], readout = [];
+  const addCell = (id, span, count, taps, rows) => {
+    neurons.push({ id, type: 'cell', span, count, abstract: false, nTaps: taps.length, threshold: Math.ceil(0.75 * taps.length), role: 'pattern' });
+    for (const t of taps) {
+      const pre = t.kind === 'C' ? t.id : hexId('in:', t.ch);
+      synapses.push({ pre, post: id, delay: t.delay, weight: +(1 / taps.length).toFixed(4) });
+    }
+    for (const [ch, n] of rows) readout.push({ pre: id, post: hexId('out:', ch), char: ch, votes: n, weight: 0 });
+  };
+  for (const L of letters) addCell(L.id, 2, L.fires, [{ kind: 'L', ch: L.c0, delay: 0 }, { kind: 'L', ch: L.c1, delay: 1 }], L.rows);
+  const ordered = deep.slice().sort((a, b) => b.fires - a.fires || (a.sig < b.sig ? -1 : 1));
+  ordered.forEach((d, i) => addCell(d.id || ('n' + i), 3, d.fires, d.taps, d.rows));
+  return { neuronModel: { softFire: 0.75 }, ftConfig: { softOutrank: true, outrankConf: 0.8 }, neurons, synapses, readout };
+}
+
+function predictLayer(letters, deep, text) {
+  return new FeatureTimeNet(layerDoc(letters, deep)).predict(text);
+}
+
+function deepOverlap(grown, target) {
+  const g = new Set(grown.map(c => c.sig));
+  let shared = 0;
+  const recovered = [], missed = [];
+  for (const c of target) {
+    if (g.has(c.sig)) { shared++; if (recovered.length < 6) recovered.push(deepShow(c.taps)); }
+    else if (missed.length < 6) missed.push(deepShow(c.taps));
+  }
+  const union = g.size + target.length - shared;
+  return {
+    recallPct: target.length ? +(100 * shared / target.length).toFixed(2) : 0,
+    precisionPct: g.size ? +(100 * shared / g.size).toFixed(2) : 0,
+    jaccardPct: union ? +(100 * shared / union).toFixed(2) : 0,
+    shared, recovered, missed,
+  };
+}
+
+function behavior(preds, text, fullPred, from, to) {
+  return {
+    testNextPct: nextPct(preds, text, from, to).pct,
+    agreeFullPct: agreePct(preds, fullPred, from, to).pct,
+  };
+}
+
 function main() {
   const modelPath = process.argv[2] || path.join(__dirname, 'baseline-frozen.snn.json');
   const samplePath = process.argv[3] || path.join(__dirname, 'sample-dialogue.txt');
@@ -236,6 +380,27 @@ function main() {
       }
       if ((best ? best.vote : null) !== grownPred[t]) fastMiss++;
     }
+  }
+
+  const layers = loadLayers(doc);
+  const at = letterFires(layers.letters, text);
+  let maxActive = 0;
+  for (const row of at) if (row.length > maxActive) maxActive = row.length;
+  const deepPool = collectDeep(at, text, split);
+  deepPool.sort(byScore);
+  const deepTarget = layers.deep.slice(0, K);
+  const deepGrown = deepPool.slice(0, K);
+  const deepFreq = deepPool.slice().sort((a, b) => b.fires - a.fires || (a.sig < b.sig ? -1 : 1)).slice(0, K);
+  const letterPred = predictLayer(layers.letters, [], text);
+  const deepExportPred = predictLayer(layers.letters, deepTarget, text);
+  const deepAllPred = predictLayer(layers.letters, layers.deep, text);
+  const deepGrownPred = predictLayer(layers.letters, deepGrown, text);
+  const deepFreqPred = predictLayer(layers.letters, deepFreq, text);
+  const shapes = { cellAndLetter: 0, cellAndCell: 0 };
+  for (const c of deepTarget) {
+    const kinds = c.taps.map(t => t.kind).sort().join('');
+    if (kinds === 'CL') shapes.cellAndLetter++;
+    else if (kinds === 'CC') shapes.cellAndCell++;
   }
 
   const testFrom = split, testTo = text.length;
@@ -284,12 +449,47 @@ function main() {
       examples: brief(adapted.cells),
     },
     readoutCheckMisses: fastMiss,
+    deeper: {
+      rule: 'depth-1 cells with taps at delay 0 and delay 2 onto the 314 letter cells or raw letters',
+      eligible: layers.deep.length,
+      maxLetterCellsAtOnce: maxActive,
+      births: deepPool.length,
+      targetShapes: shapes,
+      letterLayer: {
+        note: 'all 314 export letter cells, frozen votes',
+        ...behavior(letterPred, text, fullPred, testFrom, testTo),
+      },
+      exportTop32: {
+        note: 'letter layer plus the 32 highest-count depth-1 cells, frozen votes',
+        ...behavior(deepExportPred, text, fullPred, testFrom, testTo),
+        examples: deepTarget.slice(0, 6).map(c => deepShow(c.taps)),
+      },
+      exportAll: {
+        note: 'letter layer plus every eligible depth-1 cell, frozen votes',
+        n: layers.deep.length,
+        ...behavior(deepAllPred, text, fullPred, testFrom, testTo),
+      },
+      frequency: {
+        note: 'letter layer plus the 32 delay-0/2 pairs that co-occur most on the growth prefix',
+        ...deepOverlap(deepFreq, deepTarget),
+        ...behavior(deepFreqPred, text, fullPred, testFrom, testTo),
+        agreeExportPct: agreePct(deepFreqPred, deepExportPred, testFrom, testTo).pct,
+      },
+      grown: {
+        note: 'letter layer plus the 32 co-active delay-0/2 pairs with the best predictive score',
+        ...deepOverlap(deepGrown, deepTarget),
+        ...behavior(deepGrownPred, text, fullPred, testFrom, testTo),
+        agreeExportPct: agreePct(deepGrownPred, deepExportPred, testFrom, testTo).pct,
+        examples: deepGrown.slice(0, 6).map(c => deepShow(c.taps) + ' n=' + c.fires),
+      },
+    },
     secs: +((Date.now() - t0) / 1000).toFixed(2),
   };
   const outFile = path.join(__dirname, 'triangulate-report.json');
   fs.writeFileSync(outFile, JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report, null, 2));
-  const ok = target.length === K && fastMiss === 0 && pool.length > K;
+  const ok = target.length === K && fastMiss === 0 && pool.length > K
+    && layers.deep.length >= K && deepPool.length > K && report.deeper.letterLayer.testNextPct > 0;
   console.log(ok ? 'TRIANGULATION DONE' : 'TRIANGULATION FAIL');
   process.exitCode = ok ? 0 : 1;
 }

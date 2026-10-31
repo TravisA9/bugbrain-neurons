@@ -1901,4 +1901,18 @@ Stabilized rule: project each cell's taps onto `sum(w) = 1` inside a band `[0.5,
 | frequent bigrams | **71.88%** (23/32) | 34.11% | 37.68% |
 | predictive trophic | 40.63% (13/32) | 31.09% | 35.93% |
 
-The export letter layer resembles frequency more than sharpness. The 32 motifs do not carry the full net's accuracy; that gap is the deeper taps. `js/` and `run/` unchanged.
+The export letter layer resembles frequency more than sharpness. The 32 motifs do not carry the full net's accuracy. All 314 letter cells score 62.96% on the same tail (agree with the full net 77.80%), so most of the 28%→78% gap was the rest of the letter layer.
+
+## R28d [text] Depth-1 taps: delay 0 plus delay 2
+
+Same script. Eligible target: 341 depth-1 cells with exactly those two delays, onto letter cells or raw letters (top 32: 22 cell+letter, 10 cell+cell). At most one letter cell fires at a time on this sample, so each cell is a trigram. Birth from co-occurrence on the growth prefix (357), keep 32. Held-out tail unchanged.
+
+| set | recall of top 32 depth-1 | held-out next-letter | agree with full net |
+|---|---|---|---|
+| 314 letter cells | — | 62.96% | 77.80% |
+| letters + export top 32, frozen votes | 100% | 62.38% | 77.60% |
+| letters + all 341 eligible | — | **66.96%** | **83.06%** |
+| letters + 32 most co-occurring | 34.38% (11/32) | 65.01% | 77.22% |
+| letters + 32 predictive | 25.00% (8/32) | 63.94% | 77.31% |
+
+The whole delay-2 layer adds about 4 points. About 11 points remain to the full net (77.78%). Frequency again beats predictive score on anatomy. `js/` and `run/` unchanged.

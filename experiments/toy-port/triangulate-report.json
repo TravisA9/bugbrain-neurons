@@ -150,5 +150,99 @@
     ]
   },
   "readoutCheckMisses": 0,
-  "secs": 2.27
+  "deeper": {
+    "rule": "depth-1 cells with taps at delay 0 and delay 2 onto the 314 letter cells or raw letters",
+    "eligible": 341,
+    "maxLetterCellsAtOnce": 1,
+    "births": 357,
+    "targetShapes": {
+      "cellAndLetter": 22,
+      "cellAndCell": 10
+    },
+    "letterLayer": {
+      "note": "all 314 export letter cells, frozen votes",
+      "testNextPct": 62.96,
+      "agreeFullPct": 77.8
+    },
+    "exportTop32": {
+      "note": "letter layer plus the 32 highest-count depth-1 cells, frozen votes",
+      "testNextPct": 62.38,
+      "agreeFullPct": 77.6,
+      "examples": [
+        "h1@0 + h5@2",
+        "h3@0 + \"\\n\"@2",
+        "h100@0 + \" \"@2",
+        "h36@0 + h100@2",
+        "h79@0 + h71@2",
+        "h182@0 + \" \"@2"
+      ]
+    },
+    "exportAll": {
+      "note": "letter layer plus every eligible depth-1 cell, frozen votes",
+      "n": 341,
+      "testNextPct": 66.96,
+      "agreeFullPct": 83.06
+    },
+    "frequency": {
+      "note": "letter layer plus the 32 delay-0/2 pairs that co-occur most on the growth prefix",
+      "recallPct": 34.38,
+      "precisionPct": 34.38,
+      "jaccardPct": 20.75,
+      "shared": 11,
+      "recovered": [
+        "h1@0 + h5@2",
+        "h3@0 + \"\\n\"@2",
+        "h100@0 + \" \"@2",
+        "h36@0 + h100@2",
+        "h79@0 + h71@2",
+        "h34@0 + \"e\"@2"
+      ],
+      "missed": [
+        "h182@0 + \" \"@2",
+        "h173@0 + \"e\"@2",
+        "h8@0 + \":\"@2",
+        "h71@0 + \"d\"@2",
+        "h48@0 + h2490@2",
+        "h598@0 + \"d\"@2"
+      ],
+      "testNextPct": 65.01,
+      "agreeFullPct": 77.22,
+      "agreeExportPct": 93.48
+    },
+    "grown": {
+      "note": "letter layer plus the 32 co-active delay-0/2 pairs with the best predictive score",
+      "recallPct": 25,
+      "precisionPct": 25,
+      "jaccardPct": 14.29,
+      "shared": 8,
+      "recovered": [
+        "h100@0 + \" \"@2",
+        "h79@0 + h71@2",
+        "h576@0 + \" \"@2",
+        "h60@0 + \" \"@2",
+        "h82@0 + \" \"@2",
+        "h596@0 + h125@2"
+      ],
+      "missed": [
+        "h1@0 + h5@2",
+        "h3@0 + \"\\n\"@2",
+        "h36@0 + h100@2",
+        "h182@0 + \" \"@2",
+        "h173@0 + \"e\"@2",
+        "h8@0 + \":\"@2"
+      ],
+      "testNextPct": 63.94,
+      "agreeFullPct": 77.31,
+      "agreeExportPct": 96.59,
+      "examples": [
+        "h79@0 + \"t\"@2 n=66",
+        "h79@0 + h71@2 n=44",
+        "h6@0 + \"_\"@2 n=35",
+        "h100@0 + h132@2 n=33",
+        "h105@0 + h59@2 n=33",
+        "h105@0 + \"d\"@2 n=33"
+      ]
+    }
+  },
+  "secs": 2.64
 }
