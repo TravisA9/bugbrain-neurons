@@ -517,7 +517,9 @@ class SpikingNet {
     if (oT) { const spk = this.spk; for (let s = 0; s < this.nSpk; s++) { const i = spk[s]; if (i < nO) this.gSym = i; else break; } }   // R83c: the symbol input that just arrived = the output that was right (seq tasks: output m <-> symbol m)
     const gw = oT && params.granWin > 0, gA = gw ? (this.gAcc || (this.gAcc = new Float32Array(this.N))) : null;   // R83c granWin: the presynaptic activity is each granule's spike count since the last teaching event (the window the outputs were read in), not its decayed trace at the event
     const gG = gw && params.granGain > 0, o1 = o0 + nO;   // R83d granGain: learned output gain psi of the granule pathway (ws = psi x learned weight u), see below
-    if (gA) { const spk = this.spk, gr = this.g.gran; for (let s = 0; s < this.nSpk; s++) { const i = spk[s]; if (gr[i]) gA[i]++; else if (gG && i >= o0 && i < o1) gA[i]++; } }
+    const sp = gA && params.granSparse !== 0 && !(params.granAnneal > 0) && !this.gd;   // R107 granSparse (default on, bit-identical): only the granules that spiked in the read window are visited (see granSparseStep)
+    if (gA) { const spk = this.spk, gr = this.g.gran; if (sp) { const aL = this.gActL || (this.gActL = new Int32Array(this.N)); let nA = this.gActN || 0; for (let s = 0; s < this.nSpk; s++) { const i = spk[s]; if (gr[i]) { if (gA[i]++ === 0) aL[nA++] = i; } else if (gG && i >= o0 && i < o1) gA[i]++; } this.gActN = nA; }
+      else for (let s = 0; s < this.nSpk; s++) { const i = spk[s]; if (gr[i]) gA[i]++; else if (gG && i >= o0 && i < o1) gA[i]++; } }
     const L0 = this.dList, plN = this.p.plateau; let ev = false; for (let q = 0; q < L0.length; q++) if (plat[L0[q]] === plN) { ev = true; break; } if (!ev) return;
     const lT = params.granLrT > 0 ? params.granLrT : 0, nEv = lT ? (this.gEv = (this.gEv || 0) + 1) : 0;   // R100 granLrT (global, 0/undefined = off, bit-identical off): granule step schedule tied to the teaching events seen (~ symbols): granLr until granLrT events, then granLrLate (default granLr / 2); granLrShape 1 = smooth: late + (granLr - late) x T / (T + events)
     const L = oT ? (this.gOutL || (this.gOutL = Int32Array.from({ length: nO }, (_, m) => o0 + m))) : L0;
@@ -526,6 +528,7 @@ class SpikingNet {
     let U = null; if (gG) { if (!this.gU) { this.gU = new Float32Array(K.length); for (let r = 0; r < K.length; r++) this.gU[r] = ws[K[r]]; this.gPsi = params.granGain0 > 0 ? params.granGain0 : 0; } U = this.gU; }
     const aT = params.granAnneal > 0 ? params.granAnneal : 0, aMn = params.granAnnealMin > 0 ? params.granAnnealMin : 0, gC = aT ? (this.gCnt || (this.gCnt = new Float32Array(this.N))) : null;   // R91 granAnneal: per-granule step decays with the granule's use count (a count-based / consolidating estimate: rare combinations learn fast, common ones average finely); floor granAnnealMin x granLr
     let oS = 0, dPs = 0; if (gG) for (let q = 0; q < nO; q++) oS += gA[o0 + q];
+    if (sp && oT) { this.granSparseStep(L, S, K, ws, pr, wMax, lr, ref, D, U, gA, gG, oS, o0, nO); return; }
     for (let q = 0; q < L.length; q++) { const i = L[q], t = oT ? (q === this.gSym ? 1 : 0) : plat[i] === plN ? 1 : 0; let d = 0;
       let xx = 0; for (let r = S[q]; r < S[q + 1]; r++) { const k = K[r], x = gA ? gA[pr[k]] / params.granWin : xT[pr[k]] * xg; if (x >= 0.01) { d += (U ? U[r] : ws[k]) * x; xx += x * x; } }
       const y = Math.min(1, d / ref), er = t - y, g = oT ? (xx > 0 ? lr * ref / xx : 0) : lr;   // R83c output mode: normalised LMS (step / input power: stable for granLr < 1 at any granule count)
@@ -536,8 +539,40 @@ class SpikingNet {
     // (granGain: psi rises while the granule prediction points where the outputs under-predict the arriving symbol and falls where it adds
     //  false alarms, so the pathway self-silences when it does not reduce the outputs' error; local: one gain per granule->output projection)
     if (gC) { if (!this.granL) { const L = []; for (let i = 0; i < this.N; i++) if (this.g.gran[i]) L.push(i); this.granL = Int32Array.from(L); } const Lg = this.granL, nLg = this.granLn != null ? this.granLn : Lg.length; for (let q = 0; q < nLg; q++) { const j = Lg[q], x = gA ? gA[j] / params.granWin : xT[j] * xg; if (x >= 0.01) gC[j]++; } }   // R91: count this teaching event for every granule active in the read window
-    if (gA) gA.fill(0);
+    if (gA) { gA.fill(0); this.gActN = 0; }
     if (this.gd) this.granDemandEvent();   // R102: once per teaching event, after this window's spikes have been counted
+  }
+  /* R107 granSparse: the same NLMS event as granStep (output mode, read window), visiting only the granules that spiked since the last
+   * teaching event instead of every granule -> output synapse. The active synapse indices are sorted, so every sum runs in the original
+   * order (bit-identical). The granGain rescale (ws = psi x u) stays dense. */
+  granSparseStep(L, S, K, ws, pr, wMax, lr, ref, D, U, gA, gG, oS, o0, nO) {
+    if (!this.gRS) { const N = this.N, nL = L.length, c = new Int32Array(N + 1); for (let r = 0; r < K.length; r++) c[pr[K[r]] + 1]++; for (let i = 0; i < N; i++) c[i + 1] += c[i];
+      const R = new Int32Array(K.length), f = c.slice(0, N); for (let r = 0; r < K.length; r++) R[f[pr[K[r]]]++] = r;
+      const Q = new Int32Array(K.length); let mono = true; for (let q = 0; q < nL; q++) for (let r = S[q]; r < S[q + 1]; r++) { Q[r] = q; if (r > S[q] && pr[K[r]] < pr[K[r - 1]]) mono = false; }
+      const P = Array.from({ length: K.length }, (_, r) => r).sort((x, y) => K[x] - K[y]), KS = new Int32Array(K.length), pos = new Int32Array(K.length); for (let p = 0; p < P.length; p++) { KS[p] = K[P[p]]; pos[P[p]] = p; }
+      this.gRS = c; this.gRR = R; this.gRQ = Q; this.gRmono = mono; this.gRB = new Int32Array(K.length); this.gRo = new Int32Array(nL + 1); this.gRf = new Int32Array(nL);
+      this.gRKS = KS; this.gRpos = pos; if (U) { const Uw = this.gRUw = new Float32Array(K.length); for (let r = 0; r < K.length; r++) Uw[pos[r]] = U[r]; } }
+    const c = this.gRS, RR = this.gRR, Q = this.gRQ, aL = this.gActL, nA = this.gActN || 0, W = params.granWin, nL = L.length, B = this.gRB, off = this.gRo, pos = this.gRpos, Uw = this.gRUw;
+    let Bs;
+    if (this.gRmono) {   // granules ascending -> within each output the synapse indices come out ascending (= the dense loop order); counting sort by output
+      const A = aL.subarray(0, nA); A.sort(); off.fill(0);
+      for (let a = 0; a < nA; a++) { const j = A[a]; if (gA[j] / W < 0.01) continue; for (let p = c[j], e = c[j + 1]; p < e; p++) off[Q[RR[p]] + 1]++; }
+      for (let q = 0; q < nL; q++) off[q + 1] += off[q]; const fp = this.gRf; for (let q = 0; q < nL; q++) fp[q] = off[q];
+      for (let a = 0; a < nA; a++) { const j = A[a]; if (gA[j] / W < 0.01) continue; for (let p = c[j], e = c[j + 1]; p < e; p++) { const r = RR[p]; B[fp[Q[r]]++] = r; } }
+      Bs = B;
+    } else {             // fallback: sort the active synapse indices
+      let nB = 0; for (let a = 0; a < nA; a++) { const j = aL[a]; if (gA[j] / W < 0.01) continue; for (let p = c[j], e = c[j + 1]; p < e; p++) B[nB++] = RR[p]; }
+      Bs = B.subarray(0, nB); Bs.sort(); off.fill(0); for (let b = 0; b < nB; b++) off[Q[Bs[b]] + 1]++; for (let q = 0; q < nL; q++) off[q + 1] += off[q];
+    }
+    let dPs = 0;
+    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
+      for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], x = gA[pr[K[r]]] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += x * x; }
+      const i = L[q], y = Math.min(1, d / ref), er = t - y, g = xx > 0 ? lr * ref / xx : 0;
+      if (gG) { const n = oS > 0 ? gA[i] / oS : 1 / nO, cc = n + this.gPsi * (y - n); dPs += (t - cc) * (y - n); }
+      if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
+      for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], x = gA[pr[k]] / W; if (U) { const u = U[r] + g * x * er; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; } const w = ws[k] + g * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
+    if (gG) { const ps = this.gPsi = Math.min(1, Math.max(0, this.gPsi + params.granGain * dPs)), KS = this.gRKS; for (let p = 0; p < KS.length; p++) ws[KS[p]] = ps * Uw[p]; if (D) { D.psi = ps; D.pn = (D.pn || 0) + 1; D.ps = (D.ps || 0) + ps; } }   // (rescale in synapse order: same values, sequential writes)
+    for (let a = 0; a < nA; a++) gA[aL[a]] = 0; this.gActN = 0; if (gG) for (let q = 0; q < nO; q++) gA[o0 + q] = 0;
   }
   // R85 granIso (global param, 0/undefined = off): with granTgt 1, the granule -> output synapses do not make the output cells
   // 'receivers' of the prediction-cell machinery (teacher AHP, trust, receiver pool): the output cells keep their v40 dynamics

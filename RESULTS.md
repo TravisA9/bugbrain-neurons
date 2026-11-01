@@ -4339,3 +4339,27 @@ Sources: y219b (linux-pc, finished 9:34 AM CT, 32 runs, 0 errors), y226 (linux-p
 - **y228** (0.915, memGB 3; fresh k 2856-2863; after y227): 64000 vs 32000 at book300k (held-out leg for the 64000 knee; counts only if y227 shows a 300k gain); 44 slot-h (~7-8 h wall).
 - **y230** (0.905, memGB 4; fresh k 2864-2879): cx4dT context x1 + cortex x2 (order3 / K4 / seqchoice), + striatum x1 (seqchoice only; the striatum grows only with an outcome, box g2864 order3 identical to context x1), and the 1x reference; 6.1 slot-h (~1 h). Box smoke g2864 order3: x1 0.7825, x1 + cortex x2 0.80, 1x 0.9675.
 - Depth: linux-pc ~9 h left of y227 then y228 / y229 / y230; chromium ~5 h left of y224 then y229 / y228. Unclaimed ~17 h of wall work on top of the two running jobs ≈ 13-15 h per heavy worker.
+
+## R107 (Nov 1 2026, 7 AM CT queue review) — **no adoption** (DEFAULTS_VERSION stays 39 / v46 = 32000 cells); y227: 64000 cells gain at book300k small and not significant (+0.0020, 4/3) -> held-out legs y228 (300k) + new y231 (100k) decide; **sparse granule update (P.granSparse=1) bit-identical, 1.26-1.30x faster on book**; chromium silent since 10:39 PM CT Oct 31
+Sources: y227 (linux-pc, finished 6:27 AM CT Nov 1, 16 runs, 0 errors; 17.8 h wall vs 6.5 h estimate). References y193 / y206 / y207 / y222 (same growths k 2536-2543 where present). Paired growth-by-growth (an107.py).
+### y227 (k 2536-2543, n 8): 64000 granule cells (v46 settings x2 cells)
+| comparison | book100k | book300k |
+|---|---|---|
+| 64000 vs 32000 (v46) | +0.0046 (0.4143 vs 0.4097, 7/0, t 4.2) | +0.0020 (0.4181 vs 0.4161, 4/3, t 1.4) |
+| 64000 vs 16000 | +0.0029 (5/3, t 1.8) | **+0.0095 (8/0, t 4.5)** |
+| 64000 vs 16000 sched100k | +0.0029 (5/3, t 1.8) | +0.0059 (7/0, t 4.1) |
+| ref: 32000 vs 16000 (16 growths, R105) | -0.0003 (7/6) | +0.0056 (13/3, t 3.8) |
+- On these 8 growths 32000 sits *below* 16000 at book100k (-0.0017), so the 100k win over 32000 is partly a low reference; vs 16000 it is only +0.0029 (5/3).
+- At 300k the second doubling (32000 -> 64000) buys +0.0020 vs +0.0056 for the first (16000 -> 32000): diminishing returns; the knee looks near 32000 at 300k. **Not adopted** (8 growths, n.s., and 64000 costs ~2x v46 runtime). Pre-registered y228 (fresh k 2856-2863, 300k) stays the decider; **y231** adds the matching fresh 100k leg. Full-task confirmation only if both held-out legs show a gain.
+### Engineering: sparse granule -> output update (I106, P.granSparse, default 1; P.granSparse=0 = old dense loop)
+- granStep keeps an active-granule list; the NLMS update touches only active granules' synapses (~3400 of 32000 granules, ~81k of 768k synapses per event), counting-sorted into the exact dense order, plus a weight-ordered mirror so the self-silencing rescale is a sequential pass. Falls back to dense when granAnneal or debug is on.
+- Box identity (deepURSx3, 32000 cells, sparse vs dense in parallel): book3k g2536, fables4000 g2540, order3 K8 g2538, seqchoice cycle g2539 — **mean and every stat identical**. Wall: book3k 57 vs 74 s (**1.30x**), fables4000 77 vs 97 s (1.26x), order3 1.04x, seqchoice 1.01x. test_core.js ALL OK on the box.
+- Profile after the change (book3k): stepFast 66% (granule forward + per-substep homeostasis over all granules), granSparseStep 17%. Next engineering lever: lazy granule homeostasis / event-driven forward.
+- Jobs do not need the new code (bit-identical); workers pick it up on their next code pull.
+### Workers (R107, ~7:45 AM CT; heartbeats = lease-renewal commits on origin/queue)
+- linux-pc: healthy on 4e7b51a. y227 done 6:27 AM CT, claimed y229 (1M 2x2) 6:27 AM CT, renewing every 30 min (last 7:27 AM CT).
+- chromium: **silent** since its last y224 renewal 10:39 PM CT Oct 31 (~9 h), on old code d403a9f; y224 lease expired ~3:12 AM CT, partial results not on origin. Clean stop (no crash loop). y224 is reclaimable.
+- tacobell: worker Disabled on purpose (stale Oct 29 / 30 file expected); laptop = push route only.
+### Queue (R107; run/r107_jobs.js)
+- **y231** (0.9, memGB 3; fresh k 2856-2863): 64000 vs 32000 at book100k; 14.6 slot-h (est 2.4 h; real ~2-2.7x).
+- Pending: y229 (linux-pc running, 46.9 slot-h), y228 (44), y224 (reclaimable, 22.4), y230 (6.1), y231 (14.6) = ~134 slot-h. At the observed ~2.5x estimate, linux-pc alone has well over 24 h; chromium (if it returns) takes y224 / y228.

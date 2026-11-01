@@ -64,6 +64,8 @@ const params = {
   // distinct recent patterns (LRU; not a dense n-gram matrix). Hypothesis: demand-grown claws from repeated co-occurrence vs
   // random sparse claws at the same N. Not a default — v44 stays random claws, DEFAULTS_VERSION unchanged.
   granDemand: 0, granCo: 2, granRecycle: 1, granMap: 0, granHold: 0,
+  // R107 granSparse (1 = on; P.granSparse=0 = the old dense loop): the granule NLMS event visits only granules that spiked in the read window (bit-identical, faster)
+  granSparse: 1,
   plasticity: true,    // lifetime learning (reward-modulated STDP); false = frozen genome weights
   cellStart: 'env',    // a new population starts from mutants of this body plan ('env' = the environment's default)
   cellMut: 0.02,       // chance per genome number to mutate

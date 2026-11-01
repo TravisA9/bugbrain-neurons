@@ -1524,8 +1524,8 @@
       "id": "I101",
       "area": "scaling",
       "title": "Granule cell count scaled with training length (bigger combination layer only when the brain will see more text)",
-      "status": "adopted R106 as v46 (32000 cells); 64000 tested next (y227 running, held-out y228 pre-staged)",
-      "evidence": "R99: 16000 vs 8000 cells: book10k ~0, book30k +0.005, book100k +0.008 (y192, 16/0); y178 16000 vs 8000 at 100k +0.0056 (6/2). Gain grows with length; at 10k the extra cells only cost runtime (~1.7x). Tests: y200 / y205 (32000). R100: y194a (k 2584-2591) N4000 vs v44 book20k -0.0067 (2/6), book30k -0.0054; N16000 vs v44 20k -0.0017, 30k -0.0010 on those growths. y200 (32000) crashed: run/lib.js dense N x N synapse count, fixed (bit-identical, peak memory at 16000 cells 550 -> 238 MB). R101: y194a+b pooled (16 growths k 2584-2599) N4000 vs v44 book10k -0.0029 (5/10), book20k -0.0052 (2/14), book30k -0.0079 (2/14, t -5.6); N16000 vs v44 book5k..30k +0.0007..+0.0013 (n.s.): 16000 pays mainly at 100k+. y203 (cx3, 16 fresh k 2664-2679) N16000 vs N8000 (both ref1800) book100k +0.0063 (14/1, t 5.8; 0.4327): the size-with-length rule holds at cx3. y205 (32000, pre-R100 code) crashed again (all 64 runs); y208 / y207 still wait for the R100 push. New y216: 32000 cells on order3 / K4 / seqchoice. R102r: y216 (box, 8 growths): order3 / K4 / seqchoice order2 / cycle identical across 8000 / 16000 / 32000 cells (32000 order3 -0.0003 0/1, K4 +0.0003 1/0). R103: y207 32000 cells book300k +0.0075 vs 16000 (8/0), +0.0039 vs 16000 sched100k (5/2); 100k -0.0018 (3/4); y208 short tasks within noise. R104: box timing 16000 / 32000 / 64000 cells = 37 / 73 / 144 s at 3000 symbols (runtime ~linear in cells), 64000 peak RSS ~490 MB. Queued y223 (32000 full-set, pre-staged after y222), y227 (64000 at 100k / 300k, k 2536-2543), y224 (32000 sched100k at 1M). R105: y222 (fresh k 2816-2823, n 8): 32000 vs 16000 book300k +0.0037 (5/3, t 1.6), vs 16000 sched100k +0.0044 (6/2, t 1.7); 32000 sched100k vs 16000 sched100k +0.0046 (6/2); book100k +0.0011 (4/2). Pooled with y207 (16 growths): 32000 vs 16000 300k +0.0056 (13/3, t 3.8), vs 16000 sched100k +0.0042 (11/4, t 2.9) -> pre-registered length bar met; book100k -0.0003 (7/6). Adoption (v46) waits for y223 (all 8 tasks, 16 fresh k 2824-2839) and weighs ~2x runtime. R106: full-set confirmation y223 passed, no task worse (book10k +0.0003 8/8, book30k +0.0025 11/5 t 3.2, fables4000 +0.0014 11/4 t 1.9, text1000 +0.0003 9/5, K4 +0.0002, order3 / seqchoice identical) -> v46 = 32000 cells (DEFAULTS_VERSION 39). Next: y227 (64000 at 100k / 300k, k 2536-2543) + y228 (64000 vs 32000 at 300k, fresh k 2856-2863, after y227); 1M: y224 + y229.",
+      "status": "adopted R106 as v46 (32000 cells); 64000 not adopted R107 (300k gain small, n.s.); held-out legs y228 (300k) + y231 (100k) on fresh k 2856-2863 decide",
+      "evidence": "R99: 16000 vs 8000 cells: book10k ~0, book30k +0.005, book100k +0.008 (y192, 16/0); y178 16000 vs 8000 at 100k +0.0056 (6/2). Gain grows with length; at 10k the extra cells only cost runtime (~1.7x). Tests: y200 / y205 (32000). R100: y194a (k 2584-2591) N4000 vs v44 book20k -0.0067 (2/6), book30k -0.0054; N16000 vs v44 20k -0.0017, 30k -0.0010 on those growths. y200 (32000) crashed: run/lib.js dense N x N synapse count, fixed (bit-identical, peak memory at 16000 cells 550 -> 238 MB). R101: y194a+b pooled (16 growths k 2584-2599) N4000 vs v44 book10k -0.0029 (5/10), book20k -0.0052 (2/14), book30k -0.0079 (2/14, t -5.6); N16000 vs v44 book5k..30k +0.0007..+0.0013 (n.s.): 16000 pays mainly at 100k+. y203 (cx3, 16 fresh k 2664-2679) N16000 vs N8000 (both ref1800) book100k +0.0063 (14/1, t 5.8; 0.4327): the size-with-length rule holds at cx3. y205 (32000, pre-R100 code) crashed again (all 64 runs); y208 / y207 still wait for the R100 push. New y216: 32000 cells on order3 / K4 / seqchoice. R102r: y216 (box, 8 growths): order3 / K4 / seqchoice order2 / cycle identical across 8000 / 16000 / 32000 cells (32000 order3 -0.0003 0/1, K4 +0.0003 1/0). R103: y207 32000 cells book300k +0.0075 vs 16000 (8/0), +0.0039 vs 16000 sched100k (5/2); 100k -0.0018 (3/4); y208 short tasks within noise. R104: box timing 16000 / 32000 / 64000 cells = 37 / 73 / 144 s at 3000 symbols (runtime ~linear in cells), 64000 peak RSS ~490 MB. Queued y223 (32000 full-set, pre-staged after y222), y227 (64000 at 100k / 300k, k 2536-2543), y224 (32000 sched100k at 1M). R105: y222 (fresh k 2816-2823, n 8): 32000 vs 16000 book300k +0.0037 (5/3, t 1.6), vs 16000 sched100k +0.0044 (6/2, t 1.7); 32000 sched100k vs 16000 sched100k +0.0046 (6/2); book100k +0.0011 (4/2). Pooled with y207 (16 growths): 32000 vs 16000 300k +0.0056 (13/3, t 3.8), vs 16000 sched100k +0.0042 (11/4, t 2.9) -> pre-registered length bar met; book100k -0.0003 (7/6). Adoption (v46) waits for y223 (all 8 tasks, 16 fresh k 2824-2839) and weighs ~2x runtime. R106: full-set confirmation y223 passed, no task worse (book10k +0.0003 8/8, book30k +0.0025 11/5 t 3.2, fables4000 +0.0014 11/4 t 1.9, text1000 +0.0003 9/5, K4 +0.0002, order3 / seqchoice identical) -> v46 = 32000 cells (DEFAULTS_VERSION 39). Next: y227 (64000 at 100k / 300k, k 2536-2543) + y228 (64000 vs 32000 at 300k, fresh k 2856-2863, after y227); 1M: y224 + y229. R107: y227 (k 2536-2543, n 8) 64000 vs 32000: book100k +0.0046 (0.4143 vs 0.4097, 7/0, t 4.2) but on these growths 32000 sat below 16000 at 100k (-0.0017), so vs 16000 only +0.0029 (5/3, t 1.8); book300k +0.0020 (0.4181 vs 0.4161, 4/3, t 1.4), vs 16000 +0.0095 (8/0, t 4.5). Doubling 16000->32000 gave +0.0056 at 300k (16 growths), 32000->64000 +0.0020: diminishing returns, knee near 32000 at 300k unless y228 says otherwise. 64000 wall time on linux-pc 17.8 h for y227 (est 6.5 h; ~2.7x estimate).",
       "why": "combination capacity is only used once enough rare letter combinations have been seen; matching layer size to experience saves runtime on short tasks",
       "rounds": [
         "R99",
@@ -1533,7 +1533,8 @@
         "R101",
         "R104",
         "R105",
-        "R106"
+        "R106",
+        "R107"
       ],
       "theme": "scaling",
       "parents": [
@@ -1608,6 +1609,22 @@
       "theme": "representation",
       "parents": [
         "I99"
+      ]
+    },
+    {
+      "id": "I106",
+      "area": "engineering",
+      "title": "Sparse granule->output NLMS update (P.granSparse=1): touch only active granules (~10%) and their synapses, with a weight-ordered mirror for the self-silencing rescale",
+      "status": "default on in code R107 (engineering, bit-identical; no DEFAULTS_VERSION change)",
+      "evidence": "R107 box: bit-identical (mean and every stat) vs P.granSparse=0 on book3k g2536, fables4000 g2540, order3 K8 g2538, seqchoice cycle g2539 (deepURSx3, 32000 cells). Wall: book3k 57 vs 74 s (1.30x), fables4000 77 vs 97 s (1.26x), order3 1.04x, seqchoice 1.01x. Profile after: stepFast 66% (granule forward + per-substep homeostasis over all granules), granSparseStep 17%. Next lever: lazy / event-driven granule homeostasis and forward pass.",
+      "why": "runtime is linear in granule cells; v46 is 2x v45 and 64000 cells ~2.7x the planned time; only ~10% of granules are active per event",
+      "rounds": [
+        "R107"
+      ],
+      "theme": "engineering",
+      "parents": [
+        "I99",
+        "I101"
       ]
     }
   ],

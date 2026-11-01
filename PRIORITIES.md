@@ -1,3 +1,23 @@
+# PRIORITIES (R107, Nov 1 2026, ~7:45 AM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
+
+## R107 update (queue review, morning)
+- **64000 cells not adopted:** y227 (n 8) book300k +0.0020 vs 32000 (4/3, t 1.4; first doubling gave +0.0056), book100k +0.0046 (7/0) but 32000 sat below 16000 there. Held-out y228 (300k) + new y231 (100k) on fresh k 2856-2863 decide; full-task confirmation only if both gain.
+- **Sparse granule update in code (P.granSparse=1):** bit-identical on book / fables / order3 / seqchoice; 1.26-1.30x faster on book tasks. Next: lazy granule homeostasis + forward (stepFast now 66% of time).
+- chromium silent since 10:39 PM CT Oct 31 (clean stop, y224 reclaimable); linux-pc carries the queue (y229 since 6:27 AM CT).
+
+## Ranked open questions (R107)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q42 / I102 | Capacity or rule at 1M: 2x2 cells (16000 / 32000) x rule (fixed / sched100k) | y229 (running), y224 |
+| 2 | I101 | Is 32000 the knee? Held-out 64000 vs 32000 at 300k and 100k | y228, y231 |
+| 3 | I104 / Q46 | Sized order3: cortex x2 / striatum x1 | y230 |
+| 4 | I106 | Engineering: lazy granule homeostasis / event-driven forward (box) | (box) |
+| 5 | I98 | cx3 sized recipe | (later) |
+Generation loops wait for the length rule. Low: analogy / evolution. Rejected ideas stay rejected.
+
+## Worker notes (R107)
+linux-pc: healthy on 4e7b51a, y229 since 6:27 AM CT (last renewal 7:27 AM CT). chromium: silent since 10:39 PM CT Oct 31 on d403a9f. tacobell: Disabled on purpose; push route only.
+
 # PRIORITIES (R106, Oct 31 2026, ~7:20 PM CT; **v46 / DEFAULTS_VERSION 39 adopted** — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2; v45 kept as deepURSx3v45)
 
 ## R106 update (queue review, evening)
