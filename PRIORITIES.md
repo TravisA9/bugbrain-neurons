@@ -1,3 +1,24 @@
+# PRIORITIES (R106, Oct 31 2026, ~7:20 PM CT; **v46 / DEFAULTS_VERSION 39 adopted** — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2; v45 kept as deepURSx3v45)
+
+## R106 update (queue review, evening)
+- **v46 adopted:** y223 full-set confirmation (16 fresh growths): book30k +0.0025 (11/5, t 3.2), fables4000 +0.0014 (11/4), book10k +0.0003 (8/8), text1000 +0.0003, K4 +0.0002, order3 / seqchoice identical; length leg (R105) +0.0056 at 300k (13/3). ~2x v45 runtime.
+- **Step schedule not adopted:** y219b sched100k +0.0013 (5/3); pooled 32 growths +0.0018 (19/13, t 1.8); nil at 32000. Only the 1M 2x2 (y224 + y229) can revive it. y221 blocked (rejected smooth arm, no fixed reference) -> y229.
+- **Sized order3 (y226):** cx4dT context x1 fixes most of order3 (+0.121, 15/1) but K4 -0.0052 (0/15); x2 worst on text. No context size passes; y230 probes cortex x2 / striatum x1.
+- Both heavy workers healthy (chromium back since 12:01 PM CT). Queue: y229, y228 (after y227), y230.
+
+## Ranked open questions (R106)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | I101 | Is 32000 the knee? 64000 at 100k / 300k, then fresh held-out at 300k | y227 (running), y228 |
+| 2 | Q42 / I102 | Capacity or rule at 1M: 2x2 cells (16000 / 32000) x rule (fixed / sched100k) | y224 (running), y229 |
+| 3 | I104 / Q46 | Sized order3: which area (context done; cortex x2, striatum x1) costs order3 / K4 | y230 |
+| 4 | I98 | cx3 sized recipe (y211 passed except book10k -0.003 4/12) | (later) |
+Engineering: sparse granule update path is now urgent (v46 = 2x v45 runtime; 64000 would be 4x). Growth-phase memory: 64000 peak ~0.5 GB, fine. Generation loops wait for the length rule.
+Low: analogy / evolution. Rejected ideas stay rejected (incl. smooth granule schedule, demand claws as built, cortex lr 0.15, constant granLr 0.05; step schedule not adopted).
+
+## Worker notes (R106)
+linux-pc: healthy on d403a9f, y227 since 12:41 PM CT (last renewal 7:11 PM CT). chromium: healthy on d403a9f, y224 since 2:09 PM CT (last renewal 7:09 PM CT). tacobell: worker Disabled on purpose; laptop = push route only.
+
 # PRIORITIES (R105, Oct 31 2026, ~7:20 AM CT; **v45 / DEFAULTS_VERSION 38** unchanged — v45 = plan deepURSx3 with a 16000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2; v44 kept as deepURSx3v44; **v46 candidate = 32000 cells**, waiting for y223)
 
 ## R105 update (queue review, morning)

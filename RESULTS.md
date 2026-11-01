@@ -4295,3 +4295,47 @@ Sources: y222 (linux-pc, finished 3:31 AM CT Oct 31, 48 runs, 0 errors); y219b p
 - chromium: **silent since 9:34 PM CT Oct 30** (clean "release ... (running)" of y219b = worker stopped / PC shut down, after 16 of 32 runs); worker file still 609911c. ~10 h. Not crash-looping. Cursor machine disconnected.
 - tacobell: worker Disabled on purpose (Travis); laptop disconnected this morning -> no push route.
 ### Queue (R105): no new jobs. Unclaimed heavy pool = y223 (11.2 slot-h), y226 (18.7), y227 (39.1), y224 (22.4), y221 (36.7) = 128 slot-h + ~15 slot-h left of y219b. At linux-pc's observed pace (y222: 48.5 slot-h in 15.4 h ≈ 3.1 slot-h per hour) that is ~45 h of linux-pc alone, ~25-30 h if chromium returns. Order already right: y219b -> y223 (confirmation) -> y226 -> y227 -> y224 -> y221.
+
+## R106 (Oct 31 2026, 7 PM CT queue review) — **adopt v46 (DEFAULTS_VERSION 39): plan deepURSx3 grows 32000 granule cells** (v45 kept as plan deepURSx3v45); y223 full-set confirmation passed, no task worse; step schedule not adopted (weak, nil at 32000); y226: no cx4dT context size passes (context x1 fixes order3 but costs K4)
+Sources: y219b (linux-pc, finished 9:34 AM CT, 32 runs, 0 errors), y226 (linux-pc, finished 12:41 PM CT, 384 runs, 0 errors), y223 (chromium, finished 2:09 PM CT, 256 runs, 0 errors). Paired growth-by-growth (cmp.py).
+### y223 (16 fresh growths k 2824-2839, 8 tasks): 32000 vs 16000 (v45) granule cells — full-set confirmation
+| task | 32000 vs 16000 | W/L | t |
+|---|---|---|---|
+| book10k (0.3867 vs 0.3865) | +0.0003 | 8/8 | 0.2 |
+| book30k (0.4072 vs 0.4047) | **+0.0025** | 11/5 | 3.2 |
+| fables4000 (0.3693 vs 0.3678) | +0.0014 | 11/4 | 1.9 |
+| text1000 (0.7608 vs 0.7604) | +0.0003 | 9/5 | 0.8 |
+| K4 | +0.0002 | 1/0 | |
+| order3, seqchoice order2, seqchoice cycle | identical | 0/0 | |
+- Pre-registered bar (R104 note: length bar y207 + y222 met in R105, and here no task worse: losses not > 60%, t > -2): **met on every task**. Combined with the length leg (16 growths at 300k: +0.0056 vs 16000, 13/3, t 3.8) -> **v46 adopted** (APP_VERSION v46, DEFAULTS_VERSION 39; js/envs/reward_evolved.js GRAN_N_V46 = 32000; v45 = plan deepURSx3v45). Cost: ~2x v45 runtime (linear in cells).
+- Pending jobs (y221, y224, y227) and all R106 jobs pin P.granN / claws / granW / cortex lr, so nothing needed pinning before the change.
+### y219b (fresh k 2808-2815, n 8): granule step schedule at 300k, 16000 cells
+| arm vs fixed 0.1 (0.4176) | delta | W/L | t |
+|---|---|---|---|
+| sched100k (0.4189) | +0.0013 | 5/3 | 0.7 |
+| sched30k (0.4181) | +0.0005 | 5/2 | 0.4 |
+| fixed 0.05 (0.4169) | -0.0006 | 5/3 | -0.3 |
+| sched100k vs fixed 0.05 | +0.0019 | 6/1 | 1.8 |
+- Pooled sched100k vs fixed 0.1 at 300k (y206 + y219a + y219b + y222, 32 growths at 16000 cells): **+0.0018 (19/13, t 1.8)**; at 32000 cells (y222) +0.0002 (4/4). **Not adopted**: small, not significant, and it vanishes at the new default size. Only the 1M 2x2 (y224 + y229) can revive it.
+### y226 (fresh k 2840-2855, 8 tasks): cx4dT N16000 context x4 (as built) vs x2 vs x1 (sized order3, I104)
+| task | x1 vs x4 | x2 vs x4 | x1 vs x2 |
+|---|---|---|---|
+| order3 (x4 0.727) | **+0.121 (15/1, t 7.9)** -> 0.847 | +0.026 (7/2) | +0.094 (15/1) |
+| K4 (x4 0.9875) | **-0.0052 (0/15, t -9.7)** | -0.0003 (0/2) | -0.0048 (1/15) |
+| book10k | +0.0011 (8/8) | -0.0056 (3/12, t -3.6) | +0.0067 (13/3) |
+| book30k | +0.0028 (10/6) | -0.0084 (3/13, t -4.4) | +0.0112 (14/2) |
+| fables4000 | +0.0003 (8/7) | -0.0043 (3/13) | +0.0046 (12/3) |
+| text1000 | -0.0044 (5/11, t -1.6) | -0.0084 (2/13) | +0.0040 (9/6) |
+| seqchoice order2 | -0.0016 (7/9) | +0.0128 (9/7) | -0.0144 |
+| seqchoice cycle | -0.046 (5/11, t -1.5) | -0.033 (5/10) | -0.013 |
+- Context x1 confirms y213 on fresh growths (order3 +0.12) and helps book a little, but **fails the bar on K4** (0/15, t -9.7) and is borderline on text1000 / seqchoice cycle. x2 is worse than both ends on every text task (non-monotonic: a half-sized chain is the worst). No context size passes. x1 order3 0.847 is still far below the 1x brain (~0.95), so another sized area carries the rest of the gap -> **y230**.
+### Workers (R106, ~7:20 PM CT; heartbeats = lease-renewal commits on origin/queue; worker-file "at" is UTC = time of the last claim)
+- linux-pc: healthy on d403a9f. y219b done 9:34 AM CT, y226 done 12:41 PM CT, claimed y227 (64000 cells) 12:41 PM CT, renewing every 30 min (last 7:11 PM CT; lease to ~4:56 AM CT).
+- chromium: back and healthy on d403a9f. Renewed y223 at 12:01 PM CT after the morning silence, finished it 2:09 PM CT, claimed y224 (32000 sched100k book1M) 2:09 PM CT, renewing every 30 min (last 7:09 PM CT; lease to ~12:42 AM CT). No crash loop. (Its cursor machine shows disconnected; the worker itself is running.)
+- tacobell: worker Disabled on purpose (stale file from Oct 29 / 30 is expected). Laptop connected; used only as the push route.
+### Queue (R106; run/r106_jobs.js)
+- **y221 blocked** (worker-config jobs): its smooth30k arm is a rejected idea and it had no fixed-0.1 1M reference. Replaced by:
+- **y229** (0.92, memGB 3; k 2536-2539): 16000 fixed / 16000 sched100k / 32000 fixed (v46) at book1M; with y224 (32000 sched100k, same growths) a 2x2 of cells x rule at 1M; 46.9 slot-h (~8-9 h wall: 12 runs of 3-5.6 h).
+- **y228** (0.915, memGB 3; fresh k 2856-2863; after y227): 64000 vs 32000 at book300k (held-out leg for the 64000 knee; counts only if y227 shows a 300k gain); 44 slot-h (~7-8 h wall).
+- **y230** (0.905, memGB 4; fresh k 2864-2879): cx4dT context x1 + cortex x2 (order3 / K4 / seqchoice), + striatum x1 (seqchoice only; the striatum grows only with an outcome, box g2864 order3 identical to context x1), and the 1x reference; 6.1 slot-h (~1 h). Box smoke g2864 order3: x1 0.7825, x1 + cortex x2 0.80, 1x 0.9675.
+- Depth: linux-pc ~9 h left of y227 then y228 / y229 / y230; chromium ~5 h left of y224 then y229 / y228. Unclaimed ~17 h of wall work on top of the two running jobs ≈ 13-15 h per heavy worker.
