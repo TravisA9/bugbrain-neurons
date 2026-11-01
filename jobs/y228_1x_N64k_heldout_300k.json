@@ -1,0 +1,272 @@
+{
+  "id": "y228_1x_N64k_heldout_300k",
+  "question": "I101",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/lib.js",
+    "run/r100_jobs.js",
+    "run/r102r_jobs.js",
+    "run/r103_jobs.js",
+    "run/r104_jobs.js",
+    "run/r106_jobs.js"
+  ],
+  "title": "64000 vs 32000 (v46) granule cells at book300k, fresh k 2856-2863 (pre-staged held-out leg for y227; counts only if y227 shows 64000 > 32000 at 300k)",
+  "priority": 0.915,
+  "estHours": 7.3,
+  "slotHours": 44,
+  "phone": false,
+  "flag": "text",
+  "memGB": 3,
+  "accept": {
+    "note": "Pre-registered: 64000 goes to a full-set confirmation only if y227 + y228 (16 growths) beat 32000 at 300k (mean > 0, losses not > 60%, t > -2). If y227 is flat this job still adds 8 fresh v46 length references. ~2x v46 runtime per 64000 run (~3.7 h per run on linux-pc)."
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2856",
+        "--force"
+      ],
+      "label": "v44 N32000 book300k g2856 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2857",
+        "--force"
+      ],
+      "label": "v44 N32000 book300k g2857 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2858",
+        "--force"
+      ],
+      "label": "v44 N32000 book300k g2858 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2859",
+        "--force"
+      ],
+      "label": "v44 N32000 book300k g2859 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2860",
+        "--force"
+      ],
+      "label": "v44 N32000 book300k g2860 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2861",
+        "--force"
+      ],
+      "label": "v44 N32000 book300k g2861 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2862",
+        "--force"
+      ],
+      "label": "v44 N32000 book300k g2862 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2863",
+        "--force"
+      ],
+      "label": "v44 N32000 book300k g2863 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=64000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2856",
+        "--force"
+      ],
+      "label": "v44 N64000 book300k g2856 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=64000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2857",
+        "--force"
+      ],
+      "label": "v44 N64000 book300k g2857 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=64000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2858",
+        "--force"
+      ],
+      "label": "v44 N64000 book300k g2858 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=64000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2859",
+        "--force"
+      ],
+      "label": "v44 N64000 book300k g2859 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=64000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2860",
+        "--force"
+      ],
+      "label": "v44 N64000 book300k g2860 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=64000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2861",
+        "--force"
+      ],
+      "label": "v44 N64000 book300k g2861 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=64000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2862",
+        "--force"
+      ],
+      "label": "v44 N64000 book300k g2862 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=64000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2863",
+        "--force"
+      ],
+      "label": "v44 N64000 book300k g2863 n1",
+      "env": {
+        "BB_OUT": "results/phone/y228_1x_N64k_heldout_300k.jsonl"
+      }
+    }
+  ],
+  "after": "y227_1x_N64k_length"
+}
