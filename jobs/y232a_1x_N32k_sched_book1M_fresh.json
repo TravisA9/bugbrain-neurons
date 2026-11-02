@@ -1,0 +1,153 @@
+{
+  "id": "y232a_1x_N32k_sched_book1M_fresh",
+  "question": "Q42",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/lib.js",
+    "run/r100_jobs.js",
+    "run/r102r_jobs.js",
+    "run/r103_jobs.js",
+    "run/r104_jobs.js",
+    "run/r106_jobs.js",
+    "run/r107_jobs.js",
+    "run/r109_jobs.js"
+  ],
+  "title": "step schedule at 1M, fresh held-out (part a): 32000 fixed 0.1 (v46) vs 32000 sched100k at book1M, k 2880-2883",
+  "priority": 0.93,
+  "estHours": 7.5,
+  "slotHours": 44.9,
+  "phone": false,
+  "flag": "text",
+  "memGB": 3,
+  "accept": {
+    "note": "Pre-registered with y232b (8 fresh growths): sched100k is a length-rule candidate if mean > 0 at 1M with losses not > 60% and t > -2 on y232a+b; adoption additionally needs 16 fresh 1M growths and the full short set (book10k/30k, fables4000, order3, text1000, seqchoice) not worse. Short tasks are unaffected below 100k symbols by construction (step at 100k)."
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2880",
+        "--force"
+      ],
+      "label": "v44 N32000 book1M g2880 n1",
+      "env": {
+        "BB_OUT": "results/phone/y232a_1x_N32k_sched_book1M_fresh.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2881",
+        "--force"
+      ],
+      "label": "v44 N32000 book1M g2881 n1",
+      "env": {
+        "BB_OUT": "results/phone/y232a_1x_N32k_sched_book1M_fresh.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2882",
+        "--force"
+      ],
+      "label": "v44 N32000 book1M g2882 n1",
+      "env": {
+        "BB_OUT": "results/phone/y232a_1x_N32k_sched_book1M_fresh.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.fastEngine=1",
+        "2883",
+        "--force"
+      ],
+      "label": "v44 N32000 book1M g2883 n1",
+      "env": {
+        "BB_OUT": "results/phone/y232a_1x_N32k_sched_book1M_fresh.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2880",
+        "--force"
+      ],
+      "label": "v44 N32000 sched100k book1M g2880 n1",
+      "env": {
+        "BB_OUT": "results/phone/y232a_1x_N32k_sched_book1M_fresh.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2881",
+        "--force"
+      ],
+      "label": "v44 N32000 sched100k book1M g2881 n1",
+      "env": {
+        "BB_OUT": "results/phone/y232a_1x_N32k_sched_book1M_fresh.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2882",
+        "--force"
+      ],
+      "label": "v44 N32000 sched100k book1M g2882 n1",
+      "env": {
+        "BB_OUT": "results/phone/y232a_1x_N32k_sched_book1M_fresh.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2883",
+        "--force"
+      ],
+      "label": "v44 N32000 sched100k book1M g2883 n1",
+      "env": {
+        "BB_OUT": "results/phone/y232a_1x_N32k_sched_book1M_fresh.jsonl"
+      }
+    }
+  ]
+}
