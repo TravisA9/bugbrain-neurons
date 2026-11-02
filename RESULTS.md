@@ -4340,6 +4340,17 @@ Sources: y219b (linux-pc, finished 9:34 AM CT, 32 runs, 0 errors), y226 (linux-p
 - **y230** (0.905, memGB 4; fresh k 2864-2879): cx4dT context x1 + cortex x2 (order3 / K4 / seqchoice), + striatum x1 (seqchoice only; the striatum grows only with an outcome, box g2864 order3 identical to context x1), and the 1x reference; 6.1 slot-h (~1 h). Box smoke g2864 order3: x1 0.7825, x1 + cortex x2 0.80, 1x 0.9675.
 - Depth: linux-pc ~9 h left of y227 then y228 / y229 / y230; chromium ~5 h left of y224 then y229 / y228. Unclaimed ~17 h of wall work on top of the two running jobs ≈ 13-15 h per heavy worker.
 
+## R108 (Nov 1 2026, 7 PM CT queue review) — **nothing finished; no adoption** (DEFAULTS_VERSION stays 39 / v46 = 32000 cells); y228 half done (32000 reference arm 8/8 published by chromium at 2:37 PM CT, 64000 arm pending); chromium silent again since 2:37 PM CT; queue unchanged (deep enough)
+Sources: origin/queue e10ca16 (6:57 PM CT). No `result` commits since R107 (3421983, 7:45 AM CT).
+### Partial: y228 (fresh k 2856-2863, book300k), reference arm only
+- chromium released y228 at 2:37 PM CT with status `running` after 8 of 16 runs: all 8 are the **32000 (v46) reference** arm, mean 0.4106 (g2856-2863: 0.4000 / 0.4055 / 0.4335 / 0.4030 / 0.4020 / 0.4230 / 0.4250 / 0.3925). The 64000 arm has not run, so there is no comparison yet. These runs are in registry/y228 on origin, so a restart skips them (no work lost).
+### Workers (R108, ~7:25 PM CT; heartbeats = lease-renewal commits on origin/queue)
+- linux-pc: **healthy**, y229 (1M 2x2) since 6:27 AM CT, renewing every 30 min (last 6:57 PM CT); still on code 4e7b51a (supervised workers update between jobs; granSparse is bit-identical, so no harm). At the observed ~2.5-2.7x estimate y229 (est 7.8 h) should finish ~2-4 AM CT Nov 2.
+- chromium: **silent** since 2:37 PM CT (~4.8 h). Pattern: came back 8:56 AM CT (released y224 as `restarted`, claimed y228 = higher priority), renewed every 30 min until 2:26 PM CT, released y228 at 2:37 PM CT (job process ended mid-job), re-claimed it 4 s later, then no renewal. Not a crash loop (one release+reclaim, then the machine went dark); the Chromium machine is also disconnected from the agent. Claim on y228 expires 1:34 AM CT Nov 2; then linux-pc (after y229) or chromium can take it. Code bb145f3 (current).
+- tacobell: worker Disabled on purpose (stale Oct 29 file expected); laptop offline -> R108 not pushed (bundle in /workspace/R108 on the box).
+### Queue (R108): unchanged
+- Pending: y229 (linux-pc), y228 (chromium claim, 8/16 done), y224 (22.4 slot-h, 1M 32000 sched100k, unclaimed again), y230 (6.1), y231 (14.6) = ~134 nominal slot-h; real remaining work on linux-pc alone is ~40+ h at the 2.5-2.7x rate, so >12 h deep for every live worker. No new jobs: the open decisions (I101 knee, Q42 1M capacity vs rule) are already queued and nothing new to confirm.
+
 ## R107 (Nov 1 2026, 7 AM CT queue review) — **no adoption** (DEFAULTS_VERSION stays 39 / v46 = 32000 cells); y227: 64000 cells gain at book300k small and not significant (+0.0020, 4/3) -> held-out legs y228 (300k) + new y231 (100k) decide; **sparse granule update (P.granSparse=1) bit-identical, 1.26-1.30x faster on book**; chromium silent since 10:39 PM CT Oct 31
 Sources: y227 (linux-pc, finished 6:27 AM CT Nov 1, 16 runs, 0 errors; 17.8 h wall vs 6.5 h estimate). References y193 / y206 / y207 / y222 (same growths k 2536-2543 where present). Paired growth-by-growth (an107.py).
 ### y227 (k 2536-2543, n 8): 64000 granule cells (v46 settings x2 cells)

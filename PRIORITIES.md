@@ -1,3 +1,24 @@
+# PRIORITIES (R108, Nov 1 2026, ~7:25 PM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
+
+## R108 update (queue review, evening)
+- **Nothing finished since R107; no adoption.** y228 is half done (32000 reference arm 8/8 at book300k on fresh k 2856-2863, mean 0.4106; 64000 arm pending).
+- linux-pc healthy on y229 (1M 2x2, since 6:27 AM CT; expected done ~2-4 AM CT Nov 2). chromium silent since 2:37 PM CT (second evening dropout in a row; holds y228 until 1:34 AM CT).
+- Queue unchanged (~134 nominal slot-h, >12 h for each live worker). Ranking unchanged from R107.
+- Worry: chromium runs ~6-8 h then drops; 44-slot-h jobs only finish there because of registry resume. If it keeps dropping, give it the short jobs (y230, y231) and leave 300k / 1M to linux-pc.
+
+## Ranked open questions (R108) — same as R107
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q42 / I102 | Capacity or rule at 1M: 2x2 cells (16000 / 32000) x rule (fixed / sched100k) | y229 (running), y224 |
+| 2 | I101 | Is 32000 the knee? Held-out 64000 vs 32000 at 300k and 100k | y228 (8/16), y231 |
+| 3 | I104 / Q46 | Sized order3: cortex x2 / striatum x1 | y230 |
+| 4 | I106 | Engineering: lazy granule homeostasis / event-driven forward (box) | (box) |
+| 5 | I98 | cx3 sized recipe | (later) |
+Generation loops wait for the length rule. Low: analogy / evolution. Rejected ideas stay rejected.
+
+## Worker notes (R108)
+linux-pc: healthy on 4e7b51a, y229 since 6:27 AM CT (last renewal 6:57 PM CT). chromium: silent since 2:37 PM CT on bb145f3 (y228 claim until 1:34 AM CT). tacobell: Disabled on purpose; laptop offline (push route down).
+
 # PRIORITIES (R107, Nov 1 2026, ~7:45 AM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
 
 ## R107 update (queue review, morning)
