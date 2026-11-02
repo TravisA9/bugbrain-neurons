@@ -4374,3 +4374,37 @@ Sources: y227 (linux-pc, finished 6:27 AM CT Nov 1, 16 runs, 0 errors; 17.8 h wa
 ### Queue (R107; run/r107_jobs.js)
 - **y231** (0.9, memGB 3; fresh k 2856-2863): 64000 vs 32000 at book100k; 14.6 slot-h (est 2.4 h; real ~2-2.7x).
 - Pending: y229 (linux-pc running, 46.9 slot-h), y228 (44), y224 (reclaimable, 22.4), y230 (6.1), y231 (14.6) = ~134 slot-h. At the observed ~2.5x estimate, linux-pc alone has well over 24 h; chromium (if it returns) takes y224 / y228.
+
+## R109 (Nov 2 2026, 7 AM CT queue review) — **no adoption** (DEFAULTS_VERSION stays 39 / v46 = 32000 cells); **1M 2x2: the granule step schedule (sched100k) gains at 1M (+0.0063 at 32000, 4/0) while the cell gain shrinks** -> fresh 1M held-out y232a/b; 64000 cells pass the 100k held-out leg (16 growths +0.0037, 12/3, t 4.4), 300k leg y228 running; y230: context x1 + cortex x2 closes 2/3 of the cx4dT order3 gap without K4 cost, striatum must stay x4
+Sources: y229 (linux-pc, done 7:25 PM CT Nov 1, 12 runs, 0 errors), y224 (linux-pc, done 12:00 AM CT Nov 2, 4 runs), y230 (linux-pc, done 12:21 AM CT, 224 runs), y231 (linux-pc, done 2:30 AM CT, 16 runs). origin/queue 9aa24a6 (7:00 AM CT). Paired growth-by-growth (an109.py / an109b.py on the box).
+### 1M 2x2: cells x rule at book1M (y229 + y224, k 2536-2539, n 4 = direction)
+| arm | book100k | book300k | book1M |
+|---|---|---|---|
+| 16000 fixed 0.1 | 0.4021 | 0.3999 | 0.4125 |
+| 16000 sched100k | 0.4021 | 0.4014 | 0.4176 |
+| 32000 fixed 0.1 (v46) | 0.4010 | 0.4052 | 0.4150 |
+| 32000 sched100k | | | **0.4213** |
+| comparison at 1M | delta | W/L | t |
+|---|---|---|---|
+| sched100k vs fixed, 32000 | **+0.0063** | 4/0 | 2.7 |
+| sched100k vs fixed, 16000 | +0.0051 | 3/1 | 1.2 |
+| 32000 vs 16000, fixed | +0.0025 | 3/1 | 1.1 |
+| 32000 vs 16000, sched100k | +0.0036 | 3/1 | 1.4 |
+- Rule effect grows with length (16000: +0.0000 at 100k, +0.0015 at 300k, +0.0051 at 1M; 32000: ~+0.0002 at 300k in y222, +0.0063 at 1M); cell effect shrinks past 300k (+0.0054 at 300k -> +0.0025 at 1M on these growths). Pre-registered reading (y229 note): sched100k helps mainly at 1M -> **write the length rule**. Length pays at 1M on every arm (300k -> 1M +0.010 to +0.016): the long-text plateau is gone at this size.
+- n 4 on the y227 growths: direction only. Queued **y232a/b** (fresh k 2880-2887, 32000 fixed vs sched100k at 1M, 8 growths; candidate if mean > 0, losses not > 60%, t > -2; adoption needs 16 fresh 1M growths + full short set not worse) and **y233** (sched300k at 1M on k 2536-2539: does the best step time scale with length?).
+### y231 (fresh k 2856-2863, book100k): 64000 vs 32000 (I101 held-out 100k leg)
+- 64000 0.4116 vs 32000 0.4089: **+0.0027 (5/3, t 2.2)**. Pooled with y227 (16 growths): **+0.0037 (12/3, t 4.4)** -> 100k leg of the pre-registered bar met. The 300k leg (y228; y227 alone +0.0020, 4/3) still decides; 64000 costs ~2x v46 runtime.
+### y230 (fresh k 2864-2879): cx4dT N16000 context x1 — which other sized area costs order3 / seqchoice
+| task | ctx1 + cortex x2 vs ctx1 | ctx1 + striatum x1 vs ctx1 | 1x vs ctx1 |
+|---|---|---|---|
+| order3 (ctx1 0.824) | **+0.087 (14/1, t 5.4)** -> 0.911 | | +0.130 (15/0) -> 0.953 |
+| K4 (ctx1 0.9834) | +0.0025 (12/2, t 3.3) | | +0.0030 (12/0) |
+| seqchoice order2 (ctx1 0.440) | +0.047 (14/2, t 3.5) | **-0.248 (0/16)** | +0.201 (16/0) |
+| seqchoice cycle (ctx1 0.630) | +0.004 (8/8) | **-0.431 (0/16)** | +0.288 (16/0) |
+- Shrinking the cortex x4 -> x2 (with context x1) closes 2/3 of the order3 gap and removes the K4 cost seen in y226. The striatum must stay large when the cortex is large (x1 collapses seqchoice). Seqchoice cycle still far below 1x. Open: does cortex x2 keep the cx4 text gains, and does cortex x1 close the rest -> **y234** (fresh k 2888-2903; context x1 + cortex x4 / x2 on all 8 tasks, cortex x1 on order3 / K4 / seqchoice, 1x reference; 18 slot-h).
+### Workers (R109, ~7:45 AM CT; heartbeats = lease-renewal commits on origin/queue)
+- linux-pc: **healthy** on bb145f3. Finished y229 (7:25 PM CT), y224 (12:00 AM), y230 (12:21 AM), y231 (2:30 AM); claimed y228 at 2:30 AM CT after chromium's claim expired (8 reference runs from chromium kept in registry/y228; it runs the 64000 arm), renewing every 30 min (last 7:00 AM CT; lease to 5:57 PM CT). Expected done ~midday-afternoon CT. No crash loop.
+- chromium: **silent** since 2:37 PM CT Nov 1 (~17 h; machine disconnected). Third drop in ~3 days, each after ~6-8 h of work. Its y228 claim lapsed cleanly; nothing stranded.
+- tacobell: worker Disabled on purpose (stale Oct 29 file expected); laptop connected again -> push route.
+### Queue (R109; run/r109_jobs.js)
+- New: y232a (0.93, 44.9 slot-h), y232b (0.925, 44.9), y234 (0.9, 18.0, memGB 4), y233 (0.89, 22.4) = 130 slot-h, on top of y228 (running). At linux-pc's ~3 slot-h per hour that is ~40+ h; >12 h for linux-pc and for chromium if it returns (y232 is split so two heavy workers can share it).

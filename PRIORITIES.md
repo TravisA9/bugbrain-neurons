@@ -1,3 +1,25 @@
+# PRIORITIES (R109, Nov 2 2026, ~7:45 AM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
+
+## R109 update (queue review, morning)
+- **No adoption.** Four jobs finished overnight on linux-pc (y229, y224, y230, y231).
+- **1M 2x2 (y229 + y224, n 4, direction): the step rule wins at length.** sched100k vs fixed at 1M +0.0063 at 32000 (4/0, t 2.7), +0.0051 at 16000; cells 32000 vs 16000 only +0.0025 / +0.0036 at 1M (vs +0.0054 at 300k). Length pays at 1M on every arm (300k -> 1M +0.010-0.016). Best measured: 32000 sched100k book1M 0.4213. -> fresh held-out y232a/b (pre-registered) + step-time screen y233.
+- **64000 cells, 100k leg passes:** y231 fresh +0.0027 (5/3, t 2.2); 16 growths +0.0037 (12/3, t 4.4). The 300k leg (y228) is running on linux-pc (64000 arm; reference arm done). Full-set confirmation only if y227 + y228 at 300k also pass.
+- **Sized order3 (y230):** context x1 + cortex x2 order3 +0.087 (0.911; 1x 0.953), K4 +0.0025, seqchoice order2 +0.047; striatum x1 collapses seqchoice (0/16). -> y234 (cortex x4 / x2 / x1 with context x1, full set vs 1x).
+- chromium silent since 2:37 PM CT Nov 1 (~17 h); its y228 claim expired, linux-pc took y228 at 2:30 AM CT (no work lost). Queue ~130 slot-h new + y228 remainder (~40 h of linux-pc).
+
+## Ranked open questions (R109)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q42 / I102 | Length rule at 1M: does sched100k beat fixed on fresh growths at 32000? when to step? | y232a, y232b, y233 |
+| 2 | I101 | Is 32000 the knee? 64000 vs 32000 at 300k (100k leg passed) | y228 (running) |
+| 3 | I104 / Q46 | Sized order3: cortex size with context x1 on the full set | y234 |
+| 4 | I106 | Engineering: lazy granule homeostasis / event-driven forward (box) | (box) |
+| 5 | I98 | cx3 sized recipe | (later) |
+Generation loops wait for the length rule. Low: analogy / evolution. Rejected ideas stay rejected (smooth schedule, demand claws as built, cortex lr 0.15, constant granLr 0.05).
+
+## Worker notes (R109)
+linux-pc: healthy on bb145f3; y228 since 2:30 AM CT (last renewal 7:00 AM CT, lease to 5:57 PM CT). chromium: silent since 2:37 PM CT Nov 1 (third drop in ~3 days; machine disconnected). tacobell: worker Disabled on purpose; laptop connected (push route).
+
 # PRIORITIES (R108, Nov 1 2026, ~7:25 PM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
 
 ## R108 update (queue review, evening)
