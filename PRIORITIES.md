@@ -1,3 +1,25 @@
+# PRIORITIES (R110, Nov 2 2026, ~7:30 PM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
+
+## R110 update (queue review, evening)
+- **No adoption.** Three jobs finished on linux-pc (y228, y232a, y234).
+- **64000 cells pass both held-out length legs** (300k: 16 growths +0.0023, 8/5, t 2.1; 100k +0.0037, 12/3) -> full-set confirmation y235a/b (16 fresh). Diminishing returns (+0.0056 -> +0.0023 per doubling at 300k) at ~2x runtime; y237 asks whether capacity still pays at 1M with the step rule.
+- **Step rule at 1M:** fresh y232a +0.0019 (3/1); pooled 8 growths +0.0041 (7/1, t 2.6). y232b decides the pre-registered bar.
+- **y234:** cortex x1 (context x1) fixes order3 (+0.0098 vs 1x); text gains need cortex x4 (fables +0.0195) and halve at x2; **seqchoice stays collapsed even at cortex x1** -> y236 knob leave-one-out.
+- chromium silent since 9:30 AM CT (holds y232b until 8:45 PM CT). TacoBell offline -> not pushed (bundles on the box).
+
+## Ranked open questions (R110)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q42 / I102 | Length rule at 1M: second fresh half; when to step | y232b, y233 (running) |
+| 2 | I101 | 64000 cells: full short set; does capacity pay at 1M with the step | y235a/b, y237 |
+| 3 | Q46 / I104 | Which cx4dT knob breaks seqchoice (cortex / context size ruled out) | y236 |
+| 4 | I106 | Engineering: lazy granule homeostasis / event-driven forward (box) | (box) |
+| 5 | I98 | cx3 sized recipe | (later) |
+Generation loops wait for the length rule. Low: analogy / evolution. Rejected ideas stay rejected (smooth schedule, demand claws as built, cortex lr 0.15, constant granLr 0.05).
+
+## Worker notes (R110)
+linux-pc: healthy on 400d0d8; y233 since 6:12 PM CT (last renewal 7:12 PM CT). chromium: silent since 9:30 AM CT on 400d0d8 (fourth drop in ~4 days). tacobell: worker Disabled on purpose; laptop offline (push route down).
+
 # PRIORITIES (R109, Nov 2 2026, ~7:45 AM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
 
 ## R109 update (queue review, morning)

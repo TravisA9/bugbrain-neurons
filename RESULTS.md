@@ -4408,3 +4408,30 @@ Sources: y229 (linux-pc, done 7:25 PM CT Nov 1, 12 runs, 0 errors), y224 (linux-
 - tacobell: worker Disabled on purpose (stale Oct 29 file expected); laptop connected again -> push route.
 ### Queue (R109; run/r109_jobs.js)
 - New: y232a (0.93, 44.9 slot-h), y232b (0.925, 44.9), y234 (0.9, 18.0, memGB 4), y233 (0.89, 22.4) = 130 slot-h, on top of y228 (running). At linux-pc's ~3 slot-h per hour that is ~40+ h; >12 h for linux-pc and for chromium if it returns (y232 is split so two heavy workers can share it).
+
+## R110 (Nov 2 2026, 7 PM CT queue review) — **no adoption** (DEFAULTS_VERSION stays 39 / v46 = 32000 cells); **64000 cells pass the 300k held-out leg** (16 growths +0.0023, 8/5, t 2.1) -> full-set confirmation y235a/b; step schedule at 1M smaller on fresh growths (y232a +0.0019, 3/1; pooled 8 +0.0041, 7/1); **y234: cortex x1 fixes order3 but seqchoice stays broken** -> the seqchoice loss is not area size
+Sources: y228 (linux-pc, done 8:43 AM CT, 16 runs), y232a (linux-pc, done 4:04 PM CT, 8 runs), y234 (linux-pc, done 6:12 PM CT, 448 runs), 0 errors. origin/queue 7e14196 (7:12 PM CT). Paired growth-by-growth (an110.py / an110b.py on the box).
+### y228 (fresh k 2856-2863, book300k): 64000 vs 32000 (I101 held-out 300k leg)
+- 64000 0.4133 vs 32000 0.4106: +0.0027 (4/2, t 1.5). Pooled with y227 (16 growths): **+0.0023 (0.4157 vs 0.4133, 8/5, t 2.1)**; 100k leg +0.0037 (12/3, t 4.4). Both legs of the pre-registered bar met -> **y235a/b** full short set (8 tasks, 16 fresh k 2904-2919). Returns per doubling keep shrinking (16000->32000 +0.0056 at 300k; 32000->64000 +0.0023) at ~2x runtime, so adoption also weighs cost.
+### y232a (fresh k 2880-2883, 32000 cells, book1M): sched100k vs fixed 0.1
+- sched100k 0.4380 vs fixed 0.4361: +0.0019 (3/1, t 1.1; per growth -0.0015 / +0.0020 / +0.0005 / +0.0065). Pooled with y224/y229 (k 2536-2539): **+0.0041 (7/1, t 2.6, n 8)**. Smaller than the first 4 growths (+0.0063): direction holds, size uncertain. y232b (k 2884-2887) completes the pre-registered 8 fresh; held by silent chromium until 8:45 PM CT, then linux-pc.
+- These fresh growths score much higher at 1M (0.436-0.438) than k 2536-2539 (0.415-0.421): growth-to-growth spread at 1M (~0.02) is ~5x the effects, so paired comparisons only.
+### y234 (fresh k 2888-2903): cx4dT N16000 context x1, cortex x4 / x2 / x1 vs 1x (v44 N16000)
+| task (1x) | cortex x4 | cortex x2 | cortex x1 |
+|---|---|---|---|
+| book10k (0.3958) | +0.0077 (13/3) | +0.0062 (13/2) | |
+| book30k (0.4201) | +0.0073 (14/2) | +0.0038 (12/4) | |
+| fables4000 (0.3698) | **+0.0195 (16/0, t 11)** | +0.0102 (16/0) | |
+| text1000 (0.7586) | +0.0024 (9/7) | -0.0038 (7/9, t -1.1) | |
+| order3 (0.9536) | -0.108 (0/16) | -0.010 (4/12, t -1.3) | **+0.0098 (8/5, t 2.2)** |
+| K4 (0.9861) | -0.0020 (2/9, t -2.8) | +0.0006 (5/2) | -0.0003 (3/5) |
+| seqchoice order2 (0.668) | -0.210 (0/16) | -0.166 (1/15) | -0.203 (0/16) |
+| seqchoice cycle (0.875) | -0.267 (1/15) | -0.179 (2/14) | -0.236 (1/15) |
+- Text gains and the order3 cost both scale with cortex size (x2 keeps ~half the book / fables gain and ~90% of the order3 fix). Cortex x2 (context x1) passes order3 / K4 within the bar but fails seqchoice; no sized recipe passes.
+- **Seqchoice collapse survives cortex x1 + context x1** (only striatum x4 and the cx4dT knobs remain): the seqchoice loss is not cortex / context size. -> **y236** leave-one-out of the remaining knobs on the cx1 brain (fresh k 2920-2927, 10 arms, seqchoice order2 / cycle + order3, 6 slot-h).
+### Workers (R110, ~7:30 PM CT; heartbeats = lease-renewal commits on origin/queue)
+- linux-pc: **healthy** on 400d0d8 (self-updated). Finished y228 (8:43 AM), y232a (4:04 PM), y234 (6:12 PM CT); y233 since 6:12 PM CT, renewing every 30 min (last 7:12 PM CT). ~6 slot-h per hour on 1M jobs, ~9 on short. No crash loop.
+- chromium: came back briefly on 400d0d8 (claim / release / claim of y232b at 9:30 AM CT within 10 s, a restart, not a loop), then **silent since 9:30 AM CT** (~10 h, no renewal at all). Claim lapses 8:45 PM CT. Fourth dropout in ~4 days.
+- tacobell: worker Disabled on purpose (stale Oct 29 file, code 91501d6, expected). Laptop **offline** -> R110 not pushed (bundles in /workspace/R110 on the box).
+### Queue (R110; run/r110_jobs.js)
+- New: y235a (0.92, 10.9 slot-h), y235b (0.915, 10.9), y236 (0.9, 6.0), y237 (0.88, 48.9) = 76.7 slot-h; plus y233 (running, ~3 h left) and y232b (44.9, pending). ~20 h for linux-pc alone; chromium shares it if it returns.
