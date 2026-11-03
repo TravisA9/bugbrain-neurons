@@ -1,3 +1,25 @@
+# PRIORITIES (R111, Nov 3 2026, ~7:45 AM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
+
+## R111 update (queue review, morning)
+- **No adoption.** Two jobs finished on linux-pc overnight (y233 11:15 PM CT, y232b 6:00 AM CT).
+- **Step rule at 1M passes the pre-registered 8-fresh bar:** y232b +0.0086 (3/1); y232a+b (k 2880-2887) **+0.0053 (6/2, t 2.2)**; all 12 growths +0.0056 (10/2, t 3.3). Adoption still needs 16 fresh 1M growths -> **y238a/b** (k 2928-2935). Short set: the step cannot fire below 100k teaching events; box check bit-identical on order3 / fables4000 / seqchoice cycle / book30k -> **y238c** identity check on the workers instead of a 16-growth short-set run.
+- **y233:** stepping at 300k is not better than at 100k at 1M (-0.0015, 1/3) -> **y239** screens earlier (30k) and a lower late rate (0.025).
+- **linux-pc has been idle since 6:00 AM CT:** R110's jobs (y235a/b, y236, y237) never reached origin (TacoBell offline). Every hour until the R110+R111 bundles are pushed is a lost linux-pc hour.
+
+## Ranked open questions (R111)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q42 / I102 | Length rule at 1M: growths 9-16 fresh; short-set identity | y238c, y238a, y238b |
+| 2 | I101 | 64000 cells: full short set; does capacity pay at 1M with the step | y235a/b, y237 |
+| 3 | Q46 / I104 | Which cx4dT knob breaks seqchoice (cortex / context size ruled out) | y236 |
+| 4 | Q42 | When / how far to step at 1M (later is not better) | y239 |
+| 5 | I106 | Engineering: lazy granule homeostasis / event-driven forward (box) | (box) |
+| 6 | I98 | cx3 sized recipe | (later) |
+Generation loops wait for the length rule. Low: analogy / evolution. Rejected ideas stay rejected (smooth schedule, demand claws as built, cortex lr 0.15, constant granLr 0.05).
+
+## Worker notes (R111)
+linux-pc: healthy on 400d0d8 but **idle since 6:00 AM CT** (queue empty on origin; heartbeats every 30 min, last 7:01 AM CT). chromium: silent since 9:30 AM CT Nov 2 (~22 h; machine disconnected; its y232b claim lapsed and linux-pc finished y232b). tacobell: worker Disabled on purpose; laptop offline -> R110 + R111 not pushed (bundles on the box, /workspace/R111).
+
 # PRIORITIES (R110, Nov 2 2026, ~7:30 PM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
 
 ## R110 update (queue review, evening)

@@ -4435,3 +4435,23 @@ Sources: y228 (linux-pc, done 8:43 AM CT, 16 runs), y232a (linux-pc, done 4:04 P
 - tacobell: worker Disabled on purpose (stale Oct 29 file, code 91501d6, expected). Laptop **offline** -> R110 not pushed (bundles in /workspace/R110 on the box).
 ### Queue (R110; run/r110_jobs.js)
 - New: y235a (0.92, 10.9 slot-h), y235b (0.915, 10.9), y236 (0.9, 6.0), y237 (0.88, 48.9) = 76.7 slot-h; plus y233 (running, ~3 h left) and y232b (44.9, pending). ~20 h for linux-pc alone; chromium shares it if it returns.
+
+## R111 (Nov 3 2026, 7 AM CT queue review) — **no adoption** (DEFAULTS_VERSION stays 39 / v46 = 32000 cells); **step schedule at 1M passes the pre-registered 8-fresh-growth bar** (y232a+b +0.0053, 6/2, t 2.2) -> growths 9-16 queued (y238a/b); stepping later (300k) is not better (y233)
+Sources: y233 (linux-pc, done 11:15 PM CT Nov 2, 4 runs), y232b (linux-pc, done 6:00 AM CT, 8 runs), 0 errors. origin/queue 5d4c307 (7:01 AM CT). Paired growth-by-growth (an111.py / a1.py on the box).
+### y232b (fresh k 2884-2887, 32000 cells, book1M): sched100k vs fixed 0.1
+- sched100k 0.4396 vs fixed 0.4310: **+0.0086 (3/1, t 2.2)**; per growth +0.0175 / +0.0110 / -0.0015 / +0.0075.
+- Pre-registered 8 fresh growths (y232a+b, k 2880-2887): **+0.0053 (0.4388 vs 0.4336, 6/2, t 2.2)** -> bar met (mean > 0, losses 25%, t > -2): candidate. All 12 growths incl. k 2536-2539: +0.0056 (10/2, t 3.3).
+- Adoption needs 16 fresh 1M growths -> **y238a/b** (k 2928-2935, same two arms). Short-set part of the bar: the step fires only after granLrT = 100000 teaching events, so short tasks cannot change. Box check (8000 cells, k 2904, fixed vs sched100k): order3 9.675 / 9.675, fables4000 3.633 / 3.633, seqchoice cycle 9.03 / 9.03, book30k 4.27 / 4.27 (bit-identical) -> **y238c** (32000 sched100k on all 8 short tasks, k 2904-2905) must match y235a's 32000 arm exactly; any difference blocks adoption.
+### y233 (k 2536-2539, 32000 cells, book1M): sched300k (step at 300k, late 0.05)
+| arm (same growths) | book1M |
+|---|---|
+| fixed 0.1 (v46, y229) | 0.4150 |
+| sched100k (y224) | **0.4213** |
+| sched300k (y233) | 0.4198 |
+- sched300k vs sched100k **-0.0015 (1/3, t -0.9)**; vs fixed +0.0048 (3/1, t 1.9). Stepping later does not help at 1M: the best step time does not scale with text length (at least not past 100k). -> **y239** (sched30k and sched100k late 0.025 at 1M, same growths; screen).
+### Workers (R111, ~7:30 AM CT; heartbeats = commits on origin/queue)
+- linux-pc: healthy on 400d0d8. Finished y233 (11:15 PM CT) and y232b (6:00 AM CT, took it after chromium's claim lapsed); **idle since 6:00 AM CT** because the R110 jobs were never pushed (heartbeats 6:00 / 6:31 / 7:01 AM CT "idle"). No crash loop.
+- chromium: silent since 9:30 AM CT Nov 2 (~22 h; machine disconnected). Fourth dropout in ~4 days; nothing stranded.
+- tacobell: worker Disabled on purpose (stale Oct 29 file, code 91501d6). Laptop offline -> R110 and R111 not pushed.
+### Queue (R111; run/r111_jobs.js, plus unpushed R110 jobs)
+- New: y238c (0.93, 0.9 slot-h), y238a (0.917, 44.9), y238b (0.912, 44.9), y239 (0.87, 44.9) = 135.6 slot-h. With R110's y235a/b (21.8), y236 (6.0), y237 (48.9): **212 slot-h ≈ 35 h of linux-pc** (~6 slot-h per hour on 1M jobs) once pushed; >12 h for chromium too if it returns.
