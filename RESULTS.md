@@ -4464,3 +4464,31 @@ Sources: origin/queue ca6da0e (6:53 PM CT). Last result is still y232b (6:00 AM 
 - tacobell: laptop back online this evening; BugBrainWorker Disabled on purpose (watchdog Ready), worker file stale since Oct 29 (code 91501d6), expected.
 ### Queue (R112)
 - No new jobs: the pushed R110 + R111 set (y238c 0.9, y235a/b 21.8, y236 6.0, y238a/b 89.8, y237 48.9, y239 44.9 slot-h = 212 slot-h) is ≈ 35 h of linux-pc alone, well over 12 h. tacobell cannot take any of it (memGB 2-3 > maxMemGB 1, book1M skip) and stays disabled.
+
+## R113 (Nov 4 2026, 7 AM CT queue review) — **no adoption** (DEFAULTS_VERSION stays 39 / v46 = 32000 cells); step rule identical on the short set on the workers (y238c); growths 9-12 at 1M small but positive (y238a); **64000 cells do nothing on the short set** (y235a/b)
+Sources: y238c (linux-pc, done 7:31 PM CT Nov 3, 16 runs), y235a (done 8:50 PM CT, 128 runs), y238a (done 3:25 AM CT, 8 runs), y235b (done 4:32 AM CT, 128 runs), 0 errors. origin/queue 322f3d1 (7:03 AM CT). Paired growth by growth (an113.py on the box).
+### y238c: short-set identity check for sched100k (32000 cells, k 2904-2905)
+- All 16 scores (book10k/30k, fables4000, order3, K4, text1000, seqchoice order2 / cycle x 2 growths) are **bit-identical** to y235a's 32000 arm on the same growths. The step never fires below 100k teaching events, so the short-set part of the adoption bar is met.
+### y238a: sched100k vs fixed 0.1 at book1M (32000 cells, fresh k 2928-2931 = growths 9-12)
+- sched100k 0.4348 vs fixed 0.4335: **+0.0012 (2/2, t 0.5)**; per growth -0.0040 / -0.0015 / +0.0050 / +0.0055.
+- Pre-registered fresh pool (y232a+b + y238a, 12 growths): **+0.0039 (0.4375 vs 0.4335, 8/4, t 2.2)**. y238b (k 2932-2935, running on linux-pc since 4:32 AM CT) completes the 16. Only a y238b mean below -0.0117 per growth (worse than any of the 12 so far) could fail the bar (mean > 0, losses not > 60%, t > -2); losses cannot exceed 60% any more. Expect adoption at R114 if y238b is not a disaster.
+- The effect is shrinking as fresh growths come in (first 4 +0.0063, y232a +0.0019, y232b +0.0086, y238a +0.0012): real but small (~+0.004 at 1M, ~1%).
+### y235a/b: 64000 vs 32000 cells on the full short set (16 fresh growths, k 2904-2919)
+| task | 32000 | 64000 | d (W/L, t) |
+|---|---|---|---|
+| book10k | 0.3996 | 0.4005 | +0.0010 (9/7, t 1.2) |
+| book30k | 0.4205 | 0.4208 | +0.0003 (9/7, t 0.2) |
+| fables4000 | 0.3654 | 0.3663 | +0.0008 (10/6, t 0.7) |
+| order3 | 0.9644 | 0.9636 | -0.0008 (0/3, t -1.8) |
+| K4 | 0.9861 | 0.9861 | 0.0000 (1/1) |
+| text1000 | 0.7633 | 0.7633 | -0.0001 (10/4, t -0.1) |
+| seqchoice order2 | 0.6085 | 0.6085 | identical (granules not on this path) |
+| seqchoice cycle | 0.9023 | 0.9023 | identical |
+- Verdict: **not adopted.** Nothing on the short set gains, order3 is a hair worse on 3 growths (0/3), and 64000 costs ~2x runtime. The 64000 gains seen at 100k (+0.0037) and 300k (+0.0023) are length-only: extra granule capacity is unused until the text is long. The capacity question is now "does it pay at 1M+ with the step" (y237), not a default change.
+- Plateau picture: capacity gain per doubling at 300k shrinks (+0.0056 16k->32k, +0.0023 32k->64k), short texts saturate by 32000, while length keeps paying (300k -> 1M +0.010-0.016). -> y240 asks whether 1M -> 3M still climbs.
+### Workers (R113, ~7:20 AM CT; heartbeats = commits on origin/queue)
+- linux-pc: healthy on b281d12 (current code). Finished 4 jobs overnight with no gaps; running y238b since 4:32 AM CT (renewed every 30 min, last 7:03 AM CT; expected done ~11 AM CT). No crash loop, crashSkip empty.
+- chromium: silent since 9:30 AM CT Nov 2 (~46 h; machine disconnected); its worker file still says y232b (stale, finished by linux-pc).
+- tacobell: worker Disabled on purpose (stale Oct 29 file, code 91501d6); laptop connected (push route).
+### Queue (R113; run/r113_jobs.js)
+- New: y240 (0.86, 4 runs at book3M, 67.3 slot-h, ~17 h wall per run). Pending before it: y238b (~4 h left), y236 (6.0 slot-h), y237 (48.9), y239 (44.9). ~45 h of linux-pc wall time.

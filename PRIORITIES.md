@@ -1,3 +1,26 @@
+# PRIORITIES (R113, Nov 4 2026, ~7:20 AM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
+
+## R113 update (queue review, morning)
+- **No adoption.** Four jobs finished on linux-pc overnight (y238c, y235a, y238a, y235b).
+- **Step rule (sched100k):** short set bit-identical on the workers (y238c); fresh growths 9-12 at 1M +0.0012 (2/2); pre-registered pool 12 fresh +0.0039 (8/4, t 2.2). y238b (growths 13-16, running, ~11 AM CT) decides; it fails only if its mean is below -0.0117/growth. **R114: if it passes, adopt sched100k (P.granLrT=100000, granLrLate 0.05) as v47 / DEFAULTS_VERSION 40.** Pending arms to check before bumping: y236 (cx4dT short tasks; the step cannot fire, no pin needed), y237 / y239 / y240 (every arm sets granLrT explicitly; y240 fixed arm pins granLrT=0).
+- **64000 cells: not adopted.** Full short set 16 fresh growths: nothing gains (book10k +0.0010, book30k +0.0003, fables +0.0008, text1000 -0.0001), order3 -0.0008 (0/3), seqchoice identical. Capacity past 32000 only matters at 100k+ symbols -> y237 (1M) decides whether it is worth 2x runtime there.
+- New y240: learning plateau at book3M (32000 fixed vs sched100k, k 2536-2537; refs at 1M on the same growths).
+
+## Ranked open questions (R113)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q42 / I102 | Length rule at 1M: growths 13-16 -> adoption | y238b (running) |
+| 2 | Q46 / I104 | Which cx4dT knob breaks seqchoice | y236 |
+| 3 | I101 | Does 64000 pay at 1M with the step (short set: no) | y237 |
+| 4 | Q42 | When / how far to step at 1M (later is not better) | y239 |
+| 5 | Q42 / I101 | Learning plateau: does 1M -> 3M still climb; does the rule gap grow | y240 |
+| 6 | I106 | Engineering: lazy granule homeostasis / event-driven forward (box) | (box) |
+| 7 | I98 | cx3 sized recipe | (later) |
+Generation loops wait for the length rule (unblock after R114 adoption). Low: analogy / evolution. Rejected ideas stay rejected (smooth schedule, demand claws as built, cortex lr 0.15, constant granLr 0.05; 64000 as a short-set default).
+
+## Worker notes (R113)
+linux-pc: healthy on b281d12, 4 jobs overnight, y238b since 4:32 AM CT (last renewal 7:03 AM CT). chromium: silent since 9:30 AM CT Nov 2 (~46 h, disconnected). tacobell: worker Disabled on purpose; laptop connected (push route). Queue ≈ 45 h of linux-pc.
+
 # PRIORITIES (R111, Nov 3 2026, ~7:45 AM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
 
 ## R112 update (queue review, evening)
