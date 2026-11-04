@@ -1,5 +1,12 @@
 # PRIORITIES (R111, Nov 3 2026, ~7:45 AM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
 
+## R112 update (queue review, evening)
+- **No new results, no adoption** (v46 / DEFAULTS_VERSION 39). Nothing ran today after y232b (6:00 AM CT): R110 + R111 jobs were stuck on the box while TacoBell was offline.
+- R110 + R111 + R112 pushed this evening via TacoBell (see commit log); linux-pc should claim y238c / y235a first. Ranking unchanged from R111.
+
+## Worker notes (R112)
+linux-pc: healthy on 400d0d8, idle 6:00 AM - ~7:30 PM CT (no jobs on origin), heartbeats every 30 min. chromium: silent since 9:30 AM CT Nov 2 (~34 h). tacobell: laptop online again, worker Disabled on purpose. Queue ≈ 35 h of linux-pc once pushed.
+
 ## R111 update (queue review, morning)
 - **No adoption.** Two jobs finished on linux-pc overnight (y233 11:15 PM CT, y232b 6:00 AM CT).
 - **Step rule at 1M passes the pre-registered 8-fresh bar:** y232b +0.0086 (3/1); y232a+b (k 2880-2887) **+0.0053 (6/2, t 2.2)**; all 12 growths +0.0056 (10/2, t 3.3). Adoption still needs 16 fresh 1M growths -> **y238a/b** (k 2928-2935). Short set: the step cannot fire below 100k teaching events; box check bit-identical on order3 / fables4000 / seqchoice cycle / book30k -> **y238c** identity check on the workers instead of a 16-growth short-set run.

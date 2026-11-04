@@ -4455,3 +4455,12 @@ Sources: y233 (linux-pc, done 11:15 PM CT Nov 2, 4 runs), y232b (linux-pc, done 
 - tacobell: worker Disabled on purpose (stale Oct 29 file, code 91501d6). Laptop offline -> R110 and R111 not pushed.
 ### Queue (R111; run/r111_jobs.js, plus unpushed R110 jobs)
 - New: y238c (0.93, 0.9 slot-h), y238a (0.917, 44.9), y238b (0.912, 44.9), y239 (0.87, 44.9) = 135.6 slot-h. With R110's y235a/b (21.8), y236 (6.0), y237 (48.9): **212 slot-h ≈ 35 h of linux-pc** (~6 slot-h per hour on 1M jobs) once pushed; >12 h for chromium too if it returns.
+
+## R112 (Nov 3 2026, 7 PM CT queue review) — **no new results, no adoption** (DEFAULTS_VERSION stays 39 / v46 = 32000 cells)
+Sources: origin/queue ca6da0e (6:53 PM CT). Last result is still y232b (6:00 AM CT, already in R111). Nothing ran since: the R110 + R111 jobs never reached origin because TacoBell was offline all day.
+### Workers (R112, ~7:20 PM CT; heartbeats = commits on origin/queue)
+- linux-pc: healthy on 400d0d8, heartbeat every 30 min (last 6:53 PM CT "idle"); **idle since 6:00 AM CT (~13 h)** for lack of jobs, not a fault. No crash loop, no stuck claim (claims/ empty).
+- chromium: silent since 9:30 AM CT Nov 2 (~34 h; machine disconnected). Its file still says "running y232b" but linux-pc finished y232b; nothing stranded.
+- tacobell: laptop back online this evening; BugBrainWorker Disabled on purpose (watchdog Ready), worker file stale since Oct 29 (code 91501d6), expected.
+### Queue (R112)
+- No new jobs: the pushed R110 + R111 set (y238c 0.9, y235a/b 21.8, y236 6.0, y238a/b 89.8, y237 48.9, y239 44.9 slot-h = 212 slot-h) is ≈ 35 h of linux-pc alone, well over 12 h. tacobell cannot take any of it (memGB 2-3 > maxMemGB 1, book1M skip) and stays disabled.
