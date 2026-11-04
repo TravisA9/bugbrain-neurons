@@ -1,0 +1,93 @@
+{
+  "id": "y237_1x_N64k_sched_book1M",
+  "question": "I101",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/lib.js",
+    "run/r100_jobs.js",
+    "run/r102r_jobs.js",
+    "run/r103_jobs.js",
+    "run/r104_jobs.js",
+    "run/r106_jobs.js",
+    "run/r107_jobs.js",
+    "run/r109_jobs.js"
+  ],
+  "title": "does capacity pay at 1M with the step rule? 64000 sched100k at book1M on k 2536-2539 (refs: y224 32000 sched100k 0.4213, y229 16000 sched100k 0.4176, same growths)",
+  "priority": 0.88,
+  "estHours": 8.2,
+  "slotHours": 48.9,
+  "phone": false,
+  "flag": "text",
+  "memGB": 3,
+  "accept": {
+    "note": "Screen (n 4, direction). y229: the cell gain shrank at 1M (32000 vs 16000 +0.0025-0.0036 vs +0.0054 at 300k). If 64000 sched100k > 32000 sched100k by > +0.003 (3/1+), capacity still pays at 1M and the plateau is capacity-bound; if flat, the 1M limit is the rule / readout, not cells."
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=64000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2536",
+        "--force"
+      ],
+      "label": "v44 N64000 sched100k book1M g2536 n1",
+      "env": {
+        "BB_OUT": "results/phone/y237_1x_N64k_sched_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=64000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2537",
+        "--force"
+      ],
+      "label": "v44 N64000 sched100k book1M g2537 n1",
+      "env": {
+        "BB_OUT": "results/phone/y237_1x_N64k_sched_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=64000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2538",
+        "--force"
+      ],
+      "label": "v44 N64000 sched100k book1M g2538 n1",
+      "env": {
+        "BB_OUT": "results/phone/y237_1x_N64k_sched_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=64000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2539",
+        "--force"
+      ],
+      "label": "v44 N64000 sched100k book1M g2539 n1",
+      "env": {
+        "BB_OUT": "results/phone/y237_1x_N64k_sched_book1M.jsonl"
+      }
+    }
+  ]
+}

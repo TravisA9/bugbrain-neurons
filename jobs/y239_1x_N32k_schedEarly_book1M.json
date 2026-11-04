@@ -1,0 +1,153 @@
+{
+  "id": "y239_1x_N32k_schedEarly_book1M",
+  "question": "Q42",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/lib.js",
+    "run/r100_jobs.js",
+    "run/r102r_jobs.js",
+    "run/r103_jobs.js",
+    "run/r104_jobs.js",
+    "run/r106_jobs.js",
+    "run/r107_jobs.js",
+    "run/r109_jobs.js"
+  ],
+  "title": "step time / late rate at 1M: 32000 sched30k (late 0.05) and sched100k late 0.025 at book1M on k 2536-2539 (refs: y229 fixed, y224 sched100k, y233 sched300k, same growths)",
+  "priority": 0.87,
+  "estHours": 7.5,
+  "slotHours": 44.9,
+  "phone": false,
+  "flag": "text",
+  "memGB": 3,
+  "accept": {
+    "note": "Screen (n 4, direction). y233: sched300k -0.0015 vs sched100k (1/3). If sched30k >= sched100k, the step time is not length-bound (anneal early); if late 0.025 > 0.05 by > +0.003, the late rate is the lever. Neither replaces sched100k without its own 16 fresh growths."
+  },
+  "runs": [
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=30000,P.granLrLate=0.05,P.fastEngine=1",
+        "2536",
+        "--force"
+      ],
+      "label": "v44 N32000 sched30k book1M g2536 n1",
+      "env": {
+        "BB_OUT": "results/phone/y239_1x_N32k_schedEarly_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=30000,P.granLrLate=0.05,P.fastEngine=1",
+        "2537",
+        "--force"
+      ],
+      "label": "v44 N32000 sched30k book1M g2537 n1",
+      "env": {
+        "BB_OUT": "results/phone/y239_1x_N32k_schedEarly_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=30000,P.granLrLate=0.05,P.fastEngine=1",
+        "2538",
+        "--force"
+      ],
+      "label": "v44 N32000 sched30k book1M g2538 n1",
+      "env": {
+        "BB_OUT": "results/phone/y239_1x_N32k_schedEarly_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=30000,P.granLrLate=0.05,P.fastEngine=1",
+        "2539",
+        "--force"
+      ],
+      "label": "v44 N32000 sched30k book1M g2539 n1",
+      "env": {
+        "BB_OUT": "results/phone/y239_1x_N32k_schedEarly_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.025,P.fastEngine=1",
+        "2536",
+        "--force"
+      ],
+      "label": "v44 N32000 sched100k late025 book1M g2536 n1",
+      "env": {
+        "BB_OUT": "results/phone/y239_1x_N32k_schedEarly_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.025,P.fastEngine=1",
+        "2537",
+        "--force"
+      ],
+      "label": "v44 N32000 sched100k late025 book1M g2537 n1",
+      "env": {
+        "BB_OUT": "results/phone/y239_1x_N32k_schedEarly_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.025,P.fastEngine=1",
+        "2538",
+        "--force"
+      ],
+      "label": "v44 N32000 sched100k late025 book1M g2538 n1",
+      "env": {
+        "BB_OUT": "results/phone/y239_1x_N32k_schedEarly_book1M.jsonl"
+      }
+    },
+    {
+      "script": "run/r42.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":1000000,\"evalSyms\":2000}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.025,P.fastEngine=1",
+        "2539",
+        "--force"
+      ],
+      "label": "v44 N32000 sched100k late025 book1M g2539 n1",
+      "env": {
+        "BB_OUT": "results/phone/y239_1x_N32k_schedEarly_book1M.jsonl"
+      }
+    }
+  ]
+}
