@@ -1,3 +1,25 @@
+# PRIORITIES (R114, Nov 4 2026, ~7:20 PM CT; **v47 / DEFAULTS_VERSION 40** — v47 = plan deepURSx3 (32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2) **+ granule step schedule: granLr 0.1 -> 0.05 after 100k teaching events**)
+
+## R114 update (queue review, evening)
+- **Adopted v47 / DEFAULTS_VERSION 40.** sched100k passed the pre-registered 16 fresh 1M growths: +0.0038 (11/5, t 2.8); short set bit-identical (y238c). Plan genes d.gran.lrT/lrLate; explicit P.granLrT still overrides (pending y237/y239/y240 pin it). Old default = deepURSx3v46.
+- **y236:** striatum x4 is the only cx4dT knob that breaks seqchoice (cx1 brain: removing it restores order2 -0.043 / cycle +0.021 vs 1x, from -0.25 / -0.31); the size cone is required (-0.50 / -0.74 without). With y230 -> striatum must match cortex size -> **y241** ratio grid.
+- Generation loops are now unblocked (length rule settled); design a job next round.
+
+## Ranked open questions (R114)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q46 / I104 | Striatum:cortex ratio fixes seqchoice? (cx1 x str1/2/4, cx2 x str2/4) | y241 |
+| 2 | I101 | Does 64000 pay at 1M with the step (short set: no) | y237 (running) |
+| 3 | Q42 | Earlier step (30k) / lower late rate (0.025) at 1M | y239 |
+| 4 | Q42 / I101 | Learning plateau: does 1M -> 3M still climb; does the rule gap grow | y240 |
+| 5 | — | Generation loops on v47 (unblocked) | (design R115) |
+| 6 | I106 | Engineering: lazy granule homeostasis / event-driven forward (box) | (box) |
+| 7 | I98 | cx3 sized recipe (after y241) | (later) |
+Low: analogy / evolution. Rejected ideas stay rejected (smooth schedule, demand claws as built, cortex lr 0.15, constant granLr 0.05; 64000 as a short-set default; step at 300k).
+
+## Worker notes (R114)
+linux-pc: healthy on 70daae6, y238b + y236 done before noon, y237 since 11:37 AM CT (last renewal 7:07 PM CT). Workers pick up v47 code on their next pull; pending jobs pin granLrT so results stay comparable. chromium: silent since 9:30 AM CT Nov 2 (~58 h). tacobell: worker Disabled on purpose. Queue ≈ 30 h of linux-pc.
+
 # PRIORITIES (R113, Nov 4 2026, ~7:20 AM CT; **v46 / DEFAULTS_VERSION 39** unchanged — v46 = plan deepURSx3 with a 32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2)
 
 ## R113 update (queue review, morning)

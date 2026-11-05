@@ -82,6 +82,7 @@ function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, g
   const colsOf = ([p, c]) => { const m = new Map(); for (let i = p.g.nIn; i < p.g.nIn + p.g.nHid; i++) if (p.g.cellType[i] === N_FIXED + c && p.g.topo && !isNaN(p.g.topo[i])) { const k = Math.round(p.g.topo[i] * 1e4); if (!m.has(k)) m.set(k, []); m.get(k).push(node(p, i)); } return m; };
   const C = srcs.map(colsOf), r = mulberry32((seed ^ 0x6a7a11) >>> 0);
   G.gran = new Uint8Array(G.N);
+  if (gd && gd.lrT > 0) G.granSch = { T: gd.lrT, late: gd.lrLate > 0 ? gd.lrLate : 0 };   // v47 (R114): plan gene d.gran.lrT / lrLate = the granule step schedule (net.js granStep; P.granLrT overrides, P.granLrT=0 = fixed granLr)
   // R102 granDemand (P.granDemand > 0): do not draw random claws. The same granN cells stay reserved (the cap) and net.js
   // wires a claw when that lag window has co-occurred granCo times. Off: the loop below is the v41–v44 random claw, unchanged.
   if (!(params.granDemand > 0)) {

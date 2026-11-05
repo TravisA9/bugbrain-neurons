@@ -4492,3 +4492,35 @@ Sources: y238c (linux-pc, done 7:31 PM CT Nov 3, 16 runs), y235a (done 8:50 PM C
 - tacobell: worker Disabled on purpose (stale Oct 29 file, code 91501d6); laptop connected (push route).
 ### Queue (R113; run/r113_jobs.js)
 - New: y240 (0.86, 4 runs at book3M, 67.3 slot-h, ~17 h wall per run). Pending before it: y238b (~4 h left), y236 (6.0 slot-h), y237 (48.9), y239 (44.9). ~45 h of linux-pc wall time.
+
+## R114 (Nov 4 2026, 7 PM CT queue review) — **ADOPTED v47 / DEFAULTS_VERSION 40: granule step schedule (granLr 0.1 -> 0.05 after 100k teaching events) is now the default**; y236 finds **striatum x4 is the only cx4dT knob that breaks seqchoice** (size cone is required)
+Sources: y238b (linux-pc, done 11:19 AM CT, 8 runs), y236 (done 11:37 AM CT, 160 runs), 0 errors. origin/queue f292301 (7:07 PM CT). Paired growth by growth (an114.py on the box).
+### y238b: sched100k vs fixed 0.1 at book1M (32000 cells, fresh k 2932-2935 = growths 13-16)
+- sched100k 0.4494 vs fixed 0.4459: **+0.0035 (3/1, t 2.2)**.
+- **Pre-registered pool, 16 fresh growths (y232a+b, y238a+b, k 2880-2887 + 2928-2935): +0.0038 (0.4404 vs 0.4366, 11/5, t 2.8)** -> passes (mean > 0, losses 31% <= 60%, t > -2).
+- Short set: bit-identical on the workers (y238c, R113) — the step cannot fire below 100k teaching events, so no task is worse.
+### Adoption: v47 / DEFAULTS_VERSION 40
+- Plan deepURSx3 now carries the schedule as plan genes: d.gran.lrT = 100000, d.gran.lrLate = 0.05 (regions.js -> G.granSch; net.js granStep uses it when P.granLrT is unset). An explicit P.granLrT (including 0 = off) still overrides, so every pending/old job that sets it is unaffected. Old default kept as plan deepURSx3v46.
+- Pins: y237 / y239 / y240 set P.granLrT explicitly in every arm (y240's fixed arm pins granLrT=0); y241 is short-task only (step cannot fire). Nothing else pending depends on it.
+- Box identity (book130k, granN 2000, g2536): deepURSx3 (v47) == deepURSx3v46 + P.granLrT=100000,P.granLrLate=0.05 (3.58, every stat identical); deepURSx3 + P.granLrT=0 == deepURSx3v46 (3.555, identical). test_core passes (new v47 test).
+- Size of the win: ~+0.004 at 1M (~1%), shrinking as fresh growths arrived (+0.0063, +0.0019, +0.0086, +0.0012, +0.0035 per batch). Real, small, free.
+### y236: which cx4dT knob breaks seqchoice (cortex x1 / context x1 brain "cx1", 8 growths k 2920-2927, vs v44 N16000 1x)
+| arm | seqchoice order2 | seqchoice cycle | order3 |
+|---|---|---|---|
+| cx1 (all knobs) | -0.249 (1/7, t -3.7) | -0.306 (0/8, t -5.4) | +0.0022 (3/3) |
+| **-str4 (striatum x1)** | **-0.043 (4/4, t -0.7)** | **+0.021 (4/4, t 0.6)** | +0.0022 |
+| -strTroph | -0.223 | -0.270 | +0.0022 |
+| -cxDivTroph | -0.209 | -0.268 | +0.0034 |
+| -cone | -0.496 (0/8) | -0.741 (0/8) | +0.0022 |
+| -thin | -0.245 | -0.289 | +0.0022 |
+| -fanRef | -0.225 | -0.264 | +0.0056 (4/0) |
+| -preNorm / -granRef | -0.249 | -0.306 | +0.0006 / +0.0022 |
+- **Striatum x4 alone causes the seqchoice collapse** on a cortex-x1 brain; removing it restores the 1x level. The size cone is load-bearing (removing it is far worse). No knob matters for order3 on the cx1 brain (all ~+0.002).
+- With y230 (cortex x2 + striatum x1 also collapses seqchoice), the working hypothesis is a **striatum:cortex size mismatch**, not a bad knob: the striatum must match the cortex size. -> y241 tests the ratio directly (cx1 x str1/2/4, cx2 x str2/4).
+### Workers (R114, ~7:20 PM CT; heartbeats = commits on origin/queue)
+- linux-pc: healthy on 70daae6 (current code). y238b done 11:19 AM, y236 done 11:37 AM, running y237 since 11:37 AM CT (renewed every 30 min, last 7:07 PM CT). No crash loop, crashSkip empty.
+- chromium: silent since 9:30 AM CT Nov 2 (~58 h; disconnected); stale file still says y232b.
+- tacobell: worker Disabled on purpose (stale Oct 29 file, code 91501d6).
+### Queue (R114; run/r114_jobs.js)
+- New: y241 (0.89, 192 runs, 4.0 slot-h, ~1 h wall): striatum:cortex ratio on seqchoice order2 / cycle, order3, K4 (8 growths k 2936-2943).
+- Pending: y237 (running, ~5 h left), y239 (44.9 slot-h, ~7 h), y240 (67.3, ~17 h). ≈ 30 h of linux-pc wall time (> 12 h).
