@@ -1,3 +1,25 @@
+# PRIORITIES (R115, Nov 5 2026, ~7:20 AM CT; **v47 / DEFAULTS_VERSION 40** unchanged — v47 = plan deepURSx3 (32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2) + granule step schedule granLr 0.1 -> 0.05 after 100k teaching events)
+
+## R115 update (queue review, morning)
+- **No adoption.** Two jobs finished on linux-pc overnight (y237 9:19 PM, y239 3:58 AM CT).
+- **y237:** 64000 cells + step at 1M +0.0020 vs 32000 + step (3/1, t 1.0), same as the 300k gain, at ~2x runtime -> not pursued; capacity (I101) parked until y240.
+- **y239:** sched30k -0.0016 (1/2), late 0.025 -0.0006 (1/3) vs the adopted 100k / 0.05 -> step timing closed at 1M.
+- New **y242**: generation loops vs life length on v47 (book30k vs book300k, greedy; distinct4 / nonSpace / triBits).
+- **Push blocked again:** TacoBell offline, so R114 (v47 code + y241) and R115 (y242) sit on the box. linux-pc keeps running y240 on 70daae6 (fine: pins), but once y240 ends (~9 PM CT) it idles unless the push lands.
+
+## Ranked open questions (R115)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q46 / I104 | Striatum:cortex ratio fixes seqchoice? (cx1 x str1/2/4, cx2 x str2/4) | y241 (unpushed) |
+| 2 | Q42 / I101 | Learning plateau: does 1M -> 3M still climb; does the rule gap grow | y240 (running) |
+| 3 | I81 | Generation loops: learning (life length) or readout policy? | y242 (unpushed) |
+| 4 | I106 | Engineering: lazy granule homeostasis / event-driven forward (box) | (box) |
+| 5 | I98 | cx3 sized recipe (after y241) | (later) |
+Closed: step timing at 1M (y233 / y239). Parked: 64000 cells (y235a/b, y237) until y240. Low: analogy / evolution. Rejected ideas stay rejected (smooth schedule, demand claws as built, cortex lr 0.15, constant granLr 0.05; 64000 as a default; step at 300k / 30k; late rate 0.025).
+
+## Worker notes (R115)
+linux-pc: healthy on 70daae6, y237 + y239 done overnight, y240 since 3:59 AM CT (last renewal 6:59 AM CT, ~17 h job). chromium: silent since 9:30 AM CT Nov 2 (~70 h). tacobell: worker Disabled on purpose; laptop offline (push route down). Queue on origin ≈ 14 h (y240); ≈ 23 h once R114 + R115 land.
+
 # PRIORITIES (R114, Nov 4 2026, ~7:20 PM CT; **v47 / DEFAULTS_VERSION 40** — v47 = plan deepURSx3 (32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2) **+ granule step schedule: granLr 0.1 -> 0.05 after 100k teaching events**)
 
 ## R114 update (queue review, evening)

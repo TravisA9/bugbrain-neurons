@@ -4524,3 +4524,27 @@ Sources: y238b (linux-pc, done 11:19 AM CT, 8 runs), y236 (done 11:37 AM CT, 160
 ### Queue (R114; run/r114_jobs.js)
 - New: y241 (0.89, 192 runs, 4.0 slot-h, ~1 h wall): striatum:cortex ratio on seqchoice order2 / cycle, order3, K4 (8 growths k 2936-2943).
 - Pending: y237 (running, ~5 h left), y239 (44.9 slot-h, ~7 h), y240 (67.3, ~17 h). ≈ 30 h of linux-pc wall time (> 12 h).
+
+## R115 (Nov 5 2026, 7 AM CT queue review) — **no adoption** (v47 / DEFAULTS_VERSION 40 stays); **64000 cells at 1M: +0.0020, not worth 2x runtime** (y237); **step timing closed: 30k and late 0.025 are no better than the adopted 100k / 0.05** (y239)
+Sources: y237 (linux-pc, done 9:19 PM CT Nov 4, 4 runs, 9.7 h wall), y239 (done 3:58 AM CT Nov 5, 8 runs), 0 errors. origin/queue 7bc1465 (6:59 AM CT). Paired growth by growth vs the same growths' 32000 sched100k arm (y224, k 2536-2539; an115.py on the box).
+### y237: 64000 cells + sched100k at book1M
+| arm (k 2536-2539) | book1M | d vs 32000 sched100k (W/L, t) | per growth |
+|---|---|---|---|
+| 32000 fixed 0.1 (v46, y229) | 0.4150 | -0.0063 (0/4, t -2.7) | -0.001 / -0.012 / -0.0075 / -0.0045 |
+| **32000 sched100k (v47, y224)** | **0.4213** | ref | |
+| 64000 sched100k (y237) | 0.4233 | +0.0020 (3/1, t 1.0) | +0.001 / -0.0025 / +0.007 / +0.0025 |
+- 64000 at 1M gains about what it gained at 300k (+0.0023 over 16): the capacity gain is not growing with length past 300k, and the arm costs ~2x runtime (9.7 h wall for 4 runs). **Not pursued**; I101 parked until y240 shows whether 32000 saturates by 3M.
+### y239: when / how far to step at 1M (32000 cells, k 2536-2539)
+| arm | book1M | d vs sched100k late 0.05 (W/L, t) |
+|---|---|---|
+| sched30k (step at 30k, late 0.05) | 0.4196 | -0.0016 (1/2, t -1.3) |
+| sched100k late 0.025 | 0.4206 | -0.0006 (1/3, t -0.5) |
+| sched300k (y233) | 0.4198 | -0.0015 (1/3, t -0.9) |
+- Earlier, later, and a lower late rate are all a hair worse than the adopted (100k, 0.05). **Step-timing question closed at 1M**; v47 stays.
+### Workers (R115, ~7:20 AM CT; heartbeats = commits on origin/queue)
+- linux-pc: healthy, still on code 70daae6 (R114's v47 code is not on origin yet; harmless, every pending arm pins granLrT). y237 done 9:19 PM, y239 9:19 PM - 3:58 AM, **y240 (book3M) since 3:59 AM CT**, renewed every 30 min (last 6:59 AM CT); expected done ~9 PM CT. No crash loop, crashSkip empty.
+- chromium: silent since 9:30 AM CT Nov 2 (~70 h; machine disconnected); stale file still says y232b.
+- tacobell: worker Disabled on purpose (stale Oct 29 file, code 91501d6); laptop offline since R114 -> **R114 and R115 not pushed** (bundles in /workspace/R114 and /workspace/R115 on the box).
+### Queue (R115; run/r115_jobs.js)
+- New: **y242** (0.85, 48 runs, 48.4 slot-h, ~8 h wall): generation loops vs life length on v47 (32000 cells + step, P.granLrT pinned): greedy 500-symbol free-run after book30k vs book300k, published stats distinct4 / nonSpace / triBits, fresh k 2944-2951. Box smoke (book3k, g2944): greedy collapses to spaces (nonSpace 0.035, distinct4 0.076, triBits 5.78 vs real 2.58). If the 10x longer life does not cut the loops, they are a readout-policy problem (sampled / anti-repeat readout next), not a learning one.
+- On origin: only y240 (running, ~14 h left). Waiting for the push: y241 (R114, ~1 h) and y242 (~8 h) -> ≈ 23 h of linux-pc once pushed; ≈ 14 h if not.
