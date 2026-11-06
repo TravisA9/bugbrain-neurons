@@ -1,0 +1,1563 @@
+{
+  "id": "y243_1x_v47_gen_policy",
+  "question": "I81",
+  "track": "neuro",
+  "kind": "runs",
+  "requires": [
+    "run/r42.js",
+    "run/gen.js",
+    "js/core/net.js",
+    "js/core/regions.js",
+    "js/core/develop.js",
+    "run/mempar.js",
+    "run/lib.js"
+  ],
+  "title": "generation readout policy on v47 (32000 cells + step pinned): greedy vs genTemp=1 vs gate margin 0.2 at book30k, plus genTemp=1 at book300k; distinct4 / nonSpace / triBits; fresh k 2952-2959",
+  "priority": 0.84,
+  "estHours": 9.5,
+  "slotHours": 57.1,
+  "phone": false,
+  "flag": "text",
+  "memGB": 2,
+  "accept": {
+    "note": "Plateau closed (y240): length parked, focus generation. Box smoke (R115) and historical z06: greedy loops / space-collapses at book30k; T1 and gate margin 0.2 were the useful policy levers (I81). Does either lift distinct4 / nonSpace on v47 at the known failure point (8 growths, paired)? The book300k T1 arm keeps queue depth >=12h with y241+y242 and asks whether sampling still helps after a life where the step fires (compare directionally to y242 greedy@300k on k 2944-2951). If neither policy beats greedy on distinct4 / nonSpace, generation needs a new idea (anti-repeat / larger prime), not more learning length."
+  },
+  "runs": [
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2952",
+        "--force"
+      ],
+      "label": "v47 greedy gen distinct4 book30k g2952 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2953",
+        "--force"
+      ],
+      "label": "v47 greedy gen distinct4 book30k g2953 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2954",
+        "--force"
+      ],
+      "label": "v47 greedy gen distinct4 book30k g2954 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2955",
+        "--force"
+      ],
+      "label": "v47 greedy gen distinct4 book30k g2955 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2956",
+        "--force"
+      ],
+      "label": "v47 greedy gen distinct4 book30k g2956 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2957",
+        "--force"
+      ],
+      "label": "v47 greedy gen distinct4 book30k g2957 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2958",
+        "--force"
+      ],
+      "label": "v47 greedy gen distinct4 book30k g2958 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2959",
+        "--force"
+      ],
+      "label": "v47 greedy gen distinct4 book30k g2959 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2952",
+        "--force"
+      ],
+      "label": "v47 greedy gen nonSpace book30k g2952 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2953",
+        "--force"
+      ],
+      "label": "v47 greedy gen nonSpace book30k g2953 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2954",
+        "--force"
+      ],
+      "label": "v47 greedy gen nonSpace book30k g2954 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2955",
+        "--force"
+      ],
+      "label": "v47 greedy gen nonSpace book30k g2955 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2956",
+        "--force"
+      ],
+      "label": "v47 greedy gen nonSpace book30k g2956 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2957",
+        "--force"
+      ],
+      "label": "v47 greedy gen nonSpace book30k g2957 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2958",
+        "--force"
+      ],
+      "label": "v47 greedy gen nonSpace book30k g2958 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2959",
+        "--force"
+      ],
+      "label": "v47 greedy gen nonSpace book30k g2959 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2952",
+        "--force"
+      ],
+      "label": "v47 greedy gen triBits book30k g2952 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2953",
+        "--force"
+      ],
+      "label": "v47 greedy gen triBits book30k g2953 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2954",
+        "--force"
+      ],
+      "label": "v47 greedy gen triBits book30k g2954 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2955",
+        "--force"
+      ],
+      "label": "v47 greedy gen triBits book30k g2955 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2956",
+        "--force"
+      ],
+      "label": "v47 greedy gen triBits book30k g2956 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2957",
+        "--force"
+      ],
+      "label": "v47 greedy gen triBits book30k g2957 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2958",
+        "--force"
+      ],
+      "label": "v47 greedy gen triBits book30k g2958 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2959",
+        "--force"
+      ],
+      "label": "v47 greedy gen triBits book30k g2959 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2952",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book30k g2952 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2953",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book30k g2953 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2954",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book30k g2954 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2955",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book30k g2955 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2956",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book30k g2956 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2957",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book30k g2957 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2958",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book30k g2958 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2959",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book30k g2959 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2952",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book30k g2952 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2953",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book30k g2953 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2954",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book30k g2954 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2955",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book30k g2955 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2956",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book30k g2956 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2957",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book30k g2957 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2958",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book30k g2958 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2959",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book30k g2959 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2952",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book30k g2952 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2953",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book30k g2953 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2954",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book30k g2954 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2955",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book30k g2955 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2956",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book30k g2956 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2957",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book30k g2957 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2958",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book30k g2958 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2959",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book30k g2959 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2952",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen distinct4 book30k g2952 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2953",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen distinct4 book30k g2953 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2954",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen distinct4 book30k g2954 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2955",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen distinct4 book30k g2955 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2956",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen distinct4 book30k g2956 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2957",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen distinct4 book30k g2957 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2958",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen distinct4 book30k g2958 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2959",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen distinct4 book30k g2959 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2952",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen nonSpace book30k g2952 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2953",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen nonSpace book30k g2953 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2954",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen nonSpace book30k g2954 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2955",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen nonSpace book30k g2955 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2956",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen nonSpace book30k g2956 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2957",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen nonSpace book30k g2957 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2958",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen nonSpace book30k g2958 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2959",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen nonSpace book30k g2959 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2952",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen triBits book30k g2952 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2953",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen triBits book30k g2953 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2954",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen triBits book30k g2954 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2955",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen triBits book30k g2955 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2956",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen triBits book30k g2956 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2957",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen triBits book30k g2957 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2958",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen triBits book30k g2958 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":30000,\"evalSyms\":2000,\"genSyms\":500}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,pl.outGate=0.2,pl.outGateMode=1",
+        "2959",
+        "--force"
+      ],
+      "label": "v47 gate margin0.2 gen triBits book30k g2959 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2952",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book300k g2952 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2953",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book300k g2953 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2954",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book300k g2954 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2955",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book300k g2955 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2956",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book300k g2956 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2957",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book300k g2957 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2958",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book300k g2958 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2959",
+        "--force"
+      ],
+      "label": "v47 T1 gen distinct4 book300k g2959 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "distinct4"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2952",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book300k g2952 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2953",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book300k g2953 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2954",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book300k g2954 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2955",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book300k g2955 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2956",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book300k g2956 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2957",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book300k g2957 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2958",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book300k g2958 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2959",
+        "--force"
+      ],
+      "label": "v47 T1 gen nonSpace book300k g2959 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "nonSpace"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2952",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book300k g2952 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2953",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book300k g2953 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2954",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book300k g2954 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2955",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book300k g2955 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2956",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book300k g2956 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2957",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book300k g2957 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2958",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book300k g2958 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    },
+    {
+      "script": "run/gen.js",
+      "args": [
+        "deepURSx3",
+        "{\"env\":\"seq\",\"params\":{\"source\":\"book\",\"nSyms\":300000,\"evalSyms\":2000,\"genSyms\":500,\"genTemp\":1}}",
+        "1",
+        "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1",
+        "2959",
+        "--force"
+      ],
+      "label": "v47 T1 gen triBits book300k g2959 n1",
+      "env": {
+        "BB_OUT": "results/phone/y243_1x_v47_gen_policy.jsonl",
+        "BB_GEN_MEAN": "triBits"
+      }
+    }
+  ]
+}
