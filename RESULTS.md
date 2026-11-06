@@ -4548,3 +4548,31 @@ Sources: y237 (linux-pc, done 9:19 PM CT Nov 4, 4 runs, 9.7 h wall), y239 (done 
 ### Queue (R115; run/r115_jobs.js)
 - New: **y242** (0.85, 48 runs, 48.4 slot-h, ~8 h wall): generation loops vs life length on v47 (32000 cells + step, P.granLrT pinned): greedy 500-symbol free-run after book30k vs book300k, published stats distinct4 / nonSpace / triBits, fresh k 2944-2951. Box smoke (book3k, g2944): greedy collapses to spaces (nonSpace 0.035, distinct4 0.076, triBits 5.78 vs real 2.58). If the 10x longer life does not cut the loops, they are a readout-policy problem (sampled / anti-repeat readout next), not a learning one.
 - On origin: only y240 (running, ~14 h left). Waiting for the push: y241 (R114, ~1 h) and y242 (~8 h) -> ≈ 23 h of linux-pc once pushed; ≈ 14 h if not.
+
+## R116 (Nov 5 2026, 7 PM CT queue review) — **no adoption** (v47 / DEFAULTS_VERSION 40 stays); **y240: 1M -> 3M does not climb** (fixed −0.0033, sched −0.0057; 0/2 each); **rule gap shrinks** (+0.0065 -> +0.0040); plateau CLOSED at 32000; I101 stays parked (no 64000@3M)
+Sources: y240 (linux-pc, done 6:12 PM CT, 4 runs, ~14.2 h wall), 0 errors. origin/queue at review had y240 DONE; R114+R115 already on origin (aa31822 / 03ebe4d) and linux-pc had claimed y241. Paired growth by growth vs the same growths' 1M arms (y229 fixed, y224 sched100k, k 2536-2537; an116.py on the box; mean/10).
+### y240: learning plateau at book3M (32000 cells, k 2536-2537)
+| arm | g2536 | g2537 | mean |
+|---|---|---|---|
+| fixed book1M (y229) | 0.4005 | 0.4095 | 0.4050 |
+| fixed book3M (y240) | 0.3985 | 0.4050 | 0.4017 |
+| sched100k book1M (y224) | 0.4015 | 0.4215 | 0.4115 |
+| sched100k book3M (y240) | 0.3960 | 0.4155 | 0.4058 |
+| 1M -> 3M | d g2536 | d g2537 | mean d (climbs) |
+|---|---|---|---|
+| fixed | −0.0020 | −0.0045 | **−0.0033 (0/2)** |
+| sched100k | −0.0055 | −0.0060 | **−0.0057 (0/2)** |
+| rule gap (sched − fixed) | g2536 | g2537 | mean |
+|---|---|---|---|
+| book1M | +0.0010 | +0.0120 | +0.0065 |
+| book3M | −0.0025 | +0.0105 | **+0.0040** (shrinks) |
+- Per y240 accept note: lift < +0.003 => the plateau is real at 32000; the rule gap did not grow, so no second step. Scores are a hair *worse* at 3M than at 1M on both arms (n 2, direction only) — length past 1M does not pay.
+- **I101 / 64000@3M not queued.** y237 already measured 64000 + step at 1M: +0.0020 (3/1, t 1.0) for ~2x runtime, and the short set was nil (y235a/b). A declining 3M score is not a capacity-starvation signal. Capacity stays parked; length / plateau question **closed**.
+### New job choice (one well-designed follow-up)
+- Park length; lean on y241 (seqchoice ratio, already claimed) + y242 (gen life length) + **y243** generation readout policy on v47 (greedy vs genTemp=1 vs gate margin 0.2 at book30k, plus T1 at book300k; fresh k 2952-2959; I81). Does not wait on y241/y242 results. Rejected alternative: 64000 vs 32000 at book3M (see above).
+### Workers (R116, ~7:20 PM CT; heartbeats = commits on origin/queue)
+- linux-pc: healthy; finished y240 6:12 PM CT, idle briefly, then claimed **y241** after the R114+R115 push (~7:18 PM CT). Still on code 70daae6 until its next pull (harmless: every pending arm pins granLrT; v47 code is on origin at aa31822). No crash loop, crashSkip empty.
+- chromium: **silent** since 9:30 AM CT Nov 2 (~76 h; machine disconnected); stale file still says y232b.
+- tacobell: worker Disabled on purpose (stale Oct 30 file); laptop connected (push route) — R114+R115 landed via TacoBell at ~7:18 PM CT.
+### Queue (R116; run/r116_jobs.js)
+- New: **y243** (0.84, 96 runs, 57.1 slot-h, ~9.5 h wall): generation readout policy on v47. On origin already: y241 (~0.7 h, running) + y242 (~8.1 h). Once y243 lands: ≈ 18 h of linux-pc; well over 12 h.

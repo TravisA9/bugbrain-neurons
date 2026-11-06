@@ -1,3 +1,24 @@
+# PRIORITIES (R116, Nov 5 2026, ~7:20 PM CT; **v47 / DEFAULTS_VERSION 40** unchanged — v47 = plan deepURSx3 (32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2) + granule step schedule granLr 0.1 -> 0.05 after 100k teaching events)
+
+## R116 update (queue review, evening)
+- **No adoption.** y240 finished on linux-pc (6:12 PM CT).
+- **y240:** 1M -> 3M does not climb (fixed −0.0033, sched −0.0057; 0/2 each); rule gap shrinks (+0.0065 -> +0.0040). Plateau **closed** at 32000. No second step.
+- **I101 stays parked** (no 64000@3M): y237 already +0.0020 n.s. at 1M for ~2x cost; 3M decline ≠ capacity starvation. Length question closed.
+- New **y243**: generation readout policy on v47 (greedy / T1 / gate margin 0.2 at book30k + T1 at book300k). Does not wait on y241/y242.
+- R114+R115 pushed ~7:18 PM CT (aa31822 / y241+y242 on origin); linux-pc claimed y241.
+
+## Ranked open questions (R116)
+| rank | id | question | jobs |
+|---|---|---|---|
+| 1 | Q46 / I104 | Striatum:cortex ratio fixes seqchoice? (cx1 x str1/2/4, cx2 x str2/4) | y241 (running) |
+| 2 | I81 / I72 | Generation loops: life length (learning) or readout policy? | y242 (queued), y243 (new) |
+| 3 | I106 | Engineering: lazy granule homeostasis / event-driven forward (box) | (box) |
+| 4 | I98 | cx3 sized recipe (after y241) | (later) |
+Closed: step timing at 1M (y233 / y239); learning plateau 1M->3M (y240). Parked: 64000 cells / I101 (y235a/b, y237; no 64000@3M). Low: analogy / evolution. Rejected ideas stay rejected (smooth schedule, demand claws as built, cortex lr 0.15, constant granLr 0.05; 64000 as a default; step at 300k / 30k; late rate 0.025; second step at 1M; book10M / longer-than-3M length screens).
+
+## Worker notes (R116)
+linux-pc: healthy, claimed y241 after the R114+R115 push; will pull aa31822 on its next code fetch. chromium: silent since 9:30 AM CT Nov 2 (~76 h). tacobell: worker Disabled on purpose; laptop connected (push route). Queue once y243 lands: y241 (~1 h) + y242 (~8 h) + y243 (~9.5 h) ≈ 18 h of linux-pc.
+
 # PRIORITIES (R115, Nov 5 2026, ~7:20 AM CT; **v47 / DEFAULTS_VERSION 40** unchanged — v47 = plan deepURSx3 (32000-cell granule layer, mixed 3/4-letter claws, cortex lr 0.2) + granule step schedule granLr 0.1 -> 0.05 after 100k teaching events)
 
 ## R115 update (queue review, morning)
