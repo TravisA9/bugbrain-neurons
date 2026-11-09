@@ -92,15 +92,14 @@ function noteRestart(ids) {
 }
 function candidates() {
   const left = (HOURS * 3600e3 - (Date.now() - T0)) / 3600e3;
-  if (S.mode === 'pause') return [];
-  const skip = crashSkips();
-  return ls('jobs').filter(f => f.endsWith('.json')).map(f => rd(path.join(DIR, 'jobs', f))).filter(Boolean).map(j => WC.jobView(CFG, j)).filter(Boolean).filter(j => WC.allowed(S, j))
-    .filter(j => !skip.has(j.id) && !isDone(j.id) && !claimOf(j.id) && j.kind !== 'blocked' && (j.kind !== 'text' || A['include-text']))
-    .filter(j => !(j.requires || []).some(r => !fs.existsSync(path.join(ROOT, r))))   // R49: skip jobs needing code this checkout lacks (self-update pulls it)
-    .filter(j => !j.after || (isDone(j.after) && (!j.afterPass || (rd(path.join(DIR, 'done', j.after + '.json')) || {}).pass === true)))
-    .filter(j => estH(j) * 1.15 + 0.1 <= left)
-    .filter(j => S.maxMemGB == null || (+j.memGB || 0) <= +S.maxMemGB)   // R78: per-worker cap on declared memGB per run (shared laptop)
-    .sort((a, b) => b.priority - a.priority || (a.id < b.id ? -1 : 1));
+  const jobs = ls('jobs').filter(f => f.endsWith('.json')).map(f => rd(path.join(DIR, 'jobs', f))).filter(Boolean);
+  const done = new Set(ls('done').filter(f => f.endsWith('.json')).map(f => f.slice(0, -5)));
+  const claimed = new Set(ls('claims').filter(f => f.endsWith('.json')).map(f => f.slice(0, -5)).filter(id => claimOf(id)));
+  return WC.selectJobs(CFG, WORKER, TYPE, jobs, {
+    includeText: !!A['include-text'], leftHours: left, skip: crashSkips(), done, claimed,
+    exists: r => fs.existsSync(path.join(ROOT, r)),
+    passed: id => (rd(path.join(DIR, 'done', id + '.json')) || {}).pass === true,
+  });
 }
 function writeClaim(j, prev) {
   const at = prev ? prev.at : new Date().toISOString(), until = new Date(Date.now() + Math.max(LEASE_H, estH(j) * 1.5) * 3600e3).toISOString();
@@ -141,13 +140,26 @@ async function yieldWhy() {
 }
 // R61b: never leave job processes behind. On Windows children are not killed with their parent, so a dq.js crash or kill used to
 // orphan queue.js and its runner/r42 processes (still computing, results lost). Kill the whole job tree whenever dq.js exits.
-let jobChild = null;
+let jobChild = null, currentJob = null;
 function killJobTree() {
   const ch = jobChild; jobChild = null; if (!ch || ch.exitCode != null) return;
   try { if (process.platform === 'win32') cp.execFileSync('taskkill', ['/T', '/F', '/PID', String(ch.pid)], { stdio: 'ignore', windowsHide: true, timeout: 30000 }); else ch.kill('SIGTERM'); } catch (e) {}
 }
+// Hard stop (task End, service stop, Ctrl+C): kill the run, but put the job back. The job file is not deleted.
+// A force-kill that skips this handler still frees the job when the lease ends; it is not removed from jobs/.
+function releaseCurrent() {
+  const j = currentJob; if (!j || OBSERVE || A.dry) return;
+  try {
+    sync(); if (!stillMine(j.id) || isDone(j.id)) return;
+    const rel = path.join(DIR, 'claims', j.id + '.json'); if (!fs.existsSync(rel)) return;
+    fs.unlinkSync(rel);
+    const r = commitPush(`release ${j.id} by ${WORKER} (stopped)`, ['claims/' + j.id + '.json']);
+    if (r.ok) say(`released ${j.id}; the test stays in the queue`);
+    else say(`could not release ${j.id} (${r.kind}); it frees itself when the lease ends`);
+  } catch (e) { say('release on stop failed: ' + redact(e.message || e).split('\n')[0].slice(0, 160)); }
+}
 process.on('exit', killJobTree);
-for (const sg of ['SIGINT', 'SIGTERM', 'SIGBREAK', 'SIGHUP']) try { process.on(sg, () => { killJobTree(); process.exit(130); }); } catch (e) {}
+for (const sg of ['SIGINT', 'SIGTERM', 'SIGBREAK', 'SIGHUP']) try { process.on(sg, () => { killJobTree(); releaseCurrent(); process.exit(130); }); } catch (e) {}
 async function runJob(j) {
   const scratch = path.join(os.tmpdir(), 'bb-dq-' + j.id + '-' + process.pid), q = path.join(scratch, 'queue'), res = path.join(scratch, 'results'), reg = path.join(scratch, 'registry.jsonl');
   fs.mkdirSync(q, { recursive: true }); fs.mkdirSync(res, { recursive: true });
@@ -234,10 +246,10 @@ async function main() {
     { const why = await yieldWhy(); if (why) { if (why !== lastYield) say(why + ': waiting before claiming'); lastYield = why; heartbeat('yielding'); await waitIdle(60000); continue; } if (lastYield) say('CPU/power free again'); lastYield = ''; }
     let j; try { j = await claimNext(); } catch (e) { otherFails++; const w = Math.min(600e3, 15e3 * 2 ** Math.min(otherFails, 6)); say('sync failed, retrying in ' + Math.round(w / 1000) + ' s: ' + redact(e.message).split('\n').slice(-2).join(' | ')); await sleep(w); continue; }
     if (!j) { if (A.wait && Date.now() - T0 < HOURS * 3600e3 - 3600e3) { heartbeat('idle'); await waitIdle(WAIT); continue; } say('nothing to claim; exiting'); break; }
-    heartbeat('running', j.id);
+    heartbeat('running', j.id); currentJob = j;
     const hb = setInterval(() => { renew(j).then(ok => { if (!ok) say(`warning: lost the claim on ${j.id}`); }).catch(() => {}); }, +(process.env.BB_DQ_RENEW_MS || 1800e3));
     let r; try { r = await runJob(j); } finally { clearInterval(hb); }
-    await publish(j, r);
+    await publish(j, r); currentJob = null;
     if (A.once && ++n >= 1) break;
   }
 }
