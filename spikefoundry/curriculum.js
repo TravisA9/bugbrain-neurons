@@ -4,8 +4,9 @@
  * items are kept apart from the search items. Raw metrics stay next to the combined score. */
 const Scenarios = require('./scenarios.js');
 const SF = require('./engine.js');
+const Benchmarks = require('./benchmarks.js');
 
-const NOTE = 'Held-out score. The digit rasters are 8 by 8 drawings, not MNIST and not N-MNIST. Cart-pole uses a frozen push rule. Combined score subtracts spikes and size from the raw metric, and the raw metric is still reported.';
+const NOTE = 'Held-out score. The bundled digit drawings are not the MNIST files. A worker can fetch MNIST into a cache after a sha256 check. N-MNIST is not downloaded. Cart-pole is driven by a frozen network. Combined score subtracts spikes and size from the raw metric, and the raw metric is still reported.';
 
 const ZERO = [
   0,1,1,1,1,1,1,0,
@@ -89,42 +90,16 @@ function digitLevel(seed) {
   };
 }
 
-function cartStep(state, force) {
-  const x = state[0], dx = state[1], th = state[2], dth = state[3];
-  const gravity = 9.8, pole = 0.1, cart = 1, length = 0.5, dt = 0.02;
-  const sine = Math.sin(th), cosine = Math.cos(th);
-  const temp = (force + pole * length * dth * dth * sine) / (cart + pole);
-  const thAcc = (gravity * sine - cosine * temp) / (length * (4 / 3 - pole * cosine * cosine / (cart + pole)));
-  const xAcc = temp - pole * length * thAcc * cosine / (cart + pole);
-  return [x + dx * dt, dx + xAcc * dt, th + dth * dt, dth + thAcc * dt];
-}
-function cartRollout(th0) {
-  let state = [0, 0, th0, 0];
-  let balanced = 0;
-  let spikes = 0;
-  for (let t = 0; t < 30; t++) {
-    const force = state[2] > 0 ? 1 : -1;
-    spikes += 1;
-    state = cartStep(state, force);
-    if (Math.abs(state[2]) < 0.25 && Math.abs(state[0]) < 2.4) balanced++;
-    else break;
-  }
-  return { balanced: balanced / 30, spikes: spikes };
-}
 function cartLevel(seed) {
-  const trainAngles = [0.02, -0.02];
-  const heldAngles = [0.05 + (seed % 3) * 0.005, -0.04];
-  const train = trainAngles.map(cartRollout);
-  const held = heldAngles.map(cartRollout);
-  const mean = rows => rows.reduce((s, row) => s + row.balanced, 0) / rows.length;
-  const spikes = held.reduce((s, row) => s + row.spikes, 0);
+  const level = Benchmarks.cartLevel(seed);
   return {
     id: 'cart-pole',
     family: 'control',
     seed: seed,
-    frozenRule: 'push against the lean',
-    train: combine(mean(train), train.reduce((s, row) => s + row.spikes, 0), 4),
-    heldOut: combine(mean(held), spikes, 4),
+    frozenRule: level.frozenRule,
+    closedLoop: true,
+    train: combine(level.train.raw, level.train.spikes, 4),
+    heldOut: combine(level.heldOut.raw, level.heldOut.spikes, 4),
   };
 }
 
@@ -164,6 +139,7 @@ function levels(seed) {
     scenarioLevel('graph', seed),
     scenarioLevel('control', seed),
     digitLevel(seed),
+    Benchmarks.mnistLevel(Benchmarks.loudGenome(), seed),
     cartLevel(seed),
   ];
 }

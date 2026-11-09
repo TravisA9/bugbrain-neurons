@@ -20,6 +20,7 @@ check(JSON.stringify(cartA) === JSON.stringify(cartB), 'cart-pole rollouts repea
 check(cartA.frozenRule && cartA.heldOut.raw >= 0 && cartA.heldOut.raw <= 1, 'cart-pole reports a raw balance fraction');
 
 const report = Curriculum.run(1);
-check(report.levels.map(row => row.id).join(',') === 'coincidence,sequence,scenario-vision,scenario-sequence,scenario-graph,scenario-control,digits,cart-pole', 'levels run from toy tasks through scenarios to digits and cart-pole');
+check(report.levels.map(row => row.id).join(',') === 'coincidence,sequence,scenario-vision,scenario-sequence,scenario-graph,scenario-control,digits,mnist,cart-pole', 'levels run from toy tasks through scenarios, digits, MNIST, and cart-pole');
+check(report.levels.filter(row => row.id === 'cart-pole')[0].closedLoop === true, 'the curriculum cart-pole level is closed loop');
 check(report.levels.every(row => row.heldOut && row.train && row.heldOut.raw !== undefined), 'every level has a separate held-out score');
 console.log(n + ' checks');
