@@ -31,7 +31,7 @@ function fromEvaluations(rows, meta) {
       genomeJson: json,
       genomeHash: genomeHash(row.genome),
       genomeVersion: row.genome && row.genome.v === 2 ? 2 : 1,
-      metrics: row.metrics || {},
+      metrics: Object.assign({}, row.metrics || {}, { arm: (row.metrics && row.metrics.arm) || row.arm || 'designer' }),
       neurons: row.neurons || 0,
       synapses: row.synapses || 0,
       spikes: row.spikes || 0,

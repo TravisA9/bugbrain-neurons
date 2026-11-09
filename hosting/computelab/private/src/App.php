@@ -144,7 +144,21 @@ final class App
             worker_id VARCHAR(191) NOT NULL,
             seed INTEGER NOT NULL,
             job_id VARCHAR(191),
+            arm VARCHAR(16) NOT NULL DEFAULT \'designer\',
+            seq INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL
+        )');
+        $this->db->exec('CREATE TABLE IF NOT EXISTS task_policies (
+            id VARCHAR(191) PRIMARY KEY,
+            project_id VARCHAR(191) NOT NULL,
+            task_id VARCHAR(64) NOT NULL,
+            stall_delta REAL NOT NULL,
+            stall_evals INTEGER NOT NULL,
+            stall_hours REAL NOT NULL,
+            stall_action VARCHAR(16) NOT NULL,
+            paused INTEGER NOT NULL,
+            pause_reason VARCHAR(16),
+            advanced_to VARCHAR(64)
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS rate_limits (
             bucket VARCHAR(191) PRIMARY KEY,
@@ -160,6 +174,8 @@ final class App
         $this->ensureColumn('leases', 'started_at', 'VARCHAR(40)');
         $this->ensureColumn('leases', 'progress', 'INTEGER');
         $this->ensureColumn('results', 'seconds', 'INTEGER');
+        $this->ensureColumn('design_records', 'arm', "VARCHAR(16) NOT NULL DEFAULT 'designer'");
+        $this->ensureColumn('design_records', 'seq', 'INTEGER NOT NULL DEFAULT 0');
         $this->seed();
         $this->db->exec("UPDATE projects SET family = 'spikefoundry' WHERE id = 'spikefoundry' AND (family IS NULL OR family = '')");
         $this->db->exec("UPDATE projects SET family = 'bugbrain' WHERE id = 'bugbrain' AND (family IS NULL OR family = '')");
@@ -417,6 +433,10 @@ final class App
                     }
                     $batches = (int) ($spec['batches'] ?? 1);
                     if ($batches > (int) $worker['max_batches']) {
+                        continue;
+                    }
+                    $taskId = (string) ($spec['taskId'] ?? '');
+                    if ($taskId !== '' && $this->taskPaused((string) $project['id'], $taskId)) {
                         continue;
                     }
                     $ranked[] = ['job' => $job, 'spec' => $spec];
@@ -955,6 +975,7 @@ final class App
         $perJob = (int) ($this->config['design_per_job'] ?? 48);
         $stored = 0;
         $skipped = 0;
+        $touched = [];
         foreach ($records as $rec) {
             if (!is_array($rec)) {
                 $skipped++;
@@ -1000,12 +1021,16 @@ final class App
                 $version = 1;
             }
             $scores = isset($rec['metrics']) && is_array($rec['metrics']) ? $rec['metrics'] : [];
+            $arm = (isset($scores['arm']) && ($scores['arm'] === 'random' || $scores['arm'] === 'designer')) ? (string) $scores['arm'] : 'designer';
             $scoreJson = json_encode([
                 'quality' => isset($scores['quality']) ? (float) $scores['quality'] : null,
                 'accuracy' => isset($scores['accuracy']) ? (float) $scores['accuracy'] : null,
                 'f1' => isset($scores['f1']) ? (float) $scores['f1'] : null,
                 'precision' => isset($scores['precision']) ? (float) $scores['precision'] : null,
                 'recall' => isset($scores['recall']) ? (float) $scores['recall'] : null,
+                'train' => isset($scores['train']) ? (float) $scores['train'] : (isset($scores['quality']) ? (float) $scores['quality'] : null),
+                'heldOut' => isset($scores['heldOut']) ? (float) $scores['heldOut'] : (isset($scores['quality']) ? (float) $scores['quality'] : null),
+                'arm' => $arm,
             ]);
             if ($scoreJson === false || strlen($scoreJson) > 500) {
                 $skipped++;
@@ -1025,14 +1050,19 @@ final class App
                 continue;
             }
             $engine = substr((string) ($rec['engineVersion'] ?? 'spikefoundry-1'), 0, 32);
-            $this->db->prepare('INSERT INTO design_records (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, job_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            $seq = (int) $this->db->query('SELECT COALESCE(MAX(seq), 0) + 1 FROM design_records')->fetchColumn();
+            $this->db->prepare('INSERT INTO design_records (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, job_id, arm, seq, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
                 ->execute([
                     $id, $genomeHash, $taskId, $taskVersion, $scoreJson,
                     max(0, (int) ($rec['neurons'] ?? 0)), max(0, (int) ($rec['synapses'] ?? 0)),
                     max(0, (int) ($rec['spikes'] ?? 0)), max(0, (int) ($rec['evalMs'] ?? 0)),
-                    $engine, substr($protocolHash, 0, 64), $worker['id'], $seed, $jobId !== '' ? $jobId : null, $this->now(),
+                    $engine, substr($protocolHash, 0, 64), $worker['id'], $seed, $jobId !== '' ? $jobId : null, $arm, $seq, $this->now(),
                 ]);
             $stored++;
+            $touched[$taskId] = true;
+        }
+        foreach (array_keys($touched) as $touchedTask) {
+            $this->applyTaskPolicy('spikefoundry', $touchedTask);
         }
         return ['stored' => $stored, 'skipped' => $skipped];
     }
@@ -1153,5 +1183,220 @@ final class App
     {
         $row = $this->db->query('SELECT id, label, body_json, metric_json, created_at FROM model_checkpoints ORDER BY created_at DESC LIMIT 1')->fetch();
         return $row ?: null;
+    }
+
+    public function defaultTaskPolicy(): array
+    {
+        return ['stall_delta' => 0.005, 'stall_evals' => 3000, 'stall_hours' => 6.0, 'stall_action' => 'flag', 'paused' => 0, 'pause_reason' => '', 'advanced_to' => ''];
+    }
+
+    public function taskPolicy(string $projectId, string $taskId): array
+    {
+        $st = $this->db->prepare('SELECT * FROM task_policies WHERE project_id = ? AND task_id = ?');
+        $st->execute([$projectId, $taskId]);
+        $row = $st->fetch();
+        $base = $this->defaultTaskPolicy();
+        if (!$row) {
+            $base['project_id'] = $projectId;
+            $base['task_id'] = $taskId;
+            return $base;
+        }
+        return [
+            'project_id' => (string) $row['project_id'],
+            'task_id' => (string) $row['task_id'],
+            'stall_delta' => (float) $row['stall_delta'],
+            'stall_evals' => (int) $row['stall_evals'],
+            'stall_hours' => (float) $row['stall_hours'],
+            'stall_action' => (string) $row['stall_action'],
+            'paused' => (int) $row['paused'],
+            'pause_reason' => (string) ($row['pause_reason'] ?? ''),
+            'advanced_to' => (string) ($row['advanced_to'] ?? ''),
+        ];
+    }
+
+    public function saveTaskPolicy(string $projectId, string $taskId, float $delta, int $evals, float $hours, string $action): void
+    {
+        if (!preg_match('/^[a-z0-9._-]{1,40}$/', $projectId) || !preg_match('/^[a-z0-9._-]{1,64}$/', $taskId)) {
+            throw new InvalidArgumentException('Unknown project or task.');
+        }
+        if ($delta < 0 || $delta > 1) {
+            throw new InvalidArgumentException('The improvement delta must be from 0 to 1.');
+        }
+        if ($evals < 2 || $evals > 100000) {
+            throw new InvalidArgumentException('The evaluation window must be from 2 to 100000.');
+        }
+        if ($hours < 0 || $hours > 10000) {
+            throw new InvalidArgumentException('The compute window must be from 0 to 10000 hours.');
+        }
+        if (!in_array($action, ['flag', 'pause', 'advance'], true)) {
+            throw new InvalidArgumentException('Choose flag, pause, or advance.');
+        }
+        $current = $this->taskPolicy($projectId, $taskId);
+        $id = substr(hash('sha256', $projectId . '|' . $taskId), 0, 32);
+        $this->db->prepare('REPLACE INTO task_policies (id, project_id, task_id, stall_delta, stall_evals, stall_hours, stall_action, paused, pause_reason, advanced_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            ->execute([$id, $projectId, $taskId, $delta, $evals, $hours, $action, (int) $current['paused'], $current['pause_reason'], $current['advanced_to']]);
+        $this->applyTaskPolicy($projectId, $taskId);
+    }
+
+    public function taskPaused(string $projectId, string $taskId): bool
+    {
+        return (int) $this->taskPolicy($projectId, $taskId)['paused'] === 1;
+    }
+
+    public function taskSeries(string $taskId, int $limit = 500): array
+    {
+        if ($limit < 1) {
+            $limit = 1;
+        }
+        if ($limit > 500) {
+            $limit = 500;
+        }
+        $st = $this->db->prepare('SELECT score_json, eval_ms, arm, created_at FROM design_records WHERE task_id = ? ORDER BY seq DESC, created_at DESC LIMIT ' . (int) $limit);
+        $st->execute([$taskId]);
+        $rows = array_reverse($st->fetchAll());
+        $bestHeld = 0.0;
+        $bestTrain = 0.0;
+        $hours = 0.0;
+        $points = [];
+        $n = 0;
+        foreach ($rows as $row) {
+            $n++;
+            $score = json_decode((string) $row['score_json'], true);
+            if (!is_array($score)) {
+                $score = [];
+            }
+            $held = isset($score['heldOut']) ? (float) $score['heldOut'] : (isset($score['quality']) ? (float) $score['quality'] : 0.0);
+            $train = isset($score['train']) ? (float) $score['train'] : $held;
+            $hours += ((int) $row['eval_ms']) / 3600000;
+            if ($held > $bestHeld) {
+                $bestHeld = $held;
+            }
+            if ($train > $bestTrain) {
+                $bestTrain = $train;
+            }
+            $points[] = [
+                'n' => $n,
+                'hours' => $hours,
+                'bestHeld' => $bestHeld,
+                'bestTrain' => $bestTrain,
+                'held' => $held,
+                'train' => $train,
+                'arm' => (string) ($row['arm'] ?? 'designer'),
+            ];
+        }
+        return $points;
+    }
+
+    public function taskStatus(string $projectId, string $taskId): array
+    {
+        $policy = $this->taskPolicy($projectId, $taskId);
+        $points = $this->taskSeries($taskId, max(20, (int) $policy['stall_evals']));
+        $count = count($points);
+        $status = 'Improving';
+        if ($count >= 2) {
+            $window = min($count, max(2, (int) $policy['stall_evals']));
+            $slice = array_slice($points, $count - $window);
+            $start = $slice[0];
+            $end = $slice[count($slice) - 1];
+            $base = $start['bestHeld'] > 0.01 ? $start['bestHeld'] : 0.01;
+            $relative = ($end['bestHeld'] - $start['bestHeld']) / $base;
+            $hours = $end['hours'] - $start['hours'];
+            $full = count($slice) >= (int) $policy['stall_evals'] && $hours + 1e-9 >= (float) $policy['stall_hours'];
+            $half = (int) floor(count($slice) / 2);
+            $first = array_slice($slice, 0, max(1, $half));
+            $second = array_slice($slice, max(1, $half));
+            $avg = function (array $rows, string $key): float {
+                $sum = 0.0;
+                foreach ($rows as $row) {
+                    $sum += (float) $row[$key];
+                }
+                return $sum / max(1, count($rows));
+            };
+            $trainUp = $avg($second, 'train') > $avg($first, 'train') + 0.001;
+            $heldFlat = $avg($second, 'held') <= $avg($first, 'held') + 1e-9;
+            if ($trainUp && $heldFlat && count($slice) >= 4) {
+                $status = 'Overfitting';
+            } elseif ($full && $relative <= (float) $policy['stall_delta']) {
+                $status = 'Stalled';
+            } elseif ($relative <= (float) $policy['stall_delta']) {
+                $status = 'Slowing';
+            } else {
+                $status = 'Improving';
+            }
+        }
+        return ['status' => $status, 'policy' => $policy, 'points' => $points, 'designer' => $this->designerHealth($points)];
+    }
+
+    public function designerHealth(array $points): array
+    {
+        $designer = [];
+        $random = [];
+        foreach ($points as $point) {
+            if ($point['arm'] === 'random') {
+                $random[] = (float) $point['held'];
+            } else {
+                $designer[] = (float) $point['held'];
+            }
+        }
+        if (count($random) < 1 || count($designer) < 1) {
+            return ['label' => 'not enough random checks yet', 'percent' => null];
+        }
+        $mean = function (array $rows): float {
+            return array_sum($rows) / count($rows);
+        };
+        $d = $mean($designer);
+        $r = $mean($random);
+        $percent = ($d - $r) / ($r > 0.001 ? $r : 0.001) * 100;
+        if ($d > $r) {
+            return ['label' => 'designer beating random by ' . (string) (int) round($percent) . '%', 'percent' => $percent];
+        }
+        return ['label' => 'designer no longer helping', 'percent' => $percent];
+    }
+
+    public function applyTaskPolicy(string $projectId, string $taskId): array
+    {
+        $health = $this->taskStatus($projectId, $taskId);
+        $policy = $health['policy'];
+        $id = substr(hash('sha256', $projectId . '|' . $taskId), 0, 32);
+        $paused = (int) $policy['paused'];
+        $reason = (string) $policy['pause_reason'];
+        $advanced = (string) $policy['advanced_to'];
+        if ($health['status'] === 'Stalled' && $policy['stall_action'] === 'pause') {
+            $paused = 1;
+            $reason = 'stall';
+        } elseif ($health['status'] === 'Stalled' && $policy['stall_action'] === 'advance') {
+            $paused = 1;
+            $reason = 'stall';
+            $advanced = $this->nextCurriculumTask($taskId);
+        } elseif ($health['status'] === 'Improving' && $reason === 'stall') {
+            $paused = 0;
+            $reason = '';
+        }
+        $this->db->prepare('REPLACE INTO task_policies (id, project_id, task_id, stall_delta, stall_evals, stall_hours, stall_action, paused, pause_reason, advanced_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            ->execute([$id, $projectId, $taskId, $policy['stall_delta'], $policy['stall_evals'], $policy['stall_hours'], $policy['stall_action'], $paused, $reason, $advanced]);
+        $health['policy'] = $this->taskPolicy($projectId, $taskId);
+        return $health;
+    }
+
+    public function nextCurriculumTask(string $taskId): string
+    {
+        $order = ['coincidence', 'sequence', 'vote3', 'routing', 'composed', 'context3', 'nested', 'scenario-vision', 'scenario-sequence', 'scenario-graph', 'scenario-control', 'digits', 'cart-pole'];
+        $index = array_search($taskId, $order, true);
+        if ($index === false || $index >= count($order) - 1) {
+            return '';
+        }
+        return $order[$index + 1];
+    }
+
+    public function watchedTasks(): array
+    {
+        $rows = $this->db->query('SELECT DISTINCT task_id FROM design_records ORDER BY task_id ASC LIMIT 12')->fetchAll();
+        $out = [];
+        foreach ($rows as $row) {
+            $task = (string) $row['task_id'];
+            $out[] = $this->applyTaskPolicy('spikefoundry', $task);
+            $out[count($out) - 1]['task_id'] = $task;
+        }
+        return $out;
     }
 }

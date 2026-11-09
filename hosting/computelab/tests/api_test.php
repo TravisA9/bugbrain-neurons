@@ -342,5 +342,45 @@ $modelId = $lib['app']->saveModel($lib['app']->workerByToken($libWorker['token']
 $current = $lib['app']->currentModel();
 check($held && $held['id'] === $train && $modelId && $current && strpos((string) $current['body_json'], '0.77') !== false, 'a leased worker can store a versioned model checkpoint');
 
+function designRecord(string $json, int $seed, float $train, float $held, string $arm, int $ms): array
+{
+    return [
+        'taskId' => 'coincidence', 'taskVersion' => 'base-1', 'genomeJson' => $json, 'genomeHash' => hash('sha256', $json),
+        'metrics' => ['quality' => $held, 'train' => $train, 'heldOut' => $held, 'arm' => $arm],
+        'neurons' => 2, 'synapses' => 2, 'spikes' => 1, 'evalMs' => $ms, 'seed' => $seed, 'jobId' => 'plateau-job', 'engineVersion' => 'spikefoundry-1',
+    ];
+}
+$plateau = lab();
+$pw = $plateau['app']->enroll('plateau-pc', ['spikefoundry'], 2, true);
+$pworker = $plateau['app']->workerByToken($pw['token']);
+$rise = [];
+foreach ([0.2, 0.45, 0.7] as $i => $score) {
+    $json = '{"arm":"rise","n":' . $i . '}';
+    $rise[] = designRecord($json, 10 + $i, $score, $score, $i === 0 ? 'random' : 'designer', 1000);
+}
+$plateau['app']->ingestDesigns($pworker, $rise, $plateau['app']->protocolHash());
+$rising = $plateau['app']->taskStatus('spikefoundry', 'coincidence');
+check($rising['status'] === 'Improving' && strpos($rising['designer']['label'], 'beating random') !== false, 'a climbing held-out score is Improving and the designer is ahead of random');
+$plateau['app']->saveTaskPolicy('spikefoundry', 'coincidence', 0.005, 4, 0, 'pause');
+$flat = [];
+for ($i = 0; $i < 4; $i++) {
+    $flat[] = designRecord('{"arm":"flat","n":' . $i . '}', 20 + $i, 0.7, 0.7, 'designer', 1000);
+}
+$plateau['app']->ingestDesigns($pworker, $flat, $plateau['app']->protocolHash());
+$stalled = $plateau['app']->taskStatus('spikefoundry', 'coincidence');
+check($stalled['status'] === 'Stalled' && $plateau['app']->taskPaused('spikefoundry', 'coincidence'), 'a flat window pauses the task when that action is selected');
+$over = lab();
+$ow = $over['app']->enroll('over-pc', ['spikefoundry'], 2, true);
+$oworker = $over['app']->workerByToken($ow['token']);
+$split = [];
+foreach ([[0.2, 0.6], [0.2, 0.6], [0.8, 0.4], [0.9, 0.3]] as $i => $pair) {
+    $split[] = designRecord('{"arm":"over","n":' . $i . '}', 30 + $i, $pair[0], $pair[1], 'designer', 1000);
+}
+$over['app']->ingestDesigns($oworker, $split, $over['app']->protocolHash());
+check($over['app']->taskStatus('spikefoundry', 'coincidence')['status'] === 'Overfitting', 'train rising while held-out falls is Overfitting');
+require dirname(__DIR__) . '/private/src/pages.php';
+$svg = scoreChart($rising['points']);
+check(strpos($svg, '<svg') !== false && strpos($svg, 'polyline') !== false, 'the owner chart is inline SVG');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

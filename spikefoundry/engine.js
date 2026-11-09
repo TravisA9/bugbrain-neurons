@@ -327,7 +327,7 @@
       if (!state.evaluations) state.evaluations = [];
       state.evaluations.push({
         taskId: item.task, taskVersion: 'base-1', genome: item.g,
-        metrics: { quality: item.validation.quality, accuracy: item.validation.accuracy, f1: item.validation.f1, precision: item.validation.precision, recall: item.validation.recall },
+        metrics: { quality: item.validation.quality, accuracy: item.validation.accuracy, f1: item.validation.f1, precision: item.validation.precision, recall: item.validation.recall, train: item.train.quality, heldOut: item.validation.quality, arm: (state.evaluations.length % 10 === 0 ? 'random' : 'designer') },
         neurons: item.validation.neurons, synapses: item.validation.synapses,
         spikes: Math.round(item.validation.spikes || 0), evalMs: item.evalMs || 0, seed: state.seed,
       });

@@ -454,6 +454,8 @@ try {
             $app->requeue((string) ($_POST['id'] ?? ''));
         } elseif ($path === '/owner/project-create') {
             $app->createProject((string) ($_POST['title'] ?? ''), (string) ($_POST['summary'] ?? ''), (string) ($_POST['runner'] ?? ''), (int) ($_POST['priority'] ?? 1), isset($_POST['enabled']));
+        } elseif ($path === '/owner/task-policy') {
+            $app->saveTaskPolicy((string) ($_POST['project'] ?? ''), (string) ($_POST['task'] ?? ''), (float) ($_POST['delta'] ?? 0.005), (int) ($_POST['evals'] ?? 3000), (float) ($_POST['hours'] ?? 6), (string) ($_POST['action'] ?? 'flag'));
         } elseif ($path === '/owner/design-seed') {
             $app->seedJobFromDesigns((string) ($_POST['template'] ?? 'sf-vision'), (string) ($_POST['task'] ?? 'coincidence'), (int) ($_POST['count'] ?? 3), (int) ($_POST['seed'] ?? 7));
         } elseif ($path === '/owner/pause') {

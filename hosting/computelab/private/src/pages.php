@@ -308,6 +308,63 @@ function pageLogin(App $app, string $error = '', array $nav = []): string
     return layout('Owner login', $body, $base, $nav);
 }
 
+function scoreChart(array $points): string
+{
+    if (count($points) < 2) {
+        return '<p class="muted">The chart appears after two evaluations.</p>';
+    }
+    $width = 640;
+    $height = 160;
+    $step = count($points) > 1 ? ($width - 16) / (count($points) - 1) : 0;
+    $held = '';
+    $train = '';
+    foreach ($points as $i => $point) {
+        $x = 8 + $i * $step;
+        $yHeld = 8 + (1 - max(0, min(1, (float) $point['bestHeld']))) * ($height - 16);
+        $yTrain = 8 + (1 - max(0, min(1, (float) $point['bestTrain']))) * ($height - 16);
+        $held .= ($i === 0 ? '' : ' ') . round($x, 1) . ',' . round($yHeld, 1);
+        $train .= ($i === 0 ? '' : ' ') . round($x, 1) . ',' . round($yTrain, 1);
+    }
+    return '<svg viewBox="0 0 ' . $width . ' ' . $height . '" role="img" aria-label="Best scores over evaluations" style="width:100%;height:auto;background:#fff;border:1px solid #e4d5c3;border-radius:12px">'
+        . '<polyline fill="none" stroke="#1d6b4a" stroke-width="3" points="' . $held . '"></polyline>'
+        . '<polyline fill="none" stroke="#a33b24" stroke-width="2" points="' . $train . '"></polyline></svg>'
+        . '<p class="muted">Green is the best held-out score. Clay is the best train score.</p>';
+}
+
+function taskHealthSection(App $app, string $csrf, string $base): string
+{
+    $tasks = $app->watchedTasks();
+    $banner = '';
+    $cards = '';
+    foreach ($tasks as $health) {
+        $task = (string) ($health['task_id'] ?? '');
+        $status = (string) $health['status'];
+        if ($status === 'Stalled' || $status === 'Overfitting') {
+            $banner .= '<p><strong>' . h($task) . '</strong> is ' . h($status) . '.</p>';
+        }
+        $policy = $health['policy'];
+        $shown = $health['points'];
+        if (count($shown) > 80) {
+            $shown = array_slice($shown, count($shown) - 80);
+        }
+        $cards .= '<section><h2>' . h($task) . ' · ' . h($status) . '</h2>'
+            . scoreChart($shown)
+            . '<p>' . h((string) $health['designer']['label']) . '</p>'
+            . ($policy['paused'] ? '<p>Paused. New claims skip this task.' . ($policy['advanced_to'] !== '' ? ' Next level: ' . h((string) $policy['advanced_to']) : '') . '</p>' : '')
+            . '<form method="post" action="' . h($base) . '/owner/task-policy"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="project" value="spikefoundry"><input type="hidden" name="task" value="' . h($task) . '">'
+            . '<label>Minimum relative gain <input name="delta" type="number" min="0" max="1" step="0.001" value="' . h((string) $policy['stall_delta']) . '"></label>'
+            . '<label>Evaluation window <input name="evals" type="number" min="2" max="100000" value="' . h((string) $policy['stall_evals']) . '"></label>'
+            . '<label>Compute hours in that window <input name="hours" type="number" min="0" max="10000" step="0.1" value="' . h((string) $policy['stall_hours']) . '"></label>'
+            . '<label>When it stalls <select name="action"><option value="flag"' . ($policy['stall_action'] === 'flag' ? ' selected' : '') . '>Flag it</option><option value="pause"' . ($policy['stall_action'] === 'pause' ? ' selected' : '') . '>Pause the task</option><option value="advance"' . ($policy['stall_action'] === 'advance' ? ' selected' : '') . '>Advance to the next level</option></select></label>'
+            . '<button type="submit">Save thresholds</button></form></section>';
+    }
+    if ($cards === '') {
+        $cards = '<p class="muted">Charts appear after the first design upload.</p>';
+    }
+    $bannerHtml = $banner !== '' ? '<section><h2>Needs attention</h2>' . $banner . '</section>' : '';
+    return $bannerHtml . $cards;
+}
+
 function designLibrarySection(App $app, string $csrf, string $base): string
 {
     $task = 'coincidence';
@@ -413,6 +470,7 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         . '<label>Seed <input name="seed" type="number" min="1" max="1000000" value="7"></label>'
         . '<button type="submit">Queue job</button></form></section>'
         . '<section><h2>Jobs</h2>' . $filterHtml . '<table><thead><tr><th>Job</th><th>Project</th><th>Status</th><th>Attempts</th><th>Last error</th></tr></thead><tbody>' . $rows . '</tbody></table>' . $pager . '</section>'
+        . taskHealthSection($app, $csrf, $base)
         . designLibrarySection($app, $csrf, $base)
         . '<h2>Computers</h2>' . ($people !== '' ? $people : '<p class="muted">None enrolled.</p>');
     return layout('Owner', $body, $base, $nav);

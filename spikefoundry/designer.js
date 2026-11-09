@@ -206,7 +206,7 @@ function run(job, outDir, SF) {
   fs.writeFileSync(path.join(outDir, 'model.json'), JSON.stringify(checkpoint));
   const records = Library.fromEvaluations(proposed.map(item => ({
     taskId: taskId, taskVersion: spec.version, genome: item.genome,
-    metrics: { quality: item.quality, accuracy: item.quality, f1: item.quality, precision: item.quality, recall: item.quality },
+    metrics: { quality: item.quality, accuracy: item.quality, f1: item.quality, precision: item.quality, recall: item.quality, train: item.quality, heldOut: item.quality, arm: 'designer' },
     neurons: item.neurons, synapses: item.synapses, spikes: item.spikes, evalMs: 0, seed: job.seed || 1,
   })), { jobId: job.id || 'designer', engineVersion: 'spikefoundry-designer-1' });
   if (records.length) fs.writeFileSync(path.join(outDir, 'designs.json'), JSON.stringify({ records: records }));
