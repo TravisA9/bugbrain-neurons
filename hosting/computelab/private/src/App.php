@@ -543,6 +543,65 @@ final class App
             $this->noteFailure((string) $row['job_id'], (string) $row['worker_id'], 'Lease expired before a result arrived.', true);
         }
         $this->db->prepare('DELETE FROM leases WHERE until_at < ?')->execute([$now]);
+        if ($rows !== []) {
+            $this->moveQueuedOffPausedTasks();
+        }
+    }
+
+    /* Queued auto jobs that point at a paused task that already has a next task move
+     * along the chain. Runs when supply fills the queue and when leases expire, so a job
+     * that comes back from a dead worker does not sit on a solved task. */
+    public function moveQueuedOffPausedTasks(): int
+    {
+        $rows = $this->db->query("SELECT project_id, task_id, advanced_to FROM task_policies WHERE paused = 1 AND advanced_to IS NOT NULL AND advanced_to <> ''")->fetchAll();
+        if ($rows === []) {
+            return 0;
+        }
+        $byTask = [];
+        foreach ($rows as $row) {
+            $byTask[(string) $row['project_id'] . '|' . (string) $row['task_id']] = $row;
+        }
+        $order = self::CURRICULUM;
+        $moved = 0;
+        foreach ($order as $task) {
+            foreach ($byTask as $key => $row) {
+                if ((string) $row['task_id'] === $task) {
+                    $moved += $this->retargetQueued((string) $row['project_id'], $task, (string) $row['advanced_to']);
+                }
+            }
+        }
+        foreach ($byTask as $row) {
+            if (!in_array((string) $row['task_id'], $order, true)) {
+                $moved += $this->retargetQueued((string) $row['project_id'], (string) $row['task_id'], (string) $row['advanced_to']);
+            }
+        }
+        return $moved;
+    }
+
+    /* Queued jobs a worker could claim now: jobs for a paused task are skipped by claim(),
+     * so they do not count toward the low-water mark or the caps. */
+    public function claimableQueued(?string $projectId = null): int
+    {
+        if ($projectId === null) {
+            $st = $this->db->query("SELECT project_id, spec_json FROM jobs WHERE status = 'queued'");
+        } else {
+            $st = $this->db->prepare("SELECT project_id, spec_json FROM jobs WHERE status = 'queued' AND project_id = ?");
+            $st->execute([$projectId]);
+        }
+        $paused = [];
+        foreach ($this->db->query('SELECT project_id, task_id FROM task_policies WHERE paused = 1')->fetchAll() as $row) {
+            $paused[(string) $row['project_id'] . '|' . (string) $row['task_id']] = true;
+        }
+        $n = 0;
+        foreach ($st->fetchAll() as $job) {
+            $spec = json_decode((string) $job['spec_json'], true);
+            $task = is_array($spec) ? (string) ($spec['taskId'] ?? '') : '';
+            if ($task !== '' && isset($paused[(string) $job['project_id'] . '|' . $task])) {
+                continue;
+            }
+            $n++;
+        }
+        return $n;
     }
 
     public function claim(array $worker): ?array
@@ -1613,7 +1672,8 @@ final class App
         if ($globalCap < 1) {
             $globalCap = 24;
         }
-        $queuedAll = (int) $this->db->query("SELECT COUNT(*) FROM jobs WHERE status = 'queued'")->fetchColumn();
+        $this->moveQueuedOffPausedTasks();
+        $queuedAll = $this->claimableQueued();
         if ($queuedAll >= $globalCap) {
             return 0;
         }
@@ -1639,7 +1699,7 @@ final class App
             }
             $low = (int) $project['low_water'] > 0 ? (int) $project['low_water'] : max(1, $online);
             $cap = (int) $project['queue_cap'] > 0 ? (int) $project['queue_cap'] : 8;
-            $queued = (int) $this->db->query("SELECT COUNT(*) FROM jobs WHERE status = 'queued' AND project_id = " . $this->db->quote((string) $project['id']))->fetchColumn();
+            $queued = $this->claimableQueued((string) $project['id']);
             $guard = 0;
             while ($queued < $low && $queued < $cap && $queuedAll < $globalCap && $guard < 20) {
                 $task = $this->supplyTask((string) $project['id']);

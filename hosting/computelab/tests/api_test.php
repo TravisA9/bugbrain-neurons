@@ -595,5 +595,34 @@ $bigEvals['evals'] = 5000000;
 $solve['app']->ingestSummary($solveWorker, $bigEvals);
 check((int) $solve['db']->query("SELECT COUNT(*) FROM design_summaries WHERE job_id = 'sf-propose-4-d'")->fetchColumn() === 1, 'a summary from a long time-budget job with millions of evaluations is accepted');
 
+$gap = lab();
+$gapReg = $gap['app']->enroll('gap-pc', ['spikefoundry'], 2, true);
+$gapSeen = function () use ($gap, $gapReg) {
+    $gap['db']->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$gap['clock']->t, $gapReg['workerId']]);
+    return $gap['app']->workerByToken($gapReg['token']);
+};
+$gap['app']->saveSupply('spikefoundry', false, 1, 1, 0);
+$staleId = $gap['app']->createJob('sf-propose', 'Auto coincidence', 0.6, 91, ['taskId' => 'coincidence', 'mode' => 'propose', 'seedGenomes' => ['old']]);
+$leasedJob = $gap['app']->claim($gapSeen());
+$gapPolicy = substr(hash('sha256', 'spikefoundry|coincidence'), 0, 32);
+$gap['db']->prepare('REPLACE INTO task_policies (id, project_id, task_id, stall_delta, stall_evals, stall_hours, stall_action, paused, pause_reason, advanced_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    ->execute([$gapPolicy, 'spikefoundry', 'coincidence', 0.005, 3000, 6, 'flag', 1, 'solved', 'sequence']);
+$gap['app']->saveSupply('spikefoundry', true, 1, 1, 0);
+$gap['clock']->t = gmdate('c', strtotime($gap['clock']->t) + 4000);
+$afterExpiry = $gap['app']->claim($gapSeen());
+$staleSpec = json_decode((string) $gap['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $gap['db']->quote($staleId))->fetchColumn(), true);
+$afterSpec = $afterExpiry ? json_decode((string) $gap['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $gap['db']->quote((string) $afterExpiry['id']))->fetchColumn(), true) : [];
+check($leasedJob && (string) $leasedJob['id'] === $staleId && $staleSpec['taskId'] === 'sequence' && !isset($staleSpec['seedGenomes']) && $afterExpiry && $afterSpec['taskId'] === 'sequence', 'an auto job whose lease expires on a solved task moves to the next task and is claimed again');
+$gap['clock']->t = gmdate('c', strtotime($gap['clock']->t) + 4000);
+$gap['db']->exec("UPDATE jobs SET status = 'done' WHERE status IN ('queued', 'leased')");
+$gap['db']->exec('DELETE FROM leases');
+$ownerJob = $gap['app']->createJob('sf-propose', 'Owner coincidence run', 0.6, 92, ['taskId' => 'coincidence', 'mode' => 'propose']);
+$madeBefore = (int) $gap['db']->query("SELECT auto_created FROM projects WHERE id = 'spikefoundry'")->fetchColumn();
+$fresh = $gap['app']->claim($gapSeen());
+$freshSpec = $fresh ? json_decode((string) $gap['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $gap['db']->quote((string) $fresh['id']))->fetchColumn(), true) : [];
+$ownerSpec = json_decode((string) $gap['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $gap['db']->quote($ownerJob))->fetchColumn(), true);
+$madeAfter = (int) $gap['db']->query("SELECT auto_created FROM projects WHERE id = 'spikefoundry'")->fetchColumn();
+check($fresh && $freshSpec['taskId'] === 'sequence' && $ownerSpec['taskId'] === 'coincidence' && $madeAfter === $madeBefore + 1 && $gap['app']->claimableQueued('spikefoundry') === 0, 'a queued job for a paused task does not count toward the queue, so supply still adds a next-task job');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);
