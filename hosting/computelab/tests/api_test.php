@@ -382,5 +382,35 @@ require dirname(__DIR__) . '/private/src/pages.php';
 $svg = scoreChart($rising['points']);
 check(strpos($svg, '<svg') !== false && strpos($svg, 'polyline') !== false, 'the owner chart is inline SVG');
 
+$credit = lab();
+$person = $credit['app']->enroll('pat-pc', ['spikefoundry'], 2, true);
+$pw2 = $credit['app']->workerByToken($person['token']);
+$low = '{"k":1}';
+$high = '{"k":2}';
+$credit['app']->ingestDesigns($pw2, [[
+    'taskId' => 'coincidence', 'taskVersion' => 'base-1', 'genomeJson' => $low, 'genomeHash' => hash('sha256', $low),
+    'metrics' => ['quality' => 0.2, 'heldOut' => 0.2, 'train' => 0.2], 'neurons' => 1, 'synapses' => 1, 'spikes' => 1, 'evalMs' => 1000, 'seed' => 1, 'jobId' => 'credit-job',
+]], $credit['app']->protocolHash());
+$credit['app']->ingestDesigns($pw2, [[
+    'taskId' => 'sequence', 'taskVersion' => 'base-1', 'genomeJson' => $high, 'genomeHash' => hash('sha256', $high),
+    'metrics' => ['quality' => 0.9, 'heldOut' => 0.9, 'train' => 0.9], 'neurons' => 1, 'synapses' => 1, 'spikes' => 1, 'evalMs' => 3600000, 'seed' => 2, 'jobId' => 'credit-job',
+]], $credit['app']->protocolHash());
+$feed = $credit['app']->highlights([$person['workerId']]);
+$feedText = '';
+foreach ($feed as $event) {
+    $feedText .= $event['detail'] . ' ';
+}
+check(strpos($feedText, 'New best') !== false && strpos($feedText, 'moved up') !== false && strpos($feedText, '1 hours') !== false, 'highlights include a best, a promotion, and an hour milestone');
+check($credit['app']->creditName($pw2) === 'pat-pc', 'credit uses the computer name by default');
+$credit['app']->setCredit($person['participantId'], false);
+$hidden = $credit['app']->db->prepare('SELECT name, public_credit FROM workers WHERE id = ?');
+$hidden->execute([$person['workerId']]);
+check($credit['app']->creditName($hidden->fetch()) === 'Anonymous', 'opt-out credit shows Anonymous');
+$board = $credit['app']->leaderboard(5);
+check($board && $board[0]['name'] === 'Anonymous' && $board[0]['records'] === 2, 'the leaderboard respects the opt-out');
+$credit['app']->setGenomePublic(hash('sha256', $high), true);
+$pub = $credit['app']->designGenome(hash('sha256', $high));
+check($pub && (int) $pub['is_public'] === 1, 'the owner can mark a genome public');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

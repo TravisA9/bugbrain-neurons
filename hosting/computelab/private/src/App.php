@@ -127,6 +127,15 @@ final class App
             hash VARCHAR(191) PRIMARY KEY,
             genome_json TEXT NOT NULL,
             version INTEGER NOT NULL,
+            is_public INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+        )');
+        $this->db->exec('CREATE TABLE IF NOT EXISTS design_events (
+            id VARCHAR(191) PRIMARY KEY,
+            worker_id VARCHAR(191) NOT NULL,
+            task_id VARCHAR(64) NOT NULL,
+            kind VARCHAR(32) NOT NULL,
+            detail TEXT NOT NULL,
             created_at TEXT NOT NULL
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS design_records (
@@ -176,6 +185,8 @@ final class App
         $this->ensureColumn('results', 'seconds', 'INTEGER');
         $this->ensureColumn('design_records', 'arm', "VARCHAR(16) NOT NULL DEFAULT 'designer'");
         $this->ensureColumn('design_records', 'seq', 'INTEGER NOT NULL DEFAULT 0');
+        $this->ensureColumn('design_genomes', 'is_public', 'INTEGER NOT NULL DEFAULT 0');
+        $this->ensureColumn('workers', 'public_credit', 'INTEGER NOT NULL DEFAULT 1');
         $this->seed();
         $this->db->exec("UPDATE projects SET family = 'spikefoundry' WHERE id = 'spikefoundry' AND (family IS NULL OR family = '')");
         $this->db->exec("UPDATE projects SET family = 'bugbrain' WHERE id = 'bugbrain' AND (family IS NULL OR family = '')");
@@ -1060,6 +1071,8 @@ final class App
                 ]);
             $stored++;
             $touched[$taskId] = true;
+            $heldNow = isset($scores['heldOut']) ? (float) $scores['heldOut'] : (isset($scores['quality']) ? (float) $scores['quality'] : 0.0);
+            $this->noteHighlight($worker, $taskId, $heldNow, $genomeHash);
         }
         foreach (array_keys($touched) as $touchedTask) {
             $this->applyTaskPolicy('spikefoundry', $touchedTask);
@@ -1105,7 +1118,7 @@ final class App
         if (!preg_match('/^[a-f0-9]{64}$/', $hash)) {
             return null;
         }
-        $st = $this->db->prepare('SELECT hash, genome_json, version FROM design_genomes WHERE hash = ?');
+        $st = $this->db->prepare('SELECT hash, genome_json, version, is_public FROM design_genomes WHERE hash = ?');
         $st->execute([$hash]);
         $row = $st->fetch();
         return $row ?: null;
@@ -1183,6 +1196,159 @@ final class App
     {
         $row = $this->db->query('SELECT id, label, body_json, metric_json, created_at FROM model_checkpoints ORDER BY created_at DESC LIMIT 1')->fetch();
         return $row ?: null;
+    }
+
+    public function creditName(array $worker): string
+    {
+        if ((int) ($worker['public_credit'] ?? 1) !== 1) {
+            return 'Anonymous';
+        }
+        $name = trim((string) ($worker['name'] ?? ''));
+        return $name !== '' ? $name : 'Anonymous';
+    }
+
+    public function setCredit(string $participantId, bool $shown): void
+    {
+        $this->db->prepare('UPDATE workers SET public_credit = ? WHERE participant_id = ?')->execute([$shown ? 1 : 0, $participantId]);
+    }
+
+    public function setGenomePublic(string $hash, bool $shown): void
+    {
+        if (!preg_match('/^[a-f0-9]{64}$/', $hash)) {
+            throw new InvalidArgumentException('Unknown genome.');
+        }
+        $this->db->prepare('UPDATE design_genomes SET is_public = ? WHERE hash = ?')->execute([$shown ? 1 : 0, $hash]);
+    }
+
+    private function addEvent(string $workerId, string $taskId, string $kind, string $detail, string $bucket): void
+    {
+        $id = substr(hash('sha256', $workerId . '|' . $kind . '|' . $taskId . '|' . $bucket), 0, 32);
+        $have = $this->db->prepare('SELECT id FROM design_events WHERE id = ?');
+        $have->execute([$id]);
+        if ($have->fetch()) {
+            return;
+        }
+        $this->db->prepare('INSERT INTO design_events (id, worker_id, task_id, kind, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+            ->execute([$id, $workerId, $taskId, $kind, substr($detail, 0, 200), $this->now()]);
+    }
+
+    private function heldValue(string $json): float
+    {
+        $score = json_decode($json, true);
+        if (!is_array($score)) {
+            return 0.0;
+        }
+        if (isset($score['heldOut'])) {
+            return (float) $score['heldOut'];
+        }
+        return isset($score['quality']) ? (float) $score['quality'] : 0.0;
+    }
+
+    private function noteHighlight(array $worker, string $taskId, float $held, string $genomeHash): void
+    {
+        $others = $this->db->prepare('SELECT score_json, worker_id, genome_hash FROM design_records WHERE task_id = ? ORDER BY seq DESC LIMIT 200');
+        $others->execute([$taskId]);
+        $bestOther = -1.0;
+        $personal = -1.0;
+        $better = 0;
+        $seen = [];
+        foreach ($others->fetchAll() as $row) {
+            if ((string) $row['genome_hash'] === $genomeHash && (string) $row['worker_id'] === (string) $worker['id']) {
+                continue;
+            }
+            $value = $this->heldValue((string) $row['score_json']);
+            if ((string) $row['worker_id'] === (string) $worker['id'] && $value > $personal) {
+                $personal = $value;
+            }
+            if ($value > $bestOther) {
+                $bestOther = $value;
+            }
+            if (!isset($seen[$row['genome_hash']])) {
+                $seen[$row['genome_hash']] = $value;
+            }
+        }
+        foreach ($seen as $value) {
+            if ($value > $held) {
+                $better++;
+            }
+        }
+        if ($held > $bestOther) {
+            $this->addEvent((string) $worker['id'], $taskId, 'best', 'New best design on ' . $taskId, 'best');
+        }
+        if ($held > $personal) {
+            $this->addEvent((string) $worker['id'], $taskId, 'personal', 'Personal best on ' . $taskId, (string) round($held, 3));
+        }
+        if ($better < 10) {
+            $this->addEvent((string) $worker['id'], $taskId, 'top10', 'Top 10 on ' . $taskId, $genomeHash);
+        }
+        $order = ['coincidence', 'sequence', 'vote3', 'routing', 'composed', 'context3', 'nested', 'scenario-vision', 'scenario-sequence', 'scenario-graph', 'scenario-control', 'digits', 'mnist', 'cart-pole'];
+        $here = array_search($taskId, $order, true);
+        if ($here !== false && $here > 0) {
+            $prior = $this->db->prepare('SELECT DISTINCT task_id FROM design_records WHERE worker_id = ?');
+            $prior->execute([$worker['id']]);
+            $max = -1;
+            foreach ($prior->fetchAll() as $row) {
+                $at = array_search((string) $row['task_id'], $order, true);
+                if ($at !== false && (string) $row['task_id'] !== $taskId && $at > $max) {
+                    $max = (int) $at;
+                }
+            }
+            if ($max >= 0 && $here > $max) {
+                $this->addEvent((string) $worker['id'], $taskId, 'promoted', 'A design moved up to ' . $taskId, 'level');
+            }
+        }
+        $sum = $this->db->prepare('SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id = ?');
+        $sum->execute([$worker['id']]);
+        $tot = $sum->fetch() ?: ['n' => 0, 'ms' => 0];
+        foreach ([10, 100, 1000] as $mark) {
+            if ((int) $tot['n'] >= $mark) {
+                $this->addEvent((string) $worker['id'], $taskId, 'evals', $mark . ' evaluations', (string) $mark);
+            }
+        }
+        $hours = ((int) $tot['ms']) / 3600000;
+        foreach ([1, 5, 10] as $mark) {
+            if ($hours + 1e-9 >= $mark) {
+                $this->addEvent((string) $worker['id'], $taskId, 'hours', $mark . ' hours donated', (string) $mark);
+            }
+        }
+    }
+
+    public function highlights(array $workerIds): array
+    {
+        $ids = [];
+        foreach ($workerIds as $id) {
+            if (preg_match('/^[a-f0-9]{8,32}$/', (string) $id)) {
+                $ids[] = (string) $id;
+            }
+        }
+        if ($ids === []) {
+            return [];
+        }
+        $marks = implode(',', array_fill(0, count($ids), '?'));
+        $st = $this->db->prepare('SELECT kind, task_id, detail, created_at FROM design_events WHERE worker_id IN (' . $marks . ') ORDER BY created_at DESC, id DESC LIMIT 12');
+        $st->execute($ids);
+        return $st->fetchAll();
+    }
+
+    public function leaderboard(int $limit = 20): array
+    {
+        if ($limit < 1) {
+            $limit = 20;
+        }
+        if ($limit > 50) {
+            $limit = 50;
+        }
+        $rows = $this->db->query('SELECT w.participant_id, w.name, w.public_credit, COUNT(r.id) AS records, COUNT(DISTINCT r.genome_hash) AS genomes, COALESCE(SUM(r.eval_ms), 0) AS ms FROM design_records r JOIN workers w ON w.id = r.worker_id GROUP BY w.participant_id, w.name, w.public_credit ORDER BY ms DESC LIMIT ' . (int) $limit)->fetchAll();
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = [
+                'name' => (int) $row['public_credit'] === 1 ? (string) $row['name'] : 'Anonymous',
+                'records' => (int) $row['records'],
+                'genomes' => (int) $row['genomes'],
+                'hours' => ((int) $row['ms']) / 3600000,
+            ];
+        }
+        return $out;
     }
 
     public function defaultTaskPolicy(): array

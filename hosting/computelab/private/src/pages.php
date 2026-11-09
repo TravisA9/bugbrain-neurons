@@ -102,6 +102,7 @@ function navLinks(string $base, array $nav): string
     $items = [
         ['home', 'Home', $base === '' ? '/' : $base . '/'],
         ['explore', 'Explore', $base . '/explore'],
+        ['discoveries', 'Discoveries', $base . '/discoveries'],
         ['join', 'Join', $base . '/join'],
         ['me', 'My computer', $base . '/me'],
     ];
@@ -185,6 +186,38 @@ function exploreBar(string $base, array $nav): string
     $home = $base === '' ? '/' : $base . '/';
     return '<style>.cl-nav{background:#f4efe6;color:#241c16;font:16px/1.4 Segoe UI,system-ui,sans-serif}.cl-nav a{color:#1d6b4a;text-decoration:none;margin-right:12px;font-weight:650}.cl-nav a.is-current{color:#241c16;border-bottom:2px solid #241c16}.cl-nav button{background:#241c16;color:#fffaf3;border:0;border-radius:999px;padding:6px 12px;cursor:pointer}.cl-nav-inner{width:min(1100px,calc(100% - 28px));margin:0 auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0}</style>'
         . '<div class="cl-nav"><div class="cl-nav-inner"><a href="' . h($home) . '">Compute Lab</a>' . navLinks($base, $nav) . logoutForm($base, $nav) . '</div></div>';
+}
+
+function pageDiscoveries(App $app, array $nav): string
+{
+    $base = $app->base();
+    $board = '';
+    foreach ($app->leaderboard(20) as $row) {
+        $board .= '<p>' . h((string) $row['name']) . ' · ' . h((string) $row['genomes']) . ' designs · ' . h((string) $row['records']) . ' records · ' . h(number_format((float) $row['hours'], 2)) . ' hours</p>';
+    }
+    if ($board === '') {
+        $board = '<p class="muted">No public results yet.</p>';
+    }
+    $charts = '';
+    $tasks = $app->db->query('SELECT DISTINCT task_id FROM design_records ORDER BY task_id ASC LIMIT 6')->fetchAll();
+    foreach ($tasks as $task) {
+        $id = (string) $task['task_id'];
+        $points = $app->taskSeries($id, 80);
+        $charts .= '<section><h2>' . h($id) . '</h2>' . scoreChart($points);
+        foreach ($app->topDesigns($id, 3) as $row) {
+            $who = $app->db->prepare('SELECT name, public_credit FROM workers WHERE id = ?');
+            $who->execute([(string) $row['worker_id']]);
+            $finder = $who->fetch();
+            $genome = $app->designGenome((string) $row['genome_hash']);
+            $link = ($genome && (int) ($genome['is_public'] ?? 0) === 1)
+                ? ' · <a href="' . h($base . '/discoveries/genome?hash=' . $row['genome_hash']) . '">Genome</a>'
+                : '';
+            $charts .= '<p>' . h($finder ? $app->creditName($finder) : 'Anonymous') . ' · score ' . h((string) $row['quality']) . $link . '</p>';
+        }
+    }
+    $body = '<h1>Discoveries</h1><p class="muted">Names appear when that person left credit on. Genomes stay private until the owner marks one public.</p>'
+        . '<section><h2>Leaderboard</h2>' . $board . '</section>' . $charts;
+    return layout('Discoveries', $body, $base, $nav);
 }
 
 function pageHome(App $app, array $nav): string
@@ -279,6 +312,7 @@ function pageMe(App $app, array $computers, string $csrf, array $nav): string
         }
         $time = $totals['seconds'] > 0 ? formatDuration((int) $totals['seconds']) : 'No recorded time yet';
         $found = $app->designsByWorker((string) $worker['id']);
+        $shown = (int) ($worker['public_credit'] ?? 1) === 1;
         $cards .= '<section><h2>' . h((string) $worker['name']) . '</h2>'
             . '<p class="status-line" role="status">' . h($state['line']) . '</p>'
             . '<p>' . h($seen) . '</p>'
@@ -288,12 +322,25 @@ function pageMe(App $app, array $computers, string $csrf, array $nav): string
             . '<p class="muted">' . h($switchHint) . '</p></form>'
             . '<p>' . h((string) $totals['done']) . ' jobs done · ' . h($time) . ' of compute</p>'
             . '<p>Designs found by your computer: ' . h((string) $found) . '</p>'
+            . '<form method="post" action="' . h($base) . '/me/credit"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $worker['id']) . '"><input type="hidden" name="shown" value="' . ($shown ? '0' : '1') . '"><button type="submit">' . ($shown ? 'Show my designs as Anonymous' : 'Show my name on discoveries') . '</button></form>'
             . '<h3>Recent results</h3>' . $rows . '</section>';
     }
     if ($cards === '') {
         $cards = '<section><p>No computer is linked to this browser yet.</p><p><a class="cta" href="' . h($base) . '/join">Join with your computer</a></p></section>';
     }
-    $body = '<h1>My computer</h1><p class="muted">This page cannot change project order or see the owner password. On accepts new work. Off finishes the current job, then stops.</p>' . $cards;
+    $ids = [];
+    foreach ($computers as $worker) {
+        $ids[] = (string) $worker['id'];
+    }
+    $highlights = '';
+    foreach ($app->highlights($ids) as $event) {
+        $highlights .= '<p>' . h((string) $event['detail']) . '</p>';
+    }
+    if ($highlights === '') {
+        $highlights = '<p class="muted">Notable results show up here after this computer finds a design.</p>';
+    }
+    $body = '<h1>My computer</h1><p class="muted">This page cannot change project order or see the owner password. On accepts new work. Off finishes the current job, then stops.</p>'
+        . '<section><h2>Highlights</h2>' . $highlights . '</section>' . $cards;
     return layout('My computer', $body, $base, $nav);
 }
 
@@ -376,7 +423,12 @@ function designLibrarySection(App $app, string $csrf, string $base): string
     }
     $list = '';
     foreach ($top as $row) {
-        $list .= '<p>' . h((string) $row['genome_hash']) . ' · score ' . h((string) $row['quality']) . ' · <a href="' . h($base . '/owner/designs/genome?hash=' . $row['genome_hash']) . '">Download genome</a></p>';
+        $who = $app->db->prepare('SELECT name, public_credit FROM workers WHERE id = ?');
+        $who->execute([(string) ($row['worker_id'] ?? '')]);
+        $finder = $who->fetch();
+        $credit = $finder ? $app->creditName($finder) : 'Anonymous';
+        $list .= '<p>' . h($credit) . ' found ' . h((string) $row['genome_hash']) . ' · score ' . h((string) $row['quality']) . ' · <a href="' . h($base . '/owner/designs/genome?hash=' . $row['genome_hash']) . '">Download genome</a></p>'
+            . '<form method="post" action="' . h($base) . '/owner/design-public"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="hash" value="' . h((string) $row['genome_hash']) . '"><input type="hidden" name="shown" value="1"><button type="submit">Mark public</button></form>';
     }
     if ($list === '') {
         $list = '<p class="muted">No saved designs yet. Finished SpikeFoundry runs upload them.</p>';

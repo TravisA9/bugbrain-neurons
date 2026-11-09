@@ -207,6 +207,21 @@ try {
         coord_html($html);
         return;
     }
+    if ($path === '/discoveries' && $method === 'GET') {
+        coord_html(pageDiscoveries($app, coord_who($app, 'discoveries')));
+        return;
+    }
+    if ($path === '/discoveries/genome' && $method === 'GET') {
+        $row = $app->designGenome((string) ($_GET['hash'] ?? ''));
+        if (!$row || (int) ($row['is_public'] ?? 0) !== 1) {
+            http_response_code(404);
+            echo 'That genome is not public.';
+            return;
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        echo (string) $row['genome_json'];
+        return;
+    }
     if ($path === '/join' && $method === 'GET') {
         coord_html(pageJoin($app, '', coord_who($app, 'join')));
         return;
@@ -326,6 +341,28 @@ try {
             $cur->execute([$target]);
             $row = $cur->fetch();
             $app->setPaused($target, !((int) ($row['paused'] ?? 0) === 1));
+        }
+        header('Location: ' . $base . '/me', true, 303);
+        return;
+    }
+    if ($path === '/me/credit' && $method === 'POST') {
+        $session = $app->sessionById(coord_cookie('lab_participant'));
+        if (!$session || $session['role'] !== 'participant') {
+            http_response_code(403);
+            echo 'Participants only.';
+            return;
+        }
+        $csrf = (string) ($_POST['csrf'] ?? '');
+        if ($csrf === '' || !hash_equals((string) $session['csrf'], $csrf)) {
+            http_response_code(403);
+            echo 'Missing or bad security token. Reload the page.';
+            return;
+        }
+        $st = $app->db->prepare('SELECT * FROM workers WHERE id = ?');
+        $st->execute([$session['subject']]);
+        $self = $st->fetch();
+        if ($self) {
+            $app->setCredit($app->ensureParticipant($self), (string) ($_POST['shown'] ?? '1') === '1');
         }
         header('Location: ' . $base . '/me', true, 303);
         return;
@@ -456,6 +493,8 @@ try {
             $app->createProject((string) ($_POST['title'] ?? ''), (string) ($_POST['summary'] ?? ''), (string) ($_POST['runner'] ?? ''), (int) ($_POST['priority'] ?? 1), isset($_POST['enabled']));
         } elseif ($path === '/owner/task-policy') {
             $app->saveTaskPolicy((string) ($_POST['project'] ?? ''), (string) ($_POST['task'] ?? ''), (float) ($_POST['delta'] ?? 0.005), (int) ($_POST['evals'] ?? 3000), (float) ($_POST['hours'] ?? 6), (string) ($_POST['action'] ?? 'flag'));
+        } elseif ($path === '/owner/design-public') {
+            $app->setGenomePublic((string) ($_POST['hash'] ?? ''), (string) ($_POST['shown'] ?? '0') === '1');
         } elseif ($path === '/owner/design-seed') {
             $app->seedJobFromDesigns((string) ($_POST['template'] ?? 'sf-vision'), (string) ($_POST['task'] ?? 'coincidence'), (int) ($_POST['count'] ?? 3), (int) ($_POST['seed'] ?? 7));
         } elseif ($path === '/owner/pause') {
