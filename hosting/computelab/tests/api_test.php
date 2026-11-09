@@ -547,5 +547,53 @@ $series = $clean['app']->taskSeries('coincidence', 80);
 $health = $clean['app']->designerHealthForTask('coincidence');
 check($series && (int) $series[count($series) - 1]['n'] >= 4000 && $health && strpos($health['label'], 'beating random') !== false, 'plateau charts count evaluations from the job summary');
 
+$solve = lab();
+$solveReg = $solve['app']->enroll('solve-pc', ['spikefoundry'], 2, true);
+$solveWorker = $solve['app']->workerByToken($solveReg['token']);
+$solve['db']->exec("UPDATE projects SET auto_jobs = 1 WHERE id = 'spikefoundry'");
+$queuedId = $solve['app']->createJob('sf-propose', 'Auto coincidence', 0.6, 77, ['taskId' => 'coincidence', 'mode' => 'propose', 'seedGenomes' => ['abc']]);
+$manualId = $solve['app']->createJob('sf-propose', 'Owner coincidence run', 0.6, 78, ['taskId' => 'coincidence', 'mode' => 'propose']);
+$flatSummary = function (string $job, float $best) {
+    return [
+        'taskId' => 'coincidence', 'jobId' => $job, 'engineVersion' => 'spikefoundry-designer-3',
+        'evals' => 500000, 'designerEvals' => 450000, 'randomEvals' => 50000, 'evalMs' => 180000,
+        'bestHeld' => $best, 'bestTrain' => $best, 'designerMean' => 0.24, 'randomMean' => 0.12, 'histogram' => [1, 2, 3],
+        'curve' => [
+            ['n' => 1, 'held' => 0.5, 'train' => 0.5, 'bestHeld' => $best, 'bestTrain' => $best],
+            ['n' => 250000, 'held' => 0.3, 'train' => 0.3, 'bestHeld' => $best, 'bestTrain' => $best],
+            ['n' => 500000, 'held' => 0.2, 'train' => 0.2, 'bestHeld' => $best, 'bestTrain' => $best],
+        ],
+    ];
+};
+$solve['app']->ingestSummary($solveWorker, $flatSummary('sf-propose-1-a', 0.982));
+$solve['app']->ingestSummary($solveWorker, $flatSummary('sf-propose-2-b', 0.982));
+check(!$solve['app']->taskPaused('spikefoundry', 'coincidence'), 'a high flat score with fewer job summaries than required does not advance yet');
+$solve['app']->ingestSummary($solveWorker, $flatSummary('sf-propose-3-c', 0.982));
+$solvedPolicy = $solve['app']->taskPolicy('spikefoundry', 'coincidence');
+$movedSpec = json_decode((string) $solve['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $solve['db']->quote($queuedId))->fetchColumn(), true);
+$movedTitle = (string) $solve['db']->query('SELECT title FROM jobs WHERE id = ' . $solve['db']->quote($queuedId))->fetchColumn();
+$manualSpec = json_decode((string) $solve['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $solve['db']->quote($manualId))->fetchColumn(), true);
+$advanceNote = (string) $solve['db']->query("SELECT note FROM supply_state WHERE id = 'advance-coincidence'")->fetchColumn();
+check($solvedPolicy['paused'] === 1 && $solvedPolicy['pause_reason'] === 'solved' && $solvedPolicy['advanced_to'] === 'sequence' && $solvedPolicy['stall_action'] === 'flag', 'a solved task advances by default without waiting for the stall window');
+check($movedSpec['taskId'] === 'sequence' && !isset($movedSpec['seedGenomes']) && $movedTitle === 'Auto sequence' && $manualSpec['taskId'] === 'coincidence' && strpos($advanceNote, 'solved at held-out 0.982') !== false && strpos($advanceNote, 'sequence') !== false, 'queued auto jobs move to the next task and the advance is noted');
+$solve['db']->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$solve['clock']->t, $solveReg['workerId']]);
+$nextJob = $solve['app']->claim($solve['app']->workerByToken($solveReg['token']));
+$nextSpec = $nextJob ? json_decode((string) $solve['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $solve['db']->quote((string) $nextJob['id']))->fetchColumn(), true) : [];
+check($nextJob && $nextSpec['taskId'] === 'sequence', 'claims after the advance get the next task');
+$solve['app']->saveTaskPolicy('spikefoundry', 'coincidence', 0.005, 3000, 6, 'flag', false, 0.97, 3);
+check(!$solve['app']->taskPaused('spikefoundry', 'coincidence') && (int) $solve['app']->taskPolicy('spikefoundry', 'coincidence')['auto_advance'] === 0, 'turning auto-advance off returns a solved task to supply');
+$solve['app']->saveTaskPolicy('spikefoundry', 'coincidence', 0.005, 3000, 6, 'flag', true, 0.99, 3);
+check(!$solve['app']->taskPaused('spikefoundry', 'coincidence'), 'a solved score above the best held-out score keeps the task active');
+$solve['app']->saveTaskPolicy('spikefoundry', 'coincidence', 0.005, 3000, 6, 'flag', true, 0.97, 3);
+check($solve['app']->taskPaused('spikefoundry', 'coincidence') && $solve['app']->nextCurriculumTask('scenario-control') === '' && !in_array('digits', App::CURRICULUM, true), 'the default threshold advances again, and the last designer task has no next step');
+$solve['app']->ingestDesigns($solveWorker, [designRecord('{"arm":"solved","n":1}', 90, 0.982, 0.982, 'designer', 1000)], $solve['app']->protocolHash());
+$ownerHtml = taskHealthSection($solve['app'], 'csrf-x', '/computelab');
+check(strpos($ownerHtml, 'name="auto_advance" value="1" checked') !== false && strpos($ownerHtml, 'name="solve_score"') !== false && strpos($ownerHtml, 'Solved. Jobs moved on automatically.') !== false && strpos($ownerHtml, 'Next level: sequence') !== false, 'the owner console shows the solved state and the per-task auto-advance settings');
+$bigEvals = $flatSummary('sf-propose-4-d', 0.5);
+$bigEvals['taskId'] = 'sequence';
+$bigEvals['evals'] = 5000000;
+$solve['app']->ingestSummary($solveWorker, $bigEvals);
+check((int) $solve['db']->query("SELECT COUNT(*) FROM design_summaries WHERE job_id = 'sf-propose-4-d'")->fetchColumn() === 1, 'a summary from a long time-budget job with millions of evaluations is accepted');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

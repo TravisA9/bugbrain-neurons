@@ -8,7 +8,12 @@ const Library = require('./library.js');
 const DESIGN_FEATURES = 16;
 const ACTIONS = 8;
 const DESIGNER_VERSION = 'spikefoundry-designer-3';
-const EVAL_CAP = 250000;
+// Jobs stop on their targetSeconds clock. This cap is only a safety net: at ~2,800
+// evaluations a second a 3600-second job still stays under it.
+const EVAL_CAP = 20000000;
+// Retention is bounded (top-N, random reservoir, thinned curve), so heap use stays flat.
+// The guard stops a job early if the heap still grows past this many megabytes.
+const HEAP_GUARD_MB = 768;
 
 function mulberry32(seed) {
   let a = (seed >>> 0) || 1;
@@ -290,6 +295,8 @@ function run(job, outDir, SF) {
   const budgetMs = Math.max(1, Math.min(3600, +job.targetSeconds || +job.target_seconds || 180)) * 1000;
   const keepTop = Math.max(1, Math.min(200, +job.keepTop || +job.keep_top || 50));
   const keepRandom = Math.max(0, Math.min(2000, job.keepRandom != null ? +job.keepRandom : (job.keep_random != null ? +job.keep_random : 500)));
+  const heapLimit = Math.max(1, Math.min(4096, +job.heapGuardMb || HEAP_GUARD_MB)) * 1024 * 1024;
+  let stopReason = 'cap';
   const started = Date.now();
   const top = [];
   const topAt = new Map();
@@ -391,7 +398,8 @@ function run(job, outDir, SF) {
           evals: evals,
         }));
       }
-      if (now - started >= budgetMs) break;
+      if (now - started >= budgetMs) { stopReason = 'time'; break; }
+      if (evals % 2000 === 0 && process.memoryUsage().heapUsed > heapLimit) { stopReason = 'memory'; break; }
     }
     fs.writeFileSync(path.join(outDir, 'progress.json'), JSON.stringify({
       synthetic: true,
@@ -442,6 +450,8 @@ function run(job, outDir, SF) {
     curve: curveOut,
     keepTop: keepTop,
     keepRandom: keepRandom,
+    stopReason: job.mode === 'propose' ? stopReason : 'none',
+    wallMs: Date.now() - started,
     engineVersion: DESIGNER_VERSION,
     jobId: job.id || 'designer',
   };
@@ -462,6 +472,6 @@ function run(job, outDir, SF) {
 }
 
 module.exports = {
-  DESIGN_FEATURES, ACTIONS, DESIGNER_VERSION, designFeatures, makeSurrogate, trainSurrogate, predict, fitSurrogate, spearman,
+  EVAL_CAP, HEAP_GUARD_MB, DESIGN_FEATURES, ACTIONS, DESIGNER_VERSION, designFeatures, makeSurrogate, trainSurrogate, predict, fitSurrogate, spearman,
   makePolicy, propose, trainPolicy, screen, applyAction, exampleFromScore, scoreGenome, blankFor, run,
 };

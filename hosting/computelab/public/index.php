@@ -494,7 +494,7 @@ try {
         } elseif ($path === '/owner/supply') {
             $app->saveSupply((string) ($_POST['id'] ?? ''), isset($_POST['auto']), (int) ($_POST['low'] ?? 0), (int) ($_POST['cap'] ?? 8), (int) ($_POST['evals'] ?? 0), (int) ($_POST['seconds'] ?? 180), (int) ($_POST['keep'] ?? 50), (int) ($_POST['random'] ?? 500));
         } elseif ($path === '/owner/task-policy') {
-            $app->saveTaskPolicy((string) ($_POST['project'] ?? ''), (string) ($_POST['task'] ?? ''), (float) ($_POST['delta'] ?? 0.005), (int) ($_POST['evals'] ?? 3000), (float) ($_POST['hours'] ?? 6), (string) ($_POST['action'] ?? 'flag'));
+            $app->saveTaskPolicy((string) ($_POST['project'] ?? ''), (string) ($_POST['task'] ?? ''), (float) ($_POST['delta'] ?? 0.005), (int) ($_POST['evals'] ?? 3000), (float) ($_POST['hours'] ?? 6), (string) ($_POST['action'] ?? 'flag'), isset($_POST['solve_score']) ? isset($_POST['auto_advance']) : null, isset($_POST['solve_score']) ? (float) $_POST['solve_score'] : null, isset($_POST['solve_jobs']) ? (int) $_POST['solve_jobs'] : null);
         } elseif ($path === '/owner/design-public') {
             $app->setGenomePublic((string) ($_POST['hash'] ?? ''), (string) ($_POST['shown'] ?? '0') === '1');
         } elseif ($path === '/owner/design-seed') {

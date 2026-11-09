@@ -397,12 +397,16 @@ function taskHealthSection(App $app, string $csrf, string $base): string
         $cards .= '<section><h2>' . h($task) . ' · ' . h($status) . '</h2>'
             . scoreChart($shown)
             . '<p>' . h((string) $health['designer']['label']) . '</p>'
-            . ($policy['paused'] ? '<p>Paused. New claims skip this task.' . ($policy['advanced_to'] !== '' ? ' Next level: ' . h((string) $policy['advanced_to']) : '') . '</p>' : '')
+            . ($policy['paused'] ? '<p>' . ($policy['pause_reason'] === 'solved' ? 'Solved. Jobs moved on automatically.' : 'Paused.') . ' New claims skip this task.' . ($policy['advanced_to'] !== '' ? ' Next level: ' . h((string) $policy['advanced_to']) : '') . '</p>' : '')
             . '<form method="post" action="' . h($base) . '/owner/task-policy"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="project" value="spikefoundry"><input type="hidden" name="task" value="' . h($task) . '">'
             . '<label>Minimum relative gain <input name="delta" type="number" min="0" max="1" step="0.001" value="' . h((string) $policy['stall_delta']) . '"></label>'
             . '<label>Evaluation window <input name="evals" type="number" min="2" max="100000" value="' . h((string) $policy['stall_evals']) . '"></label>'
             . '<label>Compute hours in that window <input name="hours" type="number" min="0" max="10000" step="0.1" value="' . h((string) $policy['stall_hours']) . '"></label>'
             . '<label>When it stalls <select name="action"><option value="flag"' . ($policy['stall_action'] === 'flag' ? ' selected' : '') . '>Flag it</option><option value="pause"' . ($policy['stall_action'] === 'pause' ? ' selected' : '') . '>Pause the task</option><option value="advance"' . ($policy['stall_action'] === 'advance' ? ' selected' : '') . '>Advance to the next level</option></select></label>'
+            . '<label><input type="checkbox" name="auto_advance" value="1"' . ((int) $policy['auto_advance'] === 1 ? ' checked' : '') . '> Advance to the next task when solved</label>'
+            . '<label>Solved at best held-out score <input name="solve_score" type="number" min="0" max="1" step="0.001" value="' . h((string) $policy['solve_score']) . '"></label>'
+            . '<label>Job summaries needed first <input name="solve_jobs" type="number" min="1" max="1000" value="' . h((string) $policy['solve_jobs']) . '"></label>'
+            . '<p class="muted">Solved means the best held-out score reached that value and the curve is Slowing or Stalled. It does not wait for the stall window.</p>'
             . '<button type="submit">Save thresholds</button></form></section>';
     }
     if ($cards === '') {

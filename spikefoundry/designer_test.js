@@ -65,4 +65,10 @@ Designer.run({ id: 'timed-job', mode: 'propose', taskId: 'coincidence', seed: 4,
 const timedDoc = JSON.parse(fs.readFileSync(path.join(timedOut, 'designs.json'), 'utf8'));
 const progress = JSON.parse(fs.readFileSync(path.join(timedOut, 'progress.json'), 'utf8'));
 check(timedDoc.summary.evals >= 1 && timedDoc.summary.evals < 250000 && timedDoc.records.length <= 10 && progress.evals === timedDoc.summary.evals && (Date.now() - began) < 4000, 'a propose job stops at its time budget and reports progress');
+check(timedDoc.summary.stopReason === 'time' && timedDoc.summary.wallMs >= 900, 'a time-budget job reports that the clock stopped it');
+check(Designer.EVAL_CAP >= 3600 * 2800 && saved.summary.stopReason === 'cap', 'the evaluation cap does not bind before a 3600-second job on a ~2,800 eval/s worker, and an explicit evals count still stops a job');
+const guarded = path.join(out, 'guarded');
+Designer.run({ id: 'heap-job', mode: 'propose', taskId: 'coincidence', seed: 5, evals: 0, targetSeconds: 30, keepTop: 5, keepRandom: 5, heapGuardMb: 1 }, guarded, SF);
+const guardDoc = JSON.parse(fs.readFileSync(path.join(guarded, 'designs.json'), 'utf8'));
+check(guardDoc.summary.stopReason === 'memory' && guardDoc.summary.evals === 2000 && guardDoc.records.length >= 1, 'the heap guard stops a job early and still writes its designs');
 console.log(n + ' checks');

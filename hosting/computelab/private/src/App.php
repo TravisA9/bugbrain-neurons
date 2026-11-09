@@ -218,6 +218,9 @@ final class App
         $this->ensureColumn('design_records', 'arm', "VARCHAR(16) NOT NULL DEFAULT 'designer'");
         $this->ensureColumn('design_records', 'seq', 'INTEGER NOT NULL DEFAULT 0');
         $this->ensureColumn('design_genomes', 'is_public', 'INTEGER NOT NULL DEFAULT 0');
+        $this->ensureColumn('task_policies', 'auto_advance', 'INTEGER NOT NULL DEFAULT 1');
+        $this->ensureColumn('task_policies', 'solve_score', 'REAL NOT NULL DEFAULT 0.97');
+        $this->ensureColumn('task_policies', 'solve_jobs', 'INTEGER NOT NULL DEFAULT 3');
         $this->ensureColumn('workers', 'public_credit', 'INTEGER NOT NULL DEFAULT 1');
         $freshAuto = !$this->hasColumn('projects', 'auto_jobs');
         $this->ensureColumn('projects', 'auto_jobs', 'INTEGER');
@@ -1252,7 +1255,7 @@ final class App
             $engine = 'spikefoundry-designer-3';
         }
         $evals = (int) ($summary['evals'] ?? 0);
-        if ($evals < 1 || $evals > 1000000) {
+        if ($evals < 1 || $evals > 50000000) {
             throw new InvalidArgumentException('Summary evaluation count is out of range.');
         }
         $curve = isset($summary['curve']) && is_array($summary['curve']) ? array_slice($summary['curve'], 0, 120) : [];
@@ -1695,9 +1698,13 @@ final class App
         return $row ? (string) $row['id'] : '';
     }
 
+    /* Tasks the SpikeFoundry designer can score, easiest first. A task outside this list
+     * would fall back to coincidence inside the worker, so supply and auto-advance stop here. */
+    public const CURRICULUM = ['coincidence', 'sequence', 'vote3', 'routing', 'composed', 'context3', 'nested', 'scenario-vision', 'scenario-sequence', 'scenario-graph', 'scenario-control'];
+
     private function supplyTask(string $projectId): string
     {
-        $order = ['coincidence', 'sequence', 'vote3', 'routing', 'composed', 'context3', 'nested', 'scenario-vision', 'scenario-sequence', 'scenario-graph', 'scenario-control', 'digits', 'mnist', 'cart-pole'];
+        $order = self::CURRICULUM;
         if ($projectId === 'bugbrain') {
             return 'order3';
         }
@@ -1717,7 +1724,7 @@ final class App
 
     public function defaultTaskPolicy(): array
     {
-        return ['stall_delta' => 0.005, 'stall_evals' => 3000, 'stall_hours' => 6.0, 'stall_action' => 'flag', 'paused' => 0, 'pause_reason' => '', 'advanced_to' => ''];
+        return ['stall_delta' => 0.005, 'stall_evals' => 3000, 'stall_hours' => 6.0, 'stall_action' => 'flag', 'paused' => 0, 'pause_reason' => '', 'advanced_to' => '', 'auto_advance' => 1, 'solve_score' => 0.97, 'solve_jobs' => 3];
     }
 
     public function taskPolicy(string $projectId, string $taskId): array
@@ -1741,10 +1748,13 @@ final class App
             'paused' => (int) $row['paused'],
             'pause_reason' => (string) ($row['pause_reason'] ?? ''),
             'advanced_to' => (string) ($row['advanced_to'] ?? ''),
+            'auto_advance' => isset($row['auto_advance']) ? (int) $row['auto_advance'] : 1,
+            'solve_score' => isset($row['solve_score']) ? (float) $row['solve_score'] : 0.97,
+            'solve_jobs' => isset($row['solve_jobs']) ? (int) $row['solve_jobs'] : 3,
         ];
     }
 
-    public function saveTaskPolicy(string $projectId, string $taskId, float $delta, int $evals, float $hours, string $action): void
+    public function saveTaskPolicy(string $projectId, string $taskId, float $delta, int $evals, float $hours, string $action, ?bool $autoAdvance = null, ?float $solveScore = null, ?int $solveJobs = null): void
     {
         if (!preg_match('/^[a-z0-9._-]{1,40}$/', $projectId) || !preg_match('/^[a-z0-9._-]{1,64}$/', $taskId)) {
             throw new InvalidArgumentException('Unknown project or task.');
@@ -1761,10 +1771,27 @@ final class App
         if (!in_array($action, ['flag', 'pause', 'advance'], true)) {
             throw new InvalidArgumentException('Choose flag, pause, or advance.');
         }
+        if ($solveScore !== null && ($solveScore < 0 || $solveScore > 1)) {
+            throw new InvalidArgumentException('The solved score must be from 0 to 1.');
+        }
+        if ($solveJobs !== null && ($solveJobs < 1 || $solveJobs > 1000)) {
+            throw new InvalidArgumentException('The solved job count must be from 1 to 1000.');
+        }
         $current = $this->taskPolicy($projectId, $taskId);
-        $id = substr(hash('sha256', $projectId . '|' . $taskId), 0, 32);
-        $this->db->prepare('REPLACE INTO task_policies (id, project_id, task_id, stall_delta, stall_evals, stall_hours, stall_action, paused, pause_reason, advanced_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-            ->execute([$id, $projectId, $taskId, $delta, $evals, $hours, $action, (int) $current['paused'], $current['pause_reason'], $current['advanced_to']]);
+        $current['stall_delta'] = $delta;
+        $current['stall_evals'] = $evals;
+        $current['stall_hours'] = $hours;
+        $current['stall_action'] = $action;
+        if ($autoAdvance !== null) {
+            $current['auto_advance'] = $autoAdvance ? 1 : 0;
+        }
+        if ($solveScore !== null) {
+            $current['solve_score'] = $solveScore;
+        }
+        if ($solveJobs !== null) {
+            $current['solve_jobs'] = $solveJobs;
+        }
+        $this->writeTaskPolicy($projectId, $taskId, $current);
         $this->applyTaskPolicy($projectId, $taskId);
     }
 
@@ -1823,9 +1850,9 @@ final class App
 
     private function summarySeries(string $taskId, int $limit): array
     {
-        $st = $this->db->prepare('SELECT evals, eval_ms, best_held, best_train, curve_json FROM design_summaries WHERE task_id = ? ORDER BY created_at ASC LIMIT 40');
+        $st = $this->db->prepare('SELECT evals, eval_ms, best_held, best_train, curve_json FROM design_summaries WHERE task_id = ? ORDER BY created_at DESC LIMIT 40');
         $st->execute([$taskId]);
-        $rows = $st->fetchAll();
+        $rows = array_reverse($st->fetchAll());
         if ($rows === []) {
             return [];
         }
@@ -1975,7 +2002,17 @@ final class App
         $paused = (int) $policy['paused'];
         $reason = (string) $policy['pause_reason'];
         $advanced = (string) $policy['advanced_to'];
-        if ($health['status'] === 'Stalled' && $policy['stall_action'] === 'pause') {
+        $solved = $this->taskSolved($health, $taskId);
+        $wasPaused = $paused === 1;
+        if ($solved['solved']) {
+            $paused = 1;
+            $reason = 'solved';
+            $advanced = $solved['next'];
+        } elseif ($reason === 'solved') {
+            $paused = 0;
+            $reason = '';
+            $advanced = '';
+        } elseif ($health['status'] === 'Stalled' && $policy['stall_action'] === 'pause') {
             $paused = 1;
             $reason = 'stall';
         } elseif ($health['status'] === 'Stalled' && $policy['stall_action'] === 'advance') {
@@ -1986,15 +2023,87 @@ final class App
             $paused = 0;
             $reason = '';
         }
-        $this->db->prepare('REPLACE INTO task_policies (id, project_id, task_id, stall_delta, stall_evals, stall_hours, stall_action, paused, pause_reason, advanced_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-            ->execute([$id, $projectId, $taskId, $policy['stall_delta'], $policy['stall_evals'], $policy['stall_hours'], $policy['stall_action'], $paused, $reason, $advanced]);
+        $policy['paused'] = $paused;
+        $policy['pause_reason'] = $reason;
+        $policy['advanced_to'] = $advanced;
+        $this->writeTaskPolicy($projectId, $taskId, $policy);
+        if ($paused === 1 && $advanced !== '') {
+            $moved = $this->retargetQueued($projectId, $taskId, $advanced);
+            if (!$wasPaused) {
+                $note = $taskId . ' ' . ($reason === 'solved' ? 'solved at held-out ' . sprintf('%.3f', $solved['best']) : 'stalled') . '; supply moved to ' . $advanced . ' at ' . $this->now() . ($moved > 0 ? '; ' . $moved . ' queued jobs retargeted' : '');
+                $this->db->prepare('REPLACE INTO supply_state (id, ran_at, note) VALUES (?, ?, ?)')->execute([substr('advance-' . $taskId, 0, 64), $this->now(), substr($note, 0, 250)]);
+            }
+        }
         $health['policy'] = $this->taskPolicy($projectId, $taskId);
+        $health['solved'] = $solved;
         return $health;
+    }
+
+    /* A task counts as solved when auto-advance is on, a harder task exists, the best
+     * held-out score reached solve_score, the curve is Slowing or Stalled, and at least
+     * solve_jobs job summaries back it. It does not wait for the full stall window. */
+    public function taskSolved(array $health, string $taskId): array
+    {
+        $policy = $health['policy'];
+        $points = $health['points'];
+        $best = 0.0;
+        foreach ($points as $point) {
+            $best = max($best, (float) $point['bestHeld']);
+        }
+        $out = ['solved' => false, 'best' => $best, 'jobs' => 0, 'next' => ''];
+        if ((int) $policy['auto_advance'] !== 1) {
+            return $out;
+        }
+        $next = $this->nextCurriculumTask($taskId);
+        if ($next === '' || $best + 1e-9 < (float) $policy['solve_score']) {
+            return $out;
+        }
+        if (!in_array($health['status'], ['Slowing', 'Stalled'], true)) {
+            return $out;
+        }
+        $st = $this->db->prepare('SELECT COUNT(*) FROM design_summaries WHERE task_id = ?');
+        $st->execute([$taskId]);
+        $jobs = (int) $st->fetchColumn();
+        $out['jobs'] = $jobs;
+        if ($jobs < max(1, (int) $policy['solve_jobs'])) {
+            return $out;
+        }
+        $out['solved'] = true;
+        $out['next'] = $next;
+        return $out;
+    }
+
+    private function writeTaskPolicy(string $projectId, string $taskId, array $p): void
+    {
+        $id = substr(hash('sha256', $projectId . '|' . $taskId), 0, 32);
+        $this->db->prepare('REPLACE INTO task_policies (id, project_id, task_id, stall_delta, stall_evals, stall_hours, stall_action, paused, pause_reason, advanced_to, auto_advance, solve_score, solve_jobs) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            ->execute([$id, $projectId, $taskId, (float) $p['stall_delta'], (int) $p['stall_evals'], (float) $p['stall_hours'], (string) $p['stall_action'], (int) $p['paused'], (string) $p['pause_reason'], (string) $p['advanced_to'], (int) $p['auto_advance'], (float) $p['solve_score'], (int) $p['solve_jobs']]);
+    }
+
+    /* Queued auto jobs for a task that was just left behind move to the next task,
+     * so they do not sit in the queue (claims skip a paused task) and block supply. */
+    private function retargetQueued(string $projectId, string $from, string $to): int
+    {
+        $st = $this->db->prepare("SELECT id, title, spec_json FROM jobs WHERE project_id = ? AND status = 'queued'");
+        $st->execute([$projectId]);
+        $upd = $this->db->prepare("UPDATE jobs SET title = ?, spec_json = ? WHERE id = ? AND status = 'queued'");
+        $moved = 0;
+        foreach ($st->fetchAll() as $job) {
+            $spec = json_decode((string) $job['spec_json'], true);
+            if (!is_array($spec) || (string) ($spec['taskId'] ?? '') !== $from || strpos((string) $job['title'], 'Auto ') !== 0) {
+                continue;
+            }
+            $spec['taskId'] = $to;
+            unset($spec['seedGenomes']);
+            $upd->execute(['Auto ' . $to, json_encode($spec), $job['id']]);
+            $moved++;
+        }
+        return $moved;
     }
 
     public function nextCurriculumTask(string $taskId): string
     {
-        $order = ['coincidence', 'sequence', 'vote3', 'routing', 'composed', 'context3', 'nested', 'scenario-vision', 'scenario-sequence', 'scenario-graph', 'scenario-control', 'digits', 'cart-pole'];
+        $order = self::CURRICULUM;
         $index = array_search($taskId, $order, true);
         if ($index === false || $index >= count($order) - 1) {
             return '';

@@ -25,3 +25,13 @@ if ($config['driver'] === 'sqlite') {
 $app = new App($db, $config);
 $app->migrate();
 echo "Schema is current. Added any missing job, project, worker, lease, and result columns. Existing rows were kept.\n";
+foreach ($app->watchedTasks() as $health) {
+    $policy = $health['policy'];
+    $best = 0.0;
+    foreach ($health['points'] as $point) {
+        $best = max($best, (float) $point['bestHeld']);
+    }
+    echo 'Task ' . $health['task_id'] . ': ' . $health['status'] . ', best held-out ' . sprintf('%.3f', $best)
+        . ((int) $policy['paused'] === 1 ? ', paused (' . $policy['pause_reason'] . ')' . ($policy['advanced_to'] !== '' ? ', next ' . $policy['advanced_to'] : '') : ', active') . ".\n";
+}
+
