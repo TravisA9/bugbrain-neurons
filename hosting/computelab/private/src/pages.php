@@ -62,7 +62,7 @@ function pageMe(App $app, array $worker, ?array $lease, array $history): string
         $rows = '<p class="muted">None yet.</p>';
     }
     $body = '<h1>Your computer</h1><p class="muted">This page cannot change project order or see the owner password.</p>'
-        . '<section><h2>Right now</h2><p>' . $now . '</p><p>' . ($paused ? 'Paused. No new job will start.' : 'Taking new work when a job is waiting.') . '</p>'
+        . '<section><h2>Right now</h2><p>' . $now . '</p><p>' . ($paused ? 'Paused. The job already running can finish. No new job will start.' : 'Taking new work when a job is waiting.') . '</p>'
         . '<form method="post" action="' . h($base) . '/me/pause"><button type="submit">' . ($paused ? 'Allow new work' : 'Pause new work') . '</button></form></section>'
         . '<section><h2>Recent results</h2>' . $rows . '</section>';
     return layout('Your computer', $body, $base);
@@ -102,8 +102,19 @@ function pageOwner(App $app, string $csrf): string
         $people .= '<p>' . h((string) $w['name']) . ((int) $w['revoked'] ? ' · revoked' : '') . ((int) $w['paused'] ? ' · paused' : '') . '</p>'
             . '<form method="post" action="' . h($base) . '/owner/revoke"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><button type="submit">Revoke token</button></form>';
     }
-    $body = '<h1>Owner</h1><p class="muted">SpikeFoundry is priority 2 and BugBrain is priority 1 unless you change them. A leased job is not taken away.</p>'
+    $heldRows = $app->db->query("SELECT id, title, project_id, attempts, last_error FROM jobs WHERE status = 'held' AND attempts > 0 ORDER BY id")->fetchAll();
+    $heldHtml = '';
+    foreach ($heldRows as $heldJob) {
+        $heldHtml .= '<p><strong>' . h((string) $heldJob['title']) . '</strong> · ' . h((string) $heldJob['project_id']) . ' · ' . h((string) $heldJob['attempts']) . ' failed attempts</p>'
+            . '<p class="err">' . h((string) ($heldJob['last_error'] ?? '')) . '</p>'
+            . '<form method="post" action="' . h($base) . '/owner/requeue"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $heldJob['id']) . '"><button type="submit">Requeue and reset attempts</button></form>';
+    }
+    if ($heldHtml === '') {
+        $heldHtml = '<p class="muted">None.</p>';
+    }
+    $body = '<h1>Owner</h1><p class="muted">SpikeFoundry is priority 2 and BugBrain is priority 1 unless you change them. A running job stays with that computer while its heartbeat renews the lease. A job that fails three times is held below until you requeue it. Within a project, a computer takes the highest-priority queued job that fits its batch limit.</p>'
         . $proj
+        . '<section><h2>Held jobs</h2>' . $heldHtml . '</section>'
         . '<section><h2>New job from a template</h2><form method="post" action="' . h($base) . '/owner/job"><input type="hidden" name="csrf" value="' . h($csrf) . '">'
         . '<label>Template <select name="template">' . $opts . '</select></label>'
         . '<label>Title <input name="title" required maxlength="120"></label>'

@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/compat.php';
 
 /** Coordinator for shared hosting. SQLite in tests, MySQL/MariaDB on Hostinger. */
 final class App
@@ -9,6 +10,8 @@ final class App
     public array $config;
     /** @var callable():string */
     public $clock;
+    /** Test hook: runs after a fitting job is chosen and before the conditional lease update. */
+    public $beforeLease;
 
     public function __construct(PDO $db, array $config, ?callable $clock = null)
     {
@@ -17,6 +20,9 @@ final class App
         $this->clock = $clock ?? static fn (): string => gmdate('c');
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        if (($this->config['driver'] ?? '') === 'sqlite') {
+            $this->db->exec('PRAGMA busy_timeout = 8000');
+        }
     }
 
     public function now(): string
@@ -65,6 +71,10 @@ final class App
             code_hash TEXT NOT NULL,
             priority REAL NOT NULL,
             status TEXT NOT NULL,
+            attempts INTEGER NOT NULL DEFAULT 0,
+            last_error TEXT,
+            not_before VARCHAR(40),
+            last_worker VARCHAR(191),
             created_at TEXT NOT NULL
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS workers (
@@ -106,7 +116,42 @@ final class App
             window_start TEXT NOT NULL,
             hits INTEGER NOT NULL
         )');
+        $this->ensureColumn('jobs', 'attempts', 'INTEGER NOT NULL DEFAULT 0');
+        $this->ensureColumn('jobs', 'last_error', 'TEXT');
+        $this->ensureColumn('jobs', 'not_before', 'VARCHAR(40)');
+        $this->ensureColumn('jobs', 'last_worker', 'VARCHAR(191)');
         $this->seed();
+    }
+
+    private function hasColumn(string $table, string $column): bool
+    {
+        if (!preg_match('/^[a-z_]+$/', $table) || !preg_match('/^[a-z_]+$/', $column)) {
+            throw new InvalidArgumentException('Bad column.');
+        }
+        if (($this->config['driver'] ?? '') === 'sqlite') {
+            $rows = $this->db->query('PRAGMA table_info(' . $table . ')')->fetchAll();
+            foreach ($rows as $row) {
+                if ((string) ($row['name'] ?? '') === $column) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        $rows = $this->db->query('SHOW COLUMNS FROM `' . $table . '`')->fetchAll();
+        foreach ($rows as $row) {
+            if ((string) ($row['Field'] ?? '') === $column) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function ensureColumn(string $table, string $column, string $definition): void
+    {
+        if ($this->hasColumn($table, $column)) {
+            return;
+        }
+        $this->db->exec('ALTER TABLE `' . $table . '` ADD COLUMN `' . $column . '` ' . $definition);
     }
 
     public function seed(): void
@@ -232,10 +277,11 @@ final class App
     public function expireLeases(): void
     {
         $now = $this->now();
-        $st = $this->db->prepare('SELECT job_id FROM leases WHERE until_at < ?');
+        $st = $this->db->prepare('SELECT job_id, worker_id FROM leases WHERE until_at < ?');
         $st->execute([$now]);
-        foreach ($st->fetchAll() as $row) {
-            $this->db->prepare('UPDATE jobs SET status = ? WHERE id = ? AND status = ?')->execute(['queued', $row['job_id'], 'leased']);
+        $rows = $st->fetchAll();
+        foreach ($rows as $row) {
+            $this->noteFailure((string) $row['job_id'], (string) $row['worker_id'], 'Lease expired before a result arrived.', true);
         }
         $this->db->prepare('DELETE FROM leases WHERE until_at < ?')->execute([$now]);
     }
@@ -246,53 +292,113 @@ final class App
         if ((int) $worker['paused'] === 1) {
             return null;
         }
-        $allowed = json_decode((string) $worker['allowed_json'], true) ?: [];
-        $projects = $this->db->query('SELECT * FROM projects WHERE enabled = 1 ORDER BY priority DESC, id ASC')->fetchAll();
-        foreach ($projects as $project) {
-            if (!in_array($project['id'], $allowed, true)) {
-                continue;
-            }
-            $st = $this->db->prepare('SELECT * FROM jobs WHERE project_id = ? AND status = ? ORDER BY priority DESC, id ASC');
-            $st->execute([$project['id'], 'queued']);
-            $job = $st->fetch();
-            if (!$job) {
-                continue;
-            }
-            $spec = json_decode((string) $job['spec_json'], true) ?: [];
-            $batches = (int) ($spec['batches'] ?? 1);
-            if ($batches > (int) $worker['max_batches']) {
-                continue;
-            }
-            $until = gmdate('c', strtotime($this->now()) + (int) $this->config['lease_seconds']);
-            $this->db->prepare('UPDATE jobs SET status = ? WHERE id = ? AND status = ?')->execute(['leased', $job['id'], 'queued']);
-            $this->db->prepare('INSERT INTO leases (job_id, worker_id, until_at, heartbeat_at) VALUES (?, ?, ?, ?)')->execute([$job['id'], $worker['id'], $until, $this->now()]);
-            $tpl = $this->db->prepare('SELECT runner FROM templates WHERE id = ?');
-            $tpl->execute([$job['template_id']]);
-            $runner = (string) ($tpl->fetch()['runner'] ?? '');
-            return [
-                'id' => $job['id'],
-                'project' => $job['project_id'],
-                'title' => $job['title'],
-                'runner' => $runner,
-                'spec' => $spec,
-                'codeHash' => $job['code_hash'],
-                'leaseUntil' => $until,
-            ];
+        $allowed = json_decode((string) $worker['allowed_json'], true);
+        if (!is_array($allowed)) {
+            $allowed = [];
         }
-        return null;
+        $now = $this->now();
+        $projects = $this->db->query('SELECT * FROM projects WHERE enabled = 1 ORDER BY priority DESC, id ASC')->fetchAll();
+        $this->db->beginTransaction();
+        try {
+            $ranked = [];
+            $find = $this->db->prepare('SELECT * FROM jobs WHERE project_id = ? AND status = ? AND (not_before IS NULL OR not_before <= ?) ORDER BY priority DESC, attempts ASC, id ASC');
+            foreach ($projects as $project) {
+                if (!in_array($project['id'], $allowed, true)) {
+                    continue;
+                }
+                $find->execute([$project['id'], 'queued', $now]);
+                foreach ($find->fetchAll() as $job) {
+                    $spec = json_decode((string) $job['spec_json'], true);
+                    if (!is_array($spec)) {
+                        $spec = [];
+                    }
+                    $batches = (int) ($spec['batches'] ?? 1);
+                    if ($batches > (int) $worker['max_batches']) {
+                        continue;
+                    }
+                    $ranked[] = ['job' => $job, 'spec' => $spec];
+                }
+            }
+            $hasOther = false;
+            foreach ($ranked as $item) {
+                if ((string) ($item['job']['last_worker'] ?? '') !== (string) $worker['id']) {
+                    $hasOther = true;
+                    break;
+                }
+            }
+            foreach ($ranked as $item) {
+                $job = $item['job'];
+                if ($hasOther && (string) ($job['last_worker'] ?? '') === (string) $worker['id']) {
+                    continue;
+                }
+                if (is_callable($this->beforeLease)) {
+                    $hook = $this->beforeLease;
+                    $hook($job);
+                }
+                $upd = $this->db->prepare('UPDATE jobs SET status = ? WHERE id = ? AND status = ?');
+                $upd->execute(['leased', $job['id'], 'queued']);
+                if ($upd->rowCount() < 1) {
+                    continue;
+                }
+                $until = gmdate('c', strtotime($this->now()) + (int) $this->config['lease_seconds']);
+                $this->db->prepare('INSERT INTO leases (job_id, worker_id, until_at, heartbeat_at) VALUES (?, ?, ?, ?)')->execute([$job['id'], $worker['id'], $until, $this->now()]);
+                $tpl = $this->db->prepare('SELECT runner FROM templates WHERE id = ?');
+                $tpl->execute([$job['template_id']]);
+                $runner = (string) ($tpl->fetch()['runner'] ?? '');
+                $this->db->commit();
+                return [
+                    'id' => $job['id'],
+                    'project' => $job['project_id'],
+                    'title' => $job['title'],
+                    'runner' => $runner,
+                    'spec' => $item['spec'],
+                    'codeHash' => $job['code_hash'],
+                    'leaseUntil' => $until,
+                ];
+            }
+            $this->db->rollBack();
+            return null;
+        } catch (Exception $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
     }
 
     public function heartbeat(array $worker): array
     {
         $this->db->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$this->now(), $worker['id']]);
+        $fresh = $this->db->prepare('SELECT paused, revoked FROM workers WHERE id = ?');
+        $fresh->execute([$worker['id']]);
+        $state = $fresh->fetch();
+        if (!$state) {
+            return ['ok' => true, 'paused' => true, 'revoked' => true, 'jobId' => null, 'leaseUntil' => null];
+        }
         $lease = $this->db->prepare('SELECT * FROM leases WHERE worker_id = ?');
         $lease->execute([$worker['id']]);
         $row = $lease->fetch();
-        if ($row) {
-            $until = gmdate('c', strtotime($this->now()) + (int) $this->config['lease_seconds']);
-            $this->db->prepare('UPDATE leases SET heartbeat_at = ?, until_at = ? WHERE job_id = ?')->execute([$this->now(), $until, $row['job_id']]);
+        $jobId = null;
+        $until = null;
+        if ($row && (int) $state['revoked'] !== 1) {
+            $next = gmdate('c', strtotime($this->now()) + (int) $this->config['lease_seconds']);
+            $upd = $this->db->prepare('UPDATE leases SET heartbeat_at = ?, until_at = ? WHERE job_id = ? AND worker_id = ?');
+            $upd->execute([$this->now(), $next, $row['job_id'], $worker['id']]);
+            $check = $this->db->prepare('SELECT until_at FROM leases WHERE job_id = ? AND worker_id = ?');
+            $check->execute([$row['job_id'], $worker['id']]);
+            $still = $check->fetch();
+            if ($still) {
+                $jobId = (string) $row['job_id'];
+                $until = (string) $still['until_at'];
+            }
         }
-        return ['ok' => true, 'paused' => (int) $worker['paused'] === 1, 'jobId' => $row['job_id'] ?? null];
+        return [
+            'ok' => true,
+            'paused' => (int) $state['paused'] === 1,
+            'revoked' => (int) $state['revoked'] === 1,
+            'jobId' => $jobId,
+            'leaseUntil' => $until,
+        ];
     }
 
     public function submitResult(array $worker, string $jobId, array $body): void
@@ -304,17 +410,6 @@ final class App
         if ($raw === false || strlen($raw) > (int) $this->config['result_bytes']) {
             throw new InvalidArgumentException('Result is too large.');
         }
-        $lease = $this->db->prepare('SELECT * FROM leases WHERE job_id = ? AND worker_id = ?');
-        $lease->execute([$jobId, $worker['id']]);
-        if (!$lease->fetch()) {
-            throw new InvalidArgumentException('This computer does not hold that job.');
-        }
-        $job = $this->db->prepare('SELECT * FROM jobs WHERE id = ?');
-        $job->execute([$jobId]);
-        $row = $job->fetch();
-        if (!$row) {
-            throw new InvalidArgumentException('Unknown job.');
-        }
         $status = (string) ($body['status'] ?? '');
         if (!in_array($status, ['done', 'error'], true)) {
             throw new InvalidArgumentException('Status must be done or error.');
@@ -322,9 +417,6 @@ final class App
         $summary = (string) ($body['summary'] ?? '');
         if (strlen($summary) > 500) {
             throw new InvalidArgumentException('Summary is too long.');
-        }
-        if ($row['project_id'] === 'spikefoundry' && empty($body['synthetic'])) {
-            throw new InvalidArgumentException('SpikeFoundry results must be marked synthetic.');
         }
         if (isset($body['digest'])) {
             $expect = hash('sha256', $summary);
@@ -337,10 +429,101 @@ final class App
                 throw new InvalidArgumentException('Result contains a field the coordinator does not accept.');
             }
         }
-        $this->db->prepare('INSERT INTO results (job_id, worker_id, status, summary, body_json, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-            ->execute([$jobId, $worker['id'], $status, $summary, $raw, $this->now()]);
-        $this->db->prepare('UPDATE jobs SET status = ? WHERE id = ?')->execute([$status === 'done' ? 'done' : 'queued', $jobId]);
-        $this->db->prepare('DELETE FROM leases WHERE job_id = ?')->execute([$jobId]);
+        $this->db->beginTransaction();
+        try {
+            $lease = $this->db->prepare('SELECT worker_id FROM leases WHERE job_id = ? AND worker_id = ?');
+            $lease->execute([$jobId, $worker['id']]);
+            if (!$lease->fetch()) {
+                throw new InvalidArgumentException('This computer does not hold that job.');
+            }
+            $job = $this->db->prepare('SELECT * FROM jobs WHERE id = ?');
+            $job->execute([$jobId]);
+            $row = $job->fetch();
+            if (!$row || (string) $row['status'] !== 'leased') {
+                throw new InvalidArgumentException('This computer does not hold that job.');
+            }
+            if ($row['project_id'] === 'spikefoundry' && empty($body['synthetic'])) {
+                throw new InvalidArgumentException('SpikeFoundry results must be marked synthetic.');
+            }
+            $this->db->prepare('INSERT INTO results (job_id, worker_id, status, summary, body_json, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+                ->execute([$jobId, $worker['id'], $status, $summary, $raw, $this->now()]);
+            if ($status === 'done') {
+                $this->db->prepare('UPDATE jobs SET status = ?, not_before = NULL WHERE id = ? AND status = ?')->execute(['done', $jobId, 'leased']);
+            } else {
+                $this->noteFailure($jobId, (string) $worker['id'], $summary !== '' ? $summary : 'Job returned an error.', false);
+            }
+            $this->db->prepare('DELETE FROM leases WHERE job_id = ? AND worker_id = ?')->execute([$jobId, $worker['id']]);
+            $this->db->commit();
+        } catch (Exception $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    public function requeue(string $jobId): void
+    {
+        if (!preg_match('/^[a-z0-9._-]{2,80}$/', $jobId)) {
+            throw new InvalidArgumentException('Bad job id.');
+        }
+        $st = $this->db->prepare('SELECT status, attempts, last_error FROM jobs WHERE id = ?');
+        $st->execute([$jobId]);
+        $row = $st->fetch();
+        if (!$row || (string) $row['status'] !== 'held') {
+            throw new InvalidArgumentException('Only a held job can be requeued.');
+        }
+        if ((int) $row['attempts'] < 1 && trim((string) ($row['last_error'] ?? '')) === '') {
+            throw new InvalidArgumentException('Imported jobs stay held. Queue an approved template instead.');
+        }
+        $upd = $this->db->prepare('UPDATE jobs SET status = ?, attempts = 0, last_error = NULL, last_worker = NULL, not_before = NULL WHERE id = ? AND status = ?');
+        $upd->execute(['queued', $jobId, 'held']);
+        if ($upd->rowCount() < 1) {
+            throw new InvalidArgumentException('Only a held job can be requeued.');
+        }
+    }
+
+    private function noteFailure(string $jobId, string $workerId, string $error, bool $readyNow): void
+    {
+        $st = $this->db->prepare('SELECT attempts, status FROM jobs WHERE id = ?');
+        $st->execute([$jobId]);
+        $job = $st->fetch();
+        if (!$job || (string) $job['status'] !== 'leased') {
+            return;
+        }
+        $attempts = (int) $job['attempts'] + 1;
+        $max = (int) ($this->config['max_attempts'] ?? 3);
+        if ($max < 1) {
+            $max = 3;
+        }
+        if (strlen($error) > 500) {
+            $error = substr($error, 0, 500);
+        }
+        $status = 'queued';
+        $notBefore = null;
+        if ($attempts >= $max) {
+            $status = 'held';
+        } elseif (!$readyNow) {
+            $notBefore = gmdate('c', strtotime($this->now()) + $this->retryDelaySeconds($attempts));
+        }
+        $upd = $this->db->prepare('UPDATE jobs SET status = ?, attempts = ?, last_error = ?, last_worker = ?, not_before = ? WHERE id = ? AND status = ? AND attempts = ?');
+        $upd->execute([$status, $attempts, $error, $workerId, $notBefore, $jobId, 'leased', (int) $job['attempts']]);
+    }
+
+    private function retryDelaySeconds(int $attempts): int
+    {
+        $shift = $attempts - 1;
+        if ($shift < 0) {
+            $shift = 0;
+        }
+        if ($shift > 8) {
+            $shift = 8;
+        }
+        $seconds = 60 * (2 ** $shift);
+        if ($seconds > 900) {
+            $seconds = 900;
+        }
+        return (int) $seconds;
     }
 
     public function createJob(string $templateId, string $title, float $priority, int $seed): string

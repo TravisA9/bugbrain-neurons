@@ -1,6 +1,29 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/private/src/compat.php';
+
+function coord_load_compat(): void
+{
+    $candidates = [__DIR__ . '/private/src/compat.php'];
+    $homeFile = __DIR__ . '/coord-home.txt';
+    if (is_file($homeFile)) {
+        $path = trim((string) file_get_contents($homeFile));
+        if ($path !== '') {
+            $candidates[] = rtrim($path, '/') . '/src/compat.php';
+        }
+    }
+    $env = getenv('COORD_PRIVATE');
+    if (is_string($env) && $env !== '') {
+        $candidates[] = rtrim($env, '/') . '/src/compat.php';
+    }
+    $candidates[] = dirname(__DIR__) . '/private/src/compat.php';
+    foreach ($candidates as $file) {
+        if (is_file($file)) {
+            require_once $file;
+            return;
+        }
+    }
+}
+coord_load_compat();
 
 function coord_private_root(): string
 {
@@ -124,6 +147,7 @@ $app = new App(coord_db(coord_config($private)), coord_config($private));
 if (getenv('COORD_TEST_NOW')) {
     $app->clock = static fn (): string => (string) getenv('COORD_TEST_NOW');
 }
+$app->migrate();
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $path = coord_path($app);
 $base = $app->base();
@@ -237,6 +261,8 @@ try {
             $app->createJob((string) ($_POST['template'] ?? ''), (string) ($_POST['title'] ?? ''), (float) ($_POST['priority'] ?? 0.5), (int) ($_POST['seed'] ?? 1));
         } elseif ($path === '/owner/revoke') {
             $app->revoke((string) ($_POST['id'] ?? ''));
+        } elseif ($path === '/owner/requeue') {
+            $app->requeue((string) ($_POST['id'] ?? ''));
         } else {
             http_response_code(404);
             echo 'Not found.';

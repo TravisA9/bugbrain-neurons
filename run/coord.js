@@ -2,9 +2,12 @@
 'use strict';
 /* Poll a Compute Lab coordinator over HTTPS. No GitHub token and no owner password.
  *   node run/coord.js --url http://127.0.0.1:8091/computelab --token-file ~/.bugbrain/coordinator-token --once
- * Outbound polling works from a home network. The git queue remains the path when this URL is unset. */
+ * Outbound polling works from a home network. The git queue remains the path when this URL is unset.
+ * A running job heartbeats so work longer than the lease stays with this computer. */
 const fs = require('fs'), path = require('path'), cp = require('child_process');
 const ROOT = path.resolve(__dirname, '..');
+const BACKOFF_START_MS = 1000;
+const BACKOFF_CAP_MS = 5 * 60 * 1000;
 
 function args(argv) {
   const a = {}; const v = argv.slice(2);
@@ -21,17 +24,45 @@ function protocolHash() {
   const p = path.join(ROOT, 'hosting', 'computelab', 'PROTOCOL.txt');
   return require('crypto').createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 }
+function assertProtocol(job, hash) {
+  if (!job || job.codeHash !== hash) throw new Error('Job code hash does not match this checkout.');
+}
 function tokenFrom(file) {
   const t = fs.readFileSync(file, 'utf8').trim();
   if (!/^[a-f0-9]{32,128}$/.test(t)) throw new Error('Worker token file is not a coordinator token.');
   return t;
 }
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+function nextBackoff(current) {
+  const now = +current || 0;
+  if (now < BACKOFF_START_MS) return BACKOFF_START_MS;
+  return Math.min(BACKOFF_CAP_MS, now * 2);
+}
+function isRetryable(err) {
+  if (!err) return false;
+  if (err.network) return true;
+  return typeof err.status === 'number' && err.status >= 500 && err.status <= 599;
+}
+function decideRetry(err, delay) {
+  if (err && err.status === 401) return { action: 'stop', delay: 0 };
+  if (!isRetryable(err)) return { action: 'crash', delay: 0 };
+  return { action: 'retry', delay: nextBackoff(delay) };
+}
 async function api(base, token, route, body) {
-  const res = await fetch(base.replace(/\/$/, '') + route, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-    body: JSON.stringify(body || {}),
-  });
+  let res;
+  try {
+    res = await fetch(base.replace(/\/$/, '') + route, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify(body || {}),
+    });
+  } catch (e) {
+    const err = new Error((e && e.message) || 'Coordinator request failed.');
+    err.network = true;
+    throw err;
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const err = new Error(data.error || ('Coordinator answered ' + res.status));
@@ -40,18 +71,79 @@ async function api(base, token, route, body) {
   }
   return data;
 }
-function runSpec(job) {
+function stopChild(child) {
+  if (!child || child.exitCode != null || child.signalCode != null || child._coordStop) return;
+  child._coordStop = true;
+  try {
+    if (process.platform === 'win32' && child.pid) {
+      cp.execFile('taskkill', ['/T', '/F', '/PID', String(child.pid)], { windowsHide: true }, () => {});
+    } else if (typeof child.kill === 'function') {
+      child.kill('SIGTERM');
+    }
+  } catch (e) {}
+}
+function childDone(child) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      fn(value);
+    };
+    child.on('error', err => finish(reject, err));
+    child.on('close', (code, signal) => finish(resolve, { code: code == null ? 1 : code, signal: signal || null }));
+  });
+}
+function startLeaseHeartbeat(opts) {
+  const every = Math.max(5, +opts.heartbeatMs || 60000);
+  const state = { pauseAfter: false, lost: false, revoked: false, ticks: 0 };
+  let stopped = false;
+  let chain = Promise.resolve();
+  const lose = (revoked) => {
+    const was = state.lost;
+    state.lost = true;
+    if (revoked) state.revoked = true;
+    if (!was && opts.onLost) opts.onLost(state);
+  };
+  const tick = () => {
+    if (stopped) return chain;
+    chain = chain.then(() => opts.heartbeat()).then(res => {
+      if (!res) return;
+      state.ticks++;
+      if (res.paused) state.pauseAfter = true;
+      const missing = Object.prototype.hasOwnProperty.call(res, 'jobId') && res.jobId !== opts.jobId;
+      if (res.revoked || res.leaseLost || missing) lose(!!res.revoked);
+    }).catch(err => {
+      if (err && (err.revoked || err.status === 401)) lose(true);
+    });
+    return chain;
+  };
+  const timer = setInterval(() => { tick(); }, every);
+  return {
+    state,
+    finish() {
+      stopped = true;
+      clearInterval(timer);
+      return chain;
+    },
+  };
+}
+function runnerArgs(job, out) {
   if (!ALLOWED.has(job.runner)) throw new Error('Runner is not on the allowlist: ' + job.runner);
   const spec = job.spec || {};
-  const out = path.join(require('os').tmpdir(), 'coord-' + job.id);
-  fs.mkdirSync(out, { recursive: true });
   if (job.runner === 'spikefoundry/run.js') {
     const file = path.join(out, 'job.json');
-    fs.writeFileSync(file, JSON.stringify(Object.assign({ id: job.id, kind: 'spikefoundry', project: 'spikefoundry', seed: spec.seed || 1, batches: spec.batches || 1, scenario: spec.scenario, scenarioParams: spec.scenarioParams, title: job.title })));
-    cp.execFileSync(process.execPath, [path.join(ROOT, 'spikefoundry', 'run.js'), '--job', file, '--out', out], { cwd: ROOT, stdio: 'inherit' });
-    const summary = fs.existsSync(path.join(out, 'summary.json')) ? JSON.parse(fs.readFileSync(path.join(out, 'summary.json'), 'utf8')) : {};
-    const text = summary.note || 'Synthetic SpikeFoundry run.';
-    return { status: 'done', summary: String(text).slice(0, 500), synthetic: true, digest: require('crypto').createHash('sha256').update(String(text).slice(0, 500)).digest('hex') };
+    fs.writeFileSync(file, JSON.stringify(Object.assign({
+      id: job.id,
+      kind: 'spikefoundry',
+      project: 'spikefoundry',
+      seed: spec.seed || 1,
+      batches: spec.batches || 1,
+      scenario: spec.scenario,
+      scenarioParams: spec.scenarioParams,
+      title: job.title,
+    })));
+    return [path.join(ROOT, 'spikefoundry', 'run.js'), '--job', file, '--out', out];
   }
   const task = spec.task;
   if (!task || typeof task !== 'object') throw new Error('BugBrain template is missing a task object.');
@@ -59,10 +151,61 @@ function runSpec(job) {
   if (/[\n\r;&|`$]/.test(variant) || /[\n\r;&|`$]/.test(String(spec.plan || ''))) throw new Error('Template text has characters the worker will not pass through.');
   const growths = String(Math.max(1, Math.min(4, +spec.growths || 1)));
   const seed = String(Math.max(0, Math.min(1000000, +spec.seed || 0)));
-  cp.execFileSync(process.execPath, [path.join(ROOT, job.runner), String(spec.plan || 'deepURSx3'), JSON.stringify(task), growths, variant, seed], { cwd: ROOT, stdio: 'inherit' });
-  return { status: 'done', summary: 'Template ' + job.runner + ' finished.', synthetic: false, digest: require('crypto').createHash('sha256').update('Template ' + job.runner + ' finished.').digest('hex') };
+  return [path.join(ROOT, job.runner), String(spec.plan || 'deepURSx3'), JSON.stringify(task), growths, variant, seed];
 }
-
+async function runSpec(job, opts) {
+  opts = opts || {};
+  const out = opts.outDir || path.join(require('os').tmpdir(), 'coord-' + String(job.id).replace(/[^a-z0-9._-]/gi, ''));
+  fs.mkdirSync(out, { recursive: true });
+  const spawn = opts.spawn || cp.spawn;
+  const child = spawn(process.execPath, runnerArgs(job, out), { cwd: ROOT, stdio: opts.stdio || 'inherit' });
+  const beats = startLeaseHeartbeat({
+    heartbeatMs: opts.heartbeatMs != null ? opts.heartbeatMs : +(process.env.BB_COORD_HEARTBEAT_MS || 60000),
+    jobId: job.id,
+    heartbeat: opts.heartbeat || (() => Promise.resolve({ ok: true, jobId: job.id, paused: false })),
+    onLost: () => stopChild(child),
+  });
+  let done;
+  try {
+    done = await childDone(child);
+  } finally {
+    await beats.finish();
+  }
+  if (beats.state.lost) {
+    const err = new Error(beats.state.revoked ? 'Worker was revoked.' : 'Lease is gone.');
+    err.leaseLost = true;
+    err.revoked = !!beats.state.revoked;
+    err.pauseAfter = !!beats.state.pauseAfter;
+    throw err;
+  }
+  if (!done || done.code !== 0) {
+    throw new Error('Runner exited with ' + ((done && done.code) != null ? done.code : 'no status'));
+  }
+  let result;
+  if (job.runner === 'spikefoundry/run.js') {
+    const summaryPath = path.join(out, 'summary.json');
+    const summary = fs.existsSync(summaryPath) ? JSON.parse(fs.readFileSync(summaryPath, 'utf8')) : {};
+    const text = String(summary.note || 'Synthetic SpikeFoundry run.').slice(0, 500);
+    result = { status: 'done', summary: text, synthetic: true, digest: require('crypto').createHash('sha256').update(text).digest('hex') };
+  } else {
+    const text = 'Template ' + job.runner + ' finished.';
+    result = { status: 'done', summary: text, synthetic: false, digest: require('crypto').createHash('sha256').update(text).digest('hex') };
+  }
+  result.pauseAfter = !!beats.state.pauseAfter;
+  return result;
+}
+async function workerHeartbeat(base, token, hash, jobId) {
+  try {
+    return await api(base, token, '/api/v1/heartbeat', { codeHash: hash });
+  } catch (e) {
+    if (e && e.status === 401) {
+      e.revoked = true;
+      throw e;
+    }
+    if (isRetryable(e)) return { ok: true, jobId: jobId, paused: false, degraded: true };
+    throw e;
+  }
+}
 async function main() {
   const a = args(process.argv);
   const base = a.url || process.env.BB_COORDINATOR_URL;
@@ -70,31 +213,68 @@ async function main() {
   if (!base || !tokenFile) throw new Error('Need --url and --token-file (or BB_COORDINATOR_URL and BB_COORDINATOR_TOKEN_FILE).');
   const token = tokenFrom(tokenFile);
   const hash = protocolHash();
-  const wait = () => new Promise(r => setTimeout(r, +(process.env.BB_COORD_POLL_MS || 15000)));
+  const poll = +(process.env.BB_COORD_POLL_MS || 15000);
+  const heartbeatMs = +(process.env.BB_COORD_HEARTBEAT_MS || 60000);
+  let delay = 0;
   for (;;) {
-    const beat = await api(base, token, '/api/v1/heartbeat', { codeHash: hash });
-    if (beat.paused) {
-      console.log(JSON.stringify({ ok: true, paused: true }));
+    try {
+      const beat = await api(base, token, '/api/v1/heartbeat', { codeHash: hash });
+      delay = 0;
+      if (beat.revoked) {
+        console.error('Worker token was revoked.');
+        process.exitCode = 1;
+        return;
+      }
+      if (beat.paused) {
+        console.log(JSON.stringify({ ok: true, paused: true }));
+        if (a.once) return;
+        await sleep(poll);
+        continue;
+      }
+      const claimed = await api(base, token, '/api/v1/claim', { codeHash: hash });
+      if (!claimed.job) {
+        console.log(JSON.stringify({ ok: true, job: null }));
+        if (a.once) return;
+        await sleep(poll);
+        continue;
+      }
+      assertProtocol(claimed.job, hash);
+      let result;
+      try {
+        result = await runSpec(claimed.job, {
+          heartbeatMs: heartbeatMs,
+          heartbeat: () => workerHeartbeat(base, token, hash, claimed.job.id),
+        });
+      } catch (e) {
+        if (e && e.leaseLost) {
+          console.log(JSON.stringify({ ok: false, job: claimed.job.id, submit: false, reason: e.revoked ? 'revoked' : 'lease-lost' }));
+          if (e.revoked) {
+            process.exitCode = 1;
+            return;
+          }
+          if (a.once) return;
+          continue;
+        }
+        result = { status: 'error', summary: String((e && e.message) || e).slice(0, 500), synthetic: claimed.job.project === 'spikefoundry' };
+      }
+      await api(base, token, '/api/v1/result', { jobId: claimed.job.id, result: result });
+      console.log(JSON.stringify({ ok: true, job: claimed.job.id, status: result.status }));
       if (a.once) return;
-      await wait();
-      continue;
+      await sleep(poll);
+    } catch (e) {
+      const decision = decideRetry(e, delay);
+      if (decision.action === 'stop') {
+        console.error((e && e.message) || 'Worker token was revoked.');
+        process.exitCode = 1;
+        return;
+      }
+      if (decision.action === 'crash') throw e;
+      delay = decision.delay;
+      console.error((e && e.message) || e);
+      await sleep(a.once ? Math.min(delay, 1000) : delay);
+      if (a.once) throw e;
     }
-    const claimed = await api(base, token, '/api/v1/claim', { codeHash: hash });
-    if (!claimed.job) {
-      console.log(JSON.stringify({ ok: true, job: null }));
-      if (a.once) return;
-      await wait();
-      continue;
-    }
-    if (claimed.job.codeHash !== hash) throw new Error('Job code hash does not match this checkout.');
-    let result;
-    try { result = runSpec(claimed.job); }
-    catch (e) { result = { status: 'error', summary: String(e.message || e).slice(0, 500), synthetic: claimed.job.project === 'spikefoundry' }; }
-    await api(base, token, '/api/v1/result', { jobId: claimed.job.id, result });
-    console.log(JSON.stringify({ ok: true, job: claimed.job.id, status: result.status }));
-    if (a.once) return;
-    await wait();
   }
 }
 if (require.main === module) main().catch(e => { console.error(e.message || e); process.exit(1); });
-module.exports = { ALLOWED, protocolHash, runSpec };
+module.exports = { ALLOWED, protocolHash, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild };

@@ -16,6 +16,7 @@ return [
     /* Path visitors use, no trailing slash. Empty string if the app is the whole host. */
     'base_path' => '/computelab',
     'lease_seconds' => 900,
+    'max_attempts' => 3,
     'result_bytes' => 32768,
     'login_per_minute' => 8,
     'api_per_minute' => 120,
