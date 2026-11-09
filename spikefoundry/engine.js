@@ -370,11 +370,43 @@
     }));
     return { synthetic: true, batches: state.batch, tested: state.tested, phase: state.activePhase, tasks: rows, note: 'Synthetic spike-pattern match on generated examples. Not BugBrain accuracy.' };
   }
+  function simulateFrozen(net, seq) {
+    const count = net.neurons.length;
+    const mem = Array(count).fill(0);
+    const spike = Array(count).fill(0);
+    const fired = Array(net.outputs.length).fill(false);
+    let total = 0;
+    const horizon = seq.length + 4;
+    const inbox = Array.from({ length: horizon + 6 }, () => Array(count).fill(0));
+    for (let t = 0; t < horizon; t++) {
+      for (let i = 0; i < net.inputs.length; i++) spike[net.inputs[i]] = t < seq.length ? (seq[t][i] || 0) : 0;
+      for (let i = 0; i < count; i++) {
+        const neuron = net.neurons[i];
+        if (neuron.kind === 'input') continue;
+        mem[i] = neuron.leak * mem[i] + inbox[t][i];
+        spike[i] = 0;
+        if (mem[i] >= neuron.thr) {
+          spike[i] = 1;
+          mem[i] = 0;
+          total++;
+          const outIndex = net.outputs.indexOf(i);
+          if (outIndex >= 0) fired[outIndex] = true;
+        }
+      }
+      for (let e = 0; e < net.edges.length; e++) {
+        const edge = net.edges[e];
+        if (!spike[edge.from]) continue;
+        const when = t + edge.delay + 1;
+        if (when < inbox.length) inbox[when][edge.to] += edge.weight;
+      }
+    }
+    return { outputs: fired.map(Boolean), spikeCount: total };
+  }
   function network(g, taskId) { return compileSNN(g, taskId); }
   function sampleCase(taskId, index) {
     const sample = makeSample(taskId, index || 0, true, 0, mulberry32(1));
     return { task: publicTask(BASE_TASKS[taskId]), seq: sample.seq, label: sample.label, synthetic: true };
   }
 
-  return { TOPOLOGIES, LAB_BUDGET, FULL_BUDGET, PILOT_BUDGET, taskList, createState, runBatch, checkpoint, restore, summary, scoreDesign, robustScore, network, sampleCase, compileSNN, simulateSNN, BASE_TASKS };
+  return { TOPOLOGIES, LAB_BUDGET, FULL_BUDGET, PILOT_BUDGET, taskList, createState, runBatch, checkpoint, restore, summary, scoreDesign, robustScore, network, sampleCase, compileSNN, simulateSNN, simulateFrozen, BASE_TASKS };
 });
