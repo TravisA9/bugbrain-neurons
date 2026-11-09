@@ -262,7 +262,7 @@ try {
     if ($path === '/join' && $method === 'POST') {
         $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? 'local');
         if (!$app->rateLimit('join:' . $ip, (int) $app->config['login_per_minute'])) {
-            coord_html(pageJoin($app, 'Too many enrollments from this network. Wait a minute.'));
+            coord_html(pageJoin($app, 'Too many enrollments from this network. Wait a minute.', coord_who($app, 'join')));
             return;
         }
         $projects = isset($_POST['project']) && is_array($_POST['project']) ? array_map('strval', $_POST['project']) : [];
@@ -411,7 +411,7 @@ try {
     if ($path === '/owner' && $method === 'GET') {
         $session = $app->sessionById(coord_cookie('lab_owner'));
         if (!$session || $session['role'] !== 'owner') {
-            coord_html(pageLogin($app));
+            coord_html(pageLogin($app, '', coord_who($app, 'login')));
             return;
         }
         $status = (string) ($_GET['status'] ?? 'all');

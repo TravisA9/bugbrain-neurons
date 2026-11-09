@@ -99,16 +99,17 @@ function describeWorker(App $app, array $worker, ?array $lease): array
 function navLinks(string $base, array $nav): string
 {
     $current = (string) ($nav['current'] ?? '');
+    if ($current === 'login') {
+        $current = 'owner';
+    }
     $items = [
         ['home', 'Home', $base === '' ? '/' : $base . '/'],
         ['explore', 'Explore', $base . '/explore'],
         ['discoveries', 'Discoveries', $base . '/discoveries'],
         ['join', 'Join', $base . '/join'],
         ['me', 'My computer', $base . '/me'],
+        ['owner', 'Owner', $base . '/owner'],
     ];
-    if (!empty($nav['owner'])) {
-        $items[] = ['owner', 'Owner', $base . '/owner'];
-    }
     $html = '';
     foreach ($items as $item) {
         $on = $current === $item[0];
@@ -117,32 +118,54 @@ function navLinks(string $base, array $nav): string
     return $html;
 }
 
+/* The one account item at the end of the menu: Log out when signed in, Log in otherwise. */
 function logoutForm(string $base, array $nav): string
 {
     if (empty($nav['owner']) && empty($nav['participant'])) {
-        return '';
+        return '<a class="cl-account" href="' . h($base . '/owner/login') . '">Log in</a>';
     }
     $csrf = !empty($nav['owner']) ? (string) ($nav['ownerCsrf'] ?? '') : (string) ($nav['participantCsrf'] ?? '');
-    return '<form method="post" action="' . h($base) . '/logout" class="logout"><input type="hidden" name="csrf" value="' . h($csrf) . '"><button type="submit">Log out</button></form>';
+    return '<form method="post" action="' . h($base) . '/logout" class="cl-account"><input type="hidden" name="csrf" value="' . h($csrf) . '"><button type="submit">Log out</button></form>';
+}
+
+/* One header for every page, including the Explore lab. Its styles are scoped to .cl-top
+ * and set every property they rely on, so a page's own CSS cannot move or resize it. */
+function siteHeaderCss(): string
+{
+    return '<style>
+        .cl-top,.cl-top *{box-sizing:border-box;margin:0;padding:0;border:0;background:none;font:inherit;line-height:inherit;letter-spacing:normal;text-transform:none}
+        .cl-top{display:block;position:sticky;top:0;z-index:50;width:100%;height:56px;background:#fffaf3;border-bottom:1px solid #e4d5c3;color:#241c16;font:15px/1 "Segoe UI",system-ui,sans-serif;text-align:left}
+        .cl-top .cl-top-inner{width:min(1100px,calc(100% - 28px));height:55px;margin:0 auto;display:flex;align-items:center;gap:16px}
+        .cl-top .cl-brand{font:700 18px/1 Georgia,Palatino,serif;color:#241c16;text-decoration:none;white-space:nowrap;margin-right:auto}
+        .cl-top .cl-toggle{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+        .cl-top .cl-burger{display:none;cursor:pointer;border:1px solid #e4d5c3;border-radius:999px;padding:6px 12px;background:#fff;color:#241c16}
+        .cl-top .cl-nav{display:flex;align-items:center;gap:16px;white-space:nowrap}
+        .cl-top .cl-nav a{color:#1d6b4a;text-decoration:none;font-weight:650;padding:6px 0;border-bottom:2px solid transparent}
+        .cl-top .cl-nav a.is-current{color:#241c16;border-bottom-color:#241c16}
+        .cl-top .cl-account{display:inline-flex;margin-left:6px}
+        .cl-top .cl-nav a.cl-account,.cl-top .cl-account button{display:inline-block;width:88px;text-align:center;cursor:pointer;color:#241c16;border:1px solid #e4d5c3;border-radius:999px;padding:6px 0;font-weight:650}
+        @media (max-width:860px){
+          .cl-top .cl-burger{display:inline-block}
+          .cl-top .cl-nav{display:none;position:absolute;top:56px;left:0;right:0;flex-direction:column;align-items:flex-start;gap:10px;padding:12px 14px;background:#fffaf3;border-bottom:1px solid #e4d5c3}
+          .cl-top .cl-toggle:checked ~ .cl-nav{display:flex}
+          .cl-top .cl-account{margin-left:0}
+        }
+        </style>';
+}
+
+function siteHeader(string $base, array $nav): string
+{
+    return '<div class="cl-top" role="banner"><div class="cl-top-inner"><a class="cl-brand" href="' . h($base === '' ? '/' : $base . '/') . '">Compute Lab</a>'
+        . '<input class="cl-toggle" id="cl-toggle" type="checkbox" aria-label="Show menu"><label class="cl-burger" for="cl-toggle">Menu</label>'
+        . '<nav class="cl-nav" aria-label="Compute Lab">' . navLinks($base, $nav) . logoutForm($base, $nav) . '</nav></div></div>';
 }
 
 function layout(string $title, string $body, string $base, array $nav = []): string
 {
-    $links = navLinks($base, $nav);
-    $logout = logoutForm($base, $nav);
     return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>'
-        . h($title) . '</title><style>
+        . h($title) . '</title>' . siteHeaderCss() . '<style>
         :root{--paper:#f3ecdf;--card:#fffaf3;--ink:#241c16;--muted:#5c5348;--line:#e4d5c3;--moss:#1d6b4a;--clay:#a33b24;--sand:#efe4d4}
         *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.45 Segoe UI,system-ui,sans-serif}
-        .top{background:#fffaf3;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2}
-        .top-inner{width:min(920px,calc(100% - 28px));margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px 0}
-        .brand{font:700 18px/1 Georgia,Palatino,serif;color:var(--ink);text-decoration:none;margin-right:auto}
-        .nav-toggle{position:absolute;opacity:0;pointer-events:none}
-        .nav-burger{display:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:#fff}
-        nav{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
-        nav a{color:var(--moss);text-decoration:none;font-weight:650}
-        nav a.is-current{color:var(--ink);border-bottom:2px solid var(--ink)}
-        nav button,.logout button{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
         main{width:min(920px,calc(100% - 28px));margin:0 auto;padding:28px 0 56px}
         h1{font:600 36px/1.12 Georgia,Palatino,serif;margin:0 0 10px}
         h2{font:600 22px/1.2 Georgia,Palatino,serif;margin:0 0 8px}
@@ -170,22 +193,15 @@ function layout(string $title, string $body, string $base, array $nav = []): str
         .quiet{font-size:14px}
         @media (max-width:720px){
           h1{font-size:30px}.stats{grid-template-columns:1fr}
-          .nav-burger{display:inline-block}
-          nav{display:none;width:100%;flex-direction:column;align-items:flex-start;padding-bottom:8px}
-          .nav-toggle:checked ~ nav{display:flex}
           table,tbody,tr,td{display:block;width:100%}
           th{display:none}
         }
-        </style></head><body><header class="top"><div class="top-inner"><a class="brand" href="' . h($base === '' ? '/' : $base . '/') . '">Compute Lab</a>'
-        . '<input class="nav-toggle" id="nav-toggle" type="checkbox"><label class="nav-burger" for="nav-toggle">Menu</label><nav>'
-        . $links . $logout . '</nav></div></header><main>' . $body . '</main></body></html>';
+        </style></head><body>' . siteHeader($base, $nav) . '<main>' . $body . '</main></body></html>';
 }
 
 function exploreBar(string $base, array $nav): string
 {
-    $home = $base === '' ? '/' : $base . '/';
-    return '<style>.cl-nav{background:#f4efe6;color:#241c16;font:16px/1.4 Segoe UI,system-ui,sans-serif}.cl-nav a{color:#1d6b4a;text-decoration:none;margin-right:12px;font-weight:650}.cl-nav a.is-current{color:#241c16;border-bottom:2px solid #241c16}.cl-nav button{background:#241c16;color:#fffaf3;border:0;border-radius:999px;padding:6px 12px;cursor:pointer}.cl-nav-inner{width:min(1100px,calc(100% - 28px));margin:0 auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0}</style>'
-        . '<div class="cl-nav"><div class="cl-nav-inner"><a href="' . h($home) . '">Compute Lab</a>' . navLinks($base, $nav) . logoutForm($base, $nav) . '</div></div>';
+    return siteHeaderCss() . siteHeader($base, $nav);
 }
 
 function pageDiscoveries(App $app, array $nav): string

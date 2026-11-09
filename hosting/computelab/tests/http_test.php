@@ -140,9 +140,53 @@ $ownerPaused = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[
 check(in_array($ownerPause['status'], [303, 302], true) && str_contains($ownerPaused['body'], 'Resume') && str_contains($ownerPaused['body'], 'home-pc'), 'the owner can pause a computer');
 $ownerResume = http($base . '/owner/pause', 'POST', http_build_query(['csrf' => $pauseFields[1] ?? '', 'id' => $pauseFields[2] ?? '', 'paused' => '0']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
 check(in_array($ownerResume['status'], [303, 302], true), 'the owner can resume a computer');
+// Every page shares one header: only the current-tab mark and the account item may differ.
+function site_header(string $html): string
+{
+    return preg_match('#<div class="cl-top" role="banner">.*?</nav></div></div>#s', $html, $m) === 1 ? $m[0] : '';
+}
+function header_shape(string $header): string
+{
+    $x = str_replace([' class="is-current" aria-current="page"'], '', $header);
+    $x = preg_replace('#<a class="cl-account"[^>]*>Log in</a>|<form method="post" action="[^"]*/logout" class="cl-account">.*?</form>#s', '[account]', $x);
+    return (string) $x;
+}
+function header_current(string $header): string
+{
+    return preg_match('#aria-current="page">([^<]+)<#', $header, $m) === 1 ? $m[1] : '';
+}
+$ownerCookie = ['Cookie: lab_owner=' . ($oc[1] ?? '')];
+$pages = [
+    'home' => [http($base . '/')['body'], 'Home'],
+    'explore' => [http($base . '/explore')['body'], 'Explore'],
+    'discoveries' => [http($base . '/discoveries')['body'], 'Discoveries'],
+    'join' => [http($base . '/join')['body'], 'Join'],
+    'setup' => [$join['body'], 'Join'],
+    'me' => [http($base . '/me', 'GET', null, ['Cookie: lab_participant=' . $cookie])['body'], 'My computer'],
+    'owner-login' => [http($base . '/owner/login')['body'], 'Owner'],
+    'owner-out' => [http($base . '/owner')['body'], 'Owner'],
+    'owner' => [http($base . '/owner', 'GET', null, $ownerCookie)['body'], 'Owner'],
+    'home-as-owner' => [http($base . '/', 'GET', null, $ownerCookie)['body'], 'Home'],
+    'explore-as-owner' => [http($base . '/explore', 'GET', null, $ownerCookie)['body'], 'Explore'],
+];
+$shapes = [];
+$currentOk = true;
+foreach ($pages as $name => $page) {
+    $head = site_header($page[0]);
+    $shapes[$name] = $head === '' ? 'missing' : header_shape($head);
+    if (header_current($head) !== $page[1] || substr_count($head, 'aria-current="page"') !== 1) {
+        $currentOk = false;
+        echo "header current mismatch on $name: " . header_current($head) . "\n";
+    }
+}
+check(count(array_unique($shapes)) === 1 && reset($shapes) !== 'missing', 'every page has the same header apart from the current tab and account item');
+check($currentOk, 'each page marks exactly its own tab as current');
+check(str_contains(site_header($pages['home'][0]), '>Log in<') && str_contains(site_header($pages['owner'][0]), 'Log out') && str_contains(site_header($pages['me'][0]), 'Log out'), 'the account item reads Log in when signed out and Log out when signed in');
+check(substr_count($pages['explore'][0], 'class="cl-top"') === 1 && !str_contains($pages['explore'][0], 'class="top"'), 'explore uses the shared header only once');
+
 $logout = http($base . '/logout', 'POST', http_build_query(['csrf' => $pauseFields[1] ?? '']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
 $afterLogout = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
-check(in_array($logout['status'], [303, 302], true) && str_contains($afterLogout['body'], 'Owner login') && !str_contains($afterLogout['body'], '>Owner<'), 'log out returns the owner to the login page');
+check(in_array($logout['status'], [303, 302], true) && str_contains($afterLogout['body'], 'Owner login') && str_contains($afterLogout['body'], '>Log in<') && !str_contains($afterLogout['body'], 'Log out'), 'log out returns the owner to the login page');
 
 proc_terminate($proc);
 echo "http checks done\n";
