@@ -144,6 +144,7 @@ function runnerArgs(job, out) {
       mode: spec.mode,
       taskId: spec.taskId,
       seedGenomes: spec.seedGenomes,
+      evals: spec.evals,
       title: job.title,
     })));
     return [path.join(ROOT, 'spikefoundry', 'run.js'), '--job', file, '--out', out];

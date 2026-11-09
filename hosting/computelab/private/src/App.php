@@ -49,7 +49,18 @@ final class App
             summary TEXT NOT NULL,
             priority INTEGER NOT NULL,
             enabled INTEGER NOT NULL,
-            family VARCHAR(32)
+            family VARCHAR(32),
+            auto_jobs INTEGER,
+            low_water INTEGER NOT NULL DEFAULT 0,
+            queue_cap INTEGER NOT NULL DEFAULT 8,
+            evals_per_job INTEGER NOT NULL DEFAULT 40,
+            auto_created INTEGER NOT NULL DEFAULT 0,
+            auto_note TEXT
+        )');
+        $this->db->exec('CREATE TABLE IF NOT EXISTS supply_state (
+            id VARCHAR(191) PRIMARY KEY,
+            ran_at TEXT NOT NULL,
+            note TEXT NOT NULL
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS templates (
             id VARCHAR(191) PRIMARY KEY,
@@ -187,6 +198,16 @@ final class App
         $this->ensureColumn('design_records', 'seq', 'INTEGER NOT NULL DEFAULT 0');
         $this->ensureColumn('design_genomes', 'is_public', 'INTEGER NOT NULL DEFAULT 0');
         $this->ensureColumn('workers', 'public_credit', 'INTEGER NOT NULL DEFAULT 1');
+        $freshAuto = !$this->hasColumn('projects', 'auto_jobs');
+        $this->ensureColumn('projects', 'auto_jobs', 'INTEGER');
+        $this->ensureColumn('projects', 'low_water', 'INTEGER NOT NULL DEFAULT 0');
+        $this->ensureColumn('projects', 'queue_cap', 'INTEGER NOT NULL DEFAULT 8');
+        $this->ensureColumn('projects', 'evals_per_job', 'INTEGER NOT NULL DEFAULT 40');
+        $this->ensureColumn('projects', 'auto_created', 'INTEGER NOT NULL DEFAULT 0');
+        $this->ensureColumn('projects', 'auto_note', 'TEXT');
+        if ($freshAuto) {
+            $this->db->exec("UPDATE projects SET auto_jobs = 1 WHERE id = 'spikefoundry'");
+        }
         $this->seed();
         $this->db->exec("UPDATE projects SET family = 'spikefoundry' WHERE id = 'spikefoundry' AND (family IS NULL OR family = '')");
         $this->db->exec("UPDATE projects SET family = 'bugbrain' WHERE id = 'bugbrain' AND (family IS NULL OR family = '')");
@@ -407,6 +428,7 @@ final class App
 
     public function claim(array $worker): ?array
     {
+        $this->replenishJobs();
         $this->expireLeases();
         if ((int) $worker['paused'] === 1) {
             return null;
@@ -714,6 +736,9 @@ final class App
         }
         if (isset($extra['mode'])) {
             $spec['mode'] = (string) $extra['mode'];
+        }
+        if (isset($extra['evals'])) {
+            $spec['evals'] = max(1, min(200, (int) $extra['evals']));
         }
         $id = strtolower(preg_replace('/[^a-z0-9]+/', '-', $templateId) . '-' . $seed . '-' . bin2hex(random_bytes(3)));
         $this->db->prepare('INSERT INTO jobs (id, project_id, template_id, title, spec_json, code_hash, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
@@ -1349,6 +1374,136 @@ final class App
             ];
         }
         return $out;
+    }
+
+    public function projectAutoOn(array $project): bool
+    {
+        return (int) ($project['auto_jobs'] ?? 0) === 1;
+    }
+
+    public function saveSupply(string $projectId, bool $on, int $lowWater, int $cap, int $evals): void
+    {
+        if ($lowWater < 0 || $lowWater > 100 || $cap < 1 || $cap > 100 || $evals < 1 || $evals > 200) {
+            throw new InvalidArgumentException('Supply settings are out of range.');
+        }
+        $this->db->prepare('UPDATE projects SET auto_jobs = ?, low_water = ?, queue_cap = ?, evals_per_job = ? WHERE id = ?')
+            ->execute([$on ? 1 : 0, $lowWater, $cap, $evals, $projectId]);
+    }
+
+    public function replenishJobs(): int
+    {
+        $gap = (int) ($this->config['supply_seconds'] ?? 15);
+        if ($gap < 1) {
+            $gap = 15;
+        }
+        $state = $this->db->query("SELECT ran_at FROM supply_state WHERE id = 'global'")->fetch();
+        if ($state && (strtotime($this->now()) - strtotime((string) $state['ran_at'])) < $gap) {
+            return 0;
+        }
+        $this->db->prepare('REPLACE INTO supply_state (id, ran_at, note) VALUES (?, ?, ?)')->execute(['global', $this->now(), 'running']);
+        $globalCap = (int) ($this->config['supply_cap'] ?? 24);
+        if ($globalCap < 1) {
+            $globalCap = 24;
+        }
+        $queuedAll = (int) $this->db->query("SELECT COUNT(*) FROM jobs WHERE status = 'queued'")->fetchColumn();
+        if ($queuedAll >= $globalCap) {
+            return 0;
+        }
+        $online = 0;
+        $seen = $this->db->query('SELECT last_seen, revoked FROM workers')->fetchAll();
+        foreach ($seen as $row) {
+            if ((int) $row['revoked'] === 1 || empty($row['last_seen'])) {
+                continue;
+            }
+            if ((strtotime($this->now()) - strtotime((string) $row['last_seen'])) <= 180) {
+                $online++;
+            }
+        }
+        $made = 0;
+        $projects = $this->db->query('SELECT * FROM projects WHERE enabled = 1 ORDER BY priority DESC, id ASC')->fetchAll();
+        foreach ($projects as $project) {
+            if (!$this->projectAutoOn($project)) {
+                continue;
+            }
+            $template = $this->supplyTemplate((string) $project['id']);
+            if ($template === '') {
+                continue;
+            }
+            $low = (int) $project['low_water'] > 0 ? (int) $project['low_water'] : max(1, $online);
+            $cap = (int) $project['queue_cap'] > 0 ? (int) $project['queue_cap'] : 8;
+            $queued = (int) $this->db->query("SELECT COUNT(*) FROM jobs WHERE status = 'queued' AND project_id = " . $this->db->quote((string) $project['id']))->fetchColumn();
+            $guard = 0;
+            while ($queued < $low && $queued < $cap && $queuedAll < $globalCap && $guard < 20) {
+                $task = $this->supplyTask((string) $project['id']);
+                if ($task === '') {
+                    break;
+                }
+                $seed = (hexdec(substr(hash('sha256', $project['id'] . '|' . $this->now() . '|' . $made), 0, 6)) % 1000000) + 1;
+                $extra = ['taskId' => $task, 'evals' => (int) ($project['evals_per_job'] > 0 ? $project['evals_per_job'] : 40)];
+                if ((string) $project['id'] !== 'bugbrain' && (string) ($project['family'] ?? '') !== 'bugbrain') {
+                    $extra['mode'] = 'propose';
+                    try {
+                        $top = $this->topDesigns($task, 3);
+                        $hashes = [];
+                        foreach ($top as $row) {
+                            $hashes[] = (string) $row['genome_hash'];
+                        }
+                        if ($hashes !== []) {
+                            $extra['seedGenomes'] = $hashes;
+                        }
+                    } catch (InvalidArgumentException $e) {
+                        $hashes = [];
+                    }
+                }
+                $this->createJob($template, 'Auto ' . $task, 0.6, $seed, $extra);
+                $queued++;
+                $queuedAll++;
+                $made++;
+                $guard++;
+            }
+            if ($made > 0) {
+                $note = $made . ' auto jobs at ' . $this->now();
+                $this->db->prepare('UPDATE projects SET auto_created = auto_created + ?, auto_note = ? WHERE id = ?')->execute([$made, substr($note, 0, 200), $project['id']]);
+                $made = 0;
+            }
+        }
+        return $queuedAll;
+    }
+
+    private function supplyTemplate(string $projectId): string
+    {
+        $prefer = ($projectId === 'bugbrain') ? ['bb-order3'] : ['sf-propose', 'sf-vision'];
+        foreach ($prefer as $id) {
+            $st = $this->db->prepare('SELECT id FROM templates WHERE id = ? AND project_id = ?');
+            $st->execute([$id, $projectId]);
+            if ($st->fetch()) {
+                return $id;
+            }
+        }
+        $st = $this->db->prepare('SELECT id FROM templates WHERE project_id = ? ORDER BY id ASC LIMIT 1');
+        $st->execute([$projectId]);
+        $row = $st->fetch();
+        return $row ? (string) $row['id'] : '';
+    }
+
+    private function supplyTask(string $projectId): string
+    {
+        $order = ['coincidence', 'sequence', 'vote3', 'routing', 'composed', 'context3', 'nested', 'scenario-vision', 'scenario-sequence', 'scenario-graph', 'scenario-control', 'digits', 'mnist', 'cart-pole'];
+        if ($projectId === 'bugbrain') {
+            return 'order3';
+        }
+        foreach ($order as $task) {
+            $policy = $this->taskPolicy($projectId, $task);
+            if ((int) $policy['paused'] === 1) {
+                $next = (string) $policy['advanced_to'];
+                if ($next !== '' && !$this->taskPaused($projectId, $next)) {
+                    return $next;
+                }
+                continue;
+            }
+            return $task;
+        }
+        return '';
     }
 
     public function defaultTaskPolicy(): array

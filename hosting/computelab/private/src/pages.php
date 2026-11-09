@@ -451,7 +451,14 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
             . '<form method="post" action="' . h($base) . '/owner/project"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $p['id']) . '">'
             . '<label>Priority <input name="priority" type="number" min="0" max="100" value="' . h((string) $p['priority']) . '"></label>'
             . '<label><input type="checkbox" name="enabled" value="1"' . ((int) $p['enabled'] ? ' checked' : '') . '> Enabled</label>'
-            . '<button type="submit">Save project</button></form></section>';
+            . '<button type="submit">Save project</button></form>'
+            . '<form method="post" action="' . h($base) . '/owner/supply"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $p['id']) . '">'
+            . '<label><input type="checkbox" name="auto" value="1"' . ($app->projectAutoOn($p) ? ' checked' : '') . '> Auto-create jobs</label>'
+            . '<label>Low-water mark (0 means one waiting job per online computer) <input name="low" type="number" min="0" max="100" value="' . h((string) ($p['low_water'] ?? 0)) . '"></label>'
+            . '<label>Cap on waiting jobs <input name="cap" type="number" min="1" max="100" value="' . h((string) ($p['queue_cap'] ?? 8)) . '"></label>'
+            . '<label>Evaluations per job <input name="evals" type="number" min="1" max="200" value="' . h((string) ($p['evals_per_job'] ?? 40)) . '"></label>'
+            . '<p class="muted">Auto-created: ' . h((string) ($p['auto_created'] ?? 0)) . '. ' . h((string) ($p['auto_note'] ?? '')) . '</p>'
+            . '<button type="submit">Save auto jobs</button></form></section>';
     }
     $runnerOpts = '';
     foreach ($app->allowedRunners() as $runner) {

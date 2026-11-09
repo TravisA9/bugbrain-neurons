@@ -412,5 +412,25 @@ $credit['app']->setGenomePublic(hash('sha256', $high), true);
 $pub = $credit['app']->designGenome(hash('sha256', $high));
 check($pub && (int) $pub['is_public'] === 1, 'the owner can mark a genome public');
 
+$supply = lab();
+$sw = $supply['app']->enroll('supply-pc', ['spikefoundry', 'bugbrain'], 2, true);
+$supply['db']->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$supply['clock']->t, $sw['workerId']]);
+$supply['db']->exec("UPDATE projects SET auto_jobs = 1 WHERE id = 'spikefoundry'");
+$got = $supply['app']->claim($supply['app']->workerByToken($sw['token']));
+$auto = (int) $supply['db']->query("SELECT auto_created FROM projects WHERE id = 'spikefoundry'")->fetchColumn();
+$spec = json_decode((string) $supply['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $supply['db']->quote((string) $got['id']))->fetchColumn(), true);
+$bbQueued = (int) $supply['db']->query("SELECT COUNT(*) FROM jobs WHERE project_id = 'bugbrain'")->fetchColumn();
+check($got && $got['project'] === 'spikefoundry' && $spec['mode'] === 'propose' && (int) $spec['evals'] === 40 && $auto === 1 && $bbQueued === 0, 'an empty SpikeFoundry queue grows one propose job and BugBrain stays off');
+$second = $supply['app']->claim($supply['app']->workerByToken($sw['token']));
+check($second === null, 'supply does not add another job until the throttle window passes');
+$supply['clock']->t = gmdate('c', strtotime($supply['clock']->t) + 20);
+$supply['app']->saveSupply('spikefoundry', true, 2, 2, 12);
+$id = substr(hash('sha256', 'spikefoundry|coincidence'), 0, 32);
+$supply['db']->prepare('REPLACE INTO task_policies (id, project_id, task_id, stall_delta, stall_evals, stall_hours, stall_action, paused, pause_reason, advanced_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    ->execute([$id, 'spikefoundry', 'coincidence', 0.005, 3000, 6, 'pause', 1, 'stall', 'sequence']);
+$again = $supply['app']->claim($supply['app']->workerByToken($sw['token']));
+$againSpec = $again ? json_decode((string) $supply['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $supply['db']->quote((string) $again['id']))->fetchColumn(), true) : [];
+check($again && $againSpec['taskId'] === 'sequence' && (int) $againSpec['evals'] === 12, 'auto jobs skip a paused task and use the next level');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

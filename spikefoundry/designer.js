@@ -183,8 +183,9 @@ function run(job, outDir, SF) {
   const policy = makePolicy(rng);
   trainPolicy(policy, taskFeatures, 3, 0.4);
   const proposed = [];
+  const rounds = Math.max(1, Math.min(80, +job.evals || 4));
   if (job.mode === 'propose') {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < rounds; i++) {
       const genome = propose(taskFeatures, rng, policy);
       const score = SF.scoreDesign
         ? SF.scoreDesign({ topology: 'parallel', wa: 1, wb: 1, thr: 1.2, decay: 0.5, nodes: 2, depth: 1 }, taskId === 'coincidence' || SF.BASE_TASKS[taskId] ? (SF.BASE_TASKS[taskId] ? taskId : 'coincidence') : 'coincidence', true, 0, SF.PILOT_BUDGET, SF.createState(job.seed || 1).rng)
