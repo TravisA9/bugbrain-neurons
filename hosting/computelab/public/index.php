@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require __DIR__ . '/private/src/compat.php';
 
 function coord_private_root(): string
 {

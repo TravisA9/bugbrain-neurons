@@ -34,18 +34,18 @@ final class App
         $auto = $this->config['driver'] === 'sqlite' ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INTEGER PRIMARY KEY AUTO_INCREMENT';
         $this->db->exec('CREATE TABLE IF NOT EXISTS owner (
             id INTEGER PRIMARY KEY,
-            username TEXT UNIQUE NOT NULL,
+            username VARCHAR(191) UNIQUE NOT NULL,
             password_hash TEXT NOT NULL
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS projects (
-            id TEXT PRIMARY KEY,
+            id VARCHAR(191) PRIMARY KEY,
             title TEXT NOT NULL,
             summary TEXT NOT NULL,
             priority INTEGER NOT NULL,
             enabled INTEGER NOT NULL
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS templates (
-            id TEXT PRIMARY KEY,
+            id VARCHAR(191) PRIMARY KEY,
             project_id TEXT NOT NULL,
             title TEXT NOT NULL,
             runner TEXT NOT NULL,
@@ -53,11 +53,11 @@ final class App
             code_hash TEXT NOT NULL
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS approved_code (
-            hash TEXT PRIMARY KEY,
+            hash VARCHAR(191) PRIMARY KEY,
             label TEXT NOT NULL
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS jobs (
-            id TEXT PRIMARY KEY,
+            id VARCHAR(191) PRIMARY KEY,
             project_id TEXT NOT NULL,
             template_id TEXT NOT NULL,
             title TEXT NOT NULL,
@@ -68,7 +68,7 @@ final class App
             created_at TEXT NOT NULL
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS workers (
-            id TEXT PRIMARY KEY,
+            id VARCHAR(191) PRIMARY KEY,
             name TEXT NOT NULL,
             token_hash TEXT NOT NULL,
             consent_at TEXT NOT NULL,
@@ -80,7 +80,7 @@ final class App
             created_at TEXT NOT NULL
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS leases (
-            job_id TEXT PRIMARY KEY,
+            job_id VARCHAR(191) PRIMARY KEY,
             worker_id TEXT NOT NULL,
             until_at TEXT NOT NULL,
             heartbeat_at TEXT NOT NULL
@@ -95,14 +95,14 @@ final class App
             created_at TEXT NOT NULL
         )");
         $this->db->exec('CREATE TABLE IF NOT EXISTS sessions (
-            id TEXT PRIMARY KEY,
+            id VARCHAR(191) PRIMARY KEY,
             role TEXT NOT NULL,
             subject TEXT NOT NULL,
             csrf TEXT NOT NULL,
             expires_at TEXT NOT NULL
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS rate_limits (
-            bucket TEXT PRIMARY KEY,
+            bucket VARCHAR(191) PRIMARY KEY,
             window_start TEXT NOT NULL,
             hits INTEGER NOT NULL
         )');
