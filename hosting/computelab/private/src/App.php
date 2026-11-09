@@ -209,6 +209,7 @@ final class App
             $this->db->exec("UPDATE projects SET auto_jobs = 1 WHERE id = 'spikefoundry'");
         }
         $this->seed();
+        $this->refreshProtocolPins();
         $this->db->exec("UPDATE projects SET family = 'spikefoundry' WHERE id = 'spikefoundry' AND (family IS NULL OR family = '')");
         $this->db->exec("UPDATE projects SET family = 'bugbrain' WHERE id = 'bugbrain' AND (family IS NULL OR family = '')");
     }
@@ -291,6 +292,32 @@ final class App
                 $ti->execute($t);
             }
         }
+    }
+
+    public function refreshProtocolPins(): int
+    {
+        $current = $this->protocolHash();
+        $st = $this->db->prepare('SELECT hash FROM approved_code WHERE hash <> ?');
+        $st->execute([$current]);
+        $hashes = [];
+        foreach ($st->fetchAll() as $row) {
+            $hash = (string) $row['hash'];
+            if (preg_match('/^[a-f0-9]{64}$/', $hash)) {
+                $hashes[] = $hash;
+            }
+        }
+        if ($hashes === []) {
+            return 0;
+        }
+        $marks = implode(',', array_fill(0, count($hashes), '?'));
+        $changed = 0;
+        $tpl = $this->db->prepare('UPDATE templates SET code_hash = ? WHERE code_hash IN (' . $marks . ')');
+        $tpl->execute(array_merge([$current], $hashes));
+        $changed += $tpl->rowCount();
+        $jobs = $this->db->prepare("UPDATE jobs SET code_hash = ? WHERE status = 'queued' AND code_hash IN (" . $marks . ')');
+        $jobs->execute(array_merge([$current], $hashes));
+        $changed += $jobs->rowCount();
+        return $changed;
     }
 
     public function protocolHash(): string
@@ -744,7 +771,7 @@ final class App
         }
         $id = strtolower(preg_replace('/[^a-z0-9]+/', '-', $templateId) . '-' . $seed . '-' . bin2hex(random_bytes(3)));
         $this->db->prepare('INSERT INTO jobs (id, project_id, template_id, title, spec_json, code_hash, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-            ->execute([$id, $tpl['project_id'], $tpl['id'], $title, json_encode($spec), $tpl['code_hash'], $priority, 'queued', $this->now()]);
+            ->execute([$id, $tpl['project_id'], $tpl['id'], $title, json_encode($spec), $this->protocolHash(), $priority, 'queued', $this->now()]);
         return $id;
     }
 

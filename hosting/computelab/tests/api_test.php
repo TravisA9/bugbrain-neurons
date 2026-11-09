@@ -443,5 +443,25 @@ $lfApp = new App($db, array_merge($config, ['protocol' => $lfPath]), static func
 $crlfApp = new App($db, array_merge($config, ['protocol' => $crlfPath]), static function () use (&$now): string { return $now; });
 check($lfApp->protocolHash() === $crlfApp->protocolHash(), 'a CRLF protocol file hashes the same as the LF file');
 
+$pins = lab();
+$legacy = '4b0e21855d9ce104a96633047e8199874524044d399c6150d02eb77e4edca4c4';
+$currentHash = $pins['app']->protocolHash();
+$staleJob = $pins['app']->createJob('sf-vision', 'Stale hash job', 0.2, 9);
+$finished = $pins['app']->createJob('bb-order3', 'Finished old hash', 0.2, 10);
+$pins['db']->prepare('UPDATE templates SET code_hash = ? WHERE id IN (?, ?)')->execute([$legacy, 'sf-vision', 'bb-order3']);
+$pins['db']->prepare('UPDATE jobs SET code_hash = ? WHERE id = ?')->execute([$legacy, $staleJob]);
+$pins['db']->prepare("UPDATE jobs SET code_hash = ?, status = 'done' WHERE id = ?")->execute([$legacy, $finished]);
+$changedPins = $pins['app']->refreshProtocolPins();
+$visionHash = (string) $pins['db']->query("SELECT code_hash FROM templates WHERE id = 'sf-vision'")->fetchColumn();
+$orderHash = (string) $pins['db']->query("SELECT code_hash FROM templates WHERE id = 'bb-order3'")->fetchColumn();
+$queuedHash = (string) $pins['db']->query('SELECT code_hash FROM jobs WHERE id = ' . $pins['db']->quote($staleJob))->fetchColumn();
+$doneHash = (string) $pins['db']->query('SELECT code_hash FROM jobs WHERE id = ' . $pins['db']->quote($finished))->fetchColumn();
+check($changedPins >= 3 && $visionHash === $currentHash && $orderHash === $currentHash && $queuedHash === $currentHash && $doneHash === $legacy, 'old accepted template and queued hashes move to the current protocol');
+check($pins['app']->refreshProtocolPins() === 0, 'refreshing protocol pins a second time changes nothing');
+$pins['db']->prepare('UPDATE templates SET code_hash = ? WHERE id = ?')->execute([$legacy, 'sf-propose']);
+$stamped = $pins['app']->createJob('sf-propose', 'New from old template', 0.2, 11);
+$stampedHash = (string) $pins['db']->query('SELECT code_hash FROM jobs WHERE id = ' . $pins['db']->quote($stamped))->fetchColumn();
+check($stampedHash === $currentHash, 'a new job is stamped with the current protocol hash');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);
