@@ -340,7 +340,7 @@ check($seeded && strpos((string) $seedRow['spec_json'], $genomeHash) !== false, 
 check($lib['app']->codeApproved('4b0e21855d9ce104a96633047e8199874524044d399c6150d02eb77e4edca4c4'), 'the previous protocol hash stays approved');
 $train = $lib['app']->createJob('sf-train', 'Train model', 5, 4);
 $held = $lib['app']->claim($lib['app']->workerByToken($libWorker['token']));
-$modelId = $lib['app']->saveModel($lib['app']->workerByToken($libWorker['token']), $held['id'], '{"format":"spikefoundry-designer","designerVersion":"spikefoundry-designer-2","spearman":0.77}', ['spearman' => 0.77, 'heldOut' => 6]);
+$modelId = $lib['app']->saveModel($lib['app']->workerByToken($libWorker['token']), $held['id'], '{"format":"spikefoundry-designer","designerVersion":"spikefoundry-designer-3","spearman":0.77}', ['spearman' => 0.77, 'heldOut' => 6]);
 $current = $lib['app']->currentModel();
 check($held && $held['id'] === $train && $modelId && $current && strpos((string) $current['body_json'], '0.77') !== false, 'a leased worker can store a versioned model checkpoint');
 
@@ -422,7 +422,7 @@ $got = $supply['app']->claim($supply['app']->workerByToken($sw['token']));
 $auto = (int) $supply['db']->query("SELECT auto_created FROM projects WHERE id = 'spikefoundry'")->fetchColumn();
 $spec = json_decode((string) $supply['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $supply['db']->quote((string) $got['id']))->fetchColumn(), true);
 $bbQueued = (int) $supply['db']->query("SELECT COUNT(*) FROM jobs WHERE project_id = 'bugbrain'")->fetchColumn();
-check($got && $got['project'] === 'spikefoundry' && $spec['mode'] === 'propose' && (int) $spec['evals'] === 100000 && (int) $spec['targetSeconds'] === 180 && $auto === 1 && $bbQueued === 0, 'an empty SpikeFoundry queue grows one propose job and BugBrain stays off');
+check($got && $got['project'] === 'spikefoundry' && $spec['mode'] === 'propose' && (int) $spec['evals'] === 0 && (int) $spec['targetSeconds'] === 180 && (int) $spec['keepTop'] === 50 && (int) $spec['keepRandom'] === 500 && $auto === 1 && $bbQueued === 0, 'an empty SpikeFoundry queue grows one propose job and BugBrain stays off');
 $second = $supply['app']->claim($supply['app']->workerByToken($sw['token']));
 check($second === null, 'supply does not add another job until the throttle window passes');
 $supply['clock']->t = gmdate('c', strtotime($supply['clock']->t) + 20);
@@ -488,27 +488,64 @@ $oldJson = '{"v":2,"old":1}';
 $oldHash = hash('sha256', $oldJson);
 $keepJson = '{"v":2,"keep":1}';
 $keepHash = hash('sha256', $keepJson);
+$midJson = '{"v":2,"mid":1}';
+$midHash = hash('sha256', $midJson);
 $sigJson = '{"v":1,"sig":1}';
 $sigHash = hash('sha256', $sigJson);
 $insertGenome->execute([$oldHash, $oldJson, 2, $stamp]);
 $insertGenome->execute([$keepHash, $keepJson, 2, $stamp]);
+$insertGenome->execute([$midHash, $midJson, 2, $stamp]);
 $insertGenome->execute([$sigHash, $sigJson, 1, $stamp]);
 $insertRecord->execute(['old-row', $oldHash, 'coincidence', 'base-1', '{"quality":0.744,"heldOut":0.744,"train":0.744,"arm":"designer"}', 8, 14, 15, 1, 'spikefoundry-designer-1', 'abc', $oldWorker['id'], 1, 'sf-propose-1-old', 'designer', 1, $stamp]);
-$insertRecord->execute(['keep-row', $keepHash, 'coincidence', 'base-1', '{"quality":0.2,"heldOut":0.2,"train":0.2,"arm":"random"}', 8, 14, 4, 1, 'spikefoundry-designer-2', 'abc', $keepWorker['id'], 2, 'sf-propose-2-new', 'random', 2, $stamp]);
-$insertRecord->execute(['sig-row', $sigHash, 'coincidence', 'base-1', '{"quality":0.744,"arm":"designer"}', 8, 14, 15, 1, 'spikefoundry-1', 'abc', $oldWorker['id'], 3, 'sf-vision-3-sig', 'designer', 3, $stamp]);
+$insertRecord->execute(['keep-row', $keepHash, 'coincidence', 'base-1', '{"quality":0.744,"heldOut":0.744,"train":0.744,"arm":"designer"}', 8, 14, 4, 1, 'spikefoundry-designer-3', 'abc', $keepWorker['id'], 2, 'sf-propose-3-new', 'designer', 2, $stamp]);
+$insertRecord->execute(['mid-row', $midHash, 'coincidence', 'base-1', '{"quality":0.5,"heldOut":0.5,"train":0.5,"arm":"designer"}', 9, 20, 4, 1, 'spikefoundry-designer-2', 'abc', $oldWorker['id'], 4, 'sf-propose-2-mid', 'designer', 4, $stamp]);
+$insertRecord->execute(['sig-row', $sigHash, 'coincidence', 'base-1', '{"quality":0.744,"arm":"designer"}', 8, 14, 15, 1, 'spikefoundry-1', 'abc', $keepWorker['id'], 3, 'sf-vision-3-sig', 'designer', 3, $stamp]);
 $clean['db']->prepare('INSERT INTO design_events (id, worker_id, task_id, kind, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)')->execute(['evt-old', $oldWorker['id'], 'coincidence', 'best', 'New best design on coincidence', $stamp]);
 $clean['db']->prepare('INSERT INTO model_checkpoints (id, label, body_json, metric_json, created_at) VALUES (?, ?, ?, ?, ?)')->execute(['ckpt-old', 'designer', '{"format":"spikefoundry-designer","spearman":0.1}', '{}', $stamp]);
-$clean['db']->prepare('INSERT INTO model_checkpoints (id, label, body_json, metric_json, created_at) VALUES (?, ?, ?, ?, ?)')->execute(['ckpt-new', 'designer', '{"format":"spikefoundry-designer","designerVersion":"spikefoundry-designer-2"}', '{}', $stamp]);
+$clean['db']->prepare('INSERT INTO model_checkpoints (id, label, body_json, metric_json, created_at) VALUES (?, ?, ?, ?, ?)')->execute(['ckpt-new', 'designer', '{"format":"spikefoundry-designer","designerVersion":"spikefoundry-designer-3"}', '{}', $stamp]);
+$clean['db']->prepare('INSERT INTO model_checkpoints (id, label, body_json, metric_json, created_at) VALUES (?, ?, ?, ?, ?)')->execute(['ckpt-mid', 'designer', '{"format":"spikefoundry-designer","designerVersion":"spikefoundry-designer-2"}', '{}', $stamp]);
 $removed = $clean['app']->purgePlaceholderDesigns();
-$left = (int) $clean['db']->query("SELECT COUNT(*) FROM design_records")->fetchColumn();
-$oldLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_records WHERE id = 'old-row' OR id = 'sig-row'")->fetchColumn();
+$sigLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_records WHERE id = 'sig-row'")->fetchColumn();
+$keepLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_records WHERE id = 'keep-row'")->fetchColumn();
+$oldLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_records WHERE id = 'old-row'")->fetchColumn();
+check($removed === 1 && $oldLeft === 0 && $keepLeft === 1 && $sigLeft === 1, 'only the designer-1 stamp is removed, not a real score that happens to look similar');
+$clean['db']->exec("DELETE FROM supply_state WHERE id = 'purge-designer-2'");
+$removed2 = $clean['app']->purgeDesigner2();
+$midLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_records WHERE id = 'mid-row'")->fetchColumn();
 $keepLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_records WHERE id = 'keep-row'")->fetchColumn();
 $eventLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_events WHERE id = 'evt-old'")->fetchColumn();
 $oldCkpt = (int) $clean['db']->query("SELECT COUNT(*) FROM model_checkpoints WHERE id = 'ckpt-old'")->fetchColumn();
+$midCkpt = (int) $clean['db']->query("SELECT COUNT(*) FROM model_checkpoints WHERE id = 'ckpt-mid'")->fetchColumn();
 $newCkpt = (int) $clean['db']->query("SELECT COUNT(*) FROM model_checkpoints WHERE id = 'ckpt-new'")->fetchColumn();
-$note = (string) $clean['db']->query("SELECT note FROM supply_state WHERE id = 'purge-designer-1'")->fetchColumn();
-check($removed === 2 && $left === 1 && $oldLeft === 0 && $keepLeft === 1 && $eventLeft === 0 && $oldCkpt === 0 && $newCkpt === 1 && strpos($note, 'spikefoundry-designer-1') !== false, 'placeholder records, their events, and their checkpoints are removed once');
-check($clean['app']->purgePlaceholderDesigns() === 0, 'the placeholder purge does not run a second time');
+$note = (string) $clean['db']->query("SELECT note FROM supply_state WHERE id = 'purge-designer-2'")->fetchColumn();
+check($removed2 === 1 && $midLeft === 0 && $keepLeft === 1 && $eventLeft === 0 && $midCkpt === 0 && $newCkpt === 1 && $oldCkpt === 0 && strpos($note, 'spikefoundry-designer-2') !== false, 'designer-2 rows are purged once and designer-3 rows stay');
+check($clean['app']->purgeDesigner2() === 0, 'the designer-2 purge does not run a second time');
+$real = [
+    'taskId' => 'coincidence', 'taskVersion' => 'base-1', 'genomeJson' => '{"v":2,"real":1}', 'genomeHash' => hash('sha256', '{"v":2,"real":1}'),
+    'genomeVersion' => 2, 'metrics' => ['quality' => 0.744, 'heldOut' => 0.744, 'train' => 0.744, 'arm' => 'designer'],
+    'neurons' => 8, 'synapses' => 14, 'spikes' => 15, 'evalMs' => 1, 'seed' => 1, 'jobId' => 'sf-propose-3-real', 'engineVersion' => 'spikefoundry-designer-3',
+];
+$accepted = $clean['app']->ingestDesigns($keepWorker, [$real], $clean['app']->protocolHash());
+$blocked2 = false;
+try {
+    $clean['app']->ingestDesigns($keepWorker, [array_merge($real, ['engineVersion' => 'spikefoundry-designer-2', 'genomeJson' => '{"v":2,"old2":1}', 'genomeHash' => hash('sha256', '{"v":2,"old2":1}')])], $clean['app']->protocolHash());
+} catch (InvalidArgumentException $e) {
+    $blocked2 = strpos($e->getMessage(), 'spikefoundry-designer-2') !== false;
+}
+check($accepted['stored'] === 1 && $blocked2, 'designer-3 records are accepted even at 8 neurons and quality 0.744, and designer-2 is refused');
+$clean['app']->ingestSummary($keepWorker, [
+    'taskId' => 'coincidence', 'jobId' => 'sf-propose-3-sum', 'engineVersion' => 'spikefoundry-designer-3',
+    'evals' => 4000, 'designerEvals' => 3600, 'randomEvals' => 400, 'evalMs' => 180000,
+    'bestHeld' => 0.5, 'bestTrain' => 0.5, 'designerMean' => 0.42, 'randomMean' => 0.2,
+    'histogram' => [0, 0, 0, 0, 4000],
+    'curve' => [
+        ['n' => 1, 'held' => 0.2, 'train' => 0.2, 'bestHeld' => 0.2, 'bestTrain' => 0.2],
+        ['n' => 4000, 'held' => 0.5, 'train' => 0.5, 'bestHeld' => 0.5, 'bestTrain' => 0.5],
+    ],
+]);
+$series = $clean['app']->taskSeries('coincidence', 80);
+$health = $clean['app']->designerHealthForTask('coincidence');
+check($series && (int) $series[count($series) - 1]['n'] >= 4000 && $health && strpos($health['label'], 'beating random') !== false, 'plateau charts count evaluations from the job summary');
 
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

@@ -139,6 +139,47 @@ const job = {
 
   check(coord.shouldWait('done') === false && coord.shouldWait('empty') === true && coord.shouldWait('error') === true && coord.shouldWait('paused') === true, 'a finished job claims again immediately and an empty queue waits');
 
+  const batches = coord.packUploadBatches([{ a: 1 }, { a: 2 }, { a: 3 }], 2, 1000000);
+  check(batches.length === 2 && batches[0].length === 2 && batches[1].length === 1, 'design uploads split after 500 records or about 1 MB');
+  const wide = coord.packUploadBatches([{ blob: 'abcdef' }, { blob: 'ghijkl' }], 10, 20);
+  check(wide.length === 2, 'a batch also splits when the JSON would pass about 1 MB');
+
+  const uploadBeats = [];
+  const waits = [];
+  const script = [
+    { status: 503 },
+    { status: 429, headers: { 'retry-after': '2' } },
+    { status: 200, body: { stored: 1 } },
+  ];
+  let step = 0;
+  const file = path.join(out, 'designs.json');
+  fs.mkdirSync(out, { recursive: true });
+  fs.writeFileSync(file, JSON.stringify({ records: [{ id: 1 }], summary: { evals: 3 } }));
+  const report = await coord.uploadDesigns('http://coord.test', 'abc', 'hash', file, {
+    sleep: async (ms) => { waits.push(ms); },
+    heartbeat: async () => { uploadBeats.push('beat'); },
+    fetch: async () => {
+      const item = script[Math.min(step, script.length - 1)];
+      step++;
+      return { ok: item.status === 200, status: item.status, headers: { get: (name) => item.headers ? item.headers[name] : '' }, json: async () => item.body || {} };
+    },
+  });
+  check(report.ok && waits.indexOf(2000) !== -1 && uploadBeats.length >= 2, 'an upload retries 429 and 5xx, honors Retry-After, and keeps heartbeating');
+  const refused = await coord.uploadDesigns('http://coord.test', 'abc', 'hash', file, {
+    sleep: async () => {},
+    fetch: async () => ({ ok: false, status: 400, headers: { get: () => '' }, json: async () => ({ error: 'no' }) }),
+  });
+  check(!refused.ok && /no/.test(refused.error), 'a rejected upload is reported instead of dropped');
+
+  const junk = path.join(out, 'dirs');
+  fs.mkdirSync(path.join(junk, 'coord-old'), { recursive: true });
+  fs.mkdirSync(path.join(junk, 'coord-new'), { recursive: true });
+  const oldTime = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  fs.utimesSync(path.join(junk, 'coord-old'), oldTime, oldTime);
+  coord.cleanupStaleCoordDirs(junk, 24 * 60 * 60 * 1000, Date.now());
+  coord.cleanupJobDir(path.join(junk, 'coord-new'));
+  check(!fs.existsSync(path.join(junk, 'coord-old')) && !fs.existsSync(path.join(junk, 'coord-new')), 'stale coord folders and a finished job folder are removed');
+
   const lf = 'computelab-protocol-2\nkeep this line\n';
   check(coord.hashText(lf) === coord.hashText(lf.replace(/\n/g, '\r\n')), 'a CRLF copy of the protocol hashes the same as LF');
 

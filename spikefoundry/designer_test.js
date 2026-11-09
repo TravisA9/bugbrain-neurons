@@ -32,25 +32,37 @@ const proposed = Designer.propose(feat, rngOf(2), Designer.makePolicy(rngOf(2)))
 check(proposed.v === 2 && JSON.stringify(proposed).indexOf('stdp') < 0, 'the generator proposes a frozen v2 genome');
 
 const os = require('os'), path = require('path'), fs = require('fs');
+const small = Genome.sanitize(Genome.blank(1, 1));
+small.modules.forEach(mod => { if (mod.kind === 'lif') mod.n = 1; });
+const big = Genome.sanitize(Genome.blank(4, 2));
+big.modules.forEach(mod => { if (mod.kind === 'lif') mod.n = 6; });
+const smallScore = Designer.scoreGenome(small, 'coincidence', 1);
+const bigScore = Designer.scoreGenome(big, 'coincidence', 1);
+const smallNet = Genome.compile(small);
+const bigNet = Genome.compile(big);
+check(smallScore.neurons === smallNet.neurons.length && smallScore.synapses === smallNet.edges.length && bigScore.neurons === bigNet.neurons.length && bigScore.synapses === bigNet.edges.length && smallScore.neurons !== bigScore.neurons && smallScore.synapses !== bigScore.synapses, 'distinct genomes with different sizes record different counts');
+
 const out = path.join(os.tmpdir(), 'designer-score-' + process.pid);
 const SF = require('./engine.js');
-Designer.run({ id: 'score-job', mode: 'propose', taskId: 'coincidence', seed: 11, evals: 20, targetSeconds: 30 }, out, SF);
-const records = JSON.parse(fs.readFileSync(path.join(out, 'designs.json'), 'utf8')).records;
+Designer.run({ id: 'score-job', mode: 'propose', taskId: 'coincidence', seed: 11, evals: 40, targetSeconds: 30, keepTop: 3, keepRandom: 2 }, out, SF);
+const saved = JSON.parse(fs.readFileSync(path.join(out, 'designs.json'), 'utf8'));
+const records = saved.records;
 const genomes = new Set(records.map(row => row.genomeHash));
 const signatures = new Set(records.map(row => [row.metrics.quality, row.metrics.train, row.metrics.heldOut, row.spikes, row.neurons, row.synapses].join('|')));
+const sizes = new Set(records.map(row => row.neurons + '/' + row.synapses));
 const randoms = records.filter(row => row.metrics.arm === 'random').length;
 let replay = true;
 records.forEach(row => {
   const again = Designer.scoreGenome(JSON.parse(row.genomeJson), row.taskId, row.seed);
   if (again.quality !== row.metrics.quality || again.spikes !== row.spikes || again.train !== row.metrics.train || again.heldOut !== row.metrics.heldOut || again.neurons !== row.neurons || again.synapses !== row.synapses) replay = false;
 });
-check(genomes.size > 1 && signatures.size > 1, 'distinct genomes do not all receive the same score and size');
+check(genomes.size > 1 && signatures.size > 1 && sizes.size > 1, 'distinct genomes do not all receive the same score and size');
 check(replay, 'simulating a recorded genome again reproduces its recorded score');
-check(randoms >= 1 && randoms < records.length && records.every(row => row.engineVersion === 'spikefoundry-designer-2'), 'about one evaluation in ten is a random arm and the designer version is current');
+check(saved.summary.evals === 40 && saved.summary.histogram.reduce((s, n) => s + n, 0) === 40 && saved.summary.curve.length <= 100 && records.length <= 5 && randoms === 2 && randoms < records.length && records.every(row => row.engineVersion === 'spikefoundry-designer-3'), 'a job keeps the top designs and a capped random sample, plus a summary');
 const timedOut = path.join(out, 'timed');
 const began = Date.now();
-Designer.run({ id: 'timed-job', mode: 'propose', taskId: 'coincidence', seed: 4, evals: 100000, targetSeconds: 1 }, timedOut, SF);
-const timed = JSON.parse(fs.readFileSync(path.join(timedOut, 'designs.json'), 'utf8')).records.length;
+Designer.run({ id: 'timed-job', mode: 'propose', taskId: 'coincidence', seed: 4, evals: 0, targetSeconds: 1, keepTop: 5, keepRandom: 5 }, timedOut, SF);
+const timedDoc = JSON.parse(fs.readFileSync(path.join(timedOut, 'designs.json'), 'utf8'));
 const progress = JSON.parse(fs.readFileSync(path.join(timedOut, 'progress.json'), 'utf8'));
-check(timed >= 1 && timed < 100000 && progress.batchesDone === timed && (Date.now() - began) < 4000, 'a propose job stops at its time budget and reports progress');
+check(timedDoc.summary.evals >= 1 && timedDoc.summary.evals < 250000 && timedDoc.records.length <= 10 && progress.evals === timedDoc.summary.evals && (Date.now() - began) < 4000, 'a propose job stops at its time budget and reports progress');
 console.log(n + ' checks');

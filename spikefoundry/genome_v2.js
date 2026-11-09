@@ -122,6 +122,8 @@ function simulate(genome, seq) {
   const run = SF.simulateFrozen(net, seq);
   const changed = net.edges.some((edge, i) => edge.weight !== before[i]);
   if (changed) throw new Error('A frozen network changed a weight.');
+  run.neurons = net.neurons.length;
+  run.synapses = net.edges.length;
   return run;
 }
 

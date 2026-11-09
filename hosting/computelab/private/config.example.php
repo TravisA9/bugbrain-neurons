@@ -25,6 +25,7 @@ return [
     'result_bytes' => 32768,
     'login_per_minute' => 8,
     'api_per_minute' => 120,
+    'design_per_minute' => 60,
     'engine_js' => dirname(__DIR__, 3) . '/spikefoundry/engine.js',
     'lab_html' => dirname(__DIR__, 3) . '/spikefoundry/lab.html',
     'protocol' => dirname(__DIR__) . '/PROTOCOL.txt',

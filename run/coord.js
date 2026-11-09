@@ -152,6 +152,8 @@ function runnerArgs(job, out) {
       seedGenomes: spec.seedGenomes,
       evals: spec.evals,
       targetSeconds: spec.targetSeconds,
+      keepTop: spec.keepTop,
+      keepRandom: spec.keepRandom,
       title: job.title,
     })));
     return [path.join(ROOT, 'spikefoundry', 'run.js'), '--job', file, '--out', out];
@@ -204,6 +206,7 @@ async function runSpec(job, opts) {
     result = { status: 'done', summary: text, synthetic: false, digest: require('crypto').createHash('sha256').update(text).digest('hex') };
   }
   result.pauseAfter = !!beats.state.pauseAfter;
+  result.outDir = out;
   const designPath = path.join(out, 'designs.json');
   if (fs.existsSync(designPath)) result.designPath = designPath;
   const modelPath = path.join(out, 'model.json');
@@ -219,23 +222,102 @@ async function uploadModel(base, token, jobId, modelPath) {
     await api(base, token, '/api/v1/model', { jobId: jobId, model: model, metrics: { spearman: model.spearman || 0, heldOut: model.heldOut || 0 } });
   } catch (e) {}
 }
-async function uploadDesigns(base, token, hash, designPath) {
-  if (!designPath || !fs.existsSync(designPath)) return;
-  let records;
-  try { records = JSON.parse(fs.readFileSync(designPath, 'utf8')).records || []; }
-  catch (e) { return; }
-  if (!records.length) return;
-  for (let i = 0; i < records.length; i += 24) {
-    const payload = Buffer.from(JSON.stringify({ codeHash: hash, records: records.slice(i, i + 24) }));
-    const gz = require('zlib').gzipSync(payload);
-    try {
-      await fetch(base.replace(/\/$/, '') + '/api/v1/designs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip', Authorization: 'Bearer ' + token },
-        body: gz,
-      });
-    } catch (e) {}
+function packUploadBatches(records, maxCount, maxBytes) {
+  const out = [];
+  let cur = [];
+  let bytes = 2;
+  const countCap = Math.max(1, maxCount || 500);
+  const byteCap = maxBytes > 0 ? maxBytes : 900000;
+  (records || []).forEach(rec => {
+    const size = Buffer.byteLength(JSON.stringify(rec));
+    if (cur.length && (cur.length >= countCap || bytes + size + 1 > byteCap)) {
+      out.push(cur);
+      cur = [];
+      bytes = 2;
+    }
+    cur.push(rec);
+    bytes += size + 1;
+  });
+  if (cur.length) out.push(cur);
+  return out;
+}
+function retryAfterMs(res, fallback) {
+  let header = '';
+  try { header = res && res.headers && res.headers.get ? String(res.headers.get('retry-after') || '') : ''; }
+  catch (e) { header = ''; }
+  if (/^\d+$/.test(header.trim())) return Math.min(120000, (+header.trim()) * 1000);
+  return fallback;
+}
+async function uploadDesigns(base, token, hash, designPath, opts) {
+  opts = opts || {};
+  if (!designPath || !fs.existsSync(designPath)) return { ok: true, error: '', batches: 0 };
+  let parsed;
+  try { parsed = JSON.parse(fs.readFileSync(designPath, 'utf8')); }
+  catch (e) { return { ok: false, error: 'Design file could not be read.', batches: 0 }; }
+  const records = parsed.records || [];
+  const summary = parsed.summary || null;
+  if (!records.length && !summary) return { ok: true, error: '', batches: 0 };
+  const groups = records.length ? packUploadBatches(records, opts.maxCount || 500, opts.maxBytes || 900000) : [[]];
+  const wait = opts.sleep || sleep;
+  const doFetch = opts.fetch || fetch;
+  const beat = opts.heartbeat || (async () => {});
+  let failed = '';
+  for (let i = 0; i < groups.length; i++) {
+    const body = { codeHash: hash, records: groups[i] };
+    if (i === 0 && summary) body.summary = summary;
+    const gz = require('zlib').gzipSync(Buffer.from(JSON.stringify(body)));
+    let delay = 1000;
+    let sent = false;
+    for (let attempt = 0; attempt < 6 && !sent; attempt++) {
+      await beat();
+      let res;
+      try {
+        res = await doFetch(base.replace(/\/$/, '') + '/api/v1/designs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip', Authorization: 'Bearer ' + token },
+          body: gz,
+        });
+      } catch (e) {
+        await wait(delay);
+        delay = nextBackoff(delay);
+        continue;
+      }
+      if (res.ok) { sent = true; break; }
+      if (res.status === 429 || (res.status >= 500 && res.status <= 599)) {
+        await beat();
+        await wait(retryAfterMs(res, delay));
+        delay = nextBackoff(Math.max(delay, retryAfterMs(res, delay)));
+        continue;
+      }
+      const data = await res.json().catch(() => ({}));
+      failed = data.error || ('Upload answered ' + res.status);
+      break;
+    }
+    if (!sent) {
+      failed = failed || 'Design upload failed after retries.';
+      break;
+    }
   }
+  return { ok: !failed, error: failed, batches: groups.length };
+}
+function cleanupJobDir(dir) {
+  if (!dir || path.basename(dir).indexOf('coord-') !== 0) return;
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+function cleanupStaleCoordDirs(dir, maxAgeMs, now) {
+  const root = dir || require('os').tmpdir();
+  const age = maxAgeMs == null ? 24 * 60 * 60 * 1000 : maxAgeMs;
+  const clock = now == null ? Date.now() : now;
+  let names = [];
+  try { names = fs.readdirSync(root); } catch (e) { return; }
+  names.forEach(name => {
+    if (name.indexOf('coord-') !== 0) return;
+    const folder = path.join(root, name);
+    let st;
+    try { st = fs.statSync(folder); } catch (e) { return; }
+    if (!st.isDirectory()) return;
+    if (clock - st.mtimeMs >= age) fs.rmSync(folder, { recursive: true, force: true });
+  });
 }
 function shouldWait(reason) {
   return reason === 'empty' || reason === 'paused' || reason === 'error' || reason === 'retry';
@@ -272,6 +354,7 @@ async function main() {
   if (!base || !tokenFile) throw new Error('Need --url and --token-file (or BB_COORDINATOR_URL and BB_COORDINATOR_TOKEN_FILE).');
   const token = tokenFrom(tokenFile);
   const hash = protocolHash();
+  cleanupStaleCoordDirs();
   const poll = +(process.env.BB_COORD_POLL_MS || 15000);
   const heartbeatMs = +(process.env.BB_COORD_HEARTBEAT_MS || 60000);
   let delay = 0;
@@ -318,12 +401,20 @@ async function main() {
       }
       const designPath = result.designPath;
       const modelPath = result.modelPath;
+      const outDir = result.outDir;
       delete result.designPath;
       delete result.modelPath;
+      delete result.outDir;
       delete result.pauseAfter;
       await uploadModel(base, token, claimed.job.id, modelPath);
+      const uploaded = await uploadDesigns(base, token, hash, designPath, {
+        heartbeat: () => workerHeartbeat(base, token, hash, claimed.job.id, 100),
+      });
+      if (!uploaded.ok) {
+        result.summary = (String(result.summary || '') + ' Design upload failed: ' + uploaded.error).slice(0, 500);
+      }
       await api(base, token, '/api/v1/result', { jobId: claimed.job.id, result: result });
-      await uploadDesigns(base, token, hash, designPath);
+      if (uploaded.ok && result.status === 'done') cleanupJobDir(outDir);
       console.log(JSON.stringify({ ok: true, job: claimed.job.id, status: result.status }));
       if (a.once) return;
       if (shouldWait(result.status === 'done' ? 'done' : 'error')) await sleep(poll);
@@ -343,4 +434,4 @@ async function main() {
   }
 }
 if (require.main === module) main().catch(e => { console.error(e.message || e); process.exit(1); });
-module.exports = { ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild, readProgress, shouldWait };
+module.exports = { ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild, readProgress, shouldWait, packUploadBatches, uploadDesigns, cleanupJobDir, cleanupStaleCoordDirs, retryAfterMs };

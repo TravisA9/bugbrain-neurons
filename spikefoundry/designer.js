@@ -7,8 +7,8 @@ const Library = require('./library.js');
 
 const DESIGN_FEATURES = 16;
 const ACTIONS = 8;
-const DESIGNER_VERSION = 'spikefoundry-designer-2';
-const EVAL_CAP = 100000;
+const DESIGNER_VERSION = 'spikefoundry-designer-3';
+const EVAL_CAP = 250000;
 
 function mulberry32(seed) {
   let a = (seed >>> 0) || 1;
@@ -174,7 +174,12 @@ function vary(genome, rng) {
     const mod = lif[Math.floor(rng() * lif.length)];
     mod.thr = Math.round((0.4 + rng() * 2.2) * 10000) / 10000;
     mod.leak = Math.round((0.2 + rng() * 0.7) * 10000) / 10000;
+    mod.n = clamp(Math.round(1 + rng() * 7), 1, 8);
   }
+  const input = g.modules.filter(mod => mod.kind === 'input')[0];
+  if (input && rng() < 0.7) input.n = clamp(Math.round(1 + rng() * 5), 1, 8);
+  const output = g.modules.filter(mod => mod.kind === 'output')[0];
+  if (output && rng() < 0.7) output.n = clamp(Math.round(1 + rng() * 3), 1, 4);
   return Genome.sanitize(g);
 }
 
@@ -186,10 +191,11 @@ function blankFor(taskId) {
 }
 
 function scoreSet(genome, samples) {
-  const compiled = Genome.compile(genome);
-  let exact = 0, tp = 0, fp = 0, fn = 0, spikes = 0;
+  let exact = 0, tp = 0, fp = 0, fn = 0, spikes = 0, neurons = 0, synapses = 0;
   samples.forEach(sample => {
     const run = Genome.simulate(genome, sample.seq);
+    neurons = run.neurons;
+    synapses = run.synapses;
     const label = (sample.label || []).map(value => !!value);
     const outs = run.outputs || [];
     let match = outs.length === label.length && label.length > 0;
@@ -211,8 +217,8 @@ function scoreSet(genome, samples) {
   const f1 = 2 * precision * recall / (precision + recall || 1);
   const accuracy = samples.length ? exact / samples.length : 0;
   const meanSpikes = spikes / n;
-  const quality = clamp(accuracy - 0.0015 * (compiled.neurons.length + compiled.edges.length) - 0.00025 * meanSpikes, 0, 1);
-  return { accuracy: accuracy, precision: precision, recall: recall, f1: f1, quality: quality, spikes: spikes, neurons: compiled.neurons.length, synapses: compiled.edges.length };
+  const quality = clamp(accuracy - 0.0015 * (neurons + synapses) - 0.00025 * meanSpikes, 0, 1);
+  return { accuracy: accuracy, precision: precision, recall: recall, f1: f1, quality: quality, spikes: spikes, neurons: neurons, synapses: synapses };
 }
 
 function scoreGenome(genome, taskId, seed, trials) {
@@ -254,6 +260,13 @@ function exampleFromScore(taskId, genome, quality) {
   return { x: pack(Tasks.featuresOf(spec), genome), y: clamp(quality, 0, 1) };
 }
 
+function thinCurve(points, max) {
+  if (!points || points.length <= max) return points ? points.slice() : [];
+  const out = [];
+  for (let i = 0; i < max; i++) out.push(points[Math.round(i * (points.length - 1) / (max - 1))]);
+  return out;
+}
+
 function run(job, outDir, SF) {
   const fs = require('fs'), path = require('path');
   fs.mkdirSync(outDir, { recursive: true });
@@ -272,23 +285,40 @@ function run(job, outDir, SF) {
   const fit = fitSurrogate(examples, job.seed || 1);
   const policy = makePolicy(rng);
   trainPolicy(policy, taskFeatures, 3, 0.4);
-  const proposed = [];
-  const evalCap = Math.max(1, Math.min(EVAL_CAP, +job.evals || EVAL_CAP));
+  const requested = +job.evals;
+  const evalCap = requested > 0 ? Math.max(1, Math.min(EVAL_CAP, requested)) : EVAL_CAP;
   const budgetMs = Math.max(1, Math.min(3600, +job.targetSeconds || +job.target_seconds || 180)) * 1000;
+  const keepTop = Math.max(1, Math.min(200, +job.keepTop || +job.keep_top || 50));
+  const keepRandom = Math.max(0, Math.min(2000, job.keepRandom != null ? +job.keepRandom : (job.keep_random != null ? +job.keep_random : 500)));
   const started = Date.now();
+  const top = [];
+  const topAt = new Map();
+  const randoms = [];
+  let randomSeen = 0;
+  const sampleRng = mulberry32(((job.seed || 1) ^ 0xA5A5A5A5) >>> 0);
+  const histogram = Array(10).fill(0);
+  const curve = [];
+  let evals = 0;
+  let designerEvals = 0;
+  let randomEvals = 0;
+  let designerSum = 0;
+  let randomSum = 0;
+  let bestHeld = 0;
+  let bestTrain = 0;
+  let spentMs = 0;
+  let lastProgress = 0;
   if (job.mode === 'propose') {
     const origin = blankFor(taskId);
-    while (proposed.length < evalCap) {
-      const randomArm = proposed.length % 10 === 9;
+    while (evals < evalCap) {
+      const randomArm = evals % 10 === 9;
       let genome = origin;
       if (randomArm) {
-        const steps = 3;
-        for (let step = 0; step < steps; step++) genome = vary(genome, rng);
+        for (let step = 0; step < 3; step++) genome = vary(genome, rng);
       } else {
         genome = vary(propose(taskFeatures, rng, policy, origin), rng);
       }
       const score = scoreGenome(genome, taskId, job.seed || 1);
-      proposed.push({
+      const item = {
         genome: genome,
         arm: randomArm ? 'random' : 'designer',
         quality: score.quality,
@@ -302,17 +332,85 @@ function run(job, outDir, SF) {
         neurons: score.neurons,
         synapses: score.synapses,
         evalMs: score.evalMs,
-      });
-      fs.writeFileSync(path.join(outDir, 'progress.json'), JSON.stringify({
-        synthetic: true,
-        batchesDone: proposed.length,
-        batchesTotal: evalCap,
-        status: 'running',
-        seed: job.seed || 1,
-      }));
-      if (Date.now() - started >= budgetMs) break;
+      };
+      evals++;
+      spentMs += score.evalMs || 0;
+      const held = score.heldOut;
+      const train = score.train;
+      if (held > bestHeld) bestHeld = held;
+      if (train > bestTrain) bestTrain = train;
+      const bin = held >= 1 ? 9 : Math.max(0, Math.min(9, Math.floor(held * 10)));
+      histogram[bin]++;
+      if (randomArm) {
+        randomEvals++;
+        randomSum += held;
+        randomSeen++;
+        if (randoms.length < keepRandom) randoms.push(item);
+        else {
+          const slot = Math.floor(sampleRng() * randomSeen);
+          if (slot < keepRandom) randoms[slot] = item;
+        }
+      } else {
+        designerEvals++;
+        designerSum += held;
+        const hash = Library.genomeHash(genome);
+        if (topAt.has(hash)) {
+          const at = topAt.get(hash);
+          if (held > top[at].heldOut) top[at] = item;
+        } else if (top.length < keepTop) {
+          topAt.set(hash, top.length);
+          top.push(item);
+        } else {
+          let worst = 0;
+          for (let i = 1; i < top.length; i++) if (top[i].heldOut < top[worst].heldOut) worst = i;
+          if (held > top[worst].heldOut) {
+            topAt.delete(Library.genomeHash(top[worst].genome));
+            top[worst] = item;
+            topAt.set(hash, worst);
+          }
+        }
+      }
+      curve.push({ n: evals, held: held, train: train, bestHeld: bestHeld, bestTrain: bestTrain });
+      if (curve.length > 400) {
+        const kept = [];
+        for (let i = 0; i < curve.length; i += 2) kept.push(curve[i]);
+        curve.length = 0;
+        kept.forEach(point => curve.push(point));
+      }
+      const now = Date.now();
+      if (now - lastProgress > 500 || evals === evalCap) {
+        lastProgress = now;
+        const byTime = Math.round(100 * (now - started) / budgetMs);
+        const byCount = Math.round(100 * evals / evalCap);
+        fs.writeFileSync(path.join(outDir, 'progress.json'), JSON.stringify({
+          synthetic: true,
+          batchesDone: Math.max(byTime, byCount),
+          batchesTotal: 100,
+          status: 'running',
+          seed: job.seed || 1,
+          evals: evals,
+        }));
+      }
+      if (now - started >= budgetMs) break;
     }
+    fs.writeFileSync(path.join(outDir, 'progress.json'), JSON.stringify({
+      synthetic: true,
+      batchesDone: 100,
+      batchesTotal: 100,
+      status: 'done',
+      seed: job.seed || 1,
+      evals: evals,
+    }));
   }
+  const chosen = top.slice();
+  const seen = new Set(top.map(item => Library.genomeHash(item.genome)));
+  randoms.forEach(item => {
+    const hash = Library.genomeHash(item.genome);
+    if (seen.has(hash)) return;
+    seen.add(hash);
+    chosen.push(item);
+  });
+  const curveOut = thinCurve(curve, 100);
   const screened = screen(taskFeatures, Genome.blank(2, 1), rng, fit.model, 8);
   const checkpoint = {
     format: 'spikefoundry-designer',
@@ -324,12 +422,30 @@ function run(job, outDir, SF) {
     synthetic: true,
   };
   fs.writeFileSync(path.join(outDir, 'model.json'), JSON.stringify(checkpoint));
-  const records = Library.fromEvaluations(proposed.map(item => ({
+  const records = Library.fromEvaluations(chosen.map(item => ({
     taskId: taskId, taskVersion: spec.version, genome: item.genome,
     metrics: { quality: item.quality, accuracy: item.accuracy, f1: item.f1, precision: item.precision, recall: item.recall, train: item.train, heldOut: item.heldOut, arm: item.arm || 'designer' },
     neurons: item.neurons, synapses: item.synapses, spikes: item.spikes, evalMs: item.evalMs || 0, seed: job.seed || 1,
   })), { jobId: job.id || 'designer', engineVersion: DESIGNER_VERSION });
-  if (records.length) fs.writeFileSync(path.join(outDir, 'designs.json'), JSON.stringify({ records: records }));
+  const aggregate = {
+    taskId: taskId,
+    taskVersion: spec.version,
+    evals: evals,
+    designerEvals: designerEvals,
+    randomEvals: randomEvals,
+    evalMs: spentMs,
+    bestHeld: bestHeld,
+    bestTrain: bestTrain,
+    designerMean: designerEvals ? designerSum / designerEvals : 0,
+    randomMean: randomEvals ? randomSum / randomEvals : 0,
+    histogram: histogram,
+    curve: curveOut,
+    keepTop: keepTop,
+    keepRandom: keepRandom,
+    engineVersion: DESIGNER_VERSION,
+    jobId: job.id || 'designer',
+  };
+  if (records.length || evals) fs.writeFileSync(path.join(outDir, 'designs.json'), JSON.stringify({ records: records, summary: aggregate }));
   const summary = {
     synthetic: true,
     batches: 1,
@@ -337,7 +453,7 @@ function run(job, outDir, SF) {
     phase: 1,
     tasks: [{ task: taskId, name: taskId, syntheticScore: screened[0] ? screened[0].predicted : 0, syntheticMatch: screened[0] ? screened[0].predicted : 0, neurons: 0, synapses: 0, batch: 1 }],
     spearman: fit.spearman,
-    proposed: proposed.length,
+    proposed: evals,
     screened: screened.map(item => item.predicted),
     note: 'Synthetic spike-pattern match on generated examples. Not BugBrain accuracy.',
   };

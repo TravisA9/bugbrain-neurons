@@ -492,7 +492,7 @@ try {
         } elseif ($path === '/owner/project-create') {
             $app->createProject((string) ($_POST['title'] ?? ''), (string) ($_POST['summary'] ?? ''), (string) ($_POST['runner'] ?? ''), (int) ($_POST['priority'] ?? 1), isset($_POST['enabled']));
         } elseif ($path === '/owner/supply') {
-            $app->saveSupply((string) ($_POST['id'] ?? ''), isset($_POST['auto']), (int) ($_POST['low'] ?? 0), (int) ($_POST['cap'] ?? 8), (int) ($_POST['evals'] ?? 100000), (int) ($_POST['seconds'] ?? 180));
+            $app->saveSupply((string) ($_POST['id'] ?? ''), isset($_POST['auto']), (int) ($_POST['low'] ?? 0), (int) ($_POST['cap'] ?? 8), (int) ($_POST['evals'] ?? 0), (int) ($_POST['seconds'] ?? 180), (int) ($_POST['keep'] ?? 50), (int) ($_POST['random'] ?? 500));
         } elseif ($path === '/owner/task-policy') {
             $app->saveTaskPolicy((string) ($_POST['project'] ?? ''), (string) ($_POST['task'] ?? ''), (float) ($_POST['delta'] ?? 0.005), (int) ($_POST['evals'] ?? 3000), (float) ($_POST['hours'] ?? 6), (string) ($_POST['action'] ?? 'flag'));
         } elseif ($path === '/owner/design-public') {
@@ -516,7 +516,14 @@ try {
     if (str_starts_with($path, '/api/v1/') ) {
         $token = coord_bearer();
         $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? 'local');
-        if (!$app->rateLimit('api:' . ($token !== '' ? hash('sha256', $token) : $ip), (int) $app->config['api_per_minute'])) {
+        $bucket = ($path === '/api/v1/designs')
+            ? 'design:' . ($token !== '' ? hash('sha256', $token) : $ip)
+            : 'api:' . ($token !== '' ? hash('sha256', $token) : $ip);
+        $limit = ($path === '/api/v1/designs')
+            ? (int) ($app->config['design_per_minute'] ?? 60)
+            : (int) $app->config['api_per_minute'];
+        if (!$app->rateLimit($bucket, $limit)) {
+            header('Retry-After: 30');
             coord_json(429, ['error' => 'Slow down.']);
             return;
         }
@@ -545,14 +552,14 @@ try {
         }
         if ($path === '/api/v1/designs' && $method === 'POST') {
             $raw = file_get_contents('php://input') ?: '';
-            if (strlen($raw) > 65536) {
+            if (strlen($raw) > 1500000) {
                 coord_json(413, ['error' => 'Upload is too large.']);
                 return;
             }
             $encoding = strtolower((string) ($_SERVER['HTTP_CONTENT_ENCODING'] ?? ''));
             if ($encoding === 'gzip') {
                 $raw = gzdecode($raw);
-                if ($raw === false || strlen($raw) > 100000) {
+                if ($raw === false || strlen($raw) > 2000000) {
                     coord_json(400, ['error' => 'Design upload could not be read.']);
                     return;
                 }
@@ -566,6 +573,12 @@ try {
             if ($sent !== '' && !$app->codeApproved($sent)) {
                 coord_json(409, ['error' => 'This worker build is not an approved code version.']);
                 return;
+            }
+            if (isset($data['summary']) && is_array($data['summary'])) {
+                if (!isset($data['summary']['jobId']) && isset($data['records'][0]['jobId'])) {
+                    $data['summary']['jobId'] = $data['records'][0]['jobId'];
+                }
+                $app->ingestSummary($worker, $data['summary']);
             }
             coord_json(200, $app->ingestDesigns($worker, $data['records'], $sent !== '' ? $sent : $app->protocolHash()));
             return;
