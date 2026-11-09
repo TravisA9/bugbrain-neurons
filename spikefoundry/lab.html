@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Interactive lab that trains a small design model to propose SNNs from synthetic feedback. Explore only. It does not donate this computer.">
+<title>SpikeFoundry — SNN Design Lab</title>
+<style>
+  :root { --bg:#0c1218; --card:#121b24; --line:#243140; --text:#e7eef4; --muted:#8ea0b0; --mint:#6ee7b7; --amber:#f0c27a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 "Segoe UI", system-ui, sans-serif; }
+  header, main { width: min(1100px, calc(100% - 28px)); margin: 0 auto; }
+  header { padding: 22px 0 8px; }
+  .mark { letter-spacing: .16em; text-transform: uppercase; color: var(--mint); font-size: 12px; margin: 0; }
+  h1 { font-size: 32px; line-height: 1.1; margin: 6px 0; }
+  .banner { background: #2a2416; color: #f3e2b8; border-radius: 12px; padding: 12px 14px; }
+  .layout { display: grid; grid-template-columns: 1.3fr .7fr; gap: 14px; padding: 14px 0 40px; }
+  @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } h1 { font-size: 26px; } }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  h2 { font-size: 18px; margin: 0 0 8px; }
+  button, select { font: inherit; }
+  button { background: var(--mint); color: #082016; border: 0; border-radius: 999px; padding: 10px 14px; cursor: pointer; }
+  button.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
+  button:disabled { opacity: .45; }
+  button:focus-visible, select:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .metric { font-size: 28px; margin: 4px 0; }
+  .muted { color: var(--muted); }
+  svg { width: 100%; height: auto; background: #0c141c; border-radius: 10px; }
+  .task { display: block; width: 100%; text-align: left; background: #0e1620; color: var(--text); border: 1px solid var(--line); border-radius: 10px; margin: 6px 0; padding: 8px 10px; }
+  .task.on { border-color: var(--mint); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td, th { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+  #status { min-height: 1.3em; }
+</style>
+</head>
+<body>
+<header>
+  <p class="mark">SpikeFoundry</p>
+  <h1>SNN design lab</h1>
+  <p class="banner" id="honesty">Explore only. This page trains a small model to propose circuits and scores them on synthetic spike patterns. The percent is not a BugBrain reading score, and nothing here is sent to the shared queue or enrolls this computer.</p>
+</header>
+<main class="layout">
+  <div>
+    <section aria-labelledby="run-title">
+      <h2 id="run-title">One batch</h2>
+      <p class="metric" id="score">—</p>
+      <p class="muted" id="scoreNote">No batch yet. The score appears after you run one.</p>
+      <div class="row">
+        <button id="run" type="button">Run 1 batch</button>
+        <button id="pause" type="button" class="secondary">Pause</button>
+        <label>Seed <input id="seed" type="number" value="7" min="1" max="999999"></label>
+        <button id="reset" type="button" class="secondary">New local run</button>
+      </div>
+      <p id="status" role="status"></p>
+    </section>
+    <section aria-labelledby="net-title">
+      <h2 id="net-title">Proposed circuit</h2>
+      <p class="muted" id="netNote">The drawing is the circuit the model just proposed for the selected synthetic task.</p>
+      <svg id="net" viewBox="0 0 640 220" role="img" aria-label="Proposed circuit"></svg>
+    </section>
+  </div>
+  <div>
+    <section aria-labelledby="tasks-title">
+      <h2 id="tasks-title">Synthetic tasks</h2>
+      <div id="tasks"></div>
+    </section>
+    <section aria-labelledby="log-title">
+      <h2 id="log-title">Recent batches</h2>
+      <div id="log" class="muted">None yet.</div>
+    </section>
+  </div>
+</main>
+<script src="/spikefoundry/engine.js"></script>
+<script>
+(function () {
+  const SF = window.SpikeFoundry;
+  if (!SF) { document.getElementById('status').textContent = 'The shared engine did not load.'; return; }
+  const $ = id => document.getElementById(id);
+  let state = null, busy = false, held = false, task = 'coincidence';
+  function say(t) { $('status').textContent = t || ''; }
+  function start(seed) {
+    state = SF.createState(+seed || 1, SF.LAB_BUDGET);
+    say('Local run, seed ' + state.seed + '. Not shared.');
+    paint();
+  }
+  function paint() {
+    const tasks = SF.taskList();
+    const box = $('tasks');
+    box.replaceChildren();
+    tasks.forEach(t => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'task' + (t.id === task ? ' on' : '');
+      const best = state && state.best[t.id];
+      b.textContent = t.name + (best ? ' · synthetic ' + Math.round(best.score * 100) + '%' : ' · not scored');
+      b.addEventListener('click', () => { task = t.id; paint(); });
+      box.appendChild(b);
+    });
+    const best = state && state.best[task];
+    if (best) {
+      $('score').textContent = Math.round(best.accuracy * 100) + '% pattern match';
+      $('scoreNote').textContent = 'Synthetic held-out match for ' + SF.BASE_TASKS[task].name + '. Score used for search is ' + best.score.toFixed(3) + ' after a size penalty. Not a BugBrain result.';
+      draw(best.g, task);
+    } else {
+      $('score').textContent = '—';
+      $('scoreNote').textContent = 'No batch yet for this task.';
+      $('net').replaceChildren();
+    }
+    const log = $('log');
+    log.replaceChildren();
+    (state ? state.logs.slice().reverse() : []).forEach(row => {
+      const p = document.createElement('p');
+      p.textContent = 'Batch ' + row.batch + ' · ' + row.text;
+      log.appendChild(p);
+    });
+    if (!state || !state.logs.length) log.textContent = 'None yet.';
+    $('run').disabled = busy || held;
+    $('pause').textContent = held ? 'Resume this page' : 'Hold this page';
+    $('pause').setAttribute('aria-pressed', held ? 'true' : 'false');
+  }
+  function draw(g, taskId) {
+    const net = SF.network(g, taskId);
+    const svg = $('net');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    const layers = {};
+    net.nodes.forEach((n, i) => { (layers[n.layer] = layers[n.layer] || []).push(i); });
+    const keys = Object.keys(layers).map(Number).sort((a, b) => a - b);
+    const pos = {};
+    keys.forEach((layer, li) => {
+      layers[layer].forEach((id, i) => {
+        pos[id] = { x: 70 + li * (500 / Math.max(1, keys.length - 1)), y: 36 + i * (160 / Math.max(1, layers[layer].length)) };
+      });
+    });
+    const ns = 'http://www.w3.org/2000/svg';
+    net.edges.forEach(e => {
+      const a = pos[e.from], b = pos[e.to]; if (!a || !b) return;
+      const line = document.createElementNS(ns, 'line');
+      line.setAttribute('x1', a.x); line.setAttribute('y1', a.y); line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+      line.setAttribute('stroke', '#3d5566'); line.setAttribute('stroke-width', '1.4');
+      svg.appendChild(line);
+    });
+    net.nodes.forEach((n, id) => {
+      const p = pos[id], c = document.createElementNS(ns, 'circle');
+      c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); c.setAttribute('r', n.kind === 'hidden' ? 9 : 12);
+      c.setAttribute('fill', n.kind === 'input' ? '#14352d' : n.kind === 'output' ? '#3a2a16' : '#241c3d');
+      c.setAttribute('stroke', '#6ee7b7');
+      svg.appendChild(c);
+      const label = document.createElementNS(ns, 'text');
+      label.setAttribute('x', p.x); label.setAttribute('y', p.y + 4); label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('fill', '#e7eef4'); label.setAttribute('font-size', '10');
+      label.textContent = n.label;
+      svg.appendChild(label);
+    });
+    $('netNote').textContent = net.nodes.length + ' neurons, ' + net.edges.length + ' synapses. Synthetic circuit, not a BugBrain brain.';
+  }
+  async function one() {
+    if (!state || busy || held) return;
+    busy = true; paint(); say('Running one synthetic batch on this page…');
+    await new Promise(r => setTimeout(r, 20));
+    try { SF.runBatch(state); say('Batch ' + state.batch + ' finished here. Nothing was submitted.'); }
+    catch (e) { say(e.message || 'The batch failed. Nothing was submitted.'); }
+    busy = false; paint();
+  }
+  $('run').addEventListener('click', one);
+  $('pause').addEventListener('click', () => { held = !held; say(held ? 'This page will not run another batch until you resume. A background worker is separate.' : 'This page can run a batch again.'); paint(); });
+  $('reset').addEventListener('click', () => { busy = false; held = false; start(+$('seed').value); });
+  start(7);
+})();
+</script>
+</body>
+</html>

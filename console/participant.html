@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your BugBrain computer</title>
+<style>
+  :root { --paper:#f4efe6; --card:#fffaf3; --ink:#241c16; --muted:#5c5348; --line:#e3d7c6; --moss:#1d6b4a; --clay:#a33b24; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.45 "Segoe UI", system-ui, sans-serif; }
+  main { width: min(760px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 48px; display: grid; gap: 14px; }
+  h1 { font: 600 34px/1.1 Georgia, Palatino, serif; margin: 0 0 8px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  h2 { font: 600 20px/1.2 Georgia, Palatino, serif; margin: 0 0 8px; }
+  button, input { font: inherit; }
+  button { background: var(--ink); color: #fffaf3; border: 0; border-radius: 999px; padding: 10px 14px; cursor: pointer; }
+  button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button:disabled { opacity: .45; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #c9a15b; outline-offset: 2px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .muted { color: var(--muted); }
+  .chip { display: inline-block; border-radius: 999px; padding: 3px 8px; background: #efe6d8; margin-right: 6px; font-size: 14px; }
+  #msg { min-height: 1.2em; color: var(--clay); }
+  label { display: block; margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Your computer</h1>
+    <p class="muted">This page is only for the person at this machine. It cannot change project order, and it cannot see the owner key.</p>
+  </header>
+  <section aria-labelledby="now-title">
+    <h2 id="now-title">Right now</h2>
+    <p id="headline">Checking…</p>
+    <p id="explain" class="muted"></p>
+    <p id="progress"></p>
+    <div class="row">
+      <button id="pause" type="button" class="secondary">Pause new work</button>
+      <button id="off" type="button" class="secondary">Turn worker off</button>
+    </div>
+  </section>
+  <section aria-labelledby="give-title">
+    <h2 id="give-title">Donate compute</h2>
+    <p class="muted">Off until you agree. Explore the lab does not do this. A background worker, not this browser tab, runs the jobs.</p>
+    <label><input id="consent" type="checkbox"> I agree this computer may run the projects I tick, starting with SpikeFoundry when it has work.</label>
+    <label><input id="allow-sf" type="checkbox"> SpikeFoundry synthetic design jobs</label>
+    <label><input id="allow-bb" type="checkbox"> BugBrain reading and generation tests</label>
+    <label>Most batches I will take <input id="max" type="number" min="1" max="20" value="2"></label>
+    <button id="save" type="button">Save my choices</button>
+  </section>
+  <section aria-labelledby="hist-title">
+    <h2 id="hist-title">Recent results on this computer</h2>
+    <div id="history" class="muted">None yet.</div>
+  </section>
+  <p id="msg" role="status"></p>
+  <p class="muted">Public volunteers cannot join yet. The shared queue is a private git branch. This pilot stays on computers the owner already set up.</p>
+</main>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  function token() {
+    const h = new URLSearchParams(location.hash.replace(/^#/, ''));
+    if (h.get('token')) { sessionStorage.setItem('bb-participant', h.get('token')); history.replaceState(null, '', location.pathname); }
+    return sessionStorage.getItem('bb-participant') || '';
+  }
+  const KEY = token();
+  function say(t) { $('msg').textContent = t || ''; }
+  async function api(path, body) {
+    const res = await fetch(path, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'X-Bugbrain-Token': KEY }, body: body ? JSON.stringify(body) : undefined });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Could not update this computer.');
+    return data;
+  }
+  function paint(s) {
+    const cur = s.current;
+    $('headline').textContent = cur ? (cur.projectTitle + ' · ' + cur.title) : 'Not running a shared job';
+    $('explain').textContent = s.explanation || '';
+    if (!cur) $('progress').textContent = 'Progress: unknown. No checkpoint has been reported.';
+    else if (cur.progress && cur.progress.known) $('progress').textContent = 'Progress: batch ' + cur.progress.batchesDone + ' of ' + cur.progress.batchesTotal + ' (synthetic).';
+    else $('progress').textContent = 'Progress: unknown until this computer reports a checkpoint.';
+    const p = s.participant || {};
+    $('consent').checked = !!p.donate;
+    $('allow-sf').checked = (p.allowedProjects || []).indexOf('spikefoundry') >= 0;
+    $('allow-bb').checked = (p.allowedProjects || []).indexOf('bugbrain') >= 0;
+    if (p.maxBatches) $('max').value = p.maxBatches;
+    const hist = $('history');
+    hist.replaceChildren();
+    (s.history || []).forEach(row => { const el = document.createElement('p'); el.textContent = row; hist.appendChild(el); });
+    if (!s.history || !s.history.length) hist.textContent = 'None yet.';
+  }
+  async function load() { try { paint(await api('/api/participant/state')); } catch (e) { say(e.message); } }
+  $('save').addEventListener('click', async () => {
+    const allowed = [];
+    if ($('allow-sf').checked) allowed.push('spikefoundry');
+    if ($('allow-bb').checked) allowed.push('bugbrain');
+    if ($('consent').checked && !allowed.length) { say('Tick at least one project, or leave donate off.'); return; }
+    try {
+      const out = await api('/api/participant/choices', { donate: $('consent').checked, allowedProjects: allowed, maxBatches: +$('max').value });
+      say(out.note || 'Saved on this computer.');
+      await load();
+    } catch (e) { say(e.message); }
+  });
+  $('pause').addEventListener('click', async () => { try { const out = await api('/api/participant/pause', {}); say(out.note); await load(); } catch (e) { say(e.message); } });
+  $('off').addEventListener('click', async () => {
+    if (!confirm('Turn the worker off on this computer? A test already running is interrupted, not deleted.')) return;
+    try { const out = await api('/api/participant/off', {}); say(out.note || out.error || 'Off requested.'); } catch (e) { say(e.message); }
+  });
+  if (!KEY) { say('Open this page from the participant link. The owner link will not work here.'); return; }
+  load();
+})();
+</script>
+</body>
+</html>

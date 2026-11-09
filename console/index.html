@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BugBrain desk</title>
+<style>
+  :root {
+    --paper: #f3ecdf;
+    --card: #fffaf2;
+    --ink: #241c16;
+    --muted: #5e564c;
+    --line: #e2d5c3;
+    --moss: #1f6a4a;
+    --moss-soft: #e5f3eb;
+    --clay: #a33b24;
+    --clay-soft: #fde8e1;
+    --amber: #8a5a12;
+    --amber-soft: #fff1d6;
+    --slate: #4d5560;
+    --slate-soft: #ece7df;
+    --shadow: 0 12px 32px rgba(60, 40, 20, .06);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.45 "Segoe UI", system-ui, sans-serif; }
+  header, main { width: min(1080px, calc(100% - 32px)); margin: 0 auto; }
+  header { padding: 28px 0 8px; }
+  .mark { font: 600 13px/1 system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--moss); margin: 0 0 8px; }
+  h1 { font: 600 40px/1.05 Georgia, "Iowan Old Style", Palatino, serif; margin: 0 0 8px; letter-spacing: -.02em; }
+  .lede { margin: 0; max-width: 62ch; color: var(--muted); }
+  .banner { margin: 16px 0 0; padding: 12px 14px; background: var(--amber-soft); border-radius: 12px; color: #5c3b08; }
+  main { padding: 18px 0 64px; display: grid; gap: 16px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: 1.1fr .9fr; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } h1 { font-size: 32px; } }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); padding: 18px 18px 16px; }
+  h2 { font: 600 22px/1.2 Georgia, Palatino, serif; margin: 0 0 8px; }
+  h3 { font: 600 18px/1.3 Georgia, Palatino, serif; margin: 0; }
+  p { margin: 0 0 10px; }
+  .muted { color: var(--muted); }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button, select, input { font: inherit; color: inherit; }
+  button { background: var(--ink); color: #fffaf2; border: 0; border-radius: 999px; padding: 10px 16px; cursor: pointer; }
+  button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid #c9a15b; outline-offset: 2px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .chip { border-radius: 999px; padding: 4px 10px; font-size: 14px; background: var(--slate-soft); color: var(--slate); }
+  .chip.on, .chip.busy { background: var(--moss-soft); color: var(--moss); }
+  .chip.off, .chip.error { background: var(--clay-soft); color: var(--clay); }
+  .chip.pause, .chip.held, .chip.parked { background: var(--amber-soft); color: var(--amber); }
+  .chip.offline { background: var(--slate-soft); color: var(--slate); }
+  .status-line { font: 600 28px/1.15 Georgia, Palatino, serif; margin: 4px 0 8px; }
+  ul.plain { margin: 8px 0 0; padding-left: 18px; }
+  ul.plain li { margin: 4px 0; }
+  .job { border-top: 1px solid var(--line); padding: 12px 0; }
+  .job:first-of-type { border-top: 0; }
+  .job p { margin: 4px 0; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  select, input[type="number"] { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+  .templates { display: grid; gap: 8px; }
+  .template { text-align: left; background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 14px; padding: 12px; cursor: pointer; }
+  .template.on { border-color: var(--moss); background: var(--moss-soft); }
+  .template strong { display: block; margin-bottom: 4px; }
+  #detail { white-space: normal; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  pre { white-space: pre-wrap; background: #fff; border-radius: 12px; padding: 10px; font: 13px/1.4 ui-monospace, monospace; max-height: 280px; overflow: auto; }
+  .err { color: var(--clay); }
+  #toast { min-height: 1.2em; }
+</style>
+</head>
+<body>
+<header>
+  <p class="mark">BugBrain</p>
+  <h1>Desk</h1>
+  <p class="lede">Line up brain tests and see which computers are actually working. The tests run on a Windows or Linux worker. This page cannot run them, and neither can a phone.</p>
+  <p id="banner" class="banner" hidden></p>
+</header>
+<main>
+  <div class="grid">
+    <section aria-labelledby="here-title">
+      <h2 id="here-title">This computer</h2>
+      <p id="here-status" class="status-line">Checking…</p>
+      <div id="here-chips" class="chips"></div>
+      <p id="here-detail" class="muted"></p>
+      <div class="actions">
+        <button id="btn-on" type="button">Turn worker on</button>
+        <button id="btn-off" type="button" class="secondary">Turn worker off</button>
+        <button id="btn-pause" type="button" class="secondary">Pause new work</button>
+        <button id="btn-resume" type="button" class="secondary">Allow new work</button>
+      </div>
+      <p class="muted" id="here-help">Turn on and off match the BugBrainWorker task (Windows) or the bugbrain-worker service (Linux). Pause keeps a test that is already running, then waits. Off stops the program. The test is not deleted.</p>
+    </section>
+    <section aria-labelledby="why-title">
+      <h2 id="why-title">What is going on</h2>
+      <ul id="why" class="plain"></ul>
+      <p id="toast" class="err" role="status"></p>
+    </section>
+  </div>
+  <section aria-labelledby="projects-title">
+    <h2 id="projects-title">Projects</h2>
+    <p class="muted">Owner only. Higher priority runs first. SpikeFoundry stays ahead of BugBrain while both are enabled and a participant has opted in. A job already running is not taken away.</p>
+    <div id="projects"></div>
+    <div class="actions">
+      <input id="new-project" type="text" placeholder="Project name" aria-label="New project name">
+      <button id="add-project" type="button">Add project</button>
+    </div>
+  </section>
+  <section aria-labelledby="fleet-title">
+    <h2 id="fleet-title">Computers</h2>
+    <p class="muted">Enabled means the shared settings allow that computer to take tests. Heartbeat means it has checked in within 45 minutes. A saved “running” note older than that is offline.</p>
+    <div id="fleet"></div>
+  </section>
+  <div class="grid">
+    <section aria-labelledby="queue-title">
+      <h2 id="queue-title">Tests</h2>
+      <div id="jobs"></div>
+    </section>
+    <section aria-labelledby="add-title">
+      <h2 id="add-title">Add a test</h2>
+      <p class="muted">These are the real v47 checks the queue already knows how to run, cut down to one growth. They wait for a worker. They do not start in this browser.</p>
+      <div id="templates" class="templates"></div>
+      <div class="actions">
+        <label>Growth number <input id="seed" type="number" min="0" max="1000000" value="8000"></label>
+        <button id="btn-add" type="button">Add to the queue</button>
+      </div>
+      <p class="muted">Seeds from 8000 stay clear of the research growths already used. Higher priority runs first. Changing priority does not stop a test that has already started.</p>
+    </section>
+  </div>
+  <section id="detail-wrap" aria-labelledby="detail-title" hidden>
+    <h2 id="detail-title">Result</h2>
+    <div id="detail"></div>
+  </section>
+</main>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  function token() {
+    const h = new URLSearchParams(location.hash.replace(/^#/, ''));
+    if (h.get('token')) { sessionStorage.setItem('bb-token', h.get('token')); history.replaceState(null, '', location.pathname); }
+    return sessionStorage.getItem('bb-token') || '';
+  }
+  const KEY = token();
+  let state = null, chosen = null, pickedTemplate = null, sig = '';
+
+  function toast(msg) { $('toast').textContent = msg || ''; }
+  async function api(path, body) {
+    const res = await fetch(path, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'X-Bugbrain-Token': KEY }, body: body ? JSON.stringify(body) : undefined });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'The desk could not do that.');
+    return data;
+  }
+  function chip(text, kind) { const s = document.createElement('span'); s.className = 'chip ' + (kind || ''); s.textContent = text; return s; }
+  function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+
+  function paintHere() {
+    const c = state.thisComputer || {};
+    const chips = $('here-chips'); clear(chips);
+    let headline = 'Worker status unknown';
+    let detail = c.detail || '';
+    if (!c.installed && !c.unknown) {
+      headline = 'Worker is not installed';
+      chips.appendChild(chip('Not installed', 'off'));
+    } else if (c.unknown || (c.installed && c.enabled == null)) {
+      headline = 'Could not read the worker';
+      chips.appendChild(chip('Unknown', 'error'));
+      detail = detail || 'The task could not be queried. This is not shown as running.';
+    } else if (c.installed) {
+      const on = !!c.enabled;
+      const running = !!c.running;
+      headline = !on ? 'Worker is off' : running ? 'Worker is on' : 'Enabled, not running';
+      chips.appendChild(chip(on ? 'Enabled' : 'Disabled', on ? 'on' : 'off'));
+      chips.appendChild(chip(running ? 'Process running' : 'Process stopped', running ? 'busy' : 'offline'));
+      if (c.failed) chips.appendChild(chip('Last start failed', 'error'));
+      if (c.worker) {
+        chips.appendChild(chip(c.worker.connected ? 'Heartbeat connected' : 'Heartbeat offline', c.worker.connected ? 'on' : 'offline'));
+        chips.appendChild(chip(c.worker.label, c.worker.activity));
+      }
+    }
+    if (!c.liveSwitch) {
+      chips.appendChild(chip('On/off not armed', 'offline'));
+      detail = (detail ? detail + ' ' : '') + 'The on/off buttons are disabled so this screen cannot start the task. On the computer that should run tests, start the desk with --live-switch. Pause still edits this queue copy.';
+    }
+    $('here-status').textContent = headline;
+    $('here-detail').textContent = detail;
+    const canTask = !!(c.liveSwitch && c.installed && !c.unknown && c.enabled != null);
+    $('btn-on').disabled = !canTask || (c.enabled === true && c.running === true);
+    $('btn-off').disabled = !canTask || (c.enabled === false && c.running === false);
+    const named = !!(state.localName || (c.worker && c.worker.name));
+    $('btn-pause').disabled = !named;
+    $('btn-resume').disabled = !named;
+  }
+
+  function paintWhy() {
+    const ul = $('why'); clear(ul);
+    (state.whyIdle || ['No note.']).forEach(line => { const li = document.createElement('li'); li.textContent = line; ul.appendChild(li); });
+    if (!state.publishArmed) { const li = document.createElement('li'); li.textContent = 'Edits stay in this folder until you start the desk with --publish and choose to send them. Nothing is pushed by opening this page.'; ul.appendChild(li); }
+  }
+
+  function paintProjects() {
+    const box = $('projects'); if (!box) return; clear(box);
+    (state.projects || []).forEach(p => {
+      const art = document.createElement('article'); art.className = 'job';
+      const h = document.createElement('h3'); h.textContent = p.title; art.appendChild(h);
+      const meta = document.createElement('p'); meta.className = 'muted';
+      meta.textContent = p.id + ' · priority ' + p.priority + (p.enabled ? ' · enabled' : ' · off') + (p.summary ? ' · ' + p.summary : '');
+      art.appendChild(meta);
+      const actions = document.createElement('div'); actions.className = 'actions';
+      const up = document.createElement('button'); up.type = 'button'; up.textContent = 'Higher';
+      up.addEventListener('click', () => act(() => api('/api/project', { id: p.id, priority: Math.min(100, +(p.priority) + 1) })));
+      const down = document.createElement('button'); down.type = 'button'; down.className = 'secondary'; down.textContent = 'Lower';
+      down.addEventListener('click', () => act(() => api('/api/project', { id: p.id, priority: Math.max(0, +(p.priority) - 1) })));
+      const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'secondary';
+      toggle.textContent = p.enabled ? 'Disable' : 'Enable';
+      toggle.addEventListener('click', () => act(() => api('/api/project', { id: p.id, enabled: !p.enabled })));
+      actions.appendChild(up); actions.appendChild(down); actions.appendChild(toggle); art.appendChild(actions);
+      box.appendChild(art);
+    });
+    if (!(state.projects || []).length) { const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'No project list yet. Add SpikeFoundry and BugBrain to turn on two-project order.'; box.appendChild(p); }
+  }
+  function paintFleet() {
+    const box = $('fleet'); clear(box);
+    if (!state.workers.length) { const p = document.createElement('p'); p.textContent = 'No computer has published a heartbeat into this queue copy.'; box.appendChild(p); return; }
+    state.workers.forEach(w => {
+      const art = document.createElement('article'); art.className = 'job';
+      const h = document.createElement('h3'); h.textContent = w.name + (w.host ? ' · ' + w.host : ''); art.appendChild(h);
+      const chips = document.createElement('div'); chips.className = 'chips';
+      chips.appendChild(chip(w.enabled ? 'Enabled' : 'Disabled', w.enabled ? 'on' : 'off'));
+      chips.appendChild(chip(w.connected ? 'Heartbeat connected' : 'Heartbeat offline', w.connected ? 'on' : 'offline'));
+      chips.appendChild(chip(w.label, w.activity));
+      art.appendChild(chips);
+      const p = document.createElement('p'); p.className = 'muted';
+      const bits = [w.type + (w.platform ? ' / ' + w.platform : '')];
+      if (w.lastSeen) bits.push('last message ' + w.lastSeen);
+      if (w.connected && w.job) bits.push('working on ' + w.job);
+      if (w.yielding) bits.push('waiting because the computer is busy');
+      if (w.code) bits.push('code ' + w.code);
+      p.textContent = bits.join(' · ');
+      art.appendChild(p);
+      if (w.pauseNote) { const s = document.createElement('p'); s.textContent = w.pauseNote; art.appendChild(s); }
+      if (w.staleNote) { const s = document.createElement('p'); s.textContent = w.staleNote; art.appendChild(s); }
+      const actions = document.createElement('div'); actions.className = 'actions';
+      const pause = document.createElement('button'); pause.type = 'button'; pause.className = 'secondary'; pause.textContent = 'Pause new work';
+      pause.addEventListener('click', () => act(() => api('/api/mode', { worker: w.name, mode: 'pause' })));
+      const resume = document.createElement('button'); resume.type = 'button'; resume.className = 'secondary'; resume.textContent = 'Allow new work';
+      resume.addEventListener('click', () => act(() => api('/api/mode', { worker: w.name, mode: 'run' })));
+      actions.appendChild(pause); actions.appendChild(resume); art.appendChild(actions);
+      box.appendChild(art);
+    });
+  }
+
+  function jobBlock(title, list) {
+    const wrap = document.createElement('div');
+    const h = document.createElement('h3'); h.textContent = title; wrap.appendChild(h);
+    if (!list.length) { const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'None.'; wrap.appendChild(p); return wrap; }
+    list.forEach(j => wrap.appendChild(jobCard(j)));
+    return wrap;
+  }
+  function jobCard(j) {
+    const art = document.createElement('article'); art.className = 'job';
+    const h = document.createElement('h3'); h.textContent = j.title; art.appendChild(h);
+    const chips = document.createElement('div'); chips.className = 'chips';
+    chips.appendChild(chip(j.phase, j.phase === 'working' ? 'busy' : j.phase === 'waiting' ? 'on' : j.phase));
+    chips.appendChild(chip('Priority ' + j.effectivePriority, ''));
+    if (j.assign) chips.appendChild(chip('Assigned to ' + j.assign, 'pause'));
+    art.appendChild(chips);
+    const p = document.createElement('p'); p.className = 'muted';
+    const bits = [j.id];
+    if (j.estHours) bits.push('about ' + j.estHours + ' h');
+    if (j.memGB != null) bits.push(j.memGB + ' GB');
+    if (j.runs) bits.push(j.runs + ' runs');
+    if (j.claim) bits.push('leased to ' + j.claim.worker + ' until ' + j.claim.until);
+    if (j.done && j.done.finishedAt) bits.push('finished ' + j.done.finishedAt + (j.done.worker ? ' by ' + j.done.worker : '') + (j.done.pass === true ? ' · passed' : j.done.pass === false ? ' · failed the check' : ''));
+    p.textContent = bits.join(' · ');
+    art.appendChild(p);
+    if (j.parkReason === 'file') { const n = document.createElement('p'); n.textContent = 'Parked in the test file. The desk will not start it or rewrite that file.'; art.appendChild(n); }
+    if (j.parkReason === 'config') { const n = document.createElement('p'); n.textContent = 'Held in worker settings. Allow it if it should run again.'; art.appendChild(n); }
+    if (j.phase === 'leased') { const n = document.createElement('p'); n.textContent = 'A computer still holds this lease but is not reporting this test as the one it is running. It is not given to anyone else, so it cannot run twice.'; art.appendChild(n); }
+    if (j.phase === 'held') { const n = document.createElement('p'); n.textContent = 'The computer that took this is not sending a heartbeat. It stays with them until the lease ends so it cannot run twice.'; art.appendChild(n); }
+    const actions = document.createElement('div'); actions.className = 'actions';
+    if (j.phase === 'waiting' || j.phase === 'held' || j.phase === 'leased') {
+      const sooner = document.createElement('button'); sooner.type = 'button'; sooner.textContent = 'Run sooner';
+      sooner.addEventListener('click', () => nudge(j, 1));
+      const later = document.createElement('button'); later.type = 'button'; later.className = 'secondary'; later.textContent = 'Run later';
+      later.addEventListener('click', () => nudge(j, -1));
+      actions.appendChild(sooner); actions.appendChild(later);
+    }
+    if (j.phase === 'waiting') {
+      const sel = document.createElement('select');
+      const any = document.createElement('option'); any.value = ''; any.textContent = 'Any eligible computer'; sel.appendChild(any);
+      state.workerNames.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = 'Only ' + n; if (j.assign === n) o.selected = true; sel.appendChild(o); });
+      sel.addEventListener('change', () => act(() => api('/api/assign', { id: j.id, worker: sel.value })));
+      actions.appendChild(sel);
+    }
+    if (j.parkReason === 'config') {
+      const allow = document.createElement('button'); allow.type = 'button'; allow.textContent = 'Allow this test';
+      allow.addEventListener('click', () => act(() => api('/api/block', { id: j.id, blocked: false })));
+      actions.appendChild(allow);
+    } else if (j.phase === 'waiting') {
+      const hold = document.createElement('button'); hold.type = 'button'; hold.className = 'secondary'; hold.textContent = 'Don’t run this';
+      hold.addEventListener('click', () => act(() => api('/api/block', { id: j.id, blocked: true })));
+      actions.appendChild(hold);
+    }
+    const more = document.createElement('button'); more.type = 'button'; more.className = 'secondary'; more.textContent = 'Read result';
+    more.addEventListener('click', () => openJob(j.id));
+    actions.appendChild(more);
+    art.appendChild(actions);
+    return art;
+  }
+  function paintJobs() {
+    const box = $('jobs'); clear(box);
+    const jobs = state.jobs || [];
+    const take = (...phases) => jobs.filter(j => phases.includes(j.phase));
+    box.appendChild(jobBlock('Running', take('working')));
+    box.appendChild(jobBlock('Waiting', take('waiting')));
+    box.appendChild(jobBlock('Leased, not reported as running', take('leased')));
+    box.appendChild(jobBlock('Held by an offline computer', take('held')));
+    box.appendChild(jobBlock('Parked', take('parked')));
+    const done = take('finished', 'failed').slice(0, 8);
+    box.appendChild(jobBlock('Recently finished', done));
+  }
+  function paintTemplates() {
+    const box = $('templates'); if (box.childElementCount) return;
+    (state.templates || []).forEach(t => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'template';
+      const strong = document.createElement('strong'); strong.textContent = t.title; b.appendChild(strong);
+      b.appendChild(document.createTextNode(t.plain + ' ' + t.where));
+      b.addEventListener('click', () => { pickedTemplate = t.id; [...box.children].forEach(c => c.classList.remove('on')); b.classList.add('on'); });
+      box.appendChild(b);
+    });
+  }
+
+  function paint() {
+    if (state.banner) { $('banner').hidden = false; $('banner').textContent = state.banner; } else $('banner').hidden = true;
+    paintHere(); paintWhy(); paintProjects(); paintFleet(); paintJobs(); paintTemplates();
+  }
+  async function refresh() {
+    try {
+      const next = await api('/api/state');
+      const s = JSON.stringify([next.banner, next.thisComputer, next.whyIdle, next.workers, next.jobs, next.projects]);
+      state = next;
+      if (s === sig) return;
+      sig = s;
+      paint();
+    } catch (e) { toast(e.message); }
+  }
+  async function act(fn) {
+    toast('');
+    try { const out = await fn(); if (out && out.note) toast(out.note); else if (out && out.error) toast(out.error); await refresh(); }
+    catch (e) { toast(e.message); }
+  }
+  function nudge(j, dir) {
+    const prios = (state.jobs || []).map(x => +x.effectivePriority || 0);
+    const max = Math.max.apply(null, prios.concat(0));
+    const min = Math.min.apply(null, prios.concat(j.effectivePriority));
+    const next = dir > 0 ? Math.min(5, Math.round((Math.max(max, j.effectivePriority) + 0.05) * 1000) / 1000) : Math.max(0, Math.round((Math.min(min, j.effectivePriority) - 0.05) * 1000) / 1000);
+    act(() => api('/api/priority', { id: j.id, priority: next }));
+  }
+  async function openJob(id) {
+    chosen = id;
+    try {
+      const d = await api('/api/job?id=' + encodeURIComponent(id));
+      const wrap = $('detail-wrap'); wrap.hidden = false;
+      const box = $('detail'); clear(box);
+      const h = document.createElement('h3'); h.textContent = d.job.title; box.appendChild(h);
+      const p = document.createElement('p');
+      p.textContent = d.job.phase + (d.state && d.state.error ? ' · ' + d.state.error : '') + (d.state ? ' · ' + (d.state.progressDone || 0) + ' of ' + (d.state.progressTotal || d.job.runs || 0) + ' runs recorded' : '');
+      box.appendChild(p);
+      const table = markdownTable(d.log || '');
+      if (table) box.appendChild(table);
+      else if (d.log) { const pre = document.createElement('pre'); pre.textContent = d.log; box.appendChild(pre); }
+      else { const empty = document.createElement('p'); empty.className = 'muted'; empty.textContent = 'No result log in this copy yet.'; box.appendChild(empty); }
+      wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) { toast(e.message); }
+  }
+  function markdownTable(log) {
+    const lines = String(log).split('\n').filter(l => l.trim().startsWith('|'));
+    if (lines.length < 2) return null;
+    const cells = line => line.split('|').slice(1, -1).map(c => c.trim());
+    const head = cells(lines[0]);
+    const body = lines.slice(2).map(cells);
+    const table = document.createElement('table');
+    const thead = document.createElement('thead'); const tr = document.createElement('tr');
+    head.forEach(h => { const th = document.createElement('th'); th.textContent = h; tr.appendChild(th); });
+    thead.appendChild(tr); table.appendChild(thead);
+    const tb = document.createElement('tbody');
+    body.forEach(row => { const tr = document.createElement('tr'); row.forEach(c => { const td = document.createElement('td'); td.textContent = c; tr.appendChild(td); }); tb.appendChild(tr); });
+    table.appendChild(tb); return table;
+  }
+
+  $('btn-on').addEventListener('click', () => act(() => api('/api/switch', { on: true })));
+  $('btn-off').addEventListener('click', () => {
+    if (!confirm('Stop the worker on this computer? A test running here is interrupted. It is not deleted. It can be picked up again after this computer releases it, or when its lease ends.')) return;
+    act(() => api('/api/switch', { on: false }));
+  });
+  function localWorker() { return (state && (state.localName || (state.thisComputer.worker && state.thisComputer.worker.name))) || ''; }
+  $('btn-pause').addEventListener('click', () => act(() => api('/api/mode', { worker: localWorker(), mode: 'pause' })));
+  $('btn-resume').addEventListener('click', () => act(() => api('/api/mode', { worker: localWorker(), mode: 'run' })));
+  const addProject = $('add-project');
+  if (addProject) addProject.addEventListener('click', () => {
+    const title = ($('new-project').value || '').trim();
+    if (!title) { toast('Name the project first.'); return; }
+    act(() => api('/api/project', { create: true, title }));
+  });
+  $('btn-add').addEventListener('click', () => {
+    if (!pickedTemplate) { toast('Choose a test first.'); return; }
+    act(() => api('/api/submit', { template: pickedTemplate, seed: +$('seed').value }));
+  });
+  if (!KEY) { toast('Open the desk from the link printed in the terminal. That link is the key.'); return; }
+  refresh();
+  setInterval(refresh, 4000);
+})();
+</script>
+</body>
+</html>

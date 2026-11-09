@@ -1,0 +1,142 @@
+'use strict';
+const fs = require('fs'), path = require('path'), { EventEmitter } = require('events');
+const coord = require('./coord.js');
+let fail = 0, n = 0;
+function check(ok, what) {
+  n++;
+  if (!ok) { fail++; console.error('FAIL ' + what); }
+  else console.log('ok   ' + what);
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function fakeSpawn(ms) {
+  return function spawn() {
+    const child = new EventEmitter();
+    child.pid = 7;
+    child.exitCode = null;
+    child.signalCode = null;
+    const timer = setTimeout(() => {
+      child.exitCode = 0;
+      child.emit('close', 0, null);
+    }, ms);
+    child.kill = () => {
+      if (child.exitCode != null || child.signalCode != null) return;
+      clearTimeout(timer);
+      child.signalCode = 'SIGTERM';
+      child.emit('close', null, 'SIGTERM');
+    };
+    return child;
+  };
+}
+const job = {
+  id: 'sf-vision-1-abc',
+  project: 'spikefoundry',
+  title: 'Synthetic',
+  runner: 'spikefoundry/run.js',
+  codeHash: 'abc',
+  spec: { seed: 1, batches: 1, scenario: 'vision' },
+};
+
+(async () => {
+  const net = new Error('socket hang up');
+  net.network = true;
+  const server = new Error('Coordinator answered 503');
+  server.status = 503;
+  const denied = new Error('revoked');
+  denied.status = 401;
+  const bad = new Error('Job code hash does not match this checkout.');
+  check(coord.decideRetry(net, 0).action === 'retry' && coord.decideRetry(net, 0).delay === 1000, 'a network error retries inside the loop');
+  check(coord.decideRetry(server, 1000).action === 'retry' && coord.decideRetry(server, 1000).delay === 2000, 'an HTTP 500 retries with a longer wait');
+  check(coord.decideRetry(denied, 1000).action === 'stop', 'a revoked token stops the worker');
+  check(coord.decideRetry(bad, 1000).action === 'crash', 'a protocol mismatch is not retried as a transient error');
+  let delay = 0;
+  for (let i = 0; i < 20; i++) delay = coord.nextBackoff(delay);
+  check(delay === 5 * 60 * 1000, 'backoff caps at about 5 minutes');
+
+  coord.assertProtocol({ codeHash: 'abc' }, 'abc');
+  let hashThrew = false;
+  try { coord.assertProtocol({ codeHash: 'nope' }, 'abc'); } catch (e) { hashThrew = /code hash/.test(e.message); }
+  check(hashThrew, 'the worker checks the protocol hash before running');
+
+  const src = fs.readFileSync(path.join(__dirname, 'coord.js'), 'utf8');
+  check(src.indexOf('execFileSync') === -1 && coord.ALLOWED.has('spikefoundry/run.js') && coord.ALLOWED.has('run/r42.js') && coord.ALLOWED.has('run/gen.js'), 'runners stay on the allowlist and the job process is async');
+
+  let spawned = false;
+  let allowThrew = false;
+  try {
+    await coord.runSpec(Object.assign({}, job, { runner: 'run/nope.js' }), { spawn: () => { spawned = true; return fakeSpawn(10)(); } });
+  } catch (e) { allowThrew = /allowlist/.test(e.message); }
+  check(allowThrew && !spawned, 'a runner outside the allowlist is refused before a process starts');
+
+  const calls = [];
+  const beats = coord.startLeaseHeartbeat({
+    heartbeatMs: 25,
+    jobId: job.id,
+    heartbeat: async () => { calls.push(Date.now()); return { ok: true, jobId: job.id, paused: false }; },
+  });
+  await sleep(90);
+  await beats.finish();
+  check(calls.length >= 2, 'the heartbeat timer fires while a job is running');
+
+  const out = path.join(require('os').tmpdir(), 'coord-test-' + process.pid);
+  let ticks = 0;
+  const ran = await coord.runSpec(job, {
+    outDir: path.join(out, 'ok'),
+    heartbeatMs: 20,
+    stdio: 'ignore',
+    spawn: fakeSpawn(160),
+    heartbeat: async () => { ticks++; return { ok: true, jobId: job.id, paused: false }; },
+  });
+  check(ran.status === 'done' && ran.synthetic === true && ticks >= 2, 'a running job keeps heartbeating and can still finish');
+
+  let killed = false;
+  let lostThrew = false;
+  const started = Date.now();
+  try {
+    await coord.runSpec(job, {
+      outDir: path.join(out, 'lost'),
+      heartbeatMs: 15,
+      stdio: 'ignore',
+      spawn: fakeSpawn(5000),
+      heartbeat: async () => { killed = true; return { ok: true, jobId: null, paused: false }; },
+    });
+  } catch (e) { lostThrew = !!(e && e.leaseLost && !e.revoked); }
+  check(lostThrew && killed && (Date.now() - started) < 1000, 'a lost lease stops the child and does not submit');
+
+  const paused = await coord.runSpec(job, {
+    outDir: path.join(out, 'pause'),
+    heartbeatMs: 15,
+    stdio: 'ignore',
+    spawn: fakeSpawn(80),
+    heartbeat: async () => ({ ok: true, jobId: job.id, paused: true }),
+  });
+  check(paused.status === 'done' && paused.pauseAfter === true, 'pause lets the current job finish');
+
+  let revoked = false;
+  try {
+    await coord.runSpec(job, {
+      outDir: path.join(out, 'revoked'),
+      heartbeatMs: 15,
+      stdio: 'ignore',
+      spawn: fakeSpawn(5000),
+      heartbeat: async () => { const err = new Error('revoked'); err.status = 401; throw err; },
+    });
+  } catch (e) { revoked = !!(e && e.leaseLost && e.revoked); }
+  check(revoked, 'a revoked token stops the child and does not submit');
+
+  let shaky = 0;
+  const survived = await coord.runSpec(job, {
+    outDir: path.join(out, 'net'),
+    heartbeatMs: 15,
+    stdio: 'ignore',
+    spawn: fakeSpawn(70),
+    heartbeat: async () => {
+      shaky++;
+      if (shaky === 1) { const err = new Error('down'); err.network = true; throw err; }
+      return { ok: true, jobId: job.id, paused: false };
+    },
+  });
+  check(survived.status === 'done' && shaky >= 1, 'a heartbeat network error does not drop the running job');
+
+  console.log(n + ' checks');
+  process.exit(fail === 0 ? 0 : 1);
+})().catch(e => { console.error(e); process.exit(1); });

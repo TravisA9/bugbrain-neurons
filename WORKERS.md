@@ -41,6 +41,32 @@ Optional: set the user environment variable `BB_HOME` before installing to keep 
 On a laptop the worker never claims a job while on battery, and `cpuMax` (e.g. `"workers": { "tacobell": { "cpuMax": 75, "workers": 4 } }`) makes it wait while other work (the local queue) keeps the CPU busy.
 If dq.js crashes or is killed, its job process tree is killed too (taskkill /T), so no orphaned runs keep computing.
 
+## Website coordinator
+
+Volunteers do not get a GitHub token. A PHP app under a subpath of your own site issues a per-computer token after consent. Leave `BB_COORDINATOR_URL` unset to keep using the git queue. See [hosting/computelab/DEPLOY.md](hosting/computelab/DEPLOY.md). This repository does not upload that app.
+
+## SpikeFoundry
+
+A separate synthetic design lab and background job. It does not replace BugBrain tests. See [spikefoundry/README.md](spikefoundry/README.md). The original HTML file is stored unchanged under `spikefoundry/original/`.
+
+## Desk (this computer)
+
+Open a page to turn the worker on or off, see who is actually connected, and line up a test:
+
+```
+node run/console.js --dir /path/to/a-queue-checkout --live-switch
+```
+
+The printed link is the key. It only works on this computer (`127.0.0.1`). A phone or a browser can open that page; it cannot run the brain tests. Those still run in the worker (`run/dq.js`) on Windows or Linux.
+
+- **Turn worker on / off** uses the same scheduled task as `start_worker.bat` and `stop_worker.bat` (`BugBrainWorker`), or on Linux the `bugbrain-worker` user service (`start_worker.sh` / `stop_worker.sh`). The page shows the task as enabled or running only after asking the operating system. If that check fails, the status is unknown, not on.
+- **Pause new work** sets `workers.<name>.mode` to `pause` in `worker-config.json`. The current test finishes. The job is not deleted and is not taken from the machine that is running it.
+- **Run sooner / later** and **Only this computer** change pending tests. A test with a live lease cannot be reassigned. Priority changes do not stop a run.
+- **Add a test** offers four real v47 checks (`run/r42.js` or `run/gen.js`, one growth). It does not accept an arbitrary program.
+- Changes stay in the queue folder until you start the desk with `--publish`. Sending to `github.com/TravisA9/bugbrain-neurons` also needs `BB_CONSOLE_PUBLISH_LIVE=1`, so a stray click cannot edit the live queue.
+
+Without `--live-switch` the on/off buttons do nothing to the task. That is deliberate.
+
 ## Everyday
 - Is it working? `cat ~/.bugbrain/status.json` (state `running-dq` = fine, `token-refused` = new token needed). The queue branch also shows it: `workers/<name>.json` and the `heartbeat` / `claim` / `result` commits.
 - Only one worker per machine: `pgrep -af dq.js` should list one `dq.js --worker <name>` (started by the service). Old hand-started copies (`dq.js --wait --include-text`) can be stopped with `kill <pid>`; their jobs are re-run.

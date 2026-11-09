@@ -6,7 +6,7 @@
  * Every pollMinutes (default 10; env BB_POLL_MS overrides) it fetches the code branch and the queue branch:
  *   - newer code, a new config version, or changed dq settings -> graceful restart: dq.js exits after its current job (stop file), then exit 10
  *   - new forceVersion -> kill dq.js and its job now, exit 10 (the restarted dq.js releases the claim)
- *   - mode pause -> dq.js stops after its current job; this process stays and keeps polling
+ *   - mode pause -> dq.js finishes its current job, then stays up without claiming so the heartbeat can say paused
  *   - dq.js crash -> restart with backoff (15 s doubling, max 10 min); dq.js exit 10 (it saw new code itself) -> exit 10.
  * Token: BB_DQ_TOKEN or ~/.bugbrain/token (never printed). Name: ~/.bugbrain/worker-name (created on first run). */
 const fs = require('fs'), path = require('path'), cp = require('child_process');
@@ -38,11 +38,14 @@ function newerCode() {
 const keyOf = s => JSON.stringify([s.version, WC.dqArgs(s, NAME), s.mode]);
 let child = null, childStart = 0, fails = 0, restartWhy = '', backoffTimer = null, S, KEY, FORCE;
 function startDq() {
-  backoffTimer = null; if (child || S.mode === 'pause') return;
+  backoffTimer = null; if (child) return;
   try { fs.unlinkSync(STOP); } catch (e) {}
-  const args = ['run/dq.js'].concat(WC.dqArgs(S, NAME), ['--stop-file', STOP]);
-  say(`starting dq.js ${args.slice(1).join(' ')} (code ${git(['rev-parse', '--short', 'HEAD'])}, config ${S.version}, ${TYPE})`);
-  childStart = Date.now(); status('running-dq', 'code ' + git(['rev-parse', '--short', 'HEAD']) + ', config ' + S.version);
+  const coord = process.env.BB_COORDINATOR_URL;
+  const args = coord
+    ? ['run/coord.js', '--url', coord, '--token-file', process.env.BB_COORDINATOR_TOKEN_FILE || require('path').join(ST, 'coordinator-token')]
+    : ['run/dq.js'].concat(WC.dqArgs(S, NAME), ['--stop-file', STOP]);
+  say(`starting ${coord ? 'coord.js' : 'dq.js'} ${args.slice(1).join(' ')} (code ${git(['rev-parse', '--short', 'HEAD'])}, config ${S.version}, ${TYPE}${S.mode === 'pause' ? ', paused' : ''})`);
+  childStart = Date.now(); status(S.mode === 'pause' ? 'paused' : 'running-dq', 'code ' + git(['rev-parse', '--short', 'HEAD']) + ', config ' + S.version);
   child = cp.spawn(RUNTIME, args, { cwd: ROOT, stdio: 'inherit', env: ENV, detached: process.platform !== 'win32' });
   child.on('error', e => say('cannot start dq.js: ' + e.message));
   const pg = child.pid;
@@ -54,7 +57,6 @@ function startDq() {
     if (restartWhy) { say(`dq.js stopped (${code ?? sig}); restarting for: ${restartWhy}`); process.exit(10); }
     if (code === 10) { say('dq.js saw newer code; restarting via launcher'); process.exit(10); }
     if (code === 3) { say('GitHub refused the token (exit 3). Put a valid fine-grained token (Contents read/write on TravisA9/bugbrain-neurons) in ' + path.join(ST, 'token')); process.exit(3); }
-    if (S.mode === 'pause') { say('dq.js stopped for pause; idle until worker-config.json resumes this worker'); return; }
     if (ran > 600e3) fails = 0; fails++;
     const w = Math.min(600e3, 15e3 * 2 ** Math.min(fails - 1, 6));
     say(`dq.js exited (${code ?? sig}) after ${Math.round(ran / 1000)} s; restarting in ${Math.round(w / 1000)} s`);
@@ -84,7 +86,7 @@ function poll() {
   if (s2.forceVersion !== FORCE) { say(`forceVersion ${FORCE} -> ${s2.forceVersion}: killing dq.js and its job now`); restartWhy = 'forced restart'; if (child) killTree(); else process.exit(10); return; }
   const nc = newerCode(); if (nc) return gracefulRestart('new code ' + nc);
   if (keyOf(s2) !== KEY) return gracefulRestart(`config changed (version ${S.version} -> ${s2.version}, mode ${S.mode} -> ${s2.mode})`);
-  if (!child && !backoffTimer && s2.mode !== 'pause') startDq();
+  if (!child && !backoffTimer) startDq();
 }
 function main() {
   process.on('SIGTERM', () => { killTree(); process.exit(0); }); process.on('SIGINT', () => { killTree(); process.exit(0); });
