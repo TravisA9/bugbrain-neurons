@@ -315,5 +315,27 @@ $windows = setup_script('windows', $deskA['token'], 'https://zaga.info/computela
 check(strpos($unix, $deskA['token']) !== false && strpos($unix, 'set -x') === false && strpos($unix, 'nodejs.org') !== false && strpos($unix, 'BB_COORDINATOR_URL') !== false, 'the Mac/Linux setup file saves the token without tracing the shell');
 check(strpos($windows, '@echo off') === 0 && strpos($windows, $deskA['token']) !== false && strpos($windows, 'echo ' . $deskA['token']) === false && strpos($windows, 'nodejs.org') !== false, 'the Windows setup file saves the token and does not echo it');
 
+$lib = lab();
+$libWorker = $lib['app']->enroll('lib-pc', ['spikefoundry'], 2, true);
+$genomeJson = '{"decay":0.4,"topology":"parallel","wa":1.1}';
+$genomeHash = hash('sha256', $genomeJson);
+$one = ['taskId' => 'coincidence', 'taskVersion' => 'base-1', 'genomeJson' => $genomeJson, 'genomeHash' => $genomeHash, 'genomeVersion' => 1, 'metrics' => ['quality' => 0.4, 'accuracy' => 0.5], 'neurons' => 3, 'synapses' => 4, 'spikes' => 8, 'evalMs' => 2, 'seed' => 7, 'jobId' => 'sf-vision-7-aaa', 'engineVersion' => 'spikefoundry-1'];
+$better = $one;
+$better['metrics'] = ['quality' => 0.8, 'accuracy' => 0.9];
+$better['seed'] = 8;
+$bad = $one;
+$bad['genomeHash'] = str_repeat('ab', 32);
+$first = $lib['app']->ingestDesigns($lib['app']->workerByToken($libWorker['token']), [$one, $bad], $lib['app']->protocolHash());
+$again = $lib['app']->ingestDesigns($lib['app']->workerByToken($libWorker['token']), [$one, $better], $lib['app']->protocolHash());
+$top = $lib['app']->topDesigns('coincidence', 5);
+check($first['stored'] === 1 && $first['skipped'] === 1 && $again['stored'] === 1 && $again['skipped'] === 1, 'design uploads dedupe a genome and reject a bad hash');
+check(count($top) === 1 && $top[0]['quality'] == 0.8 && $lib['app']->designGenome($genomeHash)['genome_json'] === $genomeJson, 'the library keeps one genome and ranks the better score');
+check($lib['app']->designsByWorker($libWorker['workerId']) === 2, 'a computer can see how many designs it found');
+check(count($lib['app']->designExportRows('coincidence', 10)) === 2, 'export returns the compact rows');
+$seeded = $lib['app']->seedJobFromDesigns('sf-vision', 'coincidence', 3, 11);
+$seedRow = $lib['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $lib['db']->quote($seeded))->fetch();
+check($seeded && strpos((string) $seedRow['spec_json'], $genomeHash) !== false, 'the owner can seed a job from the top designs');
+check($lib['app']->codeApproved('4b0e21855d9ce104a96633047e8199874524044d399c6150d02eb77e4edca4c4'), 'the previous protocol hash stays approved');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

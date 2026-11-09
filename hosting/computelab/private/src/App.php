@@ -116,6 +116,29 @@ final class App
             csrf TEXT NOT NULL,
             expires_at TEXT NOT NULL
         )');
+        $this->db->exec('CREATE TABLE IF NOT EXISTS design_genomes (
+            hash VARCHAR(191) PRIMARY KEY,
+            genome_json TEXT NOT NULL,
+            version INTEGER NOT NULL,
+            created_at TEXT NOT NULL
+        )');
+        $this->db->exec('CREATE TABLE IF NOT EXISTS design_records (
+            id VARCHAR(191) PRIMARY KEY,
+            genome_hash VARCHAR(191) NOT NULL,
+            task_id VARCHAR(64) NOT NULL,
+            task_version VARCHAR(32) NOT NULL,
+            score_json TEXT NOT NULL,
+            neurons INTEGER NOT NULL,
+            synapses INTEGER NOT NULL,
+            spikes INTEGER NOT NULL,
+            eval_ms INTEGER NOT NULL,
+            engine_version VARCHAR(32) NOT NULL,
+            protocol_hash VARCHAR(64) NOT NULL,
+            worker_id VARCHAR(191) NOT NULL,
+            seed INTEGER NOT NULL,
+            job_id VARCHAR(191),
+            created_at TEXT NOT NULL
+        )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS rate_limits (
             bucket VARCHAR(191) PRIMARY KEY,
             window_start TEXT NOT NULL,
@@ -172,7 +195,12 @@ final class App
         $have = $this->db->prepare('SELECT hash FROM approved_code WHERE hash = ?');
         $have->execute([$hash]);
         if (!$have->fetch()) {
-            $this->db->prepare('INSERT INTO approved_code (hash, label) VALUES (?, ?)')->execute([$hash, 'protocol-1']);
+            $this->db->prepare('INSERT INTO approved_code (hash, label) VALUES (?, ?)')->execute([$hash, 'protocol-current']);
+        }
+        $legacy = '4b0e21855d9ce104a96633047e8199874524044d399c6150d02eb77e4edca4c4';
+        $have->execute([$legacy]);
+        if (!$have->fetch()) {
+            $this->db->prepare('INSERT INTO approved_code (hash, label) VALUES (?, ?)')->execute([$legacy, 'protocol-1']);
         }
         $projects = [
             ['spikefoundry', 'SpikeFoundry', 'Synthetic design jobs. Not BugBrain accuracy.', 2, 1],
@@ -209,6 +237,19 @@ final class App
         $path = (string) $this->config['protocol'];
         $text = is_file($path) ? (string) file_get_contents($path) : '';
         return hash('sha256', $text);
+    }
+
+    public function codeApproved(string $hash): bool
+    {
+        if (!preg_match('/^[a-f0-9]{64}$/', $hash)) {
+            return false;
+        }
+        if (hash_equals($this->protocolHash(), $hash)) {
+            return true;
+        }
+        $st = $this->db->prepare('SELECT hash FROM approved_code WHERE hash = ?');
+        $st->execute([$hash]);
+        return (bool) $st->fetch();
     }
 
     public function createOwner(string $username, string $password): void
@@ -339,13 +380,23 @@ final class App
         $this->db->beginTransaction();
         try {
             $ranked = [];
-            $find = $this->db->prepare('SELECT * FROM jobs WHERE project_id = ? AND status = ? AND (not_before IS NULL OR not_before <= ?) ORDER BY priority DESC, attempts ASC, id ASC');
+            $codeHash = (string) ($worker['code_hash'] ?? '');
+            $findSql = 'SELECT * FROM jobs WHERE project_id = ? AND status = ? AND (not_before IS NULL OR not_before <= ?)';
+            if ($codeHash !== '') {
+                $findSql .= ' AND code_hash = ?';
+            }
+            $findSql .= ' ORDER BY priority DESC, attempts ASC, id ASC';
+            $find = $this->db->prepare($findSql);
             foreach ($projects as $project) {
                 $family = (string) ($project['family'] ?? '');
                 if (!in_array($project['id'], $allowed, true) && !in_array($family, $allowed, true)) {
                     continue;
                 }
-                $find->execute([$project['id'], 'queued', $now]);
+                $args = [$project['id'], 'queued', $now];
+                if ($codeHash !== '') {
+                    $args[] = $codeHash;
+                }
+                $find->execute($args);
                 foreach ($find->fetchAll() as $job) {
                     $spec = json_decode((string) $job['spec_json'], true);
                     if (!is_array($spec)) {
@@ -588,7 +639,7 @@ final class App
         return (int) $seconds;
     }
 
-    public function createJob(string $templateId, string $title, float $priority, int $seed): string
+    public function createJob(string $templateId, string $title, float $priority, int $seed, array $extra = []): string
     {
         $st = $this->db->prepare('SELECT * FROM templates WHERE id = ?');
         $st->execute([$templateId]);
@@ -607,7 +658,19 @@ final class App
             throw new InvalidArgumentException('Title must be 1–120 characters.');
         }
         $spec = json_decode((string) $tpl['spec_json'], true);
+        if (!is_array($spec)) {
+            $spec = [];
+        }
         $spec['seed'] = $seed;
+        if (isset($extra['seedGenomes']) && is_array($extra['seedGenomes'])) {
+            $spec['seedGenomes'] = array_values(array_slice($extra['seedGenomes'], 0, 10));
+        }
+        if (isset($extra['taskId'])) {
+            $spec['taskId'] = (string) $extra['taskId'];
+        }
+        if (isset($extra['mode'])) {
+            $spec['mode'] = (string) $extra['mode'];
+        }
         $id = strtolower(preg_replace('/[^a-z0-9]+/', '-', $templateId) . '-' . $seed . '-' . bin2hex(random_bytes(3)));
         $this->db->prepare('INSERT INTO jobs (id, project_id, template_id, title, spec_json, code_hash, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
             ->execute([$id, $tpl['project_id'], $tpl['id'], $title, json_encode($spec), $tpl['code_hash'], $priority, 'queued', $this->now()]);
@@ -865,5 +928,184 @@ final class App
     {
         $ref = trim((string) ($this->config['worker_ref'] ?? 'cursor/worker-console-22bf'));
         return $ref !== '' ? $ref : 'cursor/worker-console-22bf';
+    }
+
+    public function ingestDesigns(array $worker, array $records, string $protocolHash): array
+    {
+        $cap = (int) ($this->config['design_batch'] ?? 24);
+        if ($cap < 1) {
+            $cap = 24;
+        }
+        if (count($records) > $cap) {
+            throw new InvalidArgumentException('Too many design records in one upload.');
+        }
+        $perJob = (int) ($this->config['design_per_job'] ?? 48);
+        $stored = 0;
+        $skipped = 0;
+        foreach ($records as $rec) {
+            if (!is_array($rec)) {
+                $skipped++;
+                continue;
+            }
+            $taskId = (string) ($rec['taskId'] ?? '');
+            $taskVersion = (string) ($rec['taskVersion'] ?? '');
+            $genomeJson = (string) ($rec['genomeJson'] ?? '');
+            $genomeHash = (string) ($rec['genomeHash'] ?? '');
+            if (!preg_match('/^[a-z0-9._-]{1,64}$/', $taskId) || !preg_match('/^[a-z0-9._-]{1,32}$/', $taskVersion)) {
+                $skipped++;
+                continue;
+            }
+            if (strlen($genomeJson) < 2 || strlen($genomeJson) > 4000 || !preg_match('/^[a-f0-9]{64}$/', $genomeHash)) {
+                $skipped++;
+                continue;
+            }
+            if (!hash_equals(hash('sha256', $genomeJson), $genomeHash)) {
+                $skipped++;
+                continue;
+            }
+            $decoded = json_decode($genomeJson, true);
+            if (!is_array($decoded)) {
+                $skipped++;
+                continue;
+            }
+            $jobId = (string) ($rec['jobId'] ?? '');
+            if ($jobId !== '' && !preg_match('/^[a-z0-9._-]{2,64}$/', $jobId)) {
+                $skipped++;
+                continue;
+            }
+            if ($jobId !== '') {
+                $count = $this->db->prepare('SELECT COUNT(*) FROM design_records WHERE job_id = ?');
+                $count->execute([$jobId]);
+                if ((int) $count->fetchColumn() >= $perJob) {
+                    $skipped++;
+                    continue;
+                }
+            }
+            $seed = (int) ($rec['seed'] ?? 0);
+            $version = (int) ($rec['genomeVersion'] ?? 1);
+            if ($version < 1 || $version > 2) {
+                $version = 1;
+            }
+            $scores = isset($rec['metrics']) && is_array($rec['metrics']) ? $rec['metrics'] : [];
+            $scoreJson = json_encode([
+                'quality' => isset($scores['quality']) ? (float) $scores['quality'] : null,
+                'accuracy' => isset($scores['accuracy']) ? (float) $scores['accuracy'] : null,
+                'f1' => isset($scores['f1']) ? (float) $scores['f1'] : null,
+                'precision' => isset($scores['precision']) ? (float) $scores['precision'] : null,
+                'recall' => isset($scores['recall']) ? (float) $scores['recall'] : null,
+            ]);
+            if ($scoreJson === false || strlen($scoreJson) > 500) {
+                $skipped++;
+                continue;
+            }
+            $haveGenome = $this->db->prepare('SELECT hash FROM design_genomes WHERE hash = ?');
+            $haveGenome->execute([$genomeHash]);
+            if (!$haveGenome->fetch()) {
+                $this->db->prepare('INSERT INTO design_genomes (hash, genome_json, version, created_at) VALUES (?, ?, ?, ?)')
+                    ->execute([$genomeHash, $genomeJson, $version, $this->now()]);
+            }
+            $id = substr(hash('sha256', $worker['id'] . '|' . $taskId . '|' . $taskVersion . '|' . $genomeHash . '|' . $seed . '|' . $jobId), 0, 32);
+            $exists = $this->db->prepare('SELECT id FROM design_records WHERE id = ?');
+            $exists->execute([$id]);
+            if ($exists->fetch()) {
+                $skipped++;
+                continue;
+            }
+            $engine = substr((string) ($rec['engineVersion'] ?? 'spikefoundry-1'), 0, 32);
+            $this->db->prepare('INSERT INTO design_records (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, job_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+                ->execute([
+                    $id, $genomeHash, $taskId, $taskVersion, $scoreJson,
+                    max(0, (int) ($rec['neurons'] ?? 0)), max(0, (int) ($rec['synapses'] ?? 0)),
+                    max(0, (int) ($rec['spikes'] ?? 0)), max(0, (int) ($rec['evalMs'] ?? 0)),
+                    $engine, substr($protocolHash, 0, 64), $worker['id'], $seed, $jobId !== '' ? $jobId : null, $this->now(),
+                ]);
+            $stored++;
+        }
+        return ['stored' => $stored, 'skipped' => $skipped];
+    }
+
+    public function topDesigns(string $taskId, int $limit = 10): array
+    {
+        if (!preg_match('/^[a-z0-9._-]{1,64}$/', $taskId)) {
+            throw new InvalidArgumentException('Unknown task.');
+        }
+        if ($limit < 1) {
+            $limit = 10;
+        }
+        if ($limit > 50) {
+            $limit = 50;
+        }
+        $st = $this->db->prepare('SELECT id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, worker_id, seed, created_at FROM design_records WHERE task_id = ? ORDER BY created_at DESC LIMIT 400');
+        $st->execute([$taskId]);
+        $best = [];
+        foreach ($st->fetchAll() as $row) {
+            $score = json_decode((string) $row['score_json'], true);
+            $quality = is_array($score) && isset($score['quality']) ? (float) $score['quality'] : -1;
+            $hash = (string) $row['genome_hash'];
+            if (!isset($best[$hash]) || $quality > $best[$hash]['quality']) {
+                $row['quality'] = $quality;
+                $best[$hash] = $row;
+            }
+        }
+        $rows = array_values($best);
+        usort($rows, function ($a, $b) {
+            if ($a['quality'] === $b['quality']) {
+                return strcmp((string) $a['genome_hash'], (string) $b['genome_hash']);
+            }
+            return $a['quality'] < $b['quality'] ? 1 : -1;
+        });
+        return array_slice($rows, 0, $limit);
+    }
+
+    public function designGenome(string $hash): ?array
+    {
+        if (!preg_match('/^[a-f0-9]{64}$/', $hash)) {
+            return null;
+        }
+        $st = $this->db->prepare('SELECT hash, genome_json, version FROM design_genomes WHERE hash = ?');
+        $st->execute([$hash]);
+        $row = $st->fetch();
+        return $row ?: null;
+    }
+
+    public function designExportRows(string $taskId, int $limit = 2000): array
+    {
+        if ($limit < 1) {
+            $limit = 1;
+        }
+        if ($limit > 2000) {
+            $limit = 2000;
+        }
+        if ($taskId === '' || $taskId === 'all') {
+            $st = $this->db->prepare('SELECT r.task_id, r.task_version, r.genome_hash, r.score_json, r.neurons, r.synapses, r.spikes, r.eval_ms, r.engine_version, r.worker_id, r.seed, r.job_id, g.genome_json FROM design_records r JOIN design_genomes g ON g.hash = r.genome_hash ORDER BY r.created_at DESC LIMIT ' . (int) $limit);
+            $st->execute();
+            return $st->fetchAll();
+        }
+        if (!preg_match('/^[a-z0-9._-]{1,64}$/', $taskId)) {
+            throw new InvalidArgumentException('Unknown task.');
+        }
+        $st = $this->db->prepare('SELECT r.task_id, r.task_version, r.genome_hash, r.score_json, r.neurons, r.synapses, r.spikes, r.eval_ms, r.engine_version, r.worker_id, r.seed, r.job_id, g.genome_json FROM design_records r JOIN design_genomes g ON g.hash = r.genome_hash WHERE r.task_id = ? ORDER BY r.created_at DESC LIMIT ' . (int) $limit);
+        $st->execute([$taskId]);
+        return $st->fetchAll();
+    }
+
+    public function designsByWorker(string $workerId): int
+    {
+        $st = $this->db->prepare('SELECT COUNT(*) FROM design_records WHERE worker_id = ?');
+        $st->execute([$workerId]);
+        return (int) $st->fetchColumn();
+    }
+
+    public function seedJobFromDesigns(string $templateId, string $taskId, int $count, int $seed): string
+    {
+        $top = $this->topDesigns($taskId, $count);
+        $hashes = [];
+        foreach ($top as $row) {
+            $hashes[] = (string) $row['genome_hash'];
+        }
+        if ($hashes === []) {
+            throw new InvalidArgumentException('No saved designs for that task yet.');
+        }
+        return $this->createJob($templateId, 'Seeded from top ' . $taskId . ' designs', 0.8, $seed, ['seedGenomes' => $hashes, 'taskId' => $taskId]);
     }
 }

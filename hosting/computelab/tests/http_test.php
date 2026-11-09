@@ -25,7 +25,7 @@ $app->createOwner('labowner', 'correct-horse');
 $app->createJob('sf-vision', 'Synthetic vision', 0.5, 11);
 
 $port = 8091;
-$cmd = 'COORD_CONFIG=' . escapeshellarg($config) . ' php -S 127.0.0.1:' . $port . ' -t ' . escapeshellarg($public) . ' ' . escapeshellarg($public . '/index.php');
+$cmd = 'exec env COORD_CONFIG=' . escapeshellarg($config) . ' php -S 127.0.0.1:' . $port . ' -t ' . escapeshellarg($public) . ' ' . escapeshellarg($public . '/index.php');
 $proc = proc_open($cmd . ' > /tmp/coord-php-server.log 2>&1', [['pipe', 'r'], ['file', '/tmp/coord-php-out.txt', 'w'], ['file', '/tmp/coord-php-err.txt', 'w']], $pipes, $public);
 $fail = 0;
 function check(bool $ok, string $what): void
@@ -109,6 +109,15 @@ $ownerAfter = http($base . '/owner?status=all&page=1', 'GET', null, ['Cookie: la
 check(in_array($proj['status'], [303, 302], true) && str_contains($ownerAfter['body'], 'Evening vision') && str_contains($ownerAfter['body'], 'Queued'), 'the owner can create a project and see the job list');
 
 $hash = trim((string) shell_exec('php -r ' . escapeshellarg('echo hash("sha256", file_get_contents(' . var_export(dirname(__DIR__) . '/PROTOCOL.txt', true) . '));')));
+$genomeJson = '{"decay":0.4,"topology":"parallel"}';
+$designBody = json_encode(['codeHash' => $hash, 'records' => [[
+    'taskId' => 'coincidence', 'taskVersion' => 'base-1', 'genomeJson' => $genomeJson,
+    'genomeHash' => hash('sha256', $genomeJson), 'metrics' => ['quality' => 0.2],
+    'neurons' => 2, 'synapses' => 2, 'spikes' => 1, 'evalMs' => 1, 'seed' => 3, 'jobId' => 'join-job',
+]]]);
+$designPost = http($base . '/api/v1/designs', 'POST', gzencode($designBody), ['Authorization: Bearer ' . $token, 'Content-Type: application/json', 'Content-Encoding: gzip']);
+$designJson = json_decode($designPost['body'], true);
+check($designPost['status'] === 200 && ($designJson['stored'] ?? 0) === 1, 'a gzip design batch is accepted for the worker token');
 $claim = http($base . '/api/v1/claim', 'POST', json_encode(['codeHash' => $hash]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json']);
 $claimBody = json_decode($claim['body'], true);
 check($claim['status'] === 200 && ($claimBody['job']['project'] ?? '') === 'spikefoundry', 'the worker API assigns a SpikeFoundry job to the enrolled token');

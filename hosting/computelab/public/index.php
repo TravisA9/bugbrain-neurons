@@ -385,6 +385,52 @@ try {
         coord_html(pageOwner($app, (string) $session['csrf'], coord_who($app, 'owner'), '', $status, $pageNum));
         return;
     }
+    if (str_starts_with($path, '/owner/designs') && $method === 'GET') {
+        $session = $app->sessionById(coord_cookie('lab_owner'));
+        if (!$session || $session['role'] !== 'owner') {
+            http_response_code(403);
+            echo 'Owner only.';
+            return;
+        }
+        $task = (string) ($_GET['task'] ?? 'coincidence');
+        if ($path === '/owner/designs/genome') {
+            $row = $app->designGenome((string) ($_GET['hash'] ?? ''));
+            if (!$row) {
+                http_response_code(404);
+                echo 'Unknown genome.';
+                return;
+            }
+            header('Content-Type: application/json; charset=utf-8');
+            header('Content-Disposition: attachment; filename="genome.json"');
+            echo (string) $row['genome_json'];
+            return;
+        }
+        if ($path === '/owner/designs/export') {
+            $format = (string) ($_GET['format'] ?? 'jsonl');
+            $rows = $app->designExportRows($task, 2000);
+            header('Cache-Control: no-store');
+            if ($format === 'csv') {
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="designs.csv"');
+                echo "task_id,task_version,genome_hash,quality,neurons,synapses,spikes,eval_ms,worker_id,seed\n";
+                foreach ($rows as $row) {
+                    $score = json_decode((string) $row['score_json'], true);
+                    $quality = is_array($score) && isset($score['quality']) ? $score['quality'] : '';
+                    echo $row['task_id'] . ',' . $row['task_version'] . ',' . $row['genome_hash'] . ',' . $quality . ',' . $row['neurons'] . ',' . $row['synapses'] . ',' . $row['spikes'] . ',' . $row['eval_ms'] . ',' . $row['worker_id'] . ',' . $row['seed'] . "\n";
+                }
+                return;
+            }
+            header('Content-Type: application/x-ndjson; charset=utf-8');
+            header('Content-Disposition: attachment; filename="designs.jsonl"');
+            foreach ($rows as $row) {
+                echo json_encode($row) . "\n";
+            }
+            return;
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['task' => $task, 'top' => $app->topDesigns($task, 10)]);
+        return;
+    }
     if (str_starts_with($path, '/owner/') && $method === 'POST') {
         $session = $app->sessionById(coord_cookie('lab_owner'));
         if (!$session || $session['role'] !== 'owner') {
@@ -408,6 +454,8 @@ try {
             $app->requeue((string) ($_POST['id'] ?? ''));
         } elseif ($path === '/owner/project-create') {
             $app->createProject((string) ($_POST['title'] ?? ''), (string) ($_POST['summary'] ?? ''), (string) ($_POST['runner'] ?? ''), (int) ($_POST['priority'] ?? 1), isset($_POST['enabled']));
+        } elseif ($path === '/owner/design-seed') {
+            $app->seedJobFromDesigns((string) ($_POST['template'] ?? 'sf-vision'), (string) ($_POST['task'] ?? 'coincidence'), (int) ($_POST['count'] ?? 3), (int) ($_POST['seed'] ?? 7));
         } elseif ($path === '/owner/pause') {
             $paused = (string) ($_POST['paused'] ?? '');
             if ($paused !== '0' && $paused !== '1') {
@@ -434,10 +482,14 @@ try {
             coord_json(401, ['error' => 'Unknown or revoked worker token.']);
             return;
         }
-        $body = $method === 'POST' ? coord_body() : [];
+        if ($path === '/api/v1/designs' && $method === 'POST') {
+            $body = [];
+        } else {
+            $body = $method === 'POST' ? coord_body() : [];
+        }
         if ($path === '/api/v1/heartbeat' && $method === 'POST') {
             $sent = (string) ($body['codeHash'] ?? '');
-            if ($sent !== '' && !hash_equals($app->protocolHash(), $sent)) {
+            if ($sent !== '' && !$app->codeApproved($sent)) {
                 coord_json(409, ['error' => 'This worker build is not an approved code version.']);
                 return;
             }
@@ -448,11 +500,39 @@ try {
             coord_json(200, $app->heartbeat($worker, $extra));
             return;
         }
+        if ($path === '/api/v1/designs' && $method === 'POST') {
+            $raw = file_get_contents('php://input') ?: '';
+            if (strlen($raw) > 65536) {
+                coord_json(413, ['error' => 'Upload is too large.']);
+                return;
+            }
+            $encoding = strtolower((string) ($_SERVER['HTTP_CONTENT_ENCODING'] ?? ''));
+            if ($encoding === 'gzip') {
+                $raw = gzdecode($raw);
+                if ($raw === false || strlen($raw) > 100000) {
+                    coord_json(400, ['error' => 'Design upload could not be read.']);
+                    return;
+                }
+            }
+            $data = json_decode($raw, true);
+            if (!is_array($data) || !isset($data['records']) || !is_array($data['records'])) {
+                coord_json(400, ['error' => 'Send a records list.']);
+                return;
+            }
+            $sent = (string) ($data['codeHash'] ?? '');
+            if ($sent !== '' && !$app->codeApproved($sent)) {
+                coord_json(409, ['error' => 'This worker build is not an approved code version.']);
+                return;
+            }
+            coord_json(200, $app->ingestDesigns($worker, $data['records'], $sent !== '' ? $sent : $app->protocolHash()));
+            return;
+        }
         if ($path === '/api/v1/claim' && $method === 'POST') {
-            if (!hash_equals($app->protocolHash(), (string) ($body['codeHash'] ?? ''))) {
+            if (!$app->codeApproved((string) ($body['codeHash'] ?? ''))) {
                 coord_json(409, ['error' => 'Code hash is not approved. Nothing was assigned.']);
                 return;
             }
+            $worker['code_hash'] = (string) $body['codeHash'];
             $job = $app->claim($worker);
             coord_json(200, ['job' => $job]);
             return;

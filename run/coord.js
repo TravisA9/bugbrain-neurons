@@ -193,7 +193,25 @@ async function runSpec(job, opts) {
     result = { status: 'done', summary: text, synthetic: false, digest: require('crypto').createHash('sha256').update(text).digest('hex') };
   }
   result.pauseAfter = !!beats.state.pauseAfter;
+  const designPath = path.join(out, 'designs.json');
+  if (fs.existsSync(designPath)) result.designPath = designPath;
   return result;
+}
+async function uploadDesigns(base, token, hash, designPath) {
+  if (!designPath || !fs.existsSync(designPath)) return;
+  let records;
+  try { records = JSON.parse(fs.readFileSync(designPath, 'utf8')).records || []; }
+  catch (e) { return; }
+  if (!records.length) return;
+  const payload = Buffer.from(JSON.stringify({ codeHash: hash, records: records.slice(0, 24) }));
+  const gz = require('zlib').gzipSync(payload);
+  try {
+    await fetch(base.replace(/\/$/, '') + '/api/v1/designs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip', Authorization: 'Bearer ' + token },
+      body: gz,
+    });
+  } catch (e) {}
 }
 function readProgress(out) {
   try {
@@ -271,7 +289,11 @@ async function main() {
         }
         result = { status: 'error', summary: String((e && e.message) || e).slice(0, 500), synthetic: claimed.job.project === 'spikefoundry' };
       }
+      const designPath = result.designPath;
+      delete result.designPath;
+      delete result.pauseAfter;
       await api(base, token, '/api/v1/result', { jobId: claimed.job.id, result: result });
+      await uploadDesigns(base, token, hash, designPath);
       console.log(JSON.stringify({ ok: true, job: claimed.job.id, status: result.status }));
       if (a.once) return;
       await sleep(poll);

@@ -269,7 +269,7 @@
     for (const id of Object.keys(BASE_TASKS)) preview[id] = randomGenome(id, rng);
     return {
       seed: seed == null ? 1 : seed >>> 0, rng, model: makeMLP(rng), batch: 0, tested: 0, examples: 0,
-      activePhase: 1, selectedTask: 'coincidence', history: [], logs: [], explore: .35, preview,
+      activePhase: 1, selectedTask: 'coincidence', history: [], logs: [], explore: .35, preview, evaluations: [],
       best: maps.best, candidates: maps.candidates, bestByTopology: maps.bestByTopology,
       budget: Object.assign({}, LAB_BUDGET, budget || {}),
       note: 'Synthetic spike-pattern match. Not a BugBrain accuracy.',
@@ -302,9 +302,11 @@
       const task = pool[i % pool.length];
       const g = makeCandidate(state, task);
       const x = features(g, task);
+      const started = Date.now();
       const train = scoreDesign(g, task, false, 0, budget, state.rng);
       const validation = robustScore(g, task, budget, state.rng);
-      items.push({ task, g, x, train, validation });
+      const evalMs = Date.now() - started;
+      items.push({ task, g, x, train, validation, evalMs });
     }
     for (const item of items) {
       train(state.model, item.x, item.train.quality);
@@ -317,6 +319,14 @@
       if (!prevTop || candidate.score > prevTop.score) state.bestByTopology[item.task][item.g.topology] = candidate;
       const old = state.best[item.task];
       if (!old || item.validation.quality > old.score) state.best[item.task] = candidate;
+      if (!state.evaluations) state.evaluations = [];
+      state.evaluations.push({
+        taskId: item.task, taskVersion: 'base-1', genome: item.g,
+        metrics: { quality: item.validation.quality, accuracy: item.validation.accuracy, f1: item.validation.f1, precision: item.validation.precision, recall: item.validation.recall },
+        neurons: item.validation.neurons, synapses: item.validation.synapses,
+        spikes: Math.round(item.validation.spikes || 0), evalMs: item.evalMs || 0, seed: state.seed,
+      });
+      if (state.evaluations.length > 64) state.evaluations.shift();
     }
     const phaseTasks = pool.filter(id => BASE_TASKS[id].phase === state.activePhase);
     if (phaseTasks.length && phaseTasks.every(id => state.best[id] && state.best[id].score >= .91) && state.activePhase < (budget.maxPhase || 6)) state.activePhase++;

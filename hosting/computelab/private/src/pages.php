@@ -278,6 +278,7 @@ function pageMe(App $app, array $computers, string $csrf, array $nav): string
             $rows = '<p class="muted">None yet.</p>';
         }
         $time = $totals['seconds'] > 0 ? formatDuration((int) $totals['seconds']) : 'No recorded time yet';
+        $found = $app->designsByWorker((string) $worker['id']);
         $cards .= '<section><h2>' . h((string) $worker['name']) . '</h2>'
             . '<p class="status-line" role="status">' . h($state['line']) . '</p>'
             . '<p>' . h($seen) . '</p>'
@@ -286,6 +287,7 @@ function pageMe(App $app, array $computers, string $csrf, array $nav): string
             . '<button class="switch ' . $switchClass . '" type="submit" aria-pressed="' . ($state['paused'] ? 'false' : 'true') . '"><span>' . $switchWord . '</span><span class="knob"></span></button>'
             . '<p class="muted">' . h($switchHint) . '</p></form>'
             . '<p>' . h((string) $totals['done']) . ' jobs done · ' . h($time) . ' of compute</p>'
+            . '<p>Designs found by your computer: ' . h((string) $found) . '</p>'
             . '<h3>Recent results</h3>' . $rows . '</section>';
     }
     if ($cards === '') {
@@ -304,6 +306,27 @@ function pageLogin(App $app, string $error = '', array $nav = []): string
         . '<label>Password <input name="password" type="password" autocomplete="current-password" required></label>'
         . '<button type="submit">Log in</button></form></section>';
     return layout('Owner login', $body, $base, $nav);
+}
+
+function designLibrarySection(App $app, string $csrf, string $base): string
+{
+    $task = 'coincidence';
+    $top = [];
+    try {
+        $top = $app->topDesigns($task, 5);
+    } catch (InvalidArgumentException $e) {
+        $top = [];
+    }
+    $list = '';
+    foreach ($top as $row) {
+        $list .= '<p>' . h((string) $row['genome_hash']) . ' · score ' . h((string) $row['quality']) . ' · <a href="' . h($base . '/owner/designs/genome?hash=' . $row['genome_hash']) . '">Download genome</a></p>';
+    }
+    if ($list === '') {
+        $list = '<p class="muted">No saved designs yet. Finished SpikeFoundry runs upload them.</p>';
+    }
+    return '<section><h2>Design library</h2><p class="muted">Top coincidence designs. Weights stay frozen. The same genome is stored once.</p>' . $list
+        . '<p><a href="' . h($base . '/owner/designs/export?format=jsonl&task=coincidence') . '">Export JSONL</a> · <a href="' . h($base . '/owner/designs/export?format=csv&task=coincidence') . '">Export CSV</a></p>'
+        . '<form method="post" action="' . h($base) . '/owner/design-seed"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="template" value="sf-vision"><input type="hidden" name="task" value="coincidence"><input type="hidden" name="count" value="3"><label>Seed <input name="seed" type="number" min="1" max="1000000" value="11"></label><button type="submit">Seed new job from top designs</button></form></section>';
 }
 
 function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', string $status = 'all', int $page = 1): string
@@ -390,6 +413,7 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         . '<label>Seed <input name="seed" type="number" min="1" max="1000000" value="7"></label>'
         . '<button type="submit">Queue job</button></form></section>'
         . '<section><h2>Jobs</h2>' . $filterHtml . '<table><thead><tr><th>Job</th><th>Project</th><th>Status</th><th>Attempts</th><th>Last error</th></tr></thead><tbody>' . $rows . '</tbody></table>' . $pager . '</section>'
+        . designLibrarySection($app, $csrf, $base)
         . '<h2>Computers</h2>' . ($people !== '' ? $people : '<p class="muted">None enrolled.</p>');
     return layout('Owner', $body, $base, $nav);
 }
