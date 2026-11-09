@@ -53,7 +53,8 @@ final class App
             auto_jobs INTEGER,
             low_water INTEGER NOT NULL DEFAULT 0,
             queue_cap INTEGER NOT NULL DEFAULT 8,
-            evals_per_job INTEGER NOT NULL DEFAULT 40,
+            evals_per_job INTEGER NOT NULL DEFAULT 100000,
+            target_seconds INTEGER NOT NULL DEFAULT 180,
             auto_created INTEGER NOT NULL DEFAULT 0,
             auto_note TEXT
         )');
@@ -202,7 +203,13 @@ final class App
         $this->ensureColumn('projects', 'auto_jobs', 'INTEGER');
         $this->ensureColumn('projects', 'low_water', 'INTEGER NOT NULL DEFAULT 0');
         $this->ensureColumn('projects', 'queue_cap', 'INTEGER NOT NULL DEFAULT 8');
-        $this->ensureColumn('projects', 'evals_per_job', 'INTEGER NOT NULL DEFAULT 40');
+        $this->ensureColumn('projects', 'evals_per_job', 'INTEGER NOT NULL DEFAULT 100000');
+        $freshSeconds = !$this->hasColumn('projects', 'target_seconds');
+        $this->ensureColumn('projects', 'target_seconds', 'INTEGER NOT NULL DEFAULT 180');
+        if ($freshSeconds) {
+            $this->db->exec('UPDATE projects SET evals_per_job = 100000 WHERE evals_per_job > 0 AND evals_per_job <= 40');
+            $this->db->exec('UPDATE projects SET target_seconds = 180 WHERE target_seconds IS NULL OR target_seconds = 0');
+        }
         $this->ensureColumn('projects', 'auto_created', 'INTEGER NOT NULL DEFAULT 0');
         $this->ensureColumn('projects', 'auto_note', 'TEXT');
         if ($freshAuto) {
@@ -210,6 +217,7 @@ final class App
         }
         $this->seed();
         $this->refreshProtocolPins();
+        $this->purgePlaceholderDesigns();
         $this->db->exec("UPDATE projects SET family = 'spikefoundry' WHERE id = 'spikefoundry' AND (family IS NULL OR family = '')");
         $this->db->exec("UPDATE projects SET family = 'bugbrain' WHERE id = 'bugbrain' AND (family IS NULL OR family = '')");
     }
@@ -318,6 +326,54 @@ final class App
         $jobs->execute(array_merge([$current], $hashes));
         $changed += $jobs->rowCount();
         return $changed;
+    }
+
+    public function retiredDesign(array $rec): bool
+    {
+        $engine = (string) ($rec['engineVersion'] ?? $rec['engine_version'] ?? '');
+        if ($engine === 'spikefoundry-designer-1') {
+            return true;
+        }
+        if ($engine === 'spikefoundry-designer-2') {
+            return false;
+        }
+        $neurons = (int) ($rec['neurons'] ?? 0);
+        $synapses = (int) ($rec['synapses'] ?? 0);
+        if ($neurons !== 8 || $synapses !== 14) {
+            return false;
+        }
+        $scores = isset($rec['metrics']) && is_array($rec['metrics']) ? $rec['metrics'] : null;
+        if ($scores === null && isset($rec['score_json'])) {
+            $decoded = json_decode((string) $rec['score_json'], true);
+            $scores = is_array($decoded) ? $decoded : [];
+        }
+        if (!is_array($scores) || !isset($scores['quality'])) {
+            return false;
+        }
+        return abs((float) $scores['quality'] - 0.744) < 0.0005;
+    }
+
+    public function purgePlaceholderDesigns(): int
+    {
+        $done = $this->db->query("SELECT id FROM supply_state WHERE id = 'purge-designer-1'")->fetch();
+        if ($done) {
+            return 0;
+        }
+        $rows = $this->db->query('SELECT id, genome_hash, engine_version, neurons, synapses, score_json, worker_id FROM design_records')->fetchAll();
+        $removed = 0;
+        foreach ($rows as $rec) {
+            if (!$this->retiredDesign($rec)) {
+                continue;
+            }
+            $this->db->prepare('DELETE FROM design_records WHERE id = ?')->execute([(string) $rec['id']]);
+            $removed++;
+        }
+        $this->db->exec('DELETE FROM design_genomes WHERE hash NOT IN (SELECT genome_hash FROM design_records)');
+        $this->db->exec('DELETE FROM design_events WHERE worker_id NOT IN (SELECT DISTINCT worker_id FROM design_records)');
+        $this->db->exec("DELETE FROM model_checkpoints WHERE body_json LIKE '%spikefoundry-designer%' AND body_json NOT LIKE '%spikefoundry-designer-2%'");
+        $note = 'removed ' . $removed . ' placeholder records: engine_version spikefoundry-designer-1, or 8 neurons, 14 synapses, and quality 0.744';
+        $this->db->prepare('INSERT INTO supply_state (id, ran_at, note) VALUES (?, ?, ?)')->execute(['purge-designer-1', $this->now(), $note]);
+        return $removed;
     }
 
     public function protocolHash(): string
@@ -767,7 +823,10 @@ final class App
             $spec['mode'] = (string) $extra['mode'];
         }
         if (isset($extra['evals'])) {
-            $spec['evals'] = max(1, min(200, (int) $extra['evals']));
+            $spec['evals'] = max(1, min(100000, (int) $extra['evals']));
+        }
+        if (isset($extra['targetSeconds'])) {
+            $spec['targetSeconds'] = max(1, min(3600, (int) $extra['targetSeconds']));
         }
         $id = strtolower(preg_replace('/[^a-z0-9]+/', '-', $templateId) . '-' . $seed . '-' . bin2hex(random_bytes(3)));
         $this->db->prepare('INSERT INTO jobs (id, project_id, template_id, title, spec_json, code_hash, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
@@ -1037,10 +1096,15 @@ final class App
         if (count($records) > $cap) {
             throw new InvalidArgumentException('Too many design records in one upload.');
         }
-        $perJob = (int) ($this->config['design_per_job'] ?? 48);
+        $perJob = (int) ($this->config['design_per_job'] ?? 100000);
         $stored = 0;
         $skipped = 0;
         $touched = [];
+        foreach ($records as $rec) {
+            if (is_array($rec) && $this->retiredDesign($rec)) {
+                throw new InvalidArgumentException('Design upload from designer version spikefoundry-designer-1 is not accepted.');
+            }
+        }
         foreach ($records as $rec) {
             if (!is_array($rec)) {
                 $skipped++;
@@ -1145,7 +1209,7 @@ final class App
         if ($limit > 50) {
             $limit = 50;
         }
-        $st = $this->db->prepare('SELECT id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, worker_id, seed, created_at FROM design_records WHERE task_id = ? ORDER BY created_at DESC LIMIT 400');
+        $st = $this->db->prepare('SELECT id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, worker_id, seed, created_at FROM design_records WHERE task_id = ? AND engine_version <> \'spikefoundry-designer-1\' ORDER BY created_at DESC LIMIT 400');
         $st->execute([$taskId]);
         $best = [];
         foreach ($st->fetchAll() as $row) {
@@ -1187,21 +1251,21 @@ final class App
             $limit = 2000;
         }
         if ($taskId === '' || $taskId === 'all') {
-            $st = $this->db->prepare('SELECT r.task_id, r.task_version, r.genome_hash, r.score_json, r.neurons, r.synapses, r.spikes, r.eval_ms, r.engine_version, r.worker_id, r.seed, r.job_id, g.genome_json FROM design_records r JOIN design_genomes g ON g.hash = r.genome_hash ORDER BY r.created_at DESC LIMIT ' . (int) $limit);
+            $st = $this->db->prepare('SELECT r.task_id, r.task_version, r.genome_hash, r.score_json, r.neurons, r.synapses, r.spikes, r.eval_ms, r.engine_version, r.worker_id, r.seed, r.job_id, g.genome_json FROM design_records r JOIN design_genomes g ON g.hash = r.genome_hash WHERE r.engine_version <> \'spikefoundry-designer-1\' ORDER BY r.created_at DESC LIMIT ' . (int) $limit);
             $st->execute();
             return $st->fetchAll();
         }
         if (!preg_match('/^[a-z0-9._-]{1,64}$/', $taskId)) {
             throw new InvalidArgumentException('Unknown task.');
         }
-        $st = $this->db->prepare('SELECT r.task_id, r.task_version, r.genome_hash, r.score_json, r.neurons, r.synapses, r.spikes, r.eval_ms, r.engine_version, r.worker_id, r.seed, r.job_id, g.genome_json FROM design_records r JOIN design_genomes g ON g.hash = r.genome_hash WHERE r.task_id = ? ORDER BY r.created_at DESC LIMIT ' . (int) $limit);
+        $st = $this->db->prepare('SELECT r.task_id, r.task_version, r.genome_hash, r.score_json, r.neurons, r.synapses, r.spikes, r.eval_ms, r.engine_version, r.worker_id, r.seed, r.job_id, g.genome_json FROM design_records r JOIN design_genomes g ON g.hash = r.genome_hash WHERE r.task_id = ? AND r.engine_version <> \'spikefoundry-designer-1\' ORDER BY r.created_at DESC LIMIT ' . (int) $limit);
         $st->execute([$taskId]);
         return $st->fetchAll();
     }
 
     public function designsByWorker(string $workerId): int
     {
-        $st = $this->db->prepare('SELECT COUNT(*) FROM design_records WHERE worker_id = ?');
+        $st = $this->db->prepare('SELECT COUNT(*) FROM design_records WHERE worker_id = ? AND engine_version <> \'spikefoundry-designer-1\'');
         $st->execute([$workerId]);
         return (int) $st->fetchColumn();
     }
@@ -1232,6 +1296,10 @@ final class App
         if (!$lease->fetch()) {
             throw new InvalidArgumentException('This computer does not hold that job.');
         }
+        $decoded = json_decode($body, true);
+        if (is_array($decoded) && (string) ($decoded['format'] ?? '') === 'spikefoundry-designer' && (string) ($decoded['designerVersion'] ?? '') !== 'spikefoundry-designer-2') {
+            throw new InvalidArgumentException('That designer checkpoint is from a retired designer version.');
+        }
         $id = substr(hash('sha256', $jobId . '|' . $worker['id'] . '|' . hash('sha256', $body)), 0, 32);
         $have = $this->db->prepare('SELECT id FROM model_checkpoints WHERE id = ?');
         $have->execute([$id]);
@@ -1248,7 +1316,7 @@ final class App
 
     public function currentModel(): ?array
     {
-        $row = $this->db->query('SELECT id, label, body_json, metric_json, created_at FROM model_checkpoints ORDER BY created_at DESC LIMIT 1')->fetch();
+        $row = $this->db->query('SELECT id, label, body_json, metric_json, created_at FROM model_checkpoints WHERE body_json NOT LIKE \'%spikefoundry-designer%\' OR body_json LIKE \'%spikefoundry-designer-2%\' ORDER BY created_at DESC LIMIT 1')->fetch();
         return $row ?: null;
     }
 
@@ -1300,7 +1368,7 @@ final class App
 
     private function noteHighlight(array $worker, string $taskId, float $held, string $genomeHash): void
     {
-        $others = $this->db->prepare('SELECT score_json, worker_id, genome_hash FROM design_records WHERE task_id = ? ORDER BY seq DESC LIMIT 200');
+        $others = $this->db->prepare('SELECT score_json, worker_id, genome_hash FROM design_records WHERE task_id = ? AND engine_version <> \'spikefoundry-designer-1\' ORDER BY seq DESC LIMIT 200');
         $others->execute([$taskId]);
         $bestOther = -1.0;
         $personal = -1.0;
@@ -1338,7 +1406,7 @@ final class App
         $order = ['coincidence', 'sequence', 'vote3', 'routing', 'composed', 'context3', 'nested', 'scenario-vision', 'scenario-sequence', 'scenario-graph', 'scenario-control', 'digits', 'mnist', 'cart-pole'];
         $here = array_search($taskId, $order, true);
         if ($here !== false && $here > 0) {
-            $prior = $this->db->prepare('SELECT DISTINCT task_id FROM design_records WHERE worker_id = ?');
+            $prior = $this->db->prepare('SELECT DISTINCT task_id FROM design_records WHERE worker_id = ? AND engine_version <> \'spikefoundry-designer-1\'');
             $prior->execute([$worker['id']]);
             $max = -1;
             foreach ($prior->fetchAll() as $row) {
@@ -1351,7 +1419,7 @@ final class App
                 $this->addEvent((string) $worker['id'], $taskId, 'promoted', 'A design moved up to ' . $taskId, 'level');
             }
         }
-        $sum = $this->db->prepare('SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id = ?');
+        $sum = $this->db->prepare('SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id = ? AND engine_version <> \'spikefoundry-designer-1\'');
         $sum->execute([$worker['id']]);
         $tot = $sum->fetch() ?: ['n' => 0, 'ms' => 0];
         foreach ([10, 100, 1000] as $mark) {
@@ -1392,7 +1460,7 @@ final class App
         if ($limit > 50) {
             $limit = 50;
         }
-        $rows = $this->db->query('SELECT w.participant_id, w.name, w.public_credit, COUNT(r.id) AS records, COUNT(DISTINCT r.genome_hash) AS genomes, COALESCE(SUM(r.eval_ms), 0) AS ms FROM design_records r JOIN workers w ON w.id = r.worker_id GROUP BY w.participant_id, w.name, w.public_credit ORDER BY ms DESC LIMIT ' . (int) $limit)->fetchAll();
+        $rows = $this->db->query('SELECT w.participant_id, w.name, w.public_credit, COUNT(r.id) AS records, COUNT(DISTINCT r.genome_hash) AS genomes, COALESCE(SUM(r.eval_ms), 0) AS ms FROM design_records r JOIN workers w ON w.id = r.worker_id WHERE r.engine_version <> \'spikefoundry-designer-1\' GROUP BY w.participant_id, w.name, w.public_credit ORDER BY ms DESC LIMIT ' . (int) $limit)->fetchAll();
         $out = [];
         foreach ($rows as $row) {
             $out[] = [
@@ -1410,13 +1478,13 @@ final class App
         return (int) ($project['auto_jobs'] ?? 0) === 1;
     }
 
-    public function saveSupply(string $projectId, bool $on, int $lowWater, int $cap, int $evals): void
+    public function saveSupply(string $projectId, bool $on, int $lowWater, int $cap, int $evals, int $seconds = 180): void
     {
-        if ($lowWater < 0 || $lowWater > 100 || $cap < 1 || $cap > 100 || $evals < 1 || $evals > 200) {
+        if ($lowWater < 0 || $lowWater > 100 || $cap < 1 || $cap > 100 || $evals < 1 || $evals > 100000 || $seconds < 1 || $seconds > 3600) {
             throw new InvalidArgumentException('Supply settings are out of range.');
         }
-        $this->db->prepare('UPDATE projects SET auto_jobs = ?, low_water = ?, queue_cap = ?, evals_per_job = ? WHERE id = ?')
-            ->execute([$on ? 1 : 0, $lowWater, $cap, $evals, $projectId]);
+        $this->db->prepare('UPDATE projects SET auto_jobs = ?, low_water = ?, queue_cap = ?, evals_per_job = ?, target_seconds = ? WHERE id = ?')
+            ->execute([$on ? 1 : 0, $lowWater, $cap, $evals, $seconds, $projectId]);
     }
 
     public function replenishJobs(): int
@@ -1468,7 +1536,9 @@ final class App
                     break;
                 }
                 $seed = (hexdec(substr(hash('sha256', $project['id'] . '|' . $this->now() . '|' . $made), 0, 6)) % 1000000) + 1;
-                $extra = ['taskId' => $task, 'evals' => (int) ($project['evals_per_job'] > 0 ? $project['evals_per_job'] : 40)];
+                $evals = (int) $project['evals_per_job'] > 0 ? (int) $project['evals_per_job'] : 100000;
+                $seconds = (int) ($project['target_seconds'] ?? 0) > 0 ? (int) $project['target_seconds'] : 180;
+                $extra = ['taskId' => $task, 'evals' => $evals, 'targetSeconds' => $seconds];
                 if ((string) $project['id'] !== 'bugbrain' && (string) ($project['family'] ?? '') !== 'bugbrain') {
                     $extra['mode'] = 'propose';
                     try {
@@ -1601,7 +1671,7 @@ final class App
         if ($limit > 500) {
             $limit = 500;
         }
-        $st = $this->db->prepare('SELECT score_json, eval_ms, arm, created_at FROM design_records WHERE task_id = ? ORDER BY seq DESC, created_at DESC LIMIT ' . (int) $limit);
+        $st = $this->db->prepare('SELECT score_json, eval_ms, arm, created_at FROM design_records WHERE task_id = ? AND engine_version <> \'spikefoundry-designer-1\' ORDER BY seq DESC, created_at DESC LIMIT ' . (int) $limit);
         $st->execute([$taskId]);
         $rows = array_reverse($st->fetchAll());
         $bestHeld = 0.0;
@@ -1740,7 +1810,7 @@ final class App
 
     public function watchedTasks(): array
     {
-        $rows = $this->db->query('SELECT DISTINCT task_id FROM design_records ORDER BY task_id ASC LIMIT 12')->fetchAll();
+        $rows = $this->db->query('SELECT DISTINCT task_id FROM design_records WHERE engine_version <> \'spikefoundry-designer-1\' ORDER BY task_id ASC LIMIT 12')->fetchAll();
         $out = [];
         foreach ($rows as $row) {
             $task = (string) $row['task_id'];

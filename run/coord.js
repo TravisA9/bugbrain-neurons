@@ -151,6 +151,7 @@ function runnerArgs(job, out) {
       taskId: spec.taskId,
       seedGenomes: spec.seedGenomes,
       evals: spec.evals,
+      targetSeconds: spec.targetSeconds,
       title: job.title,
     })));
     return [path.join(ROOT, 'spikefoundry', 'run.js'), '--job', file, '--out', out];
@@ -224,15 +225,20 @@ async function uploadDesigns(base, token, hash, designPath) {
   try { records = JSON.parse(fs.readFileSync(designPath, 'utf8')).records || []; }
   catch (e) { return; }
   if (!records.length) return;
-  const payload = Buffer.from(JSON.stringify({ codeHash: hash, records: records.slice(0, 24) }));
-  const gz = require('zlib').gzipSync(payload);
-  try {
-    await fetch(base.replace(/\/$/, '') + '/api/v1/designs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip', Authorization: 'Bearer ' + token },
-      body: gz,
-    });
-  } catch (e) {}
+  for (let i = 0; i < records.length; i += 24) {
+    const payload = Buffer.from(JSON.stringify({ codeHash: hash, records: records.slice(i, i + 24) }));
+    const gz = require('zlib').gzipSync(payload);
+    try {
+      await fetch(base.replace(/\/$/, '') + '/api/v1/designs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip', Authorization: 'Bearer ' + token },
+        body: gz,
+      });
+    } catch (e) {}
+  }
+}
+function shouldWait(reason) {
+  return reason === 'empty' || reason === 'paused' || reason === 'error' || reason === 'retry';
 }
 function readProgress(out) {
   try {
@@ -320,7 +326,7 @@ async function main() {
       await uploadDesigns(base, token, hash, designPath);
       console.log(JSON.stringify({ ok: true, job: claimed.job.id, status: result.status }));
       if (a.once) return;
-      await sleep(poll);
+      if (shouldWait(result.status === 'done' ? 'done' : 'error')) await sleep(poll);
     } catch (e) {
       const decision = decideRetry(e, delay);
       if (decision.action === 'stop') {
@@ -337,4 +343,4 @@ async function main() {
   }
 }
 if (require.main === module) main().catch(e => { console.error(e.message || e); process.exit(1); });
-module.exports = { ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild, readProgress };
+module.exports = { ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild, readProgress, shouldWait };

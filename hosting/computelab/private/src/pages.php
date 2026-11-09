@@ -456,7 +456,8 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
             . '<label><input type="checkbox" name="auto" value="1"' . ($app->projectAutoOn($p) ? ' checked' : '') . '> Auto-create jobs</label>'
             . '<label>Low-water mark (0 means one waiting job per online computer) <input name="low" type="number" min="0" max="100" value="' . h((string) ($p['low_water'] ?? 0)) . '"></label>'
             . '<label>Cap on waiting jobs <input name="cap" type="number" min="1" max="100" value="' . h((string) ($p['queue_cap'] ?? 8)) . '"></label>'
-            . '<label>Evaluations per job <input name="evals" type="number" min="1" max="200" value="' . h((string) ($p['evals_per_job'] ?? 40)) . '"></label>'
+            . '<label>Evaluations per job <input name="evals" type="number" min="1" max="100000" value="' . h((string) ($p['evals_per_job'] ?? 100000)) . '"></label>'
+            . '<label>Target seconds per job <input name="seconds" type="number" min="1" max="3600" value="' . h((string) ($p['target_seconds'] ?? 180)) . '"></label>'
             . '<p class="muted">Auto-created: ' . h((string) ($p['auto_created'] ?? 0)) . '. ' . h((string) ($p['auto_note'] ?? '')) . '</p>'
             . '<button type="submit">Save auto jobs</button></form></section>';
     }

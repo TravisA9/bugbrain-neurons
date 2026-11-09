@@ -30,4 +30,27 @@ const screened = Designer.screen(feat, Genome.blank(2, 1), rngOf(8), fit.model, 
 check(screened.length === 3 && screened[0].predicted >= screened[screened.length - 1].predicted, 'the surrogate keeps only the higher-ranked mutations');
 const proposed = Designer.propose(feat, rngOf(2), Designer.makePolicy(rngOf(2)));
 check(proposed.v === 2 && JSON.stringify(proposed).indexOf('stdp') < 0, 'the generator proposes a frozen v2 genome');
+
+const os = require('os'), path = require('path'), fs = require('fs');
+const out = path.join(os.tmpdir(), 'designer-score-' + process.pid);
+const SF = require('./engine.js');
+Designer.run({ id: 'score-job', mode: 'propose', taskId: 'coincidence', seed: 11, evals: 20, targetSeconds: 30 }, out, SF);
+const records = JSON.parse(fs.readFileSync(path.join(out, 'designs.json'), 'utf8')).records;
+const genomes = new Set(records.map(row => row.genomeHash));
+const signatures = new Set(records.map(row => [row.metrics.quality, row.metrics.train, row.metrics.heldOut, row.spikes, row.neurons, row.synapses].join('|')));
+const randoms = records.filter(row => row.metrics.arm === 'random').length;
+let replay = true;
+records.forEach(row => {
+  const again = Designer.scoreGenome(JSON.parse(row.genomeJson), row.taskId, row.seed);
+  if (again.quality !== row.metrics.quality || again.spikes !== row.spikes || again.train !== row.metrics.train || again.heldOut !== row.metrics.heldOut || again.neurons !== row.neurons || again.synapses !== row.synapses) replay = false;
+});
+check(genomes.size > 1 && signatures.size > 1, 'distinct genomes do not all receive the same score and size');
+check(replay, 'simulating a recorded genome again reproduces its recorded score');
+check(randoms >= 1 && randoms < records.length && records.every(row => row.engineVersion === 'spikefoundry-designer-2'), 'about one evaluation in ten is a random arm and the designer version is current');
+const timedOut = path.join(out, 'timed');
+const began = Date.now();
+Designer.run({ id: 'timed-job', mode: 'propose', taskId: 'coincidence', seed: 4, evals: 100000, targetSeconds: 1 }, timedOut, SF);
+const timed = JSON.parse(fs.readFileSync(path.join(timedOut, 'designs.json'), 'utf8')).records.length;
+const progress = JSON.parse(fs.readFileSync(path.join(timedOut, 'progress.json'), 'utf8'));
+check(timed >= 1 && timed < 100000 && progress.batchesDone === timed && (Date.now() - began) < 4000, 'a propose job stops at its time budget and reports progress');
 console.log(n + ' checks');

@@ -137,6 +137,8 @@ const job = {
   });
   check(survived.status === 'done' && shaky >= 1, 'a heartbeat network error does not drop the running job');
 
+  check(coord.shouldWait('done') === false && coord.shouldWait('empty') === true && coord.shouldWait('error') === true && coord.shouldWait('paused') === true, 'a finished job claims again immediately and an empty queue waits');
+
   const lf = 'computelab-protocol-2\nkeep this line\n';
   check(coord.hashText(lf) === coord.hashText(lf.replace(/\n/g, '\r\n')), 'a CRLF copy of the protocol hashes the same as LF');
 

@@ -20,7 +20,7 @@ function genomeHash(genome) {
 function fromEvaluations(rows, meta) {
   meta = meta || {};
   const out = [];
-  for (let i = 0; i < rows.length && out.length < 48; i++) {
+  for (let i = 0; i < rows.length && out.length < 100000; i++) {
     const row = rows[i];
     if (!row || !row.genome || !row.taskId) continue;
     const json = genomeJson(row.genome);

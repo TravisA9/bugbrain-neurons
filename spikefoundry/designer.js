@@ -7,6 +7,8 @@ const Library = require('./library.js');
 
 const DESIGN_FEATURES = 16;
 const ACTIONS = 8;
+const DESIGNER_VERSION = 'spikefoundry-designer-2';
+const EVAL_CAP = 100000;
 
 function mulberry32(seed) {
   let a = (seed >>> 0) || 1;
@@ -133,8 +135,8 @@ function applyAction(genome, action) {
   }
   return Genome.sanitize(g);
 }
-function propose(taskFeatures, rng, policy) {
-  let genome = Genome.blank(2, 1);
+function propose(taskFeatures, rng, policy, parent) {
+  let genome = parent ? Genome.sanitize(parent) : Genome.blank(2, 1);
   const scores = actionScores(policy, taskFeatures);
   for (let step = 0; step < 4; step++) {
     const noise = scores.map(score => score + rng() * 0.05);
@@ -160,6 +162,93 @@ function screen(taskFeatures, parent, rng, model, count) {
   return scored.slice(0, 3);
 }
 
+function vary(genome, rng) {
+  const g = Genome.sanitize(genome);
+  if (g.wires.length) {
+    const wire = g.wires[Math.floor(rng() * g.wires.length)];
+    wire.weight = Math.round((rng() * 3 - 1) * 10000) / 10000;
+    wire.delay = Math.floor(rng() * 4);
+  }
+  const lif = g.modules.filter(mod => mod.kind === 'lif');
+  if (lif.length) {
+    const mod = lif[Math.floor(rng() * lif.length)];
+    mod.thr = Math.round((0.4 + rng() * 2.2) * 10000) / 10000;
+    mod.leak = Math.round((0.2 + rng() * 0.7) * 10000) / 10000;
+  }
+  return Genome.sanitize(g);
+}
+
+function blankFor(taskId) {
+  const spec = Tasks.specById(taskId) || Tasks.specById('coincidence');
+  const inputs = Math.max(1, Math.min(8, (spec.inputs && spec.inputs.count) || 2));
+  const outputs = Math.max(1, Math.min(8, (spec.outputs && spec.outputs.count) || 1));
+  return Genome.blank(inputs, outputs);
+}
+
+function scoreSet(genome, samples) {
+  const compiled = Genome.compile(genome);
+  let exact = 0, tp = 0, fp = 0, fn = 0, spikes = 0;
+  samples.forEach(sample => {
+    const run = Genome.simulate(genome, sample.seq);
+    const label = (sample.label || []).map(value => !!value);
+    const outs = run.outputs || [];
+    let match = outs.length === label.length && label.length > 0;
+    const n = Math.max(outs.length, label.length);
+    for (let j = 0; j < n; j++) {
+      const fired = !!outs[j];
+      const want = !!label[j];
+      if (fired !== want) match = false;
+      if (fired && want) tp++;
+      else if (fired) fp++;
+      else if (want) fn++;
+    }
+    if (match) exact++;
+    spikes += run.spikeCount || 0;
+  });
+  const n = Math.max(1, samples.length);
+  const precision = tp / (tp + fp || 1);
+  const recall = tp / (tp + fn || 1);
+  const f1 = 2 * precision * recall / (precision + recall || 1);
+  const accuracy = samples.length ? exact / samples.length : 0;
+  const meanSpikes = spikes / n;
+  const quality = clamp(accuracy - 0.0015 * (compiled.neurons.length + compiled.edges.length) - 0.00025 * meanSpikes, 0, 1);
+  return { accuracy: accuracy, precision: precision, recall: recall, f1: f1, quality: quality, spikes: spikes, neurons: compiled.neurons.length, synapses: compiled.edges.length };
+}
+
+function scoreGenome(genome, taskId, seed, trials) {
+  const trainN = Math.max(1, Math.min(32, (trials && trials.train) || 4));
+  const heldN = Math.max(1, Math.min(32, (trials && trials.held) || 4));
+  const SF = require('./engine.js');
+  const base = (seed || 1) >>> 0;
+  let trainSamples = SF.taskSamples ? SF.taskSamples(taskId, trainN, false, base) : [];
+  let heldSamples = SF.taskSamples ? SF.taskSamples(taskId, heldN, true, (base + 17) >>> 0) : [];
+  if (!trainSamples.length || !heldSamples.length) {
+    const spec = Tasks.specById(taskId) || Tasks.specById('coincidence');
+    const examples = (spec.examples || []).filter(example => Array.isArray(example.input) && example.input.length && Array.isArray(example.input[0]));
+    const asSample = example => ({ seq: example.input, label: Array.isArray(example.output) ? example.output : [example.output ? 1 : 0] });
+    const mid = Math.max(1, Math.floor(examples.length / 2));
+    trainSamples = examples.slice(0, mid).map(asSample);
+    heldSamples = examples.slice(mid).map(asSample);
+    if (!heldSamples.length) heldSamples = trainSamples.slice();
+  }
+  const started = Date.now();
+  const train = scoreSet(genome, trainSamples);
+  const held = scoreSet(genome, heldSamples);
+  return {
+    quality: held.quality,
+    accuracy: held.accuracy,
+    f1: held.f1,
+    precision: held.precision,
+    recall: held.recall,
+    train: train.quality,
+    heldOut: held.quality,
+    neurons: held.neurons,
+    synapses: held.synapses,
+    spikes: held.spikes,
+    evalMs: Date.now() - started,
+  };
+}
+
 function exampleFromScore(taskId, genome, quality) {
   const spec = Tasks.specById(taskId) || Tasks.specById('coincidence');
   return { x: pack(Tasks.featuresOf(spec), genome), y: clamp(quality, 0, 1) };
@@ -167,6 +256,7 @@ function exampleFromScore(taskId, genome, quality) {
 
 function run(job, outDir, SF) {
   const fs = require('fs'), path = require('path');
+  fs.mkdirSync(outDir, { recursive: true });
   const taskId = job.taskId || 'coincidence';
   const spec = Tasks.specById(taskId) || Tasks.specById('coincidence');
   const taskFeatures = Tasks.featuresOf(spec);
@@ -183,15 +273,44 @@ function run(job, outDir, SF) {
   const policy = makePolicy(rng);
   trainPolicy(policy, taskFeatures, 3, 0.4);
   const proposed = [];
-  const rounds = Math.max(1, Math.min(80, +job.evals || 4));
+  const evalCap = Math.max(1, Math.min(EVAL_CAP, +job.evals || EVAL_CAP));
+  const budgetMs = Math.max(1, Math.min(3600, +job.targetSeconds || +job.target_seconds || 180)) * 1000;
+  const started = Date.now();
   if (job.mode === 'propose') {
-    for (let i = 0; i < rounds; i++) {
-      const genome = propose(taskFeatures, rng, policy);
-      const score = SF.scoreDesign
-        ? SF.scoreDesign({ topology: 'parallel', wa: 1, wb: 1, thr: 1.2, decay: 0.5, nodes: 2, depth: 1 }, taskId === 'coincidence' || SF.BASE_TASKS[taskId] ? (SF.BASE_TASKS[taskId] ? taskId : 'coincidence') : 'coincidence', true, 0, SF.PILOT_BUDGET, SF.createState(job.seed || 1).rng)
-        : { quality: fit.model ? predict(fit.model, taskFeatures, genome) : 0, accuracy: 0, f1: 0, precision: 0, recall: 0, neurons: 4, synapses: 4, spikes: 0 };
-      const run = Genome.simulate(genome, spec.examples[0] && Array.isArray(spec.examples[0].input) && Array.isArray(spec.examples[0].input[0]) ? spec.examples[0].input : [[1, 0], [1, 1], [0, 0]]);
-      proposed.push({ genome: genome, quality: score.quality, spikes: run.spikeCount, neurons: Genome.compile(genome).neurons.length, synapses: Genome.compile(genome).edges.length });
+    const origin = blankFor(taskId);
+    while (proposed.length < evalCap) {
+      const randomArm = proposed.length % 10 === 9;
+      let genome = origin;
+      if (randomArm) {
+        const steps = 3;
+        for (let step = 0; step < steps; step++) genome = vary(genome, rng);
+      } else {
+        genome = vary(propose(taskFeatures, rng, policy, origin), rng);
+      }
+      const score = scoreGenome(genome, taskId, job.seed || 1);
+      proposed.push({
+        genome: genome,
+        arm: randomArm ? 'random' : 'designer',
+        quality: score.quality,
+        accuracy: score.accuracy,
+        f1: score.f1,
+        precision: score.precision,
+        recall: score.recall,
+        train: score.train,
+        heldOut: score.heldOut,
+        spikes: score.spikes,
+        neurons: score.neurons,
+        synapses: score.synapses,
+        evalMs: score.evalMs,
+      });
+      fs.writeFileSync(path.join(outDir, 'progress.json'), JSON.stringify({
+        synthetic: true,
+        batchesDone: proposed.length,
+        batchesTotal: evalCap,
+        status: 'running',
+        seed: job.seed || 1,
+      }));
+      if (Date.now() - started >= budgetMs) break;
     }
   }
   const screened = screen(taskFeatures, Genome.blank(2, 1), rng, fit.model, 8);
@@ -201,15 +320,15 @@ function run(job, outDir, SF) {
     policy: policy,
     spearman: fit.spearman,
     heldOut: fit.heldOut,
+    designerVersion: DESIGNER_VERSION,
     synthetic: true,
   };
-  fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, 'model.json'), JSON.stringify(checkpoint));
   const records = Library.fromEvaluations(proposed.map(item => ({
     taskId: taskId, taskVersion: spec.version, genome: item.genome,
-    metrics: { quality: item.quality, accuracy: item.quality, f1: item.quality, precision: item.quality, recall: item.quality, train: item.quality, heldOut: item.quality, arm: 'designer' },
-    neurons: item.neurons, synapses: item.synapses, spikes: item.spikes, evalMs: 0, seed: job.seed || 1,
-  })), { jobId: job.id || 'designer', engineVersion: 'spikefoundry-designer-1' });
+    metrics: { quality: item.quality, accuracy: item.accuracy, f1: item.f1, precision: item.precision, recall: item.recall, train: item.train, heldOut: item.heldOut, arm: item.arm || 'designer' },
+    neurons: item.neurons, synapses: item.synapses, spikes: item.spikes, evalMs: item.evalMs || 0, seed: job.seed || 1,
+  })), { jobId: job.id || 'designer', engineVersion: DESIGNER_VERSION });
   if (records.length) fs.writeFileSync(path.join(outDir, 'designs.json'), JSON.stringify({ records: records }));
   const summary = {
     synthetic: true,
@@ -227,6 +346,6 @@ function run(job, outDir, SF) {
 }
 
 module.exports = {
-  DESIGN_FEATURES, ACTIONS, designFeatures, makeSurrogate, trainSurrogate, predict, fitSurrogate, spearman,
-  makePolicy, propose, trainPolicy, screen, applyAction, exampleFromScore, run,
+  DESIGN_FEATURES, ACTIONS, DESIGNER_VERSION, designFeatures, makeSurrogate, trainSurrogate, predict, fitSurrogate, spearman,
+  makePolicy, propose, trainPolicy, screen, applyAction, exampleFromScore, scoreGenome, blankFor, run,
 };

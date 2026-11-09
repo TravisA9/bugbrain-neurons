@@ -305,13 +305,14 @@
     const nItems = budget.items || 4;
     for (let i = 0; i < nItems; i++) {
       const task = pool[i % pool.length];
-      const g = makeCandidate(state, task);
+      const randomArm = (((state.evaluations && state.evaluations.length) || 0) + items.length) % 10 === 9;
+      const g = randomArm ? randomGenome(task, state.rng) : makeCandidate(state, task);
       const x = features(g, task);
       const started = Date.now();
       const train = scoreDesign(g, task, false, 0, budget, state.rng);
       const validation = robustScore(g, task, budget, state.rng);
       const evalMs = Date.now() - started;
-      items.push({ task, g, x, train, validation, evalMs });
+      items.push({ task, g, x, train, validation, evalMs, randomArm });
     }
     for (const item of items) {
       train(state.model, item.x, item.train.quality);
@@ -327,7 +328,7 @@
       if (!state.evaluations) state.evaluations = [];
       state.evaluations.push({
         taskId: item.task, taskVersion: 'base-1', genome: item.g,
-        metrics: { quality: item.validation.quality, accuracy: item.validation.accuracy, f1: item.validation.f1, precision: item.validation.precision, recall: item.validation.recall, train: item.train.quality, heldOut: item.validation.quality, arm: (state.evaluations.length % 10 === 0 ? 'random' : 'designer') },
+        metrics: { quality: item.validation.quality, accuracy: item.validation.accuracy, f1: item.validation.f1, precision: item.validation.precision, recall: item.validation.recall, train: item.train.quality, heldOut: item.validation.quality, arm: item.randomArm ? 'random' : 'designer' },
         neurons: item.validation.neurons, synapses: item.validation.synapses,
         spikes: Math.round(item.validation.spikes || 0), evalMs: item.evalMs || 0, seed: state.seed,
       });
@@ -412,6 +413,14 @@
     const sample = makeSample(taskId, index || 0, true, 0, mulberry32(1));
     return { task: publicTask(BASE_TASKS[taskId]), seq: sample.seq, label: sample.label, synthetic: true };
   }
+  function taskSamples(taskId, count, validation, seed) {
+    if (!BASE_TASKS[taskId]) return [];
+    const rng = mulberry32(seed == null ? 1 : seed);
+    const n = Math.max(0, Math.min(64, count || 0));
+    const out = [];
+    for (let i = 0; i < n; i++) out.push(makeSample(taskId, i, !!validation, 0, rng));
+    return out;
+  }
 
-  return { TOPOLOGIES, LAB_BUDGET, FULL_BUDGET, PILOT_BUDGET, taskList, createState, runBatch, checkpoint, restore, summary, scoreDesign, robustScore, network, sampleCase, compileSNN, simulateSNN, simulateFrozen, heldOutPromotion, BASE_TASKS };
+  return { TOPOLOGIES, LAB_BUDGET, FULL_BUDGET, PILOT_BUDGET, taskList, createState, runBatch, checkpoint, restore, summary, scoreDesign, robustScore, network, sampleCase, taskSamples, compileSNN, simulateSNN, simulateFrozen, heldOutPromotion, BASE_TASKS };
 });

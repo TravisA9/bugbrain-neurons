@@ -492,7 +492,7 @@ try {
         } elseif ($path === '/owner/project-create') {
             $app->createProject((string) ($_POST['title'] ?? ''), (string) ($_POST['summary'] ?? ''), (string) ($_POST['runner'] ?? ''), (int) ($_POST['priority'] ?? 1), isset($_POST['enabled']));
         } elseif ($path === '/owner/supply') {
-            $app->saveSupply((string) ($_POST['id'] ?? ''), isset($_POST['auto']), (int) ($_POST['low'] ?? 0), (int) ($_POST['cap'] ?? 8), (int) ($_POST['evals'] ?? 40));
+            $app->saveSupply((string) ($_POST['id'] ?? ''), isset($_POST['auto']), (int) ($_POST['low'] ?? 0), (int) ($_POST['cap'] ?? 8), (int) ($_POST['evals'] ?? 100000), (int) ($_POST['seconds'] ?? 180));
         } elseif ($path === '/owner/task-policy') {
             $app->saveTaskPolicy((string) ($_POST['project'] ?? ''), (string) ($_POST['task'] ?? ''), (float) ($_POST['delta'] ?? 0.005), (int) ($_POST['evals'] ?? 3000), (float) ($_POST['hours'] ?? 6), (string) ($_POST['action'] ?? 'flag'));
         } elseif ($path === '/owner/design-public') {
