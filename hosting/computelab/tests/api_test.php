@@ -286,5 +286,34 @@ if (count($raceWinners) !== 1 || $raceLeases !== 1) {
 @unlink($racePath . '-wal');
 @unlink($racePath . '-shm');
 
+$ux = lab();
+$deskA = $ux['app']->enroll('desk-a', ['spikefoundry'], 2, true);
+$deskB = $ux['app']->enroll('desk-b', ['bugbrain'], 2, true, $deskA['participantId']);
+$linked = $ux['app']->computersFor($deskA['participantId']);
+check(count($linked) === 2 && $ux['app']->workerOwns($deskA['participantId'], $deskB['workerId']), 'one participant can link more than one computer');
+$badRunner = false;
+try { $ux['app']->createProject('Nope', 'No runner.', 'run/evil.js', 1, true); } catch (InvalidArgumentException $e) { $badRunner = true; }
+check($badRunner, 'a project runner outside the allowlist is refused');
+$proj = $ux['app']->createProject('Evening vision', 'A small synthetic vision project.', 'spikefoundry/run.js', 5, true);
+$evening = $ux['app']->createJob($proj . '-default', 'Evening check', 1, 3);
+$eveningJob = $ux['app']->claim($ux['app']->workerByToken($deskA['token']));
+check($eveningJob && $eveningJob['id'] === $evening && $eveningJob['project'] === $proj, 'a new SpikeFoundry project is offered to a computer that allowed SpikeFoundry');
+$ux['app']->heartbeat($ux['app']->workerByToken($deskA['token']), ['progress' => 42]);
+$eveningLease = $ux['app']->currentLease($deskA['workerId']);
+check($eveningLease && (int) $eveningLease['progress'] === 42, 'a heartbeat records progress only on that computer\'s lease');
+$runningPage = $ux['app']->listJobs('running', 1, 1);
+check($runningPage['total'] === 1 && $runningPage['rows'][0]['status'] === 'leased' && $runningPage['pages'] === 1, 'the running filter lists leased jobs');
+$ux['clock']->t = gmdate('c', strtotime($ux['clock']->t) + 90);
+$ux['app']->submitResult($ux['app']->workerByToken($deskA['token']), $evening, ['status' => 'done', 'summary' => 'Synthetic evening run.', 'synthetic' => true]);
+$contrib = $ux['app']->contribution($deskA['workerId']);
+check($contrib['done'] === 1 && $contrib['seconds'] === 90, 'a finished job records how long the computer worked');
+$stats = $ux['app']->homeStats();
+check($stats['online'] >= 1 && $stats['projects'] >= 3 && $stats['done'] >= 1, 'home totals count computers, finished jobs, and projects');
+require dirname(__DIR__) . '/private/src/setup.php';
+$unix = setup_script('unix', $deskA['token'], 'https://zaga.info/computelab', 'https://github.com/TravisA9/bugbrain-neurons.git', 'cursor/worker-console-22bf');
+$windows = setup_script('windows', $deskA['token'], 'https://zaga.info/computelab', 'https://github.com/TravisA9/bugbrain-neurons.git', 'cursor/worker-console-22bf');
+check(strpos($unix, $deskA['token']) !== false && strpos($unix, 'set -x') === false && strpos($unix, 'nodejs.org') !== false && strpos($unix, 'BB_COORDINATOR_URL') !== false, 'the Mac/Linux setup file saves the token without tracing the shell');
+check(strpos($windows, '@echo off') === 0 && strpos($windows, $deskA['token']) !== false && strpos($windows, 'echo ' . $deskA['token']) === false && strpos($windows, 'nodejs.org') !== false, 'the Windows setup file saves the token and does not echo it');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

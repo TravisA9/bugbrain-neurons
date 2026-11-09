@@ -159,10 +159,11 @@ async function runSpec(job, opts) {
   fs.mkdirSync(out, { recursive: true });
   const spawn = opts.spawn || cp.spawn;
   const child = spawn(process.execPath, runnerArgs(job, out), { cwd: ROOT, stdio: opts.stdio || 'inherit' });
+  const innerBeat = opts.heartbeat || (() => Promise.resolve({ ok: true, jobId: job.id, paused: false }));
   const beats = startLeaseHeartbeat({
     heartbeatMs: opts.heartbeatMs != null ? opts.heartbeatMs : +(process.env.BB_COORD_HEARTBEAT_MS || 60000),
     jobId: job.id,
-    heartbeat: opts.heartbeat || (() => Promise.resolve({ ok: true, jobId: job.id, paused: false })),
+    heartbeat: () => Promise.resolve().then(() => innerBeat(readProgress(out))),
     onLost: () => stopChild(child),
   });
   let done;
@@ -194,9 +195,22 @@ async function runSpec(job, opts) {
   result.pauseAfter = !!beats.state.pauseAfter;
   return result;
 }
-async function workerHeartbeat(base, token, hash, jobId) {
+function readProgress(out) {
   try {
-    return await api(base, token, '/api/v1/heartbeat', { codeHash: hash });
+    const raw = JSON.parse(fs.readFileSync(path.join(out, 'progress.json'), 'utf8'));
+    const total = +raw.batchesTotal;
+    const done = +raw.batchesDone;
+    if (!(total > 0) || !isFinite(done)) return null;
+    return Math.max(0, Math.min(100, Math.round((100 * done) / total)));
+  } catch (e) {
+    return null;
+  }
+}
+async function workerHeartbeat(base, token, hash, jobId, progress) {
+  const body = { codeHash: hash };
+  if (typeof progress === 'number' && isFinite(progress)) body.progress = Math.max(0, Math.min(100, Math.round(progress)));
+  try {
+    return await api(base, token, '/api/v1/heartbeat', body);
   } catch (e) {
     if (e && e.status === 401) {
       e.revoked = true;
@@ -243,7 +257,7 @@ async function main() {
       try {
         result = await runSpec(claimed.job, {
           heartbeatMs: heartbeatMs,
-          heartbeat: () => workerHeartbeat(base, token, hash, claimed.job.id),
+          heartbeat: (progress) => workerHeartbeat(base, token, hash, claimed.job.id, progress),
         });
       } catch (e) {
         if (e && e.leaseLost) {
@@ -277,4 +291,4 @@ async function main() {
   }
 }
 if (require.main === module) main().catch(e => { console.error(e.message || e); process.exit(1); });
-module.exports = { ALLOWED, protocolHash, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild };
+module.exports = { ALLOWED, protocolHash, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild, readProgress };

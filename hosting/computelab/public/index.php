@@ -44,6 +44,7 @@ function coord_private_root(): string
 $private = coord_private_root();
 require $private . '/src/App.php';
 require $private . '/src/pages.php';
+require $private . '/src/setup.php';
 
 function coord_config(string $private): array
 {
@@ -107,6 +108,40 @@ function coord_set_cookie(string $name, string $value, string $base): void
     setcookie($name, $value, ['expires' => time() + 86400, 'path' => ($base === '' ? '/' : $base . '/'), 'httponly' => true, 'samesite' => 'Lax']);
 }
 
+function coord_clear_cookie(string $name, string $base): void
+{
+    setcookie($name, '', ['expires' => time() - 3600, 'path' => ($base === '' ? '/' : $base . '/'), 'httponly' => true, 'samesite' => 'Lax']);
+}
+
+function coord_who(App $app, string $current): array
+{
+    $owner = $app->sessionById(coord_cookie('lab_owner'));
+    $part = $app->sessionById(coord_cookie('lab_participant'));
+    $isOwner = $owner && $owner['role'] === 'owner';
+    $isPart = $part && $part['role'] === 'participant';
+    return [
+        'current' => $current,
+        'owner' => $isOwner,
+        'participant' => $isPart,
+        'ownerCsrf' => $isOwner ? (string) $owner['csrf'] : '',
+        'participantCsrf' => $isPart ? (string) $part['csrf'] : '',
+        'participantId' => $isPart ? (string) $part['subject'] : '',
+    ];
+}
+
+function coord_public_url(App $app): string
+{
+    $configured = trim((string) ($app->config['public_url'] ?? ''));
+    if ($configured !== '') {
+        return rtrim($configured, '/');
+    }
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
+    $scheme = $https ? 'https' : 'http';
+    return $scheme . '://' . $host . $app->base();
+}
+
 function coord_bearer(): string
 {
     $h = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
@@ -159,15 +194,54 @@ try {
         readfile($file);
         return;
     }
-    if (($path === '/' || $path === '/explore') && $method === 'GET') {
+    if ($path === '/' && $method === 'GET') {
+        coord_html(pageHome($app, coord_who($app, 'home')));
+        return;
+    }
+    if (($path === '/explore' || $path === '/lab') && $method === 'GET') {
         $html = (string) file_get_contents((string) $app->config['lab_html']);
         $html = str_replace('/spikefoundry/engine.js', $base . '/assets/engine.js', $html);
         $html = str_replace('src="engine.js"', 'src="' . h($base . '/assets/engine.js') . '"', $html);
+        $bar = exploreBar($base, coord_who($app, 'explore'));
+        $html = preg_replace('/<body([^>]*)>/i', '<body$1>' . $bar, $html, 1);
         coord_html($html);
         return;
     }
     if ($path === '/join' && $method === 'GET') {
-        coord_html(pageJoin($app));
+        coord_html(pageJoin($app, '', coord_who($app, 'join')));
+        return;
+    }
+    if ($path === '/join/setup' && $method === 'GET') {
+        http_response_code(405);
+        header('Cache-Control: no-store');
+        echo 'Use the download button on the setup page.';
+        return;
+    }
+    if ($path === '/join/setup' && $method === 'POST') {
+        $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? 'local');
+        if (!$app->rateLimit('setup:' . $ip, (int) $app->config['login_per_minute'])) {
+            http_response_code(429);
+            header('Cache-Control: no-store');
+            echo 'Too many downloads. Wait a minute.';
+            return;
+        }
+        $token = (string) ($_POST['token'] ?? '');
+        $os = (string) ($_POST['os'] ?? '');
+        $worker = $app->workerByToken($token);
+        if (!$worker) {
+            http_response_code(404);
+            header('Cache-Control: no-store');
+            echo 'Unknown token.';
+            return;
+        }
+        $script = setup_script($os, $token, coord_public_url($app), $app->workerRepo(), $app->workerRef());
+        $name = $os === 'windows' ? 'computelab-setup.cmd' : 'computelab-setup.sh';
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . $name . '"');
+        header('Cache-Control: no-store');
+        header('Pragma: no-cache');
+        header('X-Content-Type-Options: nosniff');
+        echo $script;
         return;
     }
     if ($path === '/join' && $method === 'POST') {
@@ -177,16 +251,31 @@ try {
             return;
         }
         $projects = isset($_POST['project']) && is_array($_POST['project']) ? array_map('strval', $_POST['project']) : [];
-        $made = $app->enroll((string) ($_POST['name'] ?? ''), $projects, (int) ($_POST['max'] ?? 2), isset($_POST['consent']));
+        $participantId = null;
+        $existing = $app->sessionById(coord_cookie('lab_participant'));
+        if ($existing && $existing['role'] === 'participant') {
+            $prev = $app->db->prepare('SELECT * FROM workers WHERE id = ?');
+            $prev->execute([$existing['subject']]);
+            $prevRow = $prev->fetch();
+            if ($prevRow) {
+                $participantId = $app->ensureParticipant($prevRow);
+            }
+        }
+        $made = $app->enroll((string) ($_POST['name'] ?? ''), $projects, (int) ($_POST['max'] ?? 2), isset($_POST['consent']), $participantId);
         $session = $app->session('participant', $made['workerId']);
         coord_set_cookie('lab_participant', $session['id'], $base);
-        coord_html(pageToken($app, $made['name'], $made['token']));
+        header('Cache-Control: no-store');
+        $who = coord_who($app, 'join');
+        $who['participant'] = true;
+        $who['participantCsrf'] = (string) $session['csrf'];
+        coord_html(pageToken($app, $made['name'], $made['token'], $who));
         return;
     }
     if ($path === '/me' && $method === 'GET') {
         $session = $app->sessionById(coord_cookie('lab_participant'));
+        $who = coord_who($app, 'me');
         if (!$session || $session['role'] !== 'participant') {
-            coord_html(pageJoin($app, 'Enroll this computer to see its own work.'));
+            coord_html(pageJoin($app, 'Enroll this computer to see its own work.', $who));
             return;
         }
         $st = $app->db->prepare('SELECT * FROM workers WHERE id = ?');
@@ -197,7 +286,8 @@ try {
             echo 'Unknown computer.';
             return;
         }
-        coord_html(pageMe($app, $worker, $app->currentLease((string) $worker['id']), $app->history((string) $worker['id'])));
+        $pid = $app->ensureParticipant($worker);
+        coord_html(pageMe($app, $app->computersFor($pid), (string) $session['csrf'], $who));
         return;
     }
     if ($path === '/me/pause' && $method === 'POST') {
@@ -207,26 +297,74 @@ try {
             echo 'Participants only.';
             return;
         }
-        $st = $app->db->prepare('SELECT paused FROM workers WHERE id = ?');
+        $csrf = (string) ($_POST['csrf'] ?? '');
+        if ($csrf === '' || !hash_equals((string) $session['csrf'], $csrf)) {
+            http_response_code(403);
+            echo 'Missing or bad security token. Reload the page.';
+            return;
+        }
+        $st = $app->db->prepare('SELECT * FROM workers WHERE id = ?');
         $st->execute([$session['subject']]);
-        $row = $st->fetch();
-        $app->setPaused((string) $session['subject'], !((int) ($row['paused'] ?? 0) === 1));
+        $self = $st->fetch();
+        if (!$self) {
+            http_response_code(404);
+            echo 'Unknown computer.';
+            return;
+        }
+        $pid = $app->ensureParticipant($self);
+        $target = (string) ($_POST['id'] ?? $session['subject']);
+        if (!$app->workerOwns($pid, $target)) {
+            http_response_code(403);
+            echo 'That computer is not yours.';
+            return;
+        }
+        $posted = (string) ($_POST['paused'] ?? '');
+        if ($posted === '1' || $posted === '0') {
+            $app->setPaused($target, $posted === '1');
+        } else {
+            $cur = $app->db->prepare('SELECT paused FROM workers WHERE id = ?');
+            $cur->execute([$target]);
+            $row = $cur->fetch();
+            $app->setPaused($target, !((int) ($row['paused'] ?? 0) === 1));
+        }
         header('Location: ' . $base . '/me', true, 303);
         return;
     }
+    if ($path === '/logout' && $method === 'POST') {
+        $owner = $app->sessionById(coord_cookie('lab_owner'));
+        $part = $app->sessionById(coord_cookie('lab_participant'));
+        $csrf = (string) ($_POST['csrf'] ?? '');
+        $ok = ($owner && $owner['role'] === 'owner' && $csrf !== '' && hash_equals((string) $owner['csrf'], $csrf))
+            || ($part && $part['role'] === 'participant' && $csrf !== '' && hash_equals((string) $part['csrf'], $csrf));
+        if (!$ok) {
+            http_response_code(403);
+            echo 'Missing or bad security token. Reload the page.';
+            return;
+        }
+        if ($owner) {
+            $app->db->prepare('DELETE FROM sessions WHERE id = ?')->execute([$owner['id']]);
+        }
+        if ($part) {
+            $app->db->prepare('DELETE FROM sessions WHERE id = ?')->execute([$part['id']]);
+        }
+        coord_clear_cookie('lab_owner', $base);
+        coord_clear_cookie('lab_participant', $base);
+        header('Location: ' . ($base === '' ? '/' : $base . '/'), true, 303);
+        return;
+    }
     if ($path === '/owner/login' && $method === 'GET') {
-        coord_html(pageLogin($app));
+        coord_html(pageLogin($app, '', coord_who($app, 'login')));
         return;
     }
     if ($path === '/owner/login' && $method === 'POST') {
         $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? 'local');
         if (!$app->rateLimit('login:' . $ip, (int) $app->config['login_per_minute'])) {
-            coord_html(pageLogin($app, 'Too many tries. Wait a minute.'));
+            coord_html(pageLogin($app, 'Too many tries. Wait a minute.', coord_who($app, 'login')));
             return;
         }
         $session = $app->login((string) ($_POST['username'] ?? ''), (string) ($_POST['password'] ?? ''));
         if (!$session) {
-            coord_html(pageLogin($app, 'Name or password is wrong.'));
+            coord_html(pageLogin($app, 'Name or password is wrong.', coord_who($app, 'login')));
             return;
         }
         coord_set_cookie('lab_owner', $session['id'], $base);
@@ -239,7 +377,12 @@ try {
             coord_html(pageLogin($app));
             return;
         }
-        coord_html(pageOwner($app, (string) $session['csrf']));
+        $status = (string) ($_GET['status'] ?? 'all');
+        if (!in_array($status, ['all', 'queued', 'running', 'leased', 'done', 'held'], true)) {
+            $status = 'all';
+        }
+        $pageNum = (int) ($_GET['page'] ?? 1);
+        coord_html(pageOwner($app, (string) $session['csrf'], coord_who($app, 'owner'), '', $status, $pageNum));
         return;
     }
     if (str_starts_with($path, '/owner/') && $method === 'POST') {
@@ -263,6 +406,14 @@ try {
             $app->revoke((string) ($_POST['id'] ?? ''));
         } elseif ($path === '/owner/requeue') {
             $app->requeue((string) ($_POST['id'] ?? ''));
+        } elseif ($path === '/owner/project-create') {
+            $app->createProject((string) ($_POST['title'] ?? ''), (string) ($_POST['summary'] ?? ''), (string) ($_POST['runner'] ?? ''), (int) ($_POST['priority'] ?? 1), isset($_POST['enabled']));
+        } elseif ($path === '/owner/pause') {
+            $paused = (string) ($_POST['paused'] ?? '');
+            if ($paused !== '0' && $paused !== '1') {
+                throw new InvalidArgumentException('Say whether the computer should pause.');
+            }
+            $app->setPaused((string) ($_POST['id'] ?? ''), $paused === '1');
         } else {
             http_response_code(404);
             echo 'Not found.';
@@ -290,7 +441,11 @@ try {
                 coord_json(409, ['error' => 'This worker build is not an approved code version.']);
                 return;
             }
-            coord_json(200, $app->heartbeat($worker));
+            $extra = [];
+            if (isset($body['progress']) && $body['progress'] !== '' && $body['progress'] !== null && is_numeric($body['progress'])) {
+                $extra['progress'] = (int) $body['progress'];
+            }
+            coord_json(200, $app->heartbeat($worker, $extra));
             return;
         }
         if ($path === '/api/v1/claim' && $method === 'POST') {
@@ -315,8 +470,20 @@ try {
 } catch (InvalidArgumentException $e) {
     if (str_starts_with($path, '/api/')) {
         coord_json(400, ['error' => $e->getMessage()]);
+    } elseif ($path === '/join/setup') {
+        http_response_code(400);
+        header('Cache-Control: no-store');
+        echo $e->getMessage();
+    } elseif (str_starts_with($path, '/owner') && $method === 'POST') {
+        $session = $app->sessionById(coord_cookie('lab_owner'));
+        http_response_code(400);
+        if ($session && $session['role'] === 'owner') {
+            coord_html(pageOwner($app, (string) $session['csrf'], coord_who($app, 'owner'), $e->getMessage()));
+        } else {
+            echo $e->getMessage();
+        }
     } else {
         http_response_code(400);
-        coord_html(pageJoin($app, $e->getMessage()));
+        coord_html(pageJoin($app, $e->getMessage(), coord_who($app, 'join')));
     }
 }

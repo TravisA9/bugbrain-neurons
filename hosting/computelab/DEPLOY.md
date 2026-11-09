@@ -33,7 +33,7 @@ Tables that are already on the server stay in place. The first page or API reque
 php bin/upgrade.php
 ```
 
-That adds `attempts`, `last_error`, `not_before`, and `last_worker` on `jobs` when those columns are missing. It does not delete rows. Running it again is safe. In `config.php`, `max_attempts` defaults to 3 when the key is omitted: after that many errors or expired leases the job is held on the owner page until you requeue it.
+That adds missing columns and does not delete rows. Running it again is safe. The columns are `attempts`, `last_error`, `not_before`, and `last_worker` on `jobs`; `family` on `projects`; `participant_id` on `workers`; `started_at` and `progress` on `leases`; and `seconds` on `results`. In `config.php`, `max_attempts` defaults to 3 when the key is omitted: after that many errors or expired leases the job is held on the owner page until you requeue it. `public_url` is the address written into the setup download. `worker_ref` is the git branch that download fetches. It must contain `run/coord.js`.
 
 Copy the updated files under `private/` and `public/index.php` before that first request, so this version is what performs the upgrade. `public/index.php` belongs in `public_html/computelab/`. Everything else under `private/` belongs in the private directory (`public_html/computelab/private/` when that is where the app lives).
 

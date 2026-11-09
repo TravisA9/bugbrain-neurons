@@ -48,7 +48,8 @@ final class App
             title TEXT NOT NULL,
             summary TEXT NOT NULL,
             priority INTEGER NOT NULL,
-            enabled INTEGER NOT NULL
+            enabled INTEGER NOT NULL,
+            family VARCHAR(32)
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS templates (
             id VARCHAR(191) PRIMARY KEY,
@@ -87,13 +88,16 @@ final class App
             allowed_json TEXT NOT NULL,
             max_batches INTEGER NOT NULL,
             last_seen TEXT,
+            participant_id VARCHAR(191),
             created_at TEXT NOT NULL
         )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS leases (
             job_id VARCHAR(191) PRIMARY KEY,
             worker_id TEXT NOT NULL,
             until_at TEXT NOT NULL,
-            heartbeat_at TEXT NOT NULL
+            heartbeat_at TEXT NOT NULL,
+            started_at VARCHAR(40),
+            progress INTEGER
         )');
         $this->db->exec("CREATE TABLE IF NOT EXISTS results (
             id $auto,
@@ -102,6 +106,7 @@ final class App
             status TEXT NOT NULL,
             summary TEXT NOT NULL,
             body_json TEXT NOT NULL,
+            seconds INTEGER,
             created_at TEXT NOT NULL
         )");
         $this->db->exec('CREATE TABLE IF NOT EXISTS sessions (
@@ -120,7 +125,14 @@ final class App
         $this->ensureColumn('jobs', 'last_error', 'TEXT');
         $this->ensureColumn('jobs', 'not_before', 'VARCHAR(40)');
         $this->ensureColumn('jobs', 'last_worker', 'VARCHAR(191)');
+        $this->ensureColumn('projects', 'family', 'VARCHAR(32)');
+        $this->ensureColumn('workers', 'participant_id', 'VARCHAR(191)');
+        $this->ensureColumn('leases', 'started_at', 'VARCHAR(40)');
+        $this->ensureColumn('leases', 'progress', 'INTEGER');
+        $this->ensureColumn('results', 'seconds', 'INTEGER');
         $this->seed();
+        $this->db->exec("UPDATE projects SET family = 'spikefoundry' WHERE id = 'spikefoundry' AND (family IS NULL OR family = '')");
+        $this->db->exec("UPDATE projects SET family = 'bugbrain' WHERE id = 'bugbrain' AND (family IS NULL OR family = '')");
     }
 
     private function hasColumn(string $table, string $column): bool
@@ -228,8 +240,22 @@ final class App
         return true;
     }
 
+    /** @return list<string> */
+    public function allowedRunners(): array
+    {
+        return ['spikefoundry/run.js', 'run/r42.js', 'run/gen.js'];
+    }
+
+    public function runnerFamily(string $runner): string
+    {
+        if ($runner === 'spikefoundry/run.js') {
+            return 'spikefoundry';
+        }
+        return 'bugbrain';
+    }
+
     /** @param list<string> $projects */
-    public function enroll(string $name, array $projects, int $maxBatches, bool $consent): array
+    public function enroll(string $name, array $projects, int $maxBatches, bool $consent, ?string $participantId = null): array
     {
         if (!$consent) {
             throw new InvalidArgumentException('Enrollment needs the consent box.');
@@ -247,9 +273,21 @@ final class App
         }
         $id = bin2hex(random_bytes(8));
         $token = bin2hex(random_bytes(24));
-        $this->db->prepare('INSERT INTO workers (id, name, token_hash, consent_at, paused, revoked, allowed_json, max_batches, last_seen, created_at) VALUES (?, ?, ?, ?, 0, 0, ?, ?, ?, ?)')
-            ->execute([$id, $name, hash('sha256', $token), $this->now(), json_encode($allowed), $maxBatches, $this->now(), $this->now()]);
-        return ['workerId' => $id, 'token' => $token, 'name' => $name];
+        if ($participantId !== null && $participantId !== '') {
+            if (!preg_match('/^[a-f0-9]{8,32}$/', $participantId)) {
+                throw new InvalidArgumentException('Unknown participant.');
+            }
+            $known = $this->db->prepare('SELECT id FROM workers WHERE participant_id = ? OR id = ?');
+            $known->execute([$participantId, $participantId]);
+            if (!$known->fetch()) {
+                throw new InvalidArgumentException('Unknown participant.');
+            }
+        } else {
+            $participantId = $id;
+        }
+        $this->db->prepare('INSERT INTO workers (id, name, token_hash, consent_at, paused, revoked, allowed_json, max_batches, last_seen, participant_id, created_at) VALUES (?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?)')
+            ->execute([$id, $name, hash('sha256', $token), $this->now(), json_encode($allowed), $maxBatches, $this->now(), $participantId, $this->now()]);
+        return ['workerId' => $id, 'token' => $token, 'name' => $name, 'participantId' => $participantId];
     }
 
     public function workerByToken(string $token): ?array
@@ -303,7 +341,8 @@ final class App
             $ranked = [];
             $find = $this->db->prepare('SELECT * FROM jobs WHERE project_id = ? AND status = ? AND (not_before IS NULL OR not_before <= ?) ORDER BY priority DESC, attempts ASC, id ASC');
             foreach ($projects as $project) {
-                if (!in_array($project['id'], $allowed, true)) {
+                $family = (string) ($project['family'] ?? '');
+                if (!in_array($project['id'], $allowed, true) && !in_array($family, $allowed, true)) {
                     continue;
                 }
                 $find->execute([$project['id'], 'queued', $now]);
@@ -341,7 +380,7 @@ final class App
                     continue;
                 }
                 $until = gmdate('c', strtotime($this->now()) + (int) $this->config['lease_seconds']);
-                $this->db->prepare('INSERT INTO leases (job_id, worker_id, until_at, heartbeat_at) VALUES (?, ?, ?, ?)')->execute([$job['id'], $worker['id'], $until, $this->now()]);
+                $this->db->prepare('INSERT INTO leases (job_id, worker_id, until_at, heartbeat_at, started_at) VALUES (?, ?, ?, ?, ?)')->execute([$job['id'], $worker['id'], $until, $this->now(), $this->now()]);
                 $tpl = $this->db->prepare('SELECT runner FROM templates WHERE id = ?');
                 $tpl->execute([$job['template_id']]);
                 $runner = (string) ($tpl->fetch()['runner'] ?? '');
@@ -366,7 +405,7 @@ final class App
         }
     }
 
-    public function heartbeat(array $worker): array
+    public function heartbeat(array $worker, array $extra = []): array
     {
         $this->db->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$this->now(), $worker['id']]);
         $fresh = $this->db->prepare('SELECT paused, revoked FROM workers WHERE id = ?');
@@ -382,8 +421,23 @@ final class App
         $until = null;
         if ($row && (int) $state['revoked'] !== 1) {
             $next = gmdate('c', strtotime($this->now()) + (int) $this->config['lease_seconds']);
-            $upd = $this->db->prepare('UPDATE leases SET heartbeat_at = ?, until_at = ? WHERE job_id = ? AND worker_id = ?');
-            $upd->execute([$this->now(), $next, $row['job_id'], $worker['id']]);
+            $progress = null;
+            if (isset($extra['progress']) && $extra['progress'] !== '' && $extra['progress'] !== null && is_numeric($extra['progress'])) {
+                $progress = (int) $extra['progress'];
+                if ($progress < 0) {
+                    $progress = 0;
+                }
+                if ($progress > 100) {
+                    $progress = 100;
+                }
+            }
+            if ($progress === null) {
+                $upd = $this->db->prepare('UPDATE leases SET heartbeat_at = ?, until_at = ? WHERE job_id = ? AND worker_id = ?');
+                $upd->execute([$this->now(), $next, $row['job_id'], $worker['id']]);
+            } else {
+                $upd = $this->db->prepare('UPDATE leases SET heartbeat_at = ?, until_at = ?, progress = ? WHERE job_id = ? AND worker_id = ?');
+                $upd->execute([$this->now(), $next, $progress, $row['job_id'], $worker['id']]);
+            }
             $check = $this->db->prepare('SELECT until_at FROM leases WHERE job_id = ? AND worker_id = ?');
             $check->execute([$row['job_id'], $worker['id']]);
             $still = $check->fetch();
@@ -431,10 +485,18 @@ final class App
         }
         $this->db->beginTransaction();
         try {
-            $lease = $this->db->prepare('SELECT worker_id FROM leases WHERE job_id = ? AND worker_id = ?');
+            $lease = $this->db->prepare('SELECT worker_id, started_at FROM leases WHERE job_id = ? AND worker_id = ?');
             $lease->execute([$jobId, $worker['id']]);
-            if (!$lease->fetch()) {
+            $leaseRow = $lease->fetch();
+            if (!$leaseRow) {
                 throw new InvalidArgumentException('This computer does not hold that job.');
+            }
+            $seconds = null;
+            if (!empty($leaseRow['started_at'])) {
+                $seconds = strtotime($this->now()) - strtotime((string) $leaseRow['started_at']);
+                if ($seconds < 0) {
+                    $seconds = 0;
+                }
             }
             $job = $this->db->prepare('SELECT * FROM jobs WHERE id = ?');
             $job->execute([$jobId]);
@@ -445,8 +507,8 @@ final class App
             if ($row['project_id'] === 'spikefoundry' && empty($body['synthetic'])) {
                 throw new InvalidArgumentException('SpikeFoundry results must be marked synthetic.');
             }
-            $this->db->prepare('INSERT INTO results (job_id, worker_id, status, summary, body_json, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-                ->execute([$jobId, $worker['id'], $status, $summary, $raw, $this->now()]);
+            $this->db->prepare('INSERT INTO results (job_id, worker_id, status, summary, body_json, seconds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+                ->execute([$jobId, $worker['id'], $status, $summary, $raw, $seconds, $this->now()]);
             if ($status === 'done') {
                 $this->db->prepare('UPDATE jobs SET status = ?, not_before = NULL WHERE id = ? AND status = ?')->execute(['done', $jobId, 'leased']);
             } else {
@@ -646,9 +708,162 @@ final class App
 
     public function currentLease(string $workerId): ?array
     {
-        $st = $this->db->prepare('SELECT leases.job_id, leases.until_at, jobs.title, jobs.project_id FROM leases JOIN jobs ON jobs.id = leases.job_id WHERE leases.worker_id = ?');
+        $st = $this->db->prepare('SELECT leases.job_id, leases.until_at, leases.heartbeat_at, leases.started_at, leases.progress, jobs.title, jobs.project_id FROM leases JOIN jobs ON jobs.id = leases.job_id WHERE leases.worker_id = ?');
         $st->execute([$workerId]);
         $row = $st->fetch();
         return $row ?: null;
+    }
+
+    public function ensureParticipant(array $worker): string
+    {
+        $pid = (string) ($worker['participant_id'] ?? '');
+        if ($pid !== '') {
+            return $pid;
+        }
+        $pid = (string) $worker['id'];
+        $this->db->prepare('UPDATE workers SET participant_id = ? WHERE id = ? AND (participant_id IS NULL OR participant_id = \'\')')->execute([$pid, $worker['id']]);
+        return $pid;
+    }
+
+    public function computersFor(string $participantId): array
+    {
+        $st = $this->db->prepare('SELECT * FROM workers WHERE participant_id = ? AND revoked = 0 ORDER BY created_at ASC, id ASC');
+        $st->execute([$participantId]);
+        return $st->fetchAll();
+    }
+
+    public function workerOwns(string $participantId, string $workerId): bool
+    {
+        $st = $this->db->prepare('SELECT id FROM workers WHERE id = ? AND participant_id = ? AND revoked = 0');
+        $st->execute([$workerId, $participantId]);
+        return (bool) $st->fetch();
+    }
+
+    public function contribution(string $workerId): array
+    {
+        $st = $this->db->prepare('SELECT COUNT(*) AS n, COALESCE(SUM(seconds), 0) AS secs FROM results WHERE worker_id = ? AND status = ?');
+        $st->execute([$workerId, 'done']);
+        $row = $st->fetch() ?: ['n' => 0, 'secs' => 0];
+        return ['done' => (int) $row['n'], 'seconds' => (int) $row['secs']];
+    }
+
+    public function homeStats(): array
+    {
+        $now = strtotime($this->now());
+        $online = 0;
+        foreach ($this->db->query('SELECT last_seen, revoked FROM workers')->fetchAll() as $row) {
+            if ((int) $row['revoked'] === 1 || empty($row['last_seen'])) {
+                continue;
+            }
+            if (($now - strtotime((string) $row['last_seen'])) <= 180) {
+                $online++;
+            }
+        }
+        $done = (int) $this->db->query("SELECT COUNT(*) FROM jobs WHERE status = 'done'")->fetchColumn();
+        $projects = (int) $this->db->query('SELECT COUNT(*) FROM projects')->fetchColumn();
+        return ['online' => $online, 'done' => $done, 'projects' => $projects];
+    }
+
+    public function createProject(string $title, string $summary, string $runner, int $priority, bool $enabled): string
+    {
+        if (!in_array($runner, $this->allowedRunners(), true)) {
+            throw new InvalidArgumentException('Choose a runner from the list.');
+        }
+        $title = trim($title);
+        $summary = trim($summary);
+        if ($title === '' || strlen($title) > 80) {
+            throw new InvalidArgumentException('Project name must be 1-80 characters.');
+        }
+        if ($summary === '' || strlen($summary) > 400) {
+            throw new InvalidArgumentException('Description must be 1-400 characters.');
+        }
+        if ($priority < 0 || $priority > 100) {
+            throw new InvalidArgumentException('Project priority must be from 0 to 100.');
+        }
+        $id = strtolower((string) preg_replace('/[^a-z0-9]+/i', '-', $title));
+        $id = trim($id, '-');
+        if (strlen($id) < 2) {
+            throw new InvalidArgumentException('Use a name with letters or digits.');
+        }
+        if (strlen($id) > 40) {
+            $id = substr($id, 0, 40);
+            $id = trim($id, '-');
+        }
+        $baseId = $id;
+        $n = 2;
+        $exists = $this->db->prepare('SELECT id FROM projects WHERE id = ?');
+        while (true) {
+            $exists->execute([$id]);
+            if (!$exists->fetch()) {
+                break;
+            }
+            $id = $baseId . '-' . $n;
+            $n++;
+            if ($n > 50) {
+                throw new InvalidArgumentException('Could not find a free project id.');
+            }
+        }
+        $family = $this->runnerFamily($runner);
+        $this->db->prepare('INSERT INTO projects (id, title, summary, priority, enabled, family) VALUES (?, ?, ?, ?, ?, ?)')
+            ->execute([$id, $title, $summary, $priority, $enabled ? 1 : 0, $family]);
+        $spec = $runner === 'spikefoundry/run.js'
+            ? ['scenario' => 'vision', 'batches' => 1, 'scenarioParams' => ['batch' => 2, 'channels' => 1, 'height' => 4, 'width' => 4, 'steps' => 6]]
+            : [
+                'plan' => 'deepURSx3',
+                'task' => ['env' => 'seq', 'params' => ['source' => 'order3', 'K' => 8, 'readIn' => 0.01]],
+                'growths' => 1,
+                'variant' => 'pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1',
+            ];
+        $templateId = $id . '-default';
+        $this->db->prepare('INSERT INTO templates (id, project_id, title, runner, spec_json, code_hash) VALUES (?, ?, ?, ?, ?, ?)')
+            ->execute([$templateId, $id, $title, $runner, json_encode($spec), $this->protocolHash()]);
+        return $id;
+    }
+
+    public function listJobs(string $status, int $page, int $perPage = 20): array
+    {
+        $map = ['all' => '', 'queued' => 'queued', 'running' => 'leased', 'leased' => 'leased', 'done' => 'done', 'held' => 'held'];
+        if (!array_key_exists($status, $map)) {
+            throw new InvalidArgumentException('Unknown status.');
+        }
+        if ($perPage < 1) {
+            $perPage = 20;
+        }
+        if ($perPage > 100) {
+            $perPage = 100;
+        }
+        if ($page < 1) {
+            $page = 1;
+        }
+        $where = '';
+        $args = [];
+        if ($map[$status] !== '') {
+            $where = ' WHERE status = ?';
+            $args[] = $map[$status];
+        }
+        $count = $this->db->prepare('SELECT COUNT(*) FROM jobs' . $where);
+        $count->execute($args);
+        $total = (int) $count->fetchColumn();
+        $pages = max(1, (int) ceil($total / $perPage));
+        if ($page > $pages) {
+            $page = $pages;
+        }
+        $offset = ($page - 1) * $perPage;
+        $sql = 'SELECT * FROM jobs' . $where . ' ORDER BY created_at DESC, id ASC LIMIT ' . (int) $perPage . ' OFFSET ' . (int) $offset;
+        $st = $this->db->prepare($sql);
+        $st->execute($args);
+        return ['rows' => $st->fetchAll(), 'total' => $total, 'page' => $page, 'pages' => $pages, 'status' => $status];
+    }
+
+    public function workerRepo(): string
+    {
+        $repo = trim((string) ($this->config['worker_repo'] ?? 'https://github.com/TravisA9/bugbrain-neurons.git'));
+        return $repo !== '' ? $repo : 'https://github.com/TravisA9/bugbrain-neurons.git';
+    }
+
+    public function workerRef(): string
+    {
+        $ref = trim((string) ($this->config['worker_ref'] ?? 'cursor/worker-console-22bf'));
+        return $ref !== '' ? $ref : 'cursor/worker-console-22bf';
     }
 }

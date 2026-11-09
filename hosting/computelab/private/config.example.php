@@ -15,6 +15,11 @@ return [
     ],
     /* Path visitors use, no trailing slash. Empty string if the app is the whole host. */
     'base_path' => '/computelab',
+    /* Public address the setup download writes for workers. Empty uses the address of the current request. */
+    'public_url' => 'https://zaga.info/computelab',
+    'worker_repo' => 'https://github.com/TravisA9/bugbrain-neurons.git',
+    /* Branch that contains run/coord.js. After this work is merged, neuro/distributed-queue is the long-lived name. */
+    'worker_ref' => 'cursor/worker-console-22bf',
     'lease_seconds' => 900,
     'max_attempts' => 3,
     'result_bytes' => 32768,

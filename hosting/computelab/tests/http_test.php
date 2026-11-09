@@ -53,8 +53,11 @@ function http(string $url, string $method = 'GET', ?string $body = null, array $
     }
     return ['status' => $status, 'header' => implode("\n", $rawHeaders), 'body' => $text];
 }
+$home = http($base . '/');
+check($home['status'] === 200 && str_contains($home['body'], 'Join with your computer') && str_contains($home['body'], 'Explore in your browser') && str_contains($home['body'], 'aria-current="page"') && str_contains($home['body'], '>Home<') && !str_contains($home['body'], 'Run 1 batch'), 'home explains Compute Lab and highlights Home');
 $explore = http($base . '/explore');
 check($explore['status'] === 200 && str_contains($explore['body'], 'Run 1 batch') && !str_contains($explore['body'], 'Create a worker token'), 'explore serves the lab and does not enroll anyone');
+check(str_contains($explore['body'], 'aria-current="page"') && str_contains($explore['body'], '>Explore<'), 'explore keeps a way back to the rest of the site');
 check(str_contains($explore['body'], '/computelab/assets/engine.js'), 'the lab loads the engine from this site path');
 $engine = http($base . '/assets/engine.js');
 check($engine['status'] === 200 && str_contains($engine['body'], 'SpikeFoundry'), 'the engine script is served');
@@ -64,10 +67,27 @@ $join = http($base . '/join', 'POST', http_build_query([
 ]), ['Content-Type: application/x-www-form-urlencoded']);
 check($join['status'] === 200 && preg_match('/<code>([a-f0-9]{48})<\/code>/', $join['body'], $m) === 1, 'join shows a worker token once');
 $token = $m[1] ?? '';
+$setup = http($base . '/join/setup', 'POST', http_build_query(['token' => $token, 'os' => 'unix']), ['Content-Type: application/x-www-form-urlencoded']);
+check($setup['status'] === 200 && stripos($setup['header'], 'no-store') !== false && str_contains($setup['header'], 'computelab-setup.sh') && str_contains($setup['body'], $token) && str_contains($setup['body'], 'nodejs.org') && !str_contains($setup['body'], 'set -x'), 'the Mac/Linux download is not stored and contains the token');
+$setupWin = http($base . '/join/setup', 'POST', http_build_query(['token' => $token, 'os' => 'windows']), ['Content-Type: application/x-www-form-urlencoded']);
+check($setupWin['status'] === 200 && str_contains($setupWin['header'], 'computelab-setup.cmd') && str_contains($setupWin['body'], '@echo off') && !str_contains($setupWin['body'], 'echo ' . $token), 'the Windows download does not echo the token');
+$leaky = 'abcdef1234567890abcdef1234567890abcdef1234567890';
+$setupGet = http($base . '/join/setup?token=' . $leaky);
+check($setupGet['status'] === 405 && !str_contains($setupGet['body'], $leaky), 'a setup link in the address bar is refused and does not repeat the token');
 $cookie = '';
 if (preg_match('/Set-Cookie: lab_participant=([^;]+)/', $join['header'], $c)) $cookie = $c[1];
 $me = http($base . '/me', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
-check(str_contains($me['body'], 'Not running a shared job') && str_contains($me['body'], 'cannot change project order'), 'participant page is separate from the owner console');
+check(str_contains($me['body'], 'Not running a shared job') && str_contains($me['body'], 'cannot change project order') && str_contains($me['body'], 'Waiting for work') && str_contains($me['body'], 'class="switch on"'), 'participant page shows an On switch and cannot change project order');
+preg_match('/name="csrf" value="([a-f0-9]+)"/', $me['body'], $meCsrf);
+preg_match('/name="id" value="([a-f0-9]+)"/', $me['body'], $meId);
+$pauseBare = http($base . '/me/pause', 'POST', http_build_query(['id' => $meId[1] ?? '', 'paused' => '1']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_participant=' . $cookie]);
+check($pauseBare['status'] === 403, 'turning a computer off without the security token is refused');
+$pause = http($base . '/me/pause', 'POST', http_build_query(['csrf' => $meCsrf[1] ?? '', 'id' => $meId[1] ?? '', 'paused' => '1']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_participant=' . $cookie]);
+$pausedPage = http($base . '/me', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
+check(in_array($pause['status'], [303, 302], true) && str_contains($pausedPage['body'], 'Paused') && str_contains($pausedPage['body'], 'class="switch off"'), 'the Off switch pauses new work');
+$resume = http($base . '/me/pause', 'POST', http_build_query(['csrf' => $meCsrf[1] ?? '', 'id' => $meId[1] ?? '', 'paused' => '0']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_participant=' . $cookie]);
+$resumedPage = http($base . '/me', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
+check(in_array($resume['status'], [303, 302], true) && str_contains($resumedPage['body'], 'Waiting for work'), 'the On switch accepts new work again');
 
 $login = http($base . '/owner/login', 'POST', http_build_query(['username' => 'labowner', 'password' => 'correct-horse']), ['Content-Type: application/x-www-form-urlencoded']);
 preg_match('/Set-Cookie: lab_owner=([^;]+)/', $login['header'], $oc);
@@ -80,6 +100,13 @@ check(in_array($with['status'], [303, 302], true), 'owner can queue a template j
 
 $partJob = http($base . '/owner/job', 'POST', http_build_query(['csrf' => $csrf[1] ?? '', 'template' => 'sf-vision', 'title' => 'no', 'priority' => '1', 'seed' => '4']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_participant=' . $cookie]);
 check($partJob['status'] === 403, 'a participant cookie cannot queue a job');
+$projBare = http($base . '/owner/project-create', 'POST', http_build_query(['title' => 'Evening vision', 'summary' => 'A small extra project.', 'runner' => 'spikefoundry/run.js', 'priority' => '4', 'enabled' => '1']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check($projBare['status'] === 403, 'creating a project without the security token is refused');
+$projPart = http($base . '/owner/project-create', 'POST', http_build_query(['csrf' => $csrf[1] ?? '', 'title' => 'Stolen', 'summary' => 'Nope.', 'runner' => 'spikefoundry/run.js', 'priority' => '4', 'enabled' => '1']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_participant=' . $cookie]);
+check($projPart['status'] === 403, 'a participant cookie cannot create a project');
+$proj = http($base . '/owner/project-create', 'POST', http_build_query(['csrf' => $csrf[1] ?? '', 'title' => 'Evening vision', 'summary' => 'A small extra project.', 'runner' => 'spikefoundry/run.js', 'priority' => '4', 'enabled' => '1']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
+$ownerAfter = http($base . '/owner?status=all&page=1', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check(in_array($proj['status'], [303, 302], true) && str_contains($ownerAfter['body'], 'Evening vision') && str_contains($ownerAfter['body'], 'Queued'), 'the owner can create a project and see the job list');
 
 $hash = trim((string) shell_exec('php -r ' . escapeshellarg('echo hash("sha256", file_get_contents(' . var_export(dirname(__DIR__) . '/PROTOCOL.txt', true) . '));')));
 $claim = http($base . '/api/v1/claim', 'POST', json_encode(['codeHash' => $hash]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json']);
@@ -92,6 +119,21 @@ $tokenFile = sys_get_temp_dir() . '/coord-token-' . bin2hex(random_bytes(2));
 file_put_contents($tokenFile, $token . "\n");
 $worker = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($tokenFile) . ' 2>&1');
 check(is_string($worker) && str_contains($worker, '"status":"done"'), 'the native worker polls, runs the template, and submits a result');
+$ownerLive = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
+preg_match('/action="[^"]*\\/owner\\/pause"[^>]*>.*?<input type="hidden" name="csrf" value="([a-f0-9]+)"><input type="hidden" name="id" value="([a-f0-9]+)"/s', $ownerLive['body'], $pauseFields);
+if ($pauseFields === []) {
+    preg_match('/\\/owner\\/pause".*?name="csrf" value="([a-f0-9]+)".*?name="id" value="([a-f0-9]+)"/s', $ownerLive['body'], $pauseFields);
+}
+$ownerPauseBare = http($base . '/owner/pause', 'POST', http_build_query(['id' => $pauseFields[2] ?? '', 'paused' => '1']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check($ownerPauseBare['status'] === 403, 'owner pause without the security token is refused');
+$ownerPause = http($base . '/owner/pause', 'POST', http_build_query(['csrf' => $pauseFields[1] ?? '', 'id' => $pauseFields[2] ?? '', 'paused' => '1']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
+$ownerPaused = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check(in_array($ownerPause['status'], [303, 302], true) && str_contains($ownerPaused['body'], 'Resume') && str_contains($ownerPaused['body'], 'home-pc'), 'the owner can pause a computer');
+$ownerResume = http($base . '/owner/pause', 'POST', http_build_query(['csrf' => $pauseFields[1] ?? '', 'id' => $pauseFields[2] ?? '', 'paused' => '0']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check(in_array($ownerResume['status'], [303, 302], true), 'the owner can resume a computer');
+$logout = http($base . '/logout', 'POST', http_build_query(['csrf' => $pauseFields[1] ?? '']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
+$afterLogout = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check(in_array($logout['status'], [303, 302], true) && str_contains($afterLogout['body'], 'Owner login') && !str_contains($afterLogout['body'], '>Owner<'), 'log out returns the owner to the login page');
 
 proc_terminate($proc);
 echo "http checks done\n";

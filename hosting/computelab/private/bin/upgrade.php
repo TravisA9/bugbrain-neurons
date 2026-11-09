@@ -24,4 +24,4 @@ if ($config['driver'] === 'sqlite') {
 }
 $app = new App($db, $config);
 $app->migrate();
-echo "Schema is current. Jobs have attempts, last_error, not_before, and last_worker. Existing rows were kept.\n";
+echo "Schema is current. Added any missing job, project, worker, lease, and result columns. Existing rows were kept.\n";
