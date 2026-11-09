@@ -20,9 +20,15 @@ function args(argv) {
 }
 const ALLOWED = new Set(['spikefoundry/run.js', 'run/r42.js', 'run/gen.js']);
 
+function normalizeProtocol(text) {
+  return String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+}
+function hashText(text) {
+  return require('crypto').createHash('sha256').update(normalizeProtocol(text)).digest('hex');
+}
 function protocolHash() {
   const p = path.join(ROOT, 'hosting', 'computelab', 'PROTOCOL.txt');
-  return require('crypto').createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+  return hashText(fs.readFileSync(p));
 }
 function assertProtocol(job, hash) {
   if (!job || job.codeHash !== hash) throw new Error('Job code hash does not match this checkout.');
@@ -331,4 +337,4 @@ async function main() {
   }
 }
 if (require.main === module) main().catch(e => { console.error(e.message || e); process.exit(1); });
-module.exports = { ALLOWED, protocolHash, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild, readProgress };
+module.exports = { ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild, readProgress };

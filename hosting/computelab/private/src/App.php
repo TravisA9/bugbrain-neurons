@@ -297,6 +297,8 @@ final class App
     {
         $path = (string) $this->config['protocol'];
         $text = is_file($path) ? (string) file_get_contents($path) : '';
+        $text = str_replace("\r\n", "\n", $text);
+        $text = str_replace("\r", "\n", $text);
         return hash('sha256', $text);
     }
 

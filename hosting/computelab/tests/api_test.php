@@ -432,5 +432,14 @@ $again = $supply['app']->claim($supply['app']->workerByToken($sw['token']));
 $againSpec = $again ? json_decode((string) $supply['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $supply['db']->quote((string) $again['id']))->fetchColumn(), true) : [];
 check($again && $againSpec['taskId'] === 'sequence' && (int) $againSpec['evals'] === 12, 'auto jobs skip a paused task and use the next level');
 
+$lfText = "computelab-protocol-2\nkeep this line\n";
+$crlfPath = sys_get_temp_dir() . '/computelab-protocol-crlf.txt';
+$lfPath = sys_get_temp_dir() . '/computelab-protocol-lf.txt';
+file_put_contents($lfPath, $lfText);
+file_put_contents($crlfPath, str_replace("\n", "\r\n", $lfText));
+$lfApp = new App($db, array_merge($config, ['protocol' => $lfPath]), static function () use (&$now): string { return $now; });
+$crlfApp = new App($db, array_merge($config, ['protocol' => $crlfPath]), static function () use (&$now): string { return $now; });
+check($lfApp->protocolHash() === $crlfApp->protocolHash(), 'a CRLF protocol file hashes the same as the LF file');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);
