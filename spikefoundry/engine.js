@@ -283,6 +283,11 @@
       return t.phase <= (state.budget.maxPhase || 6) && t.phase <= state.activePhase;
     });
   }
+  function heldOutPromotion(best) {
+    if (!best || best.synthetic !== true || best.heldOut == null) return false;
+    const spikes = best.meanSpikes == null ? 999 : best.meanSpikes;
+    return best.heldOut >= 0.62 && spikes <= 80;
+  }
   function designSignature(g) { return [g.topology, g.nodes || 0, g.depth || 1, g.wa.toFixed(2), g.wb.toFixed(2), g.thr.toFixed(2), g.decay.toFixed(2)].join('|'); }
   function makeCandidate(state, taskId) {
     const parent = state.best[taskId] && state.best[taskId].g;
@@ -311,7 +316,7 @@
     for (const item of items) {
       train(state.model, item.x, item.train.quality);
       state.tested++; state.examples += item.train.n;
-      const candidate = { id: state.batch + '-' + item.task, task: item.task, g: item.g, score: item.validation.quality, accuracy: item.validation.accuracy, f1: item.validation.f1, neurons: item.validation.neurons, synapses: item.validation.synapses, n: item.validation.n, synthetic: true, batch: state.batch };
+      const candidate = { id: state.batch + '-' + item.task, task: item.task, g: item.g, score: item.validation.quality, heldOut: item.validation.quality, meanSpikes: item.validation.meanSpikes, accuracy: item.validation.accuracy, f1: item.validation.f1, neurons: item.validation.neurons, synapses: item.validation.synapses, n: item.validation.n, synthetic: true, batch: state.batch };
       const list = state.candidates[item.task];
       const signature = designSignature(item.g);
       if (!list.some(old => designSignature(old.g) === signature)) { list.unshift(candidate); if (list.length > 8) list.length = 8; }
@@ -329,7 +334,7 @@
       if (state.evaluations.length > 64) state.evaluations.shift();
     }
     const phaseTasks = pool.filter(id => BASE_TASKS[id].phase === state.activePhase);
-    if (phaseTasks.length && phaseTasks.every(id => state.best[id] && state.best[id].score >= .91) && state.activePhase < (budget.maxPhase || 6)) state.activePhase++;
+    if (phaseTasks.length && phaseTasks.every(id => heldOutPromotion(state.best[id])) && state.activePhase < (budget.maxPhase || 6)) state.activePhase++;
     const evaluated = Object.keys(state.best).filter(id => state.best[id]).map(id => state.best[id].score);
     const batchMean = items.reduce((s, item) => s + item.validation.quality, 0) / items.length;
     const bestMean = evaluated.reduce((s, v) => s + v, 0) / Math.max(1, evaluated.length);
@@ -408,5 +413,5 @@
     return { task: publicTask(BASE_TASKS[taskId]), seq: sample.seq, label: sample.label, synthetic: true };
   }
 
-  return { TOPOLOGIES, LAB_BUDGET, FULL_BUDGET, PILOT_BUDGET, taskList, createState, runBatch, checkpoint, restore, summary, scoreDesign, robustScore, network, sampleCase, compileSNN, simulateSNN, simulateFrozen, BASE_TASKS };
+  return { TOPOLOGIES, LAB_BUDGET, FULL_BUDGET, PILOT_BUDGET, taskList, createState, runBatch, checkpoint, restore, summary, scoreDesign, robustScore, network, sampleCase, compileSNN, simulateSNN, simulateFrozen, heldOutPromotion, BASE_TASKS };
 });

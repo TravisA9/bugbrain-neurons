@@ -60,6 +60,9 @@ function execute(job, outDir) {
   if (sum.scenario) log.push('', 'Scenario pipeline: ' + (job.curriculum ? 'curriculum' : job.scenario) + '. ' + Scenarios.NOTE);
   fs.writeFileSync(path.join(outDir, 'QUEUE_LOG.md'), log.join('\n') + '\n');
   writeJson(path.join(outDir, 'queue_state.json'), { jobs: { [job.id || 'spikefoundry']: { status: 'done', pass: null, summary: sum.note, synthetic: true } } });
+  if (job.track === 'levels') {
+    sum.curriculum = require('./curriculum.js').run(+job.seed || 1);
+  }
   const Library = require('./library.js');
   const records = Library.fromEvaluations(state.evaluations || [], { jobId: job.id || 'spikefoundry', engineVersion: 'spikefoundry-1' });
   if (records.length) writeJson(path.join(outDir, 'designs.json'), { records: records });
