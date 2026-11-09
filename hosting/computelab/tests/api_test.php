@@ -336,6 +336,11 @@ $seeded = $lib['app']->seedJobFromDesigns('sf-vision', 'coincidence', 3, 11);
 $seedRow = $lib['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $lib['db']->quote($seeded))->fetch();
 check($seeded && strpos((string) $seedRow['spec_json'], $genomeHash) !== false, 'the owner can seed a job from the top designs');
 check($lib['app']->codeApproved('4b0e21855d9ce104a96633047e8199874524044d399c6150d02eb77e4edca4c4'), 'the previous protocol hash stays approved');
+$train = $lib['app']->createJob('sf-train', 'Train model', 5, 4);
+$held = $lib['app']->claim($lib['app']->workerByToken($libWorker['token']));
+$modelId = $lib['app']->saveModel($lib['app']->workerByToken($libWorker['token']), $held['id'], '{"format":"spikefoundry-designer","spearman":0.77}', ['spearman' => 0.77, 'heldOut' => 6]);
+$current = $lib['app']->currentModel();
+check($held && $held['id'] === $train && $modelId && $current && strpos((string) $current['body_json'], '0.77') !== false, 'a leased worker can store a versioned model checkpoint');
 
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

@@ -527,6 +527,24 @@ try {
             coord_json(200, $app->ingestDesigns($worker, $data['records'], $sent !== '' ? $sent : $app->protocolHash()));
             return;
         }
+        if ($path === '/api/v1/model' && $method === 'GET') {
+            $row = $app->currentModel();
+            if (!$row) {
+                coord_json(404, ['error' => 'No model checkpoint yet.']);
+                return;
+            }
+            coord_json(200, ['id' => $row['id'], 'metrics' => json_decode((string) $row['metric_json'], true), 'model' => json_decode((string) $row['body_json'], true)]);
+            return;
+        }
+        if ($path === '/api/v1/model' && $method === 'POST') {
+            if (strlen(json_encode($body)) > 60000) {
+                coord_json(413, ['error' => 'Model checkpoint is too large.']);
+                return;
+            }
+            $id = $app->saveModel($worker, (string) ($body['jobId'] ?? ''), json_encode(isset($body['model']) ? $body['model'] : []), is_array($body['metrics'] ?? null) ? $body['metrics'] : []);
+            coord_json(200, ['id' => $id]);
+            return;
+        }
         if ($path === '/api/v1/claim' && $method === 'POST') {
             if (!$app->codeApproved((string) ($body['codeHash'] ?? ''))) {
                 coord_json(409, ['error' => 'Code hash is not approved. Nothing was assigned.']);

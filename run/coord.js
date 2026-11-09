@@ -141,6 +141,9 @@ function runnerArgs(job, out) {
       batches: spec.batches || 1,
       scenario: spec.scenario,
       scenarioParams: spec.scenarioParams,
+      mode: spec.mode,
+      taskId: spec.taskId,
+      seedGenomes: spec.seedGenomes,
       title: job.title,
     })));
     return [path.join(ROOT, 'spikefoundry', 'run.js'), '--job', file, '--out', out];
@@ -195,7 +198,18 @@ async function runSpec(job, opts) {
   result.pauseAfter = !!beats.state.pauseAfter;
   const designPath = path.join(out, 'designs.json');
   if (fs.existsSync(designPath)) result.designPath = designPath;
+  const modelPath = path.join(out, 'model.json');
+  if (fs.existsSync(modelPath)) result.modelPath = modelPath;
   return result;
+}
+async function uploadModel(base, token, jobId, modelPath) {
+  if (!modelPath || !fs.existsSync(modelPath)) return;
+  let model;
+  try { model = JSON.parse(fs.readFileSync(modelPath, 'utf8')); }
+  catch (e) { return; }
+  try {
+    await api(base, token, '/api/v1/model', { jobId: jobId, model: model, metrics: { spearman: model.spearman || 0, heldOut: model.heldOut || 0 } });
+  } catch (e) {}
 }
 async function uploadDesigns(base, token, hash, designPath) {
   if (!designPath || !fs.existsSync(designPath)) return;
@@ -290,8 +304,11 @@ async function main() {
         result = { status: 'error', summary: String((e && e.message) || e).slice(0, 500), synthetic: claimed.job.project === 'spikefoundry' };
       }
       const designPath = result.designPath;
+      const modelPath = result.modelPath;
       delete result.designPath;
+      delete result.modelPath;
       delete result.pauseAfter;
+      await uploadModel(base, token, claimed.job.id, modelPath);
       await api(base, token, '/api/v1/result', { jobId: claimed.job.id, result: result });
       await uploadDesigns(base, token, hash, designPath);
       console.log(JSON.stringify({ ok: true, job: claimed.job.id, status: result.status }));

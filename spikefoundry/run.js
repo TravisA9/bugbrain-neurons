@@ -26,6 +26,12 @@ function execute(job, outDir) {
   const batches = +job.batches || +((job.budget && job.budget.batches) || 1);
   if (batches < 1 || batches > 20) throw new Error('batches must be from 1 to 20.');
   fs.mkdirSync(outDir, { recursive: true });
+  if (job.mode === 'train-model' || job.mode === 'propose') {
+    const Designer = require('./designer.js');
+    const sum = Designer.run(job, outDir, SF);
+    writeJson(path.join(outDir, 'queue_state.json'), { jobs: { [job.id || 'spikefoundry']: { status: 'done', pass: null, summary: sum.note, synthetic: true } } });
+    return sum;
+  }
   const cpPath = path.join(outDir, 'checkpoint.json');
   const progressPath = path.join(outDir, 'progress.json');
   let state = fs.existsSync(cpPath) ? SF.restore(readJson(cpPath)) : SF.createState(+job.seed, budgetOf(job));

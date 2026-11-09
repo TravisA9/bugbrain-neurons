@@ -116,6 +116,13 @@ final class App
             csrf TEXT NOT NULL,
             expires_at TEXT NOT NULL
         )');
+        $this->db->exec('CREATE TABLE IF NOT EXISTS model_checkpoints (
+            id VARCHAR(191) PRIMARY KEY,
+            label VARCHAR(64) NOT NULL,
+            body_json TEXT NOT NULL,
+            metric_json TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS design_genomes (
             hash VARCHAR(191) PRIMARY KEY,
             genome_json TEXT NOT NULL,
@@ -213,6 +220,12 @@ final class App
             }
         }
         $templates = [
+            ['sf-train', 'spikefoundry', 'Train the design model', 'spikefoundry/run.js', json_encode([
+                'mode' => 'train-model', 'batches' => 1, 'taskId' => 'coincidence',
+            ], JSON_THROW_ON_ERROR), $hash],
+            ['sf-propose', 'spikefoundry', 'Propose and evaluate designs', 'spikefoundry/run.js', json_encode([
+                'mode' => 'propose', 'batches' => 1, 'taskId' => 'coincidence',
+            ], JSON_THROW_ON_ERROR), $hash],
             ['sf-vision', 'spikefoundry', 'Synthetic vision check', 'spikefoundry/run.js', json_encode([
                 'scenario' => 'vision', 'batches' => 1,
                 'scenarioParams' => ['batch' => 2, 'channels' => 1, 'height' => 4, 'width' => 4, 'steps' => 6],
@@ -1107,5 +1120,38 @@ final class App
             throw new InvalidArgumentException('No saved designs for that task yet.');
         }
         return $this->createJob($templateId, 'Seeded from top ' . $taskId . ' designs', 0.8, $seed, ['seedGenomes' => $hashes, 'taskId' => $taskId]);
+    }
+
+    public function saveModel(array $worker, string $jobId, string $body, array $metrics): string
+    {
+        if (strlen($body) < 2 || strlen($body) > 60000) {
+            throw new InvalidArgumentException('Model checkpoint is the wrong size.');
+        }
+        if (!preg_match('/^[a-z0-9._-]{2,64}$/', $jobId)) {
+            throw new InvalidArgumentException('Bad job id.');
+        }
+        $lease = $this->db->prepare('SELECT job_id FROM leases WHERE job_id = ? AND worker_id = ?');
+        $lease->execute([$jobId, $worker['id']]);
+        if (!$lease->fetch()) {
+            throw new InvalidArgumentException('This computer does not hold that job.');
+        }
+        $id = substr(hash('sha256', $jobId . '|' . $worker['id'] . '|' . hash('sha256', $body)), 0, 32);
+        $have = $this->db->prepare('SELECT id FROM model_checkpoints WHERE id = ?');
+        $have->execute([$id]);
+        if (!$have->fetch()) {
+            $metricJson = json_encode([
+                'spearman' => isset($metrics['spearman']) ? (float) $metrics['spearman'] : null,
+                'heldOut' => isset($metrics['heldOut']) ? (int) $metrics['heldOut'] : 0,
+            ]);
+            $this->db->prepare('INSERT INTO model_checkpoints (id, label, body_json, metric_json, created_at) VALUES (?, ?, ?, ?, ?)')
+                ->execute([$id, 'designer', $body, $metricJson === false ? '{}' : $metricJson, $this->now()]);
+        }
+        return $id;
+    }
+
+    public function currentModel(): ?array
+    {
+        $row = $this->db->query('SELECT id, label, body_json, metric_json, created_at FROM model_checkpoints ORDER BY created_at DESC LIMIT 1')->fetch();
+        return $row ?: null;
     }
 }
