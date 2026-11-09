@@ -169,7 +169,24 @@ function view(dir, now, extra) {
     workers, jobs, whyIdle: explain(jobs, workers),
     templates: TM.listTemplates(),
     workerNames: workers.map(w => w.name),
+    projects: projectsView(dir),
+    scheduleNote: scheduleNote(dir, extra.localName),
   };
+}
+function projectsView(dir) {
+  const Projects = require('../spikefoundry/schedule.js');
+  return Projects.readProjects(dir) || [];
+}
+function scheduleNote(dir, name) {
+  const Projects = require('../spikefoundry/schedule.js');
+  const projects = Projects.readProjects(dir);
+  if (!projects) return '';
+  const q = load(dir);
+  const participant = Projects.readParticipant(dir, name) ;
+  const fileExists = !!participant;
+  const jobs = q.jobs.map(j => Object.assign({ project: Projects.projectOf(j) }, j));
+  const choice = Projects.prefer(jobs.filter(j => !q.done[j.id]), projects, participant, fileExists);
+  return Projects.explain(choice, projects);
 }
 
 function fail(msg, code) { const e = new Error(msg); e.code = code || 'desk'; return e; }
@@ -308,7 +325,82 @@ function publish(dir, env) {
   return { ok: true, pushed: true, note: 'Sent to the queue branch. Workers see it on their next sync.' };
 }
 
+function saveProjects(dir, list) {
+  const Projects = require('../spikefoundry/schedule.js');
+  Projects.writeJson(path.join(dir, 'projects.json'), { projects: list });
+  return list;
+}
+function upsertProject(dir, body) {
+  const Projects = require('../spikefoundry/schedule.js');
+  let list = Projects.readProjects(dir) || Projects.DEFAULTS.map(p => Object.assign({}, p));
+  if (body.create) {
+    const title = String(body.title || '').trim();
+    if (!title || title.length > 80) throw fail('Name the project in a short title.', 'project');
+    const id = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'project';
+    if (list.some(p => p.id === id)) throw fail('That project already exists.', 'project');
+    list.push({ id, title, enabled: true, priority: 1, summary: body.summary || '' });
+  } else {
+    const p = list.find(x => x.id === body.id);
+    if (!p) throw fail('No project named ' + body.id + '.', 'missing');
+    if (body.priority != null) {
+      const n = +body.priority;
+      if (!Number.isFinite(n) || n < 0 || n > 100) throw fail('Project priority must be from 0 to 100.', 'priority');
+      p.priority = n;
+    }
+    if (body.enabled != null) p.enabled = !!body.enabled;
+    if (body.summary != null) p.summary = String(body.summary).slice(0, 240);
+    if (body.title) p.title = String(body.title).slice(0, 80);
+  }
+  saveProjects(dir, list);
+  return { ok: true, projects: list, note: 'Project list saved in this folder. Workers use it on their next sync after you send it.' };
+}
+function readParticipantFile(dir, name) {
+  const Projects = require('../spikefoundry/schedule.js');
+  return Projects.readParticipant(dir, name);
+}
+function saveParticipant(dir, name, body) {
+  if (!/^[a-z0-9._-]+$/.test(name || '')) throw fail('This computer has no worker name yet.', 'name');
+  const donate = !!body.donate;
+  const allowed = [].concat(body.allowedProjects || []).filter(id => /^[a-z0-9._-]+$/.test(id));
+  if (donate && !allowed.length) throw fail('Choose at least one project before donating, or leave donation off.', 'consent');
+  const maxBatches = body.maxBatches == null ? 2 : +body.maxBatches;
+  if (!Number.isInteger(maxBatches) || maxBatches < 1 || maxBatches > 20) throw fail('Batch limit must be a whole number from 1 to 20.', 'limit');
+  const prev = readParticipantFile(dir, name) || {};
+  const next = Object.assign({}, prev, { name, donate, allowedProjects: allowed, maxBatches, pause: donate ? false : !!prev.pause, updatedAt: new Date().toISOString() });
+  const Projects = require('../spikefoundry/schedule.js');
+  Projects.writeJson(path.join(dir, 'participants', name + '.json'), next);
+  return { ok: true, participant: next, note: donate ? 'This computer may take the projects you allowed. SpikeFoundry is first when it has eligible work.' : 'Donation is off. This computer will not claim shared work.' };
+}
+function participantView(dir, name, now) {
+  const q = load(dir);
+  const Projects = require('../spikefoundry/schedule.js');
+  const projects = Projects.readProjects(dir);
+  const participant = readParticipantFile(dir, name);
+  const mine = q.workers.find(w => w.worker === name);
+  const fresh = mine && (now - Date.parse(mine.at)) <= STALE_MS && (now - Date.parse(mine.at)) >= 0;
+  let current = null;
+  if (fresh && mine.state === 'running' && mine.job) {
+    const job = q.jobs.find(j => j.id === mine.job);
+    const projectId = job ? Projects.projectOf(job) : 'bugbrain';
+    const project = projects.find(p => p.id === projectId);
+    let progress = null;
+    const prog = readJson(path.join(dir, 'results', mine.job, 'progress.json'));
+    if (prog && prog.known) progress = prog;
+    current = { id: mine.job, title: job ? (job.title || job.id) : mine.job, project: projectId, projectTitle: project ? project.title : projectId, progress };
+  }
+  const history = [];
+  for (const id of Object.keys(q.done)) {
+    const d = q.done[id];
+    if (d.worker === name) history.push((d.finishedAt || '') + ' · ' + id + ' · ' + (d.status || 'done') + (d.summary ? ' · ' + (typeof d.summary === 'string' ? d.summary : '') : ''));
+  }
+  history.sort().reverse();
+  const waiting = q.jobs.filter(j => !q.done[j.id]).map(j => Object.assign({ project: Projects.projectOf(j) }, j));
+  const explanation = !participant ? 'You have not opted in. Explore the lab does not donate this computer.' : Projects.explain(Projects.prefer(waiting, projects, participant, true), projects);
+  return { name, participant, current, explanation, history: history.slice(0, 8), projects: (projects || []).map(p => ({ id: p.id, title: p.title, priority: p.priority, enabled: p.enabled })) };
+}
+
 module.exports = {
   STALE_MS, load, view, explain, setMode, setPriority, assignJob, setBlock, submit, jobDetail,
   assertCanPublish, publish, agePhrase, activeClaim, LIVE_RE,
+  upsertProject, saveParticipant, participantView, readParticipantFile,
 };

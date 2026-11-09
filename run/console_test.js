@@ -65,6 +65,34 @@ async function main() {
   check(st2.thisComputer.unknown === true || st2.thisComputer.detail, 'a failed probe is not reported as running');
   check(st2.thisComputer.running !== true, 'a failed probe is not running');
 
+  const ownerTok = token;
+  const partTok = 'b'.repeat(48);
+  const roles = createConsole({ dir, token: ownerTok, participantToken: partTok, publish: false, liveSwitch: false, localName: 'linux-pc', now: () => now, machine, exists: () => true });
+  const addr3 = await listen(roles.server, '127.0.0.1', 0);
+  const base3 = 'http://127.0.0.1:' + addr3.port;
+  async function hit3(method, p, body, key) {
+    const res = await fetch(base3 + p, { method, headers: { 'Content-Type': 'application/json', 'X-Bugbrain-Token': key }, body: body ? JSON.stringify(body) : undefined });
+    const json = await res.json().catch(() => ({}));
+    return { status: res.status, json };
+  }
+  const labPage = await fetch(base3 + '/lab');
+  const labHtml = await labPage.text();
+  check(labPage.status === 200 && labHtml.includes('Run 1 batch') && !labHtml.includes('/api/'), 'the lab page loads without a token and does not call the queue');
+  const denied = await hit3('POST', '/api/project', { create: true, title: 'Nope' }, partTok);
+  check(denied.status === 403, 'a participant cannot create or reorder projects');
+  const made = await hit3('POST', '/api/project', { create: true, title: 'Notes' }, ownerTok);
+  check(made.status === 200 && made.json.projects.some(p => p.id === 'spikefoundry') && made.json.projects.some(p => p.id === 'notes'), 'the owner can add a project and the defaults include SpikeFoundry');
+  const sf = made.json.projects.find(p => p.id === 'spikefoundry');
+  const bb = made.json.projects.find(p => p.id === 'bugbrain');
+  check(sf && bb && sf.priority > bb.priority, 'SpikeFoundry starts ahead of BugBrain');
+  const opted = await hit3('POST', '/api/participant/choices', { donate: true, allowedProjects: ['spikefoundry'], maxBatches: 2 }, partTok);
+  check(opted.status === 200 && opted.json.participant.donate === true, 'the participant can opt in to SpikeFoundry only');
+  const ownerOpt = await hit3('POST', '/api/participant/choices', { donate: true, allowedProjects: ['bugbrain'], maxBatches: 2 }, ownerTok);
+  check(ownerOpt.status === 403, 'the owner key cannot use the participant opt-in route');
+  const view = await hit3('GET', '/api/participant/state', null, partTok);
+  check(view.status === 200 && view.json.current == null && typeof view.json.explanation === 'string' && view.json.explanation.length > 10 && view.json.participant.donate === true, 'the participant view tells the truth when no shared job is running');
+  roles.server.close();
+
   app.server.close(); quiet.server.close();
   console.log(n + ' checks');
   if (process.exitCode) process.exit(process.exitCode);

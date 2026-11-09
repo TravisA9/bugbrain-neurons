@@ -98,6 +98,15 @@
       <p id="toast" class="err" role="status"></p>
     </section>
   </div>
+  <section aria-labelledby="projects-title">
+    <h2 id="projects-title">Projects</h2>
+    <p class="muted">Owner only. Higher priority runs first. SpikeFoundry stays ahead of BugBrain while both are enabled and a participant has opted in. A job already running is not taken away.</p>
+    <div id="projects"></div>
+    <div class="actions">
+      <input id="new-project" type="text" placeholder="Project name" aria-label="New project name">
+      <button id="add-project" type="button">Add project</button>
+    </div>
+  </section>
   <section aria-labelledby="fleet-title">
     <h2 id="fleet-title">Computers</h2>
     <p class="muted">Enabled means the shared settings allow that computer to take tests. Heartbeat means it has checked in within 45 minutes. A saved “running” note older than that is offline.</p>
@@ -189,6 +198,27 @@
     if (!state.publishArmed) { const li = document.createElement('li'); li.textContent = 'Edits stay in this folder until you start the desk with --publish and choose to send them. Nothing is pushed by opening this page.'; ul.appendChild(li); }
   }
 
+  function paintProjects() {
+    const box = $('projects'); if (!box) return; clear(box);
+    (state.projects || []).forEach(p => {
+      const art = document.createElement('article'); art.className = 'job';
+      const h = document.createElement('h3'); h.textContent = p.title; art.appendChild(h);
+      const meta = document.createElement('p'); meta.className = 'muted';
+      meta.textContent = p.id + ' · priority ' + p.priority + (p.enabled ? ' · enabled' : ' · off') + (p.summary ? ' · ' + p.summary : '');
+      art.appendChild(meta);
+      const actions = document.createElement('div'); actions.className = 'actions';
+      const up = document.createElement('button'); up.type = 'button'; up.textContent = 'Higher';
+      up.addEventListener('click', () => act(() => api('/api/project', { id: p.id, priority: Math.min(100, +(p.priority) + 1) })));
+      const down = document.createElement('button'); down.type = 'button'; down.className = 'secondary'; down.textContent = 'Lower';
+      down.addEventListener('click', () => act(() => api('/api/project', { id: p.id, priority: Math.max(0, +(p.priority) - 1) })));
+      const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'secondary';
+      toggle.textContent = p.enabled ? 'Disable' : 'Enable';
+      toggle.addEventListener('click', () => act(() => api('/api/project', { id: p.id, enabled: !p.enabled })));
+      actions.appendChild(up); actions.appendChild(down); actions.appendChild(toggle); art.appendChild(actions);
+      box.appendChild(art);
+    });
+    if (!(state.projects || []).length) { const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'No project list yet. Add SpikeFoundry and BugBrain to turn on two-project order.'; box.appendChild(p); }
+  }
   function paintFleet() {
     const box = $('fleet'); clear(box);
     if (!state.workers.length) { const p = document.createElement('p'); p.textContent = 'No computer has published a heartbeat into this queue copy.'; box.appendChild(p); return; }
@@ -303,12 +333,12 @@
 
   function paint() {
     if (state.banner) { $('banner').hidden = false; $('banner').textContent = state.banner; } else $('banner').hidden = true;
-    paintHere(); paintWhy(); paintFleet(); paintJobs(); paintTemplates();
+    paintHere(); paintWhy(); paintProjects(); paintFleet(); paintJobs(); paintTemplates();
   }
   async function refresh() {
     try {
       const next = await api('/api/state');
-      const s = JSON.stringify([next.banner, next.thisComputer, next.whyIdle, next.workers, next.jobs]);
+      const s = JSON.stringify([next.banner, next.thisComputer, next.whyIdle, next.workers, next.jobs, next.projects]);
       state = next;
       if (s === sig) return;
       sig = s;
@@ -367,6 +397,12 @@
   function localWorker() { return (state && (state.localName || (state.thisComputer.worker && state.thisComputer.worker.name))) || ''; }
   $('btn-pause').addEventListener('click', () => act(() => api('/api/mode', { worker: localWorker(), mode: 'pause' })));
   $('btn-resume').addEventListener('click', () => act(() => api('/api/mode', { worker: localWorker(), mode: 'run' })));
+  const addProject = $('add-project');
+  if (addProject) addProject.addEventListener('click', () => {
+    const title = ($('new-project').value || '').trim();
+    if (!title) { toast('Name the project first.'); return; }
+    act(() => api('/api/project', { create: true, title }));
+  });
   $('btn-add').addEventListener('click', () => {
     if (!pickedTemplate) { toast('Choose a test first.'); return; }
     act(() => api('/api/submit', { template: pickedTemplate, seed: +$('seed').value }));

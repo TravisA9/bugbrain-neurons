@@ -37,6 +37,7 @@ const PHONE = !!A.phone || process.env.BB_PHONE === '1';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const say = s => console.log(`[${new Date().toLocaleString()}] [${WORKER}] ${s}`);
 const WC = require('./wconfig.js'), TYPE = WC.deviceType(), SUPERVISED = process.env.BB_SUPERVISED === '1', OBSERVE = !!A.observe;
+const Projects = require('../spikefoundry/schedule.js');
 const TOKEN = WC.token(); if (TOKEN) process.env.BB_DQ_TOKEN = TOKEN;   // R61: also from ~/.bugbrain/token (the git helper reads the env var)
 const CODE_BRANCH = process.env.BB_CODE_BRANCH || 'neuro/distributed-queue', EXIT_UPDATE = 10;
 let CFG = null, S = WC.resolve(null, WORKER, TYPE);
@@ -95,11 +96,14 @@ function candidates() {
   const jobs = ls('jobs').filter(f => f.endsWith('.json')).map(f => rd(path.join(DIR, 'jobs', f))).filter(Boolean);
   const done = new Set(ls('done').filter(f => f.endsWith('.json')).map(f => f.slice(0, -5)));
   const claimed = new Set(ls('claims').filter(f => f.endsWith('.json')).map(f => f.slice(0, -5)).filter(id => claimOf(id)));
-  return WC.selectJobs(CFG, WORKER, TYPE, jobs, {
+  const ordered = WC.selectJobs(CFG, WORKER, TYPE, jobs, {
     includeText: !!A['include-text'], leftHours: left, skip: crashSkips(), done, claimed,
     exists: r => fs.existsSync(path.join(ROOT, r)),
     passed: id => (rd(path.join(DIR, 'done', id + '.json')) || {}).pass === true,
   });
+  const projects = Projects.readProjects(DIR);
+  const participant = Projects.readParticipant(DIR, WORKER);
+  return Projects.choose(ordered, projects, participant, fs.existsSync(path.join(DIR, 'participants', WORKER + '.json')));
 }
 function writeClaim(j, prev) {
   const at = prev ? prev.at : new Date().toISOString(), until = new Date(Date.now() + Math.max(LEASE_H, estH(j) * 1.5) * 3600e3).toISOString();
@@ -166,7 +170,9 @@ async function runJob(j) {
   fs.writeFileSync(path.join(q, j.id + '.json'), JSON.stringify(Object.assign({}, j, { after: undefined }), null, 2));
   let local = ''; try { local = fs.readFileSync(path.join(ROOT, 'experiments', 'registry.jsonl'), 'utf8'); } catch (e) {}
   const seed = (local + (local && !local.endsWith('\n') ? '\n' : '') + sharedRegistry()); fs.writeFileSync(reg, seed);
-  const qargs = ['run/queue.js', '--once'].concat(A['allow-battery'] ? ['--allow-battery'] : [], A['include-text'] ? ['--include-text'] : [], A.workers ? ['--workers', String(A.workers)] : [], PHONE ? ['--phone', '--no-refill'] : []);
+  const qargs = j.kind === 'spikefoundry'
+    ? ['spikefoundry/run.js', '--job', path.join(q, j.id + '.json'), '--out', res]
+    : ['run/queue.js', '--once'].concat(A['allow-battery'] ? ['--allow-battery'] : [], A['include-text'] ? ['--include-text'] : [], A.workers ? ['--workers', String(A.workers)] : [], PHONE ? ['--phone', '--no-refill'] : []);
   say(`running ${j.id} in ${scratch}`);
   let code;
   if (A.dry) { fs.writeFileSync(path.join(res, 'queue_state.json'), JSON.stringify({ jobs: { [j.id]: { status: 'done', pass: null, dry: true } } })); fs.appendFileSync(reg, JSON.stringify({ fp: 'dry-' + j.id, desc: { dry: j.id }, status: 'finished', by: WORKER }) + '\n'); await sleep(+(process.env.BB_DQ_DRY_MS || 1500)); code = 0; }
@@ -180,7 +186,7 @@ async function publish(j, r) {
   for (let i = 0; i < 10; i++) {
     sync(); files.length = 0;
     const out = path.join(DIR, 'results', j.id); fs.mkdirSync(out, { recursive: true });
-    for (const f of ['QUEUE_LOG.md', 'queue_state.json', 'queue.js']) if (fs.existsSync(path.join(r.res, f))) fs.copyFileSync(path.join(r.res, f), path.join(out, f));
+    for (const f of ['QUEUE_LOG.md', 'queue_state.json', 'queue.js', 'summary.json', 'progress.json']) if (fs.existsSync(path.join(r.res, f))) fs.copyFileSync(path.join(r.res, f), path.join(out, f));
     if (r.state.dir) { const sp = path.join(r.state.dir, 'summary.json'); if (fs.existsSync(sp)) fs.copyFileSync(sp, path.join(out, 'summary.json')); }
     files.push('results/' + j.id);
     if (r.newLines) { fs.mkdirSync(path.join(DIR, 'registry'), { recursive: true }); fs.writeFileSync(path.join(DIR, 'registry', j.id + '.jsonl'), r.newLines); files.push('registry/' + j.id + '.jsonl'); }

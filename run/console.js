@@ -8,7 +8,10 @@ const http = require('http'), fs = require('fs'), path = require('path'), crypto
 const Desk = require('./desk.js');
 const Machine = require('./machine.js');
 const ROOT = path.resolve(__dirname, '..');
-const PAGE = path.join(ROOT, 'console', 'index.html');
+  const PAGE = path.join(ROOT, 'console', 'index.html');
+const LAB = path.join(ROOT, 'spikefoundry', 'lab.html');
+const ENGINE = path.join(ROOT, 'spikefoundry', 'engine.js');
+const PARTICIPANT = path.join(ROOT, 'console', 'participant.html');
 
 function argMap(argv) {
   const a = {}; const v = argv.slice(2);
@@ -24,10 +27,10 @@ function sameToken(a, b) {
   if (!x.length || x.length !== y.length) return false;
   return crypto.timingSafeEqual(x, y);
 }
-function tokenFile(stateDir) {
+function tokenFile(stateDir, name) {
   fs.mkdirSync(stateDir, { recursive: true });
   try { fs.chmodSync(stateDir, 0o700); } catch (e) {}
-  const f = path.join(stateDir, 'console-token');
+  const f = path.join(stateDir, name || 'console-token');
   let t = '';
   try { t = fs.readFileSync(f, 'utf8').trim(); } catch (e) {}
   if (!/^[a-f0-9]{32,}$/.test(t)) {
@@ -59,13 +62,9 @@ function readBody(req, limit) {
   });
 }
 function send(res, code, obj, type) {
-  const body = type === 'html' ? obj : JSON.stringify(obj);
-  res.writeHead(code, {
-    'Content-Type': type === 'html' ? 'text/html; charset=utf-8' : 'application/json; charset=utf-8',
-    'Cache-Control': 'no-store',
-    'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'no-referrer',
-  });
+  const body = type === 'html' || type === 'js' ? obj : JSON.stringify(obj);
+  const ctype = type === 'html' ? 'text/html; charset=utf-8' : type === 'js' ? 'text/javascript; charset=utf-8' : 'application/json; charset=utf-8';
+  res.writeHead(code, { 'Content-Type': ctype, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' });
   res.end(body);
 }
 
@@ -73,6 +72,7 @@ function createConsole(opt) {
   opt = opt || {};
   const dir = opt.dir;
   const token = opt.token;
+  const participantToken = opt.participantToken || '';
   const publishArmed = !!opt.publish;
   const liveSwitch = !!opt.liveSwitch;
   const stateDir = opt.stateDir || path.join(os.homedir(), '.bugbrain');
@@ -112,18 +112,61 @@ function createConsole(opt) {
       if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
         send(res, 200, fs.readFileSync(PAGE), 'html'); return;
       }
+      if (req.method === 'GET' && (url.pathname === '/lab' || url.pathname === '/spikefoundry/lab.html')) {
+        send(res, 200, fs.readFileSync(LAB), 'html'); return;
+      }
+      if (req.method === 'GET' && url.pathname === '/spikefoundry/engine.js') {
+        send(res, 200, fs.readFileSync(ENGINE), 'js'); return;
+      }
+      if (req.method === 'GET' && url.pathname === '/participant') {
+        send(res, 200, fs.readFileSync(PARTICIPANT), 'html'); return;
+      }
       if (!url.pathname.startsWith('/api/')) { send(res, 404, { error: 'Not found.' }); return; }
-      if (!sameToken(req.headers['x-bugbrain-token'], token)) { send(res, 401, { error: 'Open the desk from the link printed when it started. That link is the key.' }); return; }
+      const presented = req.headers['x-bugbrain-token'];
+      const isParticipant = participantToken && sameToken(presented, participantToken);
+      const isOwner = sameToken(presented, token);
+      if (isParticipant && isOwner) { send(res, 403, { error: 'Owner and participant keys must be different.' }); return; }
       if (!allowedOrigin(req.headers.origin, host)) { send(res, 403, { error: 'This page only accepts actions from itself.' }); return; }
+      if (url.pathname.startsWith('/api/participant')) {
+        if (!isParticipant) { send(res, 403, { error: 'That action belongs to the participant page, not the owner desk.' }); return; }
+      } else if (!isOwner) {
+        send(res, isParticipant ? 403 : 401, { error: isParticipant ? 'Participants cannot change the owner desk or project order.' : 'Open the desk from the link printed when it started. That link is the key.' }); return;
+      }
       if (req.method === 'GET' && url.pathname === '/api/state') { send(res, 200, state()); return; }
       if (req.method === 'GET' && url.pathname === '/api/job') {
         send(res, 200, Desk.jobDetail(dir, url.searchParams.get('id') || '', nowFn())); return;
+      }
+      if (req.method === 'GET' && url.pathname === '/api/participant/state') {
+        send(res, 200, Desk.participantView(dir, name || 'this-computer', nowFn())); return;
       }
       if (req.method !== 'POST') { send(res, 405, { error: 'Not allowed.' }); return; }
       const body = await readBody(req, 100000);
       const t = nowFn();
       let out;
-      if (url.pathname === '/api/mode') out = Desk.setMode(dir, body.worker || name, body.mode);
+      if (url.pathname === '/api/project') out = Desk.upsertProject(dir, body);
+      else if (url.pathname === '/api/participant/choices') out = Desk.saveParticipant(dir, name || 'this-computer', body);
+      else if (url.pathname === '/api/participant/pause') {
+        const who = name || 'this-computer';
+        const prev = Desk.readParticipantFile(dir, who) || { name: who, donate: false, allowedProjects: [], maxBatches: 2 };
+        prev.pause = true;
+        require('../spikefoundry/schedule.js').writeJson(require('path').join(dir, 'participants', who + '.json'), prev);
+        try { Desk.setMode(dir, who, 'pause'); } catch (e) {}
+        out = { ok: true, note: 'Paused. A test already running finishes. No new shared job will start, and the job is not deleted.' };
+      }
+      else if (url.pathname === '/api/participant/off') {
+        const who = name || 'this-computer';
+        const prev = Desk.readParticipantFile(dir, who) || { name: who, donate: false, allowedProjects: [], maxBatches: 2 };
+        prev.pause = true;
+        require('../spikefoundry/schedule.js').writeJson(require('path').join(dir, 'participants', who + '.json'), prev);
+        try { Desk.setMode(dir, who, 'pause'); } catch (e) {}
+        if (!liveSwitch) out = { ok: true, applied: false, note: 'Paused. Live on/off is not armed, so the scheduled task was not stopped.' };
+        else {
+          const r = machine.apply('off');
+          if (!r.ok) { send(res, 409, { error: r.error || 'Could not stop the worker.' }); return; }
+          out = Object.assign({ note: 'The worker on this computer was stopped. The current test is interrupted, not deleted.' }, r);
+        }
+      }
+      else if (url.pathname === '/api/mode') out = Desk.setMode(dir, body.worker || name, body.mode);
       else if (url.pathname === '/api/priority') out = Desk.setPriority(dir, body.id, body.priority, t);
       else if (url.pathname === '/api/assign') out = Desk.assignJob(dir, body.id, body.worker || '', t);
       else if (url.pathname === '/api/block') out = Desk.setBlock(dir, body.id, !!body.blocked, t);
@@ -165,11 +208,14 @@ async function main() {
   }
   fs.mkdirSync(dir, { recursive: true });
   const token = tokenFile(stateDir);
+  const participantToken = tokenFile(stateDir, 'participant-token');
   const liveSwitch = !!a['live-switch'];
-  const app = createConsole({ dir, token, publish: !!a.publish, liveSwitch, stateDir, now: a.now ? () => Date.parse(a.now) : undefined, platform: a.platform });
+  const app = createConsole({ dir, token, participantToken, publish: !!a.publish, liveSwitch, stateDir, now: a.now ? () => Date.parse(a.now) : undefined, platform: a.platform });
   const addr = await listen(app.server, '127.0.0.1', +(a.port || 8787));
   const link = 'http://127.0.0.1:' + addr.port + '/#token=' + token;
-  console.log('BugBrain desk  ' + link);
+  console.log('Owner desk     ' + link);
+  console.log('Participant    http://127.0.0.1:' + addr.port + '/participant#token=' + participantToken);
+  console.log('Explore lab    http://127.0.0.1:' + addr.port + '/lab');
   console.log('Queue folder   ' + dir);
   console.log(liveSwitch ? 'On/off will change the worker on this computer.' : 'On/off will not change a scheduled task (pass --live-switch on the worker computer).');
   console.log(a.publish ? 'Send-to-workers is armed.' : 'Changes stay in the queue folder (pass --publish to send them).');
