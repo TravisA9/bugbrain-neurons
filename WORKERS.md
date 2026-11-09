@@ -41,6 +41,10 @@ Optional: set the user environment variable `BB_HOME` before installing to keep 
 On a laptop the worker never claims a job while on battery, and `cpuMax` (e.g. `"workers": { "tacobell": { "cpuMax": 75, "workers": 4 } }`) makes it wait while other work (the local queue) keeps the CPU busy.
 If dq.js crashes or is killed, its job process tree is killed too (taskkill /T), so no orphaned runs keep computing.
 
+## Website coordinator
+
+Volunteers do not get a GitHub token. A PHP app under a subpath of your own site issues a per-computer token after consent. Leave `BB_COORDINATOR_URL` unset to keep using the git queue. See [hosting/computelab/DEPLOY.md](hosting/computelab/DEPLOY.md). This repository does not upload that app.
+
 ## SpikeFoundry
 
 A separate synthetic design lab and background job. It does not replace BugBrain tests. See [spikefoundry/README.md](spikefoundry/README.md). The original HTML file is stored unchanged under `spikefoundry/original/`.

@@ -1,0 +1,16 @@
+# Compute Lab public folder. The existing site outside this directory is not rewritten.
+RewriteEngine On
+RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /computelab/
+RewriteRule ^private/ - [F]
+RewriteRule ^coord-home\.txt$ - [F]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
+
+# PHP that is not the front controller stays blocked if it is ever copied here.
+<FilesMatch "^(?!index\.php).+\.php$">
+  Require all denied
+</FilesMatch>
+<Files "coord-home.txt">
+  Require all denied
+</Files>

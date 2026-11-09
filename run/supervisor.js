@@ -40,8 +40,11 @@ let child = null, childStart = 0, fails = 0, restartWhy = '', backoffTimer = nul
 function startDq() {
   backoffTimer = null; if (child) return;
   try { fs.unlinkSync(STOP); } catch (e) {}
-  const args = ['run/dq.js'].concat(WC.dqArgs(S, NAME), ['--stop-file', STOP]);
-  say(`starting dq.js ${args.slice(1).join(' ')} (code ${git(['rev-parse', '--short', 'HEAD'])}, config ${S.version}, ${TYPE}${S.mode === 'pause' ? ', paused' : ''})`);
+  const coord = process.env.BB_COORDINATOR_URL;
+  const args = coord
+    ? ['run/coord.js', '--url', coord, '--token-file', process.env.BB_COORDINATOR_TOKEN_FILE || require('path').join(ST, 'coordinator-token')]
+    : ['run/dq.js'].concat(WC.dqArgs(S, NAME), ['--stop-file', STOP]);
+  say(`starting ${coord ? 'coord.js' : 'dq.js'} ${args.slice(1).join(' ')} (code ${git(['rev-parse', '--short', 'HEAD'])}, config ${S.version}, ${TYPE}${S.mode === 'pause' ? ', paused' : ''})`);
   childStart = Date.now(); status(S.mode === 'pause' ? 'paused' : 'running-dq', 'code ' + git(['rev-parse', '--short', 'HEAD']) + ', config ' + S.version);
   child = cp.spawn(RUNTIME, args, { cwd: ROOT, stdio: 'inherit', env: ENV, detached: process.platform !== 'win32' });
   child.on('error', e => say('cannot start dq.js: ' + e.message));
