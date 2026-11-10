@@ -905,7 +905,7 @@ check($again['stored'] === 0 && $cap['app']->designsByWorker((string) $cworker['
 $floor = (float) $cap['db']->query('SELECT MIN(held) FROM design_records')->fetchColumn();
 check($cap['app']->designFits('coincidence', 0.95) && !$cap['app']->designFits('coincidence', $floor - 0.001), 'designFits compares with the lowest kept held-out score once the task is full');
 
-// Prune: keep the best, the latest, confirmed designs and what Discoveries shows; drop the rest with their genomes.
+// Prune: keep the best per measure, confirmed designs and what Discoveries shows; drop the rest with their genomes.
 $pr = labWith(['design_keep_per_task' => 50, 'prune_every_seconds' => 0]);
 $pa = $pr['app'];
 $pw1 = $pa->workerByToken($pa->enroll('prune-a', ['spikefoundry'], 2, true)['token']);
@@ -931,16 +931,16 @@ $left = [];
 foreach ($pr['db']->query('SELECT id, held FROM design_records')->fetchAll() as $row) {
     $left[$row['id']] = (float) $row['held'];
 }
-$heldSorted = array_values($left);
-rsort($heldSorted);
 $top50 = (int) $pr['db']->query('SELECT COUNT(*) FROM design_records WHERE held >= 0.875')->fetchColumn();
-$latest = 0;
-for ($i = 380; $i < 400; $i++) {
-    $latest += isset($left['p' . $i]) ? 1 : 0;
-}
 $orphans = (int) $pr['db']->query('SELECT COUNT(*) FROM design_genomes g WHERE NOT EXISTS (SELECT 1 FROM design_records r WHERE r.genome_hash = g.hash)')->fetchColumn();
-check($res['finished'] && $top50 === 50 && $latest === 20 && isset($left['p5'], $left['p7'], $left['p9'], $left['dup1']) && $orphans === 0 && count($left) < 120 && $res['records'] === 401 - count($left),
-    'the prune keeps the 50 best by held-out score, the 20 latest, confirmed designs, duplicate targets and their copies, and what Discoveries shows, and drops the rest with their genomes');
+$latestOnly = 0;
+for ($i = 380; $i < 400; $i++) {
+    if (isset($left['p' . $i]) && $left['p' . $i] < 0.875) {
+        $latestOnly++;
+    }
+}
+check($res['finished'] && $top50 === 50 && $latestOnly === 0 && isset($left['p5'], $left['p7'], $left['p9'], $left['dup1']) && $orphans === 0 && count($left) < 80 && $res['records'] === 401 - count($left),
+    'the prune keeps the 50 best per quality measure, confirmed designs, duplicate targets and their copies, and what Discoveries shows, and drops the rest (including a mere recency window) with their genomes');
 check($pa->leaderboard(10) === $boardBefore, 'the leaderboard is the same before and after a prune (credit comes from worker_totals)');
 check(count($left) === (int) $pr['db']->query('SELECT COUNT(*) FROM design_records')->fetchColumn() && $pa->pruneDesigns(50, 20, 10)['records'] === 0, 'a second prune with the same policy removes nothing');
 
@@ -958,12 +958,45 @@ $sg['clock']->t = '2026-11-10T16:20:00+00:00';
 $skip = $sg['app']->maybePrune();
 $sg['clock']->t = '2026-11-10T17:01:00+00:00';
 $runs = $sg['app']->maybePrune();
-check($afterGuard === 100 && $status['warn'] && $skip === null && is_array($runs) && $runs['hard'] && $runs['keep'] === 50,
-    'the prune runs after an upload and then once per interval; over db_soft_limit_mb it keeps a quarter as many designs (here 50 best plus the 100 latest) and the owner console is warned');
+check($afterGuard === 50 && $status['warn'] && $skip === null && is_array($runs) && $runs['hard'] && $runs['keep'] === 50,
+    'the prune runs after an upload and then once per interval; over db_soft_limit_mb it keeps a quarter as many designs per measure (here 50) and the owner console is warned');
 $guardRows = (int) $sg['db']->query('SELECT COUNT(*) FROM design_records')->fetchColumn();
 check($guardRows <= 120 && $guardRows >= 50 && $sg['app']->designsByWorker((string) $sgw['id']) === 120, 'a hard prune keeps the credit');
 $html = pageOwner($sg['app'], 'csrf', []);
-check(strpos($html, 'storage-warn') !== false && strpos($html, 'Keeps the best 200 designs per task') !== false, 'the owner console shows the storage warning and the keep policy');
+check(strpos($html, 'storage-warn') !== false && strpos($html, 'Keeps the best 200 designs per task for each quality measure') !== false, 'the owner console shows the storage warning and the keep policy');
+
+// Showcase floor: a silent high-accuracy design is not listed; a weaker design that actually fires is.
+$sil = labWith(['discoveries_top_n' => 5, 'prune_every_seconds' => 0]);
+$sw = $sil['app']->workerByToken($sil['app']->enroll('floor-pc', ['spikefoundry'], 2, true)['token']);
+$silentRec = capRecord(1, 0.738, 'floor-job', 'sequence');
+$silentRec['spikes'] = 0;
+$silentRec['neurons'] = 4;
+$silentRec['synapses'] = 4;
+$silentRec['metrics'] = ['quality' => 0.738, 'train' => 0.238, 'heldOut' => 0.738, 'accuracy' => 0.75, 'recall' => 0, 'f1' => 0, 'arm' => 'designer'];
+$goodRec = capRecord(2, 0.62, 'floor-job', 'sequence');
+$goodRec['spikes'] = 8;
+$goodRec['neurons'] = 6;
+$goodRec['synapses'] = 8;
+$goodRec['metrics'] = ['quality' => 0.62, 'train' => 0.70, 'heldOut' => 0.62, 'accuracy' => 0.70, 'recall' => 0.5, 'f1' => 0.5, 'arm' => 'designer'];
+$tinyRec = capRecord(3, 0.60, 'floor-job', 'sequence');
+$tinyRec['spikes'] = 4;
+$tinyRec['neurons'] = 3;
+$tinyRec['synapses'] = 3;
+$tinyRec['metrics'] = ['quality' => 0.60, 'train' => 0.55, 'heldOut' => 0.60, 'accuracy' => 0.65, 'recall' => 0.4, 'f1' => 0.4, 'arm' => 'designer'];
+$sil['app']->ingestDesigns($sw, [$silentRec, $goodRec, $tinyRec], $sil['app']->protocolHash());
+$shown = $sil['app']->discoveries();
+$shownHeld = [];
+$shownBadges = [];
+foreach ($shown as $item) {
+    if ($item['task'] === 'sequence') {
+        $shownHeld[] = $item['held'];
+        $shownBadges[sprintf('%.2f', $item['held'])] = $item['badges'];
+    }
+}
+sort($shownHeld);
+check(count($shown) === 2 && $shownHeld === [0.6, 0.62] && !in_array(0.738, $shownHeld, true)
+    && in_array('held-out', $shownBadges['0.62'], true) && in_array('efficiency', $shownBadges['0.60'], true) && in_array('train', $shownBadges['0.62'], true),
+    'Discoveries hides a silent high-accuracy design and lists firing designs with badges for the measures they lead');
 
 // Credit totals saved before a prune are applied once the schema step runs.
 $seedFile = sys_get_temp_dir() . '/totals-seed-' . bin2hex(random_bytes(3)) . '.json';

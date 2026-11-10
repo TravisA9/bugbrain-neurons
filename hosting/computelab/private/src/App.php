@@ -1928,13 +1928,26 @@ final class App
             }
             $heldNow = isset($scores['heldOut']) ? (float) $scores['heldOut'] : (isset($scores['quality']) ? (float) $scores['quality'] : 0.0);
             $evalMs = max(0, (int) ($rec['evalMs'] ?? 0));
+            $fit = [
+                'train' => isset($scores['train']) ? (float) $scores['train'] : $heldNow,
+                'quality' => isset($scores['quality']) ? (float) $scores['quality'] : $heldNow,
+                'neurons' => max(0, (int) ($rec['neurons'] ?? 0)),
+                'synapses' => max(0, (int) ($rec['synapses'] ?? 0)),
+                'spikes' => max(0, (int) ($rec['spikes'] ?? 0)),
+            ];
+            if (isset($scores['recall'])) {
+                $fit['recall'] = (float) $scores['recall'];
+            }
+            if (isset($scores['f1'])) {
+                $fit['f1'] = (float) $scores['f1'];
+            }
             if (!isset($seen[$taskId])) {
                 $seen[$taskId] = [0, 0, 0];
             }
             $seen[$taskId][0]++;
             $seen[$taskId][2] += $evalMs;
-            if (!$this->designFits($taskId, $heldNow)) {
-                // Not among the task's best: credit the work, keep no row and no genome.
+            if (!$this->designFits($taskId, $heldNow, $fit)) {
+                // Not among the task's best on any measure: credit the work, keep no row and no genome.
                 $this->noteHighlight($worker, $taskId, $heldNow, $genomeHash, $evalMs, false);
                 $capped++;
                 continue;
@@ -1969,7 +1982,7 @@ final class App
             $stored++;
             $seen[$taskId][1]++;
             $touched[$taskId] = true;
-            $this->keptHeld($taskId, $heldNow);
+            $this->rememberKept($taskId, $fit + ['held' => $heldNow]);
             $this->noteHighlight($worker, $taskId, $heldNow, $genomeHash, $evalMs);
         }
         foreach ($seen as $task => $n) {
@@ -2317,7 +2330,7 @@ final class App
     {
         $ttl = (int) ($this->config['discoveries_cache_seconds'] ?? 600);
         $build = function (): array {
-            $items = $this->discoveries(12);
+            $items = $this->discoveries();
             $series = [];
             foreach ($items as $item) {
                 if (isset($series[$item['task']])) {
@@ -2335,7 +2348,7 @@ final class App
             });
             return ['items' => $items, 'series' => $series, 'board' => $board['rows'] ?? []];
         };
-        return $ttl > 0 ? $this->cached('discoveries-v1', $ttl, $build) : $build();
+        return $ttl > 0 ? $this->cached('discoveries-v2', $ttl, $build) : $build();
     }
 
     public function cached(string $key, int $ttl, callable $build): array
@@ -2400,10 +2413,13 @@ final class App
         }
     }
 
-    /* Outstanding discoveries for the split view: the best distinct designs of each task,
-     * newest curriculum level first, best score first inside a level. */
-    public function discoveries(int $perTask = 12): array
+    /* Outstanding discoveries for the split view: the top N designs of each task on each
+     * quality measure (held-out, train, efficiency, margin over random), after a floor that
+     * drops silent or weak designs, newest curriculum level first, best held-out first inside
+     * a level. A design that leads more than one measure is shown once, with badges. */
+    public function discoveries(?int $perMeasure = null): array
     {
+        $n = $perMeasure === null ? $this->discoveriesTopN() : max(1, min(50, $perMeasure));
         $tasks = [];
         foreach ($this->db->query("SELECT DISTINCT task_id FROM design_records WHERE engine_version NOT IN ('spikefoundry-designer-1', 'spikefoundry-designer-2')")->fetchAll() as $row) {
             $tasks[] = (string) $row['task_id'];
@@ -2427,15 +2443,15 @@ final class App
             if (!preg_match('/^[a-z0-9._-]{1,64}$/', $task)) {
                 continue;
             }
-            // Different circuits that behave the same (same scores, size and spikes) are one discovery: the first one
-            // found keeps the entry, the rest are counted as equivalent variants.
+            $random = $this->taskRandomMean($task);
             $groups = [];
-            foreach ($this->topDesigns($task, 50) as $row) {
+            foreach ($this->taskDiscoveryRows($task) as $row) {
                 $score = json_decode((string) $row['score_json'], true);
                 if (!is_array($score)) {
                     $score = [];
                 }
-                $sig = sprintf('%.4f|%.4f|%.4f|%d|%d|%d', (float) $row['quality'], (float) ($score['train'] ?? 0), (float) ($score['accuracy'] ?? 0), (int) $row['neurons'], (int) $row['synapses'], (int) $row['spikes']);
+                $quality = is_array($score) && isset($score['quality']) ? (float) $score['quality'] : (float) ($row['quality'] ?? -1);
+                $sig = sprintf('%.4f|%.4f|%.4f|%d|%d|%d', $quality, (float) ($score['train'] ?? 0), (float) ($score['accuracy'] ?? 0), (int) $row['neurons'], (int) $row['synapses'], (int) $row['spikes']);
                 if (!isset($groups[$sig])) {
                     $groups[$sig] = ['row' => $row, 'variants' => 0, 'confirmations' => 0];
                 } else {
@@ -2446,8 +2462,82 @@ final class App
                 }
                 $groups[$sig]['confirmations'] += (int) ($row['confirmations'] ?? 0);
             }
-            foreach (array_slice(array_values($groups), 0, $perTask) as $i => $group) {
-                $row = $group['row'];
+            $reps = [];
+            foreach ($groups as $group) {
+                $reps[] = ['group' => $group, 'row' => $group['row'], 'm' => $this->designMeasureValues($group['row'])];
+            }
+            $floorPass = [];
+            $bestHeld = null;
+            foreach ($reps as $i => $rep) {
+                if ($this->designPassesKeepFloor($rep['m'], $random)) {
+                    $floorPass[] = $i;
+                    if ($bestHeld === null || $rep['m']['held'] > $bestHeld) {
+                        $bestHeld = $rep['m']['held'];
+                    }
+                }
+            }
+            $eligible = [];
+            foreach ($floorPass as $i) {
+                if ($this->designPassesShowcaseFloor($reps[$i]['m'], $random, $bestHeld)) {
+                    $eligible[] = $i;
+                }
+            }
+            $picked = [];
+            $take = function (array $indices, callable $cmp, string $badge) use ($n, &$picked): void {
+                usort($indices, $cmp);
+                foreach (array_slice($indices, 0, $n) as $i) {
+                    if (!isset($picked[$i])) {
+                        $picked[$i] = [];
+                    }
+                    $picked[$i][] = $badge;
+                }
+            };
+            $byHeld = function ($a, $b) use ($reps) {
+                $ha = $reps[$a]['m']['held'];
+                $hb = $reps[$b]['m']['held'];
+                if ($ha === $hb) {
+                    return strcmp((string) $reps[$a]['row']['genome_hash'], (string) $reps[$b]['row']['genome_hash']);
+                }
+                return $ha < $hb ? 1 : -1;
+            };
+            $byTrain = function ($a, $b) use ($reps) {
+                $ta = $reps[$a]['m']['train'];
+                $tb = $reps[$b]['m']['train'];
+                if ($ta === $tb) {
+                    $ha = $reps[$a]['m']['held'];
+                    $hb = $reps[$b]['m']['held'];
+                    if ($ha === $hb) {
+                        return strcmp((string) $reps[$a]['row']['genome_hash'], (string) $reps[$b]['row']['genome_hash']);
+                    }
+                    return $ha < $hb ? 1 : -1;
+                }
+                return $ta < $tb ? 1 : -1;
+            };
+            $byEff = function ($a, $b) use ($reps) {
+                $sa = $reps[$a]['m']['size'];
+                $sb = $reps[$b]['m']['size'];
+                if ($sa === $sb) {
+                    $ha = $reps[$a]['m']['held'];
+                    $hb = $reps[$b]['m']['held'];
+                    if ($ha === $hb) {
+                        return strcmp((string) $reps[$a]['row']['genome_hash'], (string) $reps[$b]['row']['genome_hash']);
+                    }
+                    return $ha < $hb ? 1 : -1;
+                }
+                return $sa < $sb ? -1 : 1;
+            };
+            $take($eligible, $byHeld, 'held-out');
+            $take($eligible, $byTrain, 'train');
+            $take($eligible, $byEff, 'efficiency');
+            if ($random !== null) {
+                $take($eligible, $byHeld, 'margin');
+            }
+            $order = array_keys($picked);
+            usort($order, $byHeld);
+            foreach ($order as $rank => $i) {
+                $row = $reps[$i]['row'];
+                $group = $reps[$i]['group'];
+                $m = $reps[$i]['m'];
                 $score = json_decode((string) $row['score_json'], true);
                 if (!is_array($score)) {
                     $score = [];
@@ -2458,11 +2548,13 @@ final class App
                     'hash' => (string) $row['genome_hash'],
                     'task' => $task,
                     'level' => $levelOf($task) + 1,
-                    'rank' => $i + 1,
-                    'quality' => round((float) $row['quality'], 4),
-                    'held' => round(isset($score['heldOut']) ? (float) $score['heldOut'] : (float) $row['quality'], 4),
+                    'rank' => $rank + 1,
+                    'quality' => round((float) ($score['quality'] ?? $m['quality']), 4),
+                    'held' => round($m['held'], 4),
                     'train' => isset($score['train']) ? round((float) $score['train'], 4) : null,
                     'accuracy' => isset($score['accuracy']) ? round((float) $score['accuracy'], 4) : null,
+                    'margin' => $random === null ? null : round($m['held'] - $random, 4),
+                    'badges' => $picked[$i],
                     'neurons' => (int) $row['neurons'],
                     'synapses' => (int) $row['synapses'],
                     'spikes' => (int) $row['spikes'],
@@ -2478,6 +2570,28 @@ final class App
             }
         }
         return $out;
+    }
+
+    /** First-find rows a task can showcase: the stronger scores, plus compact designs that actually fired. */
+    private function taskDiscoveryRows(string $taskId): array
+    {
+        $cols = 'id, genome_hash, design_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, worker_id, seed, created_at, confirmations, quality';
+        $where = 'task_id = ? AND duplicate_of IS NULL AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')';
+        $unscored = $this->db->prepare('SELECT 1 FROM design_records WHERE task_id = ? AND quality IS NULL LIMIT 1');
+        $unscored->execute([$taskId]);
+        $order = $unscored->fetch() ? 'seq DESC' : 'quality DESC, seq ASC';
+        $st = $this->db->prepare("SELECT $cols FROM design_records WHERE $where ORDER BY $order LIMIT 2000");
+        $st->execute([$taskId]);
+        $byId = [];
+        foreach ($st->fetchAll() as $row) {
+            $byId[(string) $row['id']] = $row;
+        }
+        $small = $this->db->prepare("SELECT $cols FROM design_records WHERE $where AND spikes > 0 ORDER BY (neurons + synapses) ASC, seq ASC LIMIT 400");
+        $small->execute([$taskId]);
+        foreach ($small->fetchAll() as $row) {
+            $byId[(string) $row['id']] = $row;
+        }
+        return array_values($byId);
     }
 
     private function confirmersOf(string $designId, string $finderId, array $names): array
@@ -2839,44 +2953,263 @@ final class App
 
     /* ---- Library size ---------------------------------------------------------------------
      * Every evaluated design used to get a row and a genome: about a million of each in a day, 3.3 GB, and the host
-     * made the database read-only at its 3 GB limit. Now a task keeps only its best designs by held-out score
-     * (design_keep_per_task, default 2000). Everything else is counted (worker_totals, task_totals) and dropped.
-     * An hourly prune trims what fell out of the kept set; over db_soft_limit_mb it prunes harder, rebuilds the
-     * tables, and the owner console shows a warning. */
+     * made the database read-only at its 3 GB limit. Now a task keeps the top K designs on each quality measure
+     * (held-out, train, efficiency, margin over random; design_keep_per_measure, default 200). Everything else is
+     * counted (worker_totals, task_totals) and dropped. Discoveries shows only the top N per measure that pass a
+     * quality floor (must fire on a positive label, beat the task's random control when one exists, and reach a
+     * fraction of the task's best eligible held-out score). An hourly prune trims what fell out of the kept set;
+     * over db_soft_limit_mb it prunes harder, rebuilds the tables, and the owner console shows a warning. */
     private $keepMemo = [];
+    private $randomMeanMemo = [];
+
+    public function discoveriesTopN(): int
+    {
+        $n = (int) ($this->config['discoveries_top_n'] ?? 8);
+        return max(1, min(20, $n));
+    }
+
+    public function keepPerMeasure(): int
+    {
+        $k = (int) ($this->config['design_keep_per_measure'] ?? $this->config['design_keep_per_task'] ?? 200);
+        return max(20, min(10000, $k));
+    }
 
     public function keepPerTask(): int
     {
-        $k = (int) ($this->config['design_keep_per_task'] ?? 2000);
-        return max(50, min(100000, $k));
+        return $this->keepPerMeasure();
     }
 
-    /** Held-out scores of the task's kept designs, best first, at most keepPerTask() of them. */
-    private function keptHelds(string $taskId): array
+    public function discoveriesFloorRatio(): float
+    {
+        $r = (float) ($this->config['discoveries_floor_ratio'] ?? 0.5);
+        if ($r < 0.05) {
+            return 0.05;
+        }
+        if ($r > 1.0) {
+            return 1.0;
+        }
+        return $r;
+    }
+
+    /** Task-level random-arm mean held-out, or null when there are not enough random checks. */
+    private function taskRandomMean(string $taskId): ?float
+    {
+        if (!isset($this->randomMeanMemo[$taskId])) {
+            $st = $this->db->prepare('SELECT COALESCE(SUM(random_evals), 0) AS r, COALESCE(SUM(random_mean * random_evals), 0) AS rs FROM design_summaries WHERE task_id = ?');
+            $st->execute([$taskId]);
+            $row = $st->fetch();
+            $r = $row ? (int) $row['r'] : 0;
+            $this->randomMeanMemo[$taskId] = $r < 1 ? false : ((float) $row['rs']) / $r;
+        }
+        $v = $this->randomMeanMemo[$taskId];
+        return $v === false ? null : $v;
+    }
+
+    /** Scores used for the floor and the four keep/showcase measures. */
+    private function designMeasureValues(array $row, ?array $score = null): array
+    {
+        if ($score === null) {
+            $score = json_decode((string) ($row['score_json'] ?? ''), true);
+            if (!is_array($score)) {
+                $score = [];
+            }
+        }
+        $held = isset($score['heldOut']) ? (float) $score['heldOut'] : (isset($score['quality']) ? (float) $score['quality'] : (isset($row['held']) && $row['held'] !== null ? (float) $row['held'] : 0.0));
+        $train = isset($score['train']) ? (float) $score['train'] : $held;
+        $quality = isset($score['quality']) ? (float) $score['quality'] : $held;
+        $neurons = (int) ($row['neurons'] ?? 0);
+        $synapses = (int) ($row['synapses'] ?? 0);
+        $spikes = (int) ($row['spikes'] ?? 0);
+        return [
+            'held' => $held,
+            'train' => $train,
+            'quality' => $quality,
+            'neurons' => $neurons,
+            'synapses' => $synapses,
+            'spikes' => $spikes,
+            'recall' => isset($score['recall']) ? (float) $score['recall'] : null,
+            'f1' => isset($score['f1']) ? (float) $score['f1'] : null,
+            'size' => $neurons + $synapses,
+        ];
+    }
+
+    /** True when the design actually responds to a positive label (or, without recall/f1, when it spiked). */
+    private function designFires(array $m): bool
+    {
+        if ($m['recall'] !== null) {
+            return $m['recall'] > 0;
+        }
+        if ($m['f1'] !== null) {
+            return $m['f1'] > 0;
+        }
+        return $m['spikes'] > 0;
+    }
+
+    private function designBeatsRandom(array $m, ?float $randomMean): bool
+    {
+        if ($randomMean === null) {
+            return true;
+        }
+        return $m['held'] > $randomMean;
+    }
+
+    /** Storage floor: the design fires and beats the random control when one exists. */
+    private function designPassesKeepFloor(array $m, ?float $randomMean): bool
+    {
+        return $this->designFires($m) && $this->designBeatsRandom($m, $randomMean);
+    }
+
+    /** Showcase floor: the keep floor, plus a fraction of the task's best eligible held-out score. */
+    private function designPassesShowcaseFloor(array $m, ?float $randomMean, ?float $bestEligibleHeld): bool
+    {
+        if (!$this->designPassesKeepFloor($m, $randomMean)) {
+            return false;
+        }
+        if ($bestEligibleHeld === null || $bestEligibleHeld <= 0) {
+            return true;
+        }
+        return $m['held'] + 1e-12 >= $this->discoveriesFloorRatio() * $bestEligibleHeld;
+    }
+
+    private function measureThresholds(string $taskId): array
     {
         if (!isset($this->keepMemo[$taskId])) {
-            $st = $this->db->prepare('SELECT held FROM design_records WHERE task_id = ? AND held IS NOT NULL AND duplicate_of IS NULL ORDER BY held DESC LIMIT ' . $this->keepPerTask());
-            $st->execute([$taskId]);
-            $helds = array_map('floatval', $st->fetchAll(PDO::FETCH_COLUMN));
-            rsort($helds, SORT_NUMERIC);
-            $this->keepMemo[$taskId] = $helds;
+            $this->keepMemo[$taskId] = $this->computeMeasureThresholds($taskId);
         }
         return $this->keepMemo[$taskId];
     }
 
-    /** True when a design with this held-out score would rank among the task's kept designs (or the task has room). */
-    public function designFits(string $taskId, float $held): bool
+    private function computeMeasureThresholds(string $taskId): array
     {
-        $helds = $this->keptHelds($taskId);
-        return count($helds) < $this->keepPerTask() || $held > $helds[count($helds) - 1];
+        $k = $this->keepPerMeasure();
+        $random = $this->taskRandomMean($taskId);
+        $helds = [];
+        $trains = [];
+        $margins = [];
+        $eff = [];
+        $st = $this->db->prepare('SELECT score_json, neurons, synapses, spikes, held FROM design_records WHERE task_id = ? AND duplicate_of IS NULL');
+        $st->execute([$taskId]);
+        while (($row = $st->fetch()) !== false) {
+            $m = $this->designMeasureValues($row);
+            $helds[] = $m['held'];
+            $trains[] = $m['train'];
+            $margins[] = $m['held'] - ($random ?? 0.0);
+            if ($this->designPassesKeepFloor($m, $random)) {
+                $eff[] = [$m['size'], $m['held']];
+            }
+        }
+        return $this->packThresholds($k, $random, $helds, $trains, $margins, $eff);
     }
 
-    private function keptHeld(string $taskId, float $held): void
+    private function packThresholds(int $k, ?float $random, array $helds, array $trains, array $margins, array $eff): array
     {
-        $helds = $this->keptHelds($taskId);
-        $helds[] = $held;
         rsort($helds, SORT_NUMERIC);
-        $this->keepMemo[$taskId] = array_slice($helds, 0, $this->keepPerTask());
+        rsort($trains, SORT_NUMERIC);
+        rsort($margins, SORT_NUMERIC);
+        usort($eff, function ($a, $b) {
+            if ($a[0] === $b[0]) {
+                return $a[1] < $b[1] ? 1 : ($a[1] > $b[1] ? -1 : 0);
+            }
+            return $a[0] < $b[0] ? -1 : 1;
+        });
+        $helds = array_slice($helds, 0, $k);
+        $trains = array_slice($trains, 0, $k);
+        $margins = array_slice($margins, 0, $k);
+        $eff = array_slice($eff, 0, $k);
+        $effWorstSize = null;
+        $effMinHeldAtWorst = null;
+        if ($eff !== []) {
+            $worst = $eff[count($eff) - 1];
+            $effWorstSize = $worst[0];
+            $effMinHeldAtWorst = $worst[1];
+        }
+        return [
+            'k' => $k,
+            'random' => $random,
+            'helds' => $helds,
+            'trains' => $trains,
+            'margins' => $margins,
+            'eff' => $eff,
+            'nHeld' => count($helds),
+            'nTrain' => count($trains),
+            'nMargin' => count($margins),
+            'nEff' => count($eff),
+            'minHeld' => $helds !== [] ? $helds[count($helds) - 1] : null,
+            'minTrain' => $trains !== [] ? $trains[count($trains) - 1] : null,
+            'minMargin' => $margins !== [] ? $margins[count($margins) - 1] : null,
+            'effWorstSize' => $effWorstSize,
+            'effMinHeldAtWorst' => $effMinHeldAtWorst,
+        ];
+    }
+
+    /** True when a design would rank in some measure's kept set (or that set still has room). */
+    public function designFits(string $taskId, float $held, array $metrics = []): bool
+    {
+        $m = [
+            'held' => $held,
+            'train' => isset($metrics['train']) ? (float) $metrics['train'] : $held,
+            'quality' => isset($metrics['quality']) ? (float) $metrics['quality'] : $held,
+            'neurons' => (int) ($metrics['neurons'] ?? 0),
+            'synapses' => (int) ($metrics['synapses'] ?? 0),
+            'spikes' => (int) ($metrics['spikes'] ?? 0),
+            'recall' => isset($metrics['recall']) ? (float) $metrics['recall'] : null,
+            'f1' => isset($metrics['f1']) ? (float) $metrics['f1'] : null,
+            'size' => (int) ($metrics['neurons'] ?? 0) + (int) ($metrics['synapses'] ?? 0),
+        ];
+        $th = $this->measureThresholds($taskId);
+        $k = $th['k'];
+        if ($th['nHeld'] < $k || $held > (float) $th['minHeld']) {
+            return true;
+        }
+        if ($th['nTrain'] < $k || $m['train'] > (float) $th['minTrain']) {
+            return true;
+        }
+        $margin = $held - ($th['random'] ?? 0.0);
+        if ($th['nMargin'] < $k || $margin > (float) $th['minMargin']) {
+            return true;
+        }
+        if ($this->designPassesKeepFloor($m, $th['random'])) {
+            if ($th['nEff'] < $k) {
+                return true;
+            }
+            if ($m['size'] < (int) $th['effWorstSize']) {
+                return true;
+            }
+            if ($m['size'] === (int) $th['effWorstSize'] && $held > (float) $th['effMinHeldAtWorst']) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function rememberKept(string $taskId, array $m): void
+    {
+        if (!isset($m['size'])) {
+            $m['size'] = (int) ($m['neurons'] ?? 0) + (int) ($m['synapses'] ?? 0);
+        }
+        if (!isset($m['held'])) {
+            $m['held'] = 0.0;
+        }
+        if (!isset($m['train'])) {
+            $m['train'] = $m['held'];
+        }
+        if (!isset($m['recall'])) {
+            $m['recall'] = null;
+        }
+        if (!isset($m['f1'])) {
+            $m['f1'] = null;
+        }
+        if (!isset($m['spikes'])) {
+            $m['spikes'] = 0;
+        }
+        $th = $this->measureThresholds($taskId);
+        $th['helds'][] = (float) $m['held'];
+        $th['trains'][] = (float) $m['train'];
+        $th['margins'][] = (float) $m['held'] - ($th['random'] ?? 0.0);
+        if ($this->designPassesKeepFloor($m, $th['random'])) {
+            $th['eff'][] = [(int) $m['size'], (float) $m['held']];
+        }
+        $this->keepMemo[$taskId] = $this->packThresholds($th['k'], $th['random'], $th['helds'], $th['trains'], $th['margins'], $th['eff']);
     }
 
     private function bumpTaskTotals(string $taskId, int $seen, int $kept, int $ms): void
@@ -2955,15 +3288,16 @@ final class App
     /**
      * Deletes design records outside the keep policy, then their genomes and confirmations, old checkpoints and old
      * upload receipts. Kept for every task:
-     *   - the best $keep first finds by held-out score, and the best min(200, $keep) by quality (what Discoveries ranks by);
-     *   - the latest $latestPerTask first finds (plateau and series fall back to them) and the latest $latestPerWorker
-     *     per computer and task (personal bests);
+     *   - the best $keep first finds on each quality measure (held-out, train, efficiency, margin over random);
      *   - every design that has confirmations or later copies pointing at it, those later copies (duplicate_of set;
      *     uploads stopped making them when confirmations came in), and every design Discoveries shows now.
+     * Recency windows (latest-per-task / latest-per-worker) are no longer kept: the score-history chart reads
+     * design_summaries, and the designer / surrogate fall back to model_checkpoints (the last 50 are still kept).
+     * $latestPerTask and $latestPerWorker are accepted so older callers still run, but they are ignored.
      */
-    public function pruneDesigns(?int $keep = null, int $latestPerTask = 500, int $latestPerWorker = 200, int $budgetSeconds = 600): array
+    public function pruneDesigns(?int $keep = null, int $latestPerTask = 0, int $latestPerWorker = 0, int $budgetSeconds = 600): array
     {
-        $keep = $keep ?? $this->keepPerTask();
+        $keep = $keep ?? $this->keepPerMeasure();
         $stop = microtime(true) + max(5, $budgetSeconds);
         $out = ['keep' => $keep, 'records' => 0, 'genomes' => 0, 'confirmations' => 0, 'checkpoints' => 0, 'kept' => 0, 'tasks' => [], 'finished' => false];
         $protected = [];
@@ -2977,12 +3311,14 @@ final class App
             $protected[(string) $r['id']] = true;
         }
         $shown = $this->db->prepare('SELECT body FROM page_cache WHERE k = ?');
-        $shown->execute(['discoveries-v1']);
-        $cached = $shown->fetch();
-        $body = $cached ? json_decode((string) $cached['body'], true) : null;
-        foreach (is_array($body) && isset($body['items']) && is_array($body['items']) ? $body['items'] : [] as $item) {
-            if (is_array($item) && isset($item['id'])) {
-                $protected[(string) $item['id']] = true;
+        foreach (['discoveries-v2', 'discoveries-v1'] as $cacheKey) {
+            $shown->execute([$cacheKey]);
+            $cached = $shown->fetch();
+            $body = $cached ? json_decode((string) $cached['body'], true) : null;
+            foreach (is_array($body) && isset($body['items']) && is_array($body['items']) ? $body['items'] : [] as $item) {
+                if (is_array($item) && isset($item['id'])) {
+                    $protected[(string) $item['id']] = true;
+                }
             }
         }
         $tasks = [];
@@ -2991,12 +3327,13 @@ final class App
         }
         $mysql = ($this->config['driver'] ?? '') !== 'sqlite';
         foreach ($tasks as $task) {
+            $random = $this->taskRandomMean($task);
             $topHeld = new SplMinHeap();
-            $topQual = new SplMinHeap();
-            $latest = new SplMinHeap();
-            $byWorker = [];
+            $topTrain = new SplMinHeap();
+            $topMargin = new SplMinHeap();
+            $topEff = new SplMinHeap();
             $dups = [];
-            $sql = 'SELECT id, score_json, seq, worker_id, duplicate_of FROM design_records WHERE task_id = ?';
+            $sql = 'SELECT id, score_json, seq, worker_id, duplicate_of, neurons, synapses, spikes FROM design_records WHERE task_id = ?';
             $st = $mysql && defined('PDO::MYSQL_ATTR_USE_BUFFERED_QUERY') ? $this->db->prepare($sql, [PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => false]) : $this->db->prepare($sql);
             $st->execute([$task]);
             $total = 0;
@@ -3007,35 +3344,31 @@ final class App
                     continue;
                 }
                 $id = (string) $row[0];
-                $score = json_decode((string) $row[1], true);
-                $held = is_array($score) ? (isset($score['heldOut']) ? (float) $score['heldOut'] : (float) ($score['quality'] ?? 0)) : 0.0;
-                $quality = is_array($score) && isset($score['quality']) ? (float) $score['quality'] : -1.0;
+                $m = $this->designMeasureValues([
+                    'score_json' => $row[1],
+                    'neurons' => $row[5],
+                    'synapses' => $row[6],
+                    'spikes' => $row[7],
+                ]);
                 $seq = (int) $row[2];
-                self::boundedPush($topHeld, [$held, $seq, $id], $keep);
-                self::boundedPush($topQual, [$quality, $seq, $id], min(200, $keep));
-                self::boundedPush($latest, [$seq, $id], $latestPerTask);
-                $w = (string) $row[3];
-                if (!isset($byWorker[$w])) {
-                    $byWorker[$w] = new SplMinHeap();
+                self::boundedPush($topHeld, [$m['held'], $seq, $id], $keep);
+                self::boundedPush($topTrain, [$m['train'], $seq, $id], $keep);
+                self::boundedPush($topMargin, [$m['held'] - ($random ?? 0.0), $seq, $id], $keep);
+                if ($this->designPassesKeepFloor($m, $random)) {
+                    self::boundedPush($topEff, [-$m['size'], $m['held'], $seq, $id], $keep);
                 }
-                self::boundedPush($byWorker[$w], [$seq, $id], $latestPerWorker);
             }
             $st->closeCursor();
             $keepIds = $protected;
             foreach ($dups as $id) {
                 $keepIds[$id] = true;
             }
-            foreach ([$topHeld, $topQual, $latest] as $heap) {
+            foreach ([$topHeld, $topTrain, $topMargin, $topEff] as $heap) {
                 foreach ($heap as $item) {
                     $keepIds[(string) $item[count($item) - 1]] = true;
                 }
             }
-            foreach ($byWorker as $heap) {
-                foreach ($heap as $item) {
-                    $keepIds[(string) $item[1]] = true;
-                }
-            }
-            unset($topHeld, $topQual, $latest, $byWorker);
+            unset($topHeld, $topTrain, $topMargin, $topEff);
             $range = $this->db->prepare('SELECT MIN(seq) AS lo, MAX(seq) AS hi FROM design_records WHERE task_id = ?');
             $range->execute([$task]);
             $r = $range->fetch();
@@ -3196,8 +3529,8 @@ final class App
         $this->backfillScores();
         $before = $this->dbSizeMb();
         $hard = $before !== null && $before > $soft;
-        $keep = $this->keepPerTask();
-        $res = $this->pruneDesigns($hard ? max(50, intdiv($keep, 4)) : $keep, $hard ? 100 : 500, $hard ? 50 : 200, 300);
+        $keep = $this->keepPerMeasure();
+        $res = $this->pruneDesigns($hard ? max(20, intdiv($keep, 4)) : $keep, 0, 0, 300);
         if ($hard) {
             try {
                 $this->compactTables();

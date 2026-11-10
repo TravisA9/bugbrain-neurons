@@ -246,7 +246,11 @@
     }
     const precision = tp / (tp + fp || 1), recall = tp / (tp + fn || 1), f1 = 2 * precision * recall / (precision + recall || 1);
     const accuracy = exact / n, complexity = net.nodes.length + net.edges.length, meanSpikes = spikes / n;
-    const quality = clamp(accuracy - .0015 * complexity - .00025 * meanSpikes, 0, 1);
+    // Exact-match accuracy rewards true negatives, so a silent net can score well on
+    // imbalanced tasks (sequence is often ~75% label 0). If the eval has positives and
+    // the design never produces a true positive, it has not solved the task.
+    let quality = clamp(accuracy - .0015 * complexity - .00025 * meanSpikes, 0, 1);
+    if ((tp + fn) > 0 && tp === 0) quality = 0;
     return { accuracy, precision, recall, f1, falseSpikes: fp, missedSpikes: fn, spikes, meanSpikes, meanLatency: latencyN ? latencies / latencyN : 0, n, complexity, neurons: net.nodes.length, synapses: net.edges.length, quality, trueNegatives: tn, synthetic: true };
   }
   function robustScore(g, taskId, budget, rng) {

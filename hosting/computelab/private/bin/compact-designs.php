@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-/* php private/bin/compact-designs.php prune [--keep=2000]
+/* php private/bin/compact-designs.php prune [--keep=200]
  * php private/bin/compact-designs.php finish
  *
  * One-time shrink of the design library after it outgrew the host's 3 GB database limit (the host then refuses
@@ -14,7 +14,7 @@ $private = dirname(__DIR__);
 require $private . '/src/App.php';
 $config = require $private . '/config.php';
 $phase = $argv[1] ?? '';
-$keep = 2000;
+$keep = 200;
 foreach ($argv as $arg) {
     if (preg_match('/^--keep=(\d+)$/', $arg, $m)) {
         $keep = (int) $m[1];
@@ -98,11 +98,11 @@ if ($phase === 'prune') {
             $lap('dropped ' . count($drop) . ' overlapping indexes on design_records');
         }
     }
-    $res = $app->pruneDesigns($keep, 500, 200, 3000);
+    $res = $app->pruneDesigns($keep, 0, 0, 3000);
     foreach ($res['tasks'] as $task => $t) {
         echo "task $task: {$t['rows']} rows, deleted {$t['deleted']}\n";
     }
-    $lap("pruned: keep $keep per task; deleted {$res['records']} records, {$res['genomes']} genomes, {$res['confirmations']} confirmations, {$res['checkpoints']} old checkpoints; kept {$res['kept']}; finished " . ($res['finished'] ? 'yes' : 'NO'));
+    $lap("pruned: keep $keep per measure per task; deleted {$res['records']} records, {$res['genomes']} genomes, {$res['confirmations']} confirmations, {$res['checkpoints']} old checkpoints; kept {$res['kept']}; finished " . ($res['finished'] ? 'yes' : 'NO'));
     if ($mysql && $res['finished']) {
         $cols = columnNames($db, 'design_records');
         $idx = indexNames($db, 'design_records');
@@ -144,5 +144,5 @@ if ($phase === 'finish') {
     echo 'after: ' . sizes($db, $mysql) . "\n";
     exit(0);
 }
-fwrite(STDERR, "usage: compact-designs.php prune [--keep=2000] | finish\n");
+fwrite(STDERR, "usage: compact-designs.php prune [--keep=200] | finish\n");
 exit(2);

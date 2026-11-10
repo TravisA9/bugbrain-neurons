@@ -223,7 +223,8 @@ function scoreSet(genome, samples) {
   const f1 = 2 * precision * recall / (precision + recall || 1);
   const accuracy = samples.length ? exact / samples.length : 0;
   const meanSpikes = spikes / n;
-  const quality = clamp(accuracy - 0.0015 * (neurons + synapses) - 0.00025 * meanSpikes, 0, 1);
+  let quality = clamp(accuracy - 0.0015 * (neurons + synapses) - 0.00025 * meanSpikes, 0, 1);
+  if ((tp + fn) > 0 && tp === 0) quality = 0;
   return { accuracy: accuracy, precision: precision, recall: recall, f1: f1, quality: quality, spikes: spikes, neurons: neurons, synapses: synapses };
 }
 
