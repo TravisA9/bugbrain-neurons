@@ -258,6 +258,10 @@ final class App
         $this->ensureColumn('workers', 'allowance_pct', 'INTEGER NOT NULL DEFAULT 50');
         /* Experiments at once: 0 is Auto (the mode decides), 1..64 caps the job slots. */
         $this->ensureColumn('workers', 'max_jobs', 'INTEGER NOT NULL DEFAULT 0');
+        /* A removed computer is a tombstone: the row stays so credit, design records, results and
+         * job history keep their name, but it no longer shows in the Owner console. Only revoked
+         * computers can be removed. */
+        $this->ensureColumn('workers', 'removed_at', 'VARCHAR(40) NULL');
         $this->ensureColumn('workers', 'runtime_json', 'TEXT');
         if ($freshMode) {
             $this->db->exec("UPDATE workers SET resource_mode = 'off' WHERE paused = 1");
@@ -609,6 +613,42 @@ final class App
         $st->execute([hash('sha256', $token)]);
         $row = $st->fetch();
         return $row ?: null;
+    }
+
+    /* Removes a revoked computer from the Owner console. Returns false (and changes nothing)
+     * for an active computer. The workers row is kept as a tombstone with its name, so
+     * Discoveries, credit, design records, results and job history still resolve; only the
+     * clutter that belongs to the dead entry goes: its diagnostics, unused setup codes and
+     * any stale lease. */
+    public function removeRevoked(string $workerId): bool
+    {
+        $st = $this->db->prepare('UPDATE workers SET removed_at = ? WHERE id = ? AND revoked = 1 AND removed_at IS NULL');
+        $st->execute([$this->now(), $workerId]);
+        if ($st->rowCount() !== 1) {
+            return false;
+        }
+        $this->db->prepare('DELETE FROM worker_diagnostics WHERE worker_id = ?')->execute([$workerId]);
+        $this->db->prepare('DELETE FROM setup_codes WHERE worker_id = ?')->execute([$workerId]);
+        $this->db->prepare('DELETE FROM leases WHERE worker_id = ?')->execute([$workerId]);
+        return true;
+    }
+
+    /* One-time cleanup (bin/upgrade.php): remove every computer that is revoked today.
+     * Runs once; later revocations are removed by hand from the Owner console. */
+    public function removeRevokedOnce(): array
+    {
+        $done = $this->db->query("SELECT id FROM supply_state WHERE id = 'remove-revoked-1'")->fetch();
+        if ($done) {
+            return ['ran' => false, 'removed' => []];
+        }
+        $names = [];
+        foreach ($this->db->query('SELECT id, name FROM workers WHERE revoked = 1 AND removed_at IS NULL ORDER BY created_at ASC, id ASC')->fetchAll() as $w) {
+            if ($this->removeRevoked((string) $w['id'])) {
+                $names[] = (string) $w['name'];
+            }
+        }
+        $this->db->prepare('INSERT INTO supply_state (id, ran_at, note) VALUES (?, ?, ?)')->execute(['remove-revoked-1', $this->now(), 'removed ' . count($names) . ': ' . substr(implode(', ', $names), 0, 400)]);
+        return ['ran' => true, 'removed' => $names];
     }
 
     public function revoke(string $workerId): void

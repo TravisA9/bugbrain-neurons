@@ -706,6 +706,10 @@ try {
             $app->createJob((string) ($_POST['template'] ?? ''), (string) ($_POST['title'] ?? ''), (float) ($_POST['priority'] ?? 0.5), (int) ($_POST['seed'] ?? 1));
         } elseif ($path === '/owner/revoke') {
             $app->revoke((string) ($_POST['id'] ?? ''));
+        } elseif ($path === '/owner/remove-computer') {
+            if (!$app->removeRevoked((string) ($_POST['id'] ?? ''))) {
+                throw new InvalidArgumentException('Only a revoked computer can be removed.');
+            }
         } elseif ($path === '/owner/requeue') {
             $app->requeue((string) ($_POST['id'] ?? ''));
         } elseif ($path === '/owner/project-create') {

@@ -28,6 +28,9 @@ echo "Schema is current. Added any missing job, project, worker, lease, and resu
 // One entry per distinct design: fill canonical design hashes and mark later copies as duplicate_of the first find.
 $merge = $app->mergeDuplicateDesigns((int) (getenv('MERGE_SECONDS') ?: 900));
 echo 'Designs: hashed ' . $merge['genomes'] . ' genomes and ' . $merge['records'] . ' records; merged ' . $merge['groups'] . ' repeated designs (' . $merge['canonicalOnly'] . ' only equal after canonical ordering), marked ' . $merge['marked'] . ' later copies as duplicates (rows kept); filled ' . $merge['jobSeeds'] . ' job seeds' . ($merge['finished'] ? '' : '; time budget reached, run again to finish') . ".\n";
+// One-time: hide revoked computers from the Owner console (rows kept as tombstones for credit and history).
+$gone = $app->removeRevokedOnce();
+echo $gone['ran'] ? 'Removed revoked computers: ' . ($gone['removed'] === [] ? 'none' : implode(', ', $gone['removed'])) . " (rows kept for credit and history).\n" : "Revoked computers were already cleaned up.\n";
 foreach ($app->watchedTasks() as $health) {
     $policy = $health['policy'];
     $best = 0.0;

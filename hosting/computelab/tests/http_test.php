@@ -368,6 +368,29 @@ $manJson = json_decode($man['body'], true);
 $homeHtml = http($base . '/')['body'];
 check($man['status'] === 200 && is_array($manJson) && ($manJson['name'] ?? '') === 'Compute Lab' && count($manJson['icons'] ?? []) === 3 && str_contains($homeHtml, 'rel="icon"') && str_contains($homeHtml, '/computelab/favicon.svg') && str_contains($homeHtml, 'rel="manifest"') && str_contains(http($base . '/explore')['body'], 'rel="apple-touch-icon"'), 'every page links the favicon, touch icon and manifest');
 
+// t48u: revoked computers leave the main Owner list and can be removed; active ones cannot.
+$login2 = http($base . '/owner/login', 'POST', http_build_query(['username' => 'labowner', 'password' => 'correct-horse']), ['Content-Type: application/x-www-form-urlencoded']);
+if (preg_match('/Set-Cookie: lab_owner=([^;]+)/', $login2['header'], $oc2)) {
+    $oc = $oc2;
+}
+$oh = ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')];
+$ownerNow = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')])['body'];
+preg_match('/name="csrf" value="([a-f0-9]+)"/', $ownerNow, $oCsrf);
+preg_match_all('/action="[^"]*\/owner\/resources".*?name="id" value="([a-f0-9]+)"/s', $ownerNow, $activeIds);
+$victim = end($activeIds[1]);
+$keep = $activeIds[1][0];
+http($base . '/owner/revoke', 'POST', http_build_query(['csrf' => $oCsrf[1] ?? '', 'id' => $victim]), $oh);
+$afterRevoke = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')])['body'];
+check(count($activeIds[1]) >= 2 && !str_contains($afterRevoke, '>REVOKED<') && str_contains($afterRevoke, '<details class="revoked-list">') && str_contains($afterRevoke, 'name="id" value="' . $victim . '"><button class="button small stop" type="submit">Remove</button>') && str_contains($afterRevoke, "return confirm('Remove "), 'a revoked computer leaves the main Owner list and gets a Remove button with a confirm step');
+$badRemove = http($base . '/owner/remove-computer', 'POST', http_build_query(['csrf' => $oCsrf[1] ?? '', 'id' => $keep]), $oh);
+$afterBad = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')])['body'];
+check(preg_match('/owner\/resources".*?name="id" value="' . $keep . '"/s', $afterBad) === 1, 'an active computer cannot be removed');
+http($base . '/owner/remove-computer', 'POST', http_build_query(['csrf' => $oCsrf[1] ?? '', 'id' => $victim]), $oh);
+$afterRemove = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')])['body'];
+check(!str_contains($afterRemove, 'value="' . $victim . '"') && str_contains($afterRemove, 'discoveries and credit stay.'), 'a removed computer is gone from the Owner console, with a note that its credit stays');
+$noCsrfRemove = http($base . '/owner/remove-computer', 'POST', http_build_query(['id' => $victim]), $oh);
+check($noCsrfRemove['status'] === 403, 'removing without the security token is refused');
+
 proc_terminate($proc);
 echo "http checks done\n";
 exit($fail === 0 ? 0 : 1);

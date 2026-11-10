@@ -493,6 +493,13 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .resources input[type=range]:focus-visible::-moz-range-thumb{outline:2px solid var(--cyan);outline-offset:2px}
 .resources.has-art{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);column-gap:14px;padding-right:10px}
 .resources .hint,.resources .effective,.resources .res-head{max-width:330px}
+.revoked-list{margin-top:12px;border:1px dashed #2b3a47;border-radius:10px;padding:8px 12px}
+.revoked-list summary{cursor:pointer;font:11px var(--mono);color:var(--muted)}
+.revoked-list ul{list-style:none;margin:8px 0 0;padding:0}
+.revoked-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid #1e2a34}
+.revoked-row .quiet{flex:1}
+.revoked-row form{margin:0}
+.removed-note{margin-top:10px}
 .resources .jobs-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;box-sizing:border-box;width:310px;max-width:100%;margin-top:9px;padding:7px 9px 7px 13px;border:1px solid #263642;border-radius:10px;background:#0b1219;transition:opacity .25s}
 .resources .jobs-row.is-idle{opacity:.5;border-style:dashed}
 .resources .jobs-label{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#aeb9c2;flex:1 1 auto}
@@ -1132,9 +1139,16 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
     $err = $error !== '' ? '<p class="err">' . h($error) . '</p>' : '';
     $projects = $app->db->query('SELECT * FROM projects ORDER BY priority DESC, id ASC')->fetchAll();
     $templates = $app->db->query('SELECT * FROM templates ORDER BY id')->fetchAll();
-    $workers = $app->db->query('SELECT * FROM workers ORDER BY created_at DESC')->fetchAll();
+    $workers = $app->db->query('SELECT * FROM workers WHERE removed_at IS NULL ORDER BY created_at DESC')->fetchAll();
+    $removedCount = (int) $app->db->query('SELECT COUNT(*) FROM workers WHERE removed_at IS NOT NULL')->fetchColumn();
     $people = '';
+    $revokedRows = '';
     foreach ($workers as $w) {
+        if ((int) $w['revoked'] === 1) {
+            $revokedRows .= '<li class="revoked-row"><span class="computer-name">' . h((string) $w['name']) . '</span><span class="quiet">revoked · ' . h((string) $app->contribution((string) $w['id'])['done']) . ' jobs done</span>'
+                . '<form method="post" action="' . h($base) . '/owner/remove-computer" onsubmit="return confirm(\'Remove ' . h(addslashes((string) $w['name'])) . ' from this list? Its discoveries and credit stay.\')"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><button class="button small stop" type="submit">Remove</button></form></li>';
+            continue;
+        }
         $leases = $app->leasesOf((string) $w['id']);
         $state = describeWorker($app, $w, $leases);
         $health = $app->healthOf($w);
@@ -1234,7 +1248,10 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         . '</div></details>';
     $body = $err . '<section class="heading"><div><div class="eyebrow">Owner console</div><h1>Owner</h1><p>Computers, jobs, and task health. A running job stays with its computer while its heartbeat renews the lease. The detailed job settings are under Advanced.</p></div><div class="head-actions"><div class="chips">' . $summary . '</div></div></section>'
         . '<div class="grid2"><div class="stack">'
-        . '<section class="panel" id="computers"><div class="panelhead"><div class="paneltitle">Computers</div><span class="subtag">' . h((string) count($workers)) . ' ENROLLED</span></div><div class="panelbody">' . addComputerButton($base) . ($people !== '' ? $people : '<p class="muted">None enrolled.</p>') . '</div></section>'
+        . '<section class="panel" id="computers"><div class="panelhead"><div class="paneltitle">Computers</div><span class="subtag">' . h((string) count(array_filter($workers, function ($w) { return (int) $w['revoked'] !== 1; }))) . ' ENROLLED</span></div><div class="panelbody">' . addComputerButton($base) . ($people !== '' ? $people : '<p class="muted">None enrolled.</p>')
+        . ($revokedRows !== '' ? '<details class="revoked-list"><summary>Revoked (' . substr_count($revokedRows, '<li ') . ') — remove to clean up this list</summary><ul>' . $revokedRows . '</ul></details>' : '')
+        . ($removedCount > 0 ? '<p class="quiet removed-note">' . h((string) $removedCount) . ' removed ' . ($removedCount === 1 ? 'computer is' : 'computers are') . ' hidden here; ' . ($removedCount === 1 ? 'its' : 'their') . ' discoveries and credit stay.</p>' : '')
+        . '</div></section>'
         . '<section class="panel"><div class="panelhead"><div class="paneltitle">Jobs</div></div><div class="panelbody">' . $filterHtml . '<table><thead><tr><th>Job</th><th>Project</th><th>Status</th><th>Attempts</th><th>Last error</th></tr></thead><tbody>' . $rows . '</tbody></table>' . $pager . '</div></section>'
         . '</div><div class="stack">' . $health . designLibrarySection($app, $csrf, $base) . '</div></div>'
         . $advanced;

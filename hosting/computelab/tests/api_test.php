@@ -428,6 +428,25 @@ $credit['app']->setGenomePublic(hash('sha256', $high), true);
 $pub = $credit['app']->designGenome(hash('sha256', $high));
 check($pub && (int) $pub['is_public'] === 1, 'the owner can mark a genome public');
 
+// t48u: removing revoked computers keeps their history.
+$credit['app']->setCredit($person['participantId'], true);
+$other = $credit['app']->enroll('still-on', ['spikefoundry'], 2, true);
+check($credit['app']->removeRevoked($person['workerId']) === false && $credit['app']->removeRevoked($other['workerId']) === false, 'an active computer cannot be removed');
+$credit['app']->revoke($person['workerId']);
+$credit['app']->db->prepare('INSERT INTO worker_diagnostics (worker_id, kind, ok, summary, body_json, created_at) VALUES (?, ?, 1, ?, ?, ?)')->execute([$person['workerId'], 'startup', 'x', '{}', $credit['app']->now()]);
+$recBefore = (int) $credit['app']->db->query('SELECT COUNT(*) FROM design_records')->fetchColumn();
+$gone = $credit['app']->removeRevokedOnce();
+$again = $credit['app']->removeRevokedOnce();
+$row = $credit['app']->db->prepare('SELECT name, revoked, removed_at FROM workers WHERE id = ?');
+$row->execute([$person['workerId']]);
+$tomb = $row->fetch();
+$diag = (int) $credit['app']->db->query('SELECT COUNT(*) FROM worker_diagnostics WHERE worker_id = ' . $credit['app']->db->quote($person['workerId']))->fetchColumn();
+$board2 = $credit['app']->leaderboard(5);
+$disc = json_encode($credit['app']->discoveries());
+check($gone['ran'] && $gone['removed'] === ['pat-pc'] && !$again['ran'] && $tomb && $tomb['name'] === 'pat-pc' && !empty($tomb['removed_at']) && $diag === 0, 'the one-time cleanup removes only revoked computers, once, keeping a tombstone with the name');
+check((int) $credit['app']->db->query('SELECT COUNT(*) FROM design_records')->fetchColumn() === $recBefore && $board2 && $board2[0]['name'] === 'pat-pc' && strpos($disc, 'pat-pc') !== false && $credit['app']->creditName($pw2) === 'pat-pc', 'design records, the leaderboard, Discoveries and credit still show a removed computer');
+check($credit['app']->removeRevoked($person['workerId']) === false && $credit['app']->workerByToken($person['token']) === null, 'removing twice does nothing and a removed computer still cannot sign in');
+
 $supply = lab();
 $sw = $supply['app']->enroll('supply-pc', ['spikefoundry', 'bugbrain'], 2, true);
 $supply['db']->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$supply['clock']->t, $sw['workerId']]);
