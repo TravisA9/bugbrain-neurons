@@ -592,6 +592,44 @@ final class App
         $this->db->prepare('DELETE FROM leases WHERE worker_id = ?')->execute([$workerId]);
     }
 
+    /**
+     * Setup ran on a computer that already has a valid token for $existing. Keep that entry, and retire the entry the
+     * new setup command was made for when it is a clear, unused duplicate (no results, no designs, no running job).
+     * If the kept entry stands alone and the new one belonged to a signed-in participant, the kept entry joins that
+     * participant, so it still shows up for the person who just ran setup.
+     */
+    public function keepExistingEntry(array $existing, string $newToken): array
+    {
+        $out = ['ok' => true, 'name' => (string) $existing['name'], 'retired' => null, 'linked' => false];
+        $new = $newToken !== '' ? $this->workerByToken($newToken) : null;
+        if (!$new || (string) $new['id'] === (string) $existing['id']) {
+            return $out;
+        }
+        $nid = (string) $new['id'];
+        foreach (['results', 'design_records', 'leases'] as $table) {
+            $st = $this->db->prepare('SELECT COUNT(*) FROM ' . $table . ' WHERE worker_id = ?');
+            $st->execute([$nid]);
+            if ((int) $st->fetchColumn() > 0) {
+                return $out;
+            }
+        }
+        $eid = (string) $existing['id'];
+        $npid = (string) ($new['participant_id'] ?? '');
+        $epid = (string) ($existing['participant_id'] ?? '');
+        if ($npid !== '' && $npid !== $nid && ($epid === '' || $epid === $eid)) {
+            $others = $this->db->prepare('SELECT COUNT(*) FROM workers WHERE participant_id = ? AND id <> ?');
+            $others->execute([$eid, $eid]);
+            if ((int) $others->fetchColumn() === 0) {
+                $this->db->prepare('UPDATE workers SET participant_id = ? WHERE id = ?')->execute([$npid, $eid]);
+                $out['linked'] = true;
+            }
+        }
+        $this->revoke($nid);
+        $this->db->prepare('DELETE FROM setup_codes WHERE worker_id = ?')->execute([$nid]);
+        $out['retired'] = (string) $new['name'];
+        return $out;
+    }
+
     /* Pause is Off. Resuming a computer that was Off puts it back in Allowance. */
     public function setPaused(string $workerId, bool $paused): void
     {

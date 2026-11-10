@@ -734,6 +734,7 @@ function pageJoin(App $app, string $error = '', array $nav = []): string
         . '<label><input type="checkbox" name="project[]" value="spikefoundry" checked> SpikeFoundry synthetic design jobs</label>'
         . '<label><input type="checkbox" name="project[]" value="bugbrain"> BugBrain template tests</label>'
         . '<p class="quiet">New computers start in Allowance at 50%: about half of the cores, at low priority, so you can keep using the computer. Change it any time on Home. Job length and the rest are picked for you.</p>'
+        . '<p class="quiet">Running setup again on a computer that is already added is safe: it keeps that computer\'s entry, updates and restarts its worker, and does not add a duplicate.</p>'
         . '<button class="button primary" type="submit">Create a worker token</button></form></div></section>';
     return layout('Join Compute Lab', $body, $base, $nav, ['shell' => 'shell narrow']);
 }
@@ -751,6 +752,7 @@ function pageToken(App $app, string $name, string $token, array $nav = [], strin
         . '<section class="panel"><div class="panelhead"><div class="paneltitle">Token</div><span class="subtag">SHOWN ONCE</span></div><div class="panelbody"><p><code>' . h($token) . '</code></p></div></section>'
         . '<section class="panel"><div class="panelhead"><div class="paneltitle">One step on this computer</div><span class="subtag">STARTS AT 50% ALLOWANCE</span></div><div class="panelbody">'
         . '<p>The setup checks for Node.js 18 or newer and git, downloads the worker, saves the token in your home folder, starts the background program, and then checks that the coordinator accepts it. It prints a plain result at the end.</p>'
+        . '<p class="quiet">Running setup again on a computer that is already added is safe: it keeps that computer\'s entry, updates and restarts its worker, and does not add a duplicate.</p>'
         . $unix
         . '<h3>Mac or Linux: or download the file</h3>'
         . '<form method="post" action="' . h($base) . '/join/setup"><input type="hidden" name="token" value="' . h($token) . '"><input type="hidden" name="os" value="unix"><button class="button" type="submit">Download Mac or Linux setup</button></form>'

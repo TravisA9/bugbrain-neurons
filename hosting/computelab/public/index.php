@@ -761,6 +761,12 @@ try {
             coord_json(200, $app->saveDiagnostics((string) $worker['id'], $body, $token));
             return;
         }
+        // Setup found this (valid) token already on the computer: keep this entry, retire the unused new one.
+        if ($path === '/api/v1/setup/existing' && $method === 'POST') {
+            $newToken = is_string($body['newToken'] ?? null) ? (string) $body['newToken'] : '';
+            coord_json(200, $app->keepExistingEntry($worker, $newToken));
+            return;
+        }
         if ($path === '/api/v1/heartbeat' && $method === 'POST') {
             $sent = (string) ($body['codeHash'] ?? '');
             if ($sent !== '' && !$app->codeApproved($sent)) {

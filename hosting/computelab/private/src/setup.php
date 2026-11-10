@@ -48,8 +48,14 @@ function setup_windows(string $token, string $publicUrl, string $repo, string $r
         . "set \"LOGS=%USERPROFILE%\\.bugbrain\\logs\"\r\n"
         . "if not exist \"%DEST%\" mkdir \"%DEST%\"\r\n"
         . "if not exist \"%LOGS%\" mkdir \"%LOGS%\"\r\n"
-        // Never overwrite another registration's token silently: keep the old one next to it.
-        . "powershell -NoProfile -Command \"\$p = Join-Path \$env:USERPROFILE '.bugbrain\\coordinator-token'; \$n = '" . $token . "'; if ((Test-Path \$p) -and ([IO.File]::ReadAllText(\$p).Trim() -ne \$n)) { \$b = \$p + '.previous-' + (Get-Date -Format yyyyMMdd-HHmmss); Copy-Item \$p \$b; Write-Host ('This computer already had a Compute Lab token (another computer entry). It was kept in ' + \$b + '. If you meant to set up that same entry again, use Set up again on it instead.') }; [IO.File]::WriteAllText(\$p, \$n + [Environment]::NewLine)\"\r\n"
+        // Already added? Check the token on this computer first: keep a valid entry (no duplicate), back up a revoked one.
+        . "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand " . setup_windows_token_ps1_encoded($token, $publicUrl) . "\r\n"
+        . "if errorlevel 1 (\r\n"
+        . "  pause\r\n"
+        . "  exit /b 1\r\n"
+        . ")\r\n"
+        . "set \"KEPT=\"\r\n"
+        . "if exist \"%DEST%\\setup-kept-entry\" set /p KEPT=<\"%DEST%\\setup-kept-entry\"\r\n"
         . "setx BB_COORDINATOR_URL \"" . $publicUrl . "\" >nul\r\n"
         . "setx BB_COORDINATOR_TOKEN_FILE \"%USERPROFILE%\\.bugbrain\\coordinator-token\" >nul\r\n"
         . "setx BB_CODE_BRANCH \"" . $ref . "\" >nul\r\n"
@@ -85,6 +91,7 @@ function setup_windows(string $token, string $publicUrl, string $repo, string $r
         . "if errorlevel 1 goto notrunning\r\n"
         . "if not \"%INSTALLED%\"==\"0\" goto notrunning\r\n"
         . "echo.\r\n"
+        . "if defined KEPT echo This computer is already added as %KEPT%. Setup kept that entry and restarted its worker; no new entry was added.\r\n"
         . "echo Compute Lab is running in the background and will start again when you log on.\r\n"
         . "echo Logs are in %USERPROFILE%\\.bugbrain\\logs\r\n"
         . "echo To stop it, run %USERPROFILE%\\.bugbrain\\stop-computelab.cmd\r\n"
@@ -98,6 +105,61 @@ function setup_windows(string $token, string $publicUrl, string $repo, string $r
         . "echo The problem was also sent to the Compute Lab owner when the coordinator could be reached.\r\n"
         . "pause\r\n"
         . "exit /b 1\r\n";
+}
+
+/* Runs before anything else in the Windows setup. Exit 1 only when the existing entry could not be checked. */
+function setup_windows_token_ps1(string $token, string $publicUrl): string
+{
+    $ps = <<<'PS'
+$ErrorActionPreference = 'Stop'
+try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch {}
+$p = Join-Path $env:USERPROFILE '.bugbrain\coordinator-token'
+$m = Join-Path $env:USERPROFILE '.bugbrain\setup-kept-entry'
+$n = '@@TOKEN@@'
+$u = '@@URL@@'
+Remove-Item $m -ErrorAction SilentlyContinue
+if (Test-Path $p) {
+  $o = ([IO.File]::ReadAllText($p)).Trim()
+  if ($o -eq $n) { exit 0 }
+  $gone = $true
+  if ($o -match '^[a-f0-9]{32,128}$') {
+    try {
+      $r = Invoke-RestMethod -Method Post -Uri ($u + '/api/v1/setup/existing') -Headers @{ Authorization = 'Bearer ' + $o } -ContentType 'application/json' -Body (@{ newToken = $n } | ConvertTo-Json) -TimeoutSec 30 -UseBasicParsing
+      $gone = $false
+    } catch {
+      $code = 0
+      if ($_.Exception.Response) { $code = [int]$_.Exception.Response.StatusCode }
+      if ($code -ne 401 -and $code -ne 403) {
+        Write-Host 'FAIL: could not check the Compute Lab entry this computer already has (no answer from Compute Lab).'
+        Write-Host 'Fix: check the internet connection and run this file again. Nothing was changed.'
+        exit 1
+      }
+    }
+  }
+  if (-not $gone) {
+    Write-Host ('This computer is already added as ' + $r.name + '. Setup keeps that entry and updates its worker.')
+    if ($r.retired) { Write-Host ('The new entry ' + $r.retired + ' was not needed, so it was removed automatically.') }
+    [IO.File]::WriteAllText($m, [string]$r.name)
+    exit 0
+  }
+  $b = $p + '.previous-' + (Get-Date -Format yyyyMMdd-HHmmss)
+  Copy-Item $p $b
+  Write-Host ('The Compute Lab token already on this computer no longer works (revoked or unknown), so setup adds this computer as a new entry. The old token was kept in ' + $b + '.')
+}
+[IO.File]::WriteAllText($p, $n + [Environment]::NewLine)
+exit 0
+PS;
+    return strtr($ps, ['@@TOKEN@@' => $token, '@@URL@@' => rtrim($publicUrl, '/')]);
+}
+
+function setup_windows_token_ps1_encoded(string $token, string $publicUrl): string
+{
+    $script = str_replace("\n", "\r\n", setup_windows_token_ps1($token, $publicUrl));
+    $wide = '';
+    for ($i = 0, $n = strlen($script); $i < $n; $i++) {
+        $wide .= $script[$i] . "\0"; // the script is ASCII, so UTF-16LE is each byte plus a zero
+    }
+    return base64_encode($wide);
 }
 
 /* The scheduled task runs this. It sets the Compute Lab settings and starts the launcher loop (run/worker.ps1), which
@@ -146,7 +208,49 @@ METHOD=none
 export GIT_TERMINAL_PROMPT=0
 umask 077
 mkdir -p "$ST/logs" || { echo "Could not create $ST"; exit 1; }
-printf '%s\n' '@@TOKEN@@' > "$TOKEN_FILE" && chmod 600 "$TOKEN_FILE"
+NEW_TOKEN='@@TOKEN@@'
+KEPT=
+# Already added? If this computer has a token that still works, keep that entry (the server retires the unused new
+# one). If the old token was revoked or is unknown, keep a copy of it and add this computer as a new entry.
+existing_check() {
+  hdr="$ST/.chk-auth"; req="$ST/.chk-req"; out="$ST/.chk-out"
+  printf 'Authorization: Bearer %s\n' "$1" > "$hdr"
+  printf '{"newToken":"%s"}' "$NEW_TOKEN" > "$req"
+  CODE=000
+  if command -v curl >/dev/null 2>&1; then
+    CODE=$(curl -sS -m 30 -A computelab-setup -H "@$hdr" -H 'Content-Type: application/json' --data-binary "@$req" -o "$out" -w '%{http_code}' "$URL/api/v1/setup/existing" 2>/dev/null </dev/null) || true
+  elif command -v wget >/dev/null 2>&1; then
+    wget -q -S -T 30 -U computelab-setup --header="$(cat "$hdr")" --header='Content-Type: application/json' --post-file="$req" -O "$out" "$URL/api/v1/setup/existing" 2>"$ST/.chk-head" </dev/null || true
+    CODE=$(grep -o 'HTTP/[0-9.]* [0-9][0-9][0-9]' "$ST/.chk-head" 2>/dev/null | tail -n 1 | sed 's/.* //')
+    rm -f "$ST/.chk-head"
+  fi
+  BODY=$(cat "$out" 2>/dev/null)
+  rm -f "$hdr" "$req" "$out"
+}
+if [ -s "$TOKEN_FILE" ]; then
+  OLD=$(tr -d ' \r\n' < "$TOKEN_FILE")
+  if [ "$OLD" != "$NEW_TOKEN" ]; then
+    case "$OLD" in ''|*[!a-f0-9]*) CODE=401 ;; *) existing_check "$OLD" ;; esac
+    if [ "$CODE" = 200 ]; then
+      KEPT=$(printf '%s' "$BODY" | sed -n 's/.*"name":"\([a-z0-9._-]*\)".*/\1/p')
+      RETIRED=$(printf '%s' "$BODY" | sed -n 's/.*"retired":"\([a-z0-9._-]*\)".*/\1/p')
+      [ -n "$KEPT" ] || KEPT='its existing entry'
+      printf '%s\n' "This computer is already added as $KEPT. Setup keeps that entry and updates its worker."
+      [ -n "$RETIRED" ] && printf '%s\n' "The new entry $RETIRED was not needed, so it was removed automatically."
+    elif [ "$CODE" = 401 ] || [ "$CODE" = 403 ]; then
+      KEEP="$TOKEN_FILE.previous-$(date +%Y%m%d-%H%M%S)"
+      cp -p "$TOKEN_FILE" "$KEEP"
+      printf '%s\n' "The Compute Lab token already on this computer no longer works (revoked or unknown), so setup adds this computer as a new entry. The old token was kept in $KEEP."
+    else
+      printf '%s\n' "Setup stopped: could not check the Compute Lab entry this computer already has (no answer from Compute Lab)."
+      printf '%s\n' "Fix: check the internet connection and run the setup command again. Nothing was changed."
+      exit 1
+    fi
+  fi
+fi
+if [ -z "$KEPT" ]; then
+  printf '%s\n' "$NEW_TOKEN" > "$TOKEN_FILE" && chmod 600 "$TOKEN_FILE"
+fi
 
 say() { printf '%s\n' "$*"; }
 # Tell the coordinator why setup stopped, so the owner can see it. The token goes in a header read from a private file.
@@ -320,6 +424,7 @@ if ! "$best" "$repo/run/verify-start.js" --url "$URL" --token-file "$TOKEN_FILE"
   exit 1
 fi
 say ""
+[ -n "$KEPT" ] && say "This computer is already added as $KEPT. Setup kept that entry and restarted its worker; no new entry was added."
 say "Compute Lab is running in the background ($METHOD) and starts again after a restart or login."
 say "Worker log:  $ST/worker.log"
 say "Stop it:     sh $ST/stop-computelab.sh"

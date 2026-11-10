@@ -296,6 +296,57 @@ check($rotBare['status'] === 403, 'a new setup command needs the security token'
 $sealed = (string) $app->db->query('SELECT sealed FROM setup_codes LIMIT 1')->fetchColumn();
 check($sealed !== '' && !str_contains($sealed, $nt[1] ?? 'zz') && !str_contains(base64_decode($sealed), $nt[1] ?? 'zz'), 'setup codes do not store the token in readable form');
 
+// Setup on a computer that is already added: keep the working entry, retire the unused new one; a revoked token means a fresh add.
+require_once dirname(__DIR__) . '/private/src/setup.php';
+$runTokenStep = function (string $newToken, ?string $oldToken) use ($base): array {
+    $home = sys_get_temp_dir() . '/cl-home-' . bin2hex(random_bytes(4));
+    mkdir($home . '/.bugbrain', 0700, true);
+    if ($oldToken !== null) {
+        file_put_contents($home . '/.bugbrain/coordinator-token', $oldToken . "\n");
+    }
+    $script = setup_script('unix', $newToken, $base, 'https://example.invalid/repo.git', 'main');
+    $cut = strpos($script, 'say "Compute Lab setup"');
+    file_put_contents($home . '/step.sh', substr($script, 0, $cut === false ? strlen($script) : $cut));
+    $out = (string) shell_exec('HOME=' . escapeshellarg($home) . ' sh ' . escapeshellarg($home . '/step.sh') . ' 2>&1; echo "exit=$?"');
+    $saved = trim((string) @file_get_contents($home . '/.bugbrain/coordinator-token'));
+    $prev = glob($home . '/.bugbrain/coordinator-token.previous-*') ?: [];
+    $prevToken = $prev ? trim((string) file_get_contents($prev[0])) : '';
+    $left = glob($home . '/.bugbrain/.chk-*') ?: [];
+    return ['out' => $out, 'saved' => $saved, 'prev' => $prevToken, 'left' => count($left)];
+};
+$person = $app->enroll('dup-person', ['spikefoundry'], 2, true);
+$oldPc = $app->enroll('dup-old', ['spikefoundry'], 2, true);
+$newPc = $app->enroll('dup-new', ['spikefoundry'], 2, true, $person['participantId']);
+$newCode = $app->makeSetupCode($newPc['workerId'], $newPc['token'])['code'];
+$kept = $runTokenStep($newPc['token'], $oldPc['token']);
+$oldRow = $app->db->query('SELECT participant_id, revoked FROM workers WHERE id = ' . $app->db->quote($oldPc['workerId']))->fetch();
+check(str_contains($kept['out'], 'This computer is already added as dup-old') && str_contains($kept['out'], 'The new entry dup-new was not needed') && str_contains($kept['out'], 'exit=0')
+    && $kept['saved'] === $oldPc['token'] && $kept['prev'] === '' && $kept['left'] === 0
+    && $app->workerByToken($oldPc['token']) !== null && $app->workerByToken($newPc['token']) === null && $app->tokenForSetupCode($newCode) === null
+    && (string) $oldRow['participant_id'] === $person['participantId'], 'setup on an already-added computer keeps its entry and token, retires the unused new entry and its setup code, and links the kept entry to the person who ran it');
+$busyOld = $app->enroll('dup-old2', ['spikefoundry'], 2, true);
+$busyNew = $app->enroll('dup-busy', ['spikefoundry'], 2, true);
+$app->db->prepare('INSERT INTO leases (job_id, worker_id, until_at, heartbeat_at) VALUES (?, ?, ?, ?)')->execute(['dup-job', $busyNew['workerId'], gmdate('c', time() + 60), gmdate('c')]);
+$busy = $app->keepExistingEntry($app->workerByToken($busyOld['token']), $busyNew['token']);
+$app->db->exec("DELETE FROM leases WHERE job_id = 'dup-job'");
+check($busy['retired'] === null && $app->workerByToken($busyNew['token']) !== null, 'a new entry that already did work is never retired');
+$goneOld = $app->enroll('dup-gone', ['spikefoundry'], 2, true);
+$app->revoke($goneOld['workerId']);
+$fresh = $app->enroll('dup-fresh', ['spikefoundry'], 2, true);
+$re = $runTokenStep($fresh['token'], $goneOld['token']);
+check(str_contains($re['out'], 'no longer works') && str_contains($re['out'], 'exit=0') && !str_contains($re['out'], 'already added')
+    && $re['saved'] === $fresh['token'] && $re['prev'] === $goneOld['token'] && $app->workerByToken($fresh['token']) !== null, 'when the token on the computer was revoked, setup adds it fresh and keeps the old token as .previous-*');
+$first = $runTokenStep($fresh['token'], null);
+check($first['saved'] === $fresh['token'] && !str_contains($first['out'], 'already added') && str_contains($first['out'], 'exit=0'), 'a computer with no token is added as usual');
+$apiGone = http($base . '/api/v1/setup/existing', 'POST', json_encode(['newToken' => $fresh['token']]), ['Authorization: Bearer ' . $goneOld['token'], 'Content-Type: application/json']);
+check($apiGone['status'] === 401 && $app->workerByToken($fresh['token']) !== null, 'a revoked token cannot retire anything');
+$winSetup = setup_script('windows', $fresh['token'], $base, 'https://example.invalid/repo.git', 'main');
+preg_match('/-EncodedCommand ([A-Za-z0-9+\/=]+)/', $winSetup, $enc);
+$winPs = str_replace("\0", '', base64_decode($enc[1] ?? ''));
+check(str_contains($winPs, '/api/v1/setup/existing') && str_contains($winPs, 'This computer is already added as') && str_contains($winPs, '.previous-') && str_contains($winPs, '-ne 401') && str_contains($winSetup, 'setup-kept-entry')
+    && strpos($winSetup, 'This computer is already added as %KEPT%') > strpos($winSetup, 'verify-start.js'), 'the Windows setup checks an existing token first and says "already added" only after the verified check-in');
+check(str_contains(http($base . '/join')['body'], 'already added is safe'), 'the Add a computer page says running setup again is safe');
+
 $ico = http($base . '/favicon.ico');
 $svg = http($base . '/favicon.svg');
 $touch = http($base . '/apple-touch-icon.png');
