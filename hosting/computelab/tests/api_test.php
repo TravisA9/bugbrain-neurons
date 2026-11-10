@@ -738,7 +738,7 @@ $again = [];
 foreach ($idx['db']->query('PRAGMA index_list(design_records)')->fetchAll() as $row) {
     $again[] = (string) $row['name'];
 }
-check(count(array_intersect(['idx_dr_seq', 'idx_dr_task_seq', 'idx_dr_worker_task', 'idx_dr_engine_task'], $names)) === 4 && count($again) === count($names), 'design records are indexed for uploads and pages, and a second upgrade adds nothing');
+check(count(array_intersect(['idx_dr_seq', 'idx_dr_task_seq', 'idx_dr_worker_task', 'idx_dr_task_held', 'idx_dr_task_quality', 'idx_dr_job'], $names)) === 6 && !in_array('idx_dr_engine_task', $names, true) && count($again) === count($names), 'design records are indexed for uploads, pages and the kept set (no engine/task index), and a second upgrade adds nothing');
 $iw = $idx['app']->enroll('batch-pc', ['spikefoundry'], 2, true);
 $iworker = $idx['app']->workerByToken($iw['token']);
 $batch = [];
@@ -841,5 +841,120 @@ $same = $tot !== [];
 foreach ($tot as $r) { if ((int) $r['n'] !== (int) $r['real_n'] || (int) $r['ms'] !== (int) $r['real_ms']) { $same = false; echo "  totals {$r['worker_id']}: {$r['n']}/{$r['real_n']} {$r['ms']}/{$r['real_ms']}\n"; } }
 check($same, 'running worker totals match a full count after every upload in this test (' . count($tot) . ' computers)');
 check(strpos($src, 'SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id') === strrpos($src, 'SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id'), 'uploads scan a computer\'s records only once, in scanWorkerTotals');
+
+/* ---- Storage cap: keep each task's best designs, count the rest, prune, size guard ---- */
+function labWith(array $over): array
+{
+    global $config;
+    $box = new stdClass();
+    $box->t = '2026-11-10T16:00:00+00:00';
+    $db = new PDO('sqlite::memory:');
+    $app = new App($db, $over + $config, static function () use ($box): string { return $box->t; });
+    $app->migrate();
+    return ['app' => $app, 'db' => $db, 'clock' => $box];
+}
+function capRecord(int $i, float $held, string $job, string $task = 'coincidence'): array
+{
+    $json = '{"cap":' . $i . ',"t":"' . $task . '"}';
+    return ['taskId' => $task, 'taskVersion' => 'base-1', 'genomeJson' => $json, 'genomeHash' => hash('sha256', $json),
+        'metrics' => ['quality' => $held, 'train' => $held, 'heldOut' => $held, 'arm' => 'designer'],
+        'neurons' => 2, 'synapses' => 2, 'spikes' => 1, 'evalMs' => 10, 'seed' => $i, 'jobId' => $job, 'engineVersion' => 'spikefoundry-designer-3'];
+}
+$cap = labWith(['design_keep_per_task' => 50, 'prune_every_seconds' => 0]);
+$cw = $cap['app']->enroll('cap-pc', ['spikefoundry'], 2, true);
+$cworker = $cap['app']->workerByToken($cw['token']);
+$first = [];
+for ($i = 0; $i < 60; $i++) {
+    $first[] = capRecord($i, 0.36 - $i / 1000, 'cap-job-1');
+}
+$r1 = $cap['app']->ingestDesigns($cworker, $first, $cap['app']->protocolHash());
+$low = [];
+for ($i = 100; $i < 140; $i++) {
+    $low[] = capRecord($i, 0.1, 'cap-job-2');
+}
+$low[] = capRecord(999, 0.9, 'cap-job-2');
+$r2 = $cap['app']->ingestDesigns($cworker, $low, $cap['app']->protocolHash());
+$rows = (int) $cap['db']->query('SELECT COUNT(*) FROM design_records')->fetchColumn();
+$genomes = (int) $cap['db']->query('SELECT COUNT(*) FROM design_genomes')->fetchColumn();
+$best = (int) $cap['db']->query("SELECT COUNT(*) FROM design_records WHERE held > 0.89")->fetchColumn();
+check($r1['stored'] === 50 && $r1['capped'] === 10 && $r2['stored'] === 1 && $r2['capped'] === 40 && $rows === 51 && $genomes === 51 && $best === 1,
+    'with room for 50 designs a task stores only designs that rank among its best (or beat the best); the rest keep no row and no genome');
+$board = $cap['app']->leaderboard(10);
+$tt = $cap['app']->taskTotals();
+check(count($board) === 1 && $board[0]['records'] === 101 && $board[0]['genomes'] === 101 && abs($board[0]['hours'] - 1010 / 3600000) < 1e-12 && $cap['app']->designsByWorker((string) $cworker['id']) === 101
+    && $tt['coincidence']['seen'] === 101 && $tt['coincidence']['kept'] === 51, 'credit and the leaderboard count every evaluated design, kept or not, and the task counts what it saw and kept');
+$again = $cap['app']->ingestDesigns($cworker, $low, $cap['app']->protocolHash());
+check($again['stored'] === 0 && $cap['app']->designsByWorker((string) $cworker['id']) === 101 && $cap['app']->taskTotals()['coincidence']['seen'] === 101, 'a retried upload of the same batch is not counted twice');
+$floor = (float) $cap['db']->query('SELECT MIN(held) FROM design_records')->fetchColumn();
+check($cap['app']->designFits('coincidence', 0.95) && !$cap['app']->designFits('coincidence', $floor - 0.001), 'designFits compares with the lowest kept held-out score once the task is full');
+
+// Prune: keep the best, the latest, confirmed designs and what Discoveries shows; drop the rest with their genomes.
+$pr = labWith(['design_keep_per_task' => 50, 'prune_every_seconds' => 0]);
+$pa = $pr['app'];
+$pw1 = $pa->workerByToken($pa->enroll('prune-a', ['spikefoundry'], 2, true)['token']);
+$pw2 = $pa->workerByToken($pa->enroll('prune-b', ['spikefoundry'], 2, true)['token']);
+$seq = 0;
+$ins = $pr['db']->prepare('INSERT INTO design_records (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, job_id, arm, seq, created_at, design_hash, canon_key, held, quality, duplicate_of) VALUES (?, ?, ?, ?, ?, 2, 2, 1, 10, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+$gins = $pr['db']->prepare('INSERT INTO design_genomes (hash, genome_json, version, created_at, design_hash) VALUES (?, ?, 1, ?, ?)');
+for ($i = 0; $i < 400; $i++) {
+    $held = ($i * 37 % 400) / 400;
+    $gh = hash('sha256', 'g' . $i);
+    $gins->execute([$gh, '{"g":' . $i . '}', '2026-11-10T00:00:00+00:00', $gh]);
+    $w = $i % 2 === 0 ? $pw1 : $pw2;
+    $ins->execute(['p' . $i, $gh, 'sequence', 'base-1', json_encode(['quality' => $held, 'heldOut' => $held]), 'spikefoundry-designer-3', 'x', $w['id'], $i, 'pj', 'designer', ++$seq, '2026-11-10T00:00:00+00:00', $gh, $gh, $held, $held, null]);
+}
+$ins->execute(['dup1', hash('sha256', 'g5'), 'sequence', 'base-1', json_encode(['quality' => 0.01, 'heldOut' => 0.01]), 'spikefoundry-designer-3', 'x', $pw2['id'], 1, 'pj2', 'designer', ++$seq, '2026-11-10T00:00:00+00:00', 'z', null, 0.01, 0.01, 'p5']);
+$pr['db']->exec("UPDATE design_records SET confirmations = 1 WHERE id = 'p5'");
+$pr['db']->exec("INSERT INTO design_confirmations (design_id, worker_id, n, first_at, last_at) VALUES ('p7', '" . $pw2['id'] . "', 1, 'a', 'a')");
+$pr['db']->prepare('INSERT INTO page_cache (k, body, built_at, building_until) VALUES (?, ?, 0, 0)')->execute(['discoveries-v1', json_encode(['items' => [['id' => 'p9']]])]);
+$pr['db']->exec("INSERT INTO worker_totals (worker_id, n, ms, tasks, genomes) VALUES ('" . $pw1['id'] . "', 200, 2000, '[\"sequence\"]', 200), ('" . $pw2['id'] . "', 201, 2010, '[\"sequence\"]', 200)");
+$boardBefore = $pa->leaderboard(10);
+$res = $pa->pruneDesigns(50, 20, 10);
+$left = [];
+foreach ($pr['db']->query('SELECT id, held FROM design_records')->fetchAll() as $row) {
+    $left[$row['id']] = (float) $row['held'];
+}
+$heldSorted = array_values($left);
+rsort($heldSorted);
+$top50 = (int) $pr['db']->query('SELECT COUNT(*) FROM design_records WHERE held >= 0.875')->fetchColumn();
+$latest = 0;
+for ($i = 380; $i < 400; $i++) {
+    $latest += isset($left['p' . $i]) ? 1 : 0;
+}
+$orphans = (int) $pr['db']->query('SELECT COUNT(*) FROM design_genomes g WHERE NOT EXISTS (SELECT 1 FROM design_records r WHERE r.genome_hash = g.hash)')->fetchColumn();
+check($res['finished'] && $top50 === 50 && $latest === 20 && isset($left['p5'], $left['p7'], $left['p9'], $left['dup1']) && $orphans === 0 && count($left) < 120 && $res['records'] === 401 - count($left),
+    'the prune keeps the 50 best by held-out score, the 20 latest, confirmed designs, duplicate targets and their copies, and what Discoveries shows, and drops the rest with their genomes');
+check($pa->leaderboard(10) === $boardBefore, 'the leaderboard is the same before and after a prune (credit comes from worker_totals)');
+check(count($left) === (int) $pr['db']->query('SELECT COUNT(*) FROM design_records')->fetchColumn() && $pa->pruneDesigns(50, 20, 10)['records'] === 0, 'a second prune with the same policy removes nothing');
+
+// Size guard: over the soft limit the prune keeps fewer designs and the owner console warns.
+$sg = labWith(['design_keep_per_task' => 200, 'prune_every_seconds' => 3600, 'db_soft_limit_mb' => 0.001]);
+$sgw = $sg['app']->workerByToken($sg['app']->enroll('guard-pc', ['spikefoundry'], 2, true)['token']);
+$recs = [];
+for ($i = 0; $i < 120; $i++) {
+    $recs[] = capRecord($i, $i / 200, 'guard-job');
+}
+$sg['app']->ingestDesigns($sgw, $recs, $sg['app']->protocolHash());
+$afterGuard = (int) $sg['db']->query('SELECT COUNT(*) FROM design_records')->fetchColumn();
+$status = $sg['app']->storageStatus();
+$sg['clock']->t = '2026-11-10T16:20:00+00:00';
+$skip = $sg['app']->maybePrune();
+$sg['clock']->t = '2026-11-10T17:01:00+00:00';
+$runs = $sg['app']->maybePrune();
+check($afterGuard === 100 && $status['warn'] && $skip === null && is_array($runs) && $runs['hard'] && $runs['keep'] === 50,
+    'the prune runs after an upload and then once per interval; over db_soft_limit_mb it keeps a quarter as many designs (here 50 best plus the 100 latest) and the owner console is warned');
+$guardRows = (int) $sg['db']->query('SELECT COUNT(*) FROM design_records')->fetchColumn();
+check($guardRows <= 120 && $guardRows >= 50 && $sg['app']->designsByWorker((string) $sgw['id']) === 120, 'a hard prune keeps the credit');
+$html = pageOwner($sg['app'], 'csrf', []);
+check(strpos($html, 'storage-warn') !== false && strpos($html, 'Keeps the best 200 designs per task') !== false, 'the owner console shows the storage warning and the keep policy');
+
+// Credit totals saved before a prune are applied once the schema step runs.
+$seedFile = sys_get_temp_dir() . '/totals-seed-' . bin2hex(random_bytes(3)) . '.json';
+file_put_contents($seedFile, json_encode(['aaaaaaaaaaaaaaaa' => ['n' => 30120, 'ms' => 5, 'tasks' => ['sequence'], 'genomes' => 30058]]));
+$sd2 = labWith(['totals_seed' => $seedFile]);
+$seeded = $sd2['db']->query("SELECT n, genomes FROM worker_totals WHERE worker_id = 'aaaaaaaaaaaaaaaa'")->fetch();
+check($seeded && (int) $seeded['n'] === 30120 && (int) $seeded['genomes'] === 30058 && !is_file($seedFile) && is_file($seedFile . '.applied'), 'saved credit totals are applied once by the schema step');
+@unlink($seedFile . '.applied');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

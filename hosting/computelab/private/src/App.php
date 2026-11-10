@@ -263,7 +263,6 @@ final class App
             'idx_dr_seq' => 'seq',
             'idx_dr_task_seq' => 'task_id, seq',
             'idx_dr_worker_task' => 'worker_id, task_id',
-            'idx_dr_engine_task' => 'engine_version, task_id',
         ]);
         $this->ensureColumn('leases', 'progress', 'INTEGER');
         // One entry per distinct design: canonical design hash, first finder kept, repeats counted as confirmations.
@@ -285,7 +284,18 @@ final class App
             'idx_dr_task_design' => 'task_id, design_hash',
             'ux_dr_canon' => 'task_id, canon_key',
             'idx_dr_genome' => 'genome_hash',
+            'idx_dr_job' => 'job_id',
         ]);
+        /* Held-out score and quality as columns, so the kept set and the top designs come from an index. */
+        $this->ensureColumn('design_records', 'held', 'DOUBLE NULL');
+        $this->ensureColumn('design_records', 'quality', 'DOUBLE NULL');
+        $this->ensureIndexes('design_records', [
+            'idx_dr_task_held' => 'task_id, held',
+            'idx_dr_task_quality' => 'task_id, quality',
+        ]);
+        $this->backfillScores(5000);
+        /* engine_version, task_id only served the old full-table scans; task_seq covers the per-task reads. */
+        $this->dropIndexes('design_records', ['idx_dr_engine_task']);
         $this->ensureIndexes('design_genomes', ['idx_dg_design' => 'design_hash']);
         /* Shared cache for expensive read-only pages (Discoveries). One request rebuilds a stale entry while the
          * others keep serving the old copy. */
@@ -304,6 +314,21 @@ final class App
             ms BIGINT NOT NULL,
             tasks TEXT NOT NULL
         )');
+        $this->ensureColumn('worker_totals', 'genomes', 'BIGINT NOT NULL DEFAULT 0');
+        /* Records seen per task, kept or not: the library only keeps each task's best designs (see keepPerTask). */
+        $this->db->exec('CREATE TABLE IF NOT EXISTS task_totals (
+            task_id VARCHAR(64) PRIMARY KEY,
+            seen BIGINT NOT NULL,
+            kept BIGINT NOT NULL,
+            ms BIGINT NOT NULL
+        )');
+        /* Receipts of design uploads, so a retried upload is not counted twice (kept 3 days). */
+        $this->db->exec('CREATE TABLE IF NOT EXISTS upload_batches (
+            id VARCHAR(64) PRIMARY KEY,
+            worker_id VARCHAR(191) NOT NULL,
+            created_at VARCHAR(40) NOT NULL
+        )');
+        $this->seedWorkerTotalsFromFile();
         $this->ensureIndexes('jobs', ['idx_jobs_seed' => 'seed']);
         $this->ensureColumn('results', 'seconds', 'INTEGER');
         $this->ensureColumn('design_records', 'arm', "VARCHAR(16) NOT NULL DEFAULT 'designer'");
@@ -439,6 +464,26 @@ final class App
             return;
         }
         $this->db->exec('ALTER TABLE `' . $table . '` ADD COLUMN `' . $column . '` ' . $definition);
+    }
+
+    private function dropIndexes(string $table, array $names): void
+    {
+        if (!preg_match('/^[a-z_]+$/', $table)) {
+            throw new InvalidArgumentException('Bad table.');
+        }
+        $have = [];
+        $rows = ($this->config['driver'] ?? '') === 'sqlite'
+            ? $this->db->query('PRAGMA index_list(' . $table . ')')->fetchAll()
+            : $this->db->query('SHOW INDEX FROM `' . $table . '`')->fetchAll();
+        foreach ($rows as $row) {
+            $have[(string) ($row['name'] ?? ($row['Key_name'] ?? ''))] = true;
+        }
+        foreach ($names as $name) {
+            if (!isset($have[$name]) || !preg_match('/^[a-z0-9_]+$/', $name)) {
+                continue;
+            }
+            $this->db->exec(($this->config['driver'] ?? '') === 'sqlite' ? 'DROP INDEX ' . $name : 'ALTER TABLE `' . $table . '` DROP INDEX `' . $name . '`');
+        }
     }
 
     public function seed(): void
@@ -1742,11 +1787,20 @@ final class App
         $confirmed = 0;
         $stored = 0;
         $skipped = 0;
+        $capped = 0;
         $touched = [];
+        $seen = [];
         foreach ($records as $rec) {
             if (is_array($rec) && $this->retiredDesign($rec)) {
                 throw new InvalidArgumentException('Design upload from designer version spikefoundry-designer-1 or spikefoundry-designer-2 is not accepted.');
             }
+        }
+        /* Records below the task's kept set are only counted. A retried upload of the same batch must not count twice. */
+        $batchKey = $this->uploadBatchKey($worker, $records);
+        $batchSeen = $this->db->prepare('SELECT id FROM upload_batches WHERE id = ?');
+        $batchSeen->execute([$batchKey]);
+        if ($batchSeen->fetch()) {
+            return ['stored' => 0, 'skipped' => count($records), 'confirmed' => 0, 'capped' => 0];
         }
         foreach ($records as $rec) {
             if (!is_array($rec)) {
@@ -1813,12 +1867,6 @@ final class App
                 $skipped++;
                 continue;
             }
-            $haveGenome = $this->db->prepare('SELECT hash FROM design_genomes WHERE hash = ?');
-            $haveGenome->execute([$genomeHash]);
-            if (!$haveGenome->fetch()) {
-                $this->db->prepare('INSERT INTO design_genomes (hash, genome_json, version, created_at, design_hash) VALUES (?, ?, ?, ?, ?)')
-                    ->execute([$genomeHash, $genomeJson, $version, $this->now(), $designHash]);
-            }
             $id = substr(hash('sha256', $worker['id'] . '|' . $taskId . '|' . $taskVersion . '|' . $genomeHash . '|' . $seed . '|' . $jobId), 0, 32);
             $exists = $this->db->prepare('SELECT id FROM design_records WHERE id = ?');
             $exists->execute([$id]);
@@ -1834,16 +1882,35 @@ final class App
                 $confirmed++;
                 continue;
             }
+            $heldNow = isset($scores['heldOut']) ? (float) $scores['heldOut'] : (isset($scores['quality']) ? (float) $scores['quality'] : 0.0);
+            $evalMs = max(0, (int) ($rec['evalMs'] ?? 0));
+            if (!isset($seen[$taskId])) {
+                $seen[$taskId] = [0, 0, 0];
+            }
+            $seen[$taskId][0]++;
+            $seen[$taskId][2] += $evalMs;
+            if (!$this->designFits($taskId, $heldNow)) {
+                // Not among the task's best: credit the work, keep no row and no genome.
+                $this->noteHighlight($worker, $taskId, $heldNow, $genomeHash, $evalMs, false);
+                $capped++;
+                continue;
+            }
+            $haveGenome = $this->db->prepare('SELECT hash FROM design_genomes WHERE hash = ?');
+            $haveGenome->execute([$genomeHash]);
+            if (!$haveGenome->fetch()) {
+                $this->db->prepare('INSERT INTO design_genomes (hash, genome_json, version, created_at, design_hash) VALUES (?, ?, ?, ?, ?)')
+                    ->execute([$genomeHash, $genomeJson, $version, $this->now(), $designHash]);
+            }
             $engine = substr((string) ($rec['engineVersion'] ?? 'spikefoundry-1'), 0, 32);
             $seq = (int) $this->db->query('SELECT COALESCE(MAX(seq), 0) + 1 FROM design_records')->fetchColumn();
             try {
-                $this->db->prepare('INSERT INTO design_records (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, job_id, arm, seq, created_at, design_hash, canon_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+                $this->db->prepare('INSERT INTO design_records (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, job_id, arm, seq, created_at, design_hash, canon_key, held, quality) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
                     ->execute([
                         $id, $genomeHash, $taskId, $taskVersion, $scoreJson,
                         max(0, (int) ($rec['neurons'] ?? 0)), max(0, (int) ($rec['synapses'] ?? 0)),
                         max(0, (int) ($rec['spikes'] ?? 0)), max(0, (int) ($rec['evalMs'] ?? 0)),
                         $engine, substr($protocolHash, 0, 64), $worker['id'], $seed, $jobId !== '' ? $jobId : null, $arm, $seq, $this->now(),
-                        $designHash, $designHash,
+                        $designHash, $designHash, $heldNow, isset($scores['quality']) ? (float) $scores['quality'] : -1.0,
                     ]);
             } catch (PDOException $e) {
                 // Another upload stored the same design a moment ago (unique task + design): confirm it instead.
@@ -1856,14 +1923,33 @@ final class App
                 continue;
             }
             $stored++;
+            $seen[$taskId][1]++;
             $touched[$taskId] = true;
-            $heldNow = isset($scores['heldOut']) ? (float) $scores['heldOut'] : (isset($scores['quality']) ? (float) $scores['quality'] : 0.0);
-            $this->noteHighlight($worker, $taskId, $heldNow, $genomeHash, max(0, (int) ($rec['evalMs'] ?? 0)));
+            $this->keptHeld($taskId, $heldNow);
+            $this->noteHighlight($worker, $taskId, $heldNow, $genomeHash, $evalMs);
+        }
+        foreach ($seen as $task => $n) {
+            $this->bumpTaskTotals((string) $task, $n[0], $n[1], $n[2]);
+        }
+        try {
+            $this->db->prepare('INSERT INTO upload_batches (id, worker_id, created_at) VALUES (?, ?, ?)')->execute([$batchKey, (string) $worker['id'], $this->now()]);
+        } catch (PDOException $e) {
+            // the same batch finished in a parallel request
         }
         foreach (array_keys($touched) as $touchedTask) {
             $this->applyTaskPolicy('spikefoundry', $touchedTask);
         }
-        return ['stored' => $stored, 'skipped' => $skipped, 'confirmed' => $confirmed];
+        $this->maybePrune();
+        return ['stored' => $stored, 'skipped' => $skipped, 'confirmed' => $confirmed, 'capped' => $capped];
+    }
+
+    private function uploadBatchKey(array $worker, array $records): string
+    {
+        $parts = [(string) $worker['id']];
+        foreach ($records as $rec) {
+            $parts[] = is_array($rec) ? (string) ($rec['jobId'] ?? '') . '|' . (string) ($rec['genomeHash'] ?? '') . '|' . (string) ($rec['seed'] ?? '') . '|' . (string) ($rec['taskId'] ?? '') : '-';
+        }
+        return hash('sha256', implode("\n", $parts));
     }
 
     /* ---- Canonical designs ------------------------------------------------------------------
@@ -1956,8 +2042,8 @@ final class App
         $oldQ = is_array($old) && isset($old['quality']) ? (float) $old['quality'] : -1.0;
         $newQ = is_array($new) && isset($new['quality']) ? (float) $new['quality'] : -1.0;
         if ($newQ > $oldQ) {
-            $this->db->prepare('UPDATE design_records SET score_json = ?, spikes = ?, eval_ms = ? WHERE id = ?')
-                ->execute([(string) $scoreRow['score_json'], (int) ($scoreRow['spikes'] ?? 0), (int) ($scoreRow['eval_ms'] ?? 0), (string) $first['id']]);
+            $this->db->prepare('UPDATE design_records SET score_json = ?, spikes = ?, eval_ms = ?, held = ?, quality = ? WHERE id = ?')
+                ->execute([(string) $scoreRow['score_json'], (int) ($scoreRow['spikes'] ?? 0), (int) ($scoreRow['eval_ms'] ?? 0), $this->heldValue((string) $scoreRow['score_json']), $newQ, (string) $first['id']]);
         }
     }
 
@@ -2154,6 +2240,12 @@ final class App
             $limit = 50;
         }
         $st = $this->db->prepare('SELECT id, genome_hash, design_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, worker_id, seed, created_at, confirmations FROM design_records WHERE task_id = ? AND duplicate_of IS NULL AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') ORDER BY seq DESC LIMIT 400');
+        $unscored = $this->db->prepare('SELECT 1 FROM design_records WHERE task_id = ? AND quality IS NULL LIMIT 1');
+        $unscored->execute([$taskId]);
+        if (!$unscored->fetch()) {
+            /* Every row has its quality column: the best designs straight from the index. */
+            $st = $this->db->prepare('SELECT id, genome_hash, design_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, worker_id, seed, created_at, confirmations FROM design_records WHERE task_id = ? AND duplicate_of IS NULL AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') ORDER BY quality DESC, seq ASC LIMIT 400');
+        }
         $st->execute([$taskId]);
         $best = [];
         foreach ($st->fetchAll() as $row) {
@@ -2431,7 +2523,7 @@ final class App
 
     private function workerTotalsRow(string $workerId): ?array
     {
-        $st = $this->db->prepare('SELECT n, ms, tasks FROM worker_totals WHERE worker_id = ?');
+        $st = $this->db->prepare('SELECT n, ms, tasks, genomes FROM worker_totals WHERE worker_id = ?');
         $st->execute([$workerId]);
         $row = $st->fetch();
         if (!$row) {
@@ -2442,7 +2534,7 @@ final class App
         foreach (is_array($list) ? $list : [] as $t) {
             $tasks[(string) $t] = true;
         }
-        return ['tasks' => $tasks, 'n' => (int) $row['n'], 'ms' => (int) $row['ms']];
+        return ['tasks' => $tasks, 'n' => (int) $row['n'], 'ms' => (int) $row['ms'], 'genomes' => (int) ($row['genomes'] ?? 0)];
     }
 
     private function scanWorkerTotals(string $workerId): array
@@ -2453,10 +2545,10 @@ final class App
         foreach ($prior->fetchAll() as $row) {
             $tasks[(string) $row['task_id']] = true;
         }
-        $sum = $this->db->prepare('SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')');
+        $sum = $this->db->prepare('SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms, COUNT(DISTINCT genome_hash) AS g FROM design_records WHERE worker_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')');
         $sum->execute([$workerId]);
-        $tot = $sum->fetch() ?: ['n' => 0, 'ms' => 0];
-        return ['tasks' => $tasks, 'n' => (int) $tot['n'], 'ms' => (int) $tot['ms']];
+        $tot = $sum->fetch() ?: ['n' => 0, 'ms' => 0, 'g' => 0];
+        return ['tasks' => $tasks, 'n' => (int) $tot['n'], 'ms' => (int) $tot['ms'], 'genomes' => (int) $tot['g']];
     }
 
     public function seedJobFromDesigns(string $templateId, string $taskId, int $count, int $seed): string
@@ -2555,7 +2647,7 @@ final class App
         return isset($score['quality']) ? (float) $score['quality'] : 0.0;
     }
 
-    private function noteHighlight(array $worker, string $taskId, float $held, string $genomeHash, int $evalMs = 0): void
+    private function noteHighlight(array $worker, string $taskId, float $held, string $genomeHash, int $evalMs = 0, bool $full = true): void
     {
         $wid = (string) $worker['id'];
         if (!isset($this->highlightMemo[$wid])) {
@@ -2568,24 +2660,37 @@ final class App
                 $tot = $this->scanWorkerTotals($wid);
                 $this->highlightMemo[$wid] = $tot + ['first' => true];
                 try {
-                    $this->db->prepare('INSERT INTO worker_totals (worker_id, n, ms, tasks) VALUES (?, ?, ?, ?)')
-                        ->execute([$wid, $tot['n'], $tot['ms'], json_encode(array_keys($tot['tasks']))]);
+                    $this->db->prepare('INSERT INTO worker_totals (worker_id, n, ms, tasks, genomes) VALUES (?, ?, ?, ?, ?)')
+                        ->execute([$wid, $tot['n'], $tot['ms'], json_encode(array_keys($tot['tasks'])), $tot['genomes']]);
                 } catch (PDOException $e) {
                     // another upload from this computer saved it first
                 }
             }
         }
         $memo =& $this->highlightMemo[$wid];
-        if (!$memo['first']) {
+        if (!$memo['first'] || !$full) {
+            /* A kept record counts as a new genome unless this computer already has a row with it; a counted-only
+             * record has no row to compare with and counts as new. */
+            $newGenome = 1;
+            if ($full) {
+                $g = $this->db->prepare('SELECT COUNT(*) FROM (SELECT 1 FROM design_records WHERE genome_hash = ? AND worker_id = ? LIMIT 2) t');
+                $g->execute([$genomeHash, $wid]);
+                $newGenome = (int) $g->fetchColumn() > 1 ? 0 : 1;
+            }
             $memo['n'] += 1;
             $memo['ms'] += $evalMs;
-            $this->db->prepare('UPDATE worker_totals SET n = n + 1, ms = ms + ? WHERE worker_id = ?')->execute([$evalMs, $wid]);
+            $this->db->prepare('UPDATE worker_totals SET n = n + 1, ms = ms + ?, genomes = genomes + ? WHERE worker_id = ?')->execute([$evalMs, $newGenome, $wid]);
         }
         $memo['first'] = false;
         $priorTasks = $memo['tasks'];
         if (!isset($memo['tasks'][$taskId])) {
             $memo['tasks'][$taskId] = true;
             $this->db->prepare('UPDATE worker_totals SET tasks = ? WHERE worker_id = ?')->execute([json_encode(array_keys($memo['tasks'])), $wid]);
+        }
+        if (!$full) {
+            $this->noteMilestones($worker, $taskId, (int) $memo['n'], (int) $memo['ms']);
+            unset($memo);
+            return;
         }
         $others = $this->db->prepare('SELECT score_json, worker_id, genome_hash FROM design_records WHERE task_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') ORDER BY seq DESC LIMIT 200');
         $others->execute([$taskId]);
@@ -2638,12 +2743,17 @@ final class App
         }
         $tot = ['n' => $memo['n'], 'ms' => $memo['ms']];
         unset($memo);
+        $this->noteMilestones($worker, $taskId, (int) $tot['n'], (int) $tot['ms']);
+    }
+
+    private function noteMilestones(array $worker, string $taskId, int $n, int $ms): void
+    {
         foreach ([10, 100, 1000] as $mark) {
-            if ((int) $tot['n'] >= $mark) {
+            if ($n >= $mark) {
                 $this->addEvent((string) $worker['id'], $taskId, 'evals', $mark . ' evaluations', (string) $mark);
             }
         }
-        $hours = ((int) $tot['ms']) / 3600000;
+        $hours = $ms / 3600000;
         foreach ([1, 5, 10] as $mark) {
             if ($hours + 1e-9 >= $mark) {
                 $this->addEvent((string) $worker['id'], $taskId, 'hours', $mark . ' hours donated', (string) $mark);
@@ -2668,6 +2778,398 @@ final class App
         return $st->fetchAll();
     }
 
+    /* ---- Library size ---------------------------------------------------------------------
+     * Every evaluated design used to get a row and a genome: about a million of each in a day, 3.3 GB, and the host
+     * made the database read-only at its 3 GB limit. Now a task keeps only its best designs by held-out score
+     * (design_keep_per_task, default 2000). Everything else is counted (worker_totals, task_totals) and dropped.
+     * An hourly prune trims what fell out of the kept set; over db_soft_limit_mb it prunes harder, rebuilds the
+     * tables, and the owner console shows a warning. */
+    private $keepMemo = [];
+
+    public function keepPerTask(): int
+    {
+        $k = (int) ($this->config['design_keep_per_task'] ?? 2000);
+        return max(50, min(100000, $k));
+    }
+
+    /** Held-out scores of the task's kept designs, best first, at most keepPerTask() of them. */
+    private function keptHelds(string $taskId): array
+    {
+        if (!isset($this->keepMemo[$taskId])) {
+            $st = $this->db->prepare('SELECT held FROM design_records WHERE task_id = ? AND held IS NOT NULL AND duplicate_of IS NULL ORDER BY held DESC LIMIT ' . $this->keepPerTask());
+            $st->execute([$taskId]);
+            $helds = array_map('floatval', $st->fetchAll(PDO::FETCH_COLUMN));
+            rsort($helds, SORT_NUMERIC);
+            $this->keepMemo[$taskId] = $helds;
+        }
+        return $this->keepMemo[$taskId];
+    }
+
+    /** True when a design with this held-out score would rank among the task's kept designs (or the task has room). */
+    public function designFits(string $taskId, float $held): bool
+    {
+        $helds = $this->keptHelds($taskId);
+        return count($helds) < $this->keepPerTask() || $held > $helds[count($helds) - 1];
+    }
+
+    private function keptHeld(string $taskId, float $held): void
+    {
+        $helds = $this->keptHelds($taskId);
+        $helds[] = $held;
+        rsort($helds, SORT_NUMERIC);
+        $this->keepMemo[$taskId] = array_slice($helds, 0, $this->keepPerTask());
+    }
+
+    private function bumpTaskTotals(string $taskId, int $seen, int $kept, int $ms): void
+    {
+        $up = $this->db->prepare('UPDATE task_totals SET seen = seen + ?, kept = kept + ?, ms = ms + ? WHERE task_id = ?');
+        $up->execute([$seen, $kept, $ms, $taskId]);
+        if ($up->rowCount() > 0) {
+            return;
+        }
+        try {
+            $this->db->prepare('INSERT INTO task_totals (task_id, seen, kept, ms) VALUES (?, ?, ?, ?)')->execute([$taskId, $seen, $kept, $ms]);
+        } catch (PDOException $e) {
+            $up->execute([$seen, $kept, $ms, $taskId]);
+        }
+    }
+
+    public function taskTotals(): array
+    {
+        $out = [];
+        foreach ($this->db->query('SELECT task_id, seen, kept, ms FROM task_totals ORDER BY task_id')->fetchAll() as $row) {
+            $out[(string) $row['task_id']] = ['seen' => (int) $row['seen'], 'kept' => (int) $row['kept'], 'ms' => (int) $row['ms']];
+        }
+        return $out;
+    }
+
+    /* Credit totals computed from the full table before a prune; applied once writes work (see compact-designs.php). */
+    private function seedWorkerTotalsFromFile(): void
+    {
+        $file = (string) ($this->config['totals_seed'] ?? (dirname(__DIR__) . '/worker-totals-seed.json'));
+        if (!is_file($file)) {
+            return;
+        }
+        $rows = json_decode((string) @file_get_contents($file), true);
+        if (!is_array($rows)) {
+            return;
+        }
+        $have = $this->db->prepare('SELECT n FROM worker_totals WHERE worker_id = ?');
+        foreach ($rows as $wid => $t) {
+            if (!is_array($t) || !preg_match('/^[a-f0-9]{8,32}$/', (string) $wid)) {
+                continue;
+            }
+            $have->execute([(string) $wid]);
+            if ($have->fetch()) {
+                $this->db->prepare('UPDATE worker_totals SET genomes = ? WHERE worker_id = ? AND genomes = 0')->execute([(int) ($t['genomes'] ?? 0), (string) $wid]);
+            } else {
+                $this->db->prepare('INSERT INTO worker_totals (worker_id, n, ms, tasks, genomes) VALUES (?, ?, ?, ?, ?)')
+                    ->execute([(string) $wid, (int) ($t['n'] ?? 0), (int) ($t['ms'] ?? 0), json_encode(array_values((array) ($t['tasks'] ?? []))), (int) ($t['genomes'] ?? 0)]);
+            }
+        }
+        @rename($file, $file . '.applied');
+    }
+
+    /** Per-computer credit from the rows themselves (before a prune). */
+    public function workerTotalsFromRows(): array
+    {
+        $out = [];
+        $st = $this->db->query('SELECT worker_id, task_id, COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') GROUP BY worker_id, task_id');
+        foreach ($st->fetchAll() as $row) {
+            $w = (string) $row['worker_id'];
+            if (!isset($out[$w])) {
+                $out[$w] = ['n' => 0, 'ms' => 0, 'tasks' => [], 'genomes' => 0];
+            }
+            $out[$w]['n'] += (int) $row['n'];
+            $out[$w]['ms'] += (int) $row['ms'];
+            $out[$w]['tasks'][] = (string) $row['task_id'];
+        }
+        $st = $this->db->query('SELECT worker_id, COUNT(DISTINCT genome_hash) AS g FROM design_records WHERE engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') GROUP BY worker_id');
+        foreach ($st->fetchAll() as $row) {
+            if (isset($out[(string) $row['worker_id']])) {
+                $out[(string) $row['worker_id']]['genomes'] = (int) $row['g'];
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Deletes design records outside the keep policy, then their genomes and confirmations, old checkpoints and old
+     * upload receipts. Kept for every task:
+     *   - the best $keep first finds by held-out score, and the best min(200, $keep) by quality (what Discoveries ranks by);
+     *   - the latest $latestPerTask first finds (plateau and series fall back to them) and the latest $latestPerWorker
+     *     per computer and task (personal bests);
+     *   - every design that has confirmations or later copies pointing at it, those later copies (duplicate_of set;
+     *     uploads stopped making them when confirmations came in), and every design Discoveries shows now.
+     */
+    public function pruneDesigns(?int $keep = null, int $latestPerTask = 500, int $latestPerWorker = 200, int $budgetSeconds = 600): array
+    {
+        $keep = $keep ?? $this->keepPerTask();
+        $stop = microtime(true) + max(5, $budgetSeconds);
+        $out = ['keep' => $keep, 'records' => 0, 'genomes' => 0, 'confirmations' => 0, 'checkpoints' => 0, 'kept' => 0, 'tasks' => [], 'finished' => false];
+        $protected = [];
+        foreach ($this->db->query('SELECT DISTINCT design_id FROM design_confirmations')->fetchAll() as $r) {
+            $protected[(string) $r['design_id']] = true;
+        }
+        foreach ($this->db->query('SELECT DISTINCT duplicate_of FROM design_records WHERE duplicate_of IS NOT NULL')->fetchAll() as $r) {
+            $protected[(string) $r['duplicate_of']] = true;
+        }
+        foreach ($this->db->query('SELECT id FROM design_records WHERE confirmations > 0')->fetchAll() as $r) {
+            $protected[(string) $r['id']] = true;
+        }
+        $shown = $this->db->prepare('SELECT body FROM page_cache WHERE k = ?');
+        $shown->execute(['discoveries-v1']);
+        $cached = $shown->fetch();
+        $body = $cached ? json_decode((string) $cached['body'], true) : null;
+        foreach (is_array($body) && isset($body['items']) && is_array($body['items']) ? $body['items'] : [] as $item) {
+            if (is_array($item) && isset($item['id'])) {
+                $protected[(string) $item['id']] = true;
+            }
+        }
+        $tasks = [];
+        foreach ($this->db->query('SELECT DISTINCT task_id FROM design_records')->fetchAll() as $r) {
+            $tasks[] = (string) $r['task_id'];
+        }
+        $mysql = ($this->config['driver'] ?? '') !== 'sqlite';
+        foreach ($tasks as $task) {
+            $topHeld = new SplMinHeap();
+            $topQual = new SplMinHeap();
+            $latest = new SplMinHeap();
+            $byWorker = [];
+            $dups = [];
+            $sql = 'SELECT id, score_json, seq, worker_id, duplicate_of FROM design_records WHERE task_id = ?';
+            $st = $mysql && defined('PDO::MYSQL_ATTR_USE_BUFFERED_QUERY') ? $this->db->prepare($sql, [PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => false]) : $this->db->prepare($sql);
+            $st->execute([$task]);
+            $total = 0;
+            while (($row = $st->fetch(PDO::FETCH_NUM)) !== false) {
+                $total++;
+                if ($row[4] !== null && $row[4] !== '') {
+                    $dups[] = (string) $row[0];
+                    continue;
+                }
+                $id = (string) $row[0];
+                $score = json_decode((string) $row[1], true);
+                $held = is_array($score) ? (isset($score['heldOut']) ? (float) $score['heldOut'] : (float) ($score['quality'] ?? 0)) : 0.0;
+                $quality = is_array($score) && isset($score['quality']) ? (float) $score['quality'] : -1.0;
+                $seq = (int) $row[2];
+                self::boundedPush($topHeld, [$held, $seq, $id], $keep);
+                self::boundedPush($topQual, [$quality, $seq, $id], min(200, $keep));
+                self::boundedPush($latest, [$seq, $id], $latestPerTask);
+                $w = (string) $row[3];
+                if (!isset($byWorker[$w])) {
+                    $byWorker[$w] = new SplMinHeap();
+                }
+                self::boundedPush($byWorker[$w], [$seq, $id], $latestPerWorker);
+            }
+            $st->closeCursor();
+            $keepIds = $protected;
+            foreach ($dups as $id) {
+                $keepIds[$id] = true;
+            }
+            foreach ([$topHeld, $topQual, $latest] as $heap) {
+                foreach ($heap as $item) {
+                    $keepIds[(string) $item[count($item) - 1]] = true;
+                }
+            }
+            foreach ($byWorker as $heap) {
+                foreach ($heap as $item) {
+                    $keepIds[(string) $item[1]] = true;
+                }
+            }
+            unset($topHeld, $topQual, $latest, $byWorker);
+            $range = $this->db->prepare('SELECT MIN(seq) AS lo, MAX(seq) AS hi FROM design_records WHERE task_id = ?');
+            $range->execute([$task]);
+            $r = $range->fetch();
+            $lo = (int) ($r['lo'] ?? 0);
+            $hi = (int) ($r['hi'] ?? -1);
+            $pick = $this->db->prepare('SELECT id FROM design_records WHERE task_id = ? AND seq >= ? AND seq < ?');
+            $deleted = 0;
+            for ($from = $lo; $from <= $hi; $from += 5000) {
+                if (microtime(true) >= $stop) {
+                    $out['tasks'][$task] = ['rows' => $total, 'deleted' => $deleted];
+                    return $out;
+                }
+                $pick->execute([$task, $from, $from + 5000]);
+                $gone = [];
+                foreach ($pick->fetchAll(PDO::FETCH_COLUMN) as $id) {
+                    if (!isset($keepIds[(string) $id])) {
+                        $gone[] = (string) $id;
+                    }
+                }
+                foreach (array_chunk($gone, 500) as $chunk) {
+                    $del = $this->db->prepare('DELETE FROM design_records WHERE id IN (' . implode(',', array_fill(0, count($chunk), '?')) . ')');
+                    $del->execute($chunk);
+                    $deleted += $del->rowCount();
+                }
+            }
+            $out['records'] += $deleted;
+            $out['kept'] += $total - $deleted;
+            $out['tasks'][$task] = ['rows' => $total, 'deleted' => $deleted];
+            unset($this->keepMemo[$task]);
+        }
+        foreach (str_split('0123456789abcdef') as $prefix) {
+            if (microtime(true) >= $stop) {
+                return $out;
+            }
+            $out['genomes'] += $this->db->exec("DELETE FROM design_genomes WHERE hash LIKE '" . $prefix . "%' AND is_public = 0 AND NOT EXISTS (SELECT 1 FROM design_records r WHERE r.genome_hash = design_genomes.hash)");
+        }
+        $out['confirmations'] = $this->db->exec('DELETE FROM design_confirmations WHERE NOT EXISTS (SELECT 1 FROM design_records r WHERE r.id = design_confirmations.design_id)');
+        $old = $this->db->query('SELECT id FROM model_checkpoints ORDER BY created_at DESC, id DESC')->fetchAll(PDO::FETCH_COLUMN);
+        foreach (array_chunk(array_slice($old, 50), 200) as $chunk) {
+            $del = $this->db->prepare('DELETE FROM model_checkpoints WHERE id IN (' . implode(',', array_fill(0, count($chunk), '?')) . ')');
+            $del->execute($chunk);
+            $out['checkpoints'] += $del->rowCount();
+        }
+        try {
+            $this->db->prepare('DELETE FROM upload_batches WHERE created_at < ?')->execute([gmdate('c', strtotime($this->now()) - 3 * 86400)]);
+        } catch (PDOException $e) {
+            // not created yet (the schema step had not run)
+        }
+        $out['finished'] = true;
+        return $out;
+    }
+
+    /** Fills the held and quality columns of rows stored before they existed. */
+    public function backfillScores(int $limit = 100000): int
+    {
+        $pick = $this->db->prepare('SELECT id, score_json FROM design_records WHERE held IS NULL OR quality IS NULL LIMIT ' . max(1, $limit));
+        $pick->execute();
+        $rows = $pick->fetchAll();
+        if ($rows === []) {
+            return 0;
+        }
+        $set = $this->db->prepare('UPDATE design_records SET held = ?, quality = ? WHERE id = ?');
+        $this->db->beginTransaction();
+        foreach ($rows as $row) {
+            $score = json_decode((string) $row['score_json'], true);
+            $set->execute([$this->heldValue((string) $row['score_json']), is_array($score) && isset($score['quality']) ? (float) $score['quality'] : -1.0, (string) $row['id']]);
+        }
+        $this->db->commit();
+        return count($rows);
+    }
+
+    private static function boundedPush(SplMinHeap $heap, array $item, int $limit): void
+    {
+        if ($limit < 1) {
+            return;
+        }
+        if ($heap->count() < $limit) {
+            $heap->insert($item);
+        } elseif ($item > $heap->top()) {
+            $heap->extract();
+            $heap->insert($item);
+        }
+    }
+
+    /** Database size in MB (data and indexes), or null when unknown. */
+    public function dbSizeMb(): ?float
+    {
+        try {
+            if (($this->config['driver'] ?? '') === 'sqlite') {
+                $pages = (int) $this->db->query('PRAGMA page_count')->fetchColumn();
+                $size = (int) $this->db->query('PRAGMA page_size')->fetchColumn();
+                return round($pages * $size / 1048576, 1);
+            }
+            $v = $this->db->query('SELECT SUM(data_length + index_length) FROM information_schema.tables WHERE table_schema = DATABASE()')->fetchColumn();
+            return $v === null || $v === false ? null : round(((float) $v) / 1048576, 1);
+        } catch (PDOException $e) {
+            return null;
+        }
+    }
+
+    /** Rebuilds the design tables so deleted rows give their space back (InnoDB files do not shrink on DELETE). */
+    public function compactTables(): void
+    {
+        if (($this->config['driver'] ?? '') === 'sqlite') {
+            $this->db->exec('VACUUM');
+            return;
+        }
+        foreach (['design_records', 'design_genomes', 'design_confirmations', 'model_checkpoints'] as $table) {
+            $this->db->exec('ALTER TABLE `' . $table . '` FORCE');
+        }
+    }
+
+    /** Runs the prune at most every prune_every_seconds (default 3600; 0 = never on its own). */
+    public function maybePrune(bool $force = false): ?array
+    {
+        $every = (int) ($this->config['prune_every_seconds'] ?? 3600);
+        if (!$force && $every <= 0) {
+            return null;
+        }
+        $state = $this->db->query("SELECT ran_at FROM supply_state WHERE id = 'prune'")->fetch();
+        if (!$force && $state && (strtotime($this->now()) - strtotime((string) $state['ran_at'])) < $every) {
+            return null;
+        }
+        $claim = $state
+            ? $this->db->prepare("UPDATE supply_state SET ran_at = ?, note = 'running' WHERE id = 'prune' AND ran_at = ?")
+            : $this->db->prepare("INSERT INTO supply_state (id, ran_at, note) VALUES ('prune', ?, 'running')");
+        try {
+            $claim->execute($state ? [$this->now(), (string) $state['ran_at']] : [$this->now()]);
+        } catch (PDOException $e) {
+            return null;
+        }
+        if ($claim->rowCount() !== 1) {
+            return null;
+        }
+        if (PHP_SAPI !== 'cli') {
+            register_shutdown_function(function () {
+                ignore_user_abort(true);
+                @set_time_limit(600);
+                if (function_exists('fastcgi_finish_request')) {
+                    fastcgi_finish_request();
+                } elseif (function_exists('litespeed_finish_request')) {
+                    litespeed_finish_request();
+                }
+                try {
+                    $this->pruneNow();
+                } catch (Throwable $e) {
+                    // next upload after the interval tries again
+                }
+            });
+            return ['scheduled' => true];
+        }
+        return $this->pruneNow();
+    }
+
+    public function pruneNow(): array
+    {
+        $soft = (float) ($this->config['db_soft_limit_mb'] ?? 2048);
+        $this->backfillScores();
+        $before = $this->dbSizeMb();
+        $hard = $before !== null && $before > $soft;
+        $keep = $this->keepPerTask();
+        $res = $this->pruneDesigns($hard ? max(50, intdiv($keep, 4)) : $keep, $hard ? 100 : 500, $hard ? 50 : 200, 300);
+        if ($hard) {
+            try {
+                $this->compactTables();
+            } catch (PDOException $e) {
+                $res['compactError'] = substr($e->getMessage(), 0, 120);
+            }
+        }
+        $after = $this->dbSizeMb();
+        $note = ['before' => $before, 'mb' => $after, 'soft' => $soft, 'hard' => $hard, 'keep' => $res['keep'], 'deleted' => $res['records'], 'genomes' => $res['genomes'], 'at' => $this->now()];
+        $this->db->prepare('REPLACE INTO supply_state (id, ran_at, note) VALUES (?, ?, ?)')->execute(['storage', $this->now(), (string) json_encode($note)]);
+        $this->db->prepare("UPDATE supply_state SET note = 'done' WHERE id = 'prune'")->execute();
+        return $res + ['mbBefore' => $before, 'mbAfter' => $after, 'hard' => $hard];
+    }
+
+    /** Last measured size for the owner console; warn is set when it was over db_soft_limit_mb. */
+    public function storageStatus(): array
+    {
+        $soft = (float) ($this->config['db_soft_limit_mb'] ?? 2048);
+        $row = $this->db->query("SELECT note FROM supply_state WHERE id = 'storage'")->fetch();
+        $note = $row ? json_decode((string) $row['note'], true) : null;
+        $mb = is_array($note) && isset($note['mb']) ? (float) $note['mb'] : null;
+        $before = is_array($note) && isset($note['before']) ? (float) $note['before'] : null;
+        return [
+            'mb' => $mb,
+            'soft' => $soft,
+            'keep' => $this->keepPerTask(),
+            'at' => is_array($note) ? (string) ($note['at'] ?? '') : '',
+            'warn' => ($mb !== null && $mb > $soft) || ($before !== null && $before > $soft),
+        ];
+    }
+
     public function leaderboard(int $limit = 20): array
     {
         if ($limit < 1) {
@@ -2676,7 +3178,26 @@ final class App
         if ($limit > 50) {
             $limit = 50;
         }
-        $rows = $this->db->query('SELECT w.participant_id, w.name, w.public_credit, COUNT(r.id) AS records, COUNT(DISTINCT r.genome_hash) AS genomes, COALESCE(SUM(r.eval_ms), 0) AS ms FROM design_records r JOIN workers w ON w.id = r.worker_id WHERE r.engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') GROUP BY w.participant_id, w.name, w.public_credit ORDER BY ms DESC LIMIT ' . (int) $limit)->fetchAll();
+        /* Credit comes from the running totals: the library keeps only each task's best designs, so counting rows
+         * would undercount. A computer with records but no totals row yet gets one from its rows first. */
+        $have = [];
+        foreach ($this->db->query('SELECT worker_id FROM worker_totals')->fetchAll() as $row) {
+            $have[(string) $row['worker_id']] = true;
+        }
+        foreach ($this->db->query('SELECT DISTINCT worker_id FROM design_records')->fetchAll() as $row) {
+            $wid = (string) $row['worker_id'];
+            if (isset($have[$wid])) {
+                continue;
+            }
+            $tot = $this->scanWorkerTotals($wid);
+            try {
+                $this->db->prepare('INSERT INTO worker_totals (worker_id, n, ms, tasks, genomes) VALUES (?, ?, ?, ?, ?)')
+                    ->execute([$wid, $tot['n'], $tot['ms'], json_encode(array_keys($tot['tasks'])), $tot['genomes']]);
+            } catch (PDOException $e) {
+                // read-only right now, or another request saved it first
+            }
+        }
+        $rows = $this->db->query('SELECT w.participant_id, w.name, w.public_credit, SUM(t.n) AS records, SUM(t.genomes) AS genomes, COALESCE(SUM(t.ms), 0) AS ms FROM worker_totals t JOIN workers w ON w.id = t.worker_id WHERE t.n > 0 GROUP BY w.participant_id, w.name, w.public_credit ORDER BY ms DESC, records DESC LIMIT ' . (int) $limit)->fetchAll();
         $out = [];
         foreach ($rows as $row) {
             $out[] = [
@@ -2738,6 +3259,7 @@ final class App
             }
         }
         $made = 0;
+        $topMemo = [];
         $projects = $this->db->query('SELECT * FROM projects WHERE enabled = 1 ORDER BY priority DESC, id ASC')->fetchAll();
         foreach ($projects as $project) {
             if (!$this->projectAutoOn($project)) {
@@ -2767,7 +3289,10 @@ final class App
                 if ((string) $project['id'] !== 'bugbrain' && (string) ($project['family'] ?? '') !== 'bugbrain') {
                     $extra['mode'] = 'propose';
                     try {
-                        $top = $this->topDesigns($task, 3);
+                        if (!isset($topMemo[$task])) {
+                            $topMemo[$task] = $this->topDesigns($task, 3);
+                        }
+                        $top = $topMemo[$task];
                         $hashes = [];
                         foreach ($top as $row) {
                             $hashes[] = (string) $row['genome_hash'];

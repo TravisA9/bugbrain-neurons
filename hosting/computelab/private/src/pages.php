@@ -1269,7 +1269,15 @@ function designLibrarySection(App $app, string $csrf, string $base): string
     if ($list === '') {
         $list = '<p class="muted">No saved designs yet. Finished SpikeFoundry runs upload them.</p>';
     }
-    return '<section class="panel"><div class="panelhead"><div class="paneltitle">Design library</div><span class="subtag">TOP COINCIDENCE DESIGNS</span></div><div class="panelbody"><p class="quiet">Weights stay frozen. The same genome is stored once.</p><div class="log">' . $list . '</div>'
+    $store = $app->storageStatus();
+    $seen = '';
+    foreach ($app->taskTotals() as $tid => $t) {
+        $seen .= ($seen === '' ? '' : ' · ') . $tid . ' ' . number_format($t['seen']) . ' seen, ' . number_format($t['kept']) . ' kept';
+    }
+    $storeLine = '<p class="quiet storage-line">Keeps the best ' . h(number_format($store['keep'])) . ' designs per task by held-out score; the rest are counted for credit and not stored.'
+        . ($store['mb'] !== null ? ' Database ' . h(number_format((float) $store['mb'], 0)) . ' MB (pruning harder above ' . h(number_format($store['soft'], 0)) . ' MB).' : '')
+        . ($seen !== '' ? ' ' . h($seen) . '.' : '') . '</p>';
+    return '<section class="panel"><div class="panelhead"><div class="paneltitle">Design library</div><span class="subtag">TOP COINCIDENCE DESIGNS</span></div><div class="panelbody"><p class="quiet">Weights stay frozen. The same genome is stored once.</p>' . $storeLine . '<div class="log">' . $list . '</div>'
         . '<p style="margin-top:10px"><a href="' . h($base . '/owner/designs/export?format=jsonl&task=coincidence') . '">Export JSONL</a> · <a href="' . h($base . '/owner/designs/export?format=csv&task=coincidence') . '">Export CSV</a></p>'
         . '<form method="post" action="' . h($base) . '/owner/design-seed"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="template" value="sf-vision"><input type="hidden" name="task" value="coincidence"><input type="hidden" name="count" value="3"><label>Seed <input name="seed" type="number" min="1" max="1000000" value="11"></label><button class="small" type="submit">Seed new job from top designs</button></form></div></section>';
 }
@@ -1459,6 +1467,10 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         . '<button class="small" type="submit">Queue job</button></form>'
         . '<h2 style="margin-top:18px">Task thresholds</h2>' . ($thresholds !== '' ? $thresholds : '<p class="muted">Thresholds appear after the first design upload.</p>')
         . '</div></details>';
+    $store = $app->storageStatus();
+    if ($store['warn']) {
+        $err .= '<p class="err storage-warn">Database storage is high: ' . h(number_format((float) $store['mb'], 0)) . ' MB, over the ' . h(number_format($store['soft'], 0)) . ' MB guard (the host stops accepting writes at 3072 MB). The hourly prune is keeping fewer designs per task until it is back under.</p>';
+    }
     $body = $err . '<section class="heading"><div><div class="eyebrow">Owner console</div><h1>Owner</h1><p>Computers, jobs, and task health. A running job stays with its computer while its heartbeat renews the lease. The detailed job settings are under Advanced.</p></div><div class="head-actions"><div class="chips">' . $summary . '</div></div></section>'
         . '<section class="panel owner-computers" id="computers"><div class="panelhead"><div class="paneltitle">Computers</div><span class="subtag">' . h((string) count(array_filter($workers, function ($w) { return (int) $w['revoked'] !== 1; }))) . ' ENROLLED</span></div><div class="panelbody">' . addComputerButton($base) . ($people !== '' ? $people : '<p class="muted">None enrolled.</p>')
         . ($revokedRows !== '' ? '<details class="revoked-list"><summary>Revoked (' . substr_count($revokedRows, '<li ') . ') — remove to clean up this list</summary><ul>' . $revokedRows . '</ul></details>' : '')
