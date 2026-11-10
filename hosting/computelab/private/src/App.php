@@ -2138,7 +2138,11 @@ final class App
                 }
                 $series[$item['task']] = $pts;
             }
-            return ['items' => $items, 'series' => $series, 'board' => $this->leaderboard(12)];
+            /* The credit board scans every record (a million on the live server) and changes slowly. */
+            $board = $this->cached('board-v1', (int) ($this->config['board_cache_seconds'] ?? 3600), function (): array {
+                return ['rows' => $this->leaderboard(12)];
+            });
+            return ['items' => $items, 'series' => $series, 'board' => $board['rows'] ?? []];
         };
         return $ttl > 0 ? $this->cached('discoveries-v1', $ttl, $build) : $build();
     }
@@ -2818,7 +2822,7 @@ final class App
         if ($fromSummary !== []) {
             return $fromSummary;
         }
-        $st = $this->db->prepare('SELECT score_json, eval_ms, arm, created_at FROM design_records WHERE task_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') ORDER BY seq DESC, created_at DESC LIMIT ' . (int) $limit);
+        $st = $this->db->prepare('SELECT score_json, eval_ms, arm, created_at FROM design_records WHERE task_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') ORDER BY seq DESC LIMIT ' . (int) $limit);
         $st->execute([$taskId]);
         $rows = array_reverse($st->fetchAll());
         $bestHeld = 0.0;
