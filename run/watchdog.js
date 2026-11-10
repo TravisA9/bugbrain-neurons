@@ -24,6 +24,17 @@ const INTERVAL_MIN = 3;
 function stateDir() { return process.env.BB_STATE_DIR || path.join(os.homedir(), '.bugbrain'); }
 function write(st, rep) { try { fs.writeFileSync(path.join(st, 'watchdog.json'), JSON.stringify(Object.assign({ at: new Date().toISOString() }, rep)) + '\n'); } catch (e) {} return rep; }
 function read(st) { try { return JSON.parse(fs.readFileSync(path.join(st || stateDir(), 'watchdog.json'), 'utf8')); } catch (e) { return null; } }
+/* A probe that throws (PowerShell ETIMEDOUT under load, Access denied, and so on) did not learn whether
+ * the watchdog is present. Keep the last successful result so a later heartbeat does not tell the site
+ * this computer has no watchdog (TacoBell, 2026-11-10: the 3-minute task was already set up; a 60 s
+ * Get-ScheduledTask timed out after a supervisor restart and overwrote watchdog.json with kind none). */
+function keepPrevious(st, why) {
+  const prev = read(st);
+  if (prev && prev.ok && prev.kind && prev.kind !== 'none') {
+    return { ok: true, kind: prev.kind, task: prev.task || '', headless: !!prev.headless, changed: '', why: why, kept: true };
+  }
+  return { ok: false, kind: 'none', why: why };
+}
 
 /* PowerShell run by ensureWindows. Prints one JSON line. Only touches the Compute Lab task of this user. */
 function windowsScript(ps1) {
@@ -103,7 +114,7 @@ function ensure(opts) {
   opts = opts || {};
   const st = opts.stateDir || stateDir(), home = opts.home || os.homedir(), platform = opts.platform || process.platform;
   const install = opts.install != null ? opts.install : (process.env.BB_INSTALL || '');
-  const run = opts.run || ((cmd, args, input) => cp.execFileSync(cmd, args, { encoding: 'utf8', input: input, stdio: [input == null ? 'ignore' : 'pipe', 'pipe', 'pipe'], windowsHide: true, timeout: 60000 }));
+  const run = opts.run || ((cmd, args, input) => cp.execFileSync(cmd, args, { encoding: 'utf8', input: input, stdio: [input == null ? 'ignore' : 'pipe', 'pipe', 'pipe'], windowsHide: true, timeout: 120000 }));
   if (!process.env.BB_COORDINATOR_URL && !opts.force) return write(st, { ok: false, kind: 'none', why: 'not a Compute Lab worker' });
   let rep;
   try {
@@ -117,7 +128,7 @@ function ensure(opts) {
       try { if (fs.existsSync(stop) && fs.readFileSync(stop, 'utf8').indexOf('computelab-watchdog') < 0) fs.writeFileSync(stop, unixStopScript(), { mode: 0o700 }); } catch (e) {}
     }
   } catch (e) {
-    rep = { ok: false, kind: 'none', why: String((e && (e.stderr || e.message)) || e).trim().split('\n').pop().slice(0, 160) };
+    rep = keepPrevious(st, String((e && (e.stderr || e.message)) || e).trim().split('\n').pop().slice(0, 160));
   }
   return write(st, rep);
 }

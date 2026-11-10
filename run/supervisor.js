@@ -120,7 +120,7 @@ function main() {
   /* Install the watchdog (repeating task trigger / systemd timer / cron line) if this computer lacks it. Runs after
    * the worker started, so a slow or failing PowerShell never delays work; the result goes to ~/.bugbrain/watchdog.json. */
   if (process.env.BB_COORDINATOR_URL && process.env.BB_WATCHDOG !== 'off') setTimeout(() => {
-    try { const r = require('./watchdog.js').ensure(); say('watchdog: ' + (r.ok ? r.kind + (r.changed ? ' (set up: ' + r.changed + ')' : ' (already set up)') : 'none (' + (r.why || 'unknown') + ')')); }
+    try { const r = require('./watchdog.js').ensure(); say('watchdog: ' + (r.ok ? r.kind + (r.kept ? ' (kept previous; last check: ' + (r.why || 'failed') + ')' : (r.changed ? ' (set up: ' + r.changed + ')' : ' (already set up)')) : 'none (' + (r.why || 'unknown') + ')')); }
     catch (e) { say('watchdog check failed: ' + ((e && e.message) || e)); }
   }, 3000).unref();
   const every = +(process.env.BB_POLL_MS || Math.max(1, +S.pollMinutes || 10) * 60e3);
