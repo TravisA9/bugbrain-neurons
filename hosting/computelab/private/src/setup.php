@@ -348,6 +348,7 @@ if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/d
 [Unit]
 Description=Compute Lab worker
 After=network-online.target
+StartLimitIntervalSec=0
 [Service]
 Type=simple
 Environment="PATH=$NODE_DIR:/usr/local/bin:/usr/bin:/bin"
@@ -358,7 +359,26 @@ RestartSec=30
 [Install]
 WantedBy=default.target
 ENDUNIT
+  # Watchdog: every 3 minutes start the service if it is not running (a no-op while it runs).
+  cat > "$HOME/.config/systemd/user/computelab-watchdog.service" <<'ENDWD'
+[Unit]
+Description=Compute Lab watchdog: start the worker if it is not running
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'systemctl --user is-enabled --quiet computelab.service && systemctl --user start computelab.service'
+ENDWD
+  cat > "$HOME/.config/systemd/user/computelab-watchdog.timer" <<'ENDWT'
+[Unit]
+Description=Compute Lab watchdog every 3 minutes
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=3min
+AccuracySec=30s
+[Install]
+WantedBy=timers.target
+ENDWT
   if systemctl --user daemon-reload </dev/null && systemctl --user enable computelab.service >/dev/null 2>&1 </dev/null && systemctl --user restart computelab.service </dev/null; then
+    systemctl --user enable --now computelab-watchdog.timer >/dev/null 2>&1 </dev/null
     loginctl enable-linger "$(id -un)" >/dev/null 2>&1 </dev/null
     sleep 5
     if systemctl --user is-active --quiet computelab.service </dev/null; then started=1
@@ -393,25 +413,26 @@ if [ "$started" = 0 ]; then
   METHOD=cron
   if command -v systemctl >/dev/null 2>&1; then systemctl --user disable --now computelab.service >/dev/null 2>&1 </dev/null; fi
   if command -v crontab >/dev/null 2>&1; then
-    (crontab -l 2>/dev/null </dev/null | grep -v computelab-worker.sh; echo "@reboot BB_INSTALL=cron /bin/sh $ST/computelab-worker.sh >/dev/null 2>&1") | crontab - 2>/dev/null
+    (crontab -l 2>/dev/null </dev/null | grep -v computelab-worker.sh; echo "@reboot BB_INSTALL=cron /bin/sh $ST/computelab-worker.sh >/dev/null 2>&1"; echo "*/3 * * * * BB_INSTALL=cron /bin/sh $ST/computelab-worker.sh >/dev/null 2>&1 # computelab-watchdog") | crontab - 2>/dev/null
   fi
   BB_INSTALL=cron nohup /bin/sh "$ST/computelab-worker.sh" >/dev/null 2>&1 </dev/null &
   sleep 3
 fi
 cat > "$ST/stop-computelab.sh" <<'ENDSTOP'
 #!/bin/sh
-if command -v systemctl >/dev/null 2>&1; then systemctl --user stop computelab.service >/dev/null 2>&1; fi
+if command -v systemctl >/dev/null 2>&1; then systemctl --user stop computelab-watchdog.timer computelab.service >/dev/null 2>&1; fi
 launchctl bootout "gui/$(id -u)/info.computelab.worker" >/dev/null 2>&1
+(crontab -l 2>/dev/null | grep -v "# computelab-watchdog") | crontab - 2>/dev/null
 [ -f "$HOME/.bugbrain/worker.pid" ] && kill "$(cat "$HOME/.bugbrain/worker.pid")" 2>/dev/null
 pkill -u "$(id -u)" -f 'run/supervisor.js' >/dev/null 2>&1
 rm -f "$HOME/.bugbrain/computelab.pid"
-echo "Compute Lab worker stopped. It starts again at the next login unless you run uninstall-computelab.sh."
+echo "Compute Lab worker stopped. It starts again at the next login or after setup; run uninstall-computelab.sh to remove it."
 ENDSTOP
 cat > "$ST/uninstall-computelab.sh" <<'ENDUN'
 #!/bin/sh
 sh "$HOME/.bugbrain/stop-computelab.sh"
-if command -v systemctl >/dev/null 2>&1; then systemctl --user disable computelab.service >/dev/null 2>&1; fi
-rm -f "$HOME/.config/systemd/user/computelab.service" "$HOME/Library/LaunchAgents/info.computelab.worker.plist"
+if command -v systemctl >/dev/null 2>&1; then systemctl --user disable computelab.service computelab-watchdog.timer >/dev/null 2>&1; fi
+rm -rf "$HOME/.config/systemd/user/computelab.service" "$HOME/.config/systemd/user/computelab-watchdog.service" "$HOME/.config/systemd/user/computelab-watchdog.timer" "$HOME/.config/systemd/user/computelab.service.d" "$HOME/Library/LaunchAgents/info.computelab.worker.plist"
 (crontab -l 2>/dev/null | grep -v computelab-worker.sh) | crontab - 2>/dev/null
 if [ "${1:-}" != "--keep" ]; then rm -f "$HOME/.bugbrain/coordinator-token"; rm -rf "$HOME/.bugbrain/worker"; fi
 echo "Compute Lab was removed from this account."

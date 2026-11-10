@@ -198,6 +198,7 @@ function coord_save_resources(App $app, string $workerId, string $back): void
     }
     try {
         $app->setResources($workerId, $mode, $pct, $maxJobs);
+        $app->noteRestartRequest($workerId, $mode);
     } catch (InvalidArgumentException $e) {
         if (coord_wants_json()) {
             coord_json(400, ['ok' => false, 'error' => $e->getMessage()]);
@@ -207,9 +208,11 @@ function coord_save_resources(App $app, string $workerId, string $back): void
     }
     $st = $app->db->prepare('SELECT * FROM workers WHERE id = ?');
     $st->execute([$workerId]);
-    $res = $app->resourcesOf($st->fetch() ?: []);
+    $row = $st->fetch() ?: [];
+    $res = $app->resourcesOf($row);
     if (coord_wants_json()) {
-        coord_json(200, ['ok' => true, 'mode' => $res['mode'], 'pct' => $res['allowancePct'], 'jobs' => $res['maxJobs']]);
+        $state = describeWorker($app, $row, $app->leasesOf($workerId));
+        coord_json(200, ['ok' => true, 'mode' => $res['mode'], 'pct' => $res['allowancePct'], 'jobs' => $res['maxJobs']] + runFields($state));
         return;
     }
     header('Location: ' . $back, true, 303);
@@ -328,7 +331,7 @@ try {
         foreach (coord_my_computers($app) ?? [] as $w) {
             $state = describeWorker($app, $w, $app->leasesOf((string) $w['id']));
             $health = $app->healthOf($w);
-            $mine[] = ['id' => (string) $w['id'], 'line' => $state['line'], 'effective' => $state['effective'], 'mode' => $state['mode'], 'pct' => $state['pct'], 'health' => (string) $health['line']];
+            $mine[] = ['id' => (string) $w['id'], 'line' => $state['line'], 'effective' => $state['effective'], 'mode' => $state['mode'], 'pct' => $state['pct'], 'health' => (string) $health['line']] + runFields($state);
         }
         $live['mine'] = $mine;
         coord_json(200, $live);
@@ -618,6 +621,20 @@ try {
         }
         $pageNum = (int) ($_GET['page'] ?? 1);
         coord_html(pageOwner($app, (string) $session['csrf'], coord_who($app, 'owner'), '', $status, $pageNum));
+        return;
+    }
+    if ($path === '/owner/run.json' && $method === 'GET') {
+        $session = $app->sessionById(coord_cookie('lab_owner'));
+        if (!$session || $session['role'] !== 'owner') {
+            coord_json(403, ['ok' => false, 'error' => 'Owner only.']);
+            return;
+        }
+        $out = [];
+        foreach ($app->db->query('SELECT * FROM workers WHERE revoked = 0 AND removed_at IS NULL')->fetchAll() as $w) {
+            $state = describeWorker($app, $w, $app->leasesOf((string) $w['id']));
+            $out[] = ['id' => (string) $w['id'], 'line' => $state['line'], 'effective' => $state['effective']] + runFields($state);
+        }
+        coord_json(200, ['ok' => true, 'computers' => $out]);
         return;
     }
     if (str_starts_with($path, '/owner/designs') && $method === 'GET') {

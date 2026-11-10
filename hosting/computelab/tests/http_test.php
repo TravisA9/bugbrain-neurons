@@ -28,6 +28,10 @@ $port = 8091;
 $cmd = 'exec env COORD_CONFIG=' . escapeshellarg($config) . ' php -S 127.0.0.1:' . $port . ' -t ' . escapeshellarg($public) . ' ' . escapeshellarg($public . '/index.php');
 $proc = proc_open($cmd . ' > /tmp/coord-php-server.log 2>&1', [['pipe', 'r'], ['file', '/tmp/coord-php-out.txt', 'w'], ['file', '/tmp/coord-php-err.txt', 'w']], $pipes, $public);
 $fail = 0;
+function save4(string $body): array
+{
+    return array_intersect_key(json_decode($body, true) ?: [], array_flip(['ok', 'mode', 'pct', 'jobs']));
+}
 function check(bool $ok, string $what): void
 {
     global $fail;
@@ -97,13 +101,13 @@ $resBare = http($base . '/me/resources', 'POST', http_build_query(['id' => $meId
 check($resBare['status'] === 403, 'turning a computer off without the security token is refused');
 $offSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'off', 'pct' => '50']), $jsonHeaders);
 $offPage = $myHome();
-check($offSave['status'] === 200 && json_decode($offSave['body'], true) === ['ok' => true, 'mode' => 'off', 'pct' => 50, 'jobs' => 0] && str_contains($offPage, 'value="off" checked') && str_contains($offPage, 'Off — not taking new work') && str_contains($offPage, '<picture class="art-off is-on" data-art="off">'), 'Off stops new work, saves without a reload, and shows the Off illustration');
+check($offSave['status'] === 200 && save4($offSave['body']) === ['ok' => true, 'mode' => 'off', 'pct' => 50, 'jobs' => 0] && str_contains($offPage, 'value="off" checked') && str_contains($offPage, 'Off — not taking new work') && str_contains($offPage, '<picture class="art-off is-on" data-art="off">'), 'Off stops new work, saves without a reload, and shows the Off illustration');
 $offBeat = http($base . '/api/v1/heartbeat', 'POST', json_encode(['codeHash' => '', 'control' => true]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json']);
 $offClaim = http($base . '/api/v1/claim', 'POST', json_encode(['codeHash' => trim((string) shell_exec('php -r ' . escapeshellarg('echo hash("sha256", str_replace("\r\n", "\n", file_get_contents(' . var_export(dirname(__DIR__) . '/PROTOCOL.txt', true) . ')));')))]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json']);
 check((json_decode($offBeat['body'], true)['resources']['mode'] ?? '') === 'off' && (json_decode($offBeat['body'], true)['paused'] ?? false) === true && json_decode($offClaim['body'], true) === ['job' => null], 'the worker reads Off from its check-in and gets no job');
 $pctSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'allowance', 'pct' => '37']), $jsonHeaders);
 $badMode = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'turbo']), $jsonHeaders);
-check(json_decode($pctSave['body'], true) === ['ok' => true, 'mode' => 'allowance', 'pct' => 40, 'jobs' => 0] && $badMode['status'] === 400 && str_contains($badMode['body'], 'Full blast'), 'the allowance snaps to steps of 10 and unknown modes are refused');
+check(save4($pctSave['body']) === ['ok' => true, 'mode' => 'allowance', 'pct' => 40, 'jobs' => 0] && $badMode['status'] === 400 && str_contains($badMode['body'], 'Full blast'), 'the allowance snaps to steps of 10 and unknown modes are refused');
 $fullSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'full']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_participant=' . $cookie]);
 $fullPage = $myHome();
 $fullBeat = json_decode(http($base . '/api/v1/heartbeat', 'POST', json_encode(['control' => true, 'runtime' => ['mode' => 'full', 'pct' => 100, 'slots' => 8, 'cores' => 8, 'duty' => 1, 'priority' => 'normal', 'running' => 0]]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json'])['body'], true);
@@ -113,14 +117,51 @@ check(str_contains($fullPage2, 'data-jobs-row data-cores="8" data-known="1"') &&
 $jobsSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'allowance', 'pct' => '50', 'jobs' => '2']), $jsonHeaders);
 $jobsBeat = json_decode(http($base . '/api/v1/heartbeat', 'POST', json_encode(['control' => true, 'runtime' => ['mode' => 'allowance', 'pct' => 50, 'slots' => 2, 'cores' => 8, 'duty' => 1, 'priority' => 'low', 'running' => 0, 'maxJobs' => 2]]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json'])['body'], true);
 $jobsPage = $myHome();
-check(json_decode($jobsSave['body'], true) === ['ok' => true, 'mode' => 'allowance', 'pct' => 50, 'jobs' => 2] && ($jobsBeat['resources']['maxJobs'] ?? null) === 2 && str_contains($jobsPage, '<output data-jobs-value aria-live="polite">2</output>') && str_contains($jobsPage, 'runs 2 of 8 cores') && str_contains($jobsPage, 'Now: Allowance · 50% · 2 of 8 cores'), 'choosing 2 at once saves, reaches the worker on its check-in, and the page shows it applied');
+check(save4($jobsSave['body']) === ['ok' => true, 'mode' => 'allowance', 'pct' => 50, 'jobs' => 2] && ($jobsBeat['resources']['maxJobs'] ?? null) === 2 && str_contains($jobsPage, '<output data-jobs-value aria-live="polite">2</output>') && str_contains($jobsPage, 'runs 2 of 8 cores') && str_contains($jobsPage, 'Now: Allowance · 50% · 2 of 8 cores'), 'choosing 2 at once saves, reaches the worker on its check-in, and the page shows it applied');
 $capSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'allowance', 'pct' => '30', 'jobs' => '6']), $jsonHeaders);
 $capPage = $myHome();
 $autoSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'full', 'jobs' => 'auto']), $jsonHeaders);
 check(str_contains($capPage, 'runs 3, the allowance limit of 8 cores') && (json_decode($autoSave['body'], true)['jobs'] ?? null) === 0, 'the allowance caps a larger number, and Auto goes back to 0');
 $cssBody = http($base . '/assets/computelab.css')['body'];
 check(str_contains($cssBody, '.resources.has-art{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);') && str_contains($cssBody, 'object-fit:contain;object-position:center') && strpos($fullPage2, 'data-jobs-row') < strpos($fullPage2, '<div class="res-art">'), 'Resources is two thirds controls and one third picture, with the picture centred and never cropped');
-check(str_contains($cssBody, '.resources.has-art .res-main{display:grid;grid-template-columns:310px minmax(0,1fr);grid-template-areas:"head head" "tri jobs" "range hint" "range eff"') && str_contains($cssBody, '.resources.has-art .jobs-row{grid-area:jobs;width:100%') && str_contains($cssBody, 'width:300px;max-width:calc(100% - 10px);height:50px'), 'the controls fill the left two thirds in two columns while the toggle stays a compact pill');
+check(str_contains($cssBody, '.resources.has-art .res-main{display:grid;grid-template-columns:minmax(0,1fr) 310px;grid-template-areas:"head head" "run run" "jobs tri" "hint range" "eff range"') && str_contains($cssBody, '.resources.has-art .jobs-row{grid-area:jobs;width:100%') && str_contains($cssBody, 'width:300px;max-width:calc(100% - 10px);height:50px'), 'the toggle and slider sit in the middle next to the picture; Experiments, the hint and the Now line on the left; the toggle stays a compact pill');
+/* t53u: the toggle shows what the computer is doing. A stale heartbeat shows Stopped (Off, with its own note), the
+ * saved setting is kept; turning it on shows Starting… until a heartbeat; a chosen Off on a running computer differs. */
+$wid = $meId[1];
+$beatWith = function (array $rt) use ($base, $token) { return json_decode(http($base . '/api/v1/heartbeat', 'POST', json_encode(['control' => true, 'runtime' => $rt]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json'])['body'], true); };
+$rtFull = ['mode' => 'full', 'pct' => 100, 'slots' => 8, 'cores' => 8, 'duty' => 1, 'priority' => 'normal', 'running' => 0];
+$beatWith($rtFull);
+$app->db->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([gmdate('c', time() - 7200), $wid]);
+$stopPage = $myHome();
+check(str_contains($stopPage, 'data-saved="full" data-run="stopped"') && str_contains($stopPage, 'value="off" checked') && str_contains($stopPage, '<span class="res-now" data-mode-label>Stopped</span>') && str_contains($stopPage, 'Stopped — not running since <time datetime="') && str_contains($stopPage, '</time>. Turn it on to restart.') && str_contains($stopPage, '<picture class="art-off is-on" data-art="off">'), 'a stale heartbeat shows Stopped: Off toggle, the Off picture, "not running since", and the saved Full blast kept');
+check(str_contains($stopPage, 'no watchdog (older setup)') && str_contains($stopPage, 'run the setup command on it again'), 'a worker that never reported a watchdog says so and points to re-running setup');
+check((string) $app->db->query("SELECT resource_mode FROM workers WHERE id = '" . $wid . "'")->fetchColumn() === 'full', 'showing Stopped does not change the saved setting');
+$sjStop = json_decode(http($base . '/status.json', 'GET', null, ['Cookie: lab_participant=' . $cookie])['body'], true);
+$mineStop = array_values(array_filter($sjStop['mine'] ?? [], function ($c) use ($wid) { return $c['id'] === $wid; }))[0] ?? [];
+check(($mineStop['run'] ?? '') === 'stopped' && ($mineStop['shown'] ?? '') === 'off' && ($mineStop['saved'] ?? '') === 'full' && str_contains((string) ($mineStop['runNote'] ?? ''), '{since}'), 'status.json carries the run state for the live page');
+$startSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $wid, 'mode' => 'allowance', 'pct' => '50']), $jsonHeaders);
+$sd = json_decode($startSave['body'], true);
+$startPage = $myHome();
+check(($sd['run'] ?? '') === 'starting' && ($sd['shown'] ?? '') === 'allowance' && str_contains($startPage, 'data-run="starting"') && str_contains($startPage, '<span class="res-now" data-mode-label>Starting…</span>') && str_contains($startPage, 'value="allowance" checked') && str_contains($startPage, 'art-allowance is-on is-starting'), 'turning a stopped computer on shows Starting… with the chosen setting and its picture dimmed');
+$beatWith(['mode' => 'allowance', 'pct' => 50, 'slots' => 4, 'cores' => 8, 'duty' => 1, 'priority' => 'low', 'running' => 0, 'watchdog' => 'task-repeat']);
+$runPage = $myHome();
+check(str_contains($runPage, 'data-run="running"') && str_contains($runPage, '<span class="res-now" data-mode-label>Allowance · 50%</span>') && str_contains($runPage, 'data-run-box role="status"><p class="res-run-note" data-run-note></p><p class="res-run-sub" data-run-sub></p>') && str_contains($runPage, '<div class="res-run" hidden'), 'the next heartbeat confirms it: running, no note');
+check((string) $app->db->query("SELECT runtime_json FROM workers WHERE id = '" . $wid . "'")->fetchColumn() !== '' && str_contains((string) $app->db->query("SELECT runtime_json FROM workers WHERE id = '" . $wid . "'")->fetchColumn(), '"watchdog":"task-repeat"'), 'the heartbeat keeps the watchdog the worker reported');
+$app->db->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([gmdate('c', time() - 7200), $wid]);
+$stop2 = $myHome();
+check(str_contains($stop2, 'Its watchdog restarts it within about 3 minutes') && !str_contains($stop2, 'no watchdog (older setup)') && str_contains($stop2, 'Saved setting: Allowance · 50%'), 'with a watchdog, Stopped says it comes back by itself once the computer is awake');
+http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $wid, 'mode' => 'full']), $jsonHeaders);
+$app->db->prepare('UPDATE workers SET restart_requested_at = ? WHERE id = ?')->execute([gmdate('c', time() - 900), $wid]);
+$late = $myHome();
+check(str_contains($late, 'data-run="stopped"') && str_contains($late, 'still not running 15 min after it was turned on') && str_contains($late, 'run the setup command on it again'), 'Starting… gives up after 10 minutes and says what to check');
+$beatWith(['mode' => 'off', 'pct' => 50, 'slots' => 0, 'cores' => 8, 'duty' => 1, 'priority' => 'low', 'running' => 0, 'watchdog' => 'task-repeat']);
+http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $wid, 'mode' => 'off']), $jsonHeaders);
+$chosenOff = $myHome();
+check(str_contains($chosenOff, 'data-saved="off" data-run="running"') && str_contains($chosenOff, '<span class="res-now" data-mode-label>Off</span>') && !str_contains($chosenOff, 'Stopped —') && str_contains($chosenOff, '<div class="res-run" hidden'), 'a chosen Off on a running computer is plain Off, not Stopped');
+$js = $stopPage;
+check(str_contains($js, 'function applyRun(d)') && str_contains($js, 'rf.__run(c)') && str_contains($js, 'replace("{since}",clock(d.since))') && str_contains($js, 'Starting… waiting for this computer to check in.'), 'the page script follows the run state from status.json and shows local times');
+http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $wid, 'mode' => 'full', 'jobs' => 'auto']), $jsonHeaders);
+$beatWith($rtFull);
 $status = http($base . '/status.json', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
 $sj = json_decode($status['body'], true);
 $anon = json_decode(http($base . '/status.json')['body'], true);
@@ -171,6 +212,8 @@ $worker = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --onc
 check(is_string($worker) && str_contains($worker, '"status":"done"'), 'the native worker polls, runs the template, and submits a result');
 $ownerLive = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
 preg_match('/action="[^"]*\/owner\/resources".*?name="csrf" value="([a-f0-9]+)"><input type="hidden" name="id" value="([a-f0-9]+)"/s', $ownerLive['body'], $pauseFields);
+$ownerRun = json_decode(http($base . '/owner/run.json', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')])['body'], true);
+check(str_contains($ownerLive['body'], '<section class="panel owner-computers" id="computers">') && strpos($ownerLive['body'], 'id="computers"') < strpos($ownerLive['body'], '<div class="grid2">') && str_contains($ownerLive['body'], '<form class="resources has-art"') && str_contains($ownerLive['body'], '<div class="res-art">') && str_contains($ownerLive['body'], 'owner/run.json') && ($ownerRun['ok'] ?? false) === true && isset($ownerRun['computers'][0]['run']) && http($base . '/owner/run.json')['status'] === 403, 'Owner computer cards use the same full-width Resources layout with the picture, and keep their state live');
 check(str_contains($ownerLive['body'], '<details class="advanced"><summary>Advanced') && strpos($ownerLive['body'], 'name="seconds"') > strpos($ownerLive['body'], '<details class="advanced"><summary>Advanced'), 'the owner job-length settings sit under Advanced');
 $ownerPauseBare = http($base . '/owner/resources', 'POST', http_build_query(['id' => $pauseFields[2] ?? '', 'mode' => 'off']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
 check($ownerPauseBare['status'] === 403, 'owner resource changes without the security token are refused');
@@ -178,7 +221,7 @@ $ownerPause = http($base . '/owner/resources', 'POST', http_build_query(['csrf' 
 $ownerPaused = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
 check(in_array($ownerPause['status'], [303, 302], true) && str_contains($ownerPaused['body'], 'value="off" checked') && str_contains($ownerPaused['body'], 'home-pc'), 'the owner can turn a computer off');
 $ownerResume = http($base . '/owner/resources', 'POST', http_build_query(['csrf' => $pauseFields[1] ?? '', 'id' => $pauseFields[2] ?? '', 'mode' => 'allowance', 'pct' => '50']), ['Content-Type: application/x-www-form-urlencoded', 'Accept: application/json', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
-check($ownerResume['status'] === 200 && json_decode($ownerResume['body'], true) === ['ok' => true, 'mode' => 'allowance', 'pct' => 50, 'jobs' => 0], 'the owner can turn a computer back on');
+check($ownerResume['status'] === 200 && save4($ownerResume['body']) === ['ok' => true, 'mode' => 'allowance', 'pct' => 50, 'jobs' => 0], 'the owner can turn a computer back on');
 $disc = http($base . '/discoveries', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
 check($disc['status'] === 200 && str_contains($disc['body'], '<html lang="en" class="fit">') && str_contains($disc['body'], 'class="list-scroll"') && str_contains($disc['body'], 'id="viewer"') && str_contains($disc['body'], 'badge-mine') && str_contains($disc['body'], 'class="disc mine"'), 'Discoveries is a split view and marks your own computer\'s designs');
 $dd = preg_match('#<script type="application/json" id="disc-data">(.*?)</script>#s', $disc['body'], $dm) === 1 ? json_decode($dm[1], true) : [];

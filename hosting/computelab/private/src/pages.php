@@ -83,6 +83,46 @@ function modeLabel(string $mode, int $pct): string
     return 'Allowance · ' . $pct . '%';
 }
 
+/* The note under the Resources heading. {since} is the last heartbeat; the page shows it as a local clock time.
+ * Stopped is not the same as a chosen Off: the saved setting is kept and comes back when the worker runs again. */
+function runNote(array $run, string $saved, int $now, string $savedLabel): array
+{
+    $wd = (string) $run['watchdog'];
+    $noWatchdog = 'This computer has no watchdog (older setup), so it cannot restart by itself: run the setup command on it again (New setup command, below).';
+    if ($run['run'] === 'running') {
+        return ['note' => '', 'sub' => $wd === 'none' ? $noWatchdog : ''];
+    }
+    if ($run['run'] === 'starting') {
+        return ['note' => 'Starting… waiting for this computer to check in.',
+            'sub' => $wd === '' || $wd === 'none' ? 'If it does not start within a few minutes, this computer may have no watchdog (older setup): run the setup command on it again.' : 'Its watchdog starts the worker within about 3 minutes while the computer is on and awake.'];
+    }
+    if ($run['run'] === 'stopped') {
+        if ($saved === 'off') {
+            return ['note' => 'Off, and not running since {since}.', 'sub' => $wd === 'none' ? $noWatchdog : ''];
+        }
+        if ($run['requested'] !== '') {
+            $mins = max(1, (int) round(($now - strtotime($run['requested'])) / 60));
+            return ['note' => 'Stopped — still not running ' . $mins . ' min after it was turned on (last seen {since}).',
+                'sub' => 'Is the computer on and awake? If it is, run the setup command on it again; that adds the watchdog older setups lack.'];
+        }
+        return ['note' => 'Stopped — not running since {since}. Turn it on to restart.',
+            'sub' => $wd === '' || $wd === 'none' ? $noWatchdog : 'Saved setting: ' . $savedLabel . '. Its watchdog restarts it within about 3 minutes once the computer is on and awake.'];
+    }
+    return ['note' => '', 'sub' => ''];
+}
+
+/* The run-state fields the page script needs (status.json and the save reply). */
+function runFields(array $state): array
+{
+    return ['run' => $state['run'], 'since' => $state['since'], 'shown' => $state['shown'], 'saved' => $state['mode'], 'runNote' => $state['runNote'], 'runSub' => $state['runSub'], 'watchdog' => $state['watchdog']];
+}
+
+function sinceHtml(string $text, string $since): string
+{
+    $t = $since !== '' ? '<time datetime="' . h($since) . '" data-clock>' . h(gmdate('M j, H:i', strtotime($since)) . ' UTC') . '</time>' : 'a while';
+    return str_replace(h('{since}'), $t, h($text));
+}
+
 /* One line about a computer, plus what its worker last reported. */
 function describeWorker(App $app, array $worker, array $leases = []): array
 {
@@ -135,8 +175,15 @@ function describeWorker(App $app, array $worker, array $leases = []): array
             $effective .= ' — switching to ' . modeLabel($res['mode'], $res['allowancePct']) . ' at its next check-in';
         }
     }
+    $run = $app->runStateOf($worker);
+    if ($run['run'] === 'stopped' || $run['run'] === 'starting') {
+        $effective = is_array($rt) && isset($rt['mode']) ? 'Last report before it stopped: ' . substr($effective, 5) : 'Not running.';
+        $effective = preg_replace('/ — switching to .*$/u', '', $effective);
+    }
     $cores = is_array($rt) && isset($rt['cores']) ? max(1, min(64, (int) $rt['cores'])) : 0;
-    return ['line' => $line, 'online' => $online, 'paused' => $off, 'ago' => $ago, 'progress' => $progress, 'mode' => $res['mode'], 'pct' => $res['allowancePct'], 'maxJobs' => $res['maxJobs'], 'cores' => $cores, 'effective' => $effective, 'applied' => $applied, 'jobs' => $n];
+    $note = runNote($run, $res['mode'], $now, modeLabel($res['mode'], $res['allowancePct']));
+    return ['run' => $run['run'], 'since' => $run['since'], 'watchdog' => $run['watchdog'], 'runNote' => $note['note'], 'runSub' => $note['sub'],
+        'shown' => $run['run'] === 'stopped' ? 'off' : $res['mode'], 'line' => $line, 'online' => $online, 'paused' => $off, 'ago' => $ago, 'progress' => $progress, 'mode' => $res['mode'], 'pct' => $res['allowancePct'], 'maxJobs' => $res['maxJobs'], 'cores' => $cores, 'effective' => $effective, 'applied' => $applied, 'jobs' => $n];
 }
 
 /* Three-state control plus the allowance slider. Works as a plain form; the page script
@@ -160,8 +207,15 @@ function powerArtUrl(string $base, string $file, string $ext): string
 function resourceControl(string $action, string $csrf, array $worker, array $state, string $artBase = ''): string
 {
     $id = (string) $worker['id'];
-    $mode = (string) $state['mode'];
+    $saved = (string) $state['mode'];
+    /* The toggle and the picture show what the computer is doing: a stopped worker shows Off even when the saved
+     * setting is on (kept in data-saved and restored when it runs again). */
+    $run = (string) ($state['run'] ?? 'running');
+    $mode = (string) ($state['shown'] ?? $saved);
     $pct = (int) $state['pct'];
+    $nowLabel = $run === 'stopped' ? 'Stopped' : ($run === 'starting' ? 'Starting…' : modeLabel($mode, $pct));
+    $note = (string) ($state['runNote'] ?? '');
+    $sub = (string) ($state['runSub'] ?? '');
     $opt = function (string $value, string $short, string $aria, string $hint) use ($mode, $id): string {
         $rid = 'm-' . $id . '-' . $value;
         return '<input type="radio" id="' . h($rid) . '" name="mode" aria-label="' . h($aria) . '" value="' . h($value) . '"' . ($mode === $value ? ' checked' : '') . '>'
@@ -173,16 +227,18 @@ function resourceControl(string $action, string $csrf, array $worker, array $sta
         $art = '<div class="res-art">';
         foreach (powerArt() as $m => $info) {
             $on = $m === $mode;
-            $art .= '<picture class="art-' . h($m) . ($on ? ' is-on' : '') . '" data-art="' . h($m) . '"' . ($on ? '' : ' aria-hidden="true"') . '>'
+            $art .= '<picture class="art-' . h($m) . ($on ? ' is-on' : '') . ($on && $run === 'starting' ? ' is-starting' : '') . '" data-art="' . h($m) . '"' . ($on ? '' : ' aria-hidden="true"') . '>'
                 . '<source type="image/webp" srcset="' . h(powerArtUrl($artBase, $info['file'], 'webp')) . '">'
                 . '<img src="' . h(powerArtUrl($artBase, $info['file'], 'png')) . '" width="480" height="480" alt="' . h($info['alt']) . '" decoding="async"></picture>';
         }
         $art .= '</div>';
     }
-    return '<form class="resources' . ($art !== '' ? ' has-art' : '') . '" method="post" action="' . h($action) . '" data-resources data-mode="' . h($mode) . '">'
+    return '<form class="resources' . ($art !== '' ? ' has-art' : '') . '" method="post" action="' . h($action) . '" data-resources data-mode="' . h($mode) . '" data-saved="' . h($saved) . '" data-run="' . h($run) . '">'
         . '<input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h($id) . '">'
         . '<div class="res-main">'
-        . '<div class="res-head"><span class="label">Resources</span><span class="res-now" data-mode-label>' . h(modeLabel($mode, $pct)) . '</span></div>'
+        . '<div class="res-head"><span class="label">Resources</span><span class="res-now" data-mode-label>' . h($nowLabel) . '</span></div>'
+        . '<div class="res-run"' . ($note === '' && $sub === '' ? ' hidden' : '') . ' data-run-box role="status"><p class="res-run-note" data-run-note>' . sinceHtml($note, (string) ($state['since'] ?? '')) . '</p>'
+        . '<p class="res-run-sub" data-run-sub>' . h($sub) . '</p></div>'
         . '<div class="tri" role="radiogroup" aria-label="How much of this computer Compute Lab may use">'
         . $opt('off', 'Off', 'Off', 'Finish the current job, then take no new work')
         . $opt('allowance', $pct . '%', 'Allowance, ' . $pct . ' percent at low priority', 'Use the share set below, at low priority')
@@ -257,22 +313,42 @@ function resourceScript(): string
     return '<script>
 (function(){
   function label(m,p){return m==="off"?"Off":m==="full"?"Full blast":"Allowance · "+p+"%";}
+  function clock(iso){var d=new Date(iso);if(isNaN(d))return "a while";var n=new Date(),t=d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});return d.toDateString()===n.toDateString()?t:d.toLocaleDateString([],{month:"short",day:"numeric"})+", "+t;}
+  document.querySelectorAll("time[data-clock]").forEach(function(t){t.textContent=clock(t.getAttribute("datetime"));});
   document.querySelectorAll("form[data-resources]").forEach(function(f){
-    var range=f.querySelector("input[name=pct]"),pl=f.querySelector("[data-pct-label]"),ml=f.querySelector("[data-mode-label]"),eff=f.querySelector("[data-effective]"),row=f.querySelector(".range-row"),timer=null;
+    var range=f.querySelector("input[name=pct]"),pl=f.querySelector("[data-pct-label]"),ml=f.querySelector("[data-mode-label]"),eff=f.querySelector("[data-effective]"),row=f.querySelector(".range-row"),timer=null,saving=false;
+    var rbox=f.querySelector("[data-run-box]"),rnote=f.querySelector("[data-run-note]"),rsub=f.querySelector("[data-run-sub]");
     function mode(){var r=f.querySelector("input[name=mode]:checked");return r?r.value:"allowance";}
+    function nowLabel(){var r=f.getAttribute("data-run");return r==="stopped"?"Stopped":r==="starting"?"Starting…":label(mode(),range.value);}
+    /* Show what the computer is doing (run state from the server); the saved setting stays in data-saved. */
+    function applyRun(d){
+      if(!d||!d.run)return;
+      f.setAttribute("data-run",d.run);if(d.saved)f.setAttribute("data-saved",d.saved);
+      var shown=d.shown||d.saved||mode(),r=f.querySelector("input[name=mode][value="+shown+"]");if(r&&!r.checked)r.checked=true;
+      var note=String(d.runNote||"").replace("{since}",clock(d.since)),sub=String(d.runSub||"");
+      rnote.textContent=note;rsub.textContent=sub;rbox.hidden=!note&&!sub;
+      ml.textContent=nowLabel();row.classList.toggle("is-idle",mode()!=="allowance");art();jobsNote();
+    }
+    f.__run=function(d){if(!saving)applyRun(d);};
     function save(){
-      var body=new URLSearchParams(new FormData(f));
-      ml.textContent=label(mode(),range.value);row.classList.toggle("is-idle",mode()!=="allowance");art();jobsNote();
-      eff.textContent="Saving…";
+      var body=new URLSearchParams(new FormData(f)),run=f.getAttribute("data-run");
+      /* Turning a stopped computer on: Starting… until its heartbeat confirms. */
+      if(mode()!=="off"&&(run==="stopped"||run==="starting")){f.setAttribute("data-run","starting");rnote.textContent="Starting… waiting for this computer to check in.";rsub.textContent="";rbox.hidden=false;}
+      ml.textContent=nowLabel();row.classList.toggle("is-idle",mode()!=="allowance");art();jobsNote();
+      eff.textContent="Saving…";saving=true;
       fetch(f.action,{method:"POST",body:body,headers:{"Accept":"application/json"},credentials:"same-origin"}).then(function(r){return r.json();}).then(function(d){
+        saving=false;
         if(!d||!d.ok){eff.textContent=(d&&d.error)||"Could not save. Reload the page.";return;}
-        eff.setAttribute("data-until",String(Date.now()+45000));eff.textContent="Saved: "+label(d.mode,d.pct)+(d.jobs?" · "+d.jobs+" at once":"")+". This computer picks it up at its next check-in, within about half a minute.";
-      }).catch(function(){eff.textContent="Could not save. Reload the page.";});
+        applyRun(d);
+        eff.setAttribute("data-until",String(Date.now()+45000));
+        eff.textContent=d.run==="running"?"Saved: "+label(d.mode,d.pct)+(d.jobs?" · "+d.jobs+" at once":"")+". This computer picks it up at its next check-in, within about half a minute."
+          :d.run==="starting"?"Saved: "+label(d.mode,d.pct)+". It starts with this setting when the worker comes back.":"Saved: "+label(d.mode,d.pct)+".";
+      }).catch(function(){saving=false;eff.textContent="Could not save. Reload the page.";});
     }
     f.querySelectorAll("input[name=mode]").forEach(function(r){r.addEventListener("change",save);});
     var shortPct=f.querySelector("[data-short-pct]"),allowR=f.querySelector("input[name=mode][value=allowance]");
     function fill(){range.style.setProperty("--fill",Math.round((range.value-10)/80*100)+"%");range.setAttribute("aria-valuetext",range.value+" percent");if(shortPct)shortPct.textContent=range.value+"%";if(allowR)allowR.setAttribute("aria-label","Allowance, "+range.value+" percent at low priority");}
-    function art(){var m=mode();f.setAttribute("data-mode",m);f.querySelectorAll("[data-art]").forEach(function(p){var on=p.getAttribute("data-art")===m;p.classList.toggle("is-on",on);if(on)p.removeAttribute("aria-hidden");else p.setAttribute("aria-hidden","true");});}
+    function art(){var m=mode(),st=f.getAttribute("data-run")==="starting";f.setAttribute("data-mode",m);f.querySelectorAll("[data-art]").forEach(function(p){var on=p.getAttribute("data-art")===m;p.classList.toggle("is-on",on);p.classList.toggle("is-starting",on&&st);if(on)p.removeAttribute("aria-hidden");else p.setAttribute("aria-hidden","true");});}
     f.querySelectorAll("input[name=mode]").forEach(function(r){r.addEventListener("change",art);});
     var jr=f.querySelector("[data-jobs-row]"),jin=f.querySelector("input[name=jobs]"),jout=f.querySelector("[data-jobs-value]"),jnote=f.querySelector("[data-jobs-note]");
     function jobsNote(){
@@ -483,6 +559,20 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .resources .range-row.is-idle input[type=range]::-webkit-slider-thumb{border-color:#6f8696;box-shadow:none;background:#c9d4dc}
 .resources .range-row.is-idle input[type=range]::-moz-range-thumb{border-color:#6f8696;box-shadow:none;background:#c9d4dc}
 .resources[data-mode=off] .res-now{color:var(--red)}
+.resources[data-run=starting] .res-now{color:var(--amber)}
+.res-run{border:1px solid #5a2a33;background:#1a0f13;border-radius:9px;padding:8px 11px;margin:0 0 11px}
+.res-run[hidden]{display:none}
+.resources[data-run=starting] .res-run{border-color:#6b5531;background:#1f1a12}
+.resources[data-run=running] .res-run{border-color:#263642;background:#0b1219}
+.res-run-note{margin:0;font:600 12px var(--display);color:#ffb3b9}
+.resources[data-run=starting] .res-run-note{color:var(--amber)}
+.resources[data-run=running] .res-run-note{display:none}
+.res-run-sub{margin:3px 0 0;font:11px var(--mono);color:#aeb9c2}
+.res-run-sub:empty{display:none}
+.resources[data-run=starting] .res-run-note::before{content:"";display:inline-block;width:8px;height:8px;margin-right:7px;border-radius:50%;background:var(--amber);vertical-align:1px;animation:resPulse 1.2s ease-in-out infinite}
+@keyframes resPulse{50%{opacity:.25}}
+.res-art picture.is-on.is-starting img{filter:drop-shadow(0 8px 18px #0009) saturate(.55) brightness(.75);animation:resPulse 1.6s ease-in-out infinite}
+.owner-computers{margin-bottom:15px}
 .resources .range-label b{color:var(--mint);font:600 13px var(--display)}
 .resources input[type=range]{-webkit-appearance:none;appearance:none;height:6px;margin:9px 0 7px;border-radius:999px;background:linear-gradient(90deg,var(--mint) 0,var(--mint) var(--fill,50%),#24323d var(--fill,50%));outline:none}
 .resources .range-row.is-idle input[type=range]{background:linear-gradient(90deg,#4e6774 0,#4e6774 var(--fill,50%),#1d2933 var(--fill,50%))}
@@ -500,7 +590,9 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .revoked-row .quiet{flex:1}
 .revoked-row form{margin:0}
 .removed-note{margin-top:10px}
-.resources.has-art .res-main{display:grid;grid-template-columns:310px minmax(0,1fr);grid-template-areas:"head head" "tri jobs" "range hint" "range eff";column-gap:20px;align-items:start;align-content:center}
+/* Left: Experiments at once, the hint and the Now line. Middle (next to the picture): the toggle and the slider. */
+.resources.has-art .res-main{display:grid;grid-template-columns:minmax(0,1fr) 310px;grid-template-areas:"head head" "run run" "jobs tri" "hint range" "eff range";column-gap:20px;align-items:start;align-content:center}
+.resources.has-art .res-run{grid-area:run}
 .resources.has-art .res-head{grid-area:head;max-width:none}
 .resources.has-art .tri{grid-area:tri}
 .resources.has-art .range-row{grid-area:range;width:100%}
@@ -508,7 +600,7 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .resources.has-art .hint{grid-area:hint;max-width:none;margin:11px 0 6px}
 .resources.has-art .effective{grid-area:eff;max-width:none}
 .resources.has-art .res-main noscript{grid-column:1/-1}
-@media (max-width:1180px){.resources.has-art .res-main{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "tri" "range" "jobs" "hint" "eff"}.resources.has-art .jobs-row{margin-top:9px;min-height:0}.resources.has-art .range-row{width:310px;max-width:100%}}
+@media (max-width:1180px){.resources.has-art .res-main{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "run" "tri" "range" "jobs" "hint" "eff"}.resources.has-art .jobs-row{margin-top:9px;min-height:0}.resources.has-art .range-row{width:310px;max-width:100%}}
 @media (max-width:1180px) and (min-width:561px){.resources.has-art .range-row,.resources.has-art .jobs-row{width:100%}.resources.has-art .range-row::before{left:155px}}
 .resources .jobs-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;box-sizing:border-box;width:310px;max-width:100%;margin-top:9px;padding:7px 9px 7px 13px;border:1px solid #263642;border-radius:10px;background:#0b1219;transition:opacity .25s}
 .resources .jobs-row.is-idle{opacity:.5;border-style:dashed}
@@ -527,7 +619,7 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .res-art img{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center;filter:drop-shadow(0 8px 18px #0009)}
 .resources.has-art .tri label{gap:6px}
 @media (max-width:560px){.resources.has-art{grid-template-columns:1fr;padding-right:14px}.res-art{order:-1;min-height:0;height:150px;margin:-4px 0 8px}}
-@media (prefers-reduced-motion:reduce){.res-art picture{transition:none}.tri-thumb,.tri label,.resources .range-row{transition:none}.tri-led{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.res-art picture.is-on.is-starting img,.resources[data-run=starting] .res-run-note::before{animation:none}.res-art picture{transition:none}.tri-thumb,.tri label,.resources .range-row{transition:none}.tri-led{animation:none!important}}
 @media (max-width:420px){.tri label{font-size:11px;gap:5px}}
 .resources{border:1px solid #263642;background:#0b1319;border-radius:10px;padding:13px 14px;margin:12px 0}
 .res-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
@@ -822,7 +914,7 @@ function liveScript(): string
     fetch(box.getAttribute("data-live"),{credentials:"same-origin",headers:{"Accept":"application/json"}}).then(function(r){return r.json();}).then(function(d){
       ["online","running","queued","done","slots"].forEach(function(k){var el=box.querySelector("[data-stat="+k+"]");if(el&&d[k]!=null)el.textContent=d[k];});
       var at=box.querySelector("[data-live-at]");if(at)at.textContent="LIVE · "+new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
-      if(d.mine){d.mine.forEach(function(c){var card=document.querySelector("[data-computer=\'"+c.id+"\']");if(!card)return;var l=card.querySelector("[data-line]");if(l)l.textContent=c.line;var e=card.querySelector("[data-effective]");if(e&&!(Date.now()<+(e.getAttribute("data-until")||0))&&e.textContent!=="Saving…")e.textContent=c.effective;var hb=card.querySelector("[data-health]");if(hb&&c.health&&hb.lastChild)hb.lastChild.textContent=c.health;});}
+      if(d.mine){d.mine.forEach(function(c){var card=document.querySelector("[data-computer=\'"+c.id+"\']");if(!card)return;var l=card.querySelector("[data-line]");if(l)l.textContent=c.line;var e=card.querySelector("[data-effective]");if(e&&!(Date.now()<+(e.getAttribute("data-until")||0))&&e.textContent!=="Saving…")e.textContent=c.effective;var hb=card.querySelector("[data-health]");if(hb&&c.health&&hb.lastChild)hb.lastChild.textContent=c.health;var rf=card.querySelector("form[data-resources]");if(rf&&rf.__run)rf.__run(c);});}
     }).catch(function(){});
   }
   setInterval(tick,15000);
@@ -1270,7 +1362,7 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         $revoked = (int) $w['revoked'] === 1;
         $controls = '';
         if (!$revoked) {
-            $controls = resourceControl($base . '/owner/resources', $csrf, $w, $state)
+            $controls = resourceControl($base . '/owner/resources', $csrf, $w, $state, $base)
                 . '<div class="head-actions"><form method="post" action="' . h($base) . '/owner/revoke" onsubmit="return confirm(\'Revoke this computer\\\'s token?\')"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><button class="button small stop" type="submit">Revoke</button></form>'
                 . newSetupForm($base . '/owner/setup-command', $csrf, (string) $w['id']) . '</div>';
         }
@@ -1278,7 +1370,7 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         foreach ($leases as $l) {
             $jobs[] = (string) $l['title'];
         }
-        $people .= '<div class="computer"><div class="computer-top"><span class="computer-name">' . h((string) $w['name']) . '</span><span class="subtag">' . h($revoked ? 'REVOKED' : strtoupper(modeLabel($state['mode'], (int) $state['pct']))) . '</span></div>'
+        $people .= '<div class="computer" data-computer="' . h((string) $w['id']) . '"><div class="computer-top"><span class="computer-name">' . h((string) $w['name']) . '</span><span class="subtag">' . h($revoked ? 'REVOKED' : ($state['run'] === 'stopped' ? 'STOPPED' : ($state['run'] === 'starting' ? 'STARTING' : strtoupper(modeLabel($state['mode'], (int) $state['pct']))))) . '</span></div>'
             . '<p class="status-line">' . h($revoked ? 'Token revoked' : $state['line']) . '</p>'
             . healthBadge($health)
             . '<p class="quiet">' . ($state['ago'] !== '' ? 'Last seen ' . h($state['ago']) : 'Not seen yet') . ' · current jobs ' . h($jobs === [] ? 'none' : implode(', ', $jobs)) . ' · ' . h((string) $done['done']) . ' jobs done</p>'
@@ -1361,13 +1453,15 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         . '<h2 style="margin-top:18px">Task thresholds</h2>' . ($thresholds !== '' ? $thresholds : '<p class="muted">Thresholds appear after the first design upload.</p>')
         . '</div></details>';
     $body = $err . '<section class="heading"><div><div class="eyebrow">Owner console</div><h1>Owner</h1><p>Computers, jobs, and task health. A running job stays with its computer while its heartbeat renews the lease. The detailed job settings are under Advanced.</p></div><div class="head-actions"><div class="chips">' . $summary . '</div></div></section>'
-        . '<div class="grid2"><div class="stack">'
-        . '<section class="panel" id="computers"><div class="panelhead"><div class="paneltitle">Computers</div><span class="subtag">' . h((string) count(array_filter($workers, function ($w) { return (int) $w['revoked'] !== 1; }))) . ' ENROLLED</span></div><div class="panelbody">' . addComputerButton($base) . ($people !== '' ? $people : '<p class="muted">None enrolled.</p>')
+        . '<section class="panel owner-computers" id="computers"><div class="panelhead"><div class="paneltitle">Computers</div><span class="subtag">' . h((string) count(array_filter($workers, function ($w) { return (int) $w['revoked'] !== 1; }))) . ' ENROLLED</span></div><div class="panelbody">' . addComputerButton($base) . ($people !== '' ? $people : '<p class="muted">None enrolled.</p>')
         . ($revokedRows !== '' ? '<details class="revoked-list"><summary>Revoked (' . substr_count($revokedRows, '<li ') . ') — remove to clean up this list</summary><ul>' . $revokedRows . '</ul></details>' : '')
         . ($removedCount > 0 ? '<p class="quiet removed-note">' . h((string) $removedCount) . ' removed ' . ($removedCount === 1 ? 'computer is' : 'computers are') . ' hidden here; ' . ($removedCount === 1 ? 'its' : 'their') . ' discoveries and credit stay.</p>' : '')
         . '</div></section>'
+        . '<div class="grid2"><div class="stack">'
         . '<section class="panel"><div class="panelhead"><div class="paneltitle">Jobs</div></div><div class="panelbody">' . $filterHtml . '<table><thead><tr><th>Job</th><th>Project</th><th>Status</th><th>Attempts</th><th>Last error</th></tr></thead><tbody>' . $rows . '</tbody></table>' . $pager . '</div></section>'
         . '</div><div class="stack">' . $health . designLibrarySection($app, $csrf, $base) . '</div></div>'
         . $advanced;
-    return layout('Owner', $body, $base, $nav, ['foot' => resourceScript()]);
+    /* Keeps each computer's Resources state (Stopped / Starting… / running) current without a reload. */
+    $poll = '<script>(function(){var u=' . json_encode($base . '/owner/run.json', JSON_UNESCAPED_SLASHES) . ';function tick(){if(document.hidden)return;fetch(u,{credentials:"same-origin",headers:{"Accept":"application/json"}}).then(function(r){return r.json();}).then(function(d){(d.computers||[]).forEach(function(c){var card=document.querySelector("[data-computer=\'"+c.id+"\']");if(!card)return;var f=card.querySelector("form[data-resources]");if(f&&f.__run)f.__run(c);var l=card.querySelector(".status-line");if(l)l.textContent=c.line;var e=card.querySelector("[data-effective]");if(e&&!(Date.now()<+(e.getAttribute("data-until")||0))&&e.textContent!=="Saving…")e.textContent=c.effective;});}).catch(function(){});}setInterval(tick,15000);})();</script>';
+    return layout('Owner', $body, $base, $nav, ['foot' => resourceScript() . $poll]);
 }

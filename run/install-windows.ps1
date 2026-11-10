@@ -13,6 +13,10 @@ $st = Join-Path $env:USERPROFILE '.bugbrain'
 $ps1 = Join-Path $st 'computelab-worker.ps1'
 $user = if ($env:USERDOMAIN) { "$env:USERDOMAIN\$env:USERNAME" } else { $env:USERNAME }
 $psArgs = '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $ps1 + '"'
+# The task runs PowerShell inside a headless console host (Windows 10 1903 and newer). Otherwise Windows 11 may open the
+# worker in a Windows Terminal window, and closing that window kills the worker and all its jobs (0xC000013A).
+$taskExe = 'powershell.exe'; $taskArgs = $psArgs
+if ([Environment]::OSVersion.Version.Build -ge 18362 -and (Test-Path (Join-Path $env:SystemRoot 'System32\conhost.exe'))) { $taskExe = 'conhost.exe'; $taskArgs = '--headless powershell.exe ' + $psArgs }
 $startupDir = [Environment]::GetFolderPath('Startup')
 $startupFile = Join-Path $startupDir 'ComputeLab Worker.cmd'
 function Ok($m) { Write-Host ('  OK    ' + $m) }
@@ -44,18 +48,20 @@ Remove-Item (Join-Path $st 'coord-alive.json') -ErrorAction SilentlyContinue
 # 2. Background start at logon, for this user only.
 $method = ''
 try {
-  $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $psArgs
-  $trigger = New-ScheduledTaskTrigger -AtLogOn -User $user
+  $action = New-ScheduledTaskAction -Execute $taskExe -Argument $taskArgs
+  # At logon, and every 3 minutes as a watchdog: with IgnoreNew the repeat does nothing while the worker runs and starts
+  # it again within 3 minutes when it is gone (crash, closed window, killed by hand).
+  $trigger = @((New-ScheduledTaskTrigger -AtLogOn -User $user), (New-ScheduledTaskTrigger -Once -At ((Get-Date).AddMinutes(2)) -RepetitionInterval (New-TimeSpan -Minutes 3)))
   $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Limited
   $settings = New-ScheduledTaskSettingsSet -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew
   Register-ScheduledTask -TaskName $name -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force -ErrorAction Stop | Out-Null
   $method = 'task'
-  Ok ('scheduled task "' + $name + '" starts the worker when ' + $env:USERNAME + ' logs on')
+  Ok ('scheduled task "' + $name + '" starts the worker when ' + $env:USERNAME + ' logs on, and again within 3 minutes if it stops')
 } catch {
   Note ('Windows did not allow a scheduled task (' + ($_.Exception.Message -split "`n")[0].Trim() + '); trying schtasks')
 }
 if (-not $method) {
-  $out = & schtasks.exe /Create /F /SC ONLOGON /RL LIMITED /IT /RU $user /TN $name /TR ('powershell.exe ' + $psArgs) 2>&1
+  $out = & schtasks.exe /Create /F /SC ONLOGON /RL LIMITED /IT /RU $user /TN $name /TR ($taskExe + ' ' + $taskArgs) 2>&1
   if ($LASTEXITCODE -eq 0) { $method = 'task'; Ok ('scheduled task "' + $name + '" (schtasks) starts the worker at logon') }
   else { Note ('schtasks was refused too (' + ("$out" -split "`n")[0].Trim() + '); using the Startup folder instead') }
 }

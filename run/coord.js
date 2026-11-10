@@ -59,6 +59,10 @@ function decideRetry(err, delay) {
 }
 /* Setup waits for this file before it says the worker is running: it is written only after the
  * coordinator answered a check-in from this process. */
+function clearStaleStop(file, startedAt) {
+  try { if (file && fs.statSync(file).mtimeMs < startedAt - 1000) { fs.unlinkSync(file); return true; } } catch (e) {}
+  return false;
+}
 function markAlive(extra) {
   try {
     const dir = process.env.BB_STATE_DIR || path.join(require('os').homedir(), '.bugbrain');
@@ -463,7 +467,11 @@ async function multi(a, base, token, hash) {
   let uploadChain = Promise.resolve();
   const oneAtATime = fn => { const p = uploadChain.then(fn, fn); uploadChain = p.catch(() => {}); return p; };
   const say = obj => console.log(JSON.stringify(obj));
-  const runtime = () => ({ cores: cores, slots: plan.slots, running: running.size, duty: plan.duty, mode: plan.mode, pct: plan.pct, maxJobs: plan.want || 0, priority: plan.priority, platform: process.platform });
+  /* A stop file left behind by a worker that died (window closed, power cut) must not stop this one at once. One
+   * written after this process started is a real request from the supervisor and is kept. */
+  clearStaleStop(stopFile, Date.now() - Math.round(process.uptime() * 1000));
+  const watchdog = () => { try { return require('./watchdog.js').kind(); } catch (e) { return 'none'; } };
+  const runtime = () => ({ cores: cores, slots: plan.slots, running: running.size, duty: plan.duty, mode: plan.mode, pct: plan.pct, maxJobs: plan.want || 0, priority: plan.priority, platform: process.platform, watchdog: watchdog() });
   const adopt = next => {
     if (samePlan(plan, next)) return;
     plan = next;
@@ -668,4 +676,4 @@ async function main() {
   }
 }
 if (require.main === module) main().catch(e => { console.error(e.message || e); process.exit(1); });
-module.exports = { withDigest, timeoutSignal, resourcePlan, samePlan, settingsFrom, applyPriority, osPriority, logicalCores, writeThrottle, ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild, readProgress, shouldWait, packUploadBatches, uploadDesigns, cleanupJobDir, cleanupStaleCoordDirs, retryAfterMs };
+module.exports = { clearStaleStop, withDigest, timeoutSignal, resourcePlan, samePlan, settingsFrom, applyPriority, osPriority, logicalCores, writeThrottle, ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild, readProgress, shouldWait, packUploadBatches, uploadDesigns, cleanupJobDir, cleanupStaleCoordDirs, retryAfterMs };

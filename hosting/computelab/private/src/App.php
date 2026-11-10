@@ -263,6 +263,8 @@ final class App
          * computers can be removed. */
         $this->ensureColumn('workers', 'removed_at', 'VARCHAR(40) NULL');
         $this->ensureColumn('workers', 'runtime_json', 'TEXT');
+        /* Set when someone turns a stopped computer on: "Starting…" until a heartbeat newer than this arrives. */
+        $this->ensureColumn('workers', 'restart_requested_at', 'VARCHAR(40) NULL');
         if ($freshMode) {
             $this->db->exec("UPDATE workers SET resource_mode = 'off' WHERE paused = 1");
             $this->db->exec("UPDATE workers SET resource_mode = 'full' WHERE paused = 0");
@@ -728,6 +730,55 @@ final class App
         }
     }
 
+    /* Seconds without a heartbeat after which a computer counts as not running. The worker checks in every 20 s. */
+    public const STALE_SECONDS = 180;
+    /* How long "Starting…" may show before the page says the watchdog did not bring it back. */
+    public const START_WAIT_SECONDS = 600;
+
+    /* The toggle was set on a computer that is not running: remember when, so the page can show "Starting…" until
+     * the watchdog on that computer brings the worker back and it checks in. Off clears it. */
+    public function noteRestartRequest(string $workerId, string $mode): void
+    {
+        $st = $this->db->prepare('SELECT last_seen FROM workers WHERE id = ?');
+        $st->execute([$workerId]);
+        $seen = (string) ($st->fetchColumn() ?: '');
+        $stale = $seen === '' || (strtotime($this->now()) - strtotime($seen)) > self::STALE_SECONDS;
+        if ($mode === 'off') {
+            $this->db->prepare('UPDATE workers SET restart_requested_at = NULL WHERE id = ?')->execute([$workerId]);
+        } elseif ($stale) {
+            $this->db->prepare('UPDATE workers SET restart_requested_at = ? WHERE id = ?')->execute([$this->now(), $workerId]);
+        }
+    }
+
+    /* What the computer is actually doing, kept apart from the saved setting (resource_mode):
+     *   running   heartbeat within STALE_SECONDS
+     *   starting  someone turned it on after it stopped, less than START_WAIT_SECONDS ago, no heartbeat since
+     *   stopped   it checked in before but not lately (window closed, crash, computer off or asleep)
+     *   never     registered, never checked in (the health line explains)
+     * watchdog is what the worker reported ('task-repeat', 'systemd-timer', 'cron', 'launchd'), 'none', or '' when
+     * its code is too old to say. */
+    public function runStateOf(array $worker): array
+    {
+        $now = strtotime($this->now());
+        $seen = !empty($worker['last_seen']) ? strtotime((string) $worker['last_seen']) : 0;
+        $created = !empty($worker['created_at']) ? strtotime((string) $worker['created_at']) : 0;
+        $rt = json_decode((string) ($worker['runtime_json'] ?? ''), true);
+        $beat = ($seen - $created) > 5 || is_array($rt);
+        $watchdog = is_array($rt) && isset($rt['watchdog']) ? (string) $rt['watchdog'] : '';
+        $req = !empty($worker['restart_requested_at']) ? strtotime((string) $worker['restart_requested_at']) : 0;
+        $since = $seen ? gmdate('c', $seen) : '';
+        if ($seen && ($now - $seen) <= self::STALE_SECONDS) {
+            return ['run' => 'running', 'since' => $since, 'requested' => '', 'watchdog' => $watchdog];
+        }
+        if (!$beat) {
+            return ['run' => 'never', 'since' => $since, 'requested' => '', 'watchdog' => $watchdog];
+        }
+        if ($req > $seen && ($now - $req) < self::START_WAIT_SECONDS) {
+            return ['run' => 'starting', 'since' => $since, 'requested' => gmdate('c', $req), 'watchdog' => $watchdog];
+        }
+        return ['run' => 'stopped', 'since' => $since, 'requested' => $req > $seen ? gmdate('c', $req) : '', 'watchdog' => $watchdog];
+    }
+
     /* 0 = Auto. Anything above 64 is 64; the worker also never runs more than its cores. */
     public static function clampMaxJobs(int $n): int
     {
@@ -776,7 +827,7 @@ final class App
         if (isset($report['duty']) && is_numeric($report['duty'])) {
             $clean['duty'] = max(0.0, min(1.0, round((float) $report['duty'], 3)));
         }
-        foreach (['mode', 'priority', 'platform'] as $k) {
+        foreach (['mode', 'priority', 'platform', 'watchdog'] as $k) {
             if (isset($report[$k]) && is_string($report[$k]) && preg_match('/^[a-z0-9 _.-]{1,24}$/i', $report[$k])) {
                 $clean[$k] = $report[$k];
             }
@@ -990,7 +1041,7 @@ final class App
 
     public function heartbeat(array $worker, array $extra = []): array
     {
-        $this->db->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$this->now(), $worker['id']]);
+        $this->db->prepare('UPDATE workers SET last_seen = ?, restart_requested_at = NULL WHERE id = ?')->execute([$this->now(), $worker['id']]);
         $fresh = $this->db->prepare('SELECT * FROM workers WHERE id = ?');
         $fresh->execute([$worker['id']]);
         $state = $fresh->fetch();
