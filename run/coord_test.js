@@ -199,6 +199,19 @@ const job = {
   Throttle.useFile('');
   check(slept >= 150 && slept <= 450, 'a job at duty 0.5 rests about half of the time (' + slept + ' ms of 600)');
 
+  {
+    const C2 = require('./coord.js');
+    const crypto = require('crypto');
+    const r = { summary: 'Synthetic run.', digest: crypto.createHash('sha256').update('Synthetic run.').digest('hex') };
+    r.summary += ' Design upload failed: 503';
+    C2.withDigest(r);
+    check(r.digest === crypto.createHash('sha256').update(r.summary).digest('hex'), 'a changed summary gets a matching digest, so the result is still accepted');
+    const sig = C2.timeoutSignal(50);
+    let aborted = false;
+    try { await fetch('http://10.255.255.1:9/', { signal: sig }); } catch (e) { aborted = true; }
+    check(aborted, 'a request that never answers is given up after its timeout');
+  }
+
   console.log(n + ' checks');
   process.exit(fail === 0 ? 0 : 1);
 })().catch(e => { console.error(e); process.exit(1); });

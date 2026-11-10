@@ -57,6 +57,17 @@ function decideRetry(err, delay) {
   if (!isRetryable(err)) return { action: 'crash', delay: 0 };
   return { action: 'retry', delay: nextBackoff(delay) };
 }
+/* A request that never answers must not hold a job slot forever. */
+function timeoutSignal(ms) {
+  try { return typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined; } catch (e) { return undefined; }
+}
+/* The coordinator checks that the digest matches the summary, so any change to the summary needs a new digest. */
+function withDigest(result) {
+  if (result && typeof result.summary === 'string' && result.digest) {
+    result.digest = require('crypto').createHash('sha256').update(result.summary).digest('hex');
+  }
+  return result;
+}
 async function api(base, token, route, body) {
   let res;
   try {
@@ -64,6 +75,7 @@ async function api(base, token, route, body) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
       body: JSON.stringify(body || {}),
+      signal: timeoutSignal(+process.env.BB_COORD_TIMEOUT_MS || 60000),
     });
   } catch (e) {
     const err = new Error((e && e.message) || 'Coordinator request failed.');
@@ -284,6 +296,7 @@ async function uploadDesigns(base, token, hash, designPath, opts) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip', Authorization: 'Bearer ' + token },
           body: gz,
+          signal: timeoutSignal(+process.env.BB_COORD_UPLOAD_TIMEOUT_MS || 180000),
         });
       } catch (e) {
         await wait(delay);
@@ -292,6 +305,7 @@ async function uploadDesigns(base, token, hash, designPath, opts) {
       }
       if (res.ok) { sent = true; break; }
       if (res.status === 429 || (res.status >= 500 && res.status <= 599)) {
+        try { await res.arrayBuffer(); } catch (e) {}
         await beat();
         await wait(retryAfterMs(res, delay));
         delay = nextBackoff(Math.max(delay, retryAfterMs(res, delay)));
@@ -430,6 +444,10 @@ async function multi(a, base, token, hash) {
   const running = new Map();
   let plan = resourcePlan('off', 0, cores, maxSlots);
   let finished = 0, stopping = false, fatal = null, firstControl = true;
+  /* Uploads from this computer go one at a time, so several slots finishing together do not
+   * pile onto the coordinator and fail together. */
+  let uploadChain = Promise.resolve();
+  const oneAtATime = fn => { const p = uploadChain.then(fn, fn); uploadChain = p.catch(() => {}); return p; };
   const say = obj => console.log(JSON.stringify(obj));
   const runtime = () => ({ cores: cores, slots: plan.slots, running: running.size, duty: plan.duty, mode: plan.mode, pct: plan.pct, priority: plan.priority, platform: process.platform });
   const adopt = next => {
@@ -509,9 +527,15 @@ async function multi(a, base, token, hash) {
       const designPath = result.designPath, modelPath = result.modelPath, outDir = result.outDir;
       delete result.designPath; delete result.modelPath; delete result.outDir; delete result.pauseAfter;
       try {
-        await uploadModel(base, token, job.id, modelPath);
-        const uploaded = await uploadDesigns(base, token, hash, designPath, { heartbeat: () => workerHeartbeat(base, token, hash, job.id, 100, slot) });
-        if (!uploaded.ok) result.summary = (String(result.summary || '') + ' Design upload failed: ' + uploaded.error).slice(0, 500);
+        const uploaded = await oneAtATime(async () => {
+          await uploadModel(base, token, job.id, modelPath);
+          return uploadDesigns(base, token, hash, designPath, { heartbeat: () => workerHeartbeat(base, token, hash, job.id, 100, slot) });
+        });
+        if (!uploaded.ok) {
+          result.summary = (String(result.summary || '') + ' Design upload failed: ' + uploaded.error).slice(0, 500);
+          withDigest(result);
+          await sendDiag(base, token, 'error', false, 'Design upload failed for ' + job.id + ': ' + uploaded.error, { hint: 'The job result is still sent; its designs were not stored.' });
+        }
         await api(base, token, '/api/v1/result', { jobId: job.id, result: result });
         if (uploaded.ok && result.status === 'done') cleanupJobDir(outDir);
         say({ ok: true, job: job.id, slot: slot, status: result.status });
@@ -602,6 +626,7 @@ async function main() {
       });
       if (!uploaded.ok) {
         result.summary = (String(result.summary || '') + ' Design upload failed: ' + uploaded.error).slice(0, 500);
+        withDigest(result);
       }
       await api(base, token, '/api/v1/result', { jobId: claimed.job.id, result: result });
       if (uploaded.ok && result.status === 'done') cleanupJobDir(outDir);
@@ -628,4 +653,4 @@ async function main() {
   }
 }
 if (require.main === module) main().catch(e => { console.error(e.message || e); process.exit(1); });
-module.exports = { resourcePlan, samePlan, settingsFrom, applyPriority, osPriority, logicalCores, writeThrottle, ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild, readProgress, shouldWait, packUploadBatches, uploadDesigns, cleanupJobDir, cleanupStaleCoordDirs, retryAfterMs };
+module.exports = { withDigest, timeoutSignal, resourcePlan, samePlan, settingsFrom, applyPriority, osPriority, logicalCores, writeThrottle, ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild, readProgress, shouldWait, packUploadBatches, uploadDesigns, cleanupJobDir, cleanupStaleCoordDirs, retryAfterMs };
