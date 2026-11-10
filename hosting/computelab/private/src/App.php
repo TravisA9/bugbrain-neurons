@@ -241,6 +241,16 @@ final class App
             'idx_dr_genome' => 'genome_hash',
         ]);
         $this->ensureIndexes('design_genomes', ['idx_dg_design' => 'design_hash']);
+        /* Every uploaded record counts its job's records, and every upload sums the worker's credit. Without these
+         * each was a full scan of the million-row table, and slow uploads filled the PHP slots so every page waited.
+         * Building them on a big table takes a while, so only the command line (deploy or bin/upgrade) does it,
+         * never a web request. */
+        if (PHP_SAPI === 'cli') {
+            $this->ensureIndexes('design_records', [
+                'idx_dr_job' => 'job_id',
+                'idx_dr_worker_eval' => 'worker_id, engine_version, eval_ms',
+            ]);
+        }
         /* Shared cache for expensive read-only pages (Discoveries). One request rebuilds a stale entry while the
          * others keep serving the old copy. */
         $this->db->exec('CREATE TABLE IF NOT EXISTS page_cache (
