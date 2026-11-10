@@ -149,6 +149,7 @@ function header_shape(string $header): string
 {
     $x = str_replace([' class="is-current" aria-current="page"'], '', $header);
     $x = preg_replace('#<a class="cl-account"[^>]*>Log in</a>|<form method="post" action="[^"]*/logout" class="cl-account">.*?</form>#s', '[account]', $x);
+    $x = preg_replace('#<a href="[^"]*/join">Join</a>#', '', (string) $x);
     return (string) $x;
 }
 function header_current(string $header): string
@@ -161,7 +162,7 @@ $pages = [
     'explore' => [http($base . '/explore')['body'], 'Explore'],
     'discoveries' => [http($base . '/discoveries')['body'], 'Discoveries'],
     'join' => [http($base . '/join')['body'], 'Join'],
-    'setup' => [$join['body'], 'Join'],
+    'setup' => [$join['body'], 'My computer'],
     'me' => [http($base . '/me', 'GET', null, ['Cookie: lab_participant=' . $cookie])['body'], 'My computer'],
     'owner-login' => [http($base . '/owner/login')['body'], 'Owner'],
     'owner-out' => [http($base . '/owner')['body'], 'Owner'],
@@ -182,6 +183,20 @@ foreach ($pages as $name => $page) {
 check(count(array_unique($shapes)) === 1 && reset($shapes) !== 'missing', 'every page has the same header apart from the current tab and account item');
 check($currentOk, 'each page marks exactly its own tab as current');
 check(str_contains(site_header($pages['home'][0]), '>Log in<') && str_contains(site_header($pages['owner'][0]), 'Log out') && str_contains(site_header($pages['me'][0]), 'Log out'), 'the account item reads Log in when signed out and Log out when signed in');
+$signedIn = ['setup', 'me', 'owner', 'home-as-owner', 'explore-as-owner', 'join-as-owner', 'join-as-participant'];
+$pages['join-as-owner'] = [http($base . '/join', 'GET', null, $ownerCookie)['body'], 'My computer'];
+$pages['join-as-participant'] = [http($base . '/join', 'GET', null, ['Cookie: lab_participant=' . $cookie])['body'], 'My computer'];
+$joinOk = true;
+foreach ($pages as $name => $page) {
+    $hasJoin = str_contains(site_header($page[0]), '>Join</a>');
+    if ($hasJoin === in_array($name, $signedIn, true)) {
+        $joinOk = false;
+        echo "join tab wrong on $name\n";
+    }
+}
+check($joinOk, 'the Join tab shows only to signed-out visitors');
+check(header_current(site_header($pages['join-as-owner'][0])) === 'My computer' && str_contains($pages['join-as-owner'][0], 'name="consent"'), 'a signed-in visitor can still open the join page by URL');
+check(str_contains($pages['me'][0], '>Add a computer</a>') && str_contains($pages['owner'][0], '>Add a computer</a>'), 'My computer and the owner console offer Add a computer');
 check(substr_count($pages['explore'][0], 'class="cl-top"') === 1 && !str_contains($pages['explore'][0], 'class="top"'), 'explore uses the shared header only once');
 
 $logout = http($base . '/logout', 'POST', http_build_query(['csrf' => $pauseFields[1] ?? '']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);

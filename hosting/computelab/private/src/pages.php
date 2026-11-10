@@ -102,6 +102,13 @@ function navLinks(string $base, array $nav): string
     if ($current === 'login') {
         $current = 'owner';
     }
+    /* Signed in means an owner session or a participant session (the cookie My computer
+     * uses). Signed-in visitors add computers from My computer, so Join leaves the menu
+     * and the join and setup pages mark My computer instead. /join still works by URL. */
+    $signedIn = !empty($nav['owner']) || !empty($nav['participant']);
+    if ($signedIn && $current === 'join') {
+        $current = 'me';
+    }
     $items = [
         ['home', 'Home', $base === '' ? '/' : $base . '/'],
         ['explore', 'Explore', $base . '/explore'],
@@ -112,6 +119,9 @@ function navLinks(string $base, array $nav): string
     ];
     $html = '';
     foreach ($items as $item) {
+        if ($signedIn && $item[0] === 'join') {
+            continue;
+        }
         $on = $current === $item[0];
         $html .= '<a href="' . h($item[2]) . '"' . ($on ? ' class="is-current" aria-current="page"' : '') . '>' . h($item[1]) . '</a>';
     }
@@ -292,6 +302,11 @@ function pageToken(App $app, string $name, string $token, array $nav = []): stri
     return layout('Worker token', $body, $base, $nav);
 }
 
+function addComputerButton(string $base): string
+{
+    return '<p class="add-computer"><a class="cta" href="' . h($base) . '/join">Add a computer</a></p>';
+}
+
 function pageMe(App $app, array $computers, string $csrf, array $nav): string
 {
     $base = $app->base();
@@ -342,7 +357,7 @@ function pageMe(App $app, array $computers, string $csrf, array $nav): string
             . '<h3>Recent results</h3>' . $rows . '</section>';
     }
     if ($cards === '') {
-        $cards = '<section><p>No computer is linked to this browser yet.</p><p><a class="cta" href="' . h($base) . '/join">Join with your computer</a></p></section>';
+        $cards = '<section><p>No computer is linked to this browser yet. Use Add a computer above to set one up.</p></section>';
     }
     $ids = [];
     foreach ($computers as $worker) {
@@ -356,6 +371,7 @@ function pageMe(App $app, array $computers, string $csrf, array $nav): string
         $highlights = '<p class="muted">Notable results show up here after this computer finds a design.</p>';
     }
     $body = '<h1>My computer</h1><p class="muted">This page cannot change project order or see the owner password. On accepts new work. Off finishes the current job, then stops.</p>'
+        . addComputerButton($base)
         . '<section><h2>Highlights</h2>' . $highlights . '</section>' . $cards;
     return layout('My computer', $body, $base, $nav);
 }
@@ -554,6 +570,6 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         . '<section><h2>Jobs</h2>' . $filterHtml . '<table><thead><tr><th>Job</th><th>Project</th><th>Status</th><th>Attempts</th><th>Last error</th></tr></thead><tbody>' . $rows . '</tbody></table>' . $pager . '</section>'
         . taskHealthSection($app, $csrf, $base)
         . designLibrarySection($app, $csrf, $base)
-        . '<h2>Computers</h2>' . ($people !== '' ? $people : '<p class="muted">None enrolled.</p>');
+        . '<h2>Computers</h2>' . addComputerButton($base) . ($people !== '' ? $people : '<p class="muted">None enrolled.</p>');
     return layout('Owner', $body, $base, $nav);
 }
