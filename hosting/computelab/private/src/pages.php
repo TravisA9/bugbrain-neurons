@@ -139,32 +139,62 @@ function describeWorker(App $app, array $worker, array $leases = []): array
 
 /* Three-state control plus the allowance slider. Works as a plain form; the page script
  * saves on change without a reload. */
-function resourceControl(string $action, string $csrf, array $worker, array $state): string
+/* The three illustrations for the resource setting (Travis's artwork). Served from
+ * private/assets/power as WebP with a PNG fallback; 480 px squares, about 2x the card height. */
+function powerArt(): array
+{
+    return [
+        'off' => ['file' => 'off', 'alt' => 'A cartoon cat flopped flat on its belly with X-ed out eyes: Compute Lab is switched off on this computer.'],
+        'allowance' => ['file' => 'half-power', 'alt' => 'A drowsy cat curled around a computer chip next to a half-full battery: Compute Lab uses part of this computer in the background.'],
+        'full' => ['file' => 'full-blast', 'alt' => 'A glowing boombox ray gun crackling with lightning: Compute Lab uses this whole computer at full blast.'],
+    ];
+}
+
+function powerArtUrl(string $base, string $file, string $ext): string
+{
+    return $base . '/assets/power/' . $file . '.' . $ext . '?v=1';
+}
+
+function resourceControl(string $action, string $csrf, array $worker, array $state, string $artBase = ''): string
 {
     $id = (string) $worker['id'];
     $mode = (string) $state['mode'];
     $pct = (int) $state['pct'];
-    $opt = function (string $value, string $label, string $hint) use ($mode, $id): string {
+    $opt = function (string $value, string $short, string $aria, string $hint) use ($mode, $id): string {
         $rid = 'm-' . $id . '-' . $value;
-        return '<input type="radio" id="' . h($rid) . '" name="mode" value="' . h($value) . '"' . ($mode === $value ? ' checked' : '') . '>'
-            . '<label for="' . h($rid) . '" title="' . h($hint) . '"><span class="tri-led" aria-hidden="true"></span>' . h($label) . '</label>';
+        return '<input type="radio" id="' . h($rid) . '" name="mode" aria-label="' . h($aria) . '" value="' . h($value) . '"' . ($mode === $value ? ' checked' : '') . '>'
+            . '<label for="' . h($rid) . '" title="' . h($hint) . '"><span class="tri-led" aria-hidden="true"></span><span class="tri-text"' . ($value === 'allowance' ? ' data-short-pct' : '') . '>' . h($short) . '</span></label>';
     };
     $fill = (int) round((max(10, min(90, $pct)) - 10) / 80 * 100);
-    return '<form class="resources" method="post" action="' . h($action) . '" data-resources data-mode="' . h($mode) . '">'
+    $art = '';
+    if ($artBase !== '') {
+        $art = '<div class="res-art">';
+        foreach (powerArt() as $m => $info) {
+            $on = $m === $mode;
+            $art .= '<picture class="art-' . h($m) . ($on ? ' is-on' : '') . '" data-art="' . h($m) . '"' . ($on ? '' : ' aria-hidden="true"') . '>'
+                . '<source type="image/webp" srcset="' . h(powerArtUrl($artBase, $info['file'], 'webp')) . '">'
+                . '<img src="' . h(powerArtUrl($artBase, $info['file'], 'png')) . '" width="480" height="480" alt="' . h($info['alt']) . '" decoding="async"></picture>';
+        }
+        $art .= '</div>';
+    }
+    return '<form class="resources' . ($art !== '' ? ' has-art' : '') . '" method="post" action="' . h($action) . '" data-resources data-mode="' . h($mode) . '">'
         . '<input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h($id) . '">'
+        . '<div class="res-main">'
         . '<div class="res-head"><span class="label">Resources</span><span class="res-now" data-mode-label>' . h(modeLabel($mode, $pct)) . '</span></div>'
         . '<div class="tri" role="radiogroup" aria-label="How much of this computer Compute Lab may use">'
-        . $opt('off', 'Off', 'Finish the current job, then take no new work')
-        . $opt('allowance', 'Allowance', 'Use the share set below, at low priority')
-        . $opt('full', 'Full blast', 'Use every core at normal priority')
+        . $opt('off', 'Off', 'Off', 'Finish the current job, then take no new work')
+        . $opt('allowance', $pct . '%', 'Allowance, ' . $pct . ' percent at low priority', 'Use the share set below, at low priority')
+        . $opt('full', 'Full', 'Full blast, every core', 'Use every core at normal priority')
         . '<span class="tri-thumb" aria-hidden="true"></span>'
         . '</div>'
         . '<div class="range-row' . ($mode === 'allowance' ? '' : ' is-idle') . '"><div class="range-label"><span>Allowance share</span><b data-pct-label>' . h((string) $pct) . '%</b></div>'
         . '<input type="range" name="pct" min="10" max="90" step="10" value="' . h((string) $pct) . '" style="--fill:' . $fill . '%" aria-label="Allowance as a share of this computer" aria-valuetext="' . h((string) $pct) . ' percent">'
         . '<div class="range-ends"><span>10%</span><span>90%</span></div></div>'
-        . '<p class="hint">Allowance runs in the background at low priority. Full blast uses every core. Off lets the running job finish, then stops.</p>'
+        . '<p class="hint">Off lets the running job finish, then stops. The middle setting runs in the background at low priority. Full uses every core.</p>'
         . '<noscript><button class="button" type="submit">Save</button></noscript>'
         . '<p class="effective" data-effective>' . h((string) $state['effective']) . '</p>'
+        . '</div>'
+        . $art
         . '</form>';
 }
 
@@ -178,7 +208,7 @@ function resourceScript(): string
     function mode(){var r=f.querySelector("input[name=mode]:checked");return r?r.value:"allowance";}
     function save(){
       var body=new URLSearchParams(new FormData(f));
-      ml.textContent=label(mode(),range.value);row.classList.toggle("is-idle",mode()!=="allowance");f.setAttribute("data-mode",mode());
+      ml.textContent=label(mode(),range.value);row.classList.toggle("is-idle",mode()!=="allowance");art();
       eff.textContent="Saving…";
       fetch(f.action,{method:"POST",body:body,headers:{"Accept":"application/json"},credentials:"same-origin"}).then(function(r){return r.json();}).then(function(d){
         if(!d||!d.ok){eff.textContent=(d&&d.error)||"Could not save. Reload the page.";return;}
@@ -186,8 +216,10 @@ function resourceScript(): string
       }).catch(function(){eff.textContent="Could not save. Reload the page.";});
     }
     f.querySelectorAll("input[name=mode]").forEach(function(r){r.addEventListener("change",save);});
-    function fill(){range.style.setProperty("--fill",Math.round((range.value-10)/80*100)+"%");range.setAttribute("aria-valuetext",range.value+" percent");}
-    f.querySelectorAll("input[name=mode]").forEach(function(r){r.addEventListener("change",function(){f.setAttribute("data-mode",mode());});});
+    var shortPct=f.querySelector("[data-short-pct]"),allowR=f.querySelector("input[name=mode][value=allowance]");
+    function fill(){range.style.setProperty("--fill",Math.round((range.value-10)/80*100)+"%");range.setAttribute("aria-valuetext",range.value+" percent");if(shortPct)shortPct.textContent=range.value+"%";if(allowR)allowR.setAttribute("aria-label","Allowance, "+range.value+" percent at low priority");}
+    function art(){var m=mode();f.setAttribute("data-mode",m);f.querySelectorAll("[data-art]").forEach(function(p){var on=p.getAttribute("data-art")===m;p.classList.toggle("is-on",on);if(on)p.removeAttribute("aria-hidden");else p.setAttribute("aria-hidden","true");});}
+    f.querySelectorAll("input[name=mode]").forEach(function(r){r.addEventListener("change",art);});
     range.addEventListener("input",function(){pl.textContent=range.value+"%";fill();});
     range.addEventListener("change",function(){if(mode()!=="allowance"){var a=f.querySelector("input[value=allowance]");if(a)a.checked=true;}clearTimeout(timer);timer=setTimeout(save,150);});
   });
@@ -337,6 +369,14 @@ p{margin:0 0 10px}
 .taskdesc2{font-size:11px;color:#7e8c98}
 .prog{height:4px;background:#1d2a33;border-radius:5px;overflow:hidden;margin-top:9px}
 .prog i{height:100%;display:block;background:linear-gradient(90deg,#46b98b,#8cf0c5);border-radius:5px}
+.jobgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:7px}
+.jobgrid>.muted{grid-column:1/-1;margin:0}
+.jobgrid .taskcard{padding:7px 9px;border-radius:7px;min-width:0}
+.jobgrid .taskline{margin-bottom:2px;gap:6px}
+.jobgrid .taskname{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.jobgrid .taskdesc2{font-size:10px}
+.jobgrid .prog{margin-top:6px;height:3px}
+@media (max-width:560px){.jobgrid{grid-template-columns:1fr}}
 .log{display:flex;flex-direction:column}
 .logline{display:grid;grid-template-columns:120px 1fr auto;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1b2730;font:11px var(--mono)}
 .logline:last-child{border:0}.logtime{color:#71818d}.logtext{color:#aeb9c2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.logscore{text-align:right;color:var(--mint)}
@@ -351,7 +391,7 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .range-label b{color:var(--text);font-weight:500}
 .range-ends{display:flex;justify-content:space-between;color:#5d6d7a;font:9px var(--mono)}
 .switchrow{display:flex;justify-content:space-between;align-items:center;margin:10px 0;color:#aab6c0;font-size:12px}
-.tri{position:relative;display:grid;grid-template-columns:repeat(3,1fr);height:44px;padding:4px;background:linear-gradient(180deg,#071016,#0c151d);border:1px solid #293743;border-radius:999px;box-shadow:inset 0 2px 7px #000a,0 1px 0 #ffffff08;user-select:none}
+.tri{position:relative;display:grid;grid-template-columns:repeat(3,1fr);box-sizing:content-box;width:300px;max-width:calc(100% - 10px);height:50px;padding:4px;background:linear-gradient(180deg,#071016,#0c151d);border:1px solid #293743;border-radius:999px;box-shadow:inset 0 2px 7px #000a,0 1px 0 #ffffff08;user-select:none}
 .tri input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
 .tri label{position:relative;z-index:2;margin:0;display:flex;align-items:center;justify-content:center;gap:7px;border-radius:999px;cursor:pointer;font:600 12px var(--display);letter-spacing:.02em;color:var(--muted);transition:color .25s ease;white-space:nowrap}
 .tri label:hover{color:var(--text)}
@@ -366,7 +406,7 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .resources[data-mode=full] .tri-thumb,.tri:has(input[value=full]:checked) .tri-thumb{transform:translateX(200%);border-color:#9af0cc;background:linear-gradient(180deg,#8cf0c6,#4fcf9c);box-shadow:0 0 20px #69e2b166,inset 0 1px 0 #ffffff55}
 .resources[data-mode=full] .tri input[value=full]:checked+label .tri-led{animation:tri-pulse 1.6s ease-in-out infinite}
 @keyframes tri-pulse{50%{box-shadow:0 0 2px currentColor;opacity:.6}}
-.resources .range-row{position:relative;margin-top:11px;padding:11px 13px 8px;border:1px solid #2d5948;border-radius:10px;background:linear-gradient(180deg,#0f1f1a,#0b1513);transition:opacity .25s,border-color .25s,background .25s}
+.resources .range-row{position:relative;box-sizing:border-box;width:310px;max-width:100%;margin-top:11px;padding:11px 13px 8px;border:1px solid #2d5948;border-radius:10px;background:linear-gradient(180deg,#0f1f1a,#0b1513);transition:opacity .25s,border-color .25s,background .25s}
 .resources .range-row::before{content:"";position:absolute;top:-7px;left:50%;width:12px;height:12px;margin-left:-6px;transform:rotate(45deg);background:#0f1f1a;border-left:1px solid #2d5948;border-top:1px solid #2d5948;transition:inherit}
 .resources .range-row.is-idle{opacity:.5;border-style:dashed;border-color:#2b3a47;background:#0b1219}
 .resources .range-row.is-idle::before{opacity:0}
@@ -381,7 +421,16 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .resources input[type=range]::-moz-range-track{background:transparent}
 .resources input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--cyan);outline-offset:2px}
 .resources input[type=range]:focus-visible::-moz-range-thumb{outline:2px solid var(--cyan);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){.tri-thumb,.tri label,.resources .range-row{transition:none}.tri-led{animation:none!important}}
+.resources.has-art{display:grid;grid-template-columns:minmax(0,330px) minmax(150px,1fr);column-gap:14px;padding-right:6px}
+.resources .hint,.resources .effective{max-width:330px}
+.res-main{min-width:0}
+.res-art{position:relative;align-self:stretch;min-height:190px;margin:-8px 0 -8px 0}
+.res-art picture{position:absolute;inset:0;display:block;opacity:0;transform:scale(.94) translateY(4px);transition:opacity .35s ease,transform .5s cubic-bezier(.25,1,.5,1);pointer-events:none}
+.res-art picture.is-on{opacity:1;transform:none}
+.res-art img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 8px 18px #0009)}
+.resources.has-art .tri label{gap:6px}
+@media (max-width:560px){.resources.has-art{grid-template-columns:1fr;padding-right:14px}.res-art{order:-1;min-height:0;height:150px;margin:-4px 0 8px}}
+@media (prefers-reduced-motion:reduce){.res-art picture{transition:none}.tri-thumb,.tri label,.resources .range-row{transition:none}.tri-led{animation:none!important}}
 @media (max-width:420px){.tri label{font-size:11px;gap:5px}}
 .resources{border:1px solid #263642;background:#0b1319;border-radius:10px;padding:13px 14px;margin:12px 0}
 .res-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
@@ -618,8 +667,8 @@ function myComputerPanel(App $app, string $base, ?array $computers, string $csrf
             . '<span class="status ' . h($led) . '"><i class="led ' . h($led) . '"></i>' . h($seen) . '</span></div>'
             . '<p class="status-line" role="status" data-line>' . h($state['line']) . '</p>'
             . healthBadge($app->healthOf($worker))
-            . resourceControl($base . '/me/resources', $csrf, $worker, $state)
-            . '<h3>What it is doing</h3><div class="tasks" data-jobs>' . $jobs . '</div>'
+            . resourceControl($base . '/me/resources', $csrf, $worker, $state, $base)
+            . '<h3>What it is doing</h3><div class="tasks jobgrid" data-jobs>' . $jobs . '</div>'
             . '<h3>Credit</h3><div class="chips"><span class="chip"><b>' . h((string) $totals['done']) . '</b> jobs done</span><span class="chip">' . h($time) . ' of compute</span><span class="chip mine"><b>' . h((string) $found) . '</b> designs found</span></div>'
             . '<form method="post" action="' . h($base) . '/me/credit" style="margin-top:10px"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $worker['id']) . '"><input type="hidden" name="shown" value="' . ($shown ? '0' : '1') . '"><button class="small" type="submit">' . ($shown ? 'Show my designs as Anonymous' : 'Show my name on discoveries') . '</button></form>'
             . '<div class="setup-again"><p class="quiet">Stopped working, or moved to a new computer? Get a new setup command and run it there. It says what is missing if something is wrong.</p>'

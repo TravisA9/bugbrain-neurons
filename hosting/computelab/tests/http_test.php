@@ -83,7 +83,12 @@ $myHome = function () use ($base, &$cookie): string {
 };
 $me = ['body' => $myHome()];
 check(str_contains($me['body'], 'id="right-now"') && strpos($me['body'], 'id="right-now"') < strpos($me['body'], 'id="my-computer"') && str_contains($me['body'], 'Not running a shared job') && str_contains($me['body'], 'Waiting for work') && !str_contains($me['body'], 'name="priority"') && !str_contains($me['body'], 'name="evals"') && !str_contains($me['body'], 'name="seconds"'), 'Home shows Right now, then My computer, with no job-length settings for participants');
-check(str_contains($me['body'], 'value="allowance" checked') && str_contains($me['body'], 'type="range" name="pct" min="10" max="90" step="10" value="50"') && str_contains($me['body'], '>Full blast<') && str_contains($me['body'], '>Off<'), 'a new computer starts in Allowance at 50%, with the three-state switch and the slider');
+check(str_contains($me['body'], 'value="allowance" checked') && str_contains($me['body'], 'type="range" name="pct" min="10" max="90" step="10" value="50"') && str_contains($me['body'], '>Full<') && str_contains($me['body'], '>Off<') && str_contains($me['body'], 'data-short-pct>50%<') && str_contains($me['body'], 'aria-label="Full blast, every core"') && str_contains($me['body'], 'aria-label="Allowance, 50 percent at low priority"'), 'a new computer starts in Allowance at 50%, with a short-label three-state switch (full names kept for screen readers) and the slider');
+$artOn = preg_match('#<picture class="art-allowance is-on" data-art="allowance">.*?half-power\.webp.*?half-power\.png#s', $me['body']) === 1;
+check($artOn && substr_count($me['body'], 'data-art="') === 3 && substr_count($me['body'], 'data-art="off" aria-hidden="true"') === 1 && substr_count($me['body'], 'data-art="full" aria-hidden="true"') === 1 && str_contains($me['body'], 'alt="A drowsy cat curled around a computer chip'), 'Home shows only the illustration for the current setting, with the other two preloaded and hidden from screen readers');
+$webp = http($base . '/assets/power/full-blast.webp');
+$png = http($base . '/assets/power/off.png');
+check($webp['status'] === 200 && str_contains($webp['header'], 'image/webp') && substr($webp['body'], 8, 4) === 'WEBP' && strlen($webp['body']) < 150000 && $png['status'] === 200 && substr($png['body'], 1, 3) === 'PNG' && strlen($png['body']) < 150000 && http($base . '/assets/power/other.png')['status'] !== 200, 'the setting illustrations are served as WebP with a PNG fallback, each under 150 KB');
 preg_match('/action="[^"]*\/me\/resources".*?name="csrf" value="([a-f0-9]+)"><input type="hidden" name="id" value="([a-f0-9]+)"/s', $me['body'], $mr);
 $meCsrf = [1 => $mr[1] ?? ''];
 $meId = [1 => $mr[2] ?? ''];
@@ -92,7 +97,7 @@ $resBare = http($base . '/me/resources', 'POST', http_build_query(['id' => $meId
 check($resBare['status'] === 403, 'turning a computer off without the security token is refused');
 $offSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'off', 'pct' => '50']), $jsonHeaders);
 $offPage = $myHome();
-check($offSave['status'] === 200 && json_decode($offSave['body'], true) === ['ok' => true, 'mode' => 'off', 'pct' => 50] && str_contains($offPage, 'value="off" checked') && str_contains($offPage, 'Off — not taking new work'), 'Off stops new work and saves without a reload');
+check($offSave['status'] === 200 && json_decode($offSave['body'], true) === ['ok' => true, 'mode' => 'off', 'pct' => 50] && str_contains($offPage, 'value="off" checked') && str_contains($offPage, 'Off — not taking new work') && str_contains($offPage, '<picture class="art-off is-on" data-art="off">'), 'Off stops new work, saves without a reload, and shows the Off illustration');
 $offBeat = http($base . '/api/v1/heartbeat', 'POST', json_encode(['codeHash' => '', 'control' => true]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json']);
 $offClaim = http($base . '/api/v1/claim', 'POST', json_encode(['codeHash' => trim((string) shell_exec('php -r ' . escapeshellarg('echo hash("sha256", str_replace("\r\n", "\n", file_get_contents(' . var_export(dirname(__DIR__) . '/PROTOCOL.txt', true) . ')));')))]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json']);
 check((json_decode($offBeat['body'], true)['resources']['mode'] ?? '') === 'off' && (json_decode($offBeat['body'], true)['paused'] ?? false) === true && json_decode($offClaim['body'], true) === ['job' => null], 'the worker reads Off from its check-in and gets no job');
@@ -110,6 +115,8 @@ $anon = json_decode(http($base . '/status.json')['body'], true);
 check($status['status'] === 200 && isset($sj['online'], $sj['running'], $sj['queued'], $sj['done'], $sj['tasks']) && ($sj['mine'][0]['mode'] ?? '') === 'full' && isset($sj['mine'][0]['health']) && ($anon['mine'] ?? null) === [], 'status.json feeds the Right now box and only lists your own computers');
 $css = http($base . '/assets/computelab.css');
 check($css['status'] === 200 && str_contains($css['header'], 'text/css') && str_contains($css['body'], '--mint:#69e2b1') && str_contains($css['body'], '.tri') && str_contains($me['body'], '/computelab/assets/computelab.css?v='), 'every page loads the shared SpikeFoundry stylesheet');
+check(str_contains($css['body'], '.jobgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))') && str_contains($css['body'], '@media (max-width:560px){.jobgrid{grid-template-columns:1fr}}') && str_contains($me['body'], 'class="tasks jobgrid" data-jobs'), 'What it is doing lays out job cards in columns, one column on phones');
+check(str_contains($css['body'], 'box-sizing:content-box;width:300px;max-width:calc(100% - 10px);height:50px;padding:4px;'), 'the three-way switch is a compact 310x60 pill like the example, not a full-width bar');
 
 $login = http($base . '/owner/login', 'POST', http_build_query(['username' => 'labowner', 'password' => 'correct-horse']), ['Content-Type: application/x-www-form-urlencoded']);
 preg_match('/Set-Cookie: lab_owner=([^;]+)/', $login['header'], $oc);

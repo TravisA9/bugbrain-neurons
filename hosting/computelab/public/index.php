@@ -292,6 +292,21 @@ try {
         }
         return;
     }
+    if (preg_match('#^/assets/power/(off|half-power|full-blast)\.(webp|png)$#', $path, $pm) && ($method === 'GET' || $method === 'HEAD')) {
+        $file = $private . '/assets/power/' . $pm[1] . '.' . $pm[2];
+        if (!is_file($file)) {
+            coord_json(404, ['ok' => false, 'error' => 'Not found.']);
+            return;
+        }
+        header('Content-Type: ' . ($pm[2] === 'webp' ? 'image/webp' : 'image/png'));
+        header('Cache-Control: public, max-age=604800');
+        header('X-Content-Type-Options: nosniff');
+        header('Content-Length: ' . filesize($file));
+        if ($method === 'GET') {
+            readfile($file);
+        }
+        return;
+    }
     if ($path === '/manifest.webmanifest' && $method === 'GET') {
         header('Content-Type: application/manifest+json; charset=utf-8');
         header('Cache-Control: public, max-age=86400');
