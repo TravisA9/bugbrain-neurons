@@ -220,6 +220,28 @@ final class App
             'idx_dr_engine_task' => 'engine_version, task_id',
         ]);
         $this->ensureColumn('leases', 'progress', 'INTEGER');
+        // One entry per distinct design: canonical design hash, first finder kept, repeats counted as confirmations.
+        $this->ensureColumn('design_records', 'design_hash', 'VARCHAR(64)');
+        $this->ensureColumn('design_records', 'canon_key', 'VARCHAR(64)');
+        $this->ensureColumn('design_records', 'duplicate_of', 'VARCHAR(191)');
+        $this->ensureColumn('design_records', 'confirmations', 'INTEGER NOT NULL DEFAULT 0');
+        $this->ensureColumn('design_genomes', 'design_hash', 'VARCHAR(64)');
+        $this->ensureColumn('jobs', 'seed', 'INTEGER');
+        $this->db->exec('CREATE TABLE IF NOT EXISTS design_confirmations (
+            design_id VARCHAR(191) NOT NULL,
+            worker_id VARCHAR(191) NOT NULL,
+            n INTEGER NOT NULL,
+            first_at VARCHAR(40) NOT NULL,
+            last_at VARCHAR(40) NOT NULL,
+            PRIMARY KEY (design_id, worker_id)
+        )');
+        $this->ensureIndexes('design_records', [
+            'idx_dr_task_design' => 'task_id, design_hash',
+            'ux_dr_canon' => 'task_id, canon_key',
+            'idx_dr_genome' => 'genome_hash',
+        ]);
+        $this->ensureIndexes('design_genomes', ['idx_dg_design' => 'design_hash']);
+        $this->ensureIndexes('jobs', ['idx_jobs_seed' => 'seed']);
         $this->ensureColumn('results', 'seconds', 'INTEGER');
         $this->ensureColumn('design_records', 'arm', "VARCHAR(16) NOT NULL DEFAULT 'designer'");
         $this->ensureColumn('design_records', 'seq', 'INTEGER NOT NULL DEFAULT 0');
@@ -332,7 +354,8 @@ final class App
                 continue;
             }
             try {
-                $this->db->exec('CREATE INDEX ' . $name . ' ON ' . $table . ' (' . $columns . ')');
+                // ux_ names are unique. Rows with a NULL key never clash, so old rows need no backfill first.
+                $this->db->exec('CREATE ' . (strpos($name, 'ux_') === 0 ? 'UNIQUE ' : '') . 'INDEX ' . $name . ' ON ' . $table . ' (' . $columns . ')');
             } catch (PDOException $e) {
                 // Another request created it at the same moment.
             }
@@ -1158,10 +1181,46 @@ final class App
         if (isset($extra['keepRandom'])) {
             $spec['keepRandom'] = max(0, min(2000, (int) $extra['keepRandom']));
         }
+        if (isset($extra['knownHashes']) && is_array($extra['knownHashes'])) {
+            $known = [];
+            foreach ($extra['knownHashes'] as $k) {
+                if (is_string($k) && preg_match('/^[a-f0-9]{16}$/', $k)) {
+                    $known[] = $k;
+                }
+            }
+            $spec['knownHashes'] = array_values(array_slice(array_unique($known), 0, 200));
+        }
         $id = strtolower(preg_replace('/[^a-z0-9]+/', '-', $templateId) . '-' . $seed . '-' . bin2hex(random_bytes(3)));
-        $this->db->prepare('INSERT INTO jobs (id, project_id, template_id, title, spec_json, code_hash, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-            ->execute([$id, $tpl['project_id'], $tpl['id'], $title, json_encode($spec), $this->protocolHash(), $priority, 'queued', $this->now()]);
+        $this->db->prepare('INSERT INTO jobs (id, project_id, template_id, title, spec_json, code_hash, priority, status, created_at, seed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            ->execute([$id, $tpl['project_id'], $tpl['id'], $title, json_encode($spec), $this->protocolHash(), $priority, 'queued', $this->now(), $seed]);
         return $id;
+    }
+
+    /** A seed no other job has used, so two jobs never repeat the same search. */
+    public function freshSeed(): int
+    {
+        $check = $this->db->prepare('SELECT 1 FROM jobs WHERE seed = ? LIMIT 1');
+        $seed = random_int(1, 1000000);
+        for ($try = 0; $try < 40; $try++) {
+            $check->execute([$seed]);
+            if (!$check->fetch()) {
+                return $seed;
+            }
+            $seed = random_int(1, 1000000);
+        }
+        return $seed;
+    }
+
+    /** Short canonical hashes of designs the library already has for a task, so a job can skip re-evaluating them. */
+    public function knownDesignHashes(string $taskId, int $limit = 100): array
+    {
+        $st = $this->db->prepare('SELECT design_hash FROM design_records WHERE task_id = ? AND duplicate_of IS NULL AND design_hash IS NOT NULL ORDER BY seq DESC LIMIT ' . max(1, min(200, $limit)));
+        $st->execute([$taskId]);
+        $out = [];
+        foreach ($st->fetchAll() as $row) {
+            $out[substr((string) $row['design_hash'], 0, 16)] = true;
+        }
+        return array_keys($out);
     }
 
     public function setProject(string $id, ?int $priority, ?bool $enabled): void
@@ -1507,6 +1566,7 @@ final class App
             throw new InvalidArgumentException('Too many design records in one upload.');
         }
         $perJob = (int) ($this->config['design_per_job'] ?? 2000);
+        $confirmed = 0;
         $stored = 0;
         $skipped = 0;
         $touched = [];
@@ -1575,11 +1635,16 @@ final class App
                 $skipped++;
                 continue;
             }
+            $designHash = self::designHash($genomeJson);
+            if ($designHash === null) {
+                $skipped++;
+                continue;
+            }
             $haveGenome = $this->db->prepare('SELECT hash FROM design_genomes WHERE hash = ?');
             $haveGenome->execute([$genomeHash]);
             if (!$haveGenome->fetch()) {
-                $this->db->prepare('INSERT INTO design_genomes (hash, genome_json, version, created_at) VALUES (?, ?, ?, ?)')
-                    ->execute([$genomeHash, $genomeJson, $version, $this->now()]);
+                $this->db->prepare('INSERT INTO design_genomes (hash, genome_json, version, created_at, design_hash) VALUES (?, ?, ?, ?, ?)')
+                    ->execute([$genomeHash, $genomeJson, $version, $this->now(), $designHash]);
             }
             $id = substr(hash('sha256', $worker['id'] . '|' . $taskId . '|' . $taskVersion . '|' . $genomeHash . '|' . $seed . '|' . $jobId), 0, 32);
             $exists = $this->db->prepare('SELECT id FROM design_records WHERE id = ?');
@@ -1588,15 +1653,35 @@ final class App
                 $skipped++;
                 continue;
             }
+            // Already in the library for this task (any computer, any listing order)? Count a confirmation instead of a new row.
+            $scoreRow = ['score_json' => $scoreJson, 'spikes' => max(0, (int) ($rec['spikes'] ?? 0)), 'eval_ms' => max(0, (int) ($rec['evalMs'] ?? 0))];
+            $first = $this->firstDesign($taskId, $designHash);
+            if ($first) {
+                $this->confirmDesign($first, $worker, $jobId, $scoreRow);
+                $confirmed++;
+                continue;
+            }
             $engine = substr((string) ($rec['engineVersion'] ?? 'spikefoundry-1'), 0, 32);
             $seq = (int) $this->db->query('SELECT COALESCE(MAX(seq), 0) + 1 FROM design_records')->fetchColumn();
-            $this->db->prepare('INSERT INTO design_records (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, job_id, arm, seq, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-                ->execute([
-                    $id, $genomeHash, $taskId, $taskVersion, $scoreJson,
-                    max(0, (int) ($rec['neurons'] ?? 0)), max(0, (int) ($rec['synapses'] ?? 0)),
-                    max(0, (int) ($rec['spikes'] ?? 0)), max(0, (int) ($rec['evalMs'] ?? 0)),
-                    $engine, substr($protocolHash, 0, 64), $worker['id'], $seed, $jobId !== '' ? $jobId : null, $arm, $seq, $this->now(),
-                ]);
+            try {
+                $this->db->prepare('INSERT INTO design_records (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, job_id, arm, seq, created_at, design_hash, canon_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+                    ->execute([
+                        $id, $genomeHash, $taskId, $taskVersion, $scoreJson,
+                        max(0, (int) ($rec['neurons'] ?? 0)), max(0, (int) ($rec['synapses'] ?? 0)),
+                        max(0, (int) ($rec['spikes'] ?? 0)), max(0, (int) ($rec['evalMs'] ?? 0)),
+                        $engine, substr($protocolHash, 0, 64), $worker['id'], $seed, $jobId !== '' ? $jobId : null, $arm, $seq, $this->now(),
+                        $designHash, $designHash,
+                    ]);
+            } catch (PDOException $e) {
+                // Another upload stored the same design a moment ago (unique task + design): confirm it instead.
+                $first = $this->firstDesign($taskId, $designHash);
+                if (!$first) {
+                    throw $e;
+                }
+                $this->confirmDesign($first, $worker, $jobId, $scoreRow);
+                $confirmed++;
+                continue;
+            }
             $stored++;
             $touched[$taskId] = true;
             $heldNow = isset($scores['heldOut']) ? (float) $scores['heldOut'] : (isset($scores['quality']) ? (float) $scores['quality'] : 0.0);
@@ -1605,7 +1690,215 @@ final class App
         foreach (array_keys($touched) as $touchedTask) {
             $this->applyTaskPolicy('spikefoundry', $touchedTask);
         }
-        return ['stored' => $stored, 'skipped' => $skipped];
+        return ['stored' => $stored, 'skipped' => $skipped, 'confirmed' => $confirmed];
+    }
+
+    /* ---- Canonical designs ------------------------------------------------------------------
+     * The same circuit gets the same design hash however its parts are listed: object keys sorted, the module and
+     * wire lists sorted (they are sets), numbers with at most 6 decimals. spikefoundry/library.js designHash() writes
+     * the exact same text. */
+    const DESIGN_SET_LISTS = ['modules' => true, 'wires' => true, 'neurons' => true, 'synapses' => true];
+
+    public static function designHash(string $genomeJson): ?string
+    {
+        $value = json_decode($genomeJson);
+        if (!is_object($value) && !is_array($value)) {
+            return null;
+        }
+        return hash('sha256', self::canonText($value, ''));
+    }
+
+    public static function canonText($value, string $key): string
+    {
+        if ($value === null) {
+            return 'null';
+        }
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+        if (is_int($value)) {
+            return (string) $value;
+        }
+        if (is_float($value)) {
+            if (is_nan($value) || is_infinite($value)) {
+                return 'null';
+            }
+            if (floor($value) === $value && abs($value) < 1e15) {
+                return (string) (int) $value;
+            }
+            $text = rtrim(rtrim(sprintf('%.6F', $value), '0'), '.');
+            return $text === '-0' ? '0' : $text;
+        }
+        if (is_string($value)) {
+            return (string) json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        }
+        if (is_array($value)) {
+            $parts = [];
+            foreach ($value as $item) {
+                $parts[] = self::canonText($item, '');
+            }
+            if ($key !== '' && isset(self::DESIGN_SET_LISTS[$key])) {
+                sort($parts, SORT_STRING);
+            }
+            return '[' . implode(',', $parts) . ']';
+        }
+        $vars = get_object_vars($value);
+        $keys = array_map('strval', array_keys($vars));
+        sort($keys, SORT_STRING);
+        $parts = [];
+        foreach ($keys as $k) {
+            $parts[] = json_encode($k, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ':' . self::canonText($vars[$k], $k);
+        }
+        return '{' . implode(',', $parts) . '}';
+    }
+
+    private function firstDesign(string $taskId, string $designHash): ?array
+    {
+        $st = $this->db->prepare('SELECT id, worker_id, job_id, score_json FROM design_records WHERE task_id = ? AND design_hash = ? AND duplicate_of IS NULL ORDER BY seq ASC, created_at ASC LIMIT 1');
+        $st->execute([$taskId, $designHash]);
+        $row = $st->fetch();
+        return $row ?: null;
+    }
+
+    /** A repeat of a known design: the first finder keeps it; the repeat is counted and the confirming computer noted.
+     * A retried upload from the same job is not a confirmation. */
+    private function confirmDesign(array $first, array $worker, string $jobId, array $scoreRow = []): void
+    {
+        $this->keepBetterScore($first, $scoreRow);
+        if ($jobId !== '' && $jobId === (string) ($first['job_id'] ?? '')) {
+            return;
+        }
+        $this->db->prepare('UPDATE design_records SET confirmations = confirmations + 1 WHERE id = ?')->execute([(string) $first['id']]);
+        $this->noteConfirmer((string) $first['id'], (string) $worker['id'], 1, $this->now());
+    }
+
+    /** Scores depend on the job's seed, so a repeat can score higher. The first finder keeps the entry, with the best score seen. */
+    private function keepBetterScore(array $first, array $scoreRow): void
+    {
+        if (!isset($scoreRow['score_json'])) {
+            return;
+        }
+        $old = json_decode((string) ($first['score_json'] ?? ''), true);
+        $new = json_decode((string) $scoreRow['score_json'], true);
+        $oldQ = is_array($old) && isset($old['quality']) ? (float) $old['quality'] : -1.0;
+        $newQ = is_array($new) && isset($new['quality']) ? (float) $new['quality'] : -1.0;
+        if ($newQ > $oldQ) {
+            $this->db->prepare('UPDATE design_records SET score_json = ?, spikes = ?, eval_ms = ? WHERE id = ?')
+                ->execute([(string) $scoreRow['score_json'], (int) ($scoreRow['spikes'] ?? 0), (int) ($scoreRow['eval_ms'] ?? 0), (string) $first['id']]);
+        }
+    }
+
+    private function noteConfirmer(string $designId, string $workerId, int $n, string $at): void
+    {
+        $up = $this->db->prepare('UPDATE design_confirmations SET n = n + ?, last_at = ? WHERE design_id = ? AND worker_id = ?');
+        $up->execute([$n, $at, $designId, $workerId]);
+        if ($up->rowCount() > 0) {
+            return;
+        }
+        try {
+            $this->db->prepare('INSERT INTO design_confirmations (design_id, worker_id, n, first_at, last_at) VALUES (?, ?, ?, ?, ?)')
+                ->execute([$designId, $workerId, $n, $at, $at]);
+        } catch (PDOException $e) {
+            $up->execute([$n, $at, $designId, $workerId]);
+        }
+    }
+
+    /**
+     * One-time (and repeatable) merge for records stored before canonical hashes: fills design_hash, then marks every
+     * later copy of a design as duplicate_of the first one (lowest seq) and counts it as a confirmation. No row is
+     * deleted. Also fills jobs.seed from the job spec. Runs from bin/upgrade.php.
+     */
+    public function mergeDuplicateDesigns(int $budgetSeconds = 900): array
+    {
+        $stop = microtime(true) + max(5, $budgetSeconds);
+        $out = ['genomes' => 0, 'records' => 0, 'groups' => 0, 'marked' => 0, 'canonicalOnly' => 0, 'jobSeeds' => 0, 'finished' => false];
+        $pick = $this->db->prepare('SELECT hash, genome_json FROM design_genomes WHERE design_hash IS NULL LIMIT 1000');
+        $set = $this->db->prepare('UPDATE design_genomes SET design_hash = ? WHERE hash = ?');
+        while (microtime(true) < $stop) {
+            $pick->execute();
+            $rows = $pick->fetchAll();
+            if ($rows === []) {
+                break;
+            }
+            $this->db->beginTransaction();
+            foreach ($rows as $row) {
+                $dh = self::designHash((string) $row['genome_json']);
+                $set->execute([$dh !== null ? $dh : (string) $row['hash'], (string) $row['hash']]);
+                $out['genomes']++;
+            }
+            $this->db->commit();
+        }
+        $out['records'] = $this->db->exec('UPDATE design_records SET design_hash = (SELECT g.design_hash FROM design_genomes g WHERE g.hash = design_records.genome_hash) WHERE design_hash IS NULL');
+        $groups = $this->db->query('SELECT task_id, design_hash, COUNT(*) AS n, COUNT(DISTINCT genome_hash) AS g FROM design_records WHERE design_hash IS NOT NULL AND duplicate_of IS NULL GROUP BY task_id, design_hash HAVING COUNT(*) > 1')->fetchAll();
+        $members = $this->db->prepare('SELECT id, worker_id, job_id, created_at, score_json, spikes, eval_ms FROM design_records WHERE task_id = ? AND design_hash = ? AND duplicate_of IS NULL ORDER BY seq ASC, created_at ASC, id ASC');
+        $mark = $this->db->prepare('UPDATE design_records SET duplicate_of = ?, canon_key = NULL WHERE id = ?');
+        $bump = $this->db->prepare('UPDATE design_records SET confirmations = confirmations + ? WHERE id = ?');
+        foreach ($groups as $group) {
+            if (microtime(true) >= $stop) {
+                return $out;
+            }
+            $members->execute([(string) $group['task_id'], (string) $group['design_hash']]);
+            $rows = $members->fetchAll();
+            if (count($rows) < 2) {
+                continue;
+            }
+            $first = array_shift($rows);
+            $this->db->beginTransaction();
+            $counted = 0;
+            $by = [];
+            $best = $first;
+            foreach ($rows as $row) {
+                $mark->execute([(string) $first['id'], (string) $row['id']]);
+                $out['marked']++;
+                $rq = json_decode((string) $row['score_json'], true);
+                $bq = json_decode((string) $best['score_json'], true);
+                if ((is_array($rq) ? (float) ($rq['quality'] ?? -1) : -1.0) > (is_array($bq) ? (float) ($bq['quality'] ?? -1) : -1.0)) {
+                    $best = $row;
+                }
+                if ((string) ($row['job_id'] ?? '') !== '' && (string) $row['job_id'] === (string) ($first['job_id'] ?? '')) {
+                    continue; // a retried upload of the same job, not a confirmation
+                }
+                $counted++;
+                $w = (string) $row['worker_id'];
+                if (!isset($by[$w])) {
+                    $by[$w] = [0, (string) $row['created_at']];
+                }
+                $by[$w][0]++;
+                $by[$w][1] = (string) $row['created_at'];
+            }
+            if ($counted > 0) {
+                $bump->execute([$counted, (string) $first['id']]);
+            }
+            if ($best !== $first) {
+                $this->keepBetterScore($first, ['score_json' => $best['score_json'], 'spikes' => $best['spikes'], 'eval_ms' => $best['eval_ms']]);
+            }
+            foreach ($by as $w => $info) {
+                $this->noteConfirmer((string) $first['id'], (string) $w, (int) $info[0], (string) $info[1]);
+            }
+            $this->db->commit();
+            $out['groups']++;
+            if ((int) $group['g'] > 1) {
+                $out['canonicalOnly']++;
+            }
+        }
+        $jobs = $this->db->prepare('SELECT id, spec_json FROM jobs WHERE seed IS NULL LIMIT 1000');
+        $setSeed = $this->db->prepare('UPDATE jobs SET seed = ? WHERE id = ?');
+        while (microtime(true) < $stop) {
+            $jobs->execute();
+            $rows = $jobs->fetchAll();
+            if ($rows === []) {
+                break;
+            }
+            $this->db->beginTransaction();
+            foreach ($rows as $row) {
+                $spec = json_decode((string) $row['spec_json'], true);
+                $setSeed->execute([is_array($spec) && isset($spec['seed']) ? (int) $spec['seed'] : 0, (string) $row['id']]);
+                $out['jobSeeds']++;
+            }
+            $this->db->commit();
+        }
+        $out['finished'] = microtime(true) < $stop;
+        return $out;
     }
 
     public function ingestSummary(array $worker, array $summary): void
@@ -1687,13 +1980,13 @@ final class App
         if ($limit > 50) {
             $limit = 50;
         }
-        $st = $this->db->prepare('SELECT id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, worker_id, seed, created_at FROM design_records WHERE task_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') ORDER BY created_at DESC LIMIT 400');
+        $st = $this->db->prepare('SELECT id, genome_hash, design_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, worker_id, seed, created_at, confirmations FROM design_records WHERE task_id = ? AND duplicate_of IS NULL AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') ORDER BY created_at DESC LIMIT 400');
         $st->execute([$taskId]);
         $best = [];
         foreach ($st->fetchAll() as $row) {
             $score = json_decode((string) $row['score_json'], true);
             $quality = is_array($score) && isset($score['quality']) ? (float) $score['quality'] : -1;
-            $hash = (string) $row['genome_hash'];
+            $hash = (string) ($row['design_hash'] ?? '') !== '' ? (string) $row['design_hash'] : (string) $row['genome_hash'];
             if (!isset($best[$hash]) || $quality > $best[$hash]['quality']) {
                 $row['quality'] = $quality;
                 $best[$hash] = $row;
@@ -1736,7 +2029,27 @@ final class App
             if (!preg_match('/^[a-z0-9._-]{1,64}$/', $task)) {
                 continue;
             }
-            foreach ($this->topDesigns($task, $perTask) as $i => $row) {
+            // Different circuits that behave the same (same scores, size and spikes) are one discovery: the first one
+            // found keeps the entry, the rest are counted as equivalent variants.
+            $groups = [];
+            foreach ($this->topDesigns($task, 50) as $row) {
+                $score = json_decode((string) $row['score_json'], true);
+                if (!is_array($score)) {
+                    $score = [];
+                }
+                $sig = sprintf('%.4f|%.4f|%.4f|%d|%d|%d', (float) $row['quality'], (float) ($score['train'] ?? 0), (float) ($score['accuracy'] ?? 0), (int) $row['neurons'], (int) $row['synapses'], (int) $row['spikes']);
+                if (!isset($groups[$sig])) {
+                    $groups[$sig] = ['row' => $row, 'variants' => 0, 'confirmations' => 0];
+                } else {
+                    $groups[$sig]['variants']++;
+                    if (strcmp((string) $row['created_at'], (string) $groups[$sig]['row']['created_at']) < 0) {
+                        $groups[$sig]['row'] = $row;
+                    }
+                }
+                $groups[$sig]['confirmations'] += (int) ($row['confirmations'] ?? 0);
+            }
+            foreach (array_slice(array_values($groups), 0, $perTask) as $i => $group) {
+                $row = $group['row'];
                 $score = json_decode((string) $row['score_json'], true);
                 if (!is_array($score)) {
                     $score = [];
@@ -1760,10 +2073,29 @@ final class App
                     'worker' => (string) $row['worker_id'],
                     'finder' => $names[(string) $row['worker_id']] ?? 'Anonymous',
                     'public' => $genome && (int) ($genome['is_public'] ?? 0) === 1,
+                    'variants' => (int) $group['variants'],
+                    'confirmations' => (int) $group['confirmations'],
+                    'confirmedBy' => $this->confirmersOf((string) $row['id'], (string) $row['worker_id'], $names),
                 ];
             }
         }
         return $out;
+    }
+
+    private function confirmersOf(string $designId, string $finderId, array $names): array
+    {
+        $st = $this->db->prepare('SELECT worker_id FROM design_confirmations WHERE design_id = ? ORDER BY first_at ASC LIMIT 20');
+        $st->execute([$designId]);
+        $out = [];
+        foreach ($st->fetchAll() as $row) {
+            $w = (string) $row['worker_id'];
+            if ($w === $finderId) {
+                continue;
+            }
+            $name = $names[$w] ?? 'Anonymous';
+            $out[$name] = true;
+        }
+        return array_keys($out);
     }
 
     /* A genome is shown to everyone once the owner marks it public, to the owner, and to
@@ -2120,7 +2452,9 @@ final class App
                 if ($task === '') {
                     break;
                 }
-                $seed = (hexdec(substr(hash('sha256', $project['id'] . '|' . $this->now() . '|' . $made), 0, 6)) % 1000000) + 1;
+                // Random and checked against every earlier job: the old time-based seed repeated when two requests
+                // refilled the queue in the same second, so two computers ran the very same search.
+                $seed = $this->freshSeed();
                 $evals = max(0, (int) ($project['evals_per_job'] ?? 0));
                 $seconds = (int) ($project['target_seconds'] ?? 0) > 0 ? (int) $project['target_seconds'] : 180;
                 $keepTop = (int) ($project['keep_top'] ?? 0) > 0 ? (int) $project['keep_top'] : 50;
@@ -2137,6 +2471,7 @@ final class App
                         if ($hashes !== []) {
                             $extra['seedGenomes'] = $hashes;
                         }
+                        $extra['knownHashes'] = $this->knownDesignHashes($task, 100);
                     } catch (InvalidArgumentException $e) {
                         $hashes = [];
                     }

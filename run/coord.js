@@ -171,6 +171,7 @@ function runnerArgs(job, out) {
       mode: spec.mode,
       taskId: spec.taskId,
       seedGenomes: spec.seedGenomes,
+      knownHashes: spec.knownHashes,
       evals: spec.evals,
       targetSeconds: spec.targetSeconds,
       keepTop: spec.keepTop,

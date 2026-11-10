@@ -344,10 +344,10 @@ $bad['genomeHash'] = str_repeat('ab', 32);
 $first = $lib['app']->ingestDesigns($lib['app']->workerByToken($libWorker['token']), [$one, $bad], $lib['app']->protocolHash());
 $again = $lib['app']->ingestDesigns($lib['app']->workerByToken($libWorker['token']), [$one, $better], $lib['app']->protocolHash());
 $top = $lib['app']->topDesigns('coincidence', 5);
-check($first['stored'] === 1 && $first['skipped'] === 1 && $again['stored'] === 1 && $again['skipped'] === 1, 'design uploads dedupe a genome and reject a bad hash');
+check($first['stored'] === 1 && $first['skipped'] === 1 && $again['stored'] === 0 && $again['skipped'] === 1 && $again['confirmed'] === 1, 'design uploads dedupe a genome and reject a bad hash');
 check(count($top) === 1 && $top[0]['quality'] == 0.8 && $lib['app']->designGenome($genomeHash)['genome_json'] === $genomeJson, 'the library keeps one genome and ranks the better score');
-check($lib['app']->designsByWorker($libWorker['workerId']) === 2, 'a computer can see how many designs it found');
-check(count($lib['app']->designExportRows('coincidence', 10)) === 2, 'export returns the compact rows');
+check($lib['app']->designsByWorker($libWorker['workerId']) === 1, 'a computer can see how many designs it found (a repeat of its own design is not a second one)');
+check(count($lib['app']->designExportRows('coincidence', 10)) === 1, 'export returns the compact rows');
 $seeded = $lib['app']->seedJobFromDesigns('sf-vision', 'coincidence', 3, 11);
 $seedRow = $lib['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $lib['db']->quote($seeded))->fetch();
 check($seeded && strpos((string) $seedRow['spec_json'], $genomeHash) !== false, 'the owner can seed a job from the top designs');
@@ -716,6 +716,74 @@ $idx['app']->ingestDesigns($iworker, $batch, $idx['app']->protocolHash());
 $tenth = (int) $idx['db']->query("SELECT COUNT(*) FROM design_events WHERE worker_id = " . $idx['db']->quote((string) $iworker['id']) . " AND kind = 'evals' AND detail = '10 evaluations'")->fetchColumn();
 $hour = (int) $idx['db']->query("SELECT COUNT(*) FROM design_events WHERE worker_id = " . $idx['db']->quote((string) $iworker['id']) . " AND kind = 'hours' AND detail = '1 hours donated'")->fetchColumn();
 check($tenth === 1 && $hour === 1, 'milestones counted within one upload batch still fire once (10 evaluations, 1 hour donated)');
+
+// t44u: one entry per distinct design, repeats counted as confirmations, unique job seeds.
+check(App::designHash('{"modules":[{"id":"in","kind":"input","leak":0.8,"motif":"feedforward","n":5,"sign":1,"thr":1},{"id":"e","kind":"lif","leak":0.3409,"motif":"coincidence","n":1,"sign":1,"thr":2.0069},{"id":"i","kind":"lif","leak":0.7961,"motif":"wta","n":1,"sign":-1,"thr":2.4083},{"id":"out","kind":"output","leak":0.8,"motif":"feedforward","n":1,"sign":1,"thr":1.0}],"v":2,"wires":[{"delay":0,"from":"in","pattern":"all","to":"e","weight":0.8},{"delay":2,"from":"e","pattern":"one","to":"i","weight":-0.1636},{"delay":1,"from":"i","pattern":"lateral","to":"e","weight":1.8566},{"delay":0,"from":"e","pattern":"feedforward","to":"out","weight":1}]}') === '55099528cf18e80b3abafe79a78032bbe43b0bb6b258768a1056e10ab8976b33', 'PHP and the worker compute the same canonical design hash');
+$dd = lab();
+$wa = $dd['app']->workerByToken($dd['app']->enroll('find-a', ['spikefoundry'], 2, true)['token']);
+$wb = $dd['app']->workerByToken($dd['app']->enroll('find-b', ['spikefoundry'], 2, true)['token']);
+$gA = '{"modules":[{"id":"a","n":1},{"id":"b","n":2}],"v":2,"wires":[{"from":"a","to":"b","weight":0.5}]}';
+$gB = '{"modules":[{"id":"b","n":2},{"id":"a","n":1}],"v":2,"wires":[{"from":"a","to":"b","weight":0.5}]}';
+$recA = designRecord($gA, 31, 0.6, 0.6, 'designer', 5); $recA['jobId'] = 'job-a';
+$recB = designRecord($gB, 32, 0.6, 0.6, 'designer', 5); $recB['jobId'] = 'job-b';
+$r1 = $dd['app']->ingestDesigns($wa, [$recA], $dd['app']->protocolHash());
+$dd['clock']->t = '2026-11-09T04:01:00+00:00';
+$r2 = $dd['app']->ingestDesigns($wb, [$recB], $dd['app']->protocolHash());
+$retry = $recA; $retry['seed'] = 99;
+$r3 = $dd['app']->ingestDesigns($wa, [$retry], $dd['app']->protocolHash());
+$rowsDd = $dd['db']->query("SELECT worker_id, confirmations FROM design_records WHERE task_id = 'coincidence'")->fetchAll();
+$conf = $dd['db']->query('SELECT worker_id, n FROM design_confirmations')->fetchAll();
+check($r1['stored'] === 1 && $r2['stored'] === 0 && $r2['confirmed'] === 1 && count($rowsDd) === 1 && $rowsDd[0]['worker_id'] === $wa['id'] && (int) $rowsDd[0]['confirmations'] === 1
+    && count($conf) === 1 && $conf[0]['worker_id'] === $wb['id'], 'the same design from another computer (listed in another order) is one entry: the first finder keeps it and the second is noted as a confirmation');
+check($r3['stored'] === 0 && (int) $dd['db']->query('SELECT confirmations FROM design_records')->fetchColumn() === 1, 'a retried job re-uploading its design adds nothing');
+$disc = $dd['app']->discoveries(12);
+check(count($disc) === 1 && $disc[0]['finder'] === 'find-a' && $disc[0]['confirmations'] === 1 && $disc[0]['confirmedBy'] === ['find-b'], 'Discoveries lists the design once, credits the first finder, and names the computer that confirmed it');
+// Same scores and size but different wiring: one Discoveries entry, the rest counted as equivalent variants.
+$gC = '{"modules":[{"id":"a","n":1},{"id":"b","n":2}],"v":2,"wires":[{"from":"a","to":"b","weight":0.7}]}';
+$recC = designRecord($gC, 33, 0.6, 0.6, 'designer', 5); $recC['jobId'] = 'job-c';
+$dd['app']->ingestDesigns($wb, [$recC], $dd['app']->protocolHash());
+$disc2 = $dd['app']->discoveries(12);
+check(count($disc2) === 1 && $disc2[0]['variants'] === 1 && $disc2[0]['finder'] === 'find-a' && (int) $dd['db']->query('SELECT COUNT(*) FROM design_records')->fetchColumn() === 2, 'circuits that score the same with the same size show as one discovery with an equivalent-variant count, and both records are kept');
+// Records stored by the old code (no design hash): the upgrade marks later copies, keeps every row, and is safe to repeat.
+$old = lab();
+$ow = [];
+foreach (['old-a', 'old-b', 'old-c'] as $nm) {
+    $ow[] = $old['app']->enroll($nm, ['spikefoundry'], 2, true)['workerId'];
+}
+$legacyRow = function (string $id, string $genomeJson, string $worker, string $job, int $seq, float $q) use ($old) {
+    $gh = hash('sha256', $genomeJson);
+    $old['db']->prepare('INSERT OR IGNORE INTO design_genomes (hash, genome_json, version, created_at) VALUES (?, ?, 2, ?)')->execute([$gh, $genomeJson, '2026-11-09T03:00:00+00:00']);
+    $old['db']->prepare("INSERT INTO design_records (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, job_id, arm, seq, created_at) VALUES (?, ?, 'sequence', 'base-1', ?, 5, 5, 0, 1, 'spikefoundry-designer-3', 'p', ?, 1, ?, 'designer', ?, ?)")
+        ->execute([$id, $gh, json_encode(['quality' => $q, 'train' => $q, 'heldOut' => $q, 'accuracy' => 0.75]), $worker, $job, $seq, '2026-11-09T03:00:0' . $seq . '+00:00']);
+};
+$legacyRow('r1', $gA, $ow[0], 'j1', 1, 0.70);
+$legacyRow('r2', $gA, $ow[1], 'j2', 2, 0.72);
+$legacyRow('r3', $gB, $ow[2], 'j3', 3, 0.70);
+$legacyRow('r4', $gA, $ow[0], 'j1', 4, 0.70);
+$legacyRow('r5', $gC, $ow[2], 'j5', 5, 0.65);
+$m1 = $old['app']->mergeDuplicateDesigns(60);
+$m2 = $old['app']->mergeDuplicateDesigns(60);
+$rows = [];
+foreach ($old['db']->query('SELECT id, duplicate_of, confirmations, score_json FROM design_records ORDER BY id')->fetchAll() as $row) {
+    $rows[$row['id']] = $row;
+}
+$best = json_decode((string) $rows['r1']['score_json'], true);
+check(count($rows) === 5 && $rows['r1']['duplicate_of'] === null && $rows['r2']['duplicate_of'] === 'r1' && $rows['r3']['duplicate_of'] === 'r1' && $rows['r4']['duplicate_of'] === 'r1' && $rows['r5']['duplicate_of'] === null
+    && (int) $rows['r1']['confirmations'] === 2 && abs((float) $best['quality'] - 0.72) < 1e-9, 'the upgrade marks later copies (including one listed in another order) as duplicate_of the first find, keeps every row, counts other jobs as confirmations, and keeps the best score');
+check($m1['groups'] === 1 && $m1['marked'] === 3 && $m1['canonicalOnly'] === 1 && $m2['groups'] === 0 && $m2['marked'] === 0, 'the duplicate merge reports what it did and is safe to run again');
+// Every auto job gets its own seed, even when the queue is refilled twice in the same second.
+$sd = lab();
+$seeds = [];
+for ($i = 0; $i < 60; $i++) {
+    $seed = $sd['app']->freshSeed();
+    $sd['app']->createJob('sf-vision', 'Auto coincidence', 0.6, $seed, ['taskId' => 'coincidence', 'knownHashes' => [substr(hash('sha256', (string) $i), 0, 16), 'not-hex']]);
+    $seeds[] = $seed;
+}
+$stored = $sd['db']->query('SELECT COUNT(DISTINCT seed) FROM jobs WHERE seed IS NOT NULL')->fetchColumn();
+$spec = json_decode((string) $sd['db']->query('SELECT spec_json FROM jobs LIMIT 1')->fetchColumn(), true);
+check(count(array_unique($seeds)) === 60 && (int) $stored >= 60 && count($spec['knownHashes'] ?? []) === 1, 'each new job gets a seed no other job used, and carries the short hashes of designs the library already has');
+$src = (string) file_get_contents(dirname(__DIR__) . '/private/src/App.php');
+check(strpos($src, "\$project['id'] . '|' . \$this->now() . '|' . \$made") === false && strpos($src, '$seed = $this->freshSeed();') !== false, 'auto jobs no longer derive their seed from the clock second');
 
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

@@ -17,6 +17,33 @@ function genomeJson(genome) {
 function genomeHash(genome) {
   return crypto.createHash('sha256').update(genomeJson(genome)).digest('hex');
 }
+/* Canonical design hash: the same circuit gives the same hash however its parts are listed. Object keys are
+ * sorted, the module and wire lists are sorted (they are sets), and numbers are written with at most 6 decimals.
+ * PHP App::designHash() writes the exact same text, so the server and the worker agree. */
+const SET_LISTS = { modules: true, wires: true, neurons: true, synapses: true };
+function canonNumber(x) {
+  if (!isFinite(x)) return 'null';
+  if (Number.isInteger(x) && Math.abs(x) < 1e15) return String(x === 0 ? 0 : x);
+  let s = x.toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
+  if (s === '-0') s = '0';
+  return s;
+}
+function canonText(value, key) {
+  if (value === null || value === undefined) return 'null';
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  if (typeof value === 'number') return canonNumber(value);
+  if (typeof value === 'string') return JSON.stringify(value);
+  if (Array.isArray(value)) {
+    const parts = value.map(item => canonText(item, ''));
+    if (key && SET_LISTS[key]) parts.sort();
+    return '[' + parts.join(',') + ']';
+  }
+  const keys = Object.keys(value).sort();
+  return '{' + keys.map(k => JSON.stringify(k) + ':' + canonText(value[k], k)).join(',') + '}';
+}
+function designHash(genome) {
+  return crypto.createHash('sha256').update(canonText(genome, '')).digest('hex');
+}
 function fromEvaluations(rows, meta) {
   meta = meta || {};
   const out = [];
@@ -44,4 +71,4 @@ function fromEvaluations(rows, meta) {
   return out;
 }
 
-module.exports = { stable, genomeJson, genomeHash, fromEvaluations };
+module.exports = { stable, genomeJson, genomeHash, designHash, canonText, fromEvaluations };

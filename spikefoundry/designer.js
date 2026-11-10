@@ -315,6 +315,12 @@ function run(job, outDir, SF) {
   let bestTrain = 0;
   let spentMs = 0;
   let lastProgress = 0;
+  // Designs the library already holds for this task (short canonical hashes from the server) and designs this job
+  // already scored: a repeat is varied a few times, and skipped if it still repeats, so no evaluation is spent twice.
+  const known = new Set(Array.isArray(job.knownHashes) ? job.knownHashes.filter(h => /^[a-f0-9]{16}$/.test(h)) : []);
+  const tried = new Set();
+  let repeatsSkipped = 0;
+  let repeatsVaried = 0;
   if (job.mode === 'propose') {
     const origin = blankFor(taskId);
     while (evals < evalCap) {
@@ -325,6 +331,18 @@ function run(job, outDir, SF) {
         for (let step = 0; step < 3; step++) genome = vary(genome, rng);
       } else {
         genome = vary(propose(taskFeatures, rng, policy, origin), rng);
+        let key = Library.designHash(genome).slice(0, 16);
+        for (let again = 0; again < 4 && (known.has(key) || tried.has(key)); again++) {
+          genome = vary(genome, rng);
+          key = Library.designHash(genome).slice(0, 16);
+          repeatsVaried++;
+        }
+        if (known.has(key) || tried.has(key)) {
+          repeatsSkipped++;
+          if (repeatsSkipped > evalCap || Date.now() - started >= budgetMs) { stopReason = 'repeats'; break; }
+          continue;
+        }
+        if (tried.size < 300000) tried.add(key);
       }
       const score = scoreGenome(genome, taskId, job.seed || 1);
       const item = {
@@ -453,6 +471,8 @@ function run(job, outDir, SF) {
     keepTop: keepTop,
     keepRandom: keepRandom,
     stopReason: job.mode === 'propose' ? stopReason : 'none',
+    repeatsSkipped: repeatsSkipped,
+    repeatsVaried: repeatsVaried,
     wallMs: Date.now() - started,
     engineVersion: DESIGNER_VERSION,
     jobId: job.id || 'designer',
