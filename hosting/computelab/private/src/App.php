@@ -244,6 +244,22 @@ final class App
         if ($freshAuto) {
             $this->db->exec("UPDATE projects SET auto_jobs = 1 WHERE id = 'spikefoundry'");
         }
+        $this->ensureColumn('workers', 'last_reject', 'TEXT');
+        $this->db->exec("CREATE TABLE IF NOT EXISTS worker_diagnostics (
+            id $auto,
+            worker_id VARCHAR(191) NOT NULL,
+            kind VARCHAR(16) NOT NULL,
+            ok INTEGER NOT NULL,
+            summary TEXT NOT NULL,
+            body_json TEXT NOT NULL,
+            created_at VARCHAR(40) NOT NULL
+        )");
+        $this->db->exec('CREATE TABLE IF NOT EXISTS setup_codes (
+            id VARCHAR(191) PRIMARY KEY,
+            worker_id VARCHAR(191) NOT NULL,
+            sealed TEXT NOT NULL,
+            expires_at VARCHAR(40) NOT NULL
+        )');
         $this->seed();
         $this->refreshProtocolPins();
         $this->purgePlaceholderDesigns();
@@ -2201,5 +2217,225 @@ final class App
             $out[count($out) - 1]['task_id'] = $task;
         }
         return $out;
+    }
+    /* ---- Remote diagnostics ------------------------------------------------------------
+     * Workers report what went wrong (startup, error, crash, setup). Reports are size-capped,
+     * scrubbed of anything that looks like a credential, and only the newest 30 per computer
+     * are kept. */
+    const DIAG_KINDS = ['startup', 'error', 'crash', 'setup'];
+    const DIAG_MAX_BYTES = 16384;
+
+    public static function scrubText(string $text): string
+    {
+        $text = preg_replace('/(Bearer|Authorization:?|token[=:]|password[=:]|passwd[=:]|secret[=:])\s*\S+/i', '$1 [redacted]', $text);
+        /* Long opaque strings look like credentials. Git commit ids (40 hex) and SHA-256
+         * hashes (64 hex) stay readable; worker tokens are 48 hex and are removed. */
+        $text = preg_replace_callback('/\b[A-Za-z0-9_\-]{32,}\b/', function ($m) {
+            $s = $m[0];
+            return (ctype_xdigit($s) && (strlen($s) === 40 || strlen($s) === 64)) ? $s : '[redacted]';
+        }, (string) $text);
+        return (string) $text;
+    }
+
+    private static function cleanDiag($value, int $depth = 0)
+    {
+        if ($depth > 3) {
+            return null;
+        }
+        if (is_array($value)) {
+            $out = [];
+            $n = 0;
+            foreach ($value as $k => $v) {
+                if (++$n > 60) {
+                    break;
+                }
+                if (is_string($k) && preg_match('/token|password|secret|cookie|auth/i', $k)) {
+                    continue;
+                }
+                $out[is_int($k) ? $k : substr((string) $k, 0, 40)] = self::cleanDiag($v, $depth + 1);
+            }
+            return $out;
+        }
+        if (is_string($value)) {
+            return self::scrubText(substr($value, 0, 2000));
+        }
+        if (is_bool($value) || is_int($value) || is_float($value) || $value === null) {
+            return $value;
+        }
+        return null;
+    }
+
+    public function saveDiagnostics(string $workerId, array $report, string $secret = ''): array
+    {
+        if ($secret !== '') {
+            $report = json_decode(str_replace($secret, '[redacted]', (string) json_encode($report)), true) ?: [];
+        }
+        $kind = (string) ($report['kind'] ?? '');
+        if (!in_array($kind, self::DIAG_KINDS, true)) {
+            throw new InvalidArgumentException('kind must be one of ' . implode(', ', self::DIAG_KINDS));
+        }
+        $ok = !empty($report['ok']) ? 1 : 0;
+        $summary = self::scrubText(substr(trim((string) ($report['summary'] ?? '')), 0, 300));
+        if ($summary === '') {
+            $summary = $ok ? ucfirst($kind) . ' report' : ucfirst($kind) . ' problem';
+        }
+        $body = self::cleanDiag($report);
+        unset($body['kind'], $body['summary'], $body['ok']);
+        if (isset($body['log']) && is_array($body['log'])) {
+            $body['log'] = array_map(function ($l) {
+                return substr((string) $l, 0, 300);
+            }, array_slice(array_values($body['log']), -50));
+        }
+        $json = json_encode($body);
+        while (strlen((string) $json) > self::DIAG_MAX_BYTES && isset($body['log']) && count($body['log']) > 0) {
+            array_shift($body['log']);
+            $json = json_encode($body);
+        }
+        if (strlen((string) $json) > self::DIAG_MAX_BYTES) {
+            unset($body['log'], $body['lastError']['stack']);
+            $json = json_encode($body);
+        }
+        if (strlen((string) $json) > self::DIAG_MAX_BYTES) {
+            $json = json_encode(['truncated' => true]);
+        }
+        $now = $this->now();
+        $this->db->prepare('INSERT INTO worker_diagnostics (worker_id, kind, ok, summary, body_json, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+            ->execute([$workerId, $kind, $ok, $summary, $json, $now]);
+        $ids = $this->db->prepare('SELECT id FROM worker_diagnostics WHERE worker_id = ? ORDER BY id DESC');
+        $ids->execute([$workerId]);
+        $all = $ids->fetchAll(PDO::FETCH_COLUMN);
+        if (count($all) > 30) {
+            $cut = (int) $all[29];
+            $this->db->prepare('DELETE FROM worker_diagnostics WHERE worker_id = ? AND id < ?')->execute([$workerId, $cut]);
+        }
+        return ['ok' => true, 'stored' => $kind];
+    }
+
+    public function latestDiagnostics(string $workerId, int $limit = 5): array
+    {
+        $limit = max(1, min(30, $limit));
+        $q = $this->db->prepare('SELECT id, kind, ok, summary, body_json, created_at FROM worker_diagnostics WHERE worker_id = ? ORDER BY id DESC LIMIT ' . $limit);
+        $q->execute([$workerId]);
+        return $q->fetchAll();
+    }
+
+    /** Remember why the server turned a worker away (protocol mismatch), for the health line. */
+    public function noteReject(string $workerId, string $what): void
+    {
+        $this->db->prepare('UPDATE workers SET last_reject = ? WHERE id = ?')
+            ->execute([json_encode(['what' => substr($what, 0, 40), 'at' => $this->now()]), $workerId]);
+    }
+
+    /** One plain-English line about whether a computer is working, plus a fix hint. */
+    public function healthOf(array $worker): array
+    {
+        $now = strtotime($this->now());
+        $id = (string) $worker['id'];
+        if ((int) ($worker['revoked'] ?? 0) === 1) {
+            return ['level' => 'bad', 'line' => 'Token revoked', 'hint' => 'Re-run setup with a new link to use this computer again.'];
+        }
+        $seen = !empty($worker['last_seen']) ? strtotime((string) $worker['last_seen']) : 0;
+        $created = !empty($worker['created_at']) ? strtotime((string) $worker['created_at']) : 0;
+        $age = $seen > 0 ? $now - $seen : null;
+        $online = $age !== null && $age <= 180;
+        /* enroll() stamps last_seen at registration; a real heartbeat moves it later or
+         * leaves a runtime report behind. */
+        $beat = ($seen - $created) > 5 || trim((string) ($worker['runtime_json'] ?? '')) !== '';
+        $reject = json_decode((string) ($worker['last_reject'] ?? ''), true);
+        $rejectRecent = is_array($reject) && isset($reject['at']) && ($now - strtotime((string) $reject['at'])) < 900 && (!$seen || strtotime((string) $reject['at']) >= $seen - 60);
+        $diags = $this->latestDiagnostics($id, 1);
+        $last = $diags[0] ?? null;
+        $lastBody = $last ? json_decode((string) $last['body_json'], true) : null;
+        $hintFrom = function (string $fallback) use ($lastBody): string {
+            return is_array($lastBody) && !empty($lastBody['hint']) ? (string) $lastBody['hint'] : $fallback;
+        };
+        $mins = $age !== null ? max(1, (int) round($age / 60)) : 0;
+        $span = $mins >= 120 ? round($mins / 60) . ' h' : $mins . ' min';
+        if ($rejectRecent && ($reject['what'] ?? '') === 'protocol') {
+            return ['level' => 'bad', 'line' => 'Protocol mismatch, needs update', 'hint' => 'The worker downloads the new code by itself within a few minutes. If this stays, re-run the setup file.'];
+        }
+        if ($online && $beat) {
+            if ($last && (int) $last['ok'] === 0 && $last['kind'] !== 'setup' && ($now - strtotime((string) $last['created_at'])) < 600) {
+                return ['level' => 'warn', 'line' => 'Running, recovered from an error: ' . $last['summary'], 'hint' => $hintFrom('')];
+            }
+            return ['level' => 'ok', 'line' => 'Healthy', 'hint' => ''];
+        }
+        $lastAt = $last ? strtotime((string) $last['created_at']) : 0;
+        if ($last && (int) $last['ok'] === 0 && $lastAt >= $seen - 120) {
+            if ($last['kind'] === 'setup') {
+                return ['level' => 'bad', 'line' => 'Setup failed: ' . $last['summary'], 'hint' => $hintFrom('Fix the problem above, then run the setup file again.')];
+            }
+            if (is_array($lastBody) && isset($lastBody['reach']) && $lastBody['reach'] === false) {
+                return ['level' => 'bad', 'line' => "Can't reach server", 'hint' => $hintFrom('Check the internet connection or firewall on that computer.')];
+            }
+            return ['level' => 'bad', 'line' => ($beat ? 'Stopped after checking in: ' : 'Not running: ') . 'worker crashed (' . $last['summary'] . ')', 'hint' => $hintFrom('Run the setup file again. If it keeps crashing, send the owner the Diagnostics shown here.')];
+        }
+        if ($online && !$beat) {
+            return ['level' => 'warn', 'line' => 'Registered, waiting for the worker program to start', 'hint' => 'Finish the setup file on that computer.'];
+        }
+        if (!$beat) {
+            return ['level' => 'bad', 'line' => 'Not running: registered ' . $span . ' ago, but the worker program never checked in', 'hint' => 'Run the setup file again on that computer and read its last lines. It needs Node.js 18 or newer for the account that runs it.'];
+        }
+        return ['level' => $mins > 60 ? 'bad' : 'warn', 'line' => 'Not running: no heartbeat for ' . $span, 'hint' => 'Is the computer on and awake? If it is, run the setup file again.'];
+    }
+
+    /* ---- One-line setup commands ---------------------------------------------------------
+     * "curl ... /s/CODE | sh" needs the worker token inside the script, but the database only keeps token hashes.
+     * A setup code seals the token with a key derived from the code itself (AES-256-GCM); the row is keyed by the
+     * code's hash and expires after an hour. Without the code, the row is useless. */
+    const SETUP_CODE_SECONDS = 3600;
+
+    public function makeSetupCode(string $workerId, string $token): array
+    {
+        $this->db->prepare('DELETE FROM setup_codes WHERE expires_at < ?')->execute([$this->now()]);
+        $code = rtrim(strtr(base64_encode(random_bytes(15)), '+/', 'Ab'), '=');
+        $key = hash('sha256', 'computelab-setup|' . $code, true);
+        $iv = random_bytes(12);
+        $tag = '';
+        $cipher = openssl_encrypt($token, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+        if ($cipher === false) {
+            throw new RuntimeException('Could not seal the setup code.');
+        }
+        $expires = gmdate('c', strtotime($this->now()) + self::SETUP_CODE_SECONDS);
+        $this->db->prepare('INSERT INTO setup_codes (id, worker_id, sealed, expires_at) VALUES (?, ?, ?, ?)')
+            ->execute([hash('sha256', $code), $workerId, base64_encode($iv . $tag . $cipher), $expires]);
+        return ['code' => $code, 'expires' => $expires];
+    }
+
+    /** Returns the token for a live setup code, or null when the code is unknown or expired. */
+    public function tokenForSetupCode(string $code): ?string
+    {
+        if (!preg_match('/^[A-Za-z0-9]{16,40}$/', $code)) {
+            return null;
+        }
+        $st = $this->db->prepare('SELECT sealed, expires_at FROM setup_codes WHERE id = ?');
+        $st->execute([hash('sha256', $code)]);
+        $row = $st->fetch();
+        if (!$row || strtotime((string) $row['expires_at']) < strtotime($this->now())) {
+            return null;
+        }
+        $raw = base64_decode((string) $row['sealed'], true);
+        if ($raw === false || strlen($raw) < 29) {
+            return null;
+        }
+        $key = hash('sha256', 'computelab-setup|' . $code, true);
+        $token = openssl_decrypt(substr($raw, 28), 'aes-256-gcm', $key, OPENSSL_RAW_DATA, substr($raw, 0, 12), substr($raw, 12, 16));
+        if (!is_string($token) || !preg_match('/^[a-f0-9]{32,128}$/', $token)) {
+            return null;
+        }
+        return $this->workerByToken($token) ? $token : null;
+    }
+
+    /** New token for an existing computer, so its owner can get a fresh setup command. The old token stops working. */
+    public function rotateToken(string $workerId): string
+    {
+        $token = bin2hex(random_bytes(24));
+        $st = $this->db->prepare('UPDATE workers SET token_hash = ? WHERE id = ? AND revoked = 0');
+        $st->execute([hash('sha256', $token), $workerId]);
+        if ($st->rowCount() < 1) {
+            throw new InvalidArgumentException('That computer is unknown or revoked.');
+        }
+        $this->db->prepare('DELETE FROM setup_codes WHERE worker_id = ?')->execute([$workerId]);
+        return $token;
     }
 }

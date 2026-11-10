@@ -37,6 +37,22 @@ function newerCode() {
 }
 const keyOf = s => JSON.stringify([s.version, WC.dqArgs(s, NAME), s.mode]);
 let child = null, childStart = 0, fails = 0, restartWhy = '', backoffTimer = null, S, KEY, FORCE;
+let errTail = [];
+/* Compute Lab: tell the coordinator when the worker crashes (exit code + last stderr lines), so the owner sees why a
+ * computer went quiet. run/diag.js scrubs the token, rate-limits, and caps the size. Never blocks the restart. */
+function reportCrash(code, sig, ran) {
+  try {
+    const D = require('./diag.js');
+    const tok = D.tokenFrom(process.env.BB_COORDINATOR_TOKEN_FILE || path.join(ST, 'coordinator-token'));
+    const last = errTail.length ? errTail[errTail.length - 1] : 'no error output';
+    const tooOld = D.nodeMajor() < 18;
+    const rep = D.collect({ kind: 'crash', ok: false, exitCode: code == null ? String(sig) : code, ranSeconds: Math.round(ran / 1000), restarts: fails,
+      summary: (tooOld ? 'Node ' + process.version + ' is too old; ' : '') + 'coord.js exited (' + (code == null ? sig : code) + ') after ' + Math.round(ran / 1000) + ' s: ' + last.slice(0, 160),
+      hint: tooOld ? 'Install Node.js 20 LTS and run the setup command again.' : '',
+      stderrTail: errTail.slice(-20), log: D.readFileTail(path.join(ST, 'worker.log'), 30) });
+    D.post(process.env.BB_COORDINATOR_URL, tok, rep, err => { if (err) say('could not send the crash report: ' + err.message); });
+  } catch (e) { say('crash report failed: ' + e.message); }
+}
 function startDq() {
   backoffTimer = null; if (child) return;
   try { fs.unlinkSync(STOP); } catch (e) {}
@@ -46,8 +62,11 @@ function startDq() {
     : ['run/dq.js'].concat(WC.dqArgs(S, NAME), ['--stop-file', STOP]);
   say(`starting ${coord ? 'coord.js' : 'dq.js'} ${args.slice(1).join(' ')} (code ${git(['rev-parse', '--short', 'HEAD'])}, config ${S.version}, ${TYPE}${S.mode === 'pause' ? ', paused' : ''})`);
   childStart = Date.now(); status(S.mode === 'pause' ? 'paused' : 'running-dq', 'code ' + git(['rev-parse', '--short', 'HEAD']) + ', config ' + S.version);
-  child = cp.spawn(RUNTIME, args, { cwd: ROOT, stdio: 'inherit', env: ENV, detached: process.platform !== 'win32' });
-  child.on('error', e => say('cannot start dq.js: ' + e.message));
+  ENV.BB_SUP_RESTARTS = String(fails);
+  child = cp.spawn(RUNTIME, args, { cwd: ROOT, stdio: coord ? ['ignore', 'inherit', 'pipe'] : 'inherit', env: ENV, detached: process.platform !== 'win32' });
+  errTail = [];
+  if (coord && child.stderr) child.stderr.on('data', d => { process.stderr.write(d); for (const l of String(d).split(/\r?\n/)) if (l.trim()) { errTail.push(l.slice(0, 300)); if (errTail.length > 40) errTail.shift(); } });
+  child.on('error', e => { say('cannot start dq.js: ' + e.message); errTail.push('spawn error: ' + e.message); });
   const pg = child.pid;
   child.on('exit', (code, sig) => {
     child = null; const ran = Date.now() - childStart;
@@ -58,6 +77,7 @@ function startDq() {
     if (code === 10) { say('dq.js saw newer code; restarting via launcher'); process.exit(10); }
     if (code === 3) { say('GitHub refused the token (exit 3). Put a valid fine-grained token (Contents read/write on TravisA9/bugbrain-neurons) in ' + path.join(ST, 'token')); process.exit(3); }
     if (ran > 600e3) fails = 0; fails++;
+    if (process.env.BB_COORDINATOR_URL) reportCrash(code, sig, ran);
     const w = Math.min(600e3, 15e3 * 2 ** Math.min(fails - 1, 6));
     say(`dq.js exited (${code ?? sig}) after ${Math.round(ran / 1000)} s; restarting in ${Math.round(w / 1000)} s`);
     backoffTimer = setTimeout(startDq, w);

@@ -201,6 +201,14 @@ function layout(string $title, string $body, string $base, array $nav = []): str
         .filters a{text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--ink)}
         .filters a.is-current{background:var(--ink);color:#fffaf3}
         .quiet{font-size:14px}
+        .cmd{display:flex;gap:8px;align-items:stretch;margin:10px 0;max-width:100%}
+        .cmd pre{flex:1;margin:0;background:#241c16;color:#f3ecdf;border-radius:12px;padding:12px 14px;font:14px/1.45 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-all}
+        .cmd button{border-radius:12px;flex:none}
+        .health{font-weight:650}.health.bad{color:var(--clay)}.health.ok{color:var(--moss)}.health.warn{color:#8a5a00}
+        details.diag{margin:10px 0;border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:#fff}
+        details.diag summary{cursor:pointer;font-weight:650}
+        details.diag pre{background:#f7f1e8;border-radius:8px;padding:8px;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto}
+        .kv{display:grid;grid-template-columns:140px 1fr;gap:2px 10px;font-size:14px}.kv b{color:var(--muted);font-weight:600}
         @media (max-width:720px){
           h1{font-size:30px}.stats{grid-template-columns:1fr}
           table,tbody,tr,td{display:block;width:100%}
@@ -283,22 +291,116 @@ function pageJoin(App $app, string $error = '', array $nav = []): string
     return layout('Join Compute Lab', $body, $base, $nav);
 }
 
-function pageToken(App $app, string $name, string $token, array $nav = []): string
+function copyScript(): string
+{
+    return '<script>document.querySelectorAll("[data-copy]").forEach(function(b){b.addEventListener("click",function(){var t=document.getElementById(b.getAttribute("data-copy")).textContent;function done(){var o=b.textContent;b.textContent="Copied";setTimeout(function(){b.textContent=o;},1600);}if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(done,function(){fallback();});}else fallback();function fallback(){var a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy");done();}catch(e){}document.body.removeChild(a);}});});</script>';
+}
+
+function commandBox(string $id, string $command): string
+{
+    return '<div class="cmd"><pre id="' . h($id) . '">' . h($command) . '</pre><button type="button" data-copy="' . h($id) . '">Copy</button></div>';
+}
+
+function healthBlock(array $health): string
+{
+    return '<p class="health ' . h((string) $health['level']) . '" role="status">' . h((string) $health['line']) . '</p>'
+        . ($health['hint'] !== '' ? '<p class="quiet">' . h((string) $health['hint']) . '</p>' : '');
+}
+
+function newSetupForm(string $action, string $csrf, string $id): string
+{
+    return '<form method="post" action="' . h($action) . '" onsubmit="return confirm(\'This makes a new setup command and replaces this computer\\\'s token. Run the new command on that computer. Continue?\')"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h($id) . '"><button type="submit">New setup command</button></form>';
+}
+
+function diagnosticsPanel(App $app, string $workerId): string
+{
+    $reports = $app->latestDiagnostics($workerId, 6);
+    if ($reports === []) {
+        return '<details class="diag"><summary>Diagnostics</summary><p class="muted quiet">No report from this computer yet. Workers send one at startup, on errors, and when setup finishes.</p></details>';
+    }
+    $r = $reports[0];
+    $b = json_decode((string) $r['body_json'], true);
+    if (!is_array($b)) {
+        $b = [];
+    }
+    $kv = '';
+    $row = function (string $k, $v) use (&$kv): void {
+        if ($v === null || $v === '' || $v === []) {
+            return;
+        }
+        if (is_bool($v)) {
+            $v = $v ? 'yes' : 'no';
+        }
+        if (is_array($v)) {
+            $v = json_encode($v);
+        }
+        $kv .= '<b>' . h($k) . '</b><span>' . h((string) $v) . '</span>';
+    };
+    $row('OS', trim((string) ($b['distro'] ?? '') . ' · ' . (string) ($b['os'] ?? ''), ' ·'));
+    $row('Arch', $b['arch'] ?? null);
+    $row('Node', $b['node'] ?? null);
+    $row('Cores / RAM', isset($b['cores']) ? $b['cores'] . ' cores · ' . ($b['ramGB'] ?? '?') . ' GB' : null);
+    $row('Code', $b['codeSha'] ?? null);
+    $row('Protocol', isset($b['protocolMatch']) ? ($b['protocolMatch'] ? 'matches the server' : 'does not match the server') : (isset($b['protocolHash']) ? substr((string) $b['protocolHash'], 0, 16) : null));
+    $row('Install', $b['install'] ?? null);
+    $row('Restarts', $b['restarts'] ?? null);
+    $row('Exit code', $b['exitCode'] ?? null);
+    $row('Fix hint', $b['hint'] ?? null);
+    $html = '<details class="diag"><summary>Diagnostics · ' . h((string) $r['kind']) . ' report ' . h(agoText(strtotime($app->now()) - strtotime((string) $r['created_at']))) . '</summary>'
+        . '<p class="' . ((int) $r['ok'] === 1 ? 'health ok' : 'err') . '">' . h((string) $r['summary']) . '</p><div class="kv">' . $kv . '</div>';
+    if (isset($b['checks']) && is_array($b['checks'])) {
+        $lines = [];
+        foreach ($b['checks'] as $c) {
+            if (is_array($c)) {
+                $lines[] = (!empty($c['ok']) ? 'OK    ' : 'FAIL  ') . ($c['name'] ?? '') . ': ' . ($c['detail'] ?? '');
+            }
+        }
+        $html .= '<h3>Setup checks</h3><pre>' . h(implode("\n", $lines)) . '</pre>';
+    }
+    if (isset($b['lastError']) && is_array($b['lastError'])) {
+        $html .= '<h3>Last error</h3><pre>' . h((string) ($b['lastError']['message'] ?? '') . "\n" . (string) ($b['lastError']['stack'] ?? '')) . '</pre>';
+    }
+    if (!empty($b['stderrTail']) && is_array($b['stderrTail'])) {
+        $html .= '<h3>Error output</h3><pre>' . h(implode("\n", array_map('strval', $b['stderrTail']))) . '</pre>';
+    }
+    if (!empty($b['log']) && is_array($b['log'])) {
+        $html .= '<h3>Last log lines</h3><pre>' . h(implode("\n", array_map('strval', $b['log']))) . '</pre>';
+    }
+    if (count($reports) > 1) {
+        $html .= '<h3>Earlier reports</h3>';
+        foreach (array_slice($reports, 1) as $old) {
+            $html .= '<p class="quiet">' . h(agoText(strtotime($app->now()) - strtotime((string) $old['created_at']))) . ' · ' . h((string) $old['kind']) . ' · ' . h((string) $old['summary']) . '</p>';
+        }
+    }
+    return $html . '</details>';
+}
+
+function pageToken(App $app, string $name, string $token, array $nav = [], string $command = '', string $expires = ''): string
 {
     $base = $app->base();
+    $unix = '';
+    if ($command !== '') {
+        $unix = '<h3>Mac or Linux: paste this into a terminal</h3>'
+            . commandBox('setup-cmd', $command)
+            . '<p class="quiet">It downloads the setup for this computer and runs it. Nothing needs to be made executable. The command works until ' . h(gmdate('H:i', strtotime($expires))) . ' UTC (one hour); after that, get a new one from My computer.</p>';
+    }
     $body = '<h1>Set up ' . h($name) . '</h1>'
-        . '<p>This token is shown once. It is not a GitHub password. The download files contain it so the setup can save it. Do not share those files.</p>'
+        . '<p>This token is shown once. It is not a GitHub password. The setup command and the download files contain it so the setup can save it. Do not share them.</p>'
         . '<section><h2>Token</h2><p><code>' . h($token) . '</code></p></section>'
         . '<section><h2>One step on this computer</h2>'
-        . '<p>Download a setup file, then open it. It checks for Node.js, downloads the worker, saves the token in your home folder, and starts the background program.</p>'
-        . '<form method="post" action="' . h($base) . '/join/setup"><input type="hidden" name="token" value="' . h($token) . '"><input type="hidden" name="os" value="windows"><button type="submit">Download Windows setup</button></form>'
+        . '<p>The setup checks for Node.js 18 or newer and git, downloads the worker, saves the token in your home folder, starts the background program, and then checks that the coordinator accepts it. It prints a plain result at the end.</p>'
+        . $unix
+        . '<h3>Mac or Linux: or download the file</h3>'
         . '<form method="post" action="' . h($base) . '/join/setup"><input type="hidden" name="token" value="' . h($token) . '"><input type="hidden" name="os" value="unix"><button type="submit">Download Mac or Linux setup</button></form>'
-        . '<p class="muted">Windows: double-click the .cmd file. Mac or Linux: open Terminal and run <code>sh ~/Downloads/computelab-setup.sh</code>.</p>'
-        . '<p>If Node.js is missing, the file tells you and links to <a href="https://nodejs.org/">nodejs.org</a>. Git is needed too, from <a href="https://git-scm.com/">git-scm.com</a>.</p>'
+        . '<p class="quiet">Then run it in a terminal (no chmod needed):</p>' . commandBox('setup-file', 'sh ~/Downloads/computelab-setup.sh')
+        . '<h3>Windows</h3>'
+        . '<form method="post" action="' . h($base) . '/join/setup"><input type="hidden" name="token" value="' . h($token) . '"><input type="hidden" name="os" value="windows"><button type="submit">Download Windows setup</button></form>'
+        . '<p class="muted">Windows: double-click the .cmd file.</p>'
+        . '<p>If Node.js is missing or too old, the setup says so and links to <a href="https://nodejs.org/">nodejs.org</a>. Git is needed too, from <a href="https://git-scm.com/">git-scm.com</a>.</p>'
         . '<h2>How to stop</h2>'
         . '<p>On My computer, turn the switch Off. The job already running can finish. No new job starts.</p>'
-        . '<p>Mac or Linux can also run <code>~/.bugbrain/stop-computelab.sh</code>. Windows can close the Compute Lab task from Task Manager, using the process id in <code>%USERPROFILE%\\.bugbrain\\computelab.pid</code>.</p>'
-        . '<p><a class="cta" href="' . h($base) . '/me">My computer</a></p></section>';
+        . '<p>Mac or Linux can also run <code>sh ~/.bugbrain/stop-computelab.sh</code>. Windows can close the Compute Lab task from Task Manager, using the process id in <code>%USERPROFILE%\\.bugbrain\\computelab.pid</code>.</p>'
+        . '<p><a class="cta" href="' . h($base) . '/me">My computer</a></p></section>' . copyScript();
     return layout('Worker token', $body, $base, $nav);
 }
 
@@ -346,6 +448,7 @@ function pageMe(App $app, array $computers, string $csrf, array $nav): string
         $shown = (int) ($worker['public_credit'] ?? 1) === 1;
         $cards .= '<section><h2>' . h((string) $worker['name']) . '</h2>'
             . '<p class="status-line" role="status">' . h($state['line']) . '</p>'
+            . healthBlock($app->healthOf($worker))
             . '<p>' . h($seen) . '</p>'
             . '<p>' . $leaseLine . '</p>' . $bar
             . '<form method="post" action="' . h($base) . '/me/pause"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $worker['id']) . '"><input type="hidden" name="paused" value="' . $next . '">'
@@ -354,7 +457,9 @@ function pageMe(App $app, array $computers, string $csrf, array $nav): string
             . '<p>' . h((string) $totals['done']) . ' jobs done · ' . h($time) . ' of compute</p>'
             . '<p>Designs found by your computer: ' . h((string) $found) . '</p>'
             . '<form method="post" action="' . h($base) . '/me/credit"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $worker['id']) . '"><input type="hidden" name="shown" value="' . ($shown ? '0' : '1') . '"><button type="submit">' . ($shown ? 'Show my designs as Anonymous' : 'Show my name on discoveries') . '</button></form>'
-            . '<h3>Recent results</h3>' . $rows . '</section>';
+            . '<h3>Recent results</h3>' . $rows
+            . '<h3>Set it up again</h3><p class="quiet">If this computer stopped working, get a new setup command and run it on that computer. It shows what is wrong if something is missing.</p>'
+            . newSetupForm($base . '/me/setup-command', $csrf, (string) $worker['id']) . '</section>';
     }
     if ($cards === '') {
         $cards = '<section><p>No computer is linked to this browser yet. Use Add a computer above to set one up.</p></section>';
@@ -553,11 +658,13 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         $controls = '';
         if (!$revoked) {
             $controls = '<form method="post" action="' . h($base) . '/owner/pause"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><input type="hidden" name="paused" value="' . ($state['paused'] ? '0' : '1') . '"><button type="submit">' . ($state['paused'] ? 'Resume' : 'Pause') . '</button></form>'
-                . '<form method="post" action="' . h($base) . '/owner/revoke"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><button type="submit">Revoke</button></form>';
+                . '<form method="post" action="' . h($base) . '/owner/revoke"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><button type="submit">Revoke</button></form>'
+                . newSetupForm($base . '/owner/setup-command', $csrf, (string) $w['id']);
         }
         $people .= '<section><h2>' . h((string) $w['name']) . '</h2><p>' . h($revoked ? 'Token revoked' : $state['line']) . '</p>'
             . '<p class="muted">' . ($state['ago'] !== '' ? 'Last seen ' . h($state['ago']) : 'Not seen yet') . ' · current job ' . h($job) . ' · ' . h((string) $done['done']) . ' jobs done</p>'
-            . $controls . '</section>';
+            . healthBlock($app->healthOf($w))
+            . $controls . diagnosticsPanel($app, (string) $w['id']) . '</section>';
     }
     $body = $err . '<h1>Owner</h1><p class="muted">SpikeFoundry is priority 2 and BugBrain is priority 1 unless you change them. A running job stays with that computer while its heartbeat renews the lease. A job that fails three times is held until you requeue it. Within a project, a computer takes the highest-priority queued job that fits its batch limit.</p>'
         . $create . $proj

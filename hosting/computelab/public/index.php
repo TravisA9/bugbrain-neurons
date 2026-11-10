@@ -142,6 +142,34 @@ function coord_public_url(App $app): string
     return $scheme . '://' . $host . $app->base();
 }
 
+/** A one-hour "curl ... | sh" command for a computer whose token is known right now (just enrolled or just rotated). */
+function coord_setup_command(App $app, string $token): array
+{
+    $worker = $app->workerByToken($token);
+    if (!$worker) {
+        return ['command' => '', 'expires' => ''];
+    }
+    $made = $app->makeSetupCode((string) $worker['id'], $token);
+    $url = coord_public_url($app) . '/s/' . $made['code'];
+    return ['command' => '(curl -fsSL ' . $url . ' || wget -qO- ' . $url . ') | sh', 'expires' => $made['expires']];
+}
+
+/** The participant session plus the participant id, or null. */
+function coord_participant(App $app): ?array
+{
+    $session = $app->sessionById(coord_cookie('lab_participant'));
+    if (!$session || $session['role'] !== 'participant') {
+        return null;
+    }
+    $st = $app->db->prepare('SELECT * FROM workers WHERE id = ?');
+    $st->execute([$session['subject']]);
+    $self = $st->fetch();
+    if (!$self) {
+        return null;
+    }
+    return ['session' => $session, 'pid' => $app->ensureParticipant($self)];
+}
+
 function coord_bearer(): string
 {
     $h = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
@@ -222,6 +250,23 @@ try {
         echo (string) $row['genome_json'];
         return;
     }
+    if (preg_match('#^/s/([A-Za-z0-9]{16,40})$#', $path, $m) && $method === 'GET') {
+        header('Content-Type: text/plain; charset=utf-8');
+        header('Cache-Control: no-store');
+        header('X-Content-Type-Options: nosniff');
+        $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? 'local');
+        if (!$app->rateLimit('setup:' . $ip, (int) $app->config['login_per_minute'])) {
+            echo "echo 'Too many setup downloads from this network. Wait a minute and run the command again.'; exit 1\n";
+            return;
+        }
+        $token = $app->tokenForSetupCode($m[1]);
+        if ($token === null) {
+            echo "echo 'This Compute Lab setup command has expired or was replaced. Get a new one from My computer on the Compute Lab page.'; exit 1\n";
+            return;
+        }
+        echo setup_script('unix', $token, coord_public_url($app), $app->workerRepo(), $app->workerRef());
+        return;
+    }
     if ($path === '/join' && $method === 'GET') {
         coord_html(pageJoin($app, '', coord_who($app, 'join')));
         return;
@@ -283,7 +328,8 @@ try {
         $who = coord_who($app, 'join');
         $who['participant'] = true;
         $who['participantCsrf'] = (string) $session['csrf'];
-        coord_html(pageToken($app, $made['name'], $made['token'], $who));
+        $cmd = coord_setup_command($app, $made['token']);
+        coord_html(pageToken($app, $made['name'], $made['token'], $who, $cmd['command'], $cmd['expires']));
         return;
     }
     if ($path === '/me' && $method === 'GET') {
@@ -343,6 +389,34 @@ try {
             $app->setPaused($target, !((int) ($row['paused'] ?? 0) === 1));
         }
         header('Location: ' . $base . '/me', true, 303);
+        return;
+    }
+    if ($path === '/me/setup-command' && $method === 'POST') {
+        $part = coord_participant($app);
+        if (!$part) {
+            http_response_code(403);
+            echo 'Participants only.';
+            return;
+        }
+        $csrf = (string) ($_POST['csrf'] ?? '');
+        if ($csrf === '' || !hash_equals((string) $part['session']['csrf'], $csrf)) {
+            http_response_code(403);
+            echo 'Missing or bad security token. Reload the page.';
+            return;
+        }
+        $target = (string) ($_POST['id'] ?? '');
+        if (!$app->workerOwns($part['pid'], $target)) {
+            http_response_code(403);
+            echo 'That computer is not yours.';
+            return;
+        }
+        $row = $app->db->prepare('SELECT name FROM workers WHERE id = ?');
+        $row->execute([$target]);
+        $name = (string) $row->fetchColumn();
+        $token = $app->rotateToken($target);
+        $cmd = coord_setup_command($app, $token);
+        header('Cache-Control: no-store');
+        coord_html(pageToken($app, $name, $token, coord_who($app, 'me'), $cmd['command'], $cmd['expires']));
         return;
     }
     if ($path === '/me/credit' && $method === 'POST') {
@@ -481,6 +555,17 @@ try {
             echo 'Missing or bad security token. Reload the owner page.';
             return;
         }
+        if ($path === '/owner/setup-command') {
+            $target = (string) ($_POST['id'] ?? '');
+            $row = $app->db->prepare('SELECT name FROM workers WHERE id = ?');
+            $row->execute([$target]);
+            $name = (string) $row->fetchColumn();
+            $token = $app->rotateToken($target);
+            $cmd = coord_setup_command($app, $token);
+            header('Cache-Control: no-store');
+            coord_html(pageToken($app, $name, $token, coord_who($app, 'owner'), $cmd['command'], $cmd['expires']));
+            return;
+        }
         if ($path === '/owner/project') {
             $app->setProject((string) ($_POST['id'] ?? ''), isset($_POST['priority']) ? (int) $_POST['priority'] : null, isset($_POST['enabled']));
         } elseif ($path === '/owner/job') {
@@ -537,11 +622,24 @@ try {
         } else {
             $body = $method === 'POST' ? coord_body() : [];
         }
+        if ($path === '/api/v1/diagnostics' && $method === 'POST') {
+            if (!$app->rateLimit('diag:' . hash('sha256', $token), 20)) {
+                header('Retry-After: 60');
+                coord_json(429, ['error' => 'Too many reports.']);
+                return;
+            }
+            coord_json(200, $app->saveDiagnostics((string) $worker['id'], $body, $token));
+            return;
+        }
         if ($path === '/api/v1/heartbeat' && $method === 'POST') {
             $sent = (string) ($body['codeHash'] ?? '');
             if ($sent !== '' && !$app->codeApproved($sent)) {
+                $app->noteReject((string) $worker['id'], 'protocol');
                 coord_json(409, ['error' => 'This worker build is not an approved code version.']);
                 return;
+            }
+            if (!empty($worker['last_reject'])) {
+                $app->db->prepare('UPDATE workers SET last_reject = NULL WHERE id = ?')->execute([(string) $worker['id']]);
             }
             $extra = [];
             if (isset($body['progress']) && $body['progress'] !== '' && $body['progress'] !== null && is_numeric($body['progress'])) {
@@ -603,6 +701,7 @@ try {
         }
         if ($path === '/api/v1/claim' && $method === 'POST') {
             if (!$app->codeApproved((string) ($body['codeHash'] ?? ''))) {
+                $app->noteReject((string) $worker['id'], 'protocol');
                 coord_json(409, ['error' => 'Code hash is not approved. Nothing was assigned.']);
                 return;
             }

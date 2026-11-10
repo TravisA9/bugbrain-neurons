@@ -67,23 +67,14 @@ function setup_windows(string $token, string $publicUrl, string $repo, string $r
         . "  pause\r\n"
         . "  exit /b 1\r\n"
         . ")\r\n"
-        . "(\r\n"
-        . "echo \$ErrorActionPreference = 'Stop'\r\n"
-        . "echo \$env:BB_CODE_BRANCH = '" . $ref . "'\r\n"
-        . "echo \$env:BB_COORDINATOR_URL = '" . $publicUrl . "'\r\n"
-        . "echo \$env:BB_COORDINATOR_TOKEN_FILE = Join-Path \$env:USERPROFILE '.bugbrain\\coordinator-token'\r\n"
-        . "echo \$env:BB_HOME = Join-Path \$env:USERPROFILE '.bugbrain\\worker'\r\n"
-        . "echo \$logs = Join-Path \$env:USERPROFILE '.bugbrain\\logs'\r\n"
-        . "echo New-Item -ItemType Directory -Force -Path \$logs ^| Out-Null\r\n"
-        . "echo \$log = Join-Path \$logs 'computelab.log'\r\n"
-        . "echo if ((Test-Path \$log) -and ((Get-Item \$log).Length -gt 2000000)) {\r\n"
-        . "echo   if (Test-Path \"\$log.2\") { Remove-Item \"\$log.2\" -Force }\r\n"
-        . "echo   if (Test-Path \"\$log.1\") { Move-Item \"\$log.1\" \"\$log.2\" -Force }\r\n"
-        . "echo   Move-Item \$log \"\$log.1\" -Force\r\n"
-        . "echo }\r\n"
-        . "echo Set-Location \$env:BB_HOME\r\n"
-        . "echo node run/supervisor.js *^>^> \$log\r\n"
-        . ") > \"%DEST%\\computelab-worker.ps1\"\r\n"
+        . "echo.\r\n"
+        . "node \"%REPO%\\run\\preflight.js\" --url \"" . $publicUrl . "\" --token-file \"%USERPROFILE%\\.bugbrain\\coordinator-token\" --install task-scheduler\r\n"
+        . "if errorlevel 1 (\r\n"
+        . "  echo Setup stopped. Read the lines above, fix the problem, and run this file again.\r\n"
+        . "  pause\r\n"
+        . "  exit /b 1\r\n"
+        . ")\r\n"
+        . "powershell -NoProfile -Command \"[IO.File]::WriteAllText((Join-Path \$env:USERPROFILE '.bugbrain\\computelab-worker.ps1'), [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('" . base64_encode(setup_windows_worker_ps1($publicUrl, $ref)) . "')))\"\r\n"
         . "powershell -NoProfile -Command \"\$ps1 = Join-Path \$env:USERPROFILE '.bugbrain\\computelab-worker.ps1'; \$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument ('-NoProfile -WindowStyle Hidden -File \"' + \$ps1 + '\"'); \$trigger = New-ScheduledTaskTrigger -AtLogOn; \$settings = New-ScheduledTaskSettingsSet -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries; Register-ScheduledTask -TaskName 'ComputeLabWorker' -Action \$action -Trigger \$trigger -Settings \$settings -Force | Out-Null; Start-ScheduledTask -TaskName 'ComputeLabWorker'\"\r\n"
         . "(\r\n"
         . "echo @echo off\r\n"
@@ -108,124 +99,222 @@ function setup_windows(string $token, string $publicUrl, string $repo, string $r
         . "pause\r\n";
 }
 
+/* The scheduled task runs this. It sets the Compute Lab settings and starts the launcher loop (run/worker.ps1), which
+ * keeps the checkout on the branch, restarts the supervisor after updates (exit 10), and backs off on crashes. */
+function setup_windows_worker_ps1(string $publicUrl, string $ref): string
+{
+    return "\$ErrorActionPreference = 'Continue'\r\n"
+        . "\$env:BB_CODE_BRANCH = '" . $ref . "'\r\n"
+        . "\$env:BB_COORDINATOR_URL = '" . $publicUrl . "'\r\n"
+        . "\$env:BB_COORDINATOR_TOKEN_FILE = Join-Path \$env:USERPROFILE '.bugbrain\\coordinator-token'\r\n"
+        . "\$env:BB_HOME = Join-Path \$env:USERPROFILE '.bugbrain\\worker'\r\n"
+        . "\$env:BB_INSTALL = 'task-scheduler'\r\n"
+        . "\$PID | Set-Content -Path (Join-Path \$env:USERPROFILE '.bugbrain\\computelab.pid')\r\n"
+        . "Set-Location \$env:BB_HOME\r\n"
+        . "& (Join-Path \$env:BB_HOME 'run\\worker.ps1')\r\n";
+}
+
 function setup_unix(string $token, string $publicUrl, string $repo, string $ref): string
 {
-    return "#!/bin/sh\n"
-        . "set -eu\n"
-        . "if ! command -v node >/dev/null 2>&1; then\n"
-        . "  echo \"Node.js is not installed.\"\n"
-        . "  echo \"Install it from https://nodejs.org/ and run this file again.\"\n"
-        . "  exit 1\n"
-        . "fi\n"
-        . "if ! command -v git >/dev/null 2>&1; then\n"
-        . "  echo \"Git is not installed.\"\n"
-        . "  echo \"Install it from https://git-scm.com/ and run this file again.\"\n"
-        . "  exit 1\n"
-        . "fi\n"
-        . "major=\$(node -p \"process.versions.node.split('.')[0]\")\n"
-        . "if [ \"\$major\" -lt 18 ]; then\n"
-        . "  echo \"Node.js 18 or newer is required. Install it from https://nodejs.org/ and run this file again.\"\n"
-        . "  exit 1\n"
-        . "fi\n"
-        . "umask 077\n"
-        . "mkdir -p \"\$HOME/.bugbrain/logs\"\n"
-        . "printf '%s\\n' '" . $token . "' > \"\$HOME/.bugbrain/coordinator-token\"\n"
-        . "chmod 600 \"\$HOME/.bugbrain/coordinator-token\"\n"
-        . "cat > \"\$HOME/.bugbrain/computelab.env\" << 'ENDENV'\n"
-        . "export BB_COORDINATOR_URL='" . $publicUrl . "'\n"
-        . "export BB_COORDINATOR_TOKEN_FILE=\"\$HOME/.bugbrain/coordinator-token\"\n"
-        . "export BB_CODE_BRANCH='" . $ref . "'\n"
-        . "export BB_HOME=\"\$HOME/.bugbrain/worker\"\n"
-        . "ENDENV\n"
-        . "set -a\n"
-        . ". \"\$HOME/.bugbrain/computelab.env\"\n"
-        . "set +a\n"
-        . "repo=\"\$HOME/.bugbrain/worker\"\n"
-        . "if [ -d \"\$repo/.git\" ]; then\n"
-        . "  git -C \"\$repo\" -c core.autocrlf=false fetch --depth 1 origin '" . $ref . "'\n"
-        . "  git -C \"\$repo\" checkout --force FETCH_HEAD\n"
-        . "else\n"
-        . "  git -c core.autocrlf=false clone --depth 1 --branch '" . $ref . "' '" . $repo . "' \"\$repo\"\n"
-        . "fi\n"
-        . "cat > \"\$HOME/.bugbrain/computelab-worker.sh\" << 'ENDRUN'\n"
-        . "#!/bin/sh\n"
-        . "set -eu\n"
-        . ". \"\$HOME/.bugbrain/computelab.env\"\n"
-        . "log=\"\$HOME/.bugbrain/logs/computelab.log\"\n"
-        . "if [ -f \"\$log\" ]; then\n"
-        . "  bytes=\$(wc -c < \"\$log\" | tr -d ' ')\n"
-        . "  if [ \"\$bytes\" -gt 2000000 ]; then\n"
-        . "    rm -f \"\$log.2\"\n"
-        . "    [ -f \"\$log.1\" ] && mv \"\$log.1\" \"\$log.2\"\n"
-        . "    mv \"\$log\" \"\$log.1\"\n"
-        . "  fi\n"
-        . "fi\n"
-        . "cd \"\$HOME/.bugbrain/worker\"\n"
-        . "exec node run/supervisor.js >> \"\$log\" 2>&1\n"
-        . "ENDRUN\n"
-        . "chmod +x \"\$HOME/.bugbrain/computelab-worker.sh\"\n"
-        . "home=\"\$HOME\"\n"
-        . "if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then\n"
-        . "  mkdir -p \"\$HOME/.config/systemd/user\"\n"
-        . "  cat > \"\$HOME/.config/systemd/user/computelab.service\" << EOF\n"
-        . "[Unit]\n"
-        . "Description=Compute Lab worker\n"
-        . "[Service]\n"
-        . "Environment=BB_CODE_BRANCH=" . $ref . "\n"
-        . "Environment=BB_COORDINATOR_URL=" . $publicUrl . "\n"
-        . "Environment=BB_COORDINATOR_TOKEN_FILE=\$home/.bugbrain/coordinator-token\n"
-        . "WorkingDirectory=\$home/.bugbrain/worker\n"
-        . "ExecStart=\$home/.bugbrain/computelab-worker.sh\n"
-        . "Restart=on-failure\n"
-        . "RestartSec=30\n"
-        . "[Install]\n"
-        . "WantedBy=default.target\n"
-        . "EOF\n"
-        . "  systemctl --user daemon-reload\n"
-        . "  systemctl --user enable --now computelab.service\n"
-        . "elif [ \"\$(uname)\" = \"Darwin\" ]; then\n"
-        . "  mkdir -p \"\$HOME/Library/LaunchAgents\"\n"
-        . "  cat > \"\$HOME/Library/LaunchAgents/info.computelab.worker.plist\" << EOF\n"
-        . "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        . "<plist version=\"1.0\"><dict>\n"
-        . "<key>Label</key><string>info.computelab.worker</string>\n"
-        . "<key>ProgramArguments</key><array><string>\$home/.bugbrain/computelab-worker.sh</string></array>\n"
-        . "<key>RunAtLoad</key><true/>\n"
-        . "<key>KeepAlive</key><true/>\n"
-        . "<key>EnvironmentVariables</key><dict>\n"
-        . "<key>BB_CODE_BRANCH</key><string>" . $ref . "</string>\n"
-        . "</dict>\n"
-        . "<key>StandardOutPath</key><string>\$home/.bugbrain/logs/computelab.log</string>\n"
-        . "<key>StandardErrorPath</key><string>\$home/.bugbrain/logs/computelab.log</string>\n"
-        . "</dict></plist>\n"
-        . "EOF\n"
-        . "  launchctl bootout \"gui/\$(id -u)/info.computelab.worker\" >/dev/null 2>&1 || true\n"
-        . "  launchctl bootstrap \"gui/\$(id -u)\" \"\$HOME/Library/LaunchAgents/info.computelab.worker.plist\"\n"
-        . "else\n"
-        . "  (crontab -l 2>/dev/null | grep -v computelab-worker.sh || true; echo \"@reboot \$HOME/.bugbrain/computelab-worker.sh\") | crontab -\n"
-        . "  \"\$HOME/.bugbrain/computelab-worker.sh\" >/dev/null 2>&1 &\n"
-        . "fi\n"
-        . "cat > \"\$HOME/.bugbrain/stop-computelab.sh\" << 'ENDSTOP'\n"
-        . "#!/bin/sh\n"
-        . "if command -v systemctl >/dev/null 2>&1; then systemctl --user stop computelab.service >/dev/null 2>&1 || true; fi\n"
-        . "launchctl bootout \"gui/\$(id -u)/info.computelab.worker\" >/dev/null 2>&1 || true\n"
-        . "if [ -f \"\$HOME/.bugbrain/computelab.pid\" ]; then kill \"\$(cat \"\$HOME/.bugbrain/computelab.pid\")\" 2>/dev/null || true; rm -f \"\$HOME/.bugbrain/computelab.pid\"; fi\n"
-        . "echo \"Compute Lab worker stopped. A job it already started can finish.\"\n"
-        . "ENDSTOP\n"
-        . "cat > \"\$HOME/.bugbrain/uninstall-computelab.sh\" << 'ENDUN'\n"
-        . "#!/bin/sh\n"
-        . "\"\$HOME/.bugbrain/stop-computelab.sh\" || true\n"
-        . "if command -v systemctl >/dev/null 2>&1; then systemctl --user disable computelab.service >/dev/null 2>&1 || true; fi\n"
-        . "rm -f \"\$HOME/.config/systemd/user/computelab.service\"\n"
-        . "rm -f \"\$HOME/Library/LaunchAgents/info.computelab.worker.plist\"\n"
-        . "(crontab -l 2>/dev/null | grep -v computelab-worker.sh || true) | crontab - || true\n"
-        . "if [ \"\${1:-}\" != \"--keep\" ]; then rm -f \"\$HOME/.bugbrain/coordinator-token\"; rm -rf \"\$HOME/.bugbrain/worker\"; fi\n"
-        . "echo \"Compute Lab was removed from this account.\"\n"
-        . "ENDUN\n"
-        . "chmod +x \"\$HOME/.bugbrain/stop-computelab.sh\" \"\$HOME/.bugbrain/uninstall-computelab.sh\"\n"
-        . "echo \"Compute Lab is running and will start again when you log in.\"\n"
-        . "echo \"Logs are in \$HOME/.bugbrain/logs\"\n"
-        . "echo \"To stop it later, run: \$HOME/.bugbrain/stop-computelab.sh\"\n"
-        . "echo \"To remove it, run: \$HOME/.bugbrain/uninstall-computelab.sh\"\n"
-        . "echo \"Your token was saved and was not printed here.\"\n";
+    return strtr(setup_unix_template(), [
+        '@@TOKEN@@' => $token,
+        '@@URL@@' => rtrim($publicUrl, '/'),
+        '@@REPO@@' => $repo,
+        '@@REF@@' => $ref,
+    ]);
+}
+
+/* POSIX sh, so it works as "sh file", "bash file", or "curl ... | sh" with no chmod. Commands that could read standard
+ * input get </dev/null, because with "curl | sh" standard input is the script itself. */
+function setup_unix_template(): string
+{
+    return <<<'SH'
+#!/bin/sh
+# Compute Lab setup for Linux and macOS.
+# Run it with:  sh computelab-setup.sh   (bash works too; no chmod needed). Running it again is safe.
+# It saves this computer's worker token (never printed), downloads the worker with git, installs a background
+# service (systemd user service, launchd, or a login cron job), and checks the result.
+set -u
+URL='@@URL@@'
+REPO='@@REPO@@'
+REF='@@REF@@'
+ST="$HOME/.bugbrain"
+TOKEN_FILE="$ST/coordinator-token"
+NODE_VERSION=none
+METHOD=none
+export GIT_TERMINAL_PROMPT=0
+umask 077
+mkdir -p "$ST/logs" || { echo "Could not create $ST"; exit 1; }
+printf '%s\n' '@@TOKEN@@' > "$TOKEN_FILE" && chmod 600 "$TOKEN_FILE"
+
+say() { printf '%s\n' "$*"; }
+# Tell the coordinator why setup stopped, so the owner can see it. The token goes in a header read from a private file.
+report() {
+  os=$(uname -sr 2>/dev/null | tr -d '"\\')
+  distro=$( (. /etc/os-release 2>/dev/null; printf '%s' "${PRETTY_NAME:-}") | tr -d '"\\')
+  [ -z "$distro" ] && [ "$(uname -s)" = Darwin ] && distro="macOS $(sw_vers -productVersion 2>/dev/null </dev/null)"
+  body=$(printf '{"kind":"setup","ok":false,"summary":"%s","hint":"%s","os":"%s","distro":"%s","arch":"%s","node":"%s","install":"%s"}' \
+    "$1" "$2" "$os" "$distro" "$(uname -m 2>/dev/null)" "$NODE_VERSION" "$METHOD")
+  hdr="$ST/.diag-auth"
+  printf 'Authorization: Bearer %s\n' "$(cat "$TOKEN_FILE")" > "$hdr"
+  sent=0
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsS -m 20 -A computelab-setup -H "@$hdr" -H 'Content-Type: application/json' -d "$body" "$URL/api/v1/diagnostics" >/dev/null 2>&1 </dev/null && sent=1
+  elif command -v wget >/dev/null 2>&1; then
+    wget -q -T 20 -U computelab-setup --header="$(cat "$hdr")" --header='Content-Type: application/json' --post-data="$body" -O /dev/null "$URL/api/v1/diagnostics" >/dev/null 2>&1 </dev/null && sent=1
+  fi
+  rm -f "$hdr"
+  [ "$sent" = 1 ] && say "(This problem was also sent to the Compute Lab owner.)"
+  return 0
+}
+fail() { say ""; say "Setup stopped: $1"; [ -n "$2" ] && say "Fix: $2"; report "Setup failed: $1" "$2"; exit 1; }
+
+say "Compute Lab setup"
+# 1. Node.js 18 or newer. Look past PATH too (nvm, fnm, volta, Homebrew, snap): services do not read ~/.bashrc,
+#    so the path found here is written into the service.
+best=; best_major=0; any=
+for c in "$(command -v node 2>/dev/null)" "$HOME"/.nvm/versions/node/*/bin/node "$HOME"/.local/share/fnm/node-versions/*/installation/bin/node \
+         "$HOME/.volta/bin/node" "$HOME/.local/bin/node" /usr/local/bin/node /opt/homebrew/bin/node /usr/bin/node /snap/bin/node; do
+  [ -n "$c" ] && [ -x "$c" ] || continue
+  m=$("$c" -p "process.versions.node.split('.')[0]" 2>/dev/null </dev/null) || continue
+  case "$m" in ''|*[!0-9]*) continue ;; esac
+  [ -z "$any" ] && { any=$c; NODE_VERSION=$("$c" -v 2>/dev/null </dev/null); }
+  if [ "$m" -ge 18 ] && [ "$m" -gt "$best_major" ]; then best=$c; best_major=$m; fi
+done
+if [ -z "$best" ]; then
+  if [ -n "$any" ]; then
+    fail "Node.js $NODE_VERSION is too old (18 or newer is needed)" "Install Node.js 20 LTS from https://nodejs.org/en/download (the apt package on older Ubuntu and Debian is too old), then run the setup command again."
+  fi
+  fail "Node.js is not installed" "Install Node.js 20 LTS from https://nodejs.org/en/download, then run the setup command again."
+fi
+NODE_VERSION=$("$best" -v </dev/null)
+NODE_DIR=$(dirname "$best")
+say "  OK    Node.js $NODE_VERSION ($best)"
+# 2. git
+command -v git >/dev/null 2>&1 || fail "git is not installed" "Debian/Ubuntu: sudo apt install git. Fedora: sudo dnf install git. Mac: xcode-select --install. Then run the setup command again."
+say "  OK    $(git --version </dev/null)"
+# 3. Worker files
+repo="$ST/worker"
+if [ -d "$repo/.git" ]; then
+  git -C "$repo" config core.autocrlf false </dev/null
+  { git -C "$repo" fetch -q --depth 1 origin "+refs/heads/$REF:refs/bb/code" </dev/null \
+    && git -C "$repo" checkout -q -f -B "$REF" refs/bb/code </dev/null && git -C "$repo" reset -q --hard refs/bb/code </dev/null; } \
+    || fail "Could not update the worker files in $repo" "Check the internet connection. If it keeps failing, delete $repo and run the setup command again."
+else
+  rm -rf "$repo"
+  git -c core.autocrlf=false clone -q --depth 1 --branch "$REF" "$REPO" "$repo" </dev/null \
+    || fail "Could not download the worker files from GitHub" "Check the internet connection and run the setup command again."
+  git -C "$repo" config core.autocrlf false </dev/null
+fi
+say "  OK    worker files ($(git -C "$repo" rev-parse --short HEAD </dev/null))"
+# 4. Settings for the background program
+cat > "$ST/computelab.env" <<ENDENV
+export BB_COORDINATOR_URL='$URL'
+export BB_COORDINATOR_TOKEN_FILE="\$HOME/.bugbrain/coordinator-token"
+export BB_CODE_BRANCH='$REF'
+export BB_HOME="\$HOME/.bugbrain/worker"
+export BB_REPO='$REPO'
+export PATH='$NODE_DIR':"\$PATH"
+ENDENV
+# 5. Check everything before installing: Node, git, files, token, coordinator, a test heartbeat.
+say ""
+"$best" "$repo/run/preflight.js" --url "$URL" --token-file "$TOKEN_FILE" --install setup </dev/null || {
+  say ""; say "Setup stopped. Fix the problem above and run the setup command again."; exit 1; }
+# 6. Background program: the launcher (run/worker.sh) keeps the worker up to date and restarts it.
+cat > "$ST/computelab-worker.sh" <<'ENDRUN'
+#!/bin/sh
+. "$HOME/.bugbrain/computelab.env"
+echo $$ > "$HOME/.bugbrain/computelab.pid"
+exec /bin/sh "$HOME/.bugbrain/worker/run/worker.sh"
+ENDRUN
+chmod 700 "$ST/computelab-worker.sh"
+# Stop an earlier copy first (a job it was running is handed back and runs again later).
+if command -v systemctl >/dev/null 2>&1; then systemctl --user stop computelab.service >/dev/null 2>&1 </dev/null; fi
+[ -f "$ST/worker.pid" ] && kill "$(cat "$ST/worker.pid")" 2>/dev/null
+pkill -u "$(id -u)" -f 'run/supervisor.js' >/dev/null 2>&1 </dev/null
+sleep 1
+started=0
+if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1 </dev/null; then
+  METHOD=systemd
+  mkdir -p "$HOME/.config/systemd/user"
+  cat > "$HOME/.config/systemd/user/computelab.service" <<ENDUNIT
+[Unit]
+Description=Compute Lab worker
+After=network-online.target
+[Service]
+Type=simple
+Environment="PATH=$NODE_DIR:/usr/local/bin:/usr/bin:/bin"
+Environment=BB_INSTALL=systemd
+ExecStart=/bin/sh "$ST/computelab-worker.sh"
+Restart=always
+RestartSec=30
+[Install]
+WantedBy=default.target
+ENDUNIT
+  if systemctl --user daemon-reload </dev/null && systemctl --user enable computelab.service >/dev/null 2>&1 </dev/null && systemctl --user restart computelab.service </dev/null; then
+    loginctl enable-linger "$(id -un)" >/dev/null 2>&1 </dev/null
+    sleep 5
+    if systemctl --user is-active --quiet computelab.service </dev/null; then started=1
+    else
+      say "The systemd service did not stay up. Its last lines:"
+      journalctl --user -u computelab.service -n 15 --no-pager 2>/dev/null </dev/null | sed 's/^/    /'
+      report "systemd service did not stay running" "Run: journalctl --user -u computelab.service -n 50"
+    fi
+  else
+    say "systemd could not start the service; using a login cron job instead."
+  fi
+elif [ "$(uname -s)" = Darwin ]; then
+  METHOD=launchd
+  mkdir -p "$HOME/Library/LaunchAgents"
+  cat > "$HOME/Library/LaunchAgents/info.computelab.worker.plist" <<ENDPLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+<key>Label</key><string>info.computelab.worker</string>
+<key>ProgramArguments</key><array><string>/bin/sh</string><string>$ST/computelab-worker.sh</string></array>
+<key>RunAtLoad</key><true/>
+<key>KeepAlive</key><true/>
+<key>EnvironmentVariables</key><dict><key>PATH</key><string>$NODE_DIR:/usr/local/bin:/usr/bin:/bin</string><key>BB_INSTALL</key><string>launchd</string></dict>
+<key>StandardOutPath</key><string>$ST/logs/computelab.log</string>
+<key>StandardErrorPath</key><string>$ST/logs/computelab.log</string>
+</dict></plist>
+ENDPLIST
+  launchctl bootout "gui/$(id -u)/info.computelab.worker" >/dev/null 2>&1 </dev/null
+  if launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/info.computelab.worker.plist" </dev/null; then started=1
+  else say "launchd could not start the worker; using a login cron job instead."; fi
+fi
+if [ "$started" = 0 ]; then
+  METHOD=cron
+  if command -v systemctl >/dev/null 2>&1; then systemctl --user disable --now computelab.service >/dev/null 2>&1 </dev/null; fi
+  if command -v crontab >/dev/null 2>&1; then
+    (crontab -l 2>/dev/null </dev/null | grep -v computelab-worker.sh; echo "@reboot BB_INSTALL=cron /bin/sh $ST/computelab-worker.sh >/dev/null 2>&1") | crontab - 2>/dev/null
+  fi
+  BB_INSTALL=cron nohup /bin/sh "$ST/computelab-worker.sh" >/dev/null 2>&1 </dev/null &
+  sleep 3
+fi
+cat > "$ST/stop-computelab.sh" <<'ENDSTOP'
+#!/bin/sh
+if command -v systemctl >/dev/null 2>&1; then systemctl --user stop computelab.service >/dev/null 2>&1; fi
+launchctl bootout "gui/$(id -u)/info.computelab.worker" >/dev/null 2>&1
+[ -f "$HOME/.bugbrain/worker.pid" ] && kill "$(cat "$HOME/.bugbrain/worker.pid")" 2>/dev/null
+pkill -u "$(id -u)" -f 'run/supervisor.js' >/dev/null 2>&1
+rm -f "$HOME/.bugbrain/computelab.pid"
+echo "Compute Lab worker stopped. It starts again at the next login unless you run uninstall-computelab.sh."
+ENDSTOP
+cat > "$ST/uninstall-computelab.sh" <<'ENDUN'
+#!/bin/sh
+sh "$HOME/.bugbrain/stop-computelab.sh"
+if command -v systemctl >/dev/null 2>&1; then systemctl --user disable computelab.service >/dev/null 2>&1; fi
+rm -f "$HOME/.config/systemd/user/computelab.service" "$HOME/Library/LaunchAgents/info.computelab.worker.plist"
+(crontab -l 2>/dev/null | grep -v computelab-worker.sh) | crontab - 2>/dev/null
+if [ "${1:-}" != "--keep" ]; then rm -f "$HOME/.bugbrain/coordinator-token"; rm -rf "$HOME/.bugbrain/worker"; fi
+echo "Compute Lab was removed from this account."
+ENDUN
+chmod 700 "$ST/stop-computelab.sh" "$ST/uninstall-computelab.sh"
+say ""
+say "Compute Lab is running in the background ($METHOD) and starts again after a restart or login."
+say "Worker log:  $ST/worker.log"
+say "Stop it:     sh $ST/stop-computelab.sh"
+say "Remove it:   sh $ST/uninstall-computelab.sh"
+say "Your token was saved in $TOKEN_FILE and was not printed."
+SH;
 }

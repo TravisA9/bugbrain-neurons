@@ -347,8 +347,27 @@ async function workerHeartbeat(base, token, hash, jobId, progress) {
     throw e;
   }
 }
+/* Remote diagnostics (run/diag.js): one report at startup and one per kind of error (rate-limited, scrubbed). */
+function sendDiag(base, token, kind, ok, summary, extra) {
+  return new Promise(resolve => {
+    try {
+      const D = require('./diag.js');
+      const rep = D.collect(Object.assign({ kind: kind, ok: ok, summary: String(summary).slice(0, 280), log: D.logTail() }, extra || {}));
+      D.post(base, token, rep, () => resolve());
+    } catch (e) { resolve(); }
+  });
+}
+function diagFor(e) {
+  const D = require('./diag.js');
+  const status = e && e.status;
+  const x = { lastError: D.errorInfo(e) };
+  if (status === 409) { x.protocolMatch = false; x.hint = 'The worker updates itself within minutes; if this stays, run the setup command again.'; }
+  else if (!status) { x.reach = false; x.hint = 'Check the internet connection or firewall on this computer.'; }
+  return x;
+}
 async function main() {
   const a = args(process.argv);
+  try { require('./diag.js').capture(); } catch (e) {}
   const base = a.url || process.env.BB_COORDINATOR_URL;
   const tokenFile = a['token-file'] || process.env.BB_COORDINATOR_TOKEN_FILE;
   if (!base || !tokenFile) throw new Error('Need --url and --token-file (or BB_COORDINATOR_URL and BB_COORDINATOR_TOKEN_FILE).');
@@ -357,11 +376,15 @@ async function main() {
   cleanupStaleCoordDirs();
   const poll = +(process.env.BB_COORD_POLL_MS || 15000);
   const heartbeatMs = +(process.env.BB_COORD_HEARTBEAT_MS || 60000);
-  let delay = 0;
+  let delay = 0, started = false;
   for (;;) {
     try {
       const beat = await api(base, token, '/api/v1/heartbeat', { codeHash: hash });
       delay = 0;
+      if (!started) {
+        started = true;
+        await sendDiag(base, token, 'startup', true, 'Worker started' + (beat.paused ? ' (paused)' : ''), { protocolMatch: true });
+      }
       if (beat.revoked) {
         console.error('Worker token was revoked.');
         process.exitCode = 1;
@@ -425,9 +448,13 @@ async function main() {
         process.exitCode = 1;
         return;
       }
-      if (decision.action === 'crash') throw e;
+      if (decision.action === 'crash') {
+        await sendDiag(base, token, 'error', false, 'Worker stopped: ' + String((e && e.message) || e), diagFor(e));
+        throw e;
+      }
       delay = decision.delay;
       console.error((e && e.message) || e);
+      await sendDiag(base, token, 'error', false, (e && e.status === 409 ? 'Protocol mismatch, needs update: ' : '') + String((e && e.message) || e), diagFor(e));
       await sleep(a.once ? Math.min(delay, 1000) : delay);
       if (a.once) throw e;
     }
