@@ -256,6 +256,8 @@ final class App
         $freshMode = !$this->hasColumn('workers', 'resource_mode');
         $this->ensureColumn('workers', 'resource_mode', "VARCHAR(16) NOT NULL DEFAULT 'allowance'");
         $this->ensureColumn('workers', 'allowance_pct', 'INTEGER NOT NULL DEFAULT 50');
+        /* Experiments at once: 0 is Auto (the mode decides), 1..64 caps the job slots. */
+        $this->ensureColumn('workers', 'max_jobs', 'INTEGER NOT NULL DEFAULT 0');
         $this->ensureColumn('workers', 'runtime_json', 'TEXT');
         if ($freshMode) {
             $this->db->exec("UPDATE workers SET resource_mode = 'off' WHERE paused = 1");
@@ -668,7 +670,7 @@ final class App
     /* The one setting a participant has: how much of the computer Compute Lab may use.
      * Off claims nothing new, Allowance caps the share of cores at low priority, Full blast
      * uses every core at normal priority. The worker reads this on its next check-in. */
-    public function setResources(string $workerId, string $mode, ?int $pct = null): void
+    public function setResources(string $workerId, string $mode, ?int $pct = null, ?int $maxJobs = null): void
     {
         if (!in_array($mode, self::RESOURCE_MODES, true)) {
             throw new InvalidArgumentException('Choose Off, Allowance, or Full blast.');
@@ -681,6 +683,15 @@ final class App
         $pct = self::clampAllowance($pct);
         $this->db->prepare('UPDATE workers SET resource_mode = ?, allowance_pct = ?, paused = ? WHERE id = ?')
             ->execute([$mode, $pct, $mode === 'off' ? 1 : 0, $workerId]);
+        if ($maxJobs !== null) {
+            $this->db->prepare('UPDATE workers SET max_jobs = ? WHERE id = ?')->execute([self::clampMaxJobs($maxJobs), $workerId]);
+        }
+    }
+
+    /* 0 = Auto. Anything above 64 is 64; the worker also never runs more than its cores. */
+    public static function clampMaxJobs(int $n): int
+    {
+        return max(0, min(64, $n));
     }
 
     public static function clampAllowance(int $pct): int
@@ -708,6 +719,7 @@ final class App
         return [
             'mode' => $mode,
             'allowancePct' => self::clampAllowance((int) ($worker['allowance_pct'] ?? 50)),
+            'maxJobs' => self::clampMaxJobs((int) ($worker['max_jobs'] ?? 0)),
             'runtime' => is_array($runtime) ? $runtime : null,
         ];
     }
@@ -716,7 +728,7 @@ final class App
     private function saveRuntime(string $workerId, array $report): void
     {
         $clean = [];
-        foreach (['cores', 'slots', 'running'] as $k) {
+        foreach (['cores', 'slots', 'running', 'maxJobs'] as $k) {
             if (isset($report[$k]) && is_numeric($report[$k])) {
                 $clean[$k] = max(0, min(1024, (int) $report[$k]));
             }
@@ -956,7 +968,7 @@ final class App
             'ok' => true,
             'paused' => (int) $state['paused'] === 1,
             'revoked' => (int) $state['revoked'] === 1,
-            'resources' => ['mode' => $resources['mode'], 'allowancePct' => $resources['allowancePct']],
+            'resources' => ['mode' => $resources['mode'], 'allowancePct' => $resources['allowancePct'], 'maxJobs' => $resources['maxJobs']],
         ];
         /* A control check-in only reads settings. It does not renew any lease. */
         if (!empty($extra['control'])) {

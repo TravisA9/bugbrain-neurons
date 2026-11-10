@@ -192,8 +192,12 @@ function coord_save_resources(App $app, string $workerId, string $back): void
 {
     $mode = (string) ($_POST['mode'] ?? '');
     $pct = isset($_POST['pct']) && is_numeric($_POST['pct']) ? (int) $_POST['pct'] : null;
+    $maxJobs = null;
+    if (isset($_POST['jobs'])) {
+        $maxJobs = $_POST['jobs'] === 'auto' ? 0 : (is_numeric($_POST['jobs']) ? (int) $_POST['jobs'] : null);
+    }
     try {
-        $app->setResources($workerId, $mode, $pct);
+        $app->setResources($workerId, $mode, $pct, $maxJobs);
     } catch (InvalidArgumentException $e) {
         if (coord_wants_json()) {
             coord_json(400, ['ok' => false, 'error' => $e->getMessage()]);
@@ -205,7 +209,7 @@ function coord_save_resources(App $app, string $workerId, string $back): void
     $st->execute([$workerId]);
     $res = $app->resourcesOf($st->fetch() ?: []);
     if (coord_wants_json()) {
-        coord_json(200, ['ok' => true, 'mode' => $res['mode'], 'pct' => $res['allowancePct']]);
+        coord_json(200, ['ok' => true, 'mode' => $res['mode'], 'pct' => $res['allowancePct'], 'jobs' => $res['maxJobs']]);
         return;
     }
     header('Location: ' . $back, true, 303);

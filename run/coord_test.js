@@ -189,6 +189,10 @@ const job = {
   check(P('allowance', 95, 8).pct === 90 && P('allowance', 3, 8).pct === 10 && P('full', 0, 8, 2).slots === 2, 'the allowance stays between 10% and 90% and BB_MAX_SLOTS caps the slots');
   check(coord.settingsFrom({ paused: true, resources: { mode: 'full', allowancePct: 70 } }).mode === 'off' && coord.settingsFrom({ resources: { mode: 'allowance', allowancePct: 70 } }).pct === 70 && coord.settingsFrom({ paused: false }).mode === 'full', 'the worker reads the setting from the heartbeat, and an old coordinator means Full blast');
   check(coord.samePlan(P('allowance', 50, 8), P('allowance', 50, 8)) && !coord.samePlan(half, full), 'a changed setting is noticed');
+  check(P('off', 50, 8, 8, 3).slots === 0 && P('full', 50, 8, 8, 3).slots === 3 && P('full', 50, 8, 8, 0).slots === 8 && P('full', 50, 8, 8, 20).slots === 8, 'Experiments at once: Off stays 0, Full blast runs up to the chosen number, Auto and a number above the cores mean every core');
+  check(P('allowance', 50, 8, 8, 6).slots === 4 && P('allowance', 50, 8, 8, 2).slots === 2 && P('allowance', 50, 8, 8, 2).duty === 1 && P('allowance', 50, 8, 8, 0).slots === 4, 'Experiments at once under Allowance: the allowance still caps it, and a smaller number runs fewer jobs');
+  check(coord.settingsFrom({ resources: { mode: 'full', allowancePct: 50, maxJobs: 3 } }).maxJobs === 3 && coord.settingsFrom({ resources: { mode: 'full' } }).maxJobs === 0 && coord.settingsFrom({ resources: { mode: 'full', maxJobs: -2 } }).maxJobs === 0, 'the worker reads Experiments at once from the heartbeat; missing means Auto');
+  check(!coord.samePlan(P('full', 50, 8, 8, 0), P('full', 50, 8, 8, 8)), 'changing Experiments at once is noticed even when the slot count is the same');
   const Throttle = require('../spikefoundry/throttle.js');
   const tdir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'thr-'));
   const tfile = path.join(tdir, 'throttle.json');

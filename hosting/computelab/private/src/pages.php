@@ -118,7 +118,8 @@ function describeWorker(App $app, array $worker, array $leases = []): array
     if (is_array($rt) && isset($rt['mode'])) {
         $rtMode = (string) $rt['mode'];
         $rtPct = (int) ($rt['pct'] ?? 0);
-        $applied = $rtMode === $res['mode'] && ($rtMode !== 'allowance' || $rtPct === $res['allowancePct']);
+        $applied = $rtMode === $res['mode'] && ($rtMode !== 'allowance' || $rtPct === $res['allowancePct'])
+            && (!array_key_exists('maxJobs', $rt) || (int) $rt['maxJobs'] === $res['maxJobs']);
         $parts = [modeLabel($rtMode, $rtPct)];
         if (isset($rt['slots'], $rt['cores'])) {
             $parts[] = $rtMode === 'off' ? 'no new jobs' : ((int) $rt['slots'] . ' of ' . (int) $rt['cores'] . ' cores');
@@ -134,7 +135,8 @@ function describeWorker(App $app, array $worker, array $leases = []): array
             $effective .= ' — switching to ' . modeLabel($res['mode'], $res['allowancePct']) . ' at its next check-in';
         }
     }
-    return ['line' => $line, 'online' => $online, 'paused' => $off, 'ago' => $ago, 'progress' => $progress, 'mode' => $res['mode'], 'pct' => $res['allowancePct'], 'effective' => $effective, 'applied' => $applied, 'jobs' => $n];
+    $cores = is_array($rt) && isset($rt['cores']) ? max(1, min(64, (int) $rt['cores'])) : 0;
+    return ['line' => $line, 'online' => $online, 'paused' => $off, 'ago' => $ago, 'progress' => $progress, 'mode' => $res['mode'], 'pct' => $res['allowancePct'], 'maxJobs' => $res['maxJobs'], 'cores' => $cores, 'effective' => $effective, 'applied' => $applied, 'jobs' => $n];
 }
 
 /* Three-state control plus the allowance slider. Works as a plain form; the page script
@@ -190,12 +192,64 @@ function resourceControl(string $action, string $csrf, array $worker, array $sta
         . '<div class="range-row' . ($mode === 'allowance' ? '' : ' is-idle') . '"><div class="range-label"><span>Allowance share</span><b data-pct-label>' . h((string) $pct) . '%</b></div>'
         . '<input type="range" name="pct" min="10" max="90" step="10" value="' . h((string) $pct) . '" style="--fill:' . $fill . '%" aria-label="Allowance as a share of this computer" aria-valuetext="' . h((string) $pct) . ' percent">'
         . '<div class="range-ends"><span>10%</span><span>90%</span></div></div>'
+        . jobsStepper($state)
         . '<p class="hint">Off lets the running job finish, then stops. The middle setting runs in the background at low priority. Full uses every core.</p>'
         . '<noscript><button class="button" type="submit">Save</button></noscript>'
         . '<p class="effective" data-effective>' . h((string) $state['effective']) . '</p>'
         . '</div>'
         . $art
         . '</form>';
+}
+
+/* Experiments at once: Auto (the default) lets the mode decide; 1..N caps the jobs this
+ * computer runs together. N is the core count the worker reported (16 until it reports).
+ * Off is always 0, Allowance never goes above its share of the cores, Full blast up to N. */
+function jobsCap(string $mode, int $pct, int $cores): int
+{
+    if ($mode === 'off') {
+        return 0;
+    }
+    if ($mode === 'full') {
+        return $cores;
+    }
+    return max(1, min($cores, (int) ceil(max(10, min(90, $pct)) / 100 * $cores - 1e-9)));
+}
+
+function jobsNote(string $mode, int $pct, int $want, int $cores, bool $known): string
+{
+    $cap = jobsCap($mode, $pct, $cores);
+    if ($mode === 'off') {
+        return 'none while Off';
+    }
+    $n = $want > 0 ? min($want, $cap) : $cap;
+    $txt = 'runs ' . ($want > 0 ? '' : 'up to ') . $n;
+    if ($want > $cap) {
+        $txt = 'runs ' . $n . ($mode === 'allowance' ? ', the allowance limit' : ', one per core');
+    }
+    return $txt . ($known ? ' of ' . $cores . ' cores' : '');
+}
+
+function jobsStepper(array $state): string
+{
+    $mode = (string) $state['mode'];
+    $pct = (int) $state['pct'];
+    $want = (int) ($state['maxJobs'] ?? 0);
+    $known = (int) ($state['cores'] ?? 0) > 0;
+    $cores = $known ? (int) $state['cores'] : 16;
+    if ($want > $cores) {
+        $cores = $want;
+    }
+    $val = $want > 0 ? (string) $want : 'Auto';
+    return '<div class="jobs-row' . ($mode === 'off' ? ' is-idle' : '') . '" data-jobs-row data-cores="' . $cores . '" data-known="' . ($known ? '1' : '0') . '">'
+        . '<span class="jobs-label" id="jl-' . h((string) ($state['id'] ?? '')) . '">Experiments at once</span>'
+        . '<span class="stepper" role="group" aria-label="Experiments at once">'
+        . '<button type="button" class="step" data-step="-1" aria-label="Fewer experiments at once">&minus;</button>'
+        . '<output data-jobs-value aria-live="polite">' . h($val) . '</output>'
+        . '<button type="button" class="step" data-step="1" aria-label="More experiments at once">+</button>'
+        . '</span>'
+        . '<input type="hidden" name="jobs" value="' . h($want > 0 ? (string) $want : 'auto') . '">'
+        . '<span class="jobs-note" data-jobs-note>' . h(jobsNote($mode, $pct, $want, $cores, $known)) . '</span>'
+        . '</div>';
 }
 
 function resourceScript(): string
@@ -208,11 +262,11 @@ function resourceScript(): string
     function mode(){var r=f.querySelector("input[name=mode]:checked");return r?r.value:"allowance";}
     function save(){
       var body=new URLSearchParams(new FormData(f));
-      ml.textContent=label(mode(),range.value);row.classList.toggle("is-idle",mode()!=="allowance");art();
+      ml.textContent=label(mode(),range.value);row.classList.toggle("is-idle",mode()!=="allowance");art();jobsNote();
       eff.textContent="Saving…";
       fetch(f.action,{method:"POST",body:body,headers:{"Accept":"application/json"},credentials:"same-origin"}).then(function(r){return r.json();}).then(function(d){
         if(!d||!d.ok){eff.textContent=(d&&d.error)||"Could not save. Reload the page.";return;}
-        eff.setAttribute("data-until",String(Date.now()+45000));eff.textContent="Saved: "+label(d.mode,d.pct)+". This computer picks it up at its next check-in, within about half a minute.";
+        eff.setAttribute("data-until",String(Date.now()+45000));eff.textContent="Saved: "+label(d.mode,d.pct)+(d.jobs?" · "+d.jobs+" at once":"")+". This computer picks it up at its next check-in, within about half a minute.";
       }).catch(function(){eff.textContent="Could not save. Reload the page.";});
     }
     f.querySelectorAll("input[name=mode]").forEach(function(r){r.addEventListener("change",save);});
@@ -220,7 +274,23 @@ function resourceScript(): string
     function fill(){range.style.setProperty("--fill",Math.round((range.value-10)/80*100)+"%");range.setAttribute("aria-valuetext",range.value+" percent");if(shortPct)shortPct.textContent=range.value+"%";if(allowR)allowR.setAttribute("aria-label","Allowance, "+range.value+" percent at low priority");}
     function art(){var m=mode();f.setAttribute("data-mode",m);f.querySelectorAll("[data-art]").forEach(function(p){var on=p.getAttribute("data-art")===m;p.classList.toggle("is-on",on);if(on)p.removeAttribute("aria-hidden");else p.setAttribute("aria-hidden","true");});}
     f.querySelectorAll("input[name=mode]").forEach(function(r){r.addEventListener("change",art);});
-    range.addEventListener("input",function(){pl.textContent=range.value+"%";fill();});
+    var jr=f.querySelector("[data-jobs-row]"),jin=f.querySelector("input[name=jobs]"),jout=f.querySelector("[data-jobs-value]"),jnote=f.querySelector("[data-jobs-note]");
+    function jobsNote(){
+      if(!jr)return;var m=mode(),n=+jr.getAttribute("data-cores")||16,known=jr.getAttribute("data-known")==="1",w=jin.value==="auto"?0:+jin.value;
+      var cap=m==="off"?0:m==="full"?n:Math.max(1,Math.min(n,Math.ceil(range.value/100*n-1e-9)));
+      jr.classList.toggle("is-idle",m==="off");
+      var t;if(m==="off"){t="none while Off";}else{var k=w>0?Math.min(w,cap):cap;t="runs "+(w>0?"":"up to ")+k;if(w>cap)t="runs "+k+(m==="allowance"?", the allowance limit":", one per core");if(known)t+=" of "+n+" cores";}
+      jnote.textContent=t;
+    }
+    if(jr){
+      jr.querySelectorAll("[data-step]").forEach(function(b){b.addEventListener("click",function(){
+        var n=+jr.getAttribute("data-cores")||16,w=jin.value==="auto"?n+1:+jin.value;
+        w=Math.max(1,Math.min(n+1,w+(+b.getAttribute("data-step"))));
+        jin.value=w>n?"auto":String(w);jout.textContent=w>n?"Auto":String(w);jobsNote();
+        clearTimeout(timer);timer=setTimeout(save,350);
+      });});
+    }
+    range.addEventListener("input",function(){pl.textContent=range.value+"%";fill();jobsNote();});
     range.addEventListener("change",function(){if(mode()!=="allowance"){var a=f.querySelector("input[value=allowance]");if(a)a.checked=true;}clearTimeout(timer);timer=setTimeout(save,150);});
   });
 })();
@@ -423,6 +493,15 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .resources input[type=range]:focus-visible::-moz-range-thumb{outline:2px solid var(--cyan);outline-offset:2px}
 .resources.has-art{display:grid;grid-template-columns:minmax(0,330px) minmax(150px,1fr);column-gap:14px;padding-right:6px}
 .resources .hint,.resources .effective{max-width:330px}
+.resources .jobs-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;box-sizing:border-box;width:310px;max-width:100%;margin-top:9px;padding:7px 9px 7px 13px;border:1px solid #263642;border-radius:10px;background:#0b1219;transition:opacity .25s}
+.resources .jobs-row.is-idle{opacity:.5;border-style:dashed}
+.resources .jobs-label{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#aeb9c2;flex:1 1 auto}
+.resources .stepper{display:inline-flex;align-items:center;border:1px solid #2d5948;border-radius:999px;background:#0f1f1a;overflow:hidden}
+.resources .stepper .step{width:28px;height:26px;border:0;background:transparent;color:var(--mint);font:600 15px var(--display);cursor:pointer;padding:0}
+.resources .stepper .step:hover{background:#173a2e}
+.resources .stepper .step:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
+.resources .stepper output{min-width:38px;text-align:center;font:600 12px var(--display);color:#e9fff5}
+.resources .jobs-note{flex:1 0 100%;font:10px var(--mono);color:var(--muted)}
 .res-main{min-width:0}
 .res-art{position:relative;align-self:stretch;min-height:190px;margin:-8px 0 -8px 0}
 .res-art picture{position:absolute;inset:0;display:block;opacity:0;transform:scale(.94) translateY(4px);transition:opacity .35s ease,transform .5s cubic-bezier(.25,1,.5,1);pointer-events:none}

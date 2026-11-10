@@ -406,20 +406,24 @@ function logicalCores() {
   try { if (typeof os.availableParallelism === 'function') return Math.max(1, os.availableParallelism()); } catch (e) {}
   return Math.max(1, (os.cpus() || []).length || 1);
 }
-function resourcePlan(mode, pct, cores, maxSlots) {
+/* want = "Experiments at once" from the website: 0 (or missing) is Auto, which leaves the
+ * count to the mode; 1..N caps the job slots. Off stays 0, Allowance never goes above its
+ * share of the cores, Full blast allows up to every core. */
+function resourcePlan(mode, pct, cores, maxSlots, want) {
   const n = Math.max(1, Math.floor(+cores || 1));
-  const cap = Math.max(1, Math.min(64, Math.floor(+maxSlots || n)));
-  if (mode === 'off') return { mode: 'off', pct: 0, slots: 0, duty: 1, priority: 'low', cores: n };
-  if (mode === 'full') return { mode: 'full', pct: 100, slots: Math.min(cap, n), duty: 1, priority: 'normal', cores: n };
+  const w = Math.max(0, Math.min(64, Math.floor(+want || 0)));
+  const cap = Math.max(1, Math.min(64, Math.floor(+maxSlots || n), w > 0 ? w : 64));
+  if (mode === 'off') return { mode: 'off', pct: 0, slots: 0, duty: 1, priority: 'low', cores: n, want: w };
+  if (mode === 'full') return { mode: 'full', pct: 100, slots: Math.min(cap, n), duty: 1, priority: 'normal', cores: n, want: w };
   let p = Math.round((+pct || 50) / 10) * 10;
   p = Math.max(10, Math.min(90, p));
   const share = (p / 100) * n;
   const slots = Math.min(cap, Math.max(1, Math.ceil(share - 1e-9)));
   const duty = Math.max(0.05, Math.min(1, Math.round((share / slots) * 1000) / 1000));
-  return { mode: 'allowance', pct: p, slots: slots, duty: duty, priority: 'low', cores: n };
+  return { mode: 'allowance', pct: p, slots: slots, duty: duty, priority: 'low', cores: n, want: w };
 }
 function samePlan(a, b) {
-  return !!a && !!b && a.mode === b.mode && a.slots === b.slots && a.duty === b.duty && a.priority === b.priority;
+  return !!a && !!b && a.mode === b.mode && a.slots === b.slots && a.duty === b.duty && a.priority === b.priority && (a.want || 0) === (b.want || 0);
 }
 function osPriority(priority) {
   const P = (os.constants && os.constants.priority) || {};
@@ -436,7 +440,8 @@ function settingsFrom(beat) {
   const r = (beat && beat.resources) || {};
   let mode = r.mode === 'off' || r.mode === 'allowance' || r.mode === 'full' ? r.mode : (beat && beat.paused ? 'off' : 'full');
   if (beat && beat.paused) mode = 'off';
-  return { mode: mode, pct: +r.allowancePct || 50 };
+  const mj = Math.floor(+r.maxJobs || 0);
+  return { mode: mode, pct: +r.allowancePct || 50, maxJobs: mj > 0 ? Math.min(64, mj) : 0 };
 }
 
 /* Several job slots, one claim per slot. A control check-in every BB_COORD_CONTROL_MS
@@ -458,7 +463,7 @@ async function multi(a, base, token, hash) {
   let uploadChain = Promise.resolve();
   const oneAtATime = fn => { const p = uploadChain.then(fn, fn); uploadChain = p.catch(() => {}); return p; };
   const say = obj => console.log(JSON.stringify(obj));
-  const runtime = () => ({ cores: cores, slots: plan.slots, running: running.size, duty: plan.duty, mode: plan.mode, pct: plan.pct, priority: plan.priority, platform: process.platform });
+  const runtime = () => ({ cores: cores, slots: plan.slots, running: running.size, duty: plan.duty, mode: plan.mode, pct: plan.pct, maxJobs: plan.want || 0, priority: plan.priority, platform: process.platform });
   const adopt = next => {
     if (samePlan(plan, next)) return;
     plan = next;
@@ -470,7 +475,7 @@ async function multi(a, base, token, hash) {
     firstControl = false;
     if (beat.revoked) { fatal = new Error('Worker token was revoked.'); fatal.status = 401; return; }
     const s = settingsFrom(beat);
-    adopt(resourcePlan(s.mode, s.pct, cores, maxSlots));
+    adopt(resourcePlan(s.mode, s.pct, cores, maxSlots, s.maxJobs));
     markAlive({ mode: s.mode });
   };
   let delay = 0;
