@@ -125,6 +125,7 @@ check(str_contains($capPage, 'runs 3, the allowance limit of 8 cores') && (json_
 $cssBody = http($base . '/assets/computelab.css')['body'];
 check(str_contains($cssBody, '.resources.has-art{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);') && str_contains($cssBody, 'object-fit:contain;object-position:center') && strpos($fullPage2, 'data-jobs-row') < strpos($fullPage2, '<div class="res-art">'), 'Resources is two thirds controls and one third picture, with the picture centred and never cropped');
 check(str_contains($cssBody, '.resources.has-art .res-main{display:grid;grid-template-columns:minmax(0,1fr) 310px;grid-template-areas:"head head" "run run" "jobs tri" "hint range" "eff range"') && str_contains($cssBody, '.resources.has-art .jobs-row{grid-area:jobs;width:100%') && str_contains($cssBody, 'width:300px;max-width:calc(100% - 10px);height:50px'), 'the toggle and slider sit in the middle next to the picture; Experiments, the hint and the Now line on the left; the toggle stays a compact pill');
+check(str_contains($cssBody, '.tri-led{flex:0 0 auto;width:12px;height:12px;') && str_contains($cssBody, '@keyframes tri-pulse{0%,100%{box-shadow:0 0 12px 1px currentColor}50%{box-shadow:0 0 20px 4px currentColor'), 'the toggle LEDs are 12 px with a matching glow and pulse');
 /* t53u: the toggle shows what the computer is doing. A stale heartbeat shows Stopped (Off, with its own note), the
  * saved setting is kept; turning it on shows Starting… until a heartbeat; a chosen Off on a running computer differs. */
 $wid = $meId[1];

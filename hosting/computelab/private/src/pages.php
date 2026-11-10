@@ -542,8 +542,8 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .tri label{position:relative;z-index:2;margin:0;display:flex;align-items:center;justify-content:center;gap:7px;border-radius:999px;cursor:pointer;font:600 12px var(--display);letter-spacing:.02em;color:var(--muted);transition:color .25s ease;white-space:nowrap}
 .tri label:hover{color:var(--text)}
 .tri input:focus-visible+label{outline:2px solid var(--cyan);outline-offset:-2px}
-.tri-led{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.45;transition:opacity .25s,box-shadow .25s}
-.tri input:checked+label .tri-led{opacity:1;box-shadow:0 0 8px currentColor}
+.tri-led{flex:0 0 auto;width:12px;height:12px;border-radius:50%;background:currentColor;opacity:.45;transition:opacity .25s,box-shadow .25s}
+.tri input:checked+label .tri-led{opacity:1;box-shadow:0 0 12px 1px currentColor}
 .tri-thumb{position:absolute;z-index:1;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/3);border-radius:999px;border:1px solid #7a3c43;background:linear-gradient(180deg,#4a2329,#2e171b);box-shadow:0 0 14px #ff818a2e,inset 0 1px 0 #ffffff14;transition:transform .35s cubic-bezier(.25,1,.5,1),background .3s,border-color .3s,box-shadow .3s}
 .tri input[value=off]:checked+label{color:#ffc2c6}
 .tri input[value=allowance]:checked+label{color:var(--mint)}
@@ -551,7 +551,7 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .resources[data-mode=allowance] .tri-thumb,.tri:has(input[value=allowance]:checked) .tri-thumb{transform:translateX(100%);border-color:#2f7a5d;background:linear-gradient(180deg,#173a2e,#0f241d);box-shadow:0 0 16px #69e2b133,inset 0 1px 0 #ffffff14}
 .resources[data-mode=full] .tri-thumb,.tri:has(input[value=full]:checked) .tri-thumb{transform:translateX(200%);border-color:#9af0cc;background:linear-gradient(180deg,#8cf0c6,#4fcf9c);box-shadow:0 0 20px #69e2b166,inset 0 1px 0 #ffffff55}
 .resources[data-mode=full] .tri input[value=full]:checked+label .tri-led{animation:tri-pulse 1.6s ease-in-out infinite}
-@keyframes tri-pulse{50%{box-shadow:0 0 2px currentColor;opacity:.6}}
+@keyframes tri-pulse{0%,100%{box-shadow:0 0 12px 1px currentColor}50%{box-shadow:0 0 20px 4px currentColor;opacity:.7}}
 .resources .range-row{position:relative;box-sizing:border-box;width:310px;max-width:100%;margin-top:11px;padding:11px 13px 8px;border:1px solid #2d5948;border-radius:10px;background:linear-gradient(180deg,#0f1f1a,#0b1513);transition:opacity .25s,border-color .25s,background .25s}
 .resources .range-row::before{content:"";position:absolute;top:-7px;left:50%;width:12px;height:12px;margin-left:-6px;transform:rotate(45deg);background:#0f1f1a;border-left:1px solid #2d5948;border-top:1px solid #2d5948;transition:inherit}
 .resources .range-row.is-idle{opacity:.5;border-style:dashed;border-color:#2b3a47;background:#0b1219}
@@ -617,10 +617,10 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .res-art picture.is-on{opacity:1;transform:none}
 .res-art picture{display:flex;align-items:center;justify-content:center}
 .res-art img{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center;filter:drop-shadow(0 8px 18px #0009)}
-.resources.has-art .tri label{gap:6px}
+.resources.has-art .tri label{gap:8px}
 @media (max-width:560px){.resources.has-art{grid-template-columns:1fr;padding-right:14px}.res-art{order:-1;min-height:0;height:150px;margin:-4px 0 8px}}
 @media (prefers-reduced-motion:reduce){.res-art picture.is-on.is-starting img,.resources[data-run=starting] .res-run-note::before{animation:none}.res-art picture{transition:none}.tri-thumb,.tri label,.resources .range-row{transition:none}.tri-led{animation:none!important}}
-@media (max-width:420px){.tri label{font-size:11px;gap:5px}}
+@media (max-width:420px){.tri label{font-size:11px;gap:6px}.tri-led{width:10px;height:10px}}
 .resources{border:1px solid #263642;background:#0b1319;border-radius:10px;padding:13px 14px;margin:12px 0}
 .res-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .res-head .label{font:10px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
