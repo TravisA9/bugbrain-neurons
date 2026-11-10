@@ -117,6 +117,53 @@ function runFields(array $state): array
     return ['run' => $state['run'], 'since' => $state['since'], 'shown' => $state['shown'], 'saved' => $state['mode'], 'runNote' => $state['runNote'], 'runSub' => $state['runSub'], 'watchdog' => $state['watchdog']];
 }
 
+/* Owner console name color uses the SpikeFoundry palette:
+ * mint when Full blast is running, amber when Allowance is running, red when the
+ * computer is dead (offline, stopped, or a stale heartbeat). A chosen Off that is
+ * still checking in is muted, not red: it is intentionally idle, not dead. */
+function ownerTone(array $state): string
+{
+    if (($state['run'] ?? '') === 'starting') {
+        return 'starting';
+    }
+    if (($state['run'] ?? '') !== 'running' || empty($state['online'])) {
+        return 'dead';
+    }
+    $mode = (string) ($state['mode'] ?? '');
+    if ($mode === 'full') {
+        return 'full';
+    }
+    if ($mode === 'allowance') {
+        return 'allowance';
+    }
+    return 'off';
+}
+
+function ownerJobsLine(array $state): string
+{
+    if (($state['run'] ?? '') === 'starting') {
+        return 'Starting…';
+    }
+    $n = (int) ($state['jobs'] ?? 0);
+    if ($n <= 0) {
+        return 'Idle';
+    }
+    return $n === 1 ? 'Running 1 job at once' : 'Running ' . $n . ' jobs at once';
+}
+
+/* Problems only: the owner list drops the "Healthy" badge so rows stay dense. */
+function ownerHealthNote(array $health): string
+{
+    if ($health['level'] === 'ok') {
+        return '';
+    }
+    $cls = $health['level'] === 'warn' ? 'warn' : 'off';
+    $color = $health['level'] === 'bad' ? ' style="color:var(--red)"' : '';
+    $led = $health['level'] === 'bad' ? ' style="background:var(--red);box-shadow:0 0 9px #ff818aaa"' : '';
+    $hint = $health['hint'] !== '' ? ' <span class="owner-health-hint">' . h($health['hint']) . '</span>' : '';
+    return '<p class="status ' . h($cls) . ' owner-health"' . $color . ' data-health><i class="led ' . h($cls) . '"' . $led . '></i>' . h($health['line']) . $hint . '</p>';
+}
+
 function sinceHtml(string $text, string $since): string
 {
     $t = $since !== '' ? '<time datetime="' . h($since) . '" data-clock>' . h(gmdate('M j, H:i', strtotime($since)) . ' UTC') . '</time>' : 'a while';
@@ -204,7 +251,7 @@ function powerArtUrl(string $base, string $file, string $ext): string
     return $base . '/assets/power/' . $file . '.' . $ext . '?v=1';
 }
 
-function resourceControl(string $action, string $csrf, array $worker, array $state, string $artBase = ''): string
+function resourceControl(string $action, string $csrf, array $worker, array $state, string $artBase = '', bool $compact = false): string
 {
     $id = (string) $worker['id'];
     $saved = (string) $state['mode'];
@@ -223,7 +270,7 @@ function resourceControl(string $action, string $csrf, array $worker, array $sta
     };
     $fill = (int) round((max(10, min(90, $pct)) - 10) / 80 * 100);
     $art = '';
-    if ($artBase !== '') {
+    if (!$compact && $artBase !== '') {
         $art = '<div class="res-art">';
         foreach (powerArt() as $m => $info) {
             $on = $m === $mode;
@@ -233,7 +280,7 @@ function resourceControl(string $action, string $csrf, array $worker, array $sta
         }
         $art .= '</div>';
     }
-    return '<form class="resources' . ($art !== '' ? ' has-art' : '') . '" method="post" action="' . h($action) . '" data-resources data-mode="' . h($mode) . '" data-saved="' . h($saved) . '" data-run="' . h($run) . '">'
+    return '<form class="resources' . ($compact ? ' compact' : '') . ($art !== '' ? ' has-art' : '') . '" method="post" action="' . h($action) . '" data-resources data-mode="' . h($mode) . '" data-saved="' . h($saved) . '" data-run="' . h($run) . '">'
         . '<input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h($id) . '">'
         . '<div class="res-main">'
         . '<div class="res-head"><span class="label">Resources</span><span class="res-now" data-mode-label>' . h($nowLabel) . '</span></div>'
@@ -249,7 +296,7 @@ function resourceControl(string $action, string $csrf, array $worker, array $sta
         . '<input type="range" name="pct" min="10" max="90" step="10" value="' . h((string) $pct) . '" style="--fill:' . $fill . '%" aria-label="Allowance as a share of this computer" aria-valuetext="' . h((string) $pct) . ' percent">'
         . '<div class="range-ends"><span>10%</span><span>90%</span></div></div>'
         . jobsStepper($state)
-        . '<p class="hint">Off lets the running job finish, then stops. The middle setting runs in the background at low priority. Full uses every core.</p>'
+        . ($compact ? '' : '<p class="hint">Off lets the running job finish, then stops. The middle setting runs in the background at low priority. Full uses every core.</p>')
         . '<noscript><button class="button" type="submit">Save</button></noscript>'
         . '<p class="effective" data-effective>' . h((string) $state['effective']) . '</p>'
         . '</div>'
@@ -573,6 +620,30 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 @keyframes resPulse{50%{opacity:.25}}
 .res-art picture.is-on.is-starting img{filter:drop-shadow(0 8px 18px #0009) saturate(.55) brightness(.75);animation:resPulse 1.6s ease-in-out infinite}
 .owner-computers{margin-bottom:15px}
+.owner-computers .computer{padding:10px 12px;margin:0 0 8px}
+.owner-computers .computer-top{justify-content:flex-start;align-items:baseline;flex-wrap:wrap;gap:6px 14px;margin-bottom:2px}
+.owner-computers .computer-name{font:600 20px/1.2 var(--display)}
+.owner-computers .computer-name.is-full{color:var(--mint)}
+.owner-computers .computer-name.is-allowance{color:var(--amber)}
+.owner-computers .computer-name.is-dead{color:var(--red)}
+.owner-computers .computer-name.is-off{color:var(--muted)}
+.owner-computers .computer-name.is-starting{color:var(--amber)}
+.owner-computers .computer-jobs{font:500 14px/1.3 var(--display);color:var(--text)}
+.owner-computers .owner-meta{margin:0 0 6px}
+.owner-computers .owner-health{margin:0 0 6px;flex-wrap:wrap}
+.owner-computers .owner-health-hint{font-weight:400;color:var(--muted);margin-left:6px}
+.owner-computers .resources.compact{margin:6px 0 8px;padding:8px 10px}
+.owner-computers .resources.compact .res-head{margin-bottom:6px}
+.owner-computers .resources.compact .res-main{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 14px}
+.owner-computers .resources.compact .res-head,.owner-computers .resources.compact .res-run,.owner-computers .resources.compact .effective{flex:1 0 100%}
+.owner-computers .resources.compact .tri,.owner-computers .resources.compact .range-row,.owner-computers .resources.compact .jobs-row{margin-top:0;flex:1 1 240px;width:auto;max-width:100%}
+.owner-computers .resources.compact .range-row::before{display:none}
+.owner-computers .resources.compact .range-row{padding:8px 10px 6px}
+.owner-computers .resources.compact .jobs-row{min-height:0;align-self:center}
+.owner-computers .resources.compact .effective{border-top:0;padding-top:0}
+.owner-computers .head-actions{margin:6px 0 4px}
+.owner-computers details.diag{margin:4px 0 0}
+@media (max-width:560px){.owner-computers .computer-name{font-size:18px}.owner-computers .resources.compact .tri,.owner-computers .resources.compact .range-row,.owner-computers .resources.compact .jobs-row{flex-basis:100%}}
 .resources .range-label b{color:var(--mint);font:600 13px var(--display)}
 .resources input[type=range]{-webkit-appearance:none;appearance:none;height:6px;margin:9px 0 7px;border-radius:999px;background:linear-gradient(90deg,var(--mint) 0,var(--mint) var(--fill,50%),#24323d var(--fill,50%));outline:none}
 .resources .range-row.is-idle input[type=range]{background:linear-gradient(90deg,#4e6774 0,#4e6774 var(--fill,50%),#1d2933 var(--fill,50%))}
@@ -1377,18 +1448,14 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         $revoked = (int) $w['revoked'] === 1;
         $controls = '';
         if (!$revoked) {
-            $controls = resourceControl($base . '/owner/resources', $csrf, $w, $state, $base)
+            $controls = resourceControl($base . '/owner/resources', $csrf, $w, $state, $base, true)
                 . '<div class="head-actions"><form method="post" action="' . h($base) . '/owner/revoke" onsubmit="return confirm(\'Revoke this computer\\\'s token?\')"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><button class="button small stop" type="submit">Revoke</button></form>'
                 . newSetupForm($base . '/owner/setup-command', $csrf, (string) $w['id']) . '</div>';
         }
-        $jobs = [];
-        foreach ($leases as $l) {
-            $jobs[] = (string) $l['title'];
-        }
-        $people .= '<div class="computer" data-computer="' . h((string) $w['id']) . '"><div class="computer-top"><span class="computer-name">' . h((string) $w['name']) . '</span><span class="subtag">' . h($revoked ? 'REVOKED' : ($state['run'] === 'stopped' ? 'STOPPED' : ($state['run'] === 'starting' ? 'STARTING' : strtoupper(modeLabel($state['mode'], (int) $state['pct']))))) . '</span></div>'
-            . '<p class="status-line">' . h($revoked ? 'Token revoked' : $state['line']) . '</p>'
-            . healthBadge($health)
-            . '<p class="quiet">' . ($state['ago'] !== '' ? 'Last seen ' . h($state['ago']) : 'Not seen yet') . ' · current jobs ' . h($jobs === [] ? 'none' : implode(', ', $jobs)) . ' · ' . h((string) $done['done']) . ' jobs done</p>'
+        $tone = ownerTone($state);
+        $people .= '<div class="computer" data-computer="' . h((string) $w['id']) . '"><div class="computer-top"><span class="computer-name is-' . h($tone) . '" data-tone>' . h((string) $w['name']) . '</span><span class="computer-jobs" data-jobs-now>' . h(ownerJobsLine($state)) . '</span></div>'
+            . ownerHealthNote($health)
+            . '<p class="quiet owner-meta"><span data-seen>' . ($state['ago'] !== '' ? 'Last seen ' . h($state['ago']) : 'Not seen yet') . '</span> · ' . h((string) $done['done']) . ' jobs done</p>'
             . $controls . diagnosticsPanel($app, (string) $w['id']) . '</div>';
     }
     $filters = ['all' => 'All', 'queued' => 'Queued', 'running' => 'Running', 'done' => 'Done', 'held' => 'Held'];
@@ -1481,6 +1548,6 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         . '</div><div class="stack">' . $health . designLibrarySection($app, $csrf, $base) . '</div></div>'
         . $advanced;
     /* Keeps each computer's Resources state (Stopped / Starting… / running) current without a reload. */
-    $poll = '<script>(function(){var u=' . json_encode($base . '/owner/run.json', JSON_UNESCAPED_SLASHES) . ';function tick(){if(document.hidden)return;fetch(u,{credentials:"same-origin",headers:{"Accept":"application/json"}}).then(function(r){return r.json();}).then(function(d){(d.computers||[]).forEach(function(c){var card=document.querySelector("[data-computer=\'"+c.id+"\']");if(!card)return;var f=card.querySelector("form[data-resources]");if(f&&f.__run)f.__run(c);var l=card.querySelector(".status-line");if(l)l.textContent=c.line;var e=card.querySelector("[data-effective]");if(e&&!(Date.now()<+(e.getAttribute("data-until")||0))&&e.textContent!=="Saving…")e.textContent=c.effective;});}).catch(function(){});}setInterval(tick,15000);})();</script>';
-    return layout('Owner', $body, $base, $nav, ['foot' => resourceScript() . $poll]);
+        $poll = '<script>(function(){var u=' . json_encode($base . '/owner/run.json', JSON_UNESCAPED_SLASHES) . ';function tick(){if(document.hidden)return;fetch(u,{credentials:"same-origin",headers:{"Accept":"application/json"}}).then(function(r){return r.json();}).then(function(d){(d.computers||[]).forEach(function(c){var card=document.querySelector("[data-computer=\'"+c.id+"\']");if(!card)return;var f=card.querySelector("form[data-resources]");if(f&&f.__run)f.__run(c);var n=card.querySelector("[data-tone]");if(n&&c.tone)n.className="computer-name is-"+c.tone;var j=card.querySelector("[data-jobs-now]");if(j&&c.jobsLine)j.textContent=c.jobsLine;var s=card.querySelector("[data-seen]");if(s&&c.seen)s.textContent=c.seen;var e=card.querySelector("[data-effective]");if(e&&!(Date.now()<+(e.getAttribute("data-until")||0))&&e.textContent!=="Saving…")e.textContent=c.effective;var hb=card.querySelector("[data-health]");if(c.healthHtml){if(hb){hb.outerHTML=c.healthHtml;}else{var meta=card.querySelector(".owner-meta");if(meta)meta.insertAdjacentHTML("beforebegin",c.healthHtml);}}else if(hb){hb.remove();}});}).catch(function(){});}setInterval(tick,15000);})();</script>';
+return layout('Owner', $body, $base, $nav, ['foot' => resourceScript() . $poll]);
 }

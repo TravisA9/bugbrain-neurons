@@ -632,7 +632,10 @@ try {
         $out = [];
         foreach ($app->db->query('SELECT * FROM workers WHERE revoked = 0 AND removed_at IS NULL')->fetchAll() as $w) {
             $state = describeWorker($app, $w, $app->leasesOf((string) $w['id']));
-            $out[] = ['id' => (string) $w['id'], 'line' => $state['line'], 'effective' => $state['effective']] + runFields($state);
+            $out[] = ['id' => (string) $w['id'], 'line' => $state['line'], 'effective' => $state['effective'],
+                'tone' => ownerTone($state), 'jobsLine' => ownerJobsLine($state),
+                'seen' => $state['ago'] !== '' ? 'Last seen ' . $state['ago'] : 'Not seen yet',
+                'healthHtml' => ownerHealthNote($app->healthOf($w))] + runFields($state);
         }
         coord_json(200, ['ok' => true, 'computers' => $out]);
         return;
