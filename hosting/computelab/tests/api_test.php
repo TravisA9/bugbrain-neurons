@@ -424,7 +424,9 @@ $spec = json_decode((string) $supply['db']->query('SELECT spec_json FROM jobs WH
 $bbQueued = (int) $supply['db']->query("SELECT COUNT(*) FROM jobs WHERE project_id = 'bugbrain'")->fetchColumn();
 check($got && $got['project'] === 'spikefoundry' && $spec['mode'] === 'propose' && (int) $spec['evals'] === 0 && (int) $spec['targetSeconds'] === 180 && (int) $spec['keepTop'] === 50 && (int) $spec['keepRandom'] === 500 && $auto === 1 && $bbQueued === 0, 'an empty SpikeFoundry queue grows one propose job and BugBrain stays off');
 $second = $supply['app']->claim($supply['app']->workerByToken($sw['token']));
-check($second === null, 'supply does not add another job until the throttle window passes');
+$jobsAfter = (int) $supply['db']->query("SELECT COUNT(*) FROM jobs WHERE project_id = 'spikefoundry'")->fetchColumn();
+$autoAfter = (int) $supply['db']->query("SELECT auto_created FROM projects WHERE id = 'spikefoundry'")->fetchColumn();
+check(($second === null || (string) $second['id'] === (string) $got['id']) && $jobsAfter === 1 && $autoAfter === 1, 'supply does not add another job until the throttle window passes');
 $supply['clock']->t = gmdate('c', strtotime($supply['clock']->t) + 20);
 $supply['app']->saveSupply('spikefoundry', true, 2, 2, 12);
 $id = substr(hash('sha256', 'spikefoundry|coincidence'), 0, 32);
@@ -594,6 +596,23 @@ $bigEvals['taskId'] = 'sequence';
 $bigEvals['evals'] = 5000000;
 $solve['app']->ingestSummary($solveWorker, $bigEvals);
 check((int) $solve['db']->query("SELECT COUNT(*) FROM design_summaries WHERE job_id = 'sf-propose-4-d'")->fetchColumn() === 1, 'a summary from a long time-budget job with millions of evaluations is accepted');
+
+$two = lab();
+$twoReg = $two['app']->enroll('two-pc', ['spikefoundry'], 2, true);
+$twoSeen = function () use ($two, $twoReg) {
+    $two['db']->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$two['clock']->t, $twoReg['workerId']]);
+    return $two['app']->workerByToken($twoReg['token']);
+};
+$two['app']->saveSupply('spikefoundry', false, 1, 1, 0);
+$two['app']->createJob('sf-propose', 'Left behind', 0.9, 551402, ['taskId' => 'sequence', 'mode' => 'propose']);
+$two['app']->createJob('sf-propose', 'Next run', 0.5, 601809, ['taskId' => 'sequence', 'mode' => 'propose']);
+$oldRun = $two['app']->claim($twoSeen());
+$two['clock']->t = gmdate('c', strtotime($two['clock']->t) + 60);
+$newRun = $two['app']->claim($twoSeen());
+$twoBeat = $two['app']->heartbeat($twoSeen());
+$oldRow = $two['db']->query('SELECT status, attempts FROM jobs WHERE id = ' . $two['db']->quote((string) $oldRun['id']))->fetch();
+$leaseCount = (int) $two['db']->query('SELECT COUNT(*) FROM leases')->fetchColumn();
+check($oldRun && $newRun && (string) $newRun['id'] !== (string) $oldRun['id'] && $twoBeat['jobId'] === (string) $newRun['id'] && $leaseCount === 1 && (string) $oldRow['status'] === 'queued' && (int) $oldRow['attempts'] === 1, 'a restarted computer that claims again drops its old lease, and the heartbeat follows the new job');
 
 $gap = lab();
 $gapReg = $gap['app']->enroll('gap-pc', ['spikefoundry'], 2, true);

@@ -611,6 +611,7 @@ final class App
         if ((int) $worker['paused'] === 1) {
             return null;
         }
+        $this->dropLeasesOf((string) $worker['id']);
         $allowed = json_decode((string) $worker['allowed_json'], true);
         if (!is_array($allowed)) {
             $allowed = [];
@@ -700,6 +701,25 @@ final class App
         }
     }
 
+    /* A worker runs one job at a time and only asks for work when it is idle, so any
+     * lease it still holds at that point belongs to a run it gave up (a restart, or a
+     * heartbeat that answered for another job). Hand those jobs back now instead of
+     * letting the old lease ride along and confuse the next heartbeat. */
+    private function dropLeasesOf(string $workerId): void
+    {
+        $st = $this->db->prepare('SELECT job_id FROM leases WHERE worker_id = ?');
+        $st->execute([$workerId]);
+        $rows = $st->fetchAll();
+        if ($rows === []) {
+            return;
+        }
+        foreach ($rows as $row) {
+            $this->noteFailure((string) $row['job_id'], $workerId, 'The computer asked for new work while still holding this lease, so the lease was dropped.', true);
+        }
+        $this->db->prepare('DELETE FROM leases WHERE worker_id = ?')->execute([$workerId]);
+        $this->moveQueuedOffPausedTasks();
+    }
+
     public function heartbeat(array $worker, array $extra = []): array
     {
         $this->db->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$this->now(), $worker['id']]);
@@ -709,7 +729,7 @@ final class App
         if (!$state) {
             return ['ok' => true, 'paused' => true, 'revoked' => true, 'jobId' => null, 'leaseUntil' => null];
         }
-        $lease = $this->db->prepare('SELECT * FROM leases WHERE worker_id = ?');
+        $lease = $this->db->prepare('SELECT * FROM leases WHERE worker_id = ? ORDER BY started_at DESC, job_id DESC');
         $lease->execute([$worker['id']]);
         $row = $lease->fetch();
         $jobId = null;
