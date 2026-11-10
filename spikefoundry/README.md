@@ -16,12 +16,16 @@ node spikefoundry/experiment.js sequence-experiment.json sequence-results
 Each round compares the current proposal strategy and simple evolution under
 the same CPU and proposal caps. After the first round, a learned arm ranks
 candidate edits with a checkpoint fitted on actual search outcomes. All arms
-share the screening and search cases. Only each arm's winner reaches balanced
-confirmation cases, including longer sequences. The experiment tracks
+share the screening and search cases. Each arm can send up to three finalists
+to balanced confirmation cases, including longer sequences. The reported
+CPU time to a verified circuit includes the completed search, confirmation,
+and the learned checkpoint's training cost. The experiment tracks
 cache hits, unique simulation CPU time, attempts, plateau stops, confirmation
 scores, and circuit size. It requires two consecutive qualifying rounds with
 the same checkpoint to promote it. It also checks a 64-module chain assembled
-from reference circuits separately from the learned search.
+from reference circuits separately from the learned search. An approved
+checkpoint also ranks modules for a new task with two independent sequence
+channels. The transfer test checks both component behaviors and both outputs.
 
 The output directory holds the experiment report, the evaluation journal,
 the tested model versions, and an approved checkpoint if one passes. Reuse
@@ -33,6 +37,15 @@ the number of proposals across machines even with the same seed.
 On Compute Lab, the owner can queue **Run a capped sequence experiment** from
 the job template list. Each seed has one job ID, and workers must advertise
 experiment support. The owner console links the latest JSON report.
+The **Sequence study** form queues three capped jobs with consecutive seeds.
+The three jobs use disjoint case partitions. The comparison shows successes
+and median CPU time for matched rounds with the same budget and starting
+checkpoint. Discoveries lists circuits that pass both confirmation suites
+separately from the search rankings.
+
+The coordinator saves completed rounds during a job. A replacement donor can
+restore those rounds. An interrupted round can still repeat on a replacement
+machine, while a retry on the same machine also has its local journal.
 Set `pause_legacy_spikefoundry_search` in the coordinator configuration to stop
 refilling and claiming the legacy SpikeFoundry search while running the study.
 Set the study budget and optional approved `initialCheckpoint` under

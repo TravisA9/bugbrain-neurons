@@ -1110,6 +1110,49 @@ function discWhenHtml(string $iso): string
     return '<div class="row3"><time class="disc-when" datetime="' . h(gmdate('Y-m-d\\TH:i:s\\Z', $t)) . '">Found ' . h(gmdate('M j, g:i A', $t)) . ' UTC</time></div>';
 }
 
+function verifiedDiscoveries(array $studies): string
+{
+    $entries = [];
+    foreach ($studies as $seed => $study) {
+        foreach ($study['rounds'] as $round) {
+            $arms = $round['arms'] ?? [];
+            if (!is_array($arms)) {
+                continue;
+            }
+            foreach ($arms as $name => $arm) {
+                $hash = $arm['circuit'] ?? '';
+                if (!is_string($hash) || !preg_match('/^[a-f0-9]{64}$/', $hash) || isset($entries[$hash])) {
+                    continue;
+                }
+                $checks = [];
+                foreach (['fresh' => 'Fresh sequence cases', 'shifted' => 'Longer sequence cases'] as $key => $label) {
+                    $score = $arm['confirmation'][$key] ?? [];
+                    $accuracy = $score['accuracy'] ?? null;
+                    $recall = $score['recall'] ?? null;
+                    if (!is_numeric($accuracy) || !is_numeric($recall) || min($accuracy, $recall) < 0.9 || max($accuracy, $recall) > 1) {
+                        break;
+                    }
+                    $checks[] = $label . ' · ' . number_format(100 * $accuracy, 1) . '% accuracy · '
+                        . number_format(100 * $recall, 1) . '% recall · ' . number_format((float) ($score['spikes'] ?? 0), 1) . ' spikes per case';
+                }
+                if (count($checks) !== 2) {
+                    continue;
+                }
+                $checkpoint = $arm['checkpoint'] ?? '';
+                $source = is_string($checkpoint) && preg_match('/^[a-f0-9]{64}$/', $checkpoint)
+                    ? 'Checkpoint ' . substr($checkpoint, 0, 12) : 'Proposer ' . $name;
+                $entries[$hash] = '<div class="taskcard"><strong>Sequence · ' . h(substr($hash, 0, 12)) . '</strong>'
+                    . '<div class="taskdesc2">' . h($source . ' · seed ' . $seed . ' · ' . (int) ($arm['neurons'] ?? 0)
+                        . ' neurons · ' . (int) ($arm['synapses'] ?? 0) . ' synapses') . '</div>'
+                    . '<div class="taskdesc2">' . h(implode(' / ', $checks)) . '</div></div>';
+            }
+        }
+    }
+    return '<div class="viz-title"><strong>Independently verified circuits</strong><span>Fresh cases outside search</span></div>'
+        . ($entries ? '<div class="tasks">' . implode('', array_slice($entries, 0, 8)) . '</div>'
+            : '<p class="muted">No circuits have passed both fresh-case checks in a completed study yet.</p>');
+}
+
 function pageDiscoveries(App $app, array $nav, array $mineIds = []): string
 {
     $base = $app->base();
@@ -1145,9 +1188,10 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = []): string
         $list .= '<p class="muted" style="padding:8px">No discoveries yet. Finished SpikeFoundry runs upload them.</p>';
     }
     $data = ['items' => $items, 'series' => $series, 'board' => $board, 'genomeUrl' => $base . '/discoveries/genome?hash=', 'now' => $app->now(), 'mineCount' => count($mineIds)];
-    $body = '<section class="heading"><div><div class="eyebrow">Discoveries · frozen designs</div><h1>What the network has found</h1><p>The top designs of each task on each quality measure (held-out score, train score, efficiency, and margin over random), newest level first. A design that leads in more than one measure is listed once, with badges for the measures it leads. Silent or weak designs that never fire on a positive label, or that fail to beat the random control, are not shown. Each design is listed once: the first computer to find it keeps the credit, and later finds count as confirmations. Circuits that score the same with the same size are grouped as one entry. Designs found by your computer are marked in amber. Click a design to see its wiring and watch the frozen network run.</p></div></section>'
+    $body = '<section class="heading"><div><div class="eyebrow">Discoveries · frozen designs</div><h1>What the network has found</h1><p>Browse promising search results and play back their wiring. Ranking badges describe the cases used during search. The Overview lists circuits that passed separate fresh-case checks. Repeat finds earn confirmations in the credit system.</p></div></section>'
         . '<div class="split"><section class="panel" aria-label="Discoveries"><div class="panelhead"><div class="paneltitle">Discoveries</div><span class="subtag">' . h((string) count($items)) . ' DESIGNS</span></div><div class="list-scroll" id="disc-list">' . $list . '</div></section>'
         . '<section class="panel" aria-label="Discovery viewer"><div class="panelhead"><div class="paneltitle" id="v-title">Overview</div><span class="subtag" id="v-tag">ALL TASKS</span></div><div class="viewer-scroll" id="viewer"></div></section></div>'
+        . '<template id="disc-verification">' . verifiedDiscoveries($app->recentSequenceStudies()) . '</template>'
         . '<script type="application/json" id="disc-data">' . jsonForHtml($data) . '</script>';
     $engine = (string) ($app->config['engine_js'] ?? '');
     $version = is_readable($engine) ? hash_file('sha256', $engine) : 'missing';
@@ -1282,7 +1326,7 @@ var my=(8+(1-clamp(mark,0,1))*(H-16)).toFixed(1);return '<svg class="chart-svg" 
 function overview(){T.textContent='Overview';G.textContent='ALL TASKS';var by={};D.items.forEach(function(it){if(!by[it.task]||it.held>by[it.task].held)by[it.task]=it;});
 var h='<div class="metrics">'+metric('Designs listed',D.items.length,'top N per quality measure',true)+metric('Tasks',Object.keys(by).length,'curriculum levels reached')+metric('Yours',D.items.filter(function(i){return i.mine;}).length,D.mineCount?'found by your computer':'link a computer on Home')+metric('Contributors',D.board.length,'with public credit or Anonymous')+'</div>';
 h+='<div class="viz-title"><strong>Best per task</strong><span>held-out score</span></div><div class="tasks">';Object.keys(by).forEach(function(k){var it=by[k];h+='<div class="taskcard"><div class="taskline"><span class="taskname">Level '+it.level+' · '+esc(k)+'</span><span class="taskscore">'+f3(it.held)+'</span></div><div class="taskdesc2">'+esc(it.finder)+' · '+it.neurons+' neurons · '+it.synapses+' synapses · '+'<span title="'+esc(ago(it.when))+'">'+esc(when(it.when))+'</span></div><div class="prog"><i style="width:'+Math.round(100*clamp(it.held,0,1))+'%"></i></div></div>';});
-h+='</div><div class="viz-title"><strong>Contributors</strong><span>evaluation time donated</span></div><div class="log">';D.board.forEach(function(b){h+='<div class="logline"><span class="logtime">'+b.hours.toFixed(2)+' h</span><span class="logtext">'+esc(b.name)+'</span><span class="logscore">'+b.genomes+' designs</span></div>';});if(!D.board.length)h+='<p class="muted">No public results yet.</p>';V.innerHTML=h+'</div>';}
+h+='</div><div class="viz-title"><strong>Contributors</strong><span>evaluation time donated</span></div><div class="log">';D.board.forEach(function(b){h+='<div class="logline"><span class="logtime">'+b.hours.toFixed(2)+' h</span><span class="logtext">'+esc(b.name)+'</span><span class="logscore">'+b.genomes+' designs</span></div>';});if(!D.board.length)h+='<p class="muted">No public results yet.</p>';var verified=document.getElementById('disc-verification');V.innerHTML=(verified?verified.innerHTML:'')+h+'</div>';}
 function show(i,auto){var selection=++generation;if(player){player.destroy();player=null;}if(i<0)return overview();var it=D.items[i];var badges=(it.badges||[]).map(function(b){return '<span class="badge-m">'+esc(b)+'</span>';}).join('');T.innerHTML=esc('#'+it.rank+' '+it.task)+(it.mine?'<span class="badge-mine">Your computer</span>':'')+badges;G.textContent='LEVEL '+it.level;
 var h='<div class="chips" style="margin-bottom:12px"><span class="chip">genome <b>'+esc(it.hash.slice(0,12))+'</b></span><span class="chip'+(it.mine?' mine':'')+'">found by '+esc(it.finder)+'</span><span class="chip disc-found" title="'+esc(ago(it.when))+'">found <b>'+esc(when(it.when))+'</b></span>'+(it.public?'<span class="chip"><b>public</b></span>':'')+(it.confirmations?'<span class="chip" title="Found again by later jobs">confirmed <b>'+it.confirmations+'×</b>'+(it.confirmedBy&&it.confirmedBy.length?' by '+esc(it.confirmedBy.join(', ')):'')+'</span>':'')+(it.variants?'<span class="chip" title="Other circuits with the same scores, size and spikes">+'+it.variants+' equivalent variant'+(it.variants>1?'s':'')+'</span>':'')+(it.badges&&it.badges.length?it.badges.map(function(b){return '<span class="chip" title="Among the top designs of this task on this measure">'+esc(b)+'</span>';}).join(''):'')+'</div>';
 h+='<div class="metrics">'+metric('Held-out score',f3(it.held),'size penalty included',true)+metric('Train score',f3(it.train),it.accuracy!=null?'accuracy '+f3(it.accuracy):'')+metric('Circuit size',it.neurons+'<small> / '+it.synapses+'</small>','neurons / synapses')+metric('Spikes',it.spikes,'on held-out cases · '+it.evalMs+' ms')+'</div>';
@@ -1451,6 +1495,58 @@ function diagnosticsPanel(App $app, string $workerId): string
     return $html . '</div></details>';
 }
 
+function sequenceStudySection(App $app, string $csrf): string
+{
+    $labels = ['current' => 'Current proposer', 'evolution' => 'Simple evolution', 'learned' => 'Learned designer'];
+    $studies = $app->recentSequenceStudies();
+    $times = array_fill_keys(array_keys($labels), []);
+    $paired = 0;
+    $seeds = 0;
+    $comparison = static function (array $config): array {
+        return [$config['cpuBudgetMs'] ?? null, $config['cap'] ?? null, $config['initialId'] ?? null];
+    };
+    $reference = $studies ? $comparison(reset($studies)['config']) : [];
+    foreach ($studies as $study) {
+        if ($comparison($study['config']) !== $reference) {
+            continue;
+        }
+        $hasPair = false;
+        foreach ($study['rounds'] as $round) {
+            $arms = $round['arms'] ?? [];
+            if (!is_array($arms) || array_diff_key($labels, $arms)) {
+                continue;
+            }
+            $hasPair = true;
+            $paired++;
+            foreach ($labels as $name => $label) {
+                $ms = $arms[$name]['verifiedCpuMs'] ?? null;
+                if (is_numeric($ms) && $ms > 0) {
+                    $times[$name][] = (float) $ms / 1000;
+                }
+            }
+        }
+        $seeds += $hasPair ? 1 : 0;
+    }
+    $summary = '<p class="muted">No completed studies with a matched comparison yet.</p>';
+    if ($paired > 0) {
+        $summary = '<p class="quiet">' . $paired . ' matched rounds across ' . $seeds . ' seeds using the latest study budget and starting checkpoint. Times include confirmation and the learned checkpoint’s training cost.</p><ul>';
+        foreach ($labels as $name => $label) {
+            sort($times[$name], SORT_NUMERIC);
+            $n = count($times[$name]);
+            $median = $n ? ($times[$name][intdiv($n - 1, 2)] + $times[$name][intdiv($n, 2)]) / 2 : null;
+            $summary .= '<li>' . h($label . ' · ' . $n . '/' . $paired . ' verified'
+                . ($median === null ? '' : ' · median ' . number_format($median, 3) . ' CPU-seconds when successful')) . '</li>';
+        }
+        $summary .= '</ul>';
+    }
+    $base = $app->base();
+    return '<h2 style="margin-top:18px">Sequence study</h2>' . $summary
+        . '<form method="post" action="' . h($base) . '/owner/sequence-study"><input type="hidden" name="csrf" value="' . h($csrf) . '">'
+        . '<label>First seed <input name="seed" type="number" min="1" max="999998" required></label>'
+        . '<button class="small" type="submit">Queue three capped study jobs</button></form>'
+        . '<p class="quiet"><a href="' . h($base) . '/owner/sequence-experiment.json">Latest sequence experiment report (JSON)</a></p>';
+}
+
 function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', string $status = 'all', int $page = 1): string
 {
     $base = $app->base();
@@ -1559,7 +1655,7 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         . '<label>Priority <input name="priority" type="number" min="0" max="5" step="0.1" value="0.5"></label>'
         . '<label>Seed <input name="seed" type="number" min="1" max="1000000" value="7"></label></div>'
         . '<button class="small" type="submit">Queue job</button></form>'
-        . '<p class="quiet"><a href="' . h($base) . '/owner/sequence-experiment.json">Latest sequence experiment report (JSON)</a></p>'
+        . sequenceStudySection($app, $csrf)
         . '<h2 style="margin-top:18px">Task thresholds</h2>' . ($thresholds !== '' ? $thresholds : '<p class="muted">Thresholds appear after the first design upload.</p>')
         . '</div></details>';
     $store = $app->storageStatus();

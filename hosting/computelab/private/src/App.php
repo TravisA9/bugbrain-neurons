@@ -201,6 +201,16 @@ final class App
             metric_json TEXT NOT NULL,
             created_at TEXT NOT NULL
         )');
+        $this->db->exec('CREATE TABLE IF NOT EXISTS sequence_checkpoints (
+            job_id VARCHAR(191) PRIMARY KEY,
+            completed_rounds INTEGER NOT NULL,
+            payload MEDIUMTEXT NOT NULL
+        )');
+        $this->db->exec('CREATE TABLE IF NOT EXISTS sequence_study_results (
+            job_id VARCHAR(191) PRIMARY KEY,
+            seed INTEGER NOT NULL,
+            result_id INTEGER NOT NULL
+        )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS design_genomes (
             hash VARCHAR(191) PRIMARY KEY,
             genome_json TEXT NOT NULL,
@@ -1029,7 +1039,7 @@ final class App
         return $n;
     }
 
-    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false): ?array
+    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1): ?array
     {
         $this->replenishJobs();
         $this->expireLeases();
@@ -1074,7 +1084,8 @@ final class App
                     if (!is_array($spec)) {
                         $spec = [];
                     }
-                    if (($spec['mode'] ?? '') === 'sequence-experiment' && !$sequenceExperiment) {
+                    if (($spec['mode'] ?? '') === 'sequence-experiment'
+                        && (!$sequenceExperiment || $studyVersion < (int) ($spec['experiment']['studyVersion'] ?? 1))) {
                         continue;
                     }
                     if ($this->legacySearchPaused((string) $project['id'], $spec)) {
@@ -1238,7 +1249,8 @@ final class App
             throw new InvalidArgumentException('Bad job id.');
         }
         $raw = json_encode($body);
-        if ($raw === false || strlen($raw) > (int) $this->config['result_bytes']) {
+        $maxBytes = (int) $this->config['result_bytes'];
+        if ($raw === false || strlen($raw) > max($maxBytes, 60000)) {
             throw new InvalidArgumentException('Result is too large.');
         }
         $status = (string) ($body['status'] ?? '');
@@ -1281,6 +1293,9 @@ final class App
             if (!$row || (string) $row['status'] !== 'leased') {
                 throw new InvalidArgumentException('This computer does not hold that job.');
             }
+            if (strlen($raw) > ($row['template_id'] === 'sf-sequence-experiment' ? 60000 : $maxBytes)) {
+                throw new InvalidArgumentException('Result is too large.');
+            }
             if ($row['project_id'] === 'spikefoundry' && empty($body['synthetic'])) {
                 throw new InvalidArgumentException('SpikeFoundry results must be marked synthetic.');
             }
@@ -1288,7 +1303,8 @@ final class App
                 $report = $body['research'] ?? [];
                 $spec = json_decode((string) $row['spec_json'], true);
                 $options = $spec['experiment'] ?? [];
-                if (($report['version'] ?? '') !== 'sequence-experiment-1'
+                $versions = ($options['studyVersion'] ?? 1) >= 2 ? ['sequence-experiment-2'] : ['sequence-experiment-1', 'sequence-experiment-2'];
+                if (!in_array($report['version'] ?? '', $versions, true)
                     || ($report['config']['seed'] ?? null) !== (int) $row['seed']
                     || ($report['config']['cpuBudgetMs'] ?? null) !== ($options['cpuBudgetMs'] ?? null)
                     || ($report['config']['cap'] ?? null) !== ($options['cap'] ?? null)
@@ -1299,8 +1315,16 @@ final class App
             }
             $this->db->prepare('INSERT INTO results (job_id, worker_id, status, summary, body_json, seconds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
                 ->execute([$jobId, $worker['id'], $status, $summary, $raw, $seconds, $this->now()]);
+            if ($status === 'done' && $row['template_id'] === 'sf-sequence-experiment' && ($body['research']['version'] ?? '') === 'sequence-experiment-2') {
+                $resultId = (int) $this->db->lastInsertId();
+                $this->db->prepare('REPLACE INTO sequence_study_results (job_id, seed, result_id) VALUES (?, ?, ?)')
+                    ->execute([$jobId, (int) $row['seed'], $resultId]);
+            }
             if ($status === 'done') {
                 $this->db->prepare('UPDATE jobs SET status = ?, not_before = NULL WHERE id = ? AND status = ?')->execute(['done', $jobId, 'leased']);
+                if ($row['template_id'] === 'sf-sequence-experiment') {
+                    $this->db->prepare('DELETE FROM sequence_checkpoints WHERE job_id = ?')->execute([$jobId]);
+                }
             } else {
                 $this->noteFailure($jobId, (string) $worker['id'], $summary !== '' ? $summary : 'Job returned an error.', false);
             }
@@ -1434,6 +1458,7 @@ final class App
         if ($templateId === 'sf-sequence-experiment') {
             $options = $this->config['sequence_experiment'] ?? [];
             $spec['experiment'] = [
+                'studyVersion' => 2,
                 'rounds' => max(3, min(12, (int) ($options['rounds'] ?? 6))),
                 'cpuBudgetMs' => max(10, min(10000, (int) ($options['cpuBudgetMs'] ?? 1000))),
                 'cap' => max(10, min(10000, (int) ($options['cap'] ?? 3000))),
@@ -1471,6 +1496,77 @@ final class App
         $row = $st->fetch();
         $body = $row ? json_decode((string) $row['body_json'], true) : null;
         return is_array($body['research'] ?? null) ? ['jobId' => $row['id'], 'research' => $body['research']] : null;
+    }
+
+    public function recentSequenceStudies(): array
+    {
+        $rows = $this->db->query('SELECT s.seed, r.body_json FROM sequence_study_results s
+            JOIN results r ON r.id = s.result_id ORDER BY s.result_id DESC LIMIT 12')->fetchAll();
+        $studies = [];
+        foreach ($rows as $row) {
+            $body = json_decode((string) $row['body_json'], true);
+            $report = $body['research'] ?? [];
+            if (($report['version'] ?? '') === 'sequence-experiment-2' && is_array($report['rounds'] ?? null)) {
+                $studies[(int) $row['seed']] = ['config' => $report['config'] ?? [], 'rounds' => $report['rounds']];
+            }
+        }
+        return $studies;
+    }
+
+    public function queueSequenceStudy(int $firstSeed): array
+    {
+        if ($firstSeed < 1 || $firstSeed > 999998) {
+            throw new InvalidArgumentException('The first study seed must be from 1 to 999998.');
+        }
+        $this->db->beginTransaction();
+        try {
+            $ids = [];
+            for ($seed = $firstSeed; $seed < $firstSeed + 3; $seed++) {
+                $ids[] = $this->createJob('sf-sequence-experiment', 'Sequence study · seed ' . $seed, 0.8, $seed);
+            }
+            $this->db->commit();
+            return $ids;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    public function sequenceCheckpoint(array $worker, string $jobId, ?array $snapshot): ?array
+    {
+        $lease = $this->db->prepare("SELECT j.spec_json FROM jobs j JOIN leases l ON l.job_id = j.id
+            WHERE j.id = ? AND l.worker_id = ? AND l.until_at > ? AND j.status = 'leased'
+            AND j.template_id = 'sf-sequence-experiment'");
+        $lease->execute([$jobId, $worker['id'], $this->now()]);
+        $spec = json_decode((string) $lease->fetchColumn(), true);
+        if (($spec['experiment']['studyVersion'] ?? 0) < 2) {
+            throw new InvalidArgumentException('No active sequence experiment lease.');
+        }
+        if ($snapshot !== null) {
+            $rounds = $snapshot['completedRounds'] ?? null;
+            $payload = $snapshot['payload'] ?? null;
+            if (!is_int($rounds) || $rounds < 1 || $rounds > (int) $spec['experiment']['rounds']
+                || !is_string($payload) || strlen($payload) > 524288 || base64_decode($payload, true) === false) {
+                throw new InvalidArgumentException('Invalid sequence checkpoint.');
+            }
+            $active = "EXISTS (SELECT 1 FROM leases WHERE job_id = ? AND worker_id = ? AND until_at > ?)";
+            $args = [$jobId, $worker['id'], $this->now()];
+            $sql = 'INSERT INTO sequence_checkpoints (job_id, completed_rounds, payload) SELECT ?, ?, ? WHERE ' . $active
+                . ' AND NOT EXISTS (SELECT 1 FROM sequence_checkpoints WHERE job_id = ?)';
+            try {
+                $this->db->prepare($sql)->execute(array_merge([$jobId, $rounds, $payload], $args, [$jobId]));
+            } catch (PDOException $e) {
+                if ((string) $e->getCode() !== '23000') {
+                    throw $e;
+                }
+            }
+            $this->db->prepare('UPDATE sequence_checkpoints SET completed_rounds = ?, payload = ? WHERE job_id = ? AND completed_rounds < ? AND ' . $active)
+                ->execute(array_merge([$rounds, $payload, $jobId, $rounds], $args));
+        }
+        $st = $this->db->prepare('SELECT completed_rounds, payload FROM sequence_checkpoints WHERE job_id = ?');
+        $st->execute([$jobId]);
+        $row = $st->fetch();
+        return $row ? ['completedRounds' => (int) $row['completed_rounds'], 'payload' => $row['payload']] : null;
     }
 
     /** A seed no other job has used, so two jobs never repeat the same search. */

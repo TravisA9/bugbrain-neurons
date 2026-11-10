@@ -1013,7 +1013,7 @@ $researchWorker = $research->workerByToken($participant['token']);
 $research->createJob('sf-propose', 'Legacy proposal', 5, 100);
 $researchId = $research->createJob('sf-sequence-experiment', 'Sequence study', 1, 101);
 check($research->claimableQueued() === 1 && $research->claim($researchWorker) === null, 'paused legacy search and incompatible workers do not start a research job');
-$researchJob = $research->claim($researchWorker, 0, true);
+$researchJob = $research->claim($researchWorker, 0, true, 2);
 check($researchJob && $researchJob['id'] === $researchId && $researchJob['spec']['experiment']['rounds'] === 6, 'a capable worker receives one capped sequence experiment');
 try {
     $research->createJob('sf-sequence-experiment', 'Duplicate study', 1, 101);
@@ -1022,9 +1022,28 @@ try {
     $duplicateRefused = true;
 }
 check($duplicateRefused, 'a second experiment with the same seed is rejected');
-$report = ['version' => 'sequence-experiment-1', 'config' => ['seed' => 101, 'cpuBudgetMs' => 1000, 'cap' => 3000], 'rounds' => array_fill(0, 6, [])];
-$research->submitResult($researchWorker, $researchId, ['status' => 'done', 'synthetic' => true, 'research' => $report]);
+$snapshot = ['completedRounds' => 2, 'payload' => base64_encode('two completed rounds')];
+check($research->sequenceCheckpoint($researchWorker, $researchId, $snapshot) === $snapshot
+    && $research->sequenceCheckpoint($researchWorker, $researchId, ['completedRounds' => 1, 'payload' => base64_encode('older')]) === $snapshot,
+    'shared sequence checkpoints keep the newest completed round');
+$research->dropLeasesOf((string) $researchWorker['id']);
+$otherResearch = $research->enroll('replacement-research-pc', ['spikefoundry'], 2, true);
+$replacement = $research->workerByToken($otherResearch['token']);
+$replacementJob = $research->claim($replacement, 0, true, 2);
+check($replacementJob && $replacementJob['id'] === $researchId && $research->sequenceCheckpoint($replacement, $researchId, null) === $snapshot,
+    'a replacement donor can recover completed rounds');
+try {
+    $research->sequenceCheckpoint($researchWorker, $researchId, null);
+    $oldLeaseRejected = false;
+} catch (InvalidArgumentException $e) {
+    $oldLeaseRejected = true;
+}
+check($oldLeaseRejected, 'a donor without the current lease cannot read a study checkpoint');
+$report = ['version' => 'sequence-experiment-2', 'config' => ['seed' => 101, 'cpuBudgetMs' => 1000, 'cap' => 3000], 'rounds' => array_fill(0, 6, [])];
+$research->submitResult($replacement, $researchId, ['status' => 'done', 'synthetic' => true, 'research' => $report]);
 check($research->sequenceExperimentReport('')['research'] === $report, 'the coordinator persists and reads the experiment report');
+check(count($research->recentSequenceStudies()) === 1 && count($research->queueSequenceStudy(200)) === 3,
+    'the owner can compare completed studies and queue three distinct seeds');
 
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

@@ -288,10 +288,10 @@ function coord_path(App $app): string
     return $uri === '/' ? '/' : rtrim($uri, '/');
 }
 
-function coord_body(): array
+function coord_body(int $maxBytes = 65536): array
 {
-    $raw = file_get_contents('php://input') ?: '';
-    if (strlen($raw) > 65536) {
+    $raw = file_get_contents('php://input', false, null, 0, $maxBytes + 1) ?: '';
+    if (strlen($raw) > $maxBytes) {
         throw new InvalidArgumentException('Request is too large.');
     }
     if ($raw === '') {
@@ -746,6 +746,8 @@ try {
             $app->setProject((string) ($_POST['id'] ?? ''), isset($_POST['priority']) ? (int) $_POST['priority'] : null, isset($_POST['enabled']));
         } elseif ($path === '/owner/job') {
             $app->createJob((string) ($_POST['template'] ?? ''), (string) ($_POST['title'] ?? ''), (float) ($_POST['priority'] ?? 0.5), (int) ($_POST['seed'] ?? 1));
+        } elseif ($path === '/owner/sequence-study') {
+            $app->queueSequenceStudy((int) ($_POST['seed'] ?? 0));
         } elseif ($path === '/owner/revoke') {
             $app->revoke((string) ($_POST['id'] ?? ''));
         } elseif ($path === '/owner/remove-computer') {
@@ -800,7 +802,7 @@ try {
         if ($path === '/api/v1/designs' && $method === 'POST') {
             $body = [];
         } else {
-            $body = $method === 'POST' ? coord_body() : [];
+            $body = $method === 'POST' ? coord_body($path === '/api/v1/sequence-checkpoint' ? 530000 : 65536) : [];
         }
         if ($path === '/api/v1/diagnostics' && $method === 'POST') {
             if (!$app->rateLimit('diag:' . hash('sha256', $token), 20)) {
@@ -905,8 +907,13 @@ try {
             }
             $worker['code_hash'] = (string) $body['codeHash'];
             $slot = isset($body['slot']) && is_numeric($body['slot']) ? (int) $body['slot'] : 0;
-            $job = $app->claim($worker, $slot, ($body['sequenceExperiment'] ?? false) === true);
+            $job = $app->claim($worker, $slot, ($body['sequenceExperiment'] ?? false) === true, (int) ($body['studyVersion'] ?? 1));
             coord_json(200, ['job' => $job]);
+            return;
+        }
+        if ($path === '/api/v1/sequence-checkpoint' && $method === 'POST') {
+            $snapshot = is_array($body['snapshot'] ?? null) ? $body['snapshot'] : null;
+            coord_json(200, ['snapshot' => $app->sequenceCheckpoint($worker, (string) ($body['jobId'] ?? ''), $snapshot)]);
             return;
         }
         if ($path === '/api/v1/result' && $method === 'POST') {

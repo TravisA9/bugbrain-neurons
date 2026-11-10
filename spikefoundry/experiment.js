@@ -8,9 +8,9 @@ const Genome = require('./genome_v2');
 const Designer = require('./designer');
 const Tasks = require('./tasks');
 const Throttle = require('./throttle');
-const { compositionCheck } = require('./composition');
+const { chain, parallel, relay, dualSequenceCases, scoreComposition, compositionCheck } = require('./composition');
 
-const VERSION = 'sequence-experiment-1';
+const VERSION = 'sequence-experiment-2';
 const ARMS = ['current', 'evolution', 'learned'];
 const hash = value => crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const cpuMs = start => { const t = process.cpuUsage(start); return (t.user + t.system) / 1000; };
@@ -20,7 +20,7 @@ function random(seed) {
   return () => ((state = (Math.imul(state, 1664525) + 1013904223) >>> 0) / 2 ** 32);
 }
 
-function sampleSets(seed, seen = new Set()) {
+function sampleSets(seed, seen = new Set(), shard = null) {
   const rng = random(seed);
   function balanced(count, minLength, maxLength) {
     const cases = [];
@@ -38,6 +38,7 @@ function sampleSets(seed, seen = new Set()) {
         for (let t = 0; t < first; t++) if (rng() < 0.2) seq[t][before] = 1;
         for (let t = second + 1; t < length; t++) if (rng() < 0.2) seq[t][after] = 1;
         const key = hash(seq);
+        if (shard !== null && parseInt(key.slice(0, 8), 16) % 3 !== shard) continue;
         if (seen.has(key)) continue;
         seen.add(key);
         cases.push({ seq, label: [Number(yes)] });
@@ -144,6 +145,10 @@ function compare(a, b) {
     a.net.edges.length - b.net.edges.length || a.score.spikes - b.score.spikes;
 }
 
+function confirmationFloor(confirmation) {
+  return confirmation ? Math.min(...Object.values(confirmation).flatMap(s => [s.accuracy, s.recall])) : 0;
+}
+
 function search(arm, seed, evaluate, checkpoint, parents, budget, cap) {
   const start = process.cpuUsage();
   const rng = random(seed);
@@ -153,9 +158,9 @@ function search(arm, seed, evaluate, checkpoint, parents, budget, cap) {
   const origin = Genome.blank(2, 1);
   const tried = new Set();
   const leaders = [];
+  const finalists = [];
   const examples = [];
   const telemetry = { attempts: 0, invalid: 0, duplicate: 0, screen: 0, search: 0, cacheHits: 0, screenCpuMs: 0, searchCpuMs: 0 };
-  const targets = new Map();
   let chargedCacheMs = 0;
   let lastImprovement = 0;
   let stop = 'attempt-cap';
@@ -208,16 +213,16 @@ function search(arm, seed, evaluate, checkpoint, parents, budget, cap) {
     if (cpuMs(start) + chargedCacheMs >= budget) break;
     const score = evaluateStage(net, 'search');
     examples.push({ ...Designer.exampleFromScore('sequence', genome, score.recall > 0 ? score.accuracy : 0), id: key });
-    if (score.recall >= 0.9 && score.accuracy >= 0.9) targets.set(key, cpuMs(start) + chargedCacheMs);
     const candidate = { genome, net, score };
+    if (score.recall >= 0.9 && score.accuracy >= 0.9 && finalists.length < 2) finalists.push(candidate);
     if (!leaders.length || compare(candidate, leaders[0]) < 0) lastImprovement = telemetry.screen;
     leaders.push(candidate);
     leaders.sort(compare);
     if (leaders.length > 3) leaders.pop();
   }
   if (cpuMs(start) + chargedCacheMs >= budget) stop = 'cpu-budget';
-  return { winner: leaders[0], examples, telemetry: { ...telemetry, cpuMs: cpuMs(start), chargedCacheMs, stop, lastImprovement,
-    searchTargetCpuMs: leaders.length ? targets.get(hash(leaders[0].net)) ?? null : null } };
+  if (leaders.length && !finalists.includes(leaders[0])) finalists.push(leaders[0]);
+  return { finalists, examples, telemetry: { ...telemetry, cpuMs: cpuMs(start), chargedCacheMs, stop, lastImprovement } };
 }
 
 function atomicJson(file, value) {
@@ -248,6 +253,30 @@ function retainExamples(previous, current, suite) {
   for (const row of examples.values()) buckets[Math.min(3, Math.floor(row.y * 4))].push(row);
   const kept = buckets.flatMap(rows => rows.sort((a, b) => a.id.localeCompare(b.id)).slice(0, 128));
   return kept.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function learnedComposition(checkpoint, parents, left, right) {
+  if (!checkpoint) return { status: 'awaiting-approved-checkpoint' };
+  const start = process.cpuUsage();
+  const features = Tasks.featuresOf(Tasks.specById('sequence'));
+  const ranked = new Map();
+  for (const genome of parents) {
+    const net = canonicalCircuit(Genome.compile(genome));
+    const key = hash(net);
+    if (!ranked.has(key) && validCircuit(net)) {
+      ranked.set(key, { key, net, prediction: Designer.predict(checkpoint.model, features, genome) });
+    }
+  }
+  const choices = [...ranked.values()].sort((a, b) => b.prediction - a.prediction).slice(0, 3);
+  if (!choices.length) return { status: 'no-compatible-modules', checkpoint: checkpoint.id };
+  // Freeze the module choices before looking at the transfer cases.
+  const picked = [choices[0], choices[1] || choices[0]];
+  const components = picked.map((choice, i) => measure(choice.net, i === 0 ? left : right));
+  const net = parallel(picked.map(choice => chain([choice.net, relay(), relay()])));
+  const score = scoreComposition(net, dualSequenceCases(left, right));
+  const passed = Math.min(score.accuracy, ...score.recall, ...components.flatMap(c => [c.accuracy, c.recall])) >= 0.9;
+  return { status: passed ? 'passed' : 'failed', checkpoint: checkpoint.id, modules: picked.map(choice => choice.key),
+    components, score, neurons: net.neurons.length, synapses: net.edges.length, cpuMs: cpuMs(start) };
 }
 
 function acquireLock(file) {
@@ -289,7 +318,8 @@ function runExperiment(options, dir, onProgress = () => {}) {
     const cachePath = path.join(dir, 'evaluations.jsonl');
     const cache = readCache(cachePath);
     const usedCases = new Set();
-    const roundCases = Array.from({ length: rounds }, (_, i) => sampleSets(seed + i * 100003, usedCases));
+    const shard = seed % 3;
+    const roundCases = Array.from({ length: rounds }, (_, i) => sampleSets(seed + i * 100003, usedCases, shard));
     onProgress(state.rounds.length, rounds);
     for (let round = state.rounds.length; round < rounds; round++) {
       const roundSeed = seed + round * 100003;
@@ -312,23 +342,32 @@ function runExperiment(options, dir, onProgress = () => {}) {
       if (state.approved && state.challenger && state.approved.id !== state.challenger.id) arms.push('incumbent');
       for (const arm of arms) {
         const model = arm === 'incumbent' ? state.approved : checkpoint;
-        const result = search(arm, roundSeed, evaluate, model, state.parents, cpuBudgetMs, cap);
+        const trainingChargeMs = model?.trainingCpuMs ?? 0;
+        const result = search(arm, roundSeed, evaluate, model, state.parents, Math.max(0, cpuBudgetMs - trainingChargeMs), cap);
         training.push(...result.examples);
-        reports[arm] = { telemetry: result.telemetry, winner: result.winner };
+        reports[arm] = { telemetry: result.telemetry, trainingChargeMs, checkpoint: model?.id, finalists: result.finalists };
       }
       for (const report of Object.values(reports)) {
-        if (!report.winner) continue;
-        let confirmationCpuMs = 0;
-        report.confirmation = Object.fromEntries(['fresh', 'shifted'].map(stage => {
-          const result = evaluate(report.winner.net, stage);
-          confirmationCpuMs += result.ms;
-          return [stage, result.score];
-        }));
-        report.confirmationCpuMs = confirmationCpuMs;
+        report.confirmationCpuMs = 0;
+        for (const finalist of report.finalists) {
+          const confirmation = Object.fromEntries(['fresh', 'shifted'].map(stage => {
+            const result = evaluate(finalist.net, stage);
+            report.confirmationCpuMs += result.ms;
+            return [stage, result.score];
+          }));
+          if (!report.winner || confirmationFloor(confirmation) > confirmationFloor(report.confirmation)) {
+            report.winner = finalist;
+            report.confirmation = confirmation;
+          }
+          if (confirmationFloor(confirmation) >= 0.9) {
+            report.verifiedCpuMs = report.telemetry.cpuMs + report.telemetry.chargedCacheMs + report.trainingChargeMs + report.confirmationCpuMs;
+            break;
+          }
+        }
+        delete report.finalists;
       }
-      const floor = row => row?.confirmation ? Math.min(...Object.values(row.confirmation).flatMap(s => [s.accuracy, s.recall])) : 0;
-      const time = row => floor(row) >= 0.9 && row.telemetry.searchTargetCpuMs !== null
-        ? row.telemetry.searchTargetCpuMs + row.confirmationCpuMs : Infinity;
+      const floor = row => confirmationFloor(row?.confirmation);
+      const time = row => row?.verifiedCpuMs ?? Infinity;
       const controls = [reports.current, reports.evolution, reports.incumbent].filter(Boolean);
       const baseline = Math.max(...controls.map(floor));
       const baselineTime = Math.min(...controls.map(time));
@@ -343,7 +382,8 @@ function runExperiment(options, dir, onProgress = () => {}) {
       // Freeze the same challenger for independent confirmation rounds.
       if (round + 1 < rounds && state.training.length >= 16 && (!state.challenger || !passed || promoted)) {
         const fitted = Designer.fitSurrogate(state.training, roundSeed, state.approved?.model || checkpoint?.model);
-        state.challenger = { id: hash(fitted.model), model: fitted.model, examples: state.training.length, trainedThroughRound: round };
+        state.challenger = { id: hash(fitted.model), model: fitted.model, examples: state.training.length, trainedThroughRound: round,
+          trainingCpuMs: cpuMs(trainStart) };
         state.promotionStreak = 0;
         const archive = path.join(dir, 'checkpoints');
         fs.mkdirSync(archive, { recursive: true });
@@ -357,6 +397,13 @@ function runExperiment(options, dir, onProgress = () => {}) {
     }
     if (!state.composition) {
       state.composition = compositionCheck(roundCases.at(-1).shifted, 64);
+      if (state.approved) {
+        const left = sampleSets(seed + 2000003, usedCases, shard).shifted;
+        const right = sampleSets(seed + 3000017, usedCases, shard).shifted;
+        state.transfer = learnedComposition(state.approved, state.parents, left, right);
+      } else {
+        state.transfer = { status: 'awaiting-approved-checkpoint' };
+      }
       atomicJson(statePath, state);
     }
     if (state.approved) atomicJson(path.join(dir, 'approved-model.json'), state.approved);
@@ -384,14 +431,18 @@ function experimentReport(state) {
     version: VERSION,
     config: state.config,
     composition: state.composition,
+    transfer: state.transfer,
     promoted: Boolean(state.approved && state.approved.id !== state.config.initialId),
     approved: state.approved,
-    rounds: state.rounds.map(({ round, reports, baseline, learned, passed, testedCheckpoint, trainingCpuMs }) => ({
-      round, baseline, learned, passed, testedCheckpoint, trainingCpuMs,
+    rounds: state.rounds.map(({ round, suiteKeys, reports, baseline, learned, passed, testedCheckpoint, trainingCpuMs }) => ({
+      round, suiteKeys, baseline, learned, passed, testedCheckpoint, trainingCpuMs,
       arms: Object.fromEntries(Object.entries(reports).map(([arm, report]) => [arm, {
         telemetry: report.telemetry,
         confirmation: report.confirmation,
         confirmationCpuMs: report.confirmationCpuMs,
+        verifiedCpuMs: report.verifiedCpuMs,
+        trainingChargeMs: report.trainingChargeMs,
+        checkpoint: report.checkpoint,
         circuit: report.winner ? hash(report.winner.net) : null,
         neurons: report.winner?.net.neurons.length,
         synapses: report.winner?.net.edges.length,

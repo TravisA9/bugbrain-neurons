@@ -5,6 +5,7 @@
  * Outbound polling works from a home network. The git queue remains the path when this URL is unset.
  * A running job heartbeats so work longer than the lease stays with this computer. */
 const fs = require('fs'), path = require('path'), cp = require('child_process'), os = require('os');
+const { gzipSync, gunzipSync } = require('node:zlib');
 const ROOT = path.resolve(__dirname, '..');
 const BACKOFF_START_MS = 1000;
 const BACKOFF_CAP_MS = 5 * 60 * 1000;
@@ -197,6 +198,24 @@ async function runSpec(job, opts) {
   opts = opts || {};
   const out = opts.outDir || path.join(require('os').tmpdir(), 'coord-' + String(job.id).replace(/[^a-z0-9._-]/gi, ''));
   fs.mkdirSync(out, { recursive: true });
+  const syncStudy = job.spec?.experiment?.studyVersion === 2 && opts.studyCheckpoint;
+  const checkpointFile = path.join(out, 'experiment.json');
+  let syncedRounds = 0;
+  if (syncStudy) {
+    const { snapshot } = await syncStudy();
+    if (snapshot) {
+      const decoded = gunzipSync(Buffer.from(snapshot.payload, 'base64'), { maxOutputLength: 2 * 1024 * 1024 });
+      const state = JSON.parse(decoded);
+      if (state.config?.version !== 'sequence-experiment-2' || state.config.seed !== job.spec.seed ||
+          state.rounds?.length !== snapshot.completedRounds) throw new Error('Coordinator returned an incompatible study checkpoint.');
+      syncedRounds = snapshot.completedRounds;
+      const localRounds = fs.existsSync(checkpointFile) ? JSON.parse(fs.readFileSync(checkpointFile, 'utf8')).rounds.length : 0;
+      if (localRounds < syncedRounds) {
+        fs.writeFileSync(checkpointFile + '.restore', decoded);
+        fs.renameSync(checkpointFile + '.restore', checkpointFile);
+      }
+    }
+  }
   const spawn = opts.spawn || cp.spawn;
   const spawnOpts = { cwd: ROOT, stdio: opts.stdio || 'inherit' };
   if (opts.throttle != null) {
@@ -205,6 +224,22 @@ async function runSpec(job, opts) {
     spawnOpts.env = Object.assign({}, process.env, { SF_THROTTLE_FILE: tf });
   }
   const child = spawn(process.execPath, runnerArgs(job, out), spawnOpts);
+  let upload = null;
+  function saveStudy() {
+    if (!syncStudy || upload || !fs.existsSync(checkpointFile)) return upload;
+    upload = Promise.resolve().then(async () => {
+      const bytes = fs.readFileSync(checkpointFile);
+      const completedRounds = JSON.parse(bytes).rounds.length;
+      if (completedRounds <= syncedRounds) return;
+      const payload = gzipSync(bytes).toString('base64');
+      const response = await syncStudy({ completedRounds, payload });
+      syncedRounds = Math.max(syncedRounds, response.snapshot?.completedRounds || 0);
+    }).catch(error => {
+      console.error('Sequence checkpoint upload will retry:', error.message);
+    }).finally(() => { upload = null; });
+    return upload;
+  }
+  const studyTimer = syncStudy ? setInterval(saveStudy, 500) : null;
   if (opts.onSpawn) { try { opts.onSpawn(child, out); } catch (e) {} }
   const innerBeat = opts.heartbeat || (() => Promise.resolve({ ok: true, jobId: job.id, paused: false }));
   const beats = startLeaseHeartbeat({
@@ -217,6 +252,9 @@ async function runSpec(job, opts) {
   try {
     done = await childDone(child);
   } finally {
+    if (studyTimer) clearInterval(studyTimer);
+    await upload;
+    await saveStudy();
     await beats.finish();
   }
   if (beats.state.lost) {
@@ -236,7 +274,7 @@ async function runSpec(job, opts) {
     const text = String(summary.note || 'Synthetic SpikeFoundry run.').slice(0, 500);
     result = { status: 'done', summary: text, synthetic: true, digest: require('crypto').createHash('sha256').update(text).digest('hex') };
     if (job.spec?.mode === 'sequence-experiment') {
-      if (summary.research?.version !== 'sequence-experiment-1') throw new Error('Sequence experiment report is missing');
+      if (summary.research?.version !== 'sequence-experiment-2') throw new Error('Sequence experiment report is missing');
       result.research = summary.research;
     }
   } else {
@@ -518,7 +556,7 @@ async function multi(a, base, token, hash) {
       if (slot >= plan.slots) { await sleep(Math.min(3000, controlMs)); continue; }
       let claimed;
       try {
-        claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, slot: slot, sequenceExperiment: true });
+        claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, slot: slot, sequenceExperiment: true, studyVersion: 2 });
         wait = 0;
       } catch (e) {
         const d = decideRetry(e, wait);
@@ -539,6 +577,7 @@ async function multi(a, base, token, hash) {
         result = await runSpec(job, {
           heartbeatMs: heartbeatMs,
           heartbeat: progress => workerHeartbeat(base, token, hash, job.id, progress, slot),
+          studyCheckpoint: snapshot => api(base, token, '/api/v1/sequence-checkpoint', { jobId: job.id, snapshot }),
           throttle: plan.duty,
           onSpawn: (child, out) => { entry.pid = child.pid; entry.throttle = path.join(out, 'throttle.json'); applyPriority(child.pid, plan.priority); writeThrottle(entry.throttle, plan.duty); },
         });
@@ -615,7 +654,7 @@ async function main() {
         await sleep(poll);
         continue;
       }
-      const claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, sequenceExperiment: true });
+      const claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, sequenceExperiment: true, studyVersion: 2 });
       if (!claimed.job) {
         console.log(JSON.stringify({ ok: true, job: null }));
         if (a.once) return;
@@ -628,6 +667,7 @@ async function main() {
         result = await runSpec(claimed.job, {
           heartbeatMs: heartbeatMs,
           heartbeat: (progress) => workerHeartbeat(base, token, hash, claimed.job.id, progress),
+          studyCheckpoint: snapshot => api(base, token, '/api/v1/sequence-checkpoint', { jobId: claimed.job.id, snapshot }),
         });
       } catch (e) {
         if (e && e.leaseLost) {

@@ -40,6 +40,47 @@ function chain(modules) {
   return { neurons, edges, inputs, outputs, tail };
 }
 
+function parallel(modules) {
+  const result = { neurons: [], edges: [], inputs: [], outputs: [], tail: 0 };
+  for (const module of modules) {
+    const offset = result.neurons.length;
+    for (const neuron of module.neurons) result.neurons.push({ ...neuron });
+    for (const e of module.edges) result.edges.push(edge(e.from + offset, e.to + offset, e.weight, e.delay));
+    for (const input of module.inputs) result.inputs.push(input + offset);
+    for (const output of module.outputs) result.outputs.push(output + offset);
+    result.tail = Math.max(result.tail, module.tail || 0);
+    if (result.neurons.length > 4096 || result.edges.length > 32768) throw new Error('Composition exceeds simulator limits');
+  }
+  return result;
+}
+
+function dualSequenceCases(left, right) {
+  if (left.length !== right.length || left.length % 4 !== 0) throw new Error('Dual-sequence suites must be paired and balanced');
+  return left.map((a, i) => {
+    const b = right[i ^ ((i >> 1) & 1)];
+    return {
+      seq: Array.from({ length: Math.max(a.seq.length, b.seq.length) }, (_, t) =>
+        (a.seq[t] || [0, 0]).concat(b.seq[t] || [0, 0])),
+      label: [a.label[0], b.label[0]],
+    };
+  });
+}
+
+function scoreComposition(net, cases) {
+  let exact = 0;
+  const positives = net.outputs.map(() => 0);
+  const hits = net.outputs.map(() => 0);
+  for (const { seq, label } of cases) {
+    const fired = run(net, seq);
+    if (fired.every((value, i) => value === Boolean(label[i]))) exact++;
+    label.forEach((want, i) => {
+      positives[i] += Number(want);
+      hits[i] += Number(want && fired[i]);
+    });
+  }
+  return { accuracy: exact / cases.length, recall: hits.map((n, i) => n / positives[i]) };
+}
+
 function sequenceLatch() {
   return {
     neurons: [cell('input'), cell('input'), cell('lif'), cell('lif', 1), cell('output')],
@@ -69,4 +110,4 @@ function compositionCheck(cases, depth = 2) {
   };
 }
 
-module.exports = { chain, verify, sequenceLatch, relay, compositionCheck };
+module.exports = { chain, parallel, dualSequenceCases, scoreComposition, verify, sequenceLatch, relay, compositionCheck };
