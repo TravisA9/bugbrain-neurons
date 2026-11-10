@@ -147,18 +147,20 @@ function resourceControl(string $action, string $csrf, array $worker, array $sta
     $opt = function (string $value, string $label, string $hint) use ($mode, $id): string {
         $rid = 'm-' . $id . '-' . $value;
         return '<input type="radio" id="' . h($rid) . '" name="mode" value="' . h($value) . '"' . ($mode === $value ? ' checked' : '') . '>'
-            . '<label for="' . h($rid) . '" title="' . h($hint) . '">' . h($label) . '</label>';
+            . '<label for="' . h($rid) . '" title="' . h($hint) . '"><span class="tri-led" aria-hidden="true"></span>' . h($label) . '</label>';
     };
-    return '<form class="resources" method="post" action="' . h($action) . '" data-resources>'
+    $fill = (int) round((max(10, min(90, $pct)) - 10) / 80 * 100);
+    return '<form class="resources" method="post" action="' . h($action) . '" data-resources data-mode="' . h($mode) . '">'
         . '<input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h($id) . '">'
         . '<div class="res-head"><span class="label">Resources</span><span class="res-now" data-mode-label>' . h(modeLabel($mode, $pct)) . '</span></div>'
         . '<div class="tri" role="radiogroup" aria-label="How much of this computer Compute Lab may use">'
         . $opt('off', 'Off', 'Finish the current job, then take no new work')
         . $opt('allowance', 'Allowance', 'Use the share set below, at low priority')
         . $opt('full', 'Full blast', 'Use every core at normal priority')
+        . '<span class="tri-thumb" aria-hidden="true"></span>'
         . '</div>'
-        . '<div class="range-row' . ($mode === 'allowance' ? '' : ' is-idle') . '"><div class="range-label"><span>Allowance</span><b data-pct-label>' . h((string) $pct) . '%</b></div>'
-        . '<input type="range" name="pct" min="10" max="90" step="10" value="' . h((string) $pct) . '" aria-label="Allowance as a share of this computer">'
+        . '<div class="range-row' . ($mode === 'allowance' ? '' : ' is-idle') . '"><div class="range-label"><span>Allowance share</span><b data-pct-label>' . h((string) $pct) . '%</b></div>'
+        . '<input type="range" name="pct" min="10" max="90" step="10" value="' . h((string) $pct) . '" style="--fill:' . $fill . '%" aria-label="Allowance as a share of this computer" aria-valuetext="' . h((string) $pct) . ' percent">'
         . '<div class="range-ends"><span>10%</span><span>90%</span></div></div>'
         . '<p class="hint">Allowance runs in the background at low priority. Full blast uses every core. Off lets the running job finish, then stops.</p>'
         . '<noscript><button class="button" type="submit">Save</button></noscript>'
@@ -176,7 +178,7 @@ function resourceScript(): string
     function mode(){var r=f.querySelector("input[name=mode]:checked");return r?r.value:"allowance";}
     function save(){
       var body=new URLSearchParams(new FormData(f));
-      ml.textContent=label(mode(),range.value);row.classList.toggle("is-idle",mode()!=="allowance");
+      ml.textContent=label(mode(),range.value);row.classList.toggle("is-idle",mode()!=="allowance");f.setAttribute("data-mode",mode());
       eff.textContent="Saving…";
       fetch(f.action,{method:"POST",body:body,headers:{"Accept":"application/json"},credentials:"same-origin"}).then(function(r){return r.json();}).then(function(d){
         if(!d||!d.ok){eff.textContent=(d&&d.error)||"Could not save. Reload the page.";return;}
@@ -184,7 +186,9 @@ function resourceScript(): string
       }).catch(function(){eff.textContent="Could not save. Reload the page.";});
     }
     f.querySelectorAll("input[name=mode]").forEach(function(r){r.addEventListener("change",save);});
-    range.addEventListener("input",function(){pl.textContent=range.value+"%";});
+    function fill(){range.style.setProperty("--fill",Math.round((range.value-10)/80*100)+"%");range.setAttribute("aria-valuetext",range.value+" percent");}
+    f.querySelectorAll("input[name=mode]").forEach(function(r){r.addEventListener("change",function(){f.setAttribute("data-mode",mode());});});
+    range.addEventListener("input",function(){pl.textContent=range.value+"%";fill();});
     range.addEventListener("change",function(){if(mode()!=="allowance"){var a=f.querySelector("input[value=allowance]");if(a)a.checked=true;}clearTimeout(timer);timer=setTimeout(save,150);});
   });
 })();
@@ -347,14 +351,38 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .range-label b{color:var(--text);font-weight:500}
 .range-ends{display:flex;justify-content:space-between;color:#5d6d7a;font:9px var(--mono)}
 .switchrow{display:flex;justify-content:space-between;align-items:center;margin:10px 0;color:#aab6c0;font-size:12px}
-.tri{display:grid;grid-template-columns:repeat(3,1fr);background:#0c131a;border:1px solid #293743;border-radius:9px;padding:3px;gap:3px}
-.tri input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
-.tri label{margin:0;text-align:center;padding:9px 6px;border-radius:7px;cursor:pointer;font:600 12px var(--sans);color:var(--muted);border:1px solid transparent;transition:.15s}
-.tri label:hover{color:var(--text);background:#121d27}
-.tri input:focus-visible+label{outline:1px solid var(--mint)}
-.tri input[value=off]:checked+label{background:#381f24;border-color:#64353a;color:#ffafb4}
-.tri input[value=allowance]:checked+label{background:#10231e;border-color:#2d5948;color:var(--mint)}
-.tri input[value=full]:checked+label{background:var(--mint);border-color:var(--mint);color:#07120e}
+.tri{position:relative;display:grid;grid-template-columns:repeat(3,1fr);height:44px;padding:4px;background:linear-gradient(180deg,#071016,#0c151d);border:1px solid #293743;border-radius:999px;box-shadow:inset 0 2px 7px #000a,0 1px 0 #ffffff08;user-select:none}
+.tri input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.tri label{position:relative;z-index:2;margin:0;display:flex;align-items:center;justify-content:center;gap:7px;border-radius:999px;cursor:pointer;font:600 12px var(--display);letter-spacing:.02em;color:var(--muted);transition:color .25s ease;white-space:nowrap}
+.tri label:hover{color:var(--text)}
+.tri input:focus-visible+label{outline:2px solid var(--cyan);outline-offset:-2px}
+.tri-led{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.45;transition:opacity .25s,box-shadow .25s}
+.tri input:checked+label .tri-led{opacity:1;box-shadow:0 0 8px currentColor}
+.tri-thumb{position:absolute;z-index:1;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/3);border-radius:999px;border:1px solid #7a3c43;background:linear-gradient(180deg,#4a2329,#2e171b);box-shadow:0 0 14px #ff818a2e,inset 0 1px 0 #ffffff14;transition:transform .35s cubic-bezier(.25,1,.5,1),background .3s,border-color .3s,box-shadow .3s}
+.tri input[value=off]:checked+label{color:#ffc2c6}
+.tri input[value=allowance]:checked+label{color:var(--mint)}
+.tri input[value=full]:checked+label{color:#06140f}
+.resources[data-mode=allowance] .tri-thumb,.tri:has(input[value=allowance]:checked) .tri-thumb{transform:translateX(100%);border-color:#2f7a5d;background:linear-gradient(180deg,#173a2e,#0f241d);box-shadow:0 0 16px #69e2b133,inset 0 1px 0 #ffffff14}
+.resources[data-mode=full] .tri-thumb,.tri:has(input[value=full]:checked) .tri-thumb{transform:translateX(200%);border-color:#9af0cc;background:linear-gradient(180deg,#8cf0c6,#4fcf9c);box-shadow:0 0 20px #69e2b166,inset 0 1px 0 #ffffff55}
+.resources[data-mode=full] .tri input[value=full]:checked+label .tri-led{animation:tri-pulse 1.6s ease-in-out infinite}
+@keyframes tri-pulse{50%{box-shadow:0 0 2px currentColor;opacity:.6}}
+.resources .range-row{position:relative;margin-top:11px;padding:11px 13px 8px;border:1px solid #2d5948;border-radius:10px;background:linear-gradient(180deg,#0f1f1a,#0b1513);transition:opacity .25s,border-color .25s,background .25s}
+.resources .range-row::before{content:"";position:absolute;top:-7px;left:50%;width:12px;height:12px;margin-left:-6px;transform:rotate(45deg);background:#0f1f1a;border-left:1px solid #2d5948;border-top:1px solid #2d5948;transition:inherit}
+.resources .range-row.is-idle{opacity:.5;border-style:dashed;border-color:#2b3a47;background:#0b1219}
+.resources .range-row.is-idle::before{opacity:0}
+.resources .range-row.is-idle input[type=range]::-webkit-slider-thumb{border-color:#6f8696;box-shadow:none;background:#c9d4dc}
+.resources .range-row.is-idle input[type=range]::-moz-range-thumb{border-color:#6f8696;box-shadow:none;background:#c9d4dc}
+.resources[data-mode=off] .res-now{color:var(--red)}
+.resources .range-label b{color:var(--mint);font:600 13px var(--display)}
+.resources input[type=range]{-webkit-appearance:none;appearance:none;height:6px;margin:9px 0 7px;border-radius:999px;background:linear-gradient(90deg,var(--mint) 0,var(--mint) var(--fill,50%),#24323d var(--fill,50%));outline:none}
+.resources .range-row.is-idle input[type=range]{background:linear-gradient(90deg,#4e6774 0,#4e6774 var(--fill,50%),#1d2933 var(--fill,50%))}
+.resources input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#e9fff5;border:3px solid var(--mint);box-shadow:0 0 10px #69e2b188;cursor:pointer}
+.resources input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:#e9fff5;border:3px solid var(--mint);box-shadow:0 0 10px #69e2b188;cursor:pointer}
+.resources input[type=range]::-moz-range-track{background:transparent}
+.resources input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--cyan);outline-offset:2px}
+.resources input[type=range]:focus-visible::-moz-range-thumb{outline:2px solid var(--cyan);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.tri-thumb,.tri label,.resources .range-row{transition:none}.tri-led{animation:none!important}}
+@media (max-width:420px){.tri label{font-size:11px;gap:5px}}
 .resources{border:1px solid #263642;background:#0b1319;border-radius:10px;padding:13px 14px;margin:12px 0}
 .res-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .res-head .label{font:10px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
