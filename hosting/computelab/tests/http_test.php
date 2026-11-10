@@ -480,6 +480,24 @@ check(!str_contains($afterRemove, 'value="' . $victim . '"') && str_contains($af
 $noCsrfRemove = http($base . '/owner/remove-computer', 'POST', http_build_query(['id' => $victim]), $oh);
 check($noCsrfRemove['status'] === 403, 'removing without the security token is refused');
 
+$researchWorker = $app->enroll('sequence-research-pc', ['spikefoundry'], 2, true);
+$researchToken = tempnam(sys_get_temp_dir(), 'sequence-token-');
+file_put_contents($researchToken, $researchWorker['token']);
+$researchJob = http($base . '/owner/job', 'POST', http_build_query([
+    'csrf' => $oCsrf[1] ?? '', 'template' => 'sf-sequence-experiment',
+    'title' => 'Sequence experiment smoke test', 'priority' => 5, 'seed' => 1729,
+]), $oh);
+check(in_array($researchJob['status'], [302, 303], true), 'the owner can queue the sequence experiment');
+$researchPoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
+unlink($researchToken);
+$researchUrl = $base . '/owner/sequence-experiment.json?job=sf-sequence-experiment-1729';
+$researchReport = http($researchUrl, 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
+$researchJson = json_decode($researchReport['body'], true);
+check(str_contains($researchPoll ?? '', 'sf-sequence-experiment-1729') && $researchReport['status'] === 200
+    && count($researchJson['research']['rounds'] ?? []) === 6 && ($researchJson['research']['composition']['composed'] ?? false),
+    'the donor worker runs the study and its report reaches the owner');
+check(http($researchUrl)['status'] === 403, 'the study report requires an owner session');
+
 proc_terminate($proc);
 echo "http checks done\n";
 exit($fail === 0 ? 0 : 1);

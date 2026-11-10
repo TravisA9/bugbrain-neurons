@@ -1548,6 +1548,7 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         . '<label>Priority <input name="priority" type="number" min="0" max="5" step="0.1" value="0.5"></label>'
         . '<label>Seed <input name="seed" type="number" min="1" max="1000000" value="7"></label></div>'
         . '<button class="small" type="submit">Queue job</button></form>'
+        . '<p class="quiet"><a href="' . h($base) . '/owner/sequence-experiment.json">Latest sequence experiment report (JSON)</a></p>'
         . '<h2 style="margin-top:18px">Task thresholds</h2>' . ($thresholds !== '' ? $thresholds : '<p class="muted">Thresholds appear after the first design upload.</p>')
         . '</div></details>';
     $store = $app->storageStatus();

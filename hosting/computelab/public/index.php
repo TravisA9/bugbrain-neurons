@@ -631,6 +631,15 @@ try {
         coord_html(pageOwner($app, (string) $session['csrf'], coord_who($app, 'owner'), '', $status, $pageNum));
         return;
     }
+    if ($path === '/owner/sequence-experiment.json' && $method === 'GET') {
+        if (!coord_owner_session($app)) {
+            coord_json(403, ['error' => 'Owner only.']);
+            return;
+        }
+        $report = $app->sequenceExperimentReport((string) ($_GET['job'] ?? ''));
+        coord_json($report ? 200 : 404, $report ?? ['error' => 'No completed sequence experiment.']);
+        return;
+    }
     if ($path === '/owner/run.json' && $method === 'GET') {
         $session = $app->sessionById(coord_cookie('lab_owner'));
         if (!$session || $session['role'] !== 'owner') {
@@ -896,7 +905,7 @@ try {
             }
             $worker['code_hash'] = (string) $body['codeHash'];
             $slot = isset($body['slot']) && is_numeric($body['slot']) ? (int) $body['slot'] : 0;
-            $job = $app->claim($worker, $slot);
+            $job = $app->claim($worker, $slot, ($body['sequenceExperiment'] ?? false) === true);
             coord_json(200, ['job' => $job]);
             return;
         }

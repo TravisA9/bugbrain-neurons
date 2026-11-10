@@ -1,5 +1,43 @@
 # SpikeFoundry on this computer
 
+## Sequence designer experiment
+
+Run the capped study locally with Node 18 or later. Save the following as
+`sequence-experiment.json`, then run the command from the worker repository.
+
+```json
+{"seed":1729,"rounds":6,"cpuBudgetMs":1000,"cap":3000}
+```
+
+```sh
+node spikefoundry/experiment.js sequence-experiment.json sequence-results
+```
+
+Each round compares the current proposal strategy and simple evolution under
+the same CPU and proposal caps. After the first round, a learned arm ranks
+candidate edits with a checkpoint fitted on actual search outcomes. All arms
+share the screening and search cases. Only each arm's winner reaches balanced
+confirmation cases, including longer sequences. The experiment tracks
+cache hits, unique simulation CPU time, attempts, plateau stops, confirmation
+scores, and circuit size. It requires two consecutive qualifying rounds with
+the same checkpoint to promote it. It also checks a 64-module chain assembled
+from reference circuits separately from the learned search.
+
+The output directory holds the experiment report, the evaluation journal,
+the tested model versions, and an approved checkpoint if one passes. Reuse
+the same directory and options to resume. Supply the approved checkpoint
+object as `initialCheckpoint` to carry its model and verified parent into a
+follow-up study with a new seed and output directory. CPU-time caps can change
+the number of proposals across machines even with the same seed.
+
+On Compute Lab, the owner can queue **Run a capped sequence experiment** from
+the job template list. Each seed has one job ID, and workers must advertise
+experiment support. The owner console links the latest JSON report.
+Set `pause_legacy_spikefoundry_search` in the coordinator configuration to stop
+refilling and claiming the legacy SpikeFoundry search while running the study.
+Set the study budget and optional approved `initialCheckpoint` under
+`sequence_experiment` in that configuration.
+
 SpikeFoundry proposes small circuits and scores them on **synthetic spike patterns**. That percent is not a BugBrain reading score and not a result from the research queue.
 
 The file you were given is kept byte for byte at `spikefoundry/original/SpikeFoundry-SNN-Design-Lab.html`. The lab and the background worker both use `spikefoundry/engine.js` instead of a second copy of the math.

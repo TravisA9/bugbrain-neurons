@@ -1006,5 +1006,25 @@ $seeded = $sd2['db']->query("SELECT n, genomes FROM worker_totals WHERE worker_i
 check($seeded && (int) $seeded['n'] === 30120 && (int) $seeded['genomes'] === 30058 && !is_file($seedFile) && is_file($seedFile . '.applied'), 'saved credit totals are applied once by the schema step');
 @unlink($seedFile . '.applied');
 
+$researchLab = labWith(['pause_legacy_spikefoundry_search' => true]);
+$research = $researchLab['app'];
+$participant = $research->enroll('research-pc', ['spikefoundry'], 2, true);
+$researchWorker = $research->workerByToken($participant['token']);
+$research->createJob('sf-propose', 'Legacy proposal', 5, 100);
+$researchId = $research->createJob('sf-sequence-experiment', 'Sequence study', 1, 101);
+check($research->claimableQueued() === 1 && $research->claim($researchWorker) === null, 'paused legacy search and incompatible workers do not start a research job');
+$researchJob = $research->claim($researchWorker, 0, true);
+check($researchJob && $researchJob['id'] === $researchId && $researchJob['spec']['experiment']['rounds'] === 6, 'a capable worker receives one capped sequence experiment');
+try {
+    $research->createJob('sf-sequence-experiment', 'Duplicate study', 1, 101);
+    $duplicateRefused = false;
+} catch (InvalidArgumentException $e) {
+    $duplicateRefused = true;
+}
+check($duplicateRefused, 'a second experiment with the same seed is rejected');
+$report = ['version' => 'sequence-experiment-1', 'config' => ['seed' => 101, 'cpuBudgetMs' => 1000, 'cap' => 3000], 'rounds' => array_fill(0, 6, [])];
+$research->submitResult($researchWorker, $researchId, ['status' => 'done', 'synthetic' => true, 'research' => $report]);
+check($research->sequenceExperimentReport('')['research'] === $report, 'the coordinator persists and reads the experiment report');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

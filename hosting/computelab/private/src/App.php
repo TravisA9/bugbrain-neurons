@@ -521,6 +521,9 @@ final class App
             ['sf-propose', 'spikefoundry', 'Propose and evaluate designs', 'spikefoundry/run.js', json_encode([
                 'mode' => 'propose', 'batches' => 1, 'taskId' => 'coincidence',
             ], JSON_THROW_ON_ERROR), $hash],
+            ['sf-sequence-experiment', 'spikefoundry', 'Run a capped sequence experiment', 'spikefoundry/run.js', json_encode([
+                'mode' => 'sequence-experiment', 'batches' => 1,
+            ], JSON_THROW_ON_ERROR), $hash],
             ['sf-vision', 'spikefoundry', 'Synthetic vision check', 'spikefoundry/run.js', json_encode([
                 'scenario' => 'vision', 'batches' => 1,
                 'scenarioParams' => ['batch' => 2, 'channels' => 1, 'height' => 4, 'width' => 4, 'steps' => 6],
@@ -1014,6 +1017,9 @@ final class App
         $n = 0;
         foreach ($st->fetchAll() as $job) {
             $spec = json_decode((string) $job['spec_json'], true);
+            if ($this->legacySearchPaused((string) $job['project_id'], $spec)) {
+                continue;
+            }
             $task = is_array($spec) ? (string) ($spec['taskId'] ?? '') : '';
             if ($task !== '' && isset($paused[(string) $job['project_id'] . '|' . $task])) {
                 continue;
@@ -1023,7 +1029,7 @@ final class App
         return $n;
     }
 
-    public function claim(array $worker, int $slot = 0): ?array
+    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false): ?array
     {
         $this->replenishJobs();
         $this->expireLeases();
@@ -1067,6 +1073,12 @@ final class App
                     $spec = json_decode((string) $job['spec_json'], true);
                     if (!is_array($spec)) {
                         $spec = [];
+                    }
+                    if (($spec['mode'] ?? '') === 'sequence-experiment' && !$sequenceExperiment) {
+                        continue;
+                    }
+                    if ($this->legacySearchPaused((string) $project['id'], $spec)) {
+                        continue;
                     }
                     $batches = (int) ($spec['batches'] ?? 1);
                     if ($batches > (int) $worker['max_batches']) {
@@ -1272,6 +1284,19 @@ final class App
             if ($row['project_id'] === 'spikefoundry' && empty($body['synthetic'])) {
                 throw new InvalidArgumentException('SpikeFoundry results must be marked synthetic.');
             }
+            if ($status === 'done' && $row['template_id'] === 'sf-sequence-experiment') {
+                $report = $body['research'] ?? [];
+                $spec = json_decode((string) $row['spec_json'], true);
+                $options = $spec['experiment'] ?? [];
+                if (($report['version'] ?? '') !== 'sequence-experiment-1'
+                    || ($report['config']['seed'] ?? null) !== (int) $row['seed']
+                    || ($report['config']['cpuBudgetMs'] ?? null) !== ($options['cpuBudgetMs'] ?? null)
+                    || ($report['config']['cap'] ?? null) !== ($options['cap'] ?? null)
+                    || !is_array($report['rounds'] ?? null)
+                    || count($report['rounds']) !== (int) ($options['rounds'] ?? 0)) {
+                    throw new InvalidArgumentException('Sequence experiment report does not match the job.');
+                }
+            }
             $this->db->prepare('INSERT INTO results (job_id, worker_id, status, summary, body_json, seconds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
                 ->execute([$jobId, $worker['id'], $status, $summary, $raw, $seconds, $this->now()]);
             if ($status === 'done') {
@@ -1406,10 +1431,46 @@ final class App
             }
             $spec['knownHashes'] = array_values(array_slice(array_unique($known), 0, 200));
         }
-        $id = strtolower(preg_replace('/[^a-z0-9]+/', '-', $templateId) . '-' . $seed . '-' . bin2hex(random_bytes(3)));
-        $this->db->prepare('INSERT INTO jobs (id, project_id, template_id, title, spec_json, code_hash, priority, status, created_at, seed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-            ->execute([$id, $tpl['project_id'], $tpl['id'], $title, json_encode($spec), $this->protocolHash(), $priority, 'queued', $this->now(), $seed]);
+        if ($templateId === 'sf-sequence-experiment') {
+            $options = $this->config['sequence_experiment'] ?? [];
+            $spec['experiment'] = [
+                'rounds' => max(3, min(12, (int) ($options['rounds'] ?? 6))),
+                'cpuBudgetMs' => max(10, min(10000, (int) ($options['cpuBudgetMs'] ?? 1000))),
+                'cap' => max(10, min(10000, (int) ($options['cap'] ?? 3000))),
+            ];
+            if (is_array($options['initialCheckpoint'] ?? null)) {
+                $spec['experiment']['initialCheckpoint'] = $options['initialCheckpoint'];
+            }
+            $id = 'sf-sequence-experiment-' . $seed;
+        } else {
+            $id = strtolower(preg_replace('/[^a-z0-9]+/', '-', $templateId) . '-' . $seed . '-' . bin2hex(random_bytes(3)));
+        }
+        try {
+            $this->db->prepare('INSERT INTO jobs (id, project_id, template_id, title, spec_json, code_hash, priority, status, created_at, seed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+                ->execute([$id, $tpl['project_id'], $tpl['id'], $title, json_encode($spec), $this->protocolHash(), $priority, 'queued', $this->now(), $seed]);
+        } catch (PDOException $e) {
+            if ($templateId === 'sf-sequence-experiment' && (string) $e->getCode() === '23000') {
+                throw new InvalidArgumentException('A sequence experiment already uses that seed.');
+            }
+            throw $e;
+        }
         return $id;
+    }
+
+    public function sequenceExperimentReport(string $jobId): ?array
+    {
+        $sql = "SELECT j.id, r.body_json FROM results r JOIN jobs j ON j.id = r.job_id
+            WHERE j.template_id = 'sf-sequence-experiment' AND r.status = 'done'";
+        $args = [];
+        if ($jobId !== '') {
+            $sql .= ' AND j.id = ?';
+            $args[] = $jobId;
+        }
+        $st = $this->db->prepare($sql . ' ORDER BY r.created_at DESC, r.id DESC LIMIT 1');
+        $st->execute($args);
+        $row = $st->fetch();
+        $body = $row ? json_decode((string) $row['body_json'], true) : null;
+        return is_array($body['research'] ?? null) ? ['jobId' => $row['id'], 'research' => $body['research']] : null;
     }
 
     /** A seed no other job has used, so two jobs never repeat the same search. */
@@ -3654,6 +3715,9 @@ final class App
         $topMemo = [];
         $projects = $this->db->query('SELECT * FROM projects WHERE enabled = 1 ORDER BY priority DESC, id ASC')->fetchAll();
         foreach ($projects as $project) {
+            if ($this->legacySearchPaused((string) $project['id'], ['mode' => 'propose'])) {
+                continue;
+            }
             if (!$this->projectAutoOn($project)) {
                 continue;
             }
@@ -3710,6 +3774,12 @@ final class App
             }
         }
         return $queuedAll;
+    }
+
+    private function legacySearchPaused(string $projectId, $spec): bool
+    {
+        return $projectId === 'spikefoundry' && !empty($this->config['pause_legacy_spikefoundry_search'])
+            && in_array($spec['mode'] ?? '', ['propose', 'train-model'], true);
     }
 
     private function supplyTemplate(string $projectId): string

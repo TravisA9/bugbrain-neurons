@@ -173,6 +173,7 @@ function runnerArgs(job, out) {
       scenario: spec.scenario,
       scenarioParams: spec.scenarioParams,
       mode: spec.mode,
+      experiment: spec.experiment,
       taskId: spec.taskId,
       seedGenomes: spec.seedGenomes,
       knownHashes: spec.knownHashes,
@@ -234,6 +235,10 @@ async function runSpec(job, opts) {
     const summary = fs.existsSync(summaryPath) ? JSON.parse(fs.readFileSync(summaryPath, 'utf8')) : {};
     const text = String(summary.note || 'Synthetic SpikeFoundry run.').slice(0, 500);
     result = { status: 'done', summary: text, synthetic: true, digest: require('crypto').createHash('sha256').update(text).digest('hex') };
+    if (job.spec?.mode === 'sequence-experiment') {
+      if (summary.research?.version !== 'sequence-experiment-1') throw new Error('Sequence experiment report is missing');
+      result.research = summary.research;
+    }
   } else {
     const text = 'Template ' + job.runner + ' finished.';
     result = { status: 'done', summary: text, synthetic: false, digest: require('crypto').createHash('sha256').update(text).digest('hex') };
@@ -513,7 +518,7 @@ async function multi(a, base, token, hash) {
       if (slot >= plan.slots) { await sleep(Math.min(3000, controlMs)); continue; }
       let claimed;
       try {
-        claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, slot: slot });
+        claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, slot: slot, sequenceExperiment: true });
         wait = 0;
       } catch (e) {
         const d = decideRetry(e, wait);
@@ -610,7 +615,7 @@ async function main() {
         await sleep(poll);
         continue;
       }
-      const claimed = await api(base, token, '/api/v1/claim', { codeHash: hash });
+      const claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, sequenceExperiment: true });
       if (!claimed.job) {
         console.log(JSON.stringify({ ok: true, job: null }));
         if (a.once) return;

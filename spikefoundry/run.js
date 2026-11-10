@@ -26,6 +26,21 @@ function execute(job, outDir) {
   const batches = +job.batches || +((job.budget && job.budget.batches) || 1);
   if (batches < 1 || batches > 20) throw new Error('batches must be from 1 to 20.');
   fs.mkdirSync(outDir, { recursive: true });
+  if (job.mode === 'sequence-experiment') {
+    const { runExperiment, experimentReport } = require('./experiment');
+    const progress = path.join(outDir, 'progress.json');
+    const state = runExperiment({ ...job.experiment, seed: +job.seed }, outDir, (done, total) => {
+      writeJson(progress, { synthetic: true, batchesDone: done, batchesTotal: total, status: 'running' });
+    });
+    const research = experimentReport(state);
+    const note = 'Sequence experiment completed ' + research.rounds.length + ' rounds. ' +
+      (research.promoted ? 'Promoted checkpoint ' + research.approved.id.slice(0, 12) + '.' : 'No new checkpoint passed promotion.');
+    const summary = { synthetic: true, batches: 1, tasks: [], note, research };
+    writeJson(path.join(outDir, 'summary.json'), summary);
+    writeJson(progress, { synthetic: true, batchesDone: research.rounds.length, batchesTotal: research.rounds.length, status: 'done' });
+    writeJson(path.join(outDir, 'queue_state.json'), { jobs: { [job.id || 'spikefoundry']: { status: 'done', pass: null, summary: note, synthetic: true } } });
+    return summary;
+  }
   if (job.mode === 'train-model' || job.mode === 'propose') {
     const Designer = require('./designer.js');
     const sum = Designer.run(job, outDir, SF);

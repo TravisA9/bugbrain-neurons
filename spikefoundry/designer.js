@@ -5,6 +5,7 @@ const Tasks = require('./tasks.js');
 const Genome = require('./genome_v2.js');
 const Library = require('./library.js');
 const Throttle = require('./throttle.js');
+const { simulateFrozen } = require('./engine.js');
 
 const DESIGN_FEATURES = 16;
 const ACTIONS = 8;
@@ -105,9 +106,9 @@ function spearman(left, right) {
   return num / Math.sqrt(da * db);
 }
 
-function fitSurrogate(examples, seed) {
+function fitSurrogate(examples, seed, initialModel) {
   const rng = mulberry32(seed || 1);
-  const model = makeSurrogate(rng);
+  const model = initialModel ? JSON.parse(JSON.stringify(initialModel)) : makeSurrogate(rng);
   const split = Math.max(1, Math.floor(examples.length * 0.75));
   const train = examples.slice(0, split);
   const held = examples.slice(split);
@@ -196,12 +197,12 @@ function blankFor(taskId) {
   return Genome.blank(inputs, outputs);
 }
 
-function scoreSet(genome, samples) {
+function scoreSet(net, samples) {
   let exact = 0, tp = 0, fp = 0, fn = 0, spikes = 0, neurons = 0, synapses = 0;
   samples.forEach(sample => {
-    const run = Genome.simulate(genome, sample.seq);
-    neurons = run.neurons;
-    synapses = run.synapses;
+    const run = simulateFrozen(net, sample.seq);
+    neurons = net.neurons.length;
+    synapses = net.edges.length;
     const label = (sample.label || []).map(value => !!value);
     const outs = run.outputs || [];
     let match = outs.length === label.length && label.length > 0;
@@ -228,7 +229,7 @@ function scoreSet(genome, samples) {
   return { accuracy: accuracy, precision: precision, recall: recall, f1: f1, quality: quality, spikes: spikes, neurons: neurons, synapses: synapses };
 }
 
-function scoreGenome(genome, taskId, seed, trials) {
+function scoringCases(taskId, seed, trials) {
   const trainN = Math.max(1, Math.min(32, (trials && trials.train) || 4));
   const heldN = Math.max(1, Math.min(32, (trials && trials.held) || 4));
   const SF = require('./engine.js');
@@ -244,9 +245,13 @@ function scoreGenome(genome, taskId, seed, trials) {
     heldSamples = examples.slice(mid).map(asSample);
     if (!heldSamples.length) heldSamples = trainSamples.slice();
   }
+  return { trainSamples, heldSamples };
+}
+
+function scoreCircuit(net, cases) {
   const started = Date.now();
-  const train = scoreSet(genome, trainSamples);
-  const held = scoreSet(genome, heldSamples);
+  const train = scoreSet(net, cases.trainSamples);
+  const held = scoreSet(net, cases.heldSamples);
   return {
     quality: held.quality,
     accuracy: held.accuracy,
@@ -260,6 +265,10 @@ function scoreGenome(genome, taskId, seed, trials) {
     spikes: held.spikes,
     evalMs: Date.now() - started,
   };
+}
+
+function scoreGenome(genome, taskId, seed, trials) {
+  return scoreCircuit(Genome.compile(genome), scoringCases(taskId, seed, trials));
 }
 
 function exampleFromScore(taskId, genome, quality) {
@@ -320,10 +329,12 @@ function run(job, outDir, SF) {
   // already scored: a repeat is varied a few times, and skipped if it still repeats, so no evaluation is spent twice.
   const known = new Set(Array.isArray(job.knownHashes) ? job.knownHashes.filter(h => /^[a-f0-9]{16}$/.test(h)) : []);
   const tried = new Set();
+  const circuits = new Set();
   let repeatsSkipped = 0;
   let repeatsVaried = 0;
   if (job.mode === 'propose') {
     const origin = blankFor(taskId);
+    const cases = scoringCases(taskId, job.seed || 1);
     while (evals < evalCap) {
       Throttle.pace();
       const randomArm = evals % 10 === 9;
@@ -345,7 +356,15 @@ function run(job, outDir, SF) {
         }
         if (tried.size < 300000) tried.add(key);
       }
-      const score = scoreGenome(genome, taskId, job.seed || 1);
+      const net = Genome.compile(genome);
+      const circuit = Library.genomeHash(net);
+      if (circuits.has(circuit)) {
+        repeatsSkipped++;
+        if (repeatsSkipped > evalCap || Date.now() - started >= budgetMs) { stopReason = 'repeats'; break; }
+        continue;
+      }
+      if (circuits.size < 300000) circuits.add(circuit);
+      const score = scoreCircuit(net, cases);
       const item = {
         genome: genome,
         arm: randomArm ? 'random' : 'designer',
@@ -496,5 +515,5 @@ function run(job, outDir, SF) {
 
 module.exports = {
   EVAL_CAP, HEAP_GUARD_MB, DESIGN_FEATURES, ACTIONS, DESIGNER_VERSION, designFeatures, makeSurrogate, trainSurrogate, predict, fitSurrogate, spearman,
-  makePolicy, propose, trainPolicy, screen, applyAction, exampleFromScore, scoreGenome, blankFor, run,
+  makePolicy, propose, trainPolicy, screen, applyAction, vary, exampleFromScore, scoreGenome, blankFor, run,
 };
