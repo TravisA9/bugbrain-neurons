@@ -35,7 +35,51 @@ final class App
         return rtrim((string) ($this->config['base_path'] ?? ''), '/');
     }
 
+    /* Schema setup runs from the command line (deploy, tests, bin/upgrade) and once per App.php build on the web.
+     * It used to run on every request: a dozen CREATE TABLE IF NOT EXISTS / SHOW INDEX / SHOW COLUMNS statements
+     * that each need a metadata lock on the tables. On the live MariaDB they queued behind any long read of
+     * design_records and every request after them queued too, so the whole app stalled for a minute or more
+     * every few minutes. */
     public function migrate(): void
+    {
+        $stamp = (string) ($this->config['schema_stamp'] ?? (dirname(__DIR__) . '/schema.stamp'));
+        $key = sha1(implode('|', [(string) @filemtime(__FILE__), (string) @filesize(__FILE__), (string) ($this->config['driver'] ?? ''),
+            (string) ($this->config['sqlite']['path'] ?? ''), (string) ($this->config['mysql']['host'] ?? ''), (string) ($this->config['mysql']['database'] ?? '')]));
+        if (PHP_SAPI === 'cli') {
+            $this->migrateNow();
+            $this->writeStamp($stamp, $key);
+            return;
+        }
+        if (@file_get_contents($stamp) === $key) {
+            return;
+        }
+        $lock = @fopen($stamp . '.lock', 'c');
+        if ($lock !== false && !flock($lock, LOCK_EX | LOCK_NB)) {
+            fclose($lock); // another request is migrating right now
+            return;
+        }
+        try {
+            if (@file_get_contents($stamp) !== $key) {
+                $this->migrateNow();
+                $this->writeStamp($stamp, $key);
+            }
+        } finally {
+            if ($lock !== false) {
+                flock($lock, LOCK_UN);
+                fclose($lock);
+            }
+        }
+    }
+
+    private function writeStamp(string $stamp, string $key): void
+    {
+        $tmp = $stamp . '.tmp' . getmypid();
+        if (@file_put_contents($tmp, $key) !== false) {
+            @rename($tmp, $stamp);
+        }
+    }
+
+    public function migrateNow(): void
     {
         $auto = $this->config['driver'] === 'sqlite' ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INTEGER PRIMARY KEY AUTO_INCREMENT';
         $this->db->exec('CREATE TABLE IF NOT EXISTS owner (
