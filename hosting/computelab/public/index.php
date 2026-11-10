@@ -270,6 +270,34 @@ try {
         echo labCss();
         return;
     }
+    $icons = [
+        '/favicon.svg' => ['favicon.svg', 'image/svg+xml'],
+        '/favicon.ico' => ['favicon.ico', 'image/x-icon'],
+        '/apple-touch-icon.png' => ['apple-touch-icon.png', 'image/png'],
+        '/icon-192.png' => ['icon-192.png', 'image/png'],
+        '/icon-512.png' => ['icon-512.png', 'image/png'],
+    ];
+    if (isset($icons[$path]) && ($method === 'GET' || $method === 'HEAD')) {
+        $file = $private . '/assets/icons/' . $icons[$path][0];
+        if (!is_file($file)) {
+            coord_json(404, ['ok' => false, 'error' => 'Not found.']);
+            return;
+        }
+        header('Content-Type: ' . $icons[$path][1]);
+        header('Cache-Control: public, max-age=604800');
+        header('X-Content-Type-Options: nosniff');
+        header('Content-Length: ' . filesize($file));
+        if ($method === 'GET') {
+            readfile($file);
+        }
+        return;
+    }
+    if ($path === '/manifest.webmanifest' && $method === 'GET') {
+        header('Content-Type: application/manifest+json; charset=utf-8');
+        header('Cache-Control: public, max-age=86400');
+        echo json_encode(webManifest($base), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        return;
+    }
     if ($path === '/' && $method === 'GET') {
         $part = coord_participant($app);
         coord_html(pageHome($app, coord_who($app, 'home'), $part ? $app->computersFor($part['pid']) : null, $part ? (string) $part['session']['csrf'] : ''));

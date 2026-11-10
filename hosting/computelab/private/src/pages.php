@@ -466,12 +466,41 @@ function labCssUrl(string $base): string
     return $base . '/assets/computelab.css?v=' . substr(sha1(labCss()), 0, 10);
 }
 
+/* Favicon (spike-train mark in the SpikeFoundry palette) and the minimal web app manifest. */
+function iconLinks(string $base): string
+{
+    return '<link rel="icon" href="' . h($base . '/favicon.ico') . '" sizes="any">'
+        . '<link rel="icon" type="image/svg+xml" href="' . h($base . '/favicon.svg') . '">'
+        . '<link rel="apple-touch-icon" href="' . h($base . '/apple-touch-icon.png') . '">'
+        . '<link rel="manifest" href="' . h($base . '/manifest.webmanifest') . '">'
+        . '<meta name="theme-color" content="#090e14">';
+}
+
+function webManifest(string $base): array
+{
+    return [
+        'name' => 'Compute Lab',
+        'short_name' => 'Compute Lab',
+        'description' => 'Donate spare computer time to SpikeFoundry experiments.',
+        'start_url' => $base . '/',
+        'scope' => $base . '/',
+        'display' => 'standalone',
+        'background_color' => '#090e14',
+        'theme_color' => '#090e14',
+        'icons' => [
+            ['src' => $base . '/favicon.svg', 'sizes' => 'any', 'type' => 'image/svg+xml'],
+            ['src' => $base . '/icon-192.png', 'sizes' => '192x192', 'type' => 'image/png'],
+            ['src' => $base . '/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+        ],
+    ];
+}
+
 function layout(string $title, string $body, string $base, array $nav = [], array $opts = []): string
 {
     $fit = !empty($opts['fit']);
     $shell = (string) ($opts['shell'] ?? 'shell');
     return '<!DOCTYPE html><html lang="en"' . ($fit ? ' class="fit"' : '') . '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="dark"><title>'
-        . h($title) . '</title>' . siteHeaderCss() . '<link rel="stylesheet" href="' . h(labCssUrl($base)) . '">' . (string) ($opts['head'] ?? '') . '</head><body' . ($fit ? ' class="fit"' : '') . '>'
+        . h($title) . '</title>' . iconLinks($base) . siteHeaderCss() . '<link rel="stylesheet" href="' . h(labCssUrl($base)) . '">' . (string) ($opts['head'] ?? '') . '</head><body' . ($fit ? ' class="fit"' : '') . '>'
         . siteHeader($base, $nav) . '<main class="' . h($shell) . '">' . $body . '</main>' . (string) ($opts['foot'] ?? '') . '</body></html>';
 }
 
@@ -484,7 +513,7 @@ function exploreBar(string $base, array $nav): string
 
 function exploreSkin(string $base): string
 {
-    return '<link rel="stylesheet" href="' . h(labCssUrl($base)) . '"><style>
+    return iconLinks($base) . '<link rel="stylesheet" href="' . h(labCssUrl($base)) . '"><style>
         :root{--bg:#090e14;--card:#101821;--line:#202d39;--text:#e6edf3;--muted:#8b9baa;--mint:#69e2b1;--amber:#ffca76}
         body{background:radial-gradient(ellipse at 50% -15%,#142535 0,#090e14 46rem) no-repeat,#090e14;font-family:var(--sans);font-size:14px}
         body>header,body>main{width:min(1490px,calc(100% - 68px))}

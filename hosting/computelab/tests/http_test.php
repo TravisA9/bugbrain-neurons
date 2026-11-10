@@ -289,6 +289,16 @@ check($rotBare['status'] === 403, 'a new setup command needs the security token'
 $sealed = (string) $app->db->query('SELECT sealed FROM setup_codes LIMIT 1')->fetchColumn();
 check($sealed !== '' && !str_contains($sealed, $nt[1] ?? 'zz') && !str_contains(base64_decode($sealed), $nt[1] ?? 'zz'), 'setup codes do not store the token in readable form');
 
+$ico = http($base . '/favicon.ico');
+$svg = http($base . '/favicon.svg');
+$touch = http($base . '/apple-touch-icon.png');
+$i512 = http($base . '/icon-512.png');
+check($ico['status'] === 200 && str_contains($ico['header'], 'image/x-icon') && substr($ico['body'], 0, 4) === "\0\0\1\0" && $svg['status'] === 200 && str_contains($svg['header'], 'image/svg+xml') && str_contains($svg['body'], '<svg') && $touch['status'] === 200 && substr($touch['body'], 1, 3) === 'PNG' && $i512['status'] === 200, 'the favicon, touch icon and app icons are served with the right types');
+$man = http($base . '/manifest.webmanifest');
+$manJson = json_decode($man['body'], true);
+$homeHtml = http($base . '/')['body'];
+check($man['status'] === 200 && is_array($manJson) && ($manJson['name'] ?? '') === 'Compute Lab' && count($manJson['icons'] ?? []) === 3 && str_contains($homeHtml, 'rel="icon"') && str_contains($homeHtml, '/computelab/favicon.svg') && str_contains($homeHtml, 'rel="manifest"') && str_contains(http($base . '/explore')['body'], 'rel="apple-touch-icon"'), 'every page links the favicon, touch icon and manifest');
+
 proc_terminate($proc);
 echo "http checks done\n";
 exit($fail === 0 ? 0 : 1);
