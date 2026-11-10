@@ -818,5 +818,23 @@ check(count(array_unique($seeds)) === 60 && (int) $stored >= 60 && count($spec['
 $src = (string) file_get_contents(dirname(__DIR__) . '/private/src/App.php');
 check(strpos($src, "\$project['id'] . '|' . \$this->now() . '|' . \$made") === false && strpos($src, '$seed = $this->freshSeed();') !== false, 'auto jobs no longer derive their seed from the clock second');
 
+/* Discoveries cache: built once per TTL, a stale copy is served while another request rebuilds it. */
+$builds = 0;
+$mk = function () use (&$builds) { $builds++; return ['n' => $builds]; };
+$now = '2026-11-10T14:00:00+00:00';
+$a1 = $app->cached('t-cache', 120, $mk);
+$now = '2026-11-10T14:01:00+00:00';
+$a2 = $app->cached('t-cache', 120, $mk);
+$now = '2026-11-10T14:03:00+00:00';
+$app->db->prepare('UPDATE page_cache SET building_until = ? WHERE k = ?')->execute([strtotime($now) + 30, 't-cache']);
+$a3 = $app->cached('t-cache', 120, $mk);
+$app->db->prepare('UPDATE page_cache SET building_until = 0 WHERE k = ?')->execute(['t-cache']);
+$a4 = $app->cached('t-cache', 120, $mk);
+$a5 = $app->cached('t-cache', 120, $mk);
+check($a1 === ['n' => 1] && $a2 === ['n' => 1] && $a3 === ['n' => 1] && $a4 === ['n' => 2] && $a5 === ['n' => 2] && $builds === 2, 'the Discoveries cache builds once per two minutes and serves the old copy while another request rebuilds it');
+$pl = $app->discoveriesPayload();
+check(isset($pl['items'], $pl['series'], $pl['board']) && $app->discoveriesPayload() === $pl, 'the Discoveries payload comes from the shared cache');
+$idx = array_map(function ($r) { return (string) $r['name']; }, $app->db->query('PRAGMA index_list(design_records)')->fetchAll());
+check(in_array('idx_dr_task_created', $idx, true), 'design_records has the (task_id, created_at) index topDesigns needs');
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

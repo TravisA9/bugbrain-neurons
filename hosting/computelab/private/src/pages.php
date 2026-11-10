@@ -1019,24 +1019,16 @@ function scoreChart(array $points): string
 function pageDiscoveries(App $app, array $nav, array $mineIds = []): string
 {
     $base = $app->base();
-    $items = $app->discoveries(12);
+    $payload = $app->discoveriesPayload();
+    $items = $payload['items'];
     $mine = array_flip($mineIds);
-    $series = [];
-    $tasks = [];
+    $series = $payload['series'];
     foreach ($items as $i => $item) {
         $items[$i]['mine'] = isset($mine[$item['worker']]);
         unset($items[$i]['worker']);
-        $tasks[$item['task']] = true;
-    }
-    foreach (array_keys($tasks) as $task) {
-        $pts = [];
-        foreach ($app->taskSeries($task, 120) as $p) {
-            $pts[] = [round((float) $p['bestHeld'], 4), round((float) $p['held'], 4)];
-        }
-        $series[$task] = $pts;
     }
     $board = [];
-    foreach ($app->leaderboard(12) as $row) {
+    foreach ($payload['board'] as $row) {
         $board[] = ['name' => (string) $row['name'], 'genomes' => (int) $row['genomes'], 'records' => (int) $row['records'], 'hours' => round((float) $row['hours'], 2)];
     }
     $list = '<button class="disc active" type="button" data-index="-1"><div class="row1"><span class="t">Overview</span><span class="s">' . h((string) count($items)) . '</span></div><div class="row2"><span>All tasks · contributors</span><span></span></div></button>';

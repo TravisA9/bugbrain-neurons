@@ -241,6 +241,18 @@ final class App
             'idx_dr_genome' => 'genome_hash',
         ]);
         $this->ensureIndexes('design_genomes', ['idx_dg_design' => 'design_hash']);
+        /* topDesigns reads the newest 400 records of a task; without this index MySQL sorted every record of the
+         * task (wide TEXT rows) on each Discoveries view. */
+        $this->ensureIndexes('design_records', ['idx_dr_task_created' => 'task_id, created_at']);
+        $this->ensureIndexes('design_summaries', ['idx_ds_task_created' => 'task_id, created_at']);
+        /* Shared cache for expensive read-only pages (Discoveries). One request rebuilds a stale entry while the
+         * others keep serving the old copy. */
+        $this->db->exec('CREATE TABLE IF NOT EXISTS page_cache (
+            k VARCHAR(64) PRIMARY KEY,
+            body ' . (($this->config['driver'] ?? '') === 'sqlite' ? 'TEXT' : 'LONGTEXT') . ' NOT NULL,
+            built_at INTEGER NOT NULL,
+            building_until INTEGER NOT NULL DEFAULT 0
+        )');
         $this->ensureIndexes('jobs', ['idx_jobs_seed' => 'seed']);
         $this->ensureColumn('results', 'seconds', 'INTEGER');
         $this->ensureColumn('design_records', 'arm', "VARCHAR(16) NOT NULL DEFAULT 'designer'");
@@ -1484,7 +1496,14 @@ final class App
     }
 
     /* Public numbers for the Right now box. Read only: it never applies a task policy. */
+    /* Same for every visitor and polled every 15 s by each open Home page: shared for live_cache_seconds (default 10). */
     public function liveStatus(): array
+    {
+        $ttl = (int) ($this->config['live_cache_seconds'] ?? 10);
+        return $ttl > 0 ? $this->cached('live-v1', $ttl, function (): array { return $this->liveStatusNow(); }) : $this->liveStatusNow();
+    }
+
+    public function liveStatusNow(): array
     {
         $stats = $this->homeStats();
         $now = strtotime($this->now());
@@ -2103,6 +2122,63 @@ final class App
             return $a['quality'] < $b['quality'] ? 1 : -1;
         });
         return array_slice($rows, 0, $limit);
+    }
+
+    /* Everything the Discoveries page shows that is the same for every viewer, cached for
+     * discoveries_cache_seconds (default 120; 0 turns the cache off). */
+    public function discoveriesPayload(): array
+    {
+        $ttl = (int) ($this->config['discoveries_cache_seconds'] ?? 120);
+        $build = function (): array {
+            $items = $this->discoveries(12);
+            $series = [];
+            foreach ($items as $item) {
+                if (isset($series[$item['task']])) {
+                    continue;
+                }
+                $pts = [];
+                foreach ($this->taskSeries($item['task'], 120) as $p) {
+                    $pts[] = [round((float) $p['bestHeld'], 4), round((float) $p['held'], 4)];
+                }
+                $series[$item['task']] = $pts;
+            }
+            return ['items' => $items, 'series' => $series, 'board' => $this->leaderboard(12)];
+        };
+        return $ttl > 0 ? $this->cached('discoveries-v1', $ttl, $build) : $build();
+    }
+
+    public function cached(string $key, int $ttl, callable $build): array
+    {
+        $now = strtotime($this->now());
+        $st = $this->db->prepare('SELECT body, built_at, building_until FROM page_cache WHERE k = ?');
+        $st->execute([$key]);
+        $row = $st->fetch();
+        $old = $row ? json_decode((string) $row['body'], true) : null;
+        if (is_array($old) && $now - (int) $row['built_at'] < $ttl) {
+            return $old;
+        }
+        /* Claim the rebuild; whoever loses serves the stale copy instead of running the same heavy queries. */
+        if ($row) {
+            $claim = $this->db->prepare('UPDATE page_cache SET building_until = ? WHERE k = ? AND building_until < ?');
+            $claim->execute([$now + 60, $key, $now]);
+            if ($claim->rowCount() !== 1 && is_array($old)) {
+                return $old;
+            }
+        }
+        $fresh = $build();
+        $body = json_encode($fresh);
+        if ($body !== false) {
+            if ($row) {
+                $this->db->prepare('UPDATE page_cache SET body = ?, built_at = ?, building_until = 0 WHERE k = ?')->execute([$body, $now, $key]);
+            } else {
+                try {
+                    $this->db->prepare('INSERT INTO page_cache (k, body, built_at, building_until) VALUES (?, ?, ?, 0)')->execute([$key, $body, $now]);
+                } catch (PDOException $e) {
+                    // another request stored it first
+                }
+            }
+        }
+        return $fresh;
     }
 
     /* Outstanding discoveries for the split view: the best distinct designs of each task,
