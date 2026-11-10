@@ -54,5 +54,49 @@ const cases = P.heldCases('coincidence', 4);
 check(cases.length === 4 && JSON.stringify(cases) === JSON.stringify(SF.taskSamples('coincidence', 4, true, 99).map(s => ({ seq: s.seq, label: s.label }))), 'held-out cases do not depend on the job seed');
 const tr = P.trace(P.compile(G.blank(2, 1)), cases[0].seq);
 check(tr.sent.every(d => d.at === d.t + P.compile(G.blank(2, 1)).edges[d.e].delay + 1), 'pulses arrive after delay + 1 steps');
-console.log((failed ? 'FAILED ' + failed + ' of ' : 'ok ') + checks + ' snn player checks (' + runs + ' replays)');
-process.exit(failed ? 1 : 0);
+
+async function checkDelayedEngine() {
+  const discovery = execFileSync(php, ['-r', 'require "' + path.join(__dirname, '../private/src/pages.php') + '"; echo discoveriesJs();'], { encoding: 'utf8' });
+  const elements = {};
+  for (const id of ['disc-engine', 'disc-data', 'viewer', 'v-title', 'v-tag', 'disc-list', 'raster', 'net', 'net-note', 'raster-note']) {
+    elements[id] = { addEventListener(name, fn) { this[name] = fn; } };
+  }
+  elements['disc-data'].textContent = JSON.stringify({
+    items: ['coincidence', 'sequence'].map((task, i) => ({ task, hash: String(i), rank: i + 1 })),
+    series: {}, board: [], genomeUrl: '/genome?hash=',
+  });
+  const buttons = [0, 1].map(i => ({
+    classList: { toggle() {} }, getAttribute() { return i; }, addEventListener(name, fn) { this[name] = fn; },
+  }));
+  const mounted = [];
+  const view = {
+    document: {
+      getElementById(id) { return elements[id]; },
+      querySelectorAll(selector) { return selector === '#disc-list .disc' ? buttons : []; },
+    },
+    fetch: async () => ({ ok: true, json: async () => G.blank(2, 1) }),
+    SnnPlayer: { ...P, mount(box, opts) {
+      mounted.push(opts.task);
+      return { trace: () => P.trace(opts.net, opts.cases[0].seq), caseIndex: () => 0, destroy() {} };
+    } },
+  };
+  view.window = view;
+  vm.runInNewContext(discovery, view);
+  buttons[0].click();
+  buttons[1].click();
+  await new Promise(resolve => setImmediate(resolve));
+  check(mounted.length === 0, 'an early selection waits for the deferred engine');
+  view.SpikeFoundry = SF;
+  elements['disc-engine'].load();
+  await new Promise(resolve => setImmediate(resolve));
+  check(mounted.join() === 'sequence' && /Spike raster/.test(elements.raster.innerHTML),
+    'the latest selection starts playback automatically when the engine loads');
+}
+
+checkDelayedEngine().then(() => {
+  console.log((failed ? 'FAILED ' + failed + ' of ' : 'ok ') + checks + ' snn player checks (' + runs + ' replays)');
+  process.exitCode = failed ? 1 : 0;
+}).catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});

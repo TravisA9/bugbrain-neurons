@@ -1149,7 +1149,9 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = []): string
         . '<div class="split"><section class="panel" aria-label="Discoveries"><div class="panelhead"><div class="paneltitle">Discoveries</div><span class="subtag">' . h((string) count($items)) . ' DESIGNS</span></div><div class="list-scroll" id="disc-list">' . $list . '</div></section>'
         . '<section class="panel" aria-label="Discovery viewer"><div class="panelhead"><div class="paneltitle" id="v-title">Overview</div><span class="subtag" id="v-tag">ALL TASKS</span></div><div class="viewer-scroll" id="viewer"></div></section></div>'
         . '<script type="application/json" id="disc-data">' . jsonForHtml($data) . '</script>';
-    $foot = '<script src="' . h($base . '/assets/engine.js') . '" defer></script><script>' . snnPlayerJs() . '</script><script>' . discoveriesJs() . '</script>';
+    $engine = (string) ($app->config['engine_js'] ?? '');
+    $version = is_readable($engine) ? hash_file('sha256', $engine) : 'missing';
+    $foot = '<script id="disc-engine" src="' . h($base . '/assets/engine.js?v=' . $version) . '" defer></script><script>' . snnPlayerJs() . '</script><script>' . discoveriesJs() . '</script>';
     return layout('Discoveries', $body, $base, $nav, ['fit' => true, 'shell' => 'shell split-shell', 'foot' => $foot]);
 }
 
@@ -1184,7 +1186,7 @@ for(e=0;e<net.edges.length;e++){var ed=net.edges[e];if(!spk[ed.from])continue;va
 return{H:H,spikes:steps,volt:volt,sent:sent,outputs:fired.map(Boolean),spikeCount:total};}
 /* designer.js scoreSet: exact match needs as many outputs as labels, all equal. */
 function correct(outs,label){var lab=(label||[]).map(function(x){return!!x;}),m=outs.length===lab.length&&lab.length>0;for(var j=0;j<Math.max(outs.length,lab.length);j++)if(!!outs[j]!==lab[j])m=false;return m;}
-function score(net,cases){var sp=0,ex=0;cases.forEach(function(c){var r=trace(net,c.seq);sp+=r.spikeCount;if(correct(r.outputs,c.label))ex++;});var n=Math.max(1,cases.length),acc=cases.length?ex/cases.length:0;return{spikes:sp,correct:ex,n:cases.length,accuracy:acc,quality:clamp(acc-.0015*(net.neurons.length+net.edges.length)-.00025*sp/n,0,1)};}
+function score(net,cases){var sp=0,ex=0,positives=0,tp=0;cases.forEach(function(c){var r=trace(net,c.seq);sp+=r.spikeCount;if(correct(r.outputs,c.label))ex++;c.label.forEach(function(want,i){if(want){positives++;if(r.outputs[i])tp++;}});});var n=Math.max(1,cases.length),acc=cases.length?ex/cases.length:0,quality=positives&&!tp?0:clamp(acc-.0015*(net.neurons.length+net.edges.length)-.00025*sp/n,0,1);return{spikes:sp,correct:ex,n:cases.length,accuracy:acc,quality:quality};}
 /* The evaluator scores 4 held-out cases (designer.js scoreGenome default). Held-out cases do not depend on the job seed. */
 function heldCases(task,n){var SF=root.SpikeFoundry;if(!SF||!SF.taskSamples)return[];return SF.taskSamples(task,n||4,true,1).map(function(s){return{seq:s.seq,label:s.label};});}
 
@@ -1257,6 +1259,13 @@ function discoveriesJs(): string
     return <<<'JS'
 (function(){
 var D=JSON.parse(document.getElementById('disc-data').textContent),V=document.getElementById('viewer'),T=document.getElementById('v-title'),G=document.getElementById('v-tag'),cache={};
+var engineReady=new Promise(function(resolve){
+function loaded(){return window.SpikeFoundry&&typeof window.SpikeFoundry.taskSamples==='function';}
+if(loaded()){resolve(true);return;}
+var script=document.getElementById('disc-engine');
+script.addEventListener('load',function(){resolve(!!loaded());},{once:true});
+script.addEventListener('error',function(){resolve(false);},{once:true});
+});
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function ago(iso){var d=(Date.parse(D.now)-Date.parse(iso))/1000;if(!(d>=0))return iso;if(d<90)return 'just now';if(d<5400)return Math.round(d/60)+' min ago';if(d<129600)return Math.round(d/3600)+' h ago';return Math.round(d/86400)+' days ago';}
 function when(iso){var d=new Date(iso);if(isNaN(d.getTime()))return String(iso||'');var o={month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'};if(d.getFullYear()!==new Date().getFullYear())o.year='numeric';try{return d.toLocaleString(undefined,o);}catch(e){return d.toLocaleString();}}
@@ -1274,21 +1283,23 @@ function overview(){T.textContent='Overview';G.textContent='ALL TASKS';var by={}
 var h='<div class="metrics">'+metric('Designs listed',D.items.length,'top N per quality measure',true)+metric('Tasks',Object.keys(by).length,'curriculum levels reached')+metric('Yours',D.items.filter(function(i){return i.mine;}).length,D.mineCount?'found by your computer':'link a computer on Home')+metric('Contributors',D.board.length,'with public credit or Anonymous')+'</div>';
 h+='<div class="viz-title"><strong>Best per task</strong><span>held-out score</span></div><div class="tasks">';Object.keys(by).forEach(function(k){var it=by[k];h+='<div class="taskcard"><div class="taskline"><span class="taskname">Level '+it.level+' · '+esc(k)+'</span><span class="taskscore">'+f3(it.held)+'</span></div><div class="taskdesc2">'+esc(it.finder)+' · '+it.neurons+' neurons · '+it.synapses+' synapses · '+'<span title="'+esc(ago(it.when))+'">'+esc(when(it.when))+'</span></div><div class="prog"><i style="width:'+Math.round(100*clamp(it.held,0,1))+'%"></i></div></div>';});
 h+='</div><div class="viz-title"><strong>Contributors</strong><span>evaluation time donated</span></div><div class="log">';D.board.forEach(function(b){h+='<div class="logline"><span class="logtime">'+b.hours.toFixed(2)+' h</span><span class="logtext">'+esc(b.name)+'</span><span class="logscore">'+b.genomes+' designs</span></div>';});if(!D.board.length)h+='<p class="muted">No public results yet.</p>';V.innerHTML=h+'</div>';}
-function show(i,auto){if(player){player.destroy();player=null;}if(i<0)return overview();var it=D.items[i];var badges=(it.badges||[]).map(function(b){return '<span class="badge-m">'+esc(b)+'</span>';}).join('');T.innerHTML=esc('#'+it.rank+' '+it.task)+(it.mine?'<span class="badge-mine">Your computer</span>':'')+badges;G.textContent='LEVEL '+it.level;
+function show(i,auto){var selection=++generation;if(player){player.destroy();player=null;}if(i<0)return overview();var it=D.items[i];var badges=(it.badges||[]).map(function(b){return '<span class="badge-m">'+esc(b)+'</span>';}).join('');T.innerHTML=esc('#'+it.rank+' '+it.task)+(it.mine?'<span class="badge-mine">Your computer</span>':'')+badges;G.textContent='LEVEL '+it.level;
 var h='<div class="chips" style="margin-bottom:12px"><span class="chip">genome <b>'+esc(it.hash.slice(0,12))+'</b></span><span class="chip'+(it.mine?' mine':'')+'">found by '+esc(it.finder)+'</span><span class="chip disc-found" title="'+esc(ago(it.when))+'">found <b>'+esc(when(it.when))+'</b></span>'+(it.public?'<span class="chip"><b>public</b></span>':'')+(it.confirmations?'<span class="chip" title="Found again by later jobs">confirmed <b>'+it.confirmations+'×</b>'+(it.confirmedBy&&it.confirmedBy.length?' by '+esc(it.confirmedBy.join(', ')):'')+'</span>':'')+(it.variants?'<span class="chip" title="Other circuits with the same scores, size and spikes">+'+it.variants+' equivalent variant'+(it.variants>1?'s':'')+'</span>':'')+(it.badges&&it.badges.length?it.badges.map(function(b){return '<span class="chip" title="Among the top designs of this task on this measure">'+esc(b)+'</span>';}).join(''):'')+'</div>';
 h+='<div class="metrics">'+metric('Held-out score',f3(it.held),'size penalty included',true)+metric('Train score',f3(it.train),it.accuracy!=null?'accuracy '+f3(it.accuracy):'')+metric('Circuit size',it.neurons+'<small> / '+it.synapses+'</small>','neurons / synapses')+metric('Spikes',it.spikes,'on held-out cases · '+it.evalMs+' ms')+'</div>';
 h+='<div class="viz-title"><strong>Frozen network · playback</strong><span id="net-note">loading…</span></div><div id="net"><div class="stage"><div class="private">Loading the wiring…</div></div></div>';
 h+='<div class="viz-grid"><div><div class="viz-title"><strong>Spike raster</strong><span id="raster-note">every neuron · held-out case</span></div><div class="stage" id="raster"><div class="private">Needs the wiring.</div></div></div><div><div class="viz-title"><strong>Score history · '+esc(it.task)+' (whole task)</strong><span>'+((D.series[it.task]||[]).length)+' jobs, same for every design of this task</span></div>'+historySvg(D.series[it.task],it.held)+'</div></div>';
 V.innerHTML=h;V.scrollTop=0;var hash=it.hash;
-function draw(g){if(D.items[cur]!==it)return;var P=window.SnnPlayer,R=document.getElementById('raster'),box=document.getElementById('net');try{var net=P.compile(g),cases=P.heldCases(it.task,4);document.getElementById('net-note').textContent=net.neurons.length+' neurons · '+net.edges.length+' synapses · weights fixed';
-if(!cases.length){box.innerHTML='<div class="stage"><div class="private">The simulator is still loading. Pick the design again in a moment.</div></div>';return;}
+function draw(g){return engineReady.then(function(ready){if(selection!==generation)return;var P=window.SnnPlayer,R=document.getElementById('raster'),box=document.getElementById('net'),note=document.getElementById('net-note');
+if(!ready){note.textContent='unavailable';box.textContent='The simulator could not load. Reload the page to try again.';R.textContent='Playback unavailable.';return;}
+try{var net=P.compile(g),cases=P.heldCases(it.task,4);note.textContent=net.neurons.length+' neurons · '+net.edges.length+' synapses · weights fixed';
+if(!cases.length){box.textContent='Playback cases are unavailable for this task.';R.textContent='Playback unavailable.';return;}
 player=P.mount(box,{net:net,task:it.task,cases:cases,record:{spikes:it.spikes,accuracy:it.accuracy},autoplay:auto,onCase:function(k,tr){R.innerHTML=rasterSvg(net,tr.spikes);document.getElementById('raster-note').textContent='every neuron · held-out case '+(k+1);}});
-R.innerHTML=rasterSvg(net,player.trace().spikes);document.getElementById('raster-note').textContent='every neuron · held-out case '+(player.caseIndex()+1);}catch(e){box.innerHTML='<div class="stage"><div class="private">Could not simulate this design here.</div></div>';R.innerHTML='<div class="private">Could not simulate this design here.</div>';}}
-function priv(){if(D.items[cur]!==it)return;document.getElementById('net-note').textContent='private';document.getElementById('net').innerHTML='<div class="private">The wiring of this design is private until the owner publishes it.<br>Its size: '+it.neurons+' neurons and '+it.synapses+' synapses.</div>';document.getElementById('raster').innerHTML='<div class="private">Shown with the wiring.</div>';}
+R.innerHTML=rasterSvg(net,player.trace().spikes);document.getElementById('raster-note').textContent='every neuron · held-out case '+(player.caseIndex()+1);}catch(e){box.innerHTML='<div class="stage"><div class="private">Could not simulate this design here.</div></div>';R.innerHTML='<div class="private">Could not simulate this design here.</div>';}});}
+function priv(){if(selection!==generation)return;document.getElementById('net-note').textContent='private';document.getElementById('net').innerHTML='<div class="private">The wiring of this design is private until the owner publishes it.<br>Its size: '+it.neurons+' neurons and '+it.synapses+' synapses.</div>';document.getElementById('raster').innerHTML='<div class="private">Shown with the wiring.</div>';}
 if(cache[hash]===false)return priv();if(cache[hash])return draw(cache[hash]);
 fetch(D.genomeUrl+encodeURIComponent(hash),{credentials:'same-origin'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(g){cache[hash]=g;draw(g);}).catch(function(){cache[hash]=false;priv();});}
-var player=null,cur=-1,btns=[].slice.call(document.querySelectorAll('#disc-list .disc'));
-function pick(b){btns.forEach(function(x){x.classList.toggle('active',x===b);});cur=+b.getAttribute('data-index');show(cur,true);}
+var player=null,generation=0,btns=[].slice.call(document.querySelectorAll('#disc-list .disc'));
+function pick(b){btns.forEach(function(x){x.classList.toggle('active',x===b);});show(+b.getAttribute('data-index'),true);}
 btns.forEach(function(b){b.addEventListener('click',function(){pick(b);});});
 document.getElementById('disc-list').addEventListener('keydown',function(e){if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;var i=btns.indexOf(document.activeElement);if(i<0)return;var n=btns[i+(e.key==='ArrowDown'?1:-1)];if(n){e.preventDefault();n.focus();pick(n);n.scrollIntoView({block:'nearest'});}});
 overview();
