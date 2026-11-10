@@ -291,6 +291,23 @@ $deskA = $ux['app']->enroll('desk-a', ['spikefoundry'], 2, true);
 $deskB = $ux['app']->enroll('desk-b', ['bugbrain'], 2, true, $deskA['participantId']);
 $linked = $ux['app']->computersFor($deskA['participantId']);
 check(count($linked) === 2 && $ux['app']->workerOwns($deskA['participantId'], $deskB['workerId']), 'one participant can link more than one computer');
+$ux['app']->setOwnerHome($deskA['workerId'], true);
+$homes = $ux['app']->ownerHomeComputers();
+check(count($homes) === 1 && $homes[0]['id'] === $deskA['workerId'] && $ux['app']->isOwnerHome($deskA['workerId']) && !$ux['app']->isOwnerHome($deskB['workerId']), 'Show on My computer is per computer');
+$ux['app']->setOwnerHome($deskA['workerId'], false);
+check(count($ux['app']->ownerHomeComputers()) === 0, 'the owner can hide a computer from My computer again');
+
+$seedLab = lab();
+$tv = $seedLab['app']->enroll('travirtual', ['spikefoundry'], 2, true);
+$an = $seedLab['app']->enroll('analinux', ['spikefoundry'], 2, true);
+check(count($seedLab['app']->ownerHomeComputers()) === 0, 'joining a computer named travirtual after the first schema pass does not auto-flag it');
+$seedLab['db']->exec("DELETE FROM supply_state WHERE id = 'seed-owner-home-travirtual'");
+$seedLab['app']->migrateNow();
+$seeded = $seedLab['app']->ownerHomeComputers();
+check(count($seeded) === 1 && $seeded[0]['name'] === 'travirtual' && !$seedLab['app']->isOwnerHome($an['workerId']), 'the first schema pass marks existing travirtual for My computer and leaves analinux alone');
+$seedLab['app']->setOwnerHome($tv['workerId'], false);
+$seedLab['app']->migrateNow();
+check(count($seedLab['app']->ownerHomeComputers()) === 0, 'later schema passes do not put travirtual back on My computer');
 $badRunner = false;
 try { $ux['app']->createProject('Nope', 'No runner.', 'run/evil.js', 1, true); } catch (InvalidArgumentException $e) { $badRunner = true; }
 check($badRunner, 'a project runner outside the allowlist is refused');

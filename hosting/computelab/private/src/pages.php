@@ -909,12 +909,21 @@ function rightNowPanel(App $app, string $base): string
         . '</div><h3>SpikeFoundry curriculum</h3><div class="tasks" data-tasks>' . $tasks . '</div></div></section>';
 }
 
-function myComputerPanel(App $app, string $base, ?array $computers, string $csrf, bool $owner): string
+function computerCsrf(App $app, array $worker, array $nav): string
+{
+    $pid = (string) ($nav['participantId'] ?? '');
+    if ($pid !== '' && $app->workerOwns($pid, (string) $worker['id'])) {
+        return (string) ($nav['participantCsrf'] ?? '');
+    }
+    return (string) ($nav['ownerCsrf'] ?? '');
+}
+
+function myComputerPanel(App $app, string $base, ?array $computers, array $nav): string
 {
     $head = '<section class="panel" id="my-computer"><div class="panelhead"><div class="paneltitle">My computer</div><a class="button small primary" href="' . h($base) . '/join">Add a computer</a></div><div class="panelbody">';
     if ($computers === null || $computers === []) {
-        $why = $owner
-            ? 'You are signed in as the owner. Computers you link from this browser show up here; every computer is listed in the owner console.'
+        $why = !empty($nav['owner'])
+            ? 'Mark a computer with “Show on My computer” in the owner console and it will appear here. Other computers stay listed only in the owner console.'
             : 'Link this browser to a computer to see what it is doing, set how much of it Compute Lab may use, and follow what it finds.';
         return $head . '<div class="empty"><strong>No computer linked yet</strong><p>' . h($why) . '</p>'
             . '<p>Setup takes one download. A small background program does the work, and you can turn it off or down at any time.</p>'
@@ -924,6 +933,7 @@ function myComputerPanel(App $app, string $base, ?array $computers, string $csrf
     $ids = [];
     foreach ($computers as $worker) {
         $ids[] = (string) $worker['id'];
+        $csrf = computerCsrf($app, $worker, $nav);
         $leases = $app->leasesOf((string) $worker['id']);
         $state = describeWorker($app, $worker, $leases);
         $totals = $app->contribution((string) $worker['id']);
@@ -994,13 +1004,13 @@ function liveScript(): string
 </script>';
 }
 
-function pageHome(App $app, array $nav, ?array $computers = null, string $csrf = ''): string
+function pageHome(App $app, array $nav, ?array $computers = null): string
 {
     $base = $app->base();
     $intro = '<section class="heading"><div><div class="eyebrow">Volunteer computing · SpikeFoundry first</div><h1>Give a spare computer something useful to do.</h1>'
         . '<p>Compute Lab shares quiet background work. SpikeFoundry runs small synthetic design trials for spiking networks. BugBrain, the neuron research, runs when SpikeFoundry has nothing waiting. Looking around in the browser does not donate this computer.</p></div>'
         . '<div class="head-actions">' . (empty($nav['owner']) && empty($nav['participant']) ? '<a class="button primary" href="' . h($base) . '/join">Join with your computer</a>' : '') . '<a class="button" href="' . h($base) . '/explore">Explore in your browser</a></div></section>';
-    $body = $intro . rightNowPanel($app, $base) . myComputerPanel($app, $base, $computers, $csrf, !empty($nav['owner']));
+    $body = $intro . rightNowPanel($app, $base) . myComputerPanel($app, $base, $computers, $nav);
     return layout('Compute Lab', $body, $base, $nav, ['foot' => resourceScript() . liveScript()]);
 }
 
@@ -1450,7 +1460,8 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         if (!$revoked) {
             $controls = resourceControl($base . '/owner/resources', $csrf, $w, $state, $base, true)
                 . '<div class="head-actions"><form method="post" action="' . h($base) . '/owner/revoke" onsubmit="return confirm(\'Revoke this computer\\\'s token?\')"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><button class="button small stop" type="submit">Revoke</button></form>'
-                . newSetupForm($base . '/owner/setup-command', $csrf, (string) $w['id']) . '</div>';
+                . newSetupForm($base . '/owner/setup-command', $csrf, (string) $w['id'])
+                . '<form method="post" action="' . h($base) . '/owner/owner-home"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><input type="hidden" name="shown" value="' . ((int) ($w['owner_home'] ?? 0) === 1 ? '0' : '1') . '"><button class="button small" type="submit">' . ((int) ($w['owner_home'] ?? 0) === 1 ? 'Hide from My computer' : 'Show on My computer') . '</button></form></div>';
         }
         $tone = ownerTone($state);
         $people .= '<div class="computer" data-computer="' . h((string) $w['id']) . '"><div class="computer-top"><span class="computer-name is-' . h($tone) . '" data-tone>' . h((string) $w['name']) . '</span><span class="computer-jobs" data-jobs-now>' . h(ownerJobsLine($state)) . '</span></div>'

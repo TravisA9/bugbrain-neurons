@@ -177,6 +177,56 @@ function coord_my_computers(App $app): ?array
     return $part ? $app->computersFor($part['pid']) : null;
 }
 
+function coord_owner_session(App $app): ?array
+{
+    $session = $app->sessionById(coord_cookie('lab_owner'));
+    if (!$session || $session['role'] !== 'owner') {
+        return null;
+    }
+    return $session;
+}
+
+/** Computers this visitor should see on Home: the participant cookie's computers, plus any the signed-in owner marked for My computer. */
+function coord_home_computers(App $app): array
+{
+    $out = [];
+    $seen = [];
+    $part = coord_participant($app);
+    if ($part) {
+        foreach ($app->computersFor($part['pid']) as $w) {
+            $id = (string) $w['id'];
+            $out[] = $w;
+            $seen[$id] = true;
+        }
+    }
+    if (coord_owner_session($app)) {
+        foreach ($app->ownerHomeComputers() as $w) {
+            $id = (string) $w['id'];
+            if (!isset($seen[$id])) {
+                $out[] = $w;
+            }
+        }
+    }
+    return $out;
+}
+
+/** True when this POST's CSRF belongs to a session that may control this computer from Home. */
+function coord_may_control(App $app, string $workerId, string $csrf): bool
+{
+    if ($csrf === '') {
+        return false;
+    }
+    $part = coord_participant($app);
+    if ($part && hash_equals((string) $part['session']['csrf'], $csrf) && $app->workerOwns($part['pid'], $workerId)) {
+        return true;
+    }
+    $owner = coord_owner_session($app);
+    if ($owner && hash_equals((string) $owner['csrf'], $csrf) && $app->isOwnerHome($workerId)) {
+        return true;
+    }
+    return false;
+}
+
 function coord_wants_json(): bool
 {
     return stripos((string) ($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json') !== false;
@@ -321,14 +371,13 @@ try {
         return;
     }
     if ($path === '/' && $method === 'GET') {
-        $part = coord_participant($app);
-        coord_html(pageHome($app, coord_who($app, 'home'), $part ? $app->computersFor($part['pid']) : null, $part ? (string) $part['session']['csrf'] : ''));
+        coord_html(pageHome($app, coord_who($app, 'home'), coord_home_computers($app)));
         return;
     }
     if ($path === '/status.json' && $method === 'GET') {
         $live = $app->liveStatus();
         $mine = [];
-        foreach (coord_my_computers($app) ?? [] as $w) {
+        foreach (coord_home_computers($app) ?? [] as $w) {
             $state = describeWorker($app, $w, $app->leasesOf((string) $w['id']));
             $health = $app->healthOf($w);
             $mine[] = ['id' => (string) $w['id'], 'line' => $state['line'], 'effective' => $state['effective'], 'mode' => $state['mode'], 'pct' => $state['pct'], 'health' => (string) $health['line']] + runFields($state);
@@ -349,7 +398,7 @@ try {
     }
     if ($path === '/discoveries' && $method === 'GET') {
         $ids = [];
-        foreach (coord_my_computers($app) ?? [] as $w) {
+        foreach (coord_home_computers($app) ?? [] as $w) {
             $ids[] = (string) $w['id'];
         }
         coord_html(pageDiscoveries($app, coord_who($app, 'discoveries'), $ids));
@@ -359,7 +408,7 @@ try {
         $hash = (string) ($_GET['hash'] ?? '');
         $row = $app->designGenome($hash);
         $ids = [];
-        foreach (coord_my_computers($app) ?? [] as $w) {
+        foreach (coord_home_computers($app) ?? [] as $w) {
             $ids[] = (string) $w['id'];
         }
         $who = coord_who($app, 'discoveries');
@@ -460,50 +509,25 @@ try {
         return;
     }
     if ($path === '/me/resources' && $method === 'POST') {
-        $part = coord_participant($app);
-        if (!$part) {
-            coord_json(403, ['ok' => false, 'error' => 'Your session ended. Reload the page.']);
-            return;
-        }
         $csrf = (string) ($_POST['csrf'] ?? '');
-        if ($csrf === '' || !hash_equals((string) $part['session']['csrf'], $csrf)) {
-            coord_json(403, ['ok' => false, 'error' => 'Missing or bad security token. Reload the page.']);
-            return;
-        }
         $target = (string) ($_POST['id'] ?? '');
-        if (!$app->workerOwns($part['pid'], $target)) {
-            coord_json(403, ['ok' => false, 'error' => 'That computer is not yours.']);
+        if (!coord_may_control($app, $target, $csrf)) {
+            coord_json(403, ['ok' => false, 'error' => 'Your session ended, or that computer is not yours. Reload the page.']);
             return;
         }
         coord_save_resources($app, $target, coord_home_url($base, 'my-computer'));
         return;
     }
     if ($path === '/me/pause' && $method === 'POST') {
-        $session = $app->sessionById(coord_cookie('lab_participant'));
-        if (!$session || $session['role'] !== 'participant') {
-            http_response_code(403);
-            echo 'Participants only.';
-            return;
-        }
         $csrf = (string) ($_POST['csrf'] ?? '');
-        if ($csrf === '' || !hash_equals((string) $session['csrf'], $csrf)) {
-            http_response_code(403);
-            echo 'Missing or bad security token. Reload the page.';
-            return;
+        $target = (string) ($_POST['id'] ?? '');
+        if ($target === '') {
+            $part = coord_participant($app);
+            $target = $part ? (string) $part['session']['subject'] : '';
         }
-        $st = $app->db->prepare('SELECT * FROM workers WHERE id = ?');
-        $st->execute([$session['subject']]);
-        $self = $st->fetch();
-        if (!$self) {
-            http_response_code(404);
-            echo 'Unknown computer.';
-            return;
-        }
-        $pid = $app->ensureParticipant($self);
-        $target = (string) ($_POST['id'] ?? $session['subject']);
-        if (!$app->workerOwns($pid, $target)) {
+        if (!coord_may_control($app, $target, $csrf)) {
             http_response_code(403);
-            echo 'That computer is not yours.';
+            echo 'Your session ended, or that computer is not yours. Reload the page.';
             return;
         }
         $posted = (string) ($_POST['paused'] ?? '');
@@ -519,22 +543,11 @@ try {
         return;
     }
     if ($path === '/me/setup-command' && $method === 'POST') {
-        $part = coord_participant($app);
-        if (!$part) {
-            http_response_code(403);
-            echo 'Participants only.';
-            return;
-        }
         $csrf = (string) ($_POST['csrf'] ?? '');
-        if ($csrf === '' || !hash_equals((string) $part['session']['csrf'], $csrf)) {
-            http_response_code(403);
-            echo 'Missing or bad security token. Reload the page.';
-            return;
-        }
         $target = (string) ($_POST['id'] ?? '');
-        if (!$app->workerOwns($part['pid'], $target)) {
+        if (!coord_may_control($app, $target, $csrf)) {
             http_response_code(403);
-            echo 'That computer is not yours.';
+            echo 'Your session ended, or that computer is not yours. Reload the page.';
             return;
         }
         $row = $app->db->prepare('SELECT name FROM workers WHERE id = ?');
@@ -547,20 +560,15 @@ try {
         return;
     }
     if ($path === '/me/credit' && $method === 'POST') {
-        $session = $app->sessionById(coord_cookie('lab_participant'));
-        if (!$session || $session['role'] !== 'participant') {
-            http_response_code(403);
-            echo 'Participants only.';
-            return;
-        }
         $csrf = (string) ($_POST['csrf'] ?? '');
-        if ($csrf === '' || !hash_equals((string) $session['csrf'], $csrf)) {
+        $target = (string) ($_POST['id'] ?? '');
+        if (!coord_may_control($app, $target, $csrf)) {
             http_response_code(403);
-            echo 'Missing or bad security token. Reload the page.';
+            echo 'Your session ended, or that computer is not yours. Reload the page.';
             return;
         }
         $st = $app->db->prepare('SELECT * FROM workers WHERE id = ?');
-        $st->execute([$session['subject']]);
+        $st->execute([$target]);
         $self = $st->fetch();
         if ($self) {
             $app->setCredit($app->ensureParticipant($self), (string) ($_POST['shown'] ?? '1') === '1');
@@ -718,6 +726,11 @@ try {
                 throw new InvalidArgumentException('That computer is unknown or revoked.');
             }
             coord_save_resources($app, $target, $base . '/owner#computers');
+            return;
+        }
+        if ($path === '/owner/owner-home') {
+            $app->setOwnerHome((string) ($_POST['id'] ?? ''), (string) ($_POST['shown'] ?? '0') === '1');
+            header('Location: ' . $base . '/owner#computers', true, 303);
             return;
         }
         if ($path === '/owner/project') {

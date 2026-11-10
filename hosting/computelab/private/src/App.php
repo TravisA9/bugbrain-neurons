@@ -381,6 +381,11 @@ final class App
             $this->db->exec("UPDATE projects SET auto_jobs = 1 WHERE id = 'spikefoundry'");
         }
         $this->ensureColumn('workers', 'last_reject', 'TEXT');
+        /* Owner-console flag: this computer appears on the owner's Home (My computer).
+         * It is per computer, not “all of the owner's machines”. The first schema pass
+         * marks the existing travirtual machine; later passes leave the owner's choice alone. */
+        $this->ensureColumn('workers', 'owner_home', 'INTEGER NOT NULL DEFAULT 0');
+        $this->seedOwnerHomeTravirtual();
         $this->db->exec("CREATE TABLE IF NOT EXISTS worker_diagnostics (
             id $auto,
             worker_id VARCHAR(191) NOT NULL,
@@ -1564,6 +1569,45 @@ final class App
         $st = $this->db->prepare('SELECT id FROM workers WHERE id = ? AND participant_id = ? AND revoked = 0');
         $st->execute([$workerId, $participantId]);
         return (bool) $st->fetch();
+    }
+
+    /** Computers the owner has chosen to show on Home / My computer. */
+    public function ownerHomeComputers(): array
+    {
+        return $this->db->query('SELECT * FROM workers WHERE owner_home = 1 AND revoked = 0 AND removed_at IS NULL ORDER BY created_at ASC, id ASC')->fetchAll();
+    }
+
+    public function isOwnerHome(string $workerId): bool
+    {
+        $st = $this->db->prepare('SELECT id FROM workers WHERE id = ? AND owner_home = 1 AND revoked = 0 AND removed_at IS NULL');
+        $st->execute([$workerId]);
+        return (bool) $st->fetch();
+    }
+
+    public function setOwnerHome(string $workerId, bool $shown): void
+    {
+        $st = $this->db->prepare('SELECT id, revoked, removed_at FROM workers WHERE id = ?');
+        $st->execute([$workerId]);
+        $row = $st->fetch();
+        if (!$row || (int) $row['revoked'] === 1 || (string) ($row['removed_at'] ?? '') !== '') {
+            throw new InvalidArgumentException('That computer is unknown, revoked, or removed.');
+        }
+        $this->db->prepare('UPDATE workers SET owner_home = ? WHERE id = ?')->execute([$shown ? 1 : 0, $workerId]);
+    }
+
+    /** Once: put the existing travirtual computer on the owner's Home. Never re-applies. */
+    private function seedOwnerHomeTravirtual(): void
+    {
+        $done = $this->db->query("SELECT id FROM supply_state WHERE id = 'seed-owner-home-travirtual'")->fetch();
+        if ($done) {
+            return;
+        }
+        $has = (int) $this->db->query('SELECT COUNT(*) FROM workers WHERE owner_home = 1')->fetchColumn();
+        if ($has === 0) {
+            $this->db->prepare('UPDATE workers SET owner_home = 1 WHERE revoked = 0 AND removed_at IS NULL AND LOWER(name) = ?')->execute(['travirtual']);
+        }
+        $n = (int) $this->db->query('SELECT COUNT(*) FROM workers WHERE owner_home = 1')->fetchColumn();
+        $this->db->prepare('INSERT INTO supply_state (id, ran_at, note) VALUES (?, ?, ?)')->execute(['seed-owner-home-travirtual', $this->now(), 'flagged ' . $n]);
     }
 
     public function contribution(string $workerId): array
