@@ -834,7 +834,6 @@ $a5 = $app->cached('t-cache', 120, $mk);
 check($a1 === ['n' => 1] && $a2 === ['n' => 1] && $a3 === ['n' => 1] && $a4 === ['n' => 2] && $a5 === ['n' => 2] && $builds === 2, 'the Discoveries cache builds once per two minutes and serves the old copy while another request rebuilds it');
 $pl = $app->discoveriesPayload();
 check(isset($pl['items'], $pl['series'], $pl['board']) && $app->discoveriesPayload() === $pl, 'the Discoveries payload comes from the shared cache');
-$idx = array_map(function ($r) { return (string) $r['name']; }, $app->db->query('PRAGMA index_list(design_records)')->fetchAll());
-check(in_array('idx_dr_task_created', $idx, true), 'design_records has the (task_id, created_at) index topDesigns needs');
+check(strpos($src, "engine_version NOT IN (\\'spikefoundry-designer-1\\', \\'spikefoundry-designer-2\\') ORDER BY seq DESC LIMIT 400") !== false && strpos($src, 'ORDER BY created_at DESC LIMIT 400') === false, 'topDesigns reads the newest records through the (task_id, seq) index; created_at is TEXT and cannot be indexed on MySQL');
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

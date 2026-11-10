@@ -241,10 +241,6 @@ final class App
             'idx_dr_genome' => 'genome_hash',
         ]);
         $this->ensureIndexes('design_genomes', ['idx_dg_design' => 'design_hash']);
-        /* topDesigns reads the newest 400 records of a task; without this index MySQL sorted every record of the
-         * task (wide TEXT rows) on each Discoveries view. */
-        $this->ensureIndexes('design_records', ['idx_dr_task_created' => 'task_id, created_at']);
-        $this->ensureIndexes('design_summaries', ['idx_ds_task_created' => 'task_id, created_at']);
         /* Shared cache for expensive read-only pages (Discoveries). One request rebuilds a stale entry while the
          * others keep serving the old copy. */
         $this->db->exec('CREATE TABLE IF NOT EXISTS page_cache (
@@ -1499,7 +1495,7 @@ final class App
     /* Same for every visitor and polled every 15 s by each open Home page: shared for live_cache_seconds (default 10). */
     public function liveStatus(): array
     {
-        $ttl = (int) ($this->config['live_cache_seconds'] ?? 10);
+        $ttl = (int) ($this->config['live_cache_seconds'] ?? 30);
         return $ttl > 0 ? $this->cached('live-v1', $ttl, function (): array { return $this->liveStatusNow(); }) : $this->liveStatusNow();
     }
 
@@ -2102,7 +2098,7 @@ final class App
         if ($limit > 50) {
             $limit = 50;
         }
-        $st = $this->db->prepare('SELECT id, genome_hash, design_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, worker_id, seed, created_at, confirmations FROM design_records WHERE task_id = ? AND duplicate_of IS NULL AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') ORDER BY created_at DESC LIMIT 400');
+        $st = $this->db->prepare('SELECT id, genome_hash, design_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, worker_id, seed, created_at, confirmations FROM design_records WHERE task_id = ? AND duplicate_of IS NULL AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') ORDER BY seq DESC LIMIT 400');
         $st->execute([$taskId]);
         $best = [];
         foreach ($st->fetchAll() as $row) {
@@ -2128,7 +2124,7 @@ final class App
      * discoveries_cache_seconds (default 120; 0 turns the cache off). */
     public function discoveriesPayload(): array
     {
-        $ttl = (int) ($this->config['discoveries_cache_seconds'] ?? 120);
+        $ttl = (int) ($this->config['discoveries_cache_seconds'] ?? 600);
         $build = function (): array {
             $items = $this->discoveries(12);
             $series = [];
@@ -2160,25 +2156,47 @@ final class App
         /* Claim the rebuild; whoever loses serves the stale copy instead of running the same heavy queries. */
         if ($row) {
             $claim = $this->db->prepare('UPDATE page_cache SET building_until = ? WHERE k = ? AND building_until < ?');
-            $claim->execute([$now + 60, $key, $now]);
+            $claim->execute([$now + 300, $key, $now]);
             if ($claim->rowCount() !== 1 && is_array($old)) {
+                return $old;
+            }
+            /* The winner also answers with the stale copy and rebuilds after its response is sent, so no
+             * visitor waits for the rebuild (it ran ~35 s on a million records). */
+            if (is_array($old) && PHP_SAPI !== 'cli') {
+                register_shutdown_function(function () use ($key, $build) {
+                    ignore_user_abort(true);
+                    @set_time_limit(300);
+                    if (function_exists('fastcgi_finish_request')) {
+                        fastcgi_finish_request();
+                    } elseif (function_exists('litespeed_finish_request')) {
+                        litespeed_finish_request();
+                    }
+                    $this->storeCache($key, $build(), true);
+                });
                 return $old;
             }
         }
         $fresh = $build();
-        $body = json_encode($fresh);
-        if ($body !== false) {
-            if ($row) {
-                $this->db->prepare('UPDATE page_cache SET body = ?, built_at = ?, building_until = 0 WHERE k = ?')->execute([$body, $now, $key]);
-            } else {
-                try {
-                    $this->db->prepare('INSERT INTO page_cache (k, body, built_at, building_until) VALUES (?, ?, ?, 0)')->execute([$key, $body, $now]);
-                } catch (PDOException $e) {
-                    // another request stored it first
-                }
-            }
-        }
+        $this->storeCache($key, $fresh, (bool) $row);
         return $fresh;
+    }
+
+    private function storeCache(string $key, array $value, bool $exists): void
+    {
+        $body = json_encode($value);
+        if ($body === false) {
+            return;
+        }
+        $now = strtotime($this->now());
+        if ($exists) {
+            $this->db->prepare('UPDATE page_cache SET body = ?, built_at = ?, building_until = 0 WHERE k = ?')->execute([$body, $now, $key]);
+            return;
+        }
+        try {
+            $this->db->prepare('INSERT INTO page_cache (k, body, built_at, building_until) VALUES (?, ?, ?, 0)')->execute([$key, $body, $now]);
+        } catch (PDOException $e) {
+            // another request stored it first
+        }
     }
 
     /* Outstanding discoveries for the split view: the best distinct designs of each task,
