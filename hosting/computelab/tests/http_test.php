@@ -245,7 +245,12 @@ check(preg_match('#<div class="row3"><time class="disc-when" datetime="\\d{4}-\\
 $gMine = http($base . '/discoveries/genome?hash=' . $gh, 'GET', null, ['Cookie: lab_participant=' . $cookie]);
 $gAnon = http($base . '/discoveries/genome?hash=' . $gh);
 $gOwner = http($base . '/discoveries/genome?hash=' . $gh, 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
-check($gh !== '' && $gMine['status'] === 200 && $gAnon['status'] === 404 && $gOwner['status'] === 200 && !isset($dd['items'][0]['worker']), 'a private genome opens for the computer that found it and the owner, not for strangers');
+check($gh !== '' && $gMine['status'] === 200 && $gAnon['status'] === 200 && $gOwner['status'] === 200 && str_contains($gAnon['body'], '{') && !isset($dd['items'][0]['worker']), 'a design on the Discoveries list includes its wiring for every visitor');
+$hiddenHash = hash('sha256', 'not-on-the-discoveries-list');
+$app->db->prepare('INSERT INTO design_genomes (hash, genome_json, version, created_at, is_public) VALUES (?, ?, 2, ?, 0)')->execute([$hiddenHash, '{"v":2,"modules":[]}', gmdate('c')]);
+$hAnon = http($base . '/discoveries/genome?hash=' . $hiddenHash);
+$hOwner = http($base . '/discoveries/genome?hash=' . $hiddenHash, 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check($hAnon['status'] === 404 && $hOwner['status'] === 200, 'a private genome that is not on Discoveries stays hidden from strangers and opens for the owner');
 // Every page shares one header: only the current-tab mark and the account item may differ.
 function site_header(string $html): string
 {

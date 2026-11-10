@@ -2452,15 +2452,16 @@ final class App
         return array_keys($out);
     }
 
-    /* A genome is shown to everyone once the owner marks it public, to the owner, and to
-     * the people whose computer found it. Otherwise the viewer only sees its size. */
+    /* A genome is shown to everyone once the owner marks it public, when it is on the
+     * Discoveries list (the public showcase), to the owner, and to the people whose
+     * computer found it. Otherwise the viewer only sees its size. */
     public function genomeVisibleTo(string $hash, bool $owner, array $workerIds): bool
     {
         $row = $this->designGenome($hash);
         if (!$row) {
             return false;
         }
-        if ($owner || (int) ($row['is_public'] ?? 0) === 1) {
+        if ($owner || (int) ($row['is_public'] ?? 0) === 1 || $this->hashIsListedDiscovery($hash)) {
             return true;
         }
         $ids = [];
@@ -2476,6 +2477,20 @@ final class App
         $st = $this->db->prepare('SELECT 1 FROM design_records WHERE genome_hash = ? AND worker_id IN (' . $marks . ') LIMIT 1');
         $st->execute(array_merge([$hash], $ids));
         return (bool) $st->fetch();
+    }
+
+    /* Hashes of designs currently on the Discoveries page (cached with the page payload). */
+    public function hashIsListedDiscovery(string $hash): bool
+    {
+        if (!preg_match('/^[a-f0-9]{64}$/', $hash)) {
+            return false;
+        }
+        foreach (($this->discoveriesPayload()['items'] ?? []) as $item) {
+            if (is_array($item) && (string) ($item['hash'] ?? '') === $hash) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function designGenome(string $hash): ?array
