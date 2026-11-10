@@ -183,6 +183,7 @@ $disc = http($base . '/discoveries', 'GET', null, ['Cookie: lab_participant=' . 
 check($disc['status'] === 200 && str_contains($disc['body'], '<html lang="en" class="fit">') && str_contains($disc['body'], 'class="list-scroll"') && str_contains($disc['body'], 'id="viewer"') && str_contains($disc['body'], 'badge-mine') && str_contains($disc['body'], 'class="disc mine"'), 'Discoveries is a split view and marks your own computer\'s designs');
 $dd = preg_match('#<script type="application/json" id="disc-data">(.*?)</script>#s', $disc['body'], $dm) === 1 ? json_decode($dm[1], true) : [];
 $gh = (string) ($dd['items'][0]['hash'] ?? '');
+check(str_contains($disc['body'], 'root.SnnPlayer=') && str_contains($disc['body'], "prefers-reduced-motion: reduce") && str_contains($disc['body'], "addEventListener('visibilitychange'") && str_contains($disc['body'], 'requestAnimationFrame(loop)') && str_contains($disc['body'], 'This design never fires on this input') && strpos($disc['body'], 'root.SnnPlayer=') < strpos($disc['body'], 'P.mount(box'), 'Discoveries plays the frozen network back in the browser, pauses for reduced motion and hidden tabs, and says when a design is silent');
 $gMine = http($base . '/discoveries/genome?hash=' . $gh, 'GET', null, ['Cookie: lab_participant=' . $cookie]);
 $gAnon = http($base . '/discoveries/genome?hash=' . $gh);
 $gOwner = http($base . '/discoveries/genome?hash=' . $gh, 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
