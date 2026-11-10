@@ -63,6 +63,8 @@ final class App
                 $this->migrateNow();
                 $this->writeStamp($stamp, $key);
             }
+        } catch (PDOException $e) {
+            // The host refused schema changes (read-only database): serve with the schema as it is.
         } finally {
             if ($lock !== false) {
                 flock($lock, LOCK_UN);
@@ -2212,9 +2214,15 @@ final class App
         }
         /* Claim the rebuild; whoever loses serves the stale copy instead of running the same heavy queries. */
         if ($row) {
-            $claim = $this->db->prepare('UPDATE page_cache SET building_until = ? WHERE k = ? AND building_until < ?');
-            $claim->execute([$now + 300, $key, $now]);
-            if ($claim->rowCount() !== 1 && is_array($old)) {
+            try {
+                $claim = $this->db->prepare('UPDATE page_cache SET building_until = ? WHERE k = ? AND building_until < ?');
+                $claim->execute([$now + 300, $key, $now]);
+                $claimed = $claim->rowCount() === 1;
+            } catch (PDOException $e) {
+                // Read-only database (the host refuses writes, e.g. over the size limit): keep pages up.
+                return is_array($old) ? $old : $build();
+            }
+            if (!$claimed && is_array($old)) {
                 return $old;
             }
             /* The winner also answers with the stale copy and rebuilds after its response is sent, so no
@@ -2245,14 +2253,14 @@ final class App
             return;
         }
         $now = strtotime($this->now());
-        if ($exists) {
-            $this->db->prepare('UPDATE page_cache SET body = ?, built_at = ?, building_until = 0 WHERE k = ?')->execute([$body, $now, $key]);
-            return;
-        }
         try {
-            $this->db->prepare('INSERT INTO page_cache (k, body, built_at, building_until) VALUES (?, ?, ?, 0)')->execute([$key, $body, $now]);
+            if ($exists) {
+                $this->db->prepare('UPDATE page_cache SET body = ?, built_at = ?, building_until = 0 WHERE k = ?')->execute([$body, $now, $key]);
+            } else {
+                $this->db->prepare('INSERT INTO page_cache (k, body, built_at, building_until) VALUES (?, ?, ?, 0)')->execute([$key, $body, $now]);
+            }
         } catch (PDOException $e) {
-            // another request stored it first
+            // another request stored it first, or the database is read-only right now
         }
     }
 
