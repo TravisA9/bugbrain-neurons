@@ -491,8 +491,8 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .resources input[type=range]::-moz-range-track{background:transparent}
 .resources input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--cyan);outline-offset:2px}
 .resources input[type=range]:focus-visible::-moz-range-thumb{outline:2px solid var(--cyan);outline-offset:2px}
-.resources.has-art{display:grid;grid-template-columns:minmax(0,330px) minmax(150px,1fr);column-gap:14px;padding-right:6px}
-.resources .hint,.resources .effective{max-width:330px}
+.resources.has-art{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);column-gap:14px;padding-right:10px}
+.resources .hint,.resources .effective,.resources .res-head{max-width:330px}
 .resources .jobs-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;box-sizing:border-box;width:310px;max-width:100%;margin-top:9px;padding:7px 9px 7px 13px;border:1px solid #263642;border-radius:10px;background:#0b1219;transition:opacity .25s}
 .resources .jobs-row.is-idle{opacity:.5;border-style:dashed}
 .resources .jobs-label{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#aeb9c2;flex:1 1 auto}
@@ -503,10 +503,11 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .resources .stepper output{min-width:38px;text-align:center;font:600 12px var(--display);color:#e9fff5}
 .resources .jobs-note{flex:1 0 100%;font:10px var(--mono);color:var(--muted)}
 .res-main{min-width:0}
-.res-art{position:relative;align-self:stretch;min-height:190px;margin:-8px 0 -8px 0}
+.res-art{position:relative;align-self:stretch;min-height:190px;margin:0}
 .res-art picture{position:absolute;inset:0;display:block;opacity:0;transform:scale(.94) translateY(4px);transition:opacity .35s ease,transform .5s cubic-bezier(.25,1,.5,1);pointer-events:none}
 .res-art picture.is-on{opacity:1;transform:none}
-.res-art img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 8px 18px #0009)}
+.res-art picture{display:flex;align-items:center;justify-content:center}
+.res-art img{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center;filter:drop-shadow(0 8px 18px #0009)}
 .resources.has-art .tri label{gap:6px}
 @media (max-width:560px){.resources.has-art{grid-template-columns:1fr;padding-right:14px}.res-art{order:-1;min-height:0;height:150px;margin:-4px 0 8px}}
 @media (prefers-reduced-motion:reduce){.res-art picture{transition:none}.tri-thumb,.tri label,.resources .range-row{transition:none}.tri-led{animation:none!important}}

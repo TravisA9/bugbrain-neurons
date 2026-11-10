@@ -118,6 +118,8 @@ $capSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $me
 $capPage = $myHome();
 $autoSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'full', 'jobs' => 'auto']), $jsonHeaders);
 check(str_contains($capPage, 'runs 3, the allowance limit of 8 cores') && (json_decode($autoSave['body'], true)['jobs'] ?? null) === 0, 'the allowance caps a larger number, and Auto goes back to 0');
+$cssBody = http($base . '/assets/computelab.css')['body'];
+check(str_contains($cssBody, '.resources.has-art{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);') && str_contains($cssBody, 'object-fit:contain;object-position:center') && strpos($fullPage2, 'data-jobs-row') < strpos($fullPage2, '<div class="res-art">'), 'Resources is two thirds controls and one third picture, with the picture centred and never cropped');
 $status = http($base . '/status.json', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
 $sj = json_decode($status['body'], true);
 $anon = json_decode(http($base . '/status.json')['body'], true);
