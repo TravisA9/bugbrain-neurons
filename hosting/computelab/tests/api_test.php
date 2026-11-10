@@ -681,5 +681,27 @@ $res['app']->setResources($resOn['workerId'], 'full');
 $res['app']->heartbeat($res['app']->workerByToken($resOn['token']), ['control' => true, 'reset' => true]);
 check((int) $res['db']->query('SELECT COUNT(*) FROM leases WHERE worker_id = ' . $res['db']->quote($resOn['workerId']))->fetchColumn() === 0, 'a restarted worker hands back the jobs it held');
 
+$idx = lab();
+$names = [];
+foreach ($idx['db']->query('PRAGMA index_list(design_records)')->fetchAll() as $row) {
+    $names[] = (string) $row['name'];
+}
+$idx['app']->migrate();
+$again = [];
+foreach ($idx['db']->query('PRAGMA index_list(design_records)')->fetchAll() as $row) {
+    $again[] = (string) $row['name'];
+}
+check(count(array_intersect(['idx_dr_seq', 'idx_dr_task_seq', 'idx_dr_worker_task', 'idx_dr_engine_task'], $names)) === 4 && count($again) === count($names), 'design records are indexed for uploads and pages, and a second upgrade adds nothing');
+$iw = $idx['app']->enroll('batch-pc', ['spikefoundry'], 2, true);
+$iworker = $idx['app']->workerByToken($iw['token']);
+$batch = [];
+for ($i = 0; $i < 12; $i++) {
+    $batch[] = designRecord('{"arm":"batch","n":' . $i . '}', 500 + $i, 0.1 + $i / 100, 0.1 + $i / 100, 'designer', 400000);
+}
+$idx['app']->ingestDesigns($iworker, $batch, $idx['app']->protocolHash());
+$tenth = (int) $idx['db']->query("SELECT COUNT(*) FROM design_events WHERE worker_id = " . $idx['db']->quote((string) $iworker['id']) . " AND kind = 'evals' AND detail = '10 evaluations'")->fetchColumn();
+$hour = (int) $idx['db']->query("SELECT COUNT(*) FROM design_events WHERE worker_id = " . $idx['db']->quote((string) $iworker['id']) . " AND kind = 'hours' AND detail = '1 hours donated'")->fetchColumn();
+check($tenth === 1 && $hour === 1, 'milestones counted within one upload batch still fire once (10 evaluations, 1 hour donated)');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

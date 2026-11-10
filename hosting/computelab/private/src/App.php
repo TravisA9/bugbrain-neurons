@@ -213,6 +213,12 @@ final class App
         $this->ensureColumn('projects', 'family', 'VARCHAR(32)');
         $this->ensureColumn('workers', 'participant_id', 'VARCHAR(191)');
         $this->ensureColumn('leases', 'started_at', 'VARCHAR(40)');
+        $this->ensureIndexes('design_records', [
+            'idx_dr_seq' => 'seq',
+            'idx_dr_task_seq' => 'task_id, seq',
+            'idx_dr_worker_task' => 'worker_id, task_id',
+            'idx_dr_engine_task' => 'engine_version, task_id',
+        ]);
         $this->ensureColumn('leases', 'progress', 'INTEGER');
         $this->ensureColumn('results', 'seconds', 'INTEGER');
         $this->ensureColumn('design_records', 'arm', "VARCHAR(16) NOT NULL DEFAULT 'designer'");
@@ -301,6 +307,36 @@ final class App
             }
         }
         return false;
+    }
+
+    /* Design records grow with every job; without these, each upload scanned the whole table
+     * several times per record and the host flagged the slow queries. One cheap metadata
+     * query per request; a missing index is created once (a racing request may create it first). */
+    private function ensureIndexes(string $table, array $indexes): void
+    {
+        if (!preg_match('/^[a-z_]+$/', $table)) {
+            throw new InvalidArgumentException('Bad table.');
+        }
+        $have = [];
+        if (($this->config['driver'] ?? '') === 'sqlite') {
+            foreach ($this->db->query('PRAGMA index_list(' . $table . ')')->fetchAll() as $row) {
+                $have[(string) ($row['name'] ?? '')] = true;
+            }
+        } else {
+            foreach ($this->db->query('SHOW INDEX FROM `' . $table . '`')->fetchAll() as $row) {
+                $have[(string) ($row['Key_name'] ?? '')] = true;
+            }
+        }
+        foreach ($indexes as $name => $columns) {
+            if (isset($have[$name]) || !preg_match('/^[a-z_]+$/', $name) || !preg_match('/^[a-z_, ]+$/', $columns)) {
+                continue;
+            }
+            try {
+                $this->db->exec('CREATE INDEX ' . $name . ' ON ' . $table . ' (' . $columns . ')');
+            } catch (PDOException $e) {
+                // Another request created it at the same moment.
+            }
+        }
     }
 
     private function ensureColumn(string $table, string $column, string $definition): void
@@ -1416,8 +1452,12 @@ final class App
         return $ref !== '' ? $ref : 'cursor/worker-console-22bf';
     }
 
+    /** Per-upload totals for highlight checks, so they are read once per batch, not per record. */
+    private $highlightMemo = [];
+
     public function ingestDesigns(array $worker, array $records, string $protocolHash): array
     {
+        $this->highlightMemo = [];
         $cap = (int) ($this->config['design_batch'] ?? 500);
         if ($cap < 1) {
             $cap = 500;
@@ -1522,7 +1562,7 @@ final class App
             $stored++;
             $touched[$taskId] = true;
             $heldNow = isset($scores['heldOut']) ? (float) $scores['heldOut'] : (isset($scores['quality']) ? (float) $scores['quality'] : 0.0);
-            $this->noteHighlight($worker, $taskId, $heldNow, $genomeHash);
+            $this->noteHighlight($worker, $taskId, $heldNow, $genomeHash, max(0, (int) ($rec['evalMs'] ?? 0)));
         }
         foreach (array_keys($touched) as $touchedTask) {
             $this->applyTaskPolicy('spikefoundry', $touchedTask);
@@ -1849,8 +1889,30 @@ final class App
         return isset($score['quality']) ? (float) $score['quality'] : 0.0;
     }
 
-    private function noteHighlight(array $worker, string $taskId, float $held, string $genomeHash): void
+    private function noteHighlight(array $worker, string $taskId, float $held, string $genomeHash, int $evalMs = 0): void
     {
+        $wid = (string) $worker['id'];
+        if (!isset($this->highlightMemo[$wid])) {
+            $prior = $this->db->prepare('SELECT DISTINCT task_id FROM design_records WHERE worker_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')');
+            $prior->execute([$wid]);
+            $tasks = [];
+            foreach ($prior->fetchAll() as $row) {
+                $tasks[(string) $row['task_id']] = true;
+            }
+            $sum = $this->db->prepare('SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')');
+            $sum->execute([$wid]);
+            $tot = $sum->fetch() ?: ['n' => 0, 'ms' => 0];
+            // The record just stored is already counted; later records in this batch are added below.
+            $this->highlightMemo[$wid] = ['tasks' => $tasks, 'n' => (int) $tot['n'], 'ms' => (int) $tot['ms'], 'first' => true];
+        }
+        $memo =& $this->highlightMemo[$wid];
+        if (!$memo['first']) {
+            $memo['n'] += 1;
+            $memo['ms'] += $evalMs;
+        }
+        $memo['first'] = false;
+        $priorTasks = $memo['tasks'];
+        $memo['tasks'][$taskId] = true;
         $others = $this->db->prepare('SELECT score_json, worker_id, genome_hash FROM design_records WHERE task_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') ORDER BY seq DESC LIMIT 200');
         $others->execute([$taskId]);
         $bestOther = -1.0;
@@ -1889,12 +1951,10 @@ final class App
         $order = ['coincidence', 'sequence', 'vote3', 'routing', 'composed', 'context3', 'nested', 'scenario-vision', 'scenario-sequence', 'scenario-graph', 'scenario-control', 'digits', 'mnist', 'cart-pole'];
         $here = array_search($taskId, $order, true);
         if ($here !== false && $here > 0) {
-            $prior = $this->db->prepare('SELECT DISTINCT task_id FROM design_records WHERE worker_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')');
-            $prior->execute([$worker['id']]);
             $max = -1;
-            foreach ($prior->fetchAll() as $row) {
-                $at = array_search((string) $row['task_id'], $order, true);
-                if ($at !== false && (string) $row['task_id'] !== $taskId && $at > $max) {
+            foreach (array_keys($priorTasks) as $priorTask) {
+                $at = array_search((string) $priorTask, $order, true);
+                if ($at !== false && (string) $priorTask !== $taskId && $at > $max) {
                     $max = (int) $at;
                 }
             }
@@ -1902,9 +1962,8 @@ final class App
                 $this->addEvent((string) $worker['id'], $taskId, 'promoted', 'A design moved up to ' . $taskId, 'level');
             }
         }
-        $sum = $this->db->prepare('SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')');
-        $sum->execute([$worker['id']]);
-        $tot = $sum->fetch() ?: ['n' => 0, 'ms' => 0];
+        $tot = ['n' => $memo['n'], 'ms' => $memo['ms']];
+        unset($memo);
         foreach ([10, 100, 1000] as $mark) {
             if ((int) $tot['n'] >= $mark) {
                 $this->addEvent((string) $worker['id'], $taskId, 'evals', $mark . ' evaluations', (string) $mark);
