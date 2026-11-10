@@ -222,6 +222,18 @@ final class App
         $this->ensureColumn('task_policies', 'solve_score', 'REAL NOT NULL DEFAULT 0.97');
         $this->ensureColumn('task_policies', 'solve_jobs', 'INTEGER NOT NULL DEFAULT 3');
         $this->ensureColumn('workers', 'public_credit', 'INTEGER NOT NULL DEFAULT 1');
+        /* Resource control replaces the old On/Off switch. Existing computers keep what they
+         * were doing: Off stays Off, On becomes Full blast (one job at normal priority was the
+         * old meaning of On). New computers start in Allowance at 50%. */
+        $freshMode = !$this->hasColumn('workers', 'resource_mode');
+        $this->ensureColumn('workers', 'resource_mode', "VARCHAR(16) NOT NULL DEFAULT 'allowance'");
+        $this->ensureColumn('workers', 'allowance_pct', 'INTEGER NOT NULL DEFAULT 50');
+        $this->ensureColumn('workers', 'runtime_json', 'TEXT');
+        if ($freshMode) {
+            $this->db->exec("UPDATE workers SET resource_mode = 'off' WHERE paused = 1");
+            $this->db->exec("UPDATE workers SET resource_mode = 'full' WHERE paused = 0");
+        }
+        $this->ensureColumn('leases', 'slot', 'INTEGER NOT NULL DEFAULT 0');
         $freshAuto = !$this->hasColumn('projects', 'auto_jobs');
         $this->ensureColumn('projects', 'auto_jobs', 'INTEGER');
         $this->ensureColumn('projects', 'low_water', 'INTEGER NOT NULL DEFAULT 0');
@@ -522,8 +534,8 @@ final class App
         } else {
             $participantId = $id;
         }
-        $this->db->prepare('INSERT INTO workers (id, name, token_hash, consent_at, paused, revoked, allowed_json, max_batches, last_seen, participant_id, created_at) VALUES (?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?)')
-            ->execute([$id, $name, hash('sha256', $token), $this->now(), json_encode($allowed), $maxBatches, $this->now(), $participantId, $this->now()]);
+        $this->db->prepare('INSERT INTO workers (id, name, token_hash, consent_at, paused, revoked, allowed_json, max_batches, last_seen, participant_id, created_at, resource_mode, allowance_pct) VALUES (?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?)')
+            ->execute([$id, $name, hash('sha256', $token), $this->now(), json_encode($allowed), $maxBatches, $this->now(), $participantId, $this->now(), 'allowance', 50]);
         return ['workerId' => $id, 'token' => $token, 'name' => $name, 'participantId' => $participantId];
     }
 
@@ -544,9 +556,87 @@ final class App
         $this->db->prepare('DELETE FROM leases WHERE worker_id = ?')->execute([$workerId]);
     }
 
+    /* Pause is Off. Resuming a computer that was Off puts it back in Allowance. */
     public function setPaused(string $workerId, bool $paused): void
     {
-        $this->db->prepare('UPDATE workers SET paused = ? WHERE id = ?')->execute([$paused ? 1 : 0, $workerId]);
+        if ($paused) {
+            $this->db->prepare("UPDATE workers SET paused = 1, resource_mode = 'off' WHERE id = ?")->execute([$workerId]);
+            return;
+        }
+        $this->db->prepare("UPDATE workers SET paused = 0, resource_mode = CASE WHEN resource_mode = 'off' THEN 'allowance' ELSE resource_mode END WHERE id = ?")->execute([$workerId]);
+    }
+
+    public const RESOURCE_MODES = ['off', 'allowance', 'full'];
+
+    /* The one setting a participant has: how much of the computer Compute Lab may use.
+     * Off claims nothing new, Allowance caps the share of cores at low priority, Full blast
+     * uses every core at normal priority. The worker reads this on its next check-in. */
+    public function setResources(string $workerId, string $mode, ?int $pct = null): void
+    {
+        if (!in_array($mode, self::RESOURCE_MODES, true)) {
+            throw new InvalidArgumentException('Choose Off, Allowance, or Full blast.');
+        }
+        if ($pct === null) {
+            $cur = $this->db->prepare('SELECT allowance_pct FROM workers WHERE id = ?');
+            $cur->execute([$workerId]);
+            $pct = (int) ($cur->fetchColumn() ?: 50);
+        }
+        $pct = self::clampAllowance($pct);
+        $this->db->prepare('UPDATE workers SET resource_mode = ?, allowance_pct = ?, paused = ? WHERE id = ?')
+            ->execute([$mode, $pct, $mode === 'off' ? 1 : 0, $workerId]);
+    }
+
+    public static function clampAllowance(int $pct): int
+    {
+        $pct = (int) (round($pct / 10) * 10);
+        if ($pct < 10) {
+            $pct = 10;
+        }
+        if ($pct > 90) {
+            $pct = 90;
+        }
+        return $pct;
+    }
+
+    public function resourcesOf(array $worker): array
+    {
+        $mode = (string) ($worker['resource_mode'] ?? '');
+        if (!in_array($mode, self::RESOURCE_MODES, true)) {
+            $mode = (int) ($worker['paused'] ?? 0) === 1 ? 'off' : 'allowance';
+        }
+        if ((int) ($worker['paused'] ?? 0) === 1) {
+            $mode = 'off';
+        }
+        $runtime = json_decode((string) ($worker['runtime_json'] ?? ''), true);
+        return [
+            'mode' => $mode,
+            'allowancePct' => self::clampAllowance((int) ($worker['allowance_pct'] ?? 50)),
+            'runtime' => is_array($runtime) ? $runtime : null,
+        ];
+    }
+
+    /* What the worker said it is doing, kept small: cores, slots, duty, priority, mode. */
+    private function saveRuntime(string $workerId, array $report): void
+    {
+        $clean = [];
+        foreach (['cores', 'slots', 'running'] as $k) {
+            if (isset($report[$k]) && is_numeric($report[$k])) {
+                $clean[$k] = max(0, min(1024, (int) $report[$k]));
+            }
+        }
+        if (isset($report['duty']) && is_numeric($report['duty'])) {
+            $clean['duty'] = max(0.0, min(1.0, round((float) $report['duty'], 3)));
+        }
+        foreach (['mode', 'priority', 'platform'] as $k) {
+            if (isset($report[$k]) && is_string($report[$k]) && preg_match('/^[a-z0-9 _.-]{1,24}$/i', $report[$k])) {
+                $clean[$k] = $report[$k];
+            }
+        }
+        if (isset($report['pct']) && is_numeric($report['pct'])) {
+            $clean['pct'] = max(0, min(100, (int) $report['pct']));
+        }
+        $clean['at'] = $this->now();
+        $this->db->prepare('UPDATE workers SET runtime_json = ? WHERE id = ?')->execute([json_encode($clean), $workerId]);
     }
 
     public function expireLeases(): void
@@ -620,14 +710,20 @@ final class App
         return $n;
     }
 
-    public function claim(array $worker): ?array
+    public function claim(array $worker, int $slot = 0): ?array
     {
         $this->replenishJobs();
         $this->expireLeases();
-        if ((int) $worker['paused'] === 1) {
+        $fresh = $this->db->prepare('SELECT paused, resource_mode FROM workers WHERE id = ?');
+        $fresh->execute([$worker['id']]);
+        $now0 = $fresh->fetch();
+        if ((int) $worker['paused'] === 1 || ($now0 && ((int) $now0['paused'] === 1 || (string) $now0['resource_mode'] === 'off'))) {
             return null;
         }
-        $this->dropLeasesOf((string) $worker['id']);
+        if ($slot < 0 || $slot > 63) {
+            throw new InvalidArgumentException('Slot must be from 0 to 63.');
+        }
+        $this->dropLeasesOf((string) $worker['id'], $slot);
         $allowed = json_decode((string) $worker['allowed_json'], true);
         if (!is_array($allowed)) {
             $allowed = [];
@@ -692,7 +788,7 @@ final class App
                     continue;
                 }
                 $until = gmdate('c', strtotime($this->now()) + (int) $this->config['lease_seconds']);
-                $this->db->prepare('INSERT INTO leases (job_id, worker_id, until_at, heartbeat_at, started_at) VALUES (?, ?, ?, ?, ?)')->execute([$job['id'], $worker['id'], $until, $this->now(), $this->now()]);
+                $this->db->prepare('INSERT INTO leases (job_id, worker_id, until_at, heartbeat_at, started_at, slot) VALUES (?, ?, ?, ?, ?, ?)')->execute([$job['id'], $worker['id'], $until, $this->now(), $this->now(), $slot]);
                 $tpl = $this->db->prepare('SELECT runner FROM templates WHERE id = ?');
                 $tpl->execute([$job['template_id']]);
                 $runner = (string) ($tpl->fetch()['runner'] ?? '');
@@ -705,6 +801,7 @@ final class App
                     'spec' => $item['spec'],
                     'codeHash' => $job['code_hash'],
                     'leaseUntil' => $until,
+                    'slot' => $slot,
                 ];
             }
             $this->db->rollBack();
@@ -717,37 +814,67 @@ final class App
         }
     }
 
-    /* A worker runs one job at a time and only asks for work when it is idle, so any
-     * lease it still holds at that point belongs to a run it gave up (a restart, or a
+    /* Each worker slot runs one job at a time and only asks for work when that slot is
+     * idle, so a lease the slot still holds belongs to a run it gave up (a restart, or a
      * heartbeat that answered for another job). Hand those jobs back now instead of
-     * letting the old lease ride along and confuse the next heartbeat. */
-    private function dropLeasesOf(string $workerId): void
+     * letting the old lease ride along. A null slot drops every lease of the worker,
+     * which a freshly started worker asks for. */
+    public function dropLeasesOf(string $workerId, ?int $slot = null): void
     {
-        $st = $this->db->prepare('SELECT job_id FROM leases WHERE worker_id = ?');
-        $st->execute([$workerId]);
+        if ($slot === null) {
+            $st = $this->db->prepare('SELECT job_id FROM leases WHERE worker_id = ?');
+            $st->execute([$workerId]);
+        } else {
+            $st = $this->db->prepare('SELECT job_id FROM leases WHERE worker_id = ? AND slot = ?');
+            $st->execute([$workerId, $slot]);
+        }
         $rows = $st->fetchAll();
         if ($rows === []) {
             return;
         }
         foreach ($rows as $row) {
             $this->noteFailure((string) $row['job_id'], $workerId, 'The computer asked for new work while still holding this lease, so the lease was dropped.', true);
+            $this->db->prepare('DELETE FROM leases WHERE job_id = ? AND worker_id = ?')->execute([$row['job_id'], $workerId]);
         }
-        $this->db->prepare('DELETE FROM leases WHERE worker_id = ?')->execute([$workerId]);
         $this->moveQueuedOffPausedTasks();
     }
 
     public function heartbeat(array $worker, array $extra = []): array
     {
         $this->db->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$this->now(), $worker['id']]);
-        $fresh = $this->db->prepare('SELECT paused, revoked FROM workers WHERE id = ?');
+        $fresh = $this->db->prepare('SELECT * FROM workers WHERE id = ?');
         $fresh->execute([$worker['id']]);
         $state = $fresh->fetch();
         if (!$state) {
             return ['ok' => true, 'paused' => true, 'revoked' => true, 'jobId' => null, 'leaseUntil' => null];
         }
-        $lease = $this->db->prepare('SELECT * FROM leases WHERE worker_id = ? ORDER BY started_at DESC, job_id DESC');
-        $lease->execute([$worker['id']]);
-        $row = $lease->fetch();
+        if (isset($extra['runtime']) && is_array($extra['runtime'])) {
+            $this->saveRuntime((string) $worker['id'], $extra['runtime']);
+        }
+        if (!empty($extra['reset']) && (int) $state['revoked'] !== 1) {
+            $this->dropLeasesOf((string) $worker['id']);
+        }
+        $resources = $this->resourcesOf($state);
+        $base = [
+            'ok' => true,
+            'paused' => (int) $state['paused'] === 1,
+            'revoked' => (int) $state['revoked'] === 1,
+            'resources' => ['mode' => $resources['mode'], 'allowancePct' => $resources['allowancePct']],
+        ];
+        /* A control check-in only reads settings. It does not renew any lease. */
+        if (!empty($extra['control'])) {
+            return $base + ['jobId' => null, 'leaseUntil' => null];
+        }
+        $row = false;
+        if (isset($extra['jobId']) && is_string($extra['jobId']) && $extra['jobId'] !== '') {
+            $lease = $this->db->prepare('SELECT * FROM leases WHERE worker_id = ? AND job_id = ?');
+            $lease->execute([$worker['id'], $extra['jobId']]);
+            $row = $lease->fetch();
+        } else {
+            $lease = $this->db->prepare('SELECT * FROM leases WHERE worker_id = ? ORDER BY started_at DESC, job_id DESC');
+            $lease->execute([$worker['id']]);
+            $row = $lease->fetch();
+        }
         $jobId = null;
         $until = null;
         if ($row && (int) $state['revoked'] !== 1) {
@@ -777,13 +904,7 @@ final class App
                 $until = (string) $still['until_at'];
             }
         }
-        return [
-            'ok' => true,
-            'paused' => (int) $state['paused'] === 1,
-            'revoked' => (int) $state['revoked'] === 1,
-            'jobId' => $jobId,
-            'leaseUntil' => $until,
-        ];
+        return $base + ['jobId' => $jobId, 'leaseUntil' => $until];
     }
 
     public function submitResult(array $worker, string $jobId, array $body): void
@@ -1061,6 +1182,13 @@ final class App
         return $st->fetchAll();
     }
 
+    public function leasesOf(string $workerId): array
+    {
+        $st = $this->db->prepare('SELECT leases.job_id, leases.until_at, leases.heartbeat_at, leases.started_at, leases.progress, leases.slot, jobs.title, jobs.project_id FROM leases JOIN jobs ON jobs.id = leases.job_id WHERE leases.worker_id = ? ORDER BY leases.slot ASC, leases.started_at ASC');
+        $st->execute([$workerId]);
+        return $st->fetchAll();
+    }
+
     public function currentLease(string $workerId): ?array
     {
         $st = $this->db->prepare('SELECT leases.job_id, leases.until_at, leases.heartbeat_at, leases.started_at, leases.progress, jobs.title, jobs.project_id FROM leases JOIN jobs ON jobs.id = leases.job_id WHERE leases.worker_id = ?');
@@ -1117,6 +1245,72 @@ final class App
         $done = (int) $this->db->query("SELECT COUNT(*) FROM jobs WHERE status = 'done'")->fetchColumn();
         $projects = (int) $this->db->query('SELECT COUNT(*) FROM projects')->fetchColumn();
         return ['online' => $online, 'done' => $done, 'projects' => $projects];
+    }
+
+    /* Public numbers for the Right now box. Read only: it never applies a task policy. */
+    public function liveStatus(): array
+    {
+        $stats = $this->homeStats();
+        $now = strtotime($this->now());
+        $cores = 0;
+        foreach ($this->db->query('SELECT last_seen, revoked, paused, runtime_json FROM workers')->fetchAll() as $row) {
+            if ((int) $row['revoked'] === 1 || empty($row['last_seen']) || ($now - strtotime((string) $row['last_seen'])) > 180) {
+                continue;
+            }
+            $rt = json_decode((string) ($row['runtime_json'] ?? ''), true);
+            if ((int) $row['paused'] !== 1) {
+                $cores += is_array($rt) && isset($rt['slots']) ? max(0, (int) $rt['slots']) : 1;
+            }
+        }
+        $running = (int) $this->db->query('SELECT COUNT(*) FROM leases')->fetchColumn();
+        $tasks = [];
+        $rows = $this->db->query("SELECT DISTINCT task_id FROM design_records WHERE engine_version NOT IN ('spikefoundry-designer-1', 'spikefoundry-designer-2')")->fetchAll();
+        $order = self::CURRICULUM;
+        foreach ($rows as $row) {
+            $task = (string) $row['task_id'];
+            if (!preg_match('/^[a-z0-9._-]{1,64}$/', $task)) {
+                continue;
+            }
+            $at = array_search($task, $order, true);
+            $policy = $this->taskPolicy('spikefoundry', $task);
+            $best = null;
+            try {
+                $sum = $this->db->prepare('SELECT MAX(best_held) FROM design_summaries WHERE task_id = ?');
+                $sum->execute([$task]);
+                $v = $sum->fetchColumn();
+                $best = $v === null || $v === false ? null : round((float) $v, 3);
+            } catch (Exception $e) {
+                $best = null;
+            }
+            if ((int) $policy['paused'] === 1) {
+                $state = (string) ($policy['pause_reason'] ?? '') === 'solved' ? 'Solved' : 'Paused';
+            } else {
+                $health = $this->taskStatus('spikefoundry', $task);
+                $state = (string) $health['status'];
+                $pts = $health['points'];
+                if ($best === null && $pts !== []) {
+                    $best = round((float) $pts[count($pts) - 1]['bestHeld'], 3);
+                }
+            }
+            $tasks[] = ['task' => $task, 'level' => $at === false ? count($order) + 1 : $at + 1, 'state' => $state, 'best' => $best];
+        }
+        usort($tasks, function ($a, $b) {
+            return $a['level'] === $b['level'] ? strcmp($a['task'], $b['task']) : ($a['level'] < $b['level'] ? -1 : 1);
+        });
+        $projects = [];
+        foreach ($this->db->query('SELECT id, title, priority, enabled FROM projects ORDER BY priority DESC, id ASC')->fetchAll() as $p) {
+            $projects[] = ['id' => (string) $p['id'], 'title' => (string) $p['title'], 'priority' => (int) $p['priority'], 'enabled' => (int) $p['enabled'] === 1];
+        }
+        return [
+            'online' => (int) $stats['online'],
+            'done' => (int) $stats['done'],
+            'running' => $running,
+            'queued' => $this->claimableQueued(),
+            'slots' => $cores,
+            'tasks' => $tasks,
+            'projects' => $projects,
+            'at' => $this->now(),
+        ];
     }
 
     public function createProject(string $title, string $summary, string $runner, int $priority, bool $enabled): string
@@ -1437,6 +1631,89 @@ final class App
         return array_slice($rows, 0, $limit);
     }
 
+    /* Outstanding discoveries for the split view: the best distinct designs of each task,
+     * newest curriculum level first, best score first inside a level. */
+    public function discoveries(int $perTask = 12): array
+    {
+        $tasks = [];
+        foreach ($this->db->query("SELECT DISTINCT task_id FROM design_records WHERE engine_version NOT IN ('spikefoundry-designer-1', 'spikefoundry-designer-2')")->fetchAll() as $row) {
+            $tasks[] = (string) $row['task_id'];
+        }
+        $order = self::CURRICULUM;
+        $levelOf = function (string $task) use ($order): int {
+            $at = array_search($task, $order, true);
+            return $at === false ? count($order) : (int) $at;
+        };
+        usort($tasks, function ($a, $b) use ($levelOf) {
+            $la = $levelOf($a);
+            $lb = $levelOf($b);
+            return $la === $lb ? strcmp($a, $b) : ($la < $lb ? 1 : -1);
+        });
+        $names = [];
+        foreach ($this->db->query('SELECT id, name, public_credit FROM workers')->fetchAll() as $w) {
+            $names[(string) $w['id']] = $this->creditName($w);
+        }
+        $out = [];
+        foreach ($tasks as $task) {
+            if (!preg_match('/^[a-z0-9._-]{1,64}$/', $task)) {
+                continue;
+            }
+            foreach ($this->topDesigns($task, $perTask) as $i => $row) {
+                $score = json_decode((string) $row['score_json'], true);
+                if (!is_array($score)) {
+                    $score = [];
+                }
+                $genome = $this->designGenome((string) $row['genome_hash']);
+                $out[] = [
+                    'id' => (string) $row['id'],
+                    'hash' => (string) $row['genome_hash'],
+                    'task' => $task,
+                    'level' => $levelOf($task) + 1,
+                    'rank' => $i + 1,
+                    'quality' => round((float) $row['quality'], 4),
+                    'held' => round(isset($score['heldOut']) ? (float) $score['heldOut'] : (float) $row['quality'], 4),
+                    'train' => isset($score['train']) ? round((float) $score['train'], 4) : null,
+                    'accuracy' => isset($score['accuracy']) ? round((float) $score['accuracy'], 4) : null,
+                    'neurons' => (int) $row['neurons'],
+                    'synapses' => (int) $row['synapses'],
+                    'spikes' => (int) $row['spikes'],
+                    'evalMs' => (int) $row['eval_ms'],
+                    'when' => (string) $row['created_at'],
+                    'worker' => (string) $row['worker_id'],
+                    'finder' => $names[(string) $row['worker_id']] ?? 'Anonymous',
+                    'public' => $genome && (int) ($genome['is_public'] ?? 0) === 1,
+                ];
+            }
+        }
+        return $out;
+    }
+
+    /* A genome is shown to everyone once the owner marks it public, to the owner, and to
+     * the people whose computer found it. Otherwise the viewer only sees its size. */
+    public function genomeVisibleTo(string $hash, bool $owner, array $workerIds): bool
+    {
+        $row = $this->designGenome($hash);
+        if (!$row) {
+            return false;
+        }
+        if ($owner || (int) ($row['is_public'] ?? 0) === 1) {
+            return true;
+        }
+        $ids = [];
+        foreach ($workerIds as $id) {
+            if (preg_match('/^[a-f0-9]{8,32}$/', (string) $id)) {
+                $ids[] = (string) $id;
+            }
+        }
+        if ($ids === []) {
+            return false;
+        }
+        $marks = implode(',', array_fill(0, count($ids), '?'));
+        $st = $this->db->prepare('SELECT 1 FROM design_records WHERE genome_hash = ? AND worker_id IN (' . $marks . ') LIMIT 1');
+        $st->execute(array_merge([$hash], $ids));
+        return (bool) $st->fetch();
+    }
+
     public function designGenome(string $hash): ?array
     {
         if (!preg_match('/^[a-f0-9]{64}$/', $hash)) {
@@ -1713,14 +1990,18 @@ final class App
         if ($queuedAll >= $globalCap) {
             return 0;
         }
+        /* Low water 0 means one waiting job per busy slot of an online computer. A
+         * computer that runs four jobs at once counts as four. */
         $online = 0;
-        $seen = $this->db->query('SELECT last_seen, revoked FROM workers')->fetchAll();
+        $seen = $this->db->query('SELECT last_seen, revoked, paused, runtime_json FROM workers')->fetchAll();
         foreach ($seen as $row) {
-            if ((int) $row['revoked'] === 1 || empty($row['last_seen'])) {
+            if ((int) $row['revoked'] === 1 || empty($row['last_seen']) || (int) $row['paused'] === 1) {
                 continue;
             }
             if ((strtotime($this->now()) - strtotime((string) $row['last_seen'])) <= 180) {
-                $online++;
+                $rt = json_decode((string) ($row['runtime_json'] ?? ''), true);
+                $slots = is_array($rt) && isset($rt['slots']) ? (int) $rt['slots'] : 1;
+                $online += max(1, min(16, $slots));
             }
         }
         $made = 0;

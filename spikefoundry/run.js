@@ -43,6 +43,7 @@ function execute(job, outDir) {
       err.code = 'injected';
       throw err;
     }
+    require('./throttle.js').pace();
     SF.runBatch(state);
     writeJson(cpPath, SF.checkpoint(state));
     const sum = SF.summary(state);

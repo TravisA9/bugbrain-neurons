@@ -182,6 +182,22 @@ const job = {
 
   const lf = 'computelab-protocol-2\nkeep this line\n';
   check(coord.hashText(lf) === coord.hashText(lf.replace(/\n/g, '\r\n')), 'a CRLF copy of the protocol hashes the same as LF');
+  const P = coord.resourcePlan;
+  const off = P('off', 50, 8), full = P('full', 50, 8), half = P('allowance', 50, 8), tenth = P('allowance', 10, 8), third = P('allowance', 30, 8), one = P('allowance', 50, 1);
+  check(off.slots === 0 && full.slots === 8 && full.duty === 1 && full.priority === 'normal', 'Off claims nothing and Full blast uses every core at normal priority');
+  check(half.slots === 4 && half.duty === 1 && half.priority === 'low' && tenth.slots === 1 && tenth.duty === 0.8 && third.slots === 3 && third.duty === 0.8 && one.slots === 1 && one.duty === 0.5, 'Allowance caps slots to the share of cores and duty-cycles the rest at low priority');
+  check(P('allowance', 95, 8).pct === 90 && P('allowance', 3, 8).pct === 10 && P('full', 0, 8, 2).slots === 2, 'the allowance stays between 10% and 90% and BB_MAX_SLOTS caps the slots');
+  check(coord.settingsFrom({ paused: true, resources: { mode: 'full', allowancePct: 70 } }).mode === 'off' && coord.settingsFrom({ resources: { mode: 'allowance', allowancePct: 70 } }).pct === 70 && coord.settingsFrom({ paused: false }).mode === 'full', 'the worker reads the setting from the heartbeat, and an old coordinator means Full blast');
+  check(coord.samePlan(P('allowance', 50, 8), P('allowance', 50, 8)) && !coord.samePlan(half, full), 'a changed setting is noticed');
+  const Throttle = require('../spikefoundry/throttle.js');
+  const tdir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'thr-'));
+  const tfile = path.join(tdir, 'throttle.json');
+  coord.writeThrottle(tfile, 0.5);
+  Throttle.useFile(tfile);
+  const t0 = Date.now(); let slept = 0;
+  while (Date.now() - t0 < 600) { const x = Date.now(); while (Date.now() - x < 20) {} slept += Throttle.pace(); }
+  Throttle.useFile('');
+  check(slept >= 150 && slept <= 450, 'a job at duty 0.5 rests about half of the time (' + slept + ' ms of 600)');
 
   console.log(n + ' checks');
   process.exit(fail === 0 ? 0 : 1);

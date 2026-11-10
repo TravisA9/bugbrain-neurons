@@ -4,6 +4,7 @@
 const Tasks = require('./tasks.js');
 const Genome = require('./genome_v2.js');
 const Library = require('./library.js');
+const Throttle = require('./throttle.js');
 
 const DESIGN_FEATURES = 16;
 const ACTIONS = 8;
@@ -317,6 +318,7 @@ function run(job, outDir, SF) {
   if (job.mode === 'propose') {
     const origin = blankFor(taskId);
     while (evals < evalCap) {
+      Throttle.pace();
       const randomArm = evals % 10 === 9;
       let genome = origin;
       if (randomArm) {

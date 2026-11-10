@@ -76,18 +76,40 @@ $setupGet = http($base . '/join/setup?token=' . $leaky);
 check($setupGet['status'] === 405 && !str_contains($setupGet['body'], $leaky), 'a setup link in the address bar is refused and does not repeat the token');
 $cookie = '';
 if (preg_match('/Set-Cookie: lab_participant=([^;]+)/', $join['header'], $c)) $cookie = $c[1];
-$me = http($base . '/me', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
-check(str_contains($me['body'], 'Not running a shared job') && str_contains($me['body'], 'cannot change project order') && str_contains($me['body'], 'Waiting for work') && str_contains($me['body'], 'class="switch on"'), 'participant page shows an On switch and cannot change project order');
-preg_match('/name="csrf" value="([a-f0-9]+)"/', $me['body'], $meCsrf);
-preg_match('/name="id" value="([a-f0-9]+)"/', $me['body'], $meId);
-$pauseBare = http($base . '/me/pause', 'POST', http_build_query(['id' => $meId[1] ?? '', 'paused' => '1']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_participant=' . $cookie]);
-check($pauseBare['status'] === 403, 'turning a computer off without the security token is refused');
-$pause = http($base . '/me/pause', 'POST', http_build_query(['csrf' => $meCsrf[1] ?? '', 'id' => $meId[1] ?? '', 'paused' => '1']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_participant=' . $cookie]);
-$pausedPage = http($base . '/me', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
-check(in_array($pause['status'], [303, 302], true) && str_contains($pausedPage['body'], 'Paused') && str_contains($pausedPage['body'], 'class="switch off"'), 'the Off switch pauses new work');
-$resume = http($base . '/me/pause', 'POST', http_build_query(['csrf' => $meCsrf[1] ?? '', 'id' => $meId[1] ?? '', 'paused' => '0']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_participant=' . $cookie]);
-$resumedPage = http($base . '/me', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
-check(in_array($resume['status'], [303, 302], true) && str_contains($resumedPage['body'], 'Waiting for work'), 'the On switch accepts new work again');
+$meRedirect = http($base . '/me', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
+check(in_array($meRedirect['status'], [302, 303], true) && preg_match('#Location: /computelab/\#my-computer#', $meRedirect['header']) === 1, 'My computer lives on Home now, and /me sends people there');
+$myHome = function () use ($base, &$cookie): string {
+    return http($base . '/', 'GET', null, ['Cookie: lab_participant=' . $cookie])['body'];
+};
+$me = ['body' => $myHome()];
+check(str_contains($me['body'], 'id="right-now"') && strpos($me['body'], 'id="right-now"') < strpos($me['body'], 'id="my-computer"') && str_contains($me['body'], 'Not running a shared job') && str_contains($me['body'], 'Waiting for work') && !str_contains($me['body'], 'name="priority"') && !str_contains($me['body'], 'name="evals"') && !str_contains($me['body'], 'name="seconds"'), 'Home shows Right now, then My computer, with no job-length settings for participants');
+check(str_contains($me['body'], 'value="allowance" checked') && str_contains($me['body'], 'type="range" name="pct" min="10" max="90" step="10" value="50"') && str_contains($me['body'], '>Full blast<') && str_contains($me['body'], '>Off<'), 'a new computer starts in Allowance at 50%, with the three-state switch and the slider');
+preg_match('/action="[^"]*\/me\/resources".*?name="csrf" value="([a-f0-9]+)"><input type="hidden" name="id" value="([a-f0-9]+)"/s', $me['body'], $mr);
+$meCsrf = [1 => $mr[1] ?? ''];
+$meId = [1 => $mr[2] ?? ''];
+$jsonHeaders = ['Content-Type: application/x-www-form-urlencoded', 'Accept: application/json', 'Cookie: lab_participant=' . $cookie];
+$resBare = http($base . '/me/resources', 'POST', http_build_query(['id' => $meId[1], 'mode' => 'off']), $jsonHeaders);
+check($resBare['status'] === 403, 'turning a computer off without the security token is refused');
+$offSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'off', 'pct' => '50']), $jsonHeaders);
+$offPage = $myHome();
+check($offSave['status'] === 200 && json_decode($offSave['body'], true) === ['ok' => true, 'mode' => 'off', 'pct' => 50] && str_contains($offPage, 'value="off" checked') && str_contains($offPage, 'Off — not taking new work'), 'Off stops new work and saves without a reload');
+$offBeat = http($base . '/api/v1/heartbeat', 'POST', json_encode(['codeHash' => '', 'control' => true]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json']);
+$offClaim = http($base . '/api/v1/claim', 'POST', json_encode(['codeHash' => trim((string) shell_exec('php -r ' . escapeshellarg('echo hash("sha256", str_replace("\r\n", "\n", file_get_contents(' . var_export(dirname(__DIR__) . '/PROTOCOL.txt', true) . ')));')))]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json']);
+check((json_decode($offBeat['body'], true)['resources']['mode'] ?? '') === 'off' && (json_decode($offBeat['body'], true)['paused'] ?? false) === true && json_decode($offClaim['body'], true) === ['job' => null], 'the worker reads Off from its check-in and gets no job');
+$pctSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'allowance', 'pct' => '37']), $jsonHeaders);
+$badMode = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'turbo']), $jsonHeaders);
+check(json_decode($pctSave['body'], true) === ['ok' => true, 'mode' => 'allowance', 'pct' => 40] && $badMode['status'] === 400 && str_contains($badMode['body'], 'Full blast'), 'the allowance snaps to steps of 10 and unknown modes are refused');
+$fullSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $meCsrf[1], 'id' => $meId[1], 'mode' => 'full']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_participant=' . $cookie]);
+$fullPage = $myHome();
+$fullBeat = json_decode(http($base . '/api/v1/heartbeat', 'POST', json_encode(['control' => true, 'runtime' => ['mode' => 'full', 'pct' => 100, 'slots' => 8, 'cores' => 8, 'duty' => 1, 'priority' => 'normal', 'running' => 0]]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json'])['body'], true);
+$fullPage2 = $myHome();
+check(in_array($fullSave['status'], [302, 303], true) && str_contains($fullSave['header'], '#my-computer') && str_contains($fullPage, 'value="full" checked') && ($fullBeat['resources'] ?? []) === ['mode' => 'full', 'allowancePct' => 40] && str_contains($fullPage2, 'Now: Full blast · 8 of 8 cores · normal priority') && str_contains($fullPage2, 'Waiting for work'), 'Full blast works as a plain form too, and the page shows what the worker applied');
+$status = http($base . '/status.json', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
+$sj = json_decode($status['body'], true);
+$anon = json_decode(http($base . '/status.json')['body'], true);
+check($status['status'] === 200 && isset($sj['online'], $sj['running'], $sj['queued'], $sj['done'], $sj['tasks']) && ($sj['mine'][0]['mode'] ?? '') === 'full' && isset($sj['mine'][0]['health']) && ($anon['mine'] ?? null) === [], 'status.json feeds the Right now box and only lists your own computers');
+$css = http($base . '/assets/computelab.css');
+check($css['status'] === 200 && str_contains($css['header'], 'text/css') && str_contains($css['body'], '--mint:#69e2b1') && str_contains($css['body'], '.tri') && str_contains($me['body'], '/computelab/assets/computelab.css?v='), 'every page loads the shared SpikeFoundry stylesheet');
 
 $login = http($base . '/owner/login', 'POST', http_build_query(['username' => 'labowner', 'password' => 'correct-horse']), ['Content-Type: application/x-www-form-urlencoded']);
 preg_match('/Set-Cookie: lab_owner=([^;]+)/', $login['header'], $oc);
@@ -129,17 +151,23 @@ file_put_contents($tokenFile, $token . "\n");
 $worker = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($tokenFile) . ' 2>&1');
 check(is_string($worker) && str_contains($worker, '"status":"done"'), 'the native worker polls, runs the template, and submits a result');
 $ownerLive = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
-preg_match('/action="[^"]*\\/owner\\/pause"[^>]*>.*?<input type="hidden" name="csrf" value="([a-f0-9]+)"><input type="hidden" name="id" value="([a-f0-9]+)"/s', $ownerLive['body'], $pauseFields);
-if ($pauseFields === []) {
-    preg_match('/\\/owner\\/pause".*?name="csrf" value="([a-f0-9]+)".*?name="id" value="([a-f0-9]+)"/s', $ownerLive['body'], $pauseFields);
-}
-$ownerPauseBare = http($base . '/owner/pause', 'POST', http_build_query(['id' => $pauseFields[2] ?? '', 'paused' => '1']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
-check($ownerPauseBare['status'] === 403, 'owner pause without the security token is refused');
-$ownerPause = http($base . '/owner/pause', 'POST', http_build_query(['csrf' => $pauseFields[1] ?? '', 'id' => $pauseFields[2] ?? '', 'paused' => '1']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
+preg_match('/action="[^"]*\/owner\/resources".*?name="csrf" value="([a-f0-9]+)"><input type="hidden" name="id" value="([a-f0-9]+)"/s', $ownerLive['body'], $pauseFields);
+check(str_contains($ownerLive['body'], '<details class="advanced"><summary>Advanced') && strpos($ownerLive['body'], 'name="seconds"') > strpos($ownerLive['body'], '<details class="advanced"><summary>Advanced'), 'the owner job-length settings sit under Advanced');
+$ownerPauseBare = http($base . '/owner/resources', 'POST', http_build_query(['id' => $pauseFields[2] ?? '', 'mode' => 'off']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check($ownerPauseBare['status'] === 403, 'owner resource changes without the security token are refused');
+$ownerPause = http($base . '/owner/resources', 'POST', http_build_query(['csrf' => $pauseFields[1] ?? '', 'id' => $pauseFields[2] ?? '', 'mode' => 'off']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
 $ownerPaused = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
-check(in_array($ownerPause['status'], [303, 302], true) && str_contains($ownerPaused['body'], 'Resume') && str_contains($ownerPaused['body'], 'home-pc'), 'the owner can pause a computer');
-$ownerResume = http($base . '/owner/pause', 'POST', http_build_query(['csrf' => $pauseFields[1] ?? '', 'id' => $pauseFields[2] ?? '', 'paused' => '0']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
-check(in_array($ownerResume['status'], [303, 302], true), 'the owner can resume a computer');
+check(in_array($ownerPause['status'], [303, 302], true) && str_contains($ownerPaused['body'], 'value="off" checked') && str_contains($ownerPaused['body'], 'home-pc'), 'the owner can turn a computer off');
+$ownerResume = http($base . '/owner/resources', 'POST', http_build_query(['csrf' => $pauseFields[1] ?? '', 'id' => $pauseFields[2] ?? '', 'mode' => 'allowance', 'pct' => '50']), ['Content-Type: application/x-www-form-urlencoded', 'Accept: application/json', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check($ownerResume['status'] === 200 && json_decode($ownerResume['body'], true) === ['ok' => true, 'mode' => 'allowance', 'pct' => 50], 'the owner can turn a computer back on');
+$disc = http($base . '/discoveries', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
+check($disc['status'] === 200 && str_contains($disc['body'], '<html lang="en" class="fit">') && str_contains($disc['body'], 'class="list-scroll"') && str_contains($disc['body'], 'id="viewer"') && str_contains($disc['body'], 'badge-mine') && str_contains($disc['body'], 'class="disc mine"'), 'Discoveries is a split view and marks your own computer\'s designs');
+$dd = preg_match('#<script type="application/json" id="disc-data">(.*?)</script>#s', $disc['body'], $dm) === 1 ? json_decode($dm[1], true) : [];
+$gh = (string) ($dd['items'][0]['hash'] ?? '');
+$gMine = http($base . '/discoveries/genome?hash=' . $gh, 'GET', null, ['Cookie: lab_participant=' . $cookie]);
+$gAnon = http($base . '/discoveries/genome?hash=' . $gh);
+$gOwner = http($base . '/discoveries/genome?hash=' . $gh, 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check($gh !== '' && $gMine['status'] === 200 && $gAnon['status'] === 404 && $gOwner['status'] === 200 && !isset($dd['items'][0]['worker']), 'a private genome opens for the computer that found it and the owner, not for strangers');
 // Every page shares one header: only the current-tab mark and the account item may differ.
 function site_header(string $html): string
 {
@@ -162,8 +190,8 @@ $pages = [
     'explore' => [http($base . '/explore')['body'], 'Explore'],
     'discoveries' => [http($base . '/discoveries')['body'], 'Discoveries'],
     'join' => [http($base . '/join')['body'], 'Join'],
-    'setup' => [$join['body'], 'My computer'],
-    'me' => [http($base . '/me', 'GET', null, ['Cookie: lab_participant=' . $cookie])['body'], 'My computer'],
+    'setup' => [$join['body'], 'Home'],
+    'me' => [http($base . '/', 'GET', null, ['Cookie: lab_participant=' . $cookie])['body'], 'Home'],
     'owner-login' => [http($base . '/owner/login')['body'], 'Owner'],
     'owner-out' => [http($base . '/owner')['body'], 'Owner'],
     'owner' => [http($base . '/owner', 'GET', null, $ownerCookie)['body'], 'Owner'],
@@ -184,8 +212,8 @@ check(count(array_unique($shapes)) === 1 && reset($shapes) !== 'missing', 'every
 check($currentOk, 'each page marks exactly its own tab as current');
 check(str_contains(site_header($pages['home'][0]), '>Log in<') && str_contains(site_header($pages['owner'][0]), 'Log out') && str_contains(site_header($pages['me'][0]), 'Log out'), 'the account item reads Log in when signed out and Log out when signed in');
 $signedIn = ['setup', 'me', 'owner', 'home-as-owner', 'explore-as-owner', 'join-as-owner', 'join-as-participant'];
-$pages['join-as-owner'] = [http($base . '/join', 'GET', null, $ownerCookie)['body'], 'My computer'];
-$pages['join-as-participant'] = [http($base . '/join', 'GET', null, ['Cookie: lab_participant=' . $cookie])['body'], 'My computer'];
+$pages['join-as-owner'] = [http($base . '/join', 'GET', null, $ownerCookie)['body'], 'Home'];
+$pages['join-as-participant'] = [http($base . '/join', 'GET', null, ['Cookie: lab_participant=' . $cookie])['body'], 'Home'];
 $joinOk = true;
 foreach ($pages as $name => $page) {
     $hasJoin = str_contains(site_header($page[0]), '>Join</a>');
@@ -195,7 +223,7 @@ foreach ($pages as $name => $page) {
     }
 }
 check($joinOk, 'the Join tab shows only to signed-out visitors');
-check(header_current(site_header($pages['join-as-owner'][0])) === 'My computer' && str_contains($pages['join-as-owner'][0], 'name="consent"'), 'a signed-in visitor can still open the join page by URL');
+check(header_current(site_header($pages['join-as-owner'][0])) === 'Home' && str_contains($pages['join-as-owner'][0], 'name="consent"'), 'a signed-in visitor can still open the join page by URL');
 check(str_contains($pages['me'][0], '>Add a computer</a>') && str_contains($pages['owner'][0], '>Add a computer</a>'), 'My computer and the owner console offer Add a computer');
 check(substr_count($pages['explore'][0], 'class="cl-top"') === 1 && !str_contains($pages['explore'][0], 'class="top"'), 'explore uses the shared header only once');
 
@@ -234,7 +262,7 @@ $relog = http($base . '/owner/login', 'POST', http_build_query(['username' => 'l
 preg_match('/Set-Cookie: lab_owner=([^;]+)/', $relog['header'], $rc);
 $ownerView = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($rc[1] ?? '')]);
 check(str_contains($ownerView['body'], 'Diagnostics ·') && str_contains($ownerView['body'], 'Setup failed: Node.js v12.22.9 is too old') && !str_contains($ownerView['body'], $token) && !str_contains((string) $app->db->query("SELECT GROUP_CONCAT(body_json) FROM worker_diagnostics")->fetchColumn(), $token) && str_contains((string) $app->db->query("SELECT GROUP_CONCAT(body_json) FROM worker_diagnostics")->fetchColumn(), 'Ubuntu 22.04.4 LTS'), 'the owner sees the latest report without the token');
-check(str_contains($ownerView['body'], 'class="health') && str_contains($ownerView['body'], 'New setup command'), 'each computer in the owner console has a health line and a new setup command');
+check(str_contains($ownerView['body'], 'data-health') && str_contains($ownerView['body'], 'New setup command'), 'each computer in the owner console has a health line and a new setup command');
 $wrongHash = http($base . '/api/v1/heartbeat', 'POST', json_encode(['codeHash' => str_repeat('f', 64)]), ['Authorization: Bearer ' . $token, 'Content-Type: application/json']);
 $wrow = $app->db->query("SELECT * FROM workers WHERE name = 'home-pc'")->fetch();
 check($wrongHash['status'] === 409 && $app->healthOf($wrow)['line'] === 'Protocol mismatch, needs update', 'a protocol mismatch shows in the health line');
@@ -246,9 +274,9 @@ $ghost = ['id' => 'ghost', 'revoked' => 0, 'last_seen' => $ago, 'created_at' => 
 check(str_contains($app->healthOf($ghost)['line'], 'never checked in') && str_contains($app->healthOf($ghost)['hint'], 'Node.js 18'), 'a computer that registered but never ran says so, with a fix');
 $seenOld = ['id' => 'ghost', 'revoked' => 0, 'last_seen' => gmdate('c', time() - 30 * 60), 'created_at' => gmdate('c', time() - 90 * 60), 'runtime_json' => null, 'last_reject' => null];
 check(str_contains($app->healthOf($seenOld)['line'], 'no heartbeat for 30 min'), 'a computer that stopped says how long ago');
-$meNow = http($base . '/me', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
-check(str_contains($meNow['body'], 'class="health') && str_contains($meNow['body'], 'New setup command'), 'the participant sees a health line and can get a new setup command');
-preg_match('/name="csrf" value="([a-f0-9]+)"/', $meNow['body'], $mc);
+$meNow = ['body' => $myHome()];
+check(str_contains($meNow['body'], 'data-health') && str_contains($meNow['body'], 'New setup command'), 'the participant sees a health line and can get a new setup command');
+preg_match('/\/me\/setup-command".*?name="csrf" value="([a-f0-9]+)"/s', $meNow['body'], $mc);
 $wid = (string) $wrow['id'];
 $rot = http($base . '/me/setup-command', 'POST', http_build_query(['csrf' => $mc[1] ?? '', 'id' => $wid]), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_participant=' . $cookie]);
 preg_match('/<code>([a-f0-9]{48})<\/code>/', $rot['body'], $nt);

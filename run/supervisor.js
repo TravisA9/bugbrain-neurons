@@ -58,7 +58,7 @@ function startDq() {
   try { fs.unlinkSync(STOP); } catch (e) {}
   const coord = process.env.BB_COORDINATOR_URL;
   const args = coord
-    ? ['run/coord.js', '--url', coord, '--token-file', process.env.BB_COORDINATOR_TOKEN_FILE || require('path').join(ST, 'coordinator-token')]
+    ? ['run/coord.js', '--url', coord, '--token-file', process.env.BB_COORDINATOR_TOKEN_FILE || require('path').join(ST, 'coordinator-token'), '--stop-file', STOP]
     : ['run/dq.js'].concat(WC.dqArgs(S, NAME), ['--stop-file', STOP]);
   say(`starting ${coord ? 'coord.js' : 'dq.js'} ${args.slice(1).join(' ')} (code ${git(['rev-parse', '--short', 'HEAD'])}, config ${S.version}, ${TYPE}${S.mode === 'pause' ? ', paused' : ''})`);
   childStart = Date.now(); status(S.mode === 'pause' ? 'paused' : 'running-dq', 'code ' + git(['rev-parse', '--short', 'HEAD']) + ', config ' + S.version);

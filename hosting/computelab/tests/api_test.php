@@ -589,7 +589,7 @@ check(!$solve['app']->taskPaused('spikefoundry', 'coincidence'), 'a solved score
 $solve['app']->saveTaskPolicy('spikefoundry', 'coincidence', 0.005, 3000, 6, 'flag', true, 0.97, 3);
 check($solve['app']->taskPaused('spikefoundry', 'coincidence') && $solve['app']->nextCurriculumTask('scenario-control') === '' && !in_array('digits', App::CURRICULUM, true), 'the default threshold advances again, and the last designer task has no next step');
 $solve['app']->ingestDesigns($solveWorker, [designRecord('{"arm":"solved","n":1}', 90, 0.982, 0.982, 'designer', 1000)], $solve['app']->protocolHash());
-$ownerHtml = taskHealthSection($solve['app'], 'csrf-x', '/computelab');
+$ownerHtml = implode('', taskHealthSection($solve['app'], 'csrf-x', '/computelab'));
 check(strpos($ownerHtml, 'name="auto_advance" value="1" checked') !== false && strpos($ownerHtml, 'name="solve_score"') !== false && strpos($ownerHtml, 'Solved. Jobs moved on automatically.') !== false && strpos($ownerHtml, 'Next level: sequence') !== false, 'the owner console shows the solved state and the per-task auto-advance settings');
 $bigEvals = $flatSummary('sf-propose-4-d', 0.5);
 $bigEvals['taskId'] = 'sequence';
@@ -642,6 +642,44 @@ $freshSpec = $fresh ? json_decode((string) $gap['db']->query('SELECT spec_json F
 $ownerSpec = json_decode((string) $gap['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $gap['db']->quote($ownerJob))->fetchColumn(), true);
 $madeAfter = (int) $gap['db']->query("SELECT auto_created FROM projects WHERE id = 'spikefoundry'")->fetchColumn();
 check($fresh && $freshSpec['taskId'] === 'sequence' && $ownerSpec['taskId'] === 'coincidence' && $madeAfter === $madeBefore + 1 && $gap['app']->claimableQueued('spikefoundry') === 0, 'a queued job for a paused task does not count toward the queue, so supply still adds a next-task job');
+
+/* ---- Resource control: Off / Allowance / Full blast, several job slots ---- */
+$res = lab();
+$resOn = $res['app']->enroll('res-on', ['spikefoundry'], 20, true);
+$resOff = $res['app']->enroll('res-off', ['spikefoundry'], 20, true);
+check((string) $res['db']->query("SELECT resource_mode || ':' || allowance_pct FROM workers WHERE id = " . $res['db']->quote($resOn['workerId']))->fetchColumn() === 'allowance:50', 'a new computer starts in Allowance at 50%');
+$res['db']->prepare('UPDATE workers SET paused = 1 WHERE id = ?')->execute([$resOff['workerId']]);
+foreach (['resource_mode', 'allowance_pct', 'runtime_json'] as $col) {
+    $res['db']->exec('ALTER TABLE workers DROP COLUMN ' . $col);
+}
+$res['app']->migrate();
+$modes = [];
+foreach ($res['db']->query('SELECT id, resource_mode FROM workers')->fetchAll() as $row) {
+    $modes[(string) $row['id']] = (string) $row['resource_mode'];
+}
+check(($modes[$resOn['workerId']] ?? '') === 'full' && ($modes[$resOff['workerId']] ?? '') === 'off', 'upgrading keeps what each computer did: On becomes Full blast and Off stays Off');
+$res['app']->setResources($resOn['workerId'], 'allowance', 73);
+$w = $res['app']->workerByToken($resOn['token']);
+check($res['app']->resourcesOf($w)['mode'] === 'allowance' && $res['app']->resourcesOf($w)['allowancePct'] === 70 && App::clampAllowance(3) === 10 && App::clampAllowance(100) === 90, 'the allowance is kept between 10% and 90% in steps of 10');
+$res['app']->createJob('sf-vision', 'Slot A', 1, 41);
+$res['app']->createJob('sf-vision', 'Slot B', 1, 42);
+$a = $res['app']->claim($w, 0);
+$b = $res['app']->claim($res['app']->workerByToken($resOn['token']), 1);
+$leaseCount = (int) $res['db']->query('SELECT COUNT(*) FROM leases WHERE worker_id = ' . $res['db']->quote($resOn['workerId']))->fetchColumn();
+check($a && $b && $a['id'] !== $b['id'] && $b['slot'] === 1 && $leaseCount === 2, 'one computer can hold one job per slot');
+$before = (string) $res['db']->query('SELECT until_at FROM leases WHERE job_id = ' . $res['db']->quote((string) $a['id']))->fetchColumn();
+$res['clock']->t = gmdate('c', strtotime($res['clock']->t) + 30);
+$ctl = $res['app']->heartbeat($w, ['control' => true, 'runtime' => ['mode' => 'allowance', 'pct' => 70, 'slots' => 3, 'cores' => 4, 'duty' => 0.933, 'priority' => 'low', 'running' => 2, 'token' => 'x']]);
+$after = (string) $res['db']->query('SELECT until_at FROM leases WHERE job_id = ' . $res['db']->quote((string) $a['id']))->fetchColumn();
+$rt = json_decode((string) $res['db']->query('SELECT runtime_json FROM workers WHERE id = ' . $res['db']->quote($resOn['workerId']))->fetchColumn(), true);
+check($ctl['resources'] === ['mode' => 'allowance', 'allowancePct' => 70] && $ctl['jobId'] === null && $before === $after && ($rt['slots'] ?? 0) === 3 && !isset($rt['token']), 'a control check-in reads the setting and saves what the worker applied, without renewing a lease');
+$beatB = $res['app']->heartbeat($w, ['jobId' => (string) $b['id'], 'progress' => 40]);
+check($beatB['jobId'] === (string) $b['id'] && (int) $res['db']->query('SELECT progress FROM leases WHERE job_id = ' . $res['db']->quote((string) $b['id']))->fetchColumn() === 40, 'a job heartbeat renews exactly that job');
+$res['app']->setResources($resOn['workerId'], 'off');
+check($res['app']->claim($res['app']->workerByToken($resOn['token']), 2) === null && (int) $res['db']->query('SELECT COUNT(*) FROM leases WHERE worker_id = ' . $res['db']->quote($resOn['workerId']))->fetchColumn() === 2, 'Off takes no new job and lets running jobs finish');
+$res['app']->setResources($resOn['workerId'], 'full');
+$res['app']->heartbeat($res['app']->workerByToken($resOn['token']), ['control' => true, 'reset' => true]);
+check((int) $res['db']->query('SELECT COUNT(*) FROM leases WHERE worker_id = ' . $res['db']->quote($resOn['workerId']))->fetchColumn() === 0, 'a restarted worker hands back the jobs it held');
 
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

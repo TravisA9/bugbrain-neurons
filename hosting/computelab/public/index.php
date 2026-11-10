@@ -170,6 +170,47 @@ function coord_participant(App $app): ?array
     return ['session' => $session, 'pid' => $app->ensureParticipant($self)];
 }
 
+/** Computers linked to this browser's participant session, or null when there is none. */
+function coord_my_computers(App $app): ?array
+{
+    $part = coord_participant($app);
+    return $part ? $app->computersFor($part['pid']) : null;
+}
+
+function coord_wants_json(): bool
+{
+    return stripos((string) ($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json') !== false;
+}
+
+function coord_home_url(string $base, string $anchor = ''): string
+{
+    return ($base === '' ? '/' : $base . '/') . ($anchor !== '' ? '#' . $anchor : '');
+}
+
+/** Saves Off / Allowance / Full blast for one computer and answers the page script or the plain form. */
+function coord_save_resources(App $app, string $workerId, string $back): void
+{
+    $mode = (string) ($_POST['mode'] ?? '');
+    $pct = isset($_POST['pct']) && is_numeric($_POST['pct']) ? (int) $_POST['pct'] : null;
+    try {
+        $app->setResources($workerId, $mode, $pct);
+    } catch (InvalidArgumentException $e) {
+        if (coord_wants_json()) {
+            coord_json(400, ['ok' => false, 'error' => $e->getMessage()]);
+            return;
+        }
+        throw $e;
+    }
+    $st = $app->db->prepare('SELECT * FROM workers WHERE id = ?');
+    $st->execute([$workerId]);
+    $res = $app->resourcesOf($st->fetch() ?: []);
+    if (coord_wants_json()) {
+        coord_json(200, ['ok' => true, 'mode' => $res['mode'], 'pct' => $res['allowancePct']]);
+        return;
+    }
+    header('Location: ' . $back, true, 303);
+}
+
 function coord_bearer(): string
 {
     $h = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
@@ -222,8 +263,28 @@ try {
         readfile($file);
         return;
     }
+    if ($path === '/assets/computelab.css' && $method === 'GET') {
+        header('Content-Type: text/css; charset=utf-8');
+        header('Cache-Control: public, max-age=86400');
+        header('X-Content-Type-Options: nosniff');
+        echo labCss();
+        return;
+    }
     if ($path === '/' && $method === 'GET') {
-        coord_html(pageHome($app, coord_who($app, 'home')));
+        $part = coord_participant($app);
+        coord_html(pageHome($app, coord_who($app, 'home'), $part ? $app->computersFor($part['pid']) : null, $part ? (string) $part['session']['csrf'] : ''));
+        return;
+    }
+    if ($path === '/status.json' && $method === 'GET') {
+        $live = $app->liveStatus();
+        $mine = [];
+        foreach (coord_my_computers($app) ?? [] as $w) {
+            $state = describeWorker($app, $w, $app->leasesOf((string) $w['id']));
+            $health = $app->healthOf($w);
+            $mine[] = ['id' => (string) $w['id'], 'line' => $state['line'], 'effective' => $state['effective'], 'mode' => $state['mode'], 'pct' => $state['pct'], 'health' => (string) $health['line']];
+        }
+        $live['mine'] = $mine;
+        coord_json(200, $live);
         return;
     }
     if (($path === '/explore' || $path === '/lab') && $method === 'GET') {
@@ -232,21 +293,33 @@ try {
         $html = str_replace('src="engine.js"', 'src="' . h($base . '/assets/engine.js') . '"', $html);
         $bar = exploreBar($base, coord_who($app, 'explore'));
         $html = preg_replace('/<body([^>]*)>/i', '<body$1>' . $bar, $html, 1);
+        $html = preg_replace('#</head>#i', exploreSkin($base) . '</head>', $html, 1);
         coord_html($html);
         return;
     }
     if ($path === '/discoveries' && $method === 'GET') {
-        coord_html(pageDiscoveries($app, coord_who($app, 'discoveries')));
+        $ids = [];
+        foreach (coord_my_computers($app) ?? [] as $w) {
+            $ids[] = (string) $w['id'];
+        }
+        coord_html(pageDiscoveries($app, coord_who($app, 'discoveries'), $ids));
         return;
     }
     if ($path === '/discoveries/genome' && $method === 'GET') {
-        $row = $app->designGenome((string) ($_GET['hash'] ?? ''));
-        if (!$row || (int) ($row['is_public'] ?? 0) !== 1) {
+        $hash = (string) ($_GET['hash'] ?? '');
+        $row = $app->designGenome($hash);
+        $ids = [];
+        foreach (coord_my_computers($app) ?? [] as $w) {
+            $ids[] = (string) $w['id'];
+        }
+        $who = coord_who($app, 'discoveries');
+        if (!$row || !$app->genomeVisibleTo($hash, (bool) $who['owner'], $ids)) {
             http_response_code(404);
             echo 'That genome is not public.';
             return;
         }
         header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: private, no-store');
         echo (string) $row['genome_json'];
         return;
     }
@@ -321,7 +394,7 @@ try {
                 $participantId = $app->ensureParticipant($prevRow);
             }
         }
-        $made = $app->enroll((string) ($_POST['name'] ?? ''), $projects, (int) ($_POST['max'] ?? 2), isset($_POST['consent']), $participantId);
+        $made = $app->enroll((string) ($_POST['name'] ?? ''), $projects, (int) ($_POST['max'] ?? 20), isset($_POST['consent']), $participantId);
         $session = $app->session('participant', $made['workerId']);
         coord_set_cookie('lab_participant', $session['id'], $base);
         header('Cache-Control: no-store');
@@ -333,22 +406,26 @@ try {
         return;
     }
     if ($path === '/me' && $method === 'GET') {
-        $session = $app->sessionById(coord_cookie('lab_participant'));
-        $who = coord_who($app, 'me');
-        if (!$session || $session['role'] !== 'participant') {
-            coord_html(pageJoin($app, 'Enroll this computer to see its own work.', $who));
+        header('Location: ' . coord_home_url($base, 'my-computer'), true, 303);
+        return;
+    }
+    if ($path === '/me/resources' && $method === 'POST') {
+        $part = coord_participant($app);
+        if (!$part) {
+            coord_json(403, ['ok' => false, 'error' => 'Your session ended. Reload the page.']);
             return;
         }
-        $st = $app->db->prepare('SELECT * FROM workers WHERE id = ?');
-        $st->execute([$session['subject']]);
-        $worker = $st->fetch();
-        if (!$worker) {
-            http_response_code(404);
-            echo 'Unknown computer.';
+        $csrf = (string) ($_POST['csrf'] ?? '');
+        if ($csrf === '' || !hash_equals((string) $part['session']['csrf'], $csrf)) {
+            coord_json(403, ['ok' => false, 'error' => 'Missing or bad security token. Reload the page.']);
             return;
         }
-        $pid = $app->ensureParticipant($worker);
-        coord_html(pageMe($app, $app->computersFor($pid), (string) $session['csrf'], $who));
+        $target = (string) ($_POST['id'] ?? '');
+        if (!$app->workerOwns($part['pid'], $target)) {
+            coord_json(403, ['ok' => false, 'error' => 'That computer is not yours.']);
+            return;
+        }
+        coord_save_resources($app, $target, coord_home_url($base, 'my-computer'));
         return;
     }
     if ($path === '/me/pause' && $method === 'POST') {
@@ -388,7 +465,7 @@ try {
             $row = $cur->fetch();
             $app->setPaused($target, !((int) ($row['paused'] ?? 0) === 1));
         }
-        header('Location: ' . $base . '/me', true, 303);
+        header('Location: ' . coord_home_url($base, 'my-computer'), true, 303);
         return;
     }
     if ($path === '/me/setup-command' && $method === 'POST') {
@@ -438,7 +515,7 @@ try {
         if ($self) {
             $app->setCredit($app->ensureParticipant($self), (string) ($_POST['shown'] ?? '1') === '1');
         }
-        header('Location: ' . $base . '/me', true, 303);
+        header('Location: ' . coord_home_url($base, 'my-computer'), true, 303);
         return;
     }
     if ($path === '/logout' && $method === 'POST') {
@@ -566,6 +643,16 @@ try {
             coord_html(pageToken($app, $name, $token, coord_who($app, 'owner'), $cmd['command'], $cmd['expires']));
             return;
         }
+        if ($path === '/owner/resources') {
+            $target = (string) ($_POST['id'] ?? '');
+            $chk = $app->db->prepare('SELECT id FROM workers WHERE id = ? AND revoked = 0');
+            $chk->execute([$target]);
+            if (!$chk->fetch()) {
+                throw new InvalidArgumentException('That computer is unknown or revoked.');
+            }
+            coord_save_resources($app, $target, $base . '/owner#computers');
+            return;
+        }
         if ($path === '/owner/project') {
             $app->setProject((string) ($_POST['id'] ?? ''), isset($_POST['priority']) ? (int) $_POST['priority'] : null, isset($_POST['enabled']));
         } elseif ($path === '/owner/job') {
@@ -645,6 +732,18 @@ try {
             if (isset($body['progress']) && $body['progress'] !== '' && $body['progress'] !== null && is_numeric($body['progress'])) {
                 $extra['progress'] = (int) $body['progress'];
             }
+            if (isset($body['jobId']) && is_string($body['jobId']) && preg_match('/^[a-z0-9._-]{2,64}$/', $body['jobId'])) {
+                $extra['jobId'] = $body['jobId'];
+            }
+            if (!empty($body['control'])) {
+                $extra['control'] = true;
+            }
+            if (!empty($body['reset']) && empty($body['setupCheck'])) {
+                $extra['reset'] = true;
+            }
+            if (isset($body['runtime']) && is_array($body['runtime'])) {
+                $extra['runtime'] = $body['runtime'];
+            }
             coord_json(200, $app->heartbeat($worker, $extra));
             return;
         }
@@ -706,7 +805,8 @@ try {
                 return;
             }
             $worker['code_hash'] = (string) $body['codeHash'];
-            $job = $app->claim($worker);
+            $slot = isset($body['slot']) && is_numeric($body['slot']) ? (int) $body['slot'] : 0;
+            $job = $app->claim($worker, $slot);
             coord_json(200, ['job' => $job]);
             return;
         }
