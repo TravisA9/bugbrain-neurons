@@ -19,6 +19,8 @@ ok(/C:\\Users\\X\\\.bugbrain\\computelab-worker\.ps1/.test(ps), 'the task runs t
   const r = W.ensure({ force: true, stateDir: st, platform: 'win32', run: (cmd, args) => { calls.push(cmd); return 'noise\r\n{"changed":"headless,repeat","ok":true,"task":"ComputeLab Worker","headless":true,"kind":"task-repeat"}\r\n'; } });
   ok(r.ok && r.kind === 'task-repeat' && r.changed === 'headless,repeat' && calls[0] === 'powershell.exe', 'Windows ensure reports the change');
   ok(W.kind(st) === 'task-repeat' && W.read(st).task === 'ComputeLab Worker', 'the result is saved to watchdog.json for the heartbeat');
+  fs.writeFileSync(path.join(st, 'watchdog.json'), '\uFEFF' + fs.readFileSync(path.join(st, 'watchdog.json'), 'utf8').replace(/^\uFEFF/, ''));
+  ok(W.kind(st) === 'task-repeat', 'a UTF-8 BOM on watchdog.json does not make the heartbeat report no watchdog');
   const bad = W.ensure({ force: true, stateDir: st, platform: 'win32', run: () => { const e = new Error('Access is denied.'); throw e; } });
   ok(bad.ok && bad.kept && W.kind(st) === 'task-repeat' && /denied/.test(bad.why), 'a probe that throws after a successful setup keeps the last good watchdog');
 }

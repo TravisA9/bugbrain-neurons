@@ -23,7 +23,7 @@ const INTERVAL_MIN = 3;
 
 function stateDir() { return process.env.BB_STATE_DIR || path.join(os.homedir(), '.bugbrain'); }
 function write(st, rep) { try { fs.writeFileSync(path.join(st, 'watchdog.json'), JSON.stringify(Object.assign({ at: new Date().toISOString() }, rep)) + '\n'); } catch (e) {} return rep; }
-function read(st) { try { return JSON.parse(fs.readFileSync(path.join(st || stateDir(), 'watchdog.json'), 'utf8')); } catch (e) { return null; } }
+function read(st) { try { return JSON.parse(fs.readFileSync(path.join(st || stateDir(), 'watchdog.json'), 'utf8').replace(/^\uFEFF/, '')); } catch (e) { return null; } }
 /* A probe that throws (PowerShell ETIMEDOUT under load, Access denied, and so on) did not learn whether
  * the watchdog is present. Keep the last successful result so a later heartbeat does not tell the site
  * this computer has no watchdog (TacoBell, 2026-11-10: the 3-minute task was already set up; a 60 s
