@@ -120,6 +120,7 @@ $autoSave = http($base . '/me/resources', 'POST', http_build_query(['csrf' => $m
 check(str_contains($capPage, 'runs 3, the allowance limit of 8 cores') && (json_decode($autoSave['body'], true)['jobs'] ?? null) === 0, 'the allowance caps a larger number, and Auto goes back to 0');
 $cssBody = http($base . '/assets/computelab.css')['body'];
 check(str_contains($cssBody, '.resources.has-art{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);') && str_contains($cssBody, 'object-fit:contain;object-position:center') && strpos($fullPage2, 'data-jobs-row') < strpos($fullPage2, '<div class="res-art">'), 'Resources is two thirds controls and one third picture, with the picture centred and never cropped');
+check(str_contains($cssBody, '.resources.has-art .res-main{display:grid;grid-template-columns:310px minmax(0,1fr);grid-template-areas:"head head" "tri jobs" "range hint" "range eff"') && str_contains($cssBody, '.resources.has-art .jobs-row{grid-area:jobs;width:100%') && str_contains($cssBody, 'width:300px;max-width:calc(100% - 10px);height:50px'), 'the controls fill the left two thirds in two columns while the toggle stays a compact pill');
 $status = http($base . '/status.json', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
 $sj = json_decode($status['body'], true);
 $anon = json_decode(http($base . '/status.json')['body'], true);

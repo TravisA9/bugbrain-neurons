@@ -500,6 +500,16 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .revoked-row .quiet{flex:1}
 .revoked-row form{margin:0}
 .removed-note{margin-top:10px}
+.resources.has-art .res-main{display:grid;grid-template-columns:310px minmax(0,1fr);grid-template-areas:"head head" "tri jobs" "range hint" "range eff";column-gap:20px;align-items:start;align-content:center}
+.resources.has-art .res-head{grid-area:head;max-width:none}
+.resources.has-art .tri{grid-area:tri}
+.resources.has-art .range-row{grid-area:range;width:100%}
+.resources.has-art .jobs-row{grid-area:jobs;width:100%;margin-top:0;align-self:center;min-height:60px}
+.resources.has-art .hint{grid-area:hint;max-width:none;margin:11px 0 6px}
+.resources.has-art .effective{grid-area:eff;max-width:none}
+.resources.has-art .res-main noscript{grid-column:1/-1}
+@media (max-width:1180px){.resources.has-art .res-main{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "tri" "range" "jobs" "hint" "eff"}.resources.has-art .jobs-row{margin-top:9px;min-height:0}.resources.has-art .range-row{width:310px;max-width:100%}}
+@media (max-width:1180px) and (min-width:561px){.resources.has-art .range-row,.resources.has-art .jobs-row{width:100%}.resources.has-art .range-row::before{left:155px}}
 .resources .jobs-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;box-sizing:border-box;width:310px;max-width:100%;margin-top:9px;padding:7px 9px 7px 13px;border:1px solid #263642;border-radius:10px;background:#0b1219;transition:opacity .25s}
 .resources .jobs-row.is-idle{opacity:.5;border-style:dashed}
 .resources .jobs-label{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#aeb9c2;flex:1 1 auto}
@@ -510,7 +520,7 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .resources .stepper output{min-width:38px;text-align:center;font:600 12px var(--display);color:#e9fff5}
 .resources .jobs-note{flex:1 0 100%;font:10px var(--mono);color:var(--muted)}
 .res-main{min-width:0}
-.res-art{position:relative;align-self:stretch;min-height:190px;margin:0}
+.res-art{position:relative;align-self:stretch;min-height:250px;margin:0}
 .res-art picture{position:absolute;inset:0;display:block;opacity:0;transform:scale(.94) translateY(4px);transition:opacity .35s ease,transform .5s cubic-bezier(.25,1,.5,1);pointer-events:none}
 .res-art picture.is-on{opacity:1;transform:none}
 .res-art picture{display:flex;align-items:center;justify-content:center}
