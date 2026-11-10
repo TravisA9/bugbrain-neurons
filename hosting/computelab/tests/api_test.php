@@ -834,9 +834,12 @@ $a5 = $app->cached('t-cache', 120, $mk);
 check($a1 === ['n' => 1] && $a2 === ['n' => 1] && $a3 === ['n' => 1] && $a4 === ['n' => 2] && $a5 === ['n' => 2] && $builds === 2, 'the Discoveries cache builds once per two minutes and serves the old copy while another request rebuilds it');
 $pl = $app->discoveriesPayload();
 check(isset($pl['items'], $pl['series'], $pl['board']) && $app->discoveriesPayload() === $pl, 'the Discoveries payload comes from the shared cache');
-$idx = array_map(function ($r) { return (string) $r['name']; }, $app->db->query('PRAGMA index_list(design_records)')->fetchAll());
-check(in_array('idx_dr_job', $idx, true) && in_array('idx_dr_worker_eval', $idx, true), 'design_records has the job and worker-credit indexes uploads need (built from the command line)');
-check(strpos($src, "if (PHP_SAPI === 'cli') {\n            \$this->ensureIndexes('design_records', [\n                'idx_dr_job'") !== false, 'big index builds never run inside a web request');
 check(strpos($src, "engine_version NOT IN (\\'spikefoundry-designer-1\\', \\'spikefoundry-designer-2\\') ORDER BY seq DESC LIMIT 400") !== false && strpos($src, 'ORDER BY created_at DESC LIMIT 400') === false, 'topDesigns reads the newest records through the (task_id, seq) index; created_at is TEXT and cannot be indexed on MySQL');
+$tot = [];
+foreach ([$lib, $plateau, $over] as $env) { foreach ($env['app']->db->query("SELECT t.worker_id, t.n, t.ms, (SELECT COUNT(*) FROM design_records r WHERE r.worker_id = t.worker_id AND r.engine_version NOT IN ('spikefoundry-designer-1', 'spikefoundry-designer-2')) AS real_n, (SELECT COALESCE(SUM(eval_ms), 0) FROM design_records r WHERE r.worker_id = t.worker_id AND r.engine_version NOT IN ('spikefoundry-designer-1', 'spikefoundry-designer-2')) AS real_ms FROM worker_totals t")->fetchAll() as $r) { $tot[] = $r; } }
+$same = $tot !== [];
+foreach ($tot as $r) { if ((int) $r['n'] !== (int) $r['real_n'] || (int) $r['ms'] !== (int) $r['real_ms']) { $same = false; echo "  totals {$r['worker_id']}: {$r['n']}/{$r['real_n']} {$r['ms']}/{$r['real_ms']}\n"; } }
+check($same, 'running worker totals match a full count after every upload in this test (' . count($tot) . ' computers)');
+check(strpos($src, 'SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id') === strrpos($src, 'SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id'), 'uploads scan a computer\'s records only once, in scanWorkerTotals');
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

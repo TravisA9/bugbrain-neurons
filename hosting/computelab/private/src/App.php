@@ -241,16 +241,6 @@ final class App
             'idx_dr_genome' => 'genome_hash',
         ]);
         $this->ensureIndexes('design_genomes', ['idx_dg_design' => 'design_hash']);
-        /* Every uploaded record counts its job's records, and every upload sums the worker's credit. Without these
-         * each was a full scan of the million-row table, and slow uploads filled the PHP slots so every page waited.
-         * Building them on a big table takes a while, so only the command line (deploy or bin/upgrade) does it,
-         * never a web request. */
-        if (PHP_SAPI === 'cli') {
-            $this->ensureIndexes('design_records', [
-                'idx_dr_job' => 'job_id',
-                'idx_dr_worker_eval' => 'worker_id, engine_version, eval_ms',
-            ]);
-        }
         /* Shared cache for expensive read-only pages (Discoveries). One request rebuilds a stale entry while the
          * others keep serving the old copy. */
         $this->db->exec('CREATE TABLE IF NOT EXISTS page_cache (
@@ -258,6 +248,15 @@ final class App
             body ' . (($this->config['driver'] ?? '') === 'sqlite' ? 'TEXT' : 'LONGTEXT') . ' NOT NULL,
             built_at INTEGER NOT NULL,
             building_until INTEGER NOT NULL DEFAULT 0
+        )');
+        /* Running credit totals per computer. Every upload used to count and sum all of the computer's records (one
+         * computer has ~945k) twice per request; uploads arrive in waves as job slots finish together, and those scans
+         * stalled every page for about a minute every three minutes. */
+        $this->db->exec('CREATE TABLE IF NOT EXISTS worker_totals (
+            worker_id VARCHAR(191) PRIMARY KEY,
+            n INTEGER NOT NULL,
+            ms BIGINT NOT NULL,
+            tasks TEXT NOT NULL
         )');
         $this->ensureIndexes('jobs', ['idx_jobs_seed' => 'seed']);
         $this->ensureColumn('results', 'seconds', 'INTEGER');
@@ -2369,9 +2368,43 @@ final class App
 
     public function designsByWorker(string $workerId): int
     {
+        $saved = $this->workerTotalsRow($workerId);
+        if ($saved !== null) {
+            return $saved['n'];
+        }
         $st = $this->db->prepare('SELECT COUNT(*) FROM design_records WHERE worker_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')');
         $st->execute([$workerId]);
         return (int) $st->fetchColumn();
+    }
+
+    private function workerTotalsRow(string $workerId): ?array
+    {
+        $st = $this->db->prepare('SELECT n, ms, tasks FROM worker_totals WHERE worker_id = ?');
+        $st->execute([$workerId]);
+        $row = $st->fetch();
+        if (!$row) {
+            return null;
+        }
+        $tasks = [];
+        $list = json_decode((string) $row['tasks'], true);
+        foreach (is_array($list) ? $list : [] as $t) {
+            $tasks[(string) $t] = true;
+        }
+        return ['tasks' => $tasks, 'n' => (int) $row['n'], 'ms' => (int) $row['ms']];
+    }
+
+    private function scanWorkerTotals(string $workerId): array
+    {
+        $prior = $this->db->prepare('SELECT DISTINCT task_id FROM design_records WHERE worker_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')');
+        $prior->execute([$workerId]);
+        $tasks = [];
+        foreach ($prior->fetchAll() as $row) {
+            $tasks[(string) $row['task_id']] = true;
+        }
+        $sum = $this->db->prepare('SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')');
+        $sum->execute([$workerId]);
+        $tot = $sum->fetch() ?: ['n' => 0, 'ms' => 0];
+        return ['tasks' => $tasks, 'n' => (int) $tot['n'], 'ms' => (int) $tot['ms']];
     }
 
     public function seedJobFromDesigns(string $templateId, string $taskId, int $count, int $seed): string
@@ -2474,26 +2507,34 @@ final class App
     {
         $wid = (string) $worker['id'];
         if (!isset($this->highlightMemo[$wid])) {
-            $prior = $this->db->prepare('SELECT DISTINCT task_id FROM design_records WHERE worker_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')');
-            $prior->execute([$wid]);
-            $tasks = [];
-            foreach ($prior->fetchAll() as $row) {
-                $tasks[(string) $row['task_id']] = true;
+            $saved = $this->workerTotalsRow($wid);
+            if ($saved !== null) {
+                // Saved totals do not include the record just stored; it is added below.
+                $this->highlightMemo[$wid] = $saved + ['first' => false];
+            } else {
+                // First upload since the totals table: count once (includes the record just stored) and save.
+                $tot = $this->scanWorkerTotals($wid);
+                $this->highlightMemo[$wid] = $tot + ['first' => true];
+                try {
+                    $this->db->prepare('INSERT INTO worker_totals (worker_id, n, ms, tasks) VALUES (?, ?, ?, ?)')
+                        ->execute([$wid, $tot['n'], $tot['ms'], json_encode(array_keys($tot['tasks']))]);
+                } catch (PDOException $e) {
+                    // another upload from this computer saved it first
+                }
             }
-            $sum = $this->db->prepare('SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')');
-            $sum->execute([$wid]);
-            $tot = $sum->fetch() ?: ['n' => 0, 'ms' => 0];
-            // The record just stored is already counted; later records in this batch are added below.
-            $this->highlightMemo[$wid] = ['tasks' => $tasks, 'n' => (int) $tot['n'], 'ms' => (int) $tot['ms'], 'first' => true];
         }
         $memo =& $this->highlightMemo[$wid];
         if (!$memo['first']) {
             $memo['n'] += 1;
             $memo['ms'] += $evalMs;
+            $this->db->prepare('UPDATE worker_totals SET n = n + 1, ms = ms + ? WHERE worker_id = ?')->execute([$evalMs, $wid]);
         }
         $memo['first'] = false;
         $priorTasks = $memo['tasks'];
-        $memo['tasks'][$taskId] = true;
+        if (!isset($memo['tasks'][$taskId])) {
+            $memo['tasks'][$taskId] = true;
+            $this->db->prepare('UPDATE worker_totals SET tasks = ? WHERE worker_id = ?')->execute([json_encode(array_keys($memo['tasks'])), $wid]);
+        }
         $others = $this->db->prepare('SELECT score_json, worker_id, genome_hash FROM design_records WHERE task_id = ? AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\') ORDER BY seq DESC LIMIT 200');
         $others->execute([$taskId]);
         $bestOther = -1.0;
