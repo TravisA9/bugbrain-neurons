@@ -48,7 +48,8 @@ function setup_windows(string $token, string $publicUrl, string $repo, string $r
         . "set \"LOGS=%USERPROFILE%\\.bugbrain\\logs\"\r\n"
         . "if not exist \"%DEST%\" mkdir \"%DEST%\"\r\n"
         . "if not exist \"%LOGS%\" mkdir \"%LOGS%\"\r\n"
-        . "powershell -NoProfile -Command \"\$p = Join-Path \$env:USERPROFILE '.bugbrain\\coordinator-token'; [IO.File]::WriteAllText(\$p, '" . $token . "' + [Environment]::NewLine)\"\r\n"
+        // Never overwrite another registration's token silently: keep the old one next to it.
+        . "powershell -NoProfile -Command \"\$p = Join-Path \$env:USERPROFILE '.bugbrain\\coordinator-token'; \$n = '" . $token . "'; if ((Test-Path \$p) -and ([IO.File]::ReadAllText(\$p).Trim() -ne \$n)) { \$b = \$p + '.previous-' + (Get-Date -Format yyyyMMdd-HHmmss); Copy-Item \$p \$b; Write-Host ('This computer already had a Compute Lab token (another computer entry). It was kept in ' + \$b + '. If you meant to set up that same entry again, use Set up again on it instead.') }; [IO.File]::WriteAllText(\$p, \$n + [Environment]::NewLine)\"\r\n"
         . "setx BB_COORDINATOR_URL \"" . $publicUrl . "\" >nul\r\n"
         . "setx BB_COORDINATOR_TOKEN_FILE \"%USERPROFILE%\\.bugbrain\\coordinator-token\" >nul\r\n"
         . "setx BB_CODE_BRANCH \"" . $ref . "\" >nul\r\n"
@@ -75,28 +76,28 @@ function setup_windows(string $token, string $publicUrl, string $repo, string $r
         . "  exit /b 1\r\n"
         . ")\r\n"
         . "powershell -NoProfile -Command \"[IO.File]::WriteAllText((Join-Path \$env:USERPROFILE '.bugbrain\\computelab-worker.ps1'), [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('" . base64_encode(setup_windows_worker_ps1($publicUrl, $ref)) . "')))\"\r\n"
-        . "powershell -NoProfile -Command \"\$ps1 = Join-Path \$env:USERPROFILE '.bugbrain\\computelab-worker.ps1'; \$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument ('-NoProfile -WindowStyle Hidden -File \"' + \$ps1 + '\"'); \$trigger = New-ScheduledTaskTrigger -AtLogOn; \$settings = New-ScheduledTaskSettingsSet -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries; Register-ScheduledTask -TaskName 'ComputeLabWorker' -Action \$action -Trigger \$trigger -Settings \$settings -Force | Out-Null; Start-ScheduledTask -TaskName 'ComputeLabWorker'\"\r\n"
-        . "(\r\n"
-        . "echo @echo off\r\n"
-        . "echo schtasks /End /TN ComputeLabWorker ^>nul 2^>^&1\r\n"
-        . "echo schtasks /Delete /TN ComputeLabWorker /F ^>nul 2^>^&1\r\n"
-        . "echo echo Compute Lab will not start at logon anymore.\r\n"
-        . ") > \"%DEST%\\stop-computelab.cmd\"\r\n"
-        . "(\r\n"
-        . "echo @echo off\r\n"
-        . "echo call \"%%USERPROFILE%%\\.bugbrain\\stop-computelab.cmd\"\r\n"
-        . "echo if /I \"%%~1\"==\"--keep\" goto done\r\n"
-        . "echo del /q \"%%USERPROFILE%%\\.bugbrain\\coordinator-token\" 2^>nul\r\n"
-        . "echo rmdir /s /q \"%%USERPROFILE%%\\.bugbrain\\worker\" 2^>nul\r\n"
-        . "echo :done\r\n"
-        . "echo echo Compute Lab was removed from this Windows account.\r\n"
-        . ") > \"%DEST%\\uninstall-computelab.cmd\"\r\n"
+        . "for /f %%t in ('powershell -NoProfile -Command \"[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()\"') do set \"SINCE=%%t\"\r\n"
+        // Per-user task, then schtasks, then the Startup folder; reuses an existing Compute Lab task and never starts a second worker.
+        . "powershell -NoProfile -ExecutionPolicy Bypass -File \"%REPO%\\run\\install-windows.ps1\" -Branch \"" . $ref . "\" -Url \"" . $publicUrl . "\"\r\n"
+        . "set \"INSTALLED=%ERRORLEVEL%\"\r\n"
+        // Success is printed only after the worker process is alive and has checked in with the coordinator.
+        . "node \"%REPO%\\run\\verify-start.js\" --url \"" . $publicUrl . "\" --token-file \"%USERPROFILE%\\.bugbrain\\coordinator-token\" --since %SINCE% --wait 150\r\n"
+        . "if errorlevel 1 goto notrunning\r\n"
+        . "if not \"%INSTALLED%\"==\"0\" goto notrunning\r\n"
+        . "echo.\r\n"
         . "echo Compute Lab is running in the background and will start again when you log on.\r\n"
         . "echo Logs are in %USERPROFILE%\\.bugbrain\\logs\r\n"
         . "echo To stop it, run %USERPROFILE%\\.bugbrain\\stop-computelab.cmd\r\n"
         . "echo To remove the task, the token, and the checkout, run %USERPROFILE%\\.bugbrain\\uninstall-computelab.cmd\r\n"
         . "echo Your token was saved and was not printed here.\r\n"
-        . "pause\r\n";
+        . "pause\r\n"
+        . "exit /b 0\r\n"
+        . ":notrunning\r\n"
+        . "echo.\r\n"
+        . "echo FAIL: Compute Lab is NOT running yet. Read the FAIL line and Fix above, fix it, and run this file again.\r\n"
+        . "echo The problem was also sent to the Compute Lab owner when the coordinator could be reached.\r\n"
+        . "pause\r\n"
+        . "exit /b 1\r\n";
 }
 
 /* The scheduled task runs this. It sets the Compute Lab settings and starts the launcher loop (run/worker.ps1), which
@@ -229,6 +230,8 @@ exec /bin/sh "$HOME/.bugbrain/worker/run/worker.sh"
 ENDRUN
 chmod 700 "$ST/computelab-worker.sh"
 # Stop an earlier copy first (a job it was running is handed back and runs again later).
+SINCE=$(( $(date +%s) * 1000 ))
+rm -f "$ST/coord-alive.json"
 if command -v systemctl >/dev/null 2>&1; then systemctl --user stop computelab.service >/dev/null 2>&1 </dev/null; fi
 [ -f "$ST/worker.pid" ] && kill "$(cat "$ST/worker.pid")" 2>/dev/null
 pkill -u "$(id -u)" -f 'run/supervisor.js' >/dev/null 2>&1 </dev/null
@@ -310,6 +313,12 @@ if [ "${1:-}" != "--keep" ]; then rm -f "$HOME/.bugbrain/coordinator-token"; rm 
 echo "Compute Lab was removed from this account."
 ENDUN
 chmod 700 "$ST/stop-computelab.sh" "$ST/uninstall-computelab.sh"
+# Only say it is running once the worker process is alive and has checked in with the coordinator.
+if ! "$best" "$repo/run/verify-start.js" --url "$URL" --token-file "$TOKEN_FILE" --since "$SINCE" --wait 150 </dev/null; then
+  say ""
+  say "FAIL: Compute Lab is NOT running yet. Read the FAIL line and Fix above, fix it, and run the setup command again."
+  exit 1
+fi
 say ""
 say "Compute Lab is running in the background ($METHOD) and starts again after a restart or login."
 say "Worker log:  $ST/worker.log"

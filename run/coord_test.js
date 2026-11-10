@@ -212,6 +212,17 @@ const job = {
     check(aborted, 'a request that never answers is given up after its timeout');
   }
 
+  {
+    const V = require('./verify-start.js');
+    const t = Date.now();
+    check(V.judge({ since: t, alive: true, aliveAt: t + 5, coordRunning: true, launcherRunning: true }).ok === true, 'setup says running only when the worker checked in after setup started and is alive');
+    check(V.judge({ since: t, alive: true, aliveAt: t - 60000, coordRunning: true, launcherRunning: true }).ok === false, 'a check-in from before this setup does not count');
+    const dead = V.judge({ since: t, alive: false, aliveAt: 0, coordRunning: false, launcherRunning: false });
+    check(dead.ok === false && /not running/.test(dead.what) && dead.fix.length > 10, 'a worker that never started is a FAIL with a plain fix');
+    const quiet = V.judge({ since: t, alive: false, aliveAt: 0, coordRunning: false, launcherRunning: true, status: { why: 'token refused' } });
+    check(quiet.ok === false && /not checked in/.test(quiet.what) && /token refused/.test(quiet.what), 'a worker that runs but never reached the coordinator is a FAIL that says why');
+  }
+
   console.log(n + ' checks');
   process.exit(fail === 0 ? 0 : 1);
 })().catch(e => { console.error(e); process.exit(1); });

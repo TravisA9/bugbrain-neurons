@@ -27,7 +27,7 @@ function finish(reach) {
   var summary = ok ? 'Setup finished: all checks passed' : 'Setup failed: ' + firstFail;
   var report = D.collect({ kind: 'setup', ok: ok, summary: summary.slice(0, 280), checks: checks, hint: hint, reach: reach, log: D.logTail() });
   console.log('');
-  console.log(ok ? 'Result: everything looks good. This computer should show as Online on the Compute Lab page within a minute.'
+  console.log(ok ? 'Result: all checks passed. Next, setup installs and starts the worker and waits for it to check in.'
                  : 'Result: setup did not finish. ' + firstFail + (hint ? '\nFix: ' + hint : ''));
   var token = D.tokenFrom(tokenFile);
   if (reach === false || !token) { process.exitCode = ok ? 0 : 1; return; }

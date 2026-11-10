@@ -57,6 +57,14 @@ function decideRetry(err, delay) {
   if (!isRetryable(err)) return { action: 'crash', delay: 0 };
   return { action: 'retry', delay: nextBackoff(delay) };
 }
+/* Setup waits for this file before it says the worker is running: it is written only after the
+ * coordinator answered a check-in from this process. */
+function markAlive(extra) {
+  try {
+    const dir = process.env.BB_STATE_DIR || path.join(require('os').homedir(), '.bugbrain');
+    fs.writeFileSync(path.join(dir, 'coord-alive.json'), JSON.stringify(Object.assign({ at: new Date().toISOString(), pid: process.pid }, extra || {})) + '\n');
+  } catch (e) {}
+}
 /* A request that never answers must not hold a job slot forever. */
 function timeoutSignal(ms) {
   try { return typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined; } catch (e) { return undefined; }
@@ -462,6 +470,7 @@ async function multi(a, base, token, hash) {
     if (beat.revoked) { fatal = new Error('Worker token was revoked.'); fatal.status = 401; return; }
     const s = settingsFrom(beat);
     adopt(resourcePlan(s.mode, s.pct, cores, maxSlots));
+    markAlive({ mode: s.mode });
   };
   let delay = 0;
   for (;;) {
