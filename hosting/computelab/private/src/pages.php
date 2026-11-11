@@ -936,7 +936,7 @@ function myComputerPanel(App $app, string $base, ?array $computers, array $nav):
             ? 'Mark a computer with “Show on My computer” in the owner console and it will appear here. Other computers stay listed only in the owner console.'
             : 'Link this browser to a computer to see what it is doing, set how much of it Compute Lab may use, and follow what it finds.';
         return $head . '<div class="empty"><strong>No computer linked yet</strong><p>' . h($why) . '</p>'
-            . '<p>Setup takes one download. A small background program does the work, and you can turn it off or down at any time.</p>'
+            . '<p>If this computer already runs Compute Lab, run a fresh setup command on it to reconnect this browser.</p>'
             . addComputerButton($base) . '</div></div></section>';
     }
     $cards = '';

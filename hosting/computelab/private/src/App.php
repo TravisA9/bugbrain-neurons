@@ -791,8 +791,8 @@ final class App
     /**
      * Setup ran on a computer that already has a valid token for $existing. Keep that entry, and retire the entry the
      * new setup command was made for when it is a clear, unused duplicate (no results, no designs, no running job).
-     * If the kept entry stands alone and the new one belonged to a signed-in participant, the kept entry joins that
-     * participant, so it still shows up for the person who just ran setup.
+     * For a standalone kept computer, a fresh browser session follows the kept entry. If the browser already
+     * belongs to a participant with other computers, add the kept computer to that participant instead.
      */
     public function keepExistingEntry(array $existing, string $newToken): array
     {
@@ -812,11 +812,15 @@ final class App
         $eid = (string) $existing['id'];
         $npid = (string) ($new['participant_id'] ?? '');
         $epid = (string) ($existing['participant_id'] ?? '');
-        if ($npid !== '' && $npid !== $nid && ($epid === '' || $epid === $eid)) {
+        if ($npid !== '' && ($epid === '' || $epid === $eid)) {
             $others = $this->db->prepare('SELECT COUNT(*) FROM workers WHERE participant_id = ? AND id <> ?');
             $others->execute([$eid, $eid]);
             if ((int) $others->fetchColumn() === 0) {
-                $this->db->prepare('UPDATE workers SET participant_id = ? WHERE id = ?')->execute([$npid, $eid]);
+                if ($npid === $nid) {
+                    $this->db->prepare("UPDATE sessions SET subject = ? WHERE role = 'participant' AND subject = ?")->execute([$eid, $nid]);
+                } else {
+                    $this->db->prepare('UPDATE workers SET participant_id = ? WHERE id = ?')->execute([$npid, $eid]);
+                }
                 $out['linked'] = true;
             }
         }
@@ -1650,11 +1654,14 @@ final class App
         return $this->session('owner', (string) $row['username']);
     }
 
+    public const PARTICIPANT_SESSION_SECONDS = 30 * 86400;
+
     public function session(string $role, string $subject): array
     {
         $id = bin2hex(random_bytes(16));
         $csrf = bin2hex(random_bytes(16));
-        $exp = gmdate('c', strtotime($this->now()) + 86400);
+        $ttl = $role === 'participant' ? self::PARTICIPANT_SESSION_SECONDS : 86400;
+        $exp = gmdate('c', strtotime($this->now()) + $ttl);
         $this->db->prepare('INSERT INTO sessions (id, role, subject, csrf, expires_at) VALUES (?, ?, ?, ?, ?)')->execute([$id, $role, $subject, $csrf, $exp]);
         return ['id' => $id, 'role' => $role, 'subject' => $subject, 'csrf' => $csrf];
     }

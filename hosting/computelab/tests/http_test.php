@@ -400,6 +400,18 @@ check(str_contains($kept['out'], 'This computer is already added as dup-old') &&
     && $kept['saved'] === $oldPc['token'] && $kept['prev'] === '' && $kept['left'] === 0
     && $app->workerByToken($oldPc['token']) !== null && $app->workerByToken($newPc['token']) === null && $app->tokenForSetupCode($newCode) === null
     && (string) $oldRow['participant_id'] === $person['participantId'], 'setup on an already-added computer keeps its entry and token, retires the unused new entry and its setup code, and links the kept entry to the person who ran it');
+$returning = $app->enroll('reconnect-existing', ['spikefoundry'], 2, true);
+$temporary = $app->enroll('reconnect-temporary', ['spikefoundry'], 2, true);
+$returningSession = $app->session('participant', $temporary['workerId']);
+$keptReturning = $runTokenStep($temporary['token'], $returning['token']);
+$returningHome = http($base . '/', 'GET', null, ['Cookie: lab_participant=' . $returningSession['id']]);
+$rebound = $app->sessionById($returningSession['id']);
+check($keptReturning['saved'] === $returning['token'] && ($rebound['subject'] ?? '') === $returning['workerId']
+    && str_contains($returningHome['body'], '>reconnect-existing<')
+    && !str_contains($returningHome['body'], '>reconnect-temporary<'),
+    'fresh setup reconnects an unlinked browser to a standalone computer and preserves its token');
+check(strtotime($rebound['expires_at'] ?? '') - strtotime($app->now()) >= 29 * 86400,
+    'the refreshed participant session lasts 30 days');
 $busyOld = $app->enroll('dup-old2', ['spikefoundry'], 2, true);
 $busyNew = $app->enroll('dup-busy', ['spikefoundry'], 2, true);
 $app->db->prepare('INSERT INTO leases (job_id, worker_id, until_at, heartbeat_at) VALUES (?, ?, ?, ?)')->execute(['dup-job', $busyNew['workerId'], gmdate('c', time() + 60), gmdate('c')]);

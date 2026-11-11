@@ -103,9 +103,9 @@ function coord_cookie(string $name): string
     return (string) ($_COOKIE[$name] ?? '');
 }
 
-function coord_set_cookie(string $name, string $value, string $base): void
+function coord_set_cookie(string $name, string $value, string $base, int $ttl = 86400): void
 {
-    setcookie($name, $value, ['expires' => time() + 86400, 'path' => ($base === '' ? '/' : $base . '/'), 'httponly' => true, 'samesite' => 'Lax']);
+    setcookie($name, $value, ['expires' => time() + $ttl, 'path' => ($base === '' ? '/' : $base . '/'), 'httponly' => true, 'samesite' => 'Lax']);
 }
 
 function coord_clear_cookie(string $name, string $base): void
@@ -495,7 +495,7 @@ try {
         }
         $made = $app->enroll((string) ($_POST['name'] ?? ''), $projects, (int) ($_POST['max'] ?? 20), isset($_POST['consent']), $participantId);
         $session = $app->session('participant', $made['workerId']);
-        coord_set_cookie('lab_participant', $session['id'], $base);
+        coord_set_cookie('lab_participant', $session['id'], $base, App::PARTICIPANT_SESSION_SECONDS);
         header('Cache-Control: no-store');
         $who = coord_who($app, 'join');
         $who['participant'] = true;
