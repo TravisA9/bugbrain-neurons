@@ -11,7 +11,6 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function fakeSpawn(ms) {
   return function spawn() {
     const child = new EventEmitter();
-    child.pid = 7;
     child.exitCode = null;
     child.signalCode = null;
     const timer = setTimeout(() => {
@@ -46,6 +45,8 @@ const job = {
   const bad = new Error('Job code hash does not match this checkout.');
   check(coord.decideRetry(net, 0).action === 'retry' && coord.decideRetry(net, 0).delay === 1000, 'a network error retries inside the loop');
   check(coord.decideRetry(server, 1000).action === 'retry' && coord.decideRetry(server, 1000).delay === 2000, 'an HTTP 500 retries with a longer wait');
+  check(coord.decideRetry({ status: 429, retryAfterMs: 30000 }, 1000).delay === 30000,
+    'a rate-limited coordinator response retries after the server delay');
   check(coord.decideRetry(denied, 1000).action === 'stop', 'a revoked token stops the worker');
   check(coord.decideRetry(bad, 1000).action === 'crash', 'a protocol mismatch is not retried as a transient error');
   let delay = 0;

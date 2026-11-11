@@ -51,12 +51,12 @@ function nextBackoff(current) {
 function isRetryable(err) {
   if (!err) return false;
   if (err.network) return true;
-  return typeof err.status === 'number' && err.status >= 500 && err.status <= 599;
+  return err.status === 429 || (typeof err.status === 'number' && err.status >= 500 && err.status <= 599);
 }
 function decideRetry(err, delay) {
   if (err && err.status === 401) return { action: 'stop', delay: 0 };
   if (!isRetryable(err)) return { action: 'crash', delay: 0 };
-  return { action: 'retry', delay: nextBackoff(delay) };
+  return { action: 'retry', delay: Math.max(nextBackoff(delay), err.retryAfterMs || 0) };
 }
 /* Setup waits for this file before it says the worker is running: it is written only after the
  * coordinator answered a check-in from this process. */
@@ -99,9 +99,20 @@ async function api(base, token, route, body) {
   if (!res.ok) {
     const err = new Error(data.error || ('Coordinator answered ' + res.status));
     err.status = res.status;
+    if (res.status === 429) err.retryAfterMs = retryAfterMs(res, 0);
     throw err;
   }
   return data;
+}
+async function submitJobResult(base, token, jobId, result) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await api(base, token, '/api/v1/result', { jobId, result });
+    } catch (error) {
+      if (error.status !== 429 || attempt >= 3) throw error;
+      await sleep(error.retryAfterMs || 5000);
+    }
+  }
 }
 function stopChild(child) {
   if (!child || child.exitCode != null || child.signalCode != null || child._coordStop) return;
@@ -608,7 +619,7 @@ async function multi(a, base, token, hash) {
           withDigest(result);
           await sendDiag(base, token, 'error', false, 'Design upload failed for ' + job.id + ': ' + uploaded.error, { hint: 'The job result is still sent; its designs were not stored.' });
         }
-        await api(base, token, '/api/v1/result', { jobId: job.id, result: result });
+        await submitJobResult(base, token, job.id, result);
         if (uploaded.ok && result.status === 'done') cleanupJobDir(outDir);
         say({ ok: true, job: job.id, slot: slot, status: result.status });
       } catch (e) {
@@ -701,7 +712,7 @@ async function main() {
         result.summary = (String(result.summary || '') + ' Design upload failed: ' + uploaded.error).slice(0, 500);
         withDigest(result);
       }
-      await api(base, token, '/api/v1/result', { jobId: claimed.job.id, result: result });
+      await submitJobResult(base, token, claimed.job.id, result);
       if (uploaded.ok && result.status === 'done') cleanupJobDir(outDir);
       console.log(JSON.stringify({ ok: true, job: claimed.job.id, status: result.status }));
       if (a.once) return;
