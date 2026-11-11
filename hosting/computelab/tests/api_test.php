@@ -997,6 +997,26 @@ sort($shownHeld);
 check(count($shown) === 2 && $shownHeld === [0.6, 0.62] && !in_array(0.738, $shownHeld, true)
     && in_array('held-out', $shownBadges['0.62'], true) && in_array('efficiency', $shownBadges['0.60'], true) && in_array('train', $shownBadges['0.62'], true),
     'Discoveries hides a silent high-accuracy design and lists firing designs with badges for the measures they lead');
+$legacySilent = $sil['db']->prepare("INSERT INTO design_records
+    (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, seq, created_at, held, quality)
+    VALUES (?, ?, 'sequence', 'base-1', ?, 4, 4, 0, 1, 'spikefoundry-designer-3', 'p', ?, ?, ?, ?, 0.99, 0.99)");
+$firing = [];
+for ($i = 30; $i < 48; $i++) {
+    $firing[] = capRecord($i, 0.50 + ($i - 30) / 1000, 'floor-job', 'sequence');
+}
+$sil['app']->ingestDesigns($sw, $firing, $sil['app']->protocolHash());
+for ($i = 0; $i < 20; $i++) {
+    $legacySilent->execute(['old-silent-' . $i, 'old-silent-' . $i, json_encode(['heldOut' => 0.99, 'train' => 0.99, 'recall' => 0]), $sw['id'], 100 + $i, 100 + $i, $sil['clock']->t]);
+}
+$reloaded = new App($sil['db'], ['design_keep_per_measure' => 20] + $sil['app']->config);
+$newRec = capRecord(20, 0.64, 'floor-job-2', 'sequence');
+$newRec['neurons'] = 10;
+$newRec['synapses'] = 10;
+$newResult = $reloaded->ingestDesigns($sw, [$newRec], $reloaded->protocolHash());
+$prunedFloor = $reloaded->pruneDesigns();
+check($newResult['stored'] === 1 && $prunedFloor['records'] === 20
+    && in_array(0.64, array_column($reloaded->discoveries(), 'held'), true),
+    'historical silent scores cannot fill the retention slots or crowd newer firing designs out of Discoveries');
 
 // Credit totals saved before a prune are applied once the schema step runs.
 $seedFile = sys_get_temp_dir() . '/totals-seed-' . bin2hex(random_bytes(3)) . '.json';

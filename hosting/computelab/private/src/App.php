@@ -2505,7 +2505,7 @@ final class App
             });
             return ['items' => $items, 'series' => $series, 'board' => $board['rows'] ?? []];
         };
-        return $ttl > 0 ? $this->cached('discoveries-v2', $ttl, $build) : $build();
+        return $ttl > 0 ? $this->cached('discoveries-v3', $ttl, $build) : $build();
     }
 
     public function cached(string $key, int $ttl, callable $build): array
@@ -2733,7 +2733,7 @@ final class App
     private function taskDiscoveryRows(string $taskId): array
     {
         $cols = 'id, genome_hash, design_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, worker_id, seed, created_at, confirmations, quality';
-        $where = 'task_id = ? AND duplicate_of IS NULL AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')';
+        $where = 'task_id = ? AND duplicate_of IS NULL AND spikes > 0 AND engine_version NOT IN (\'spikefoundry-designer-1\', \'spikefoundry-designer-2\')';
         $unscored = $this->db->prepare('SELECT 1 FROM design_records WHERE task_id = ? AND quality IS NULL LIMIT 1');
         $unscored->execute([$taskId]);
         $order = $unscored->fetch() ? 'seq DESC' : 'quality DESC, seq ASC';
@@ -2743,7 +2743,7 @@ final class App
         foreach ($st->fetchAll() as $row) {
             $byId[(string) $row['id']] = $row;
         }
-        $small = $this->db->prepare("SELECT $cols FROM design_records WHERE $where AND spikes > 0 ORDER BY (neurons + synapses) ASC, seq ASC LIMIT 400");
+        $small = $this->db->prepare("SELECT $cols FROM design_records WHERE $where ORDER BY (neurons + synapses) ASC, seq ASC LIMIT 400");
         $small->execute([$taskId]);
         foreach ($small->fetchAll() as $row) {
             $byId[(string) $row['id']] = $row;
@@ -3193,13 +3193,16 @@ final class App
     /** True when the design actually responds to a positive label (or, without recall/f1, when it spiked). */
     private function designFires(array $m): bool
     {
+        if ($m['spikes'] <= 0) {
+            return false;
+        }
         if ($m['recall'] !== null) {
             return $m['recall'] > 0;
         }
         if ($m['f1'] !== null) {
             return $m['f1'] > 0;
         }
-        return $m['spikes'] > 0;
+        return true;
     }
 
     private function designBeatsRandom(array $m, ?float $randomMean): bool
@@ -3244,10 +3247,13 @@ final class App
         $trains = [];
         $margins = [];
         $eff = [];
-        $st = $this->db->prepare('SELECT score_json, neurons, synapses, spikes, held FROM design_records WHERE task_id = ? AND duplicate_of IS NULL');
+        $st = $this->db->prepare('SELECT score_json, neurons, synapses, spikes, held FROM design_records WHERE task_id = ? AND duplicate_of IS NULL AND spikes > 0');
         $st->execute([$taskId]);
         while (($row = $st->fetch()) !== false) {
             $m = $this->designMeasureValues($row);
+            if (!$this->designFires($m)) {
+                continue;
+            }
             $helds[] = $m['held'];
             $trains[] = $m['train'];
             $margins[] = $m['held'] - ($random ?? 0.0);
@@ -3313,6 +3319,9 @@ final class App
             'f1' => isset($metrics['f1']) ? (float) $metrics['f1'] : null,
             'size' => (int) ($metrics['neurons'] ?? 0) + (int) ($metrics['synapses'] ?? 0),
         ];
+        if ($metrics !== [] && !$this->designFires($m)) {
+            return false;
+        }
         $th = $this->measureThresholds($taskId);
         $k = $th['k'];
         if ($th['nHeld'] < $k || $held > (float) $th['minHeld']) {
@@ -3468,7 +3477,7 @@ final class App
             $protected[(string) $r['id']] = true;
         }
         $shown = $this->db->prepare('SELECT body FROM page_cache WHERE k = ?');
-        foreach (['discoveries-v2', 'discoveries-v1'] as $cacheKey) {
+        foreach (['discoveries-v3', 'discoveries-v2', 'discoveries-v1'] as $cacheKey) {
             $shown->execute([$cacheKey]);
             $cached = $shown->fetch();
             $body = $cached ? json_decode((string) $cached['body'], true) : null;
@@ -3507,6 +3516,9 @@ final class App
                     'synapses' => $row[6],
                     'spikes' => $row[7],
                 ]);
+                if (!$this->designFires($m)) {
+                    continue;
+                }
                 $seq = (int) $row[2];
                 self::boundedPush($topHeld, [$m['held'], $seq, $id], $keep);
                 self::boundedPush($topTrain, [$m['train'], $seq, $id], $keep);
