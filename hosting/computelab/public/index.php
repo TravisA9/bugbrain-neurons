@@ -638,6 +638,14 @@ try {
         coord_html(pageOwner($app, (string) $session['csrf'], coord_who($app, 'owner'), '', $status, $pageNum));
         return;
     }
+    if ($path === '/owner/inverse-champion.json' && $method === 'GET') {
+        if (!coord_owner_session($app)) {
+            coord_json(403, ['error' => 'Owner only.']);
+            return;
+        }
+        coord_json(200, $app->inverseChampion());
+        return;
+    }
     if ($path === '/owner/inverse-experiment.json' && $method === 'GET') {
         if (!coord_owner_session($app)) {
             coord_json(403, ['error' => 'Owner only.']);
@@ -924,7 +932,8 @@ try {
             $worker['code_hash'] = (string) $body['codeHash'];
             $slot = isset($body['slot']) && is_numeric($body['slot']) ? (int) $body['slot'] : 0;
             $job = $app->claim($worker, $slot, ($body['sequenceExperiment'] ?? false) === true, (int) ($body['studyVersion'] ?? 1),
-                ($body['inverseExperiment'] ?? false) === true, ($body['inverseGallery'] ?? false) === true);
+                ($body['inverseExperiment'] ?? false) === true, ($body['inverseGallery'] ?? false) === true,
+                ($body['inverseShared'] ?? false) === true);
             coord_json(200, ['job' => $job]);
             return;
         }

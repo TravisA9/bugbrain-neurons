@@ -27,13 +27,17 @@ function execute(job, outDir) {
   if (batches < 1 || batches > 20) throw new Error('batches must be from 1 to 20.');
   fs.mkdirSync(outDir, { recursive: true });
   if (job.mode === 'inverse-experiment') {
-    const { study, packModel } = require('./inverse_designer');
+    const { study, sharedStudy, packModel } = require('./inverse_designer');
     const summaryPath = path.join(outDir, 'summary.json');
     if (fs.existsSync(summaryPath)) {
       const saved = readJson(summaryPath);
-      if (saved.research?.version === 'inverse-designer-1' && saved.research.seed === +job.seed) return saved;
+      const cached = saved.research;
+      if (cached?.version === 'inverse-designer-1' && cached.seed === +job.seed
+          && cached.promotion?.benchmark === job.inverseShared?.benchmark
+          && cached.promotion?.parentGeneration === job.inverseShared?.generation) return saved;
     }
-    const { model, report } = study({ seed: +job.seed, epochs: job.inverseGallery ? 2400 : 120 });
+    const { model, report } = job.inverseShared ? sharedStudy(+job.seed, job.inverseShared)
+      : study({ seed: +job.seed, epochs: job.inverseGallery ? 2400 : 120 });
     const { results, ...research } = report;
     research.checkpoint = packModel(model);
     research.discoveries = results.map(({ learned, replay, freshCount }) => ({
@@ -41,7 +45,8 @@ function execute(job, outDir) {
       specificity: learned.specificity, demoAccuracy: learned.demoAccuracy, replay, freshCount,
     }));
     const note = 'Inverse design verified ' + report.metrics.learned.verified + '/' + report.testTasks +
-      ' held-out tasks. Random proposals verified ' + report.metrics.random.verified + '/' + report.testTasks + '.';
+      (report.promotion ? ' promotion trials from generation ' + report.promotion.parentGeneration + '.'
+        : ' held-out tasks. Random proposals verified ' + report.metrics.random.verified + '/' + report.testTasks + '.');
     const summary = { synthetic: true, batches: 1, tasks: [], note, research };
     writeJson(summaryPath, summary);
     return summary;

@@ -13,6 +13,7 @@ file_put_contents($config, '<?php return ' . var_export([
     'result_bytes' => 32768,
     'login_per_minute' => 8,
     'api_per_minute' => 120,
+    'inverse_shared_training' => true,
     'engine_js' => $root . '/spikefoundry/engine.js',
     'lab_html' => $root . '/spikefoundry/lab.html',
     'protocol' => dirname(__DIR__) . '/PROTOCOL.txt',
@@ -519,7 +520,6 @@ $inverseJob = http($base . '/owner/job', 'POST', http_build_query([
     'title' => 'Inverse experiment smoke test', 'priority' => 5, 'seed' => 1729,
 ]), $oh);
 $inversePoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
-unlink($researchToken);
 $inverseUrl = $base . '/owner/inverse-experiment.json?seed=1729';
 $inverseReport = http($inverseUrl, 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
 $inverseJson = json_decode($inverseReport['body'], true);
@@ -527,6 +527,17 @@ check(in_array($inverseJob['status'], [302, 303], true) && str_contains($inverse
     && $inverseReport['status'] === 200 && ($inverseJson['research']['checkpoint']['encoding'] ?? '') === 'f32le-gzip',
     'an updated donor trains the inverse designer and sends its model and report to the owner');
 check(http($inverseUrl)['status'] === 403, 'the inverse experiment report requires an owner session');
+
+$app->createJob('sf-inverse-experiment', 'Shared inverse smoke test', 5, 1735, ['inverseGallery' => true]);
+$sharedPoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
+unlink($researchToken);
+$championUrl = $base . '/owner/inverse-champion.json';
+$championResponse = http($championUrl, 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
+$champion = json_decode($championResponse['body'], true);
+check(str_contains($sharedPoll ?? '', 'sf-inverse-experiment-1735') && $championResponse['status'] === 200
+    && ($champion['generation'] ?? null) === 1 && count($champion['passes'] ?? []) === 36,
+    'a donor trains and publishes a shared checkpoint through HTTP');
+check(http($championUrl)['status'] === 403, 'the shared checkpoint requires an owner session');
 
 proc_terminate($proc);
 echo "http checks done\n";

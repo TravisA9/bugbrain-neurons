@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
-const { encode, design, study, packModel } = require('./inverse_designer');
+const { encode, design, study, packModel, sharedStudy } = require('./inverse_designer');
 const { designTruthTable, output, probe, temporalCircuit } = require('./inverse_circuits');
 
 for (const value of [0, 1]) {
@@ -32,4 +32,11 @@ assert.equal(prediction.demoAccuracy, test.learned.demoAccuracy);
 const packed = packModel(model);
 assert.ok(packed.payload.length < 58000);
 assert.deepEqual(design(packed, test.examples, 3), prediction);
+const first = sharedStudy(1729, { benchmark: 'inverse-shared-1', generation: 0, checkpoint: null });
+const next = sharedStudy(1730, { benchmark: 'inverse-shared-1', generation: 1, checkpoint: packModel(first.model) });
+assert.equal(first.report.promotion.candidate.length, 36);
+assert.equal(next.report.promotion.auditTrials, 36);
+assert.deepEqual(next.report.promotion.incumbent, first.report.promotion.candidate);
+assert.equal(next.report.promotion.incumbentAuditPassed, first.report.promotion.auditPassed);
+assert.equal(next.report.epochs, 60);
 console.log('Inverse designer checks passed');

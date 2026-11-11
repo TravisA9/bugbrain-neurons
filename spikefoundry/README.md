@@ -24,6 +24,23 @@ selection among eight model proposals, eight random proposals, and the
 closest circuit from the training library. Corpus and training CPU time are
 recorded separately.
 
+### Shared training
+
+Set `inverse_shared_training` to true in the coordinator configuration when
+the fleet supports shared assignments. Automatic inverse jobs then load the
+current shared checkpoint at claim time. The first eligible model starts the
+lineage. Later jobs fine-tune the assigned checkpoint for 60 epochs.
+
+The promotion benchmark uses 12 reserved circuit behaviors and three sets of
+examples per behavior. A candidate must gain at least three passes out of 36
+and improve on at least two behaviors. The coordinator accepts a promotion
+only while the assigned generation is current. Future assignments receive
+the promoted checkpoint. The owner can inspect the model and its benchmark
+results at `/owner/inverse-champion.json`.
+
+A second set of 12 reserved behaviors measures generalization. The report
+shows audit results for both models. Promotion uses the first set.
+
 For complete random truth tables, run
 `node spikefoundry/inverse_designer.js table examples.json` with all 16 rows
 in the form `{"x":[0,1,1,0],"y":1}`. This command constructs a circuit

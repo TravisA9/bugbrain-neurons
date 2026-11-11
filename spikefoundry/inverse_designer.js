@@ -7,6 +7,7 @@ const Throttle = require('./throttle');
 const { GENES, PROBES, probe, probeIndex, temporalCircuit, designTruthTable, output } = require('./inverse_circuits');
 
 const VERSION = 'inverse-designer-1';
+const SHARED_BENCHMARK = 'inverse-shared-1';
 const TARGETS = GENES.reduce((sum, values) => sum + values.length, 0);
 const accuracy = (predicted, expected) => predicted.reduce((sum, bit, i) => sum + Number(bit === expected[i]), 0) / expected.length;
 
@@ -109,8 +110,9 @@ function backprop(layer, input, gradient, rate) {
   return prior;
 }
 
-function fit(tasks, rng, epochs, demoCount) {
-  const model = { version: VERSION, first: layer(PROBES.length, 32, rng), second: layer(32, 24, rng), out: layer(24, TARGETS, rng) };
+function fit(tasks, rng, epochs, demoCount, checkpoint = null) {
+  const model = checkpoint ? unpackModel(checkpoint)
+    : { version: VERSION, first: layer(PROBES.length, 32, rng), second: layer(32, 24, rng), out: layer(24, TARGETS, rng) };
   const indices = PROBES.map((_, i) => i);
   for (let epoch = 0; epoch < epochs; epoch++) {
     for (const task of shuffle(tasks, rng)) {
@@ -119,7 +121,7 @@ function fit(tasks, rng, epochs, demoCount) {
       for (const index of shuffle(indices, rng).slice(0, demoCount)) input[index] = task.labels[index] ? 1 : -1;
       const { hidden, embedding, heads } = forward(model, input);
       const gradient = heads.flatMap((head, i) => head.map((p, j) => (p - Number(j === task.genes[i])) / GENES.length));
-      const rate = 0.12 / (1 + epoch / 120);
+      const rate = (checkpoint ? 0.04 : 0.12) / (1 + epoch / 120);
       const secondGradient = backprop(model.out, embedding, gradient, rate).map((g, i) => g * (1 - embedding[i] ** 2));
       const firstGradient = backprop(model.second, hidden, secondGradient, rate).map((g, i) => g * (1 - hidden[i] ** 2));
       backprop(model.first, input, firstGradient, rate);
@@ -270,6 +272,60 @@ function study({ seed = 1729, epochs = 120, demoCount = 64, count = 8 } = {}) {
     testTasks: test.length, corpusCpuMs, trainingCpuMs, truthTables: { exact, tested: exactTables.length }, metrics, results } };
 }
 
+function sharedEvaluation(model, tasks, seed) {
+  const rng = random(seed);
+  const indices = PROBES.map((_, i) => i);
+  return tasks.flatMap(task => Array.from({ length: 3 }, () => {
+    const shuffled = shuffle(indices, rng);
+    const examples = shuffled.slice(0, 64).map(i => ({ x: PROBES[i], y: task.labels[i] }));
+    const fresh = shuffled.slice(64);
+    const replay = [0, 1].flatMap(label => fresh.filter(i => task.labels[i] === label).slice(0, 2).map(i => [i, label]));
+    const design = choose(proposals(model, encode(examples), 8), examples);
+    const learned = { ...score(design.circuit, task, fresh), genes: design.genes, demoAccuracy: design.demoAccuracy };
+    return { learned, freshCount: fresh.length, replay };
+  }));
+}
+
+function sharedStudy(seed, parent) {
+  if (!Number.isInteger(seed) || seed < 1 || seed > 1e9 || parent?.benchmark !== SHARED_BENCHMARK
+      || !Number.isInteger(parent.generation) || parent.generation < 0
+      || Boolean(parent.checkpoint) !== (parent.generation > 0)) {
+    throw new Error('Invalid shared inverse training assignment');
+  }
+  const corpusStart = process.cpuUsage();
+  const corpus = shuffle(circuitCorpus(), random(174937));
+  // These partitions and evaluation seeds define the benchmark version.
+  const training = corpus.slice(24);
+  const promotion = corpus.slice(0, 12);
+  const audit = corpus.slice(12, 24);
+  const corpusCpuMs = cpuMs(corpusStart);
+  const epochs = parent.checkpoint ? 60 : 120;
+  const start = process.cpuUsage();
+  const model = fit(training, random(seed), epochs, 64, parent.checkpoint);
+  const trainingCpuMs = cpuMs(start);
+  const trials = sharedEvaluation(model, promotion, 827101);
+  const auditTrials = sharedEvaluation(model, audit, 972341);
+  const passes = rows => rows.map(row => Number(row.learned.verified));
+  const candidate = passes(trials);
+  const countPasses = rows => passes(rows).reduce((sum, bit) => sum + bit, 0);
+  const previous = parent.checkpoint ? unpackModel(parent.checkpoint) : null;
+  return { model, report: {
+    version: VERSION, seed, epochs, demoCount: 64, proposals: 8, trainTasks: training.length, testTasks: trials.length,
+    corpusCpuMs, trainingCpuMs,
+    metrics: { learned: {
+      verified: candidate.reduce((sum, bit) => sum + bit, 0),
+      meanAccuracy: trials.reduce((sum, row) => sum + row.learned.accuracy, 0) / trials.length,
+    } },
+    promotion: {
+      benchmark: SHARED_BENCHMARK, parentGeneration: parent.generation, candidate,
+      incumbent: previous ? passes(sharedEvaluation(previous, promotion, 827101)) : null,
+      auditPassed: countPasses(auditTrials), auditTrials: auditTrials.length,
+      incumbentAuditPassed: previous ? countPasses(sharedEvaluation(previous, audit, 972341)) : null,
+    },
+    results: trials.filter((_, i) => i % 3 === 0),
+  } };
+}
+
 if (require.main === module) {
   try {
     const [mode, first, second] = process.argv.slice(2);
@@ -292,4 +348,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { encode, design, study, packModel };
+module.exports = { encode, design, study, packModel, sharedStudy };

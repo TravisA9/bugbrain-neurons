@@ -235,6 +235,26 @@ final class App
             seed INTEGER NOT NULL,
             checkpoint TEXT NOT NULL
         )');
+        $this->db->exec('CREATE TABLE IF NOT EXISTS inverse_champion (
+            id INTEGER PRIMARY KEY,
+            benchmark VARCHAR(32) NOT NULL,
+            generation INTEGER NOT NULL,
+            job_id VARCHAR(191),
+            checkpoint TEXT,
+            passes_json TEXT,
+            audit_passed INTEGER,
+            promoted_at VARCHAR(40)
+        )');
+        if (!$this->db->query('SELECT id FROM inverse_champion WHERE id = 1')->fetchColumn()) {
+            try {
+                $this->db->prepare('INSERT INTO inverse_champion (id, benchmark, generation) VALUES (1, ?, 0)')
+                    ->execute([self::INVERSE_SHARED_BENCHMARK]);
+            } catch (PDOException $e) {
+                if ((string) $e->getCode() !== '23000') {
+                    throw $e;
+                }
+            }
+        }
         $this->db->exec('CREATE TABLE IF NOT EXISTS design_genomes (
             hash VARCHAR(191) PRIMARY KEY,
             genome_json TEXT NOT NULL,
@@ -1070,7 +1090,7 @@ final class App
         return $n;
     }
 
-    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false, bool $inverseGallery = false): ?array
+    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false, bool $inverseGallery = false, bool $inverseShared = false): ?array
     {
         $this->replenishJobs();
         $this->expireLeases();
@@ -1122,6 +1142,11 @@ final class App
                     if (($spec['mode'] ?? '') === 'inverse-experiment' && (!$inverseExperiment || (!empty($spec['inverseGallery']) && !$inverseGallery))) {
                         continue;
                     }
+                    $shared = ($spec['mode'] ?? '') === 'inverse-experiment' && !empty($spec['inverseGallery'])
+                        && !empty($this->config['inverse_shared_training']);
+                    if ($shared && !$inverseShared) {
+                        continue;
+                    }
                     if ($this->legacySearchPaused((string) $project['id'], $spec)) {
                         continue;
                     }
@@ -1133,7 +1158,7 @@ final class App
                     if ($taskId !== '' && $this->taskPaused((string) $project['id'], $taskId)) {
                         continue;
                     }
-                    $ranked[] = ['job' => $job, 'spec' => $spec];
+                    $ranked[] = ['job' => $job, 'spec' => $spec, 'shared' => $shared];
                 }
             }
             $hasOther = false;
@@ -1162,13 +1187,25 @@ final class App
                 $tpl = $this->db->prepare('SELECT runner FROM templates WHERE id = ?');
                 $tpl->execute([$job['template_id']]);
                 $runner = (string) ($tpl->fetch()['runner'] ?? '');
+                $spec = $item['spec'];
+                if ($item['shared'] || isset($spec['inverseShared'])) {
+                    unset($spec['inverseShared']);
+                    if ($item['shared']) {
+                        $champion = $this->inverseChampion();
+                        $spec['inverseShared'] = ['benchmark' => $champion['benchmark'], 'generation' => $champion['generation']];
+                    }
+                    $this->db->prepare('UPDATE jobs SET spec_json = ? WHERE id = ?')->execute([json_encode($spec), $job['id']]);
+                    if ($item['shared']) {
+                        $spec['inverseShared']['checkpoint'] = $champion['checkpoint'];
+                    }
+                }
                 $this->db->commit();
                 return [
                     'id' => $job['id'],
                     'project' => $job['project_id'],
                     'title' => $job['title'],
                     'runner' => $runner,
-                    'spec' => $item['spec'],
+                    'spec' => $spec,
                     'codeHash' => $job['code_hash'],
                     'leaseUntil' => $until,
                     'slot' => $slot,
@@ -1372,6 +1409,14 @@ final class App
                     throw new InvalidArgumentException('Automatic inverse jobs must include circuits.');
                 }
                 $this->saveInverseDiscoveries((string) $worker['id'], (int) $row['seed'], $discoveries);
+                if (isset($spec['inverseShared'])) {
+                    if (!is_array($report['promotion'] ?? null)) {
+                        throw new InvalidArgumentException('Shared inverse jobs must include a promotion report.');
+                    }
+                    $body['research']['promotion']['outcome'] = $this->considerInversePromotion(
+                        $jobId, $spec['inverseShared'], $report['promotion'], $checkpoint
+                    );
+                }
                 if (!empty($spec['inverseGallery'])) {
                     $this->db->prepare('REPLACE INTO inverse_worker_models (worker_id, seed, checkpoint) VALUES (?, ?, ?)')
                         ->execute([$worker['id'], (int) $row['seed'], json_encode($checkpoint)]);
@@ -1588,6 +1633,77 @@ final class App
     public function inverseGalleryEnabled(): bool
     {
         return !empty($this->config['inverse_gallery']);
+    }
+
+    private const INVERSE_SHARED_BENCHMARK = 'inverse-shared-1';
+
+    public function inverseChampion(): array
+    {
+        $row = $this->db->query('SELECT benchmark, generation, job_id, checkpoint, passes_json, audit_passed, promoted_at
+            FROM inverse_champion WHERE id = 1')->fetch();
+        if (!$row || $row['benchmark'] !== self::INVERSE_SHARED_BENCHMARK) {
+            throw new RuntimeException('The shared inverse benchmark is unavailable.');
+        }
+        return [
+            'benchmark' => $row['benchmark'], 'generation' => (int) $row['generation'], 'jobId' => $row['job_id'],
+            'checkpoint' => $row['checkpoint'] === null ? null : json_decode($row['checkpoint'], true),
+            'passes' => $row['passes_json'] === null ? null : json_decode($row['passes_json'], true),
+            'auditPassed' => $row['audit_passed'] === null ? null : (int) $row['audit_passed'],
+            'promotedAt' => $row['promoted_at'],
+        ];
+    }
+
+    private function considerInversePromotion(string $jobId, array $assigned, array $report, array $checkpoint): string
+    {
+        $validPasses = static function ($bits): bool {
+            return is_array($bits) && count($bits) === 36 && array_keys($bits) === range(0, 35)
+                && count(array_filter($bits, static fn ($bit) => $bit === 0 || $bit === 1)) === 36;
+        };
+        $candidate = $report['candidate'] ?? null;
+        $baseline = $report['incumbent'] ?? null;
+        $generation = $assigned['generation'];
+        $audit = $report['auditPassed'] ?? null;
+        $incumbentAudit = $report['incumbentAuditPassed'] ?? null;
+        if (($report['benchmark'] ?? '') !== $assigned['benchmark'] || ($report['parentGeneration'] ?? null) !== $generation
+            || !$validPasses($candidate) || ($generation > 0 ? !$validPasses($baseline) : $baseline !== null)
+            || ($report['auditTrials'] ?? null) !== 36 || !is_int($audit) || $audit < 0 || $audit > 36) {
+            throw new InvalidArgumentException('Invalid shared inverse benchmark report.');
+        }
+        $champion = $this->inverseChampion();
+        if ($generation !== $champion['generation']) {
+            return 'stale';
+        }
+        if ($baseline !== $champion['passes'] || $incumbentAudit !== $champion['auditPassed']) {
+            throw new InvalidArgumentException('The incumbent did not reproduce its benchmark.');
+        }
+        $passes = array_sum($candidate);
+        if ($generation === 0 && $passes === 0) {
+            return 'below-margin';
+        }
+        if ($generation > 0) {
+            $improvedTasks = 0;
+            for ($i = 0; $i < count($candidate); $i += 3) {
+                if (array_sum(array_slice($candidate, $i, 3)) > array_sum(array_slice($baseline, $i, 3))) {
+                    $improvedTasks++;
+                }
+            }
+            if ($passes - array_sum($baseline) < 3 || $improvedTasks < 2) {
+                return 'below-margin';
+            }
+        }
+        $bytes = @gzdecode(base64_decode($checkpoint['payload'], true), 38065);
+        if (!is_string($bytes) || strlen($bytes) !== 38064) {
+            throw new InvalidArgumentException('Invalid shared inverse checkpoint size.');
+        }
+        foreach (unpack('g*', $bytes) as $weight) {
+            if (!is_finite($weight)) {
+                throw new InvalidArgumentException('Invalid shared inverse checkpoint weight.');
+            }
+        }
+        $update = $this->db->prepare('UPDATE inverse_champion SET generation = generation + 1, job_id = ?, checkpoint = ?,
+            passes_json = ?, audit_passed = ?, promoted_at = ? WHERE id = 1 AND generation = ? AND benchmark = ?');
+        $update->execute([$jobId, json_encode($checkpoint), json_encode($candidate), $audit, $this->now(), $generation, $assigned['benchmark']]);
+        return $update->rowCount() === 1 ? 'promoted' : 'stale';
     }
 
     private function saveInverseDiscoveries(string $worker, int $seed, array $rows): void

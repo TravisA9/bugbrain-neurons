@@ -1091,5 +1091,47 @@ check(count($inverseCards) === 2 && $inverseCards[0]['badges'] === ['Accuracy #1
 check($inverseApp->inverseExperimentReport($inverseSeed)['research']['checkpoint'] === $checkpoint,
     'the latest automatic model is available from the owner report');
 
+$sharedLab = labWith(['inverse_gallery' => true, 'inverse_shared_training' => true]);
+$shared = $sharedLab['app'];
+$sharedA = $shared->workerByToken($shared->enroll('shared-a', ['spikefoundry'], 2, true)['token']);
+$sharedB = $shared->workerByToken($shared->enroll('shared-b', ['spikefoundry'], 2, true)['token']);
+for ($seed = 200; $seed < 205; $seed++) {
+    $shared->createJob('sf-inverse-experiment', 'Shared candidate', 1, $seed, ['inverseGallery' => true]);
+}
+check($shared->claim($sharedA, 0, false, 1, true, true) === null, 'older workers cannot claim shared inverse assignments');
+$first = $shared->claim($sharedA, 0, false, 1, true, true, true);
+$parallel = $shared->claim($sharedB, 0, false, 1, true, true, true);
+check($first['spec']['inverseShared']['generation'] === 0 && $parallel['spec']['inverseShared']['checkpoint'] === null,
+    'shared training bootstraps on the common benchmark');
+$validCheckpoint = ['version' => 'inverse-designer-1', 'encoding' => 'f32le-gzip', 'payload' => base64_encode(gzencode(str_repeat("\0", 38064)))];
+$submitShared = static function ($worker, $job, $candidatePasses, $incumbent) use ($shared, $validCheckpoint, $candidate) {
+    $assigned = $job['spec']['inverseShared'];
+    $shared->submitResult($worker, $job['id'], ['status' => 'done', 'synthetic' => true, 'research' => [
+        'version' => 'inverse-designer-1', 'seed' => $job['spec']['seed'], 'checkpoint' => $validCheckpoint,
+        'discoveries' => [$candidate + ['accuracy' => 0.6, 'recall' => 0.8, 'specificity' => 0.4, 'demoAccuracy' => 0.6]],
+        'promotion' => ['benchmark' => $assigned['benchmark'], 'parentGeneration' => $assigned['generation'],
+            'candidate' => $candidatePasses, 'incumbent' => $incumbent, 'auditPassed' => 12, 'auditTrials' => 36,
+            'incumbentAuditPassed' => $incumbent === null ? null : 12],
+    ]]);
+    return $shared->inverseExperimentReport($job['spec']['seed'])['research']['promotion']['outcome'];
+};
+$originalPasses = array_merge(array_fill(0, 12, 1), array_fill(0, 24, 0));
+check($submitShared($sharedA, $first, $originalPasses, null) === 'promoted'
+    && $submitShared($sharedB, $parallel, array_fill(0, 36, 1), null) === 'stale',
+    'the first eligible checkpoint is promoted and a stale assignment cannot replace it');
+$small = $shared->claim($sharedB, 0, false, 1, true, true, true);
+check($small['spec']['inverseShared']['generation'] === 1 && $small['spec']['inverseShared']['checkpoint'] === $validCheckpoint,
+    'another donor starts its next job from the promoted model');
+$oneTask = $originalPasses;
+$oneTask[12] = $oneTask[13] = $oneTask[14] = 1;
+check($submitShared($sharedB, $small, $oneTask, $originalPasses) === 'below-margin',
+    'a three-trial gain confined to one task does not promote');
+$win = $shared->claim($sharedA, 0, false, 1, true, true, true);
+$twoTasks = $originalPasses;
+$twoTasks[12] = $twoTasks[13] = $twoTasks[15] = 1;
+check($submitShared($sharedA, $win, $twoTasks, $originalPasses) === 'promoted'
+    && $shared->inverseChampion()['generation'] === 2 && $shared->inverseChampion()['passes'] === $twoTasks,
+    'paired improvement across tasks promotes a new fleet checkpoint');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);
