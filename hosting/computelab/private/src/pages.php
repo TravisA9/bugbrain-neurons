@@ -747,6 +747,11 @@ body.fit .shell.split-shell{height:calc(100vh - 56px);height:calc(100dvh - 56px)
 .badge-mine{display:inline-block;font:9px var(--mono);color:#1b1306;background:var(--amber);border-radius:4px;padding:2px 6px;margin-left:6px;vertical-align:middle;letter-spacing:.03em}
 .badge-m{display:inline-block;font:8px var(--mono);color:#d7efe6;background:#16332b;border:1px solid #2a5a4a;border-radius:3px;padding:1px 5px;margin:1px 0 0 4px;vertical-align:middle;letter-spacing:.04em;text-transform:uppercase}
 .group-label{font:10px var(--mono);color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin:8px 2px 2px}
+.disc-summary{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:4px 10px}
+.disc-refresh{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font:10px var(--mono)}
+.disc-refresh.is-loading::before{content:"";width:9px;height:9px;border:1px solid currentColor;border-right-color:transparent;border-radius:50%;animation:disc-spin .8s linear infinite}
+@keyframes disc-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.disc-refresh.is-loading::before{animation:none}}
 .stage{position:relative;background-image:linear-gradient(#13212c55 1px,transparent 1px),linear-gradient(90deg,#13212c55 1px,transparent 1px);background-size:28px 28px;background-position:center;background-color:#0c131a;border:1px solid #1d2a33;border-radius:8px;overflow:hidden}
 .stage svg{display:block;width:100%;height:auto}
 .wire{stroke:#4e6774;stroke-width:1.6;fill:none}.wire.inhib{stroke:#b58fff}.wire.delay{stroke-dasharray:4 3}
@@ -1162,7 +1167,7 @@ function verifiedDiscoveries(array $studies): string
             : '<p class="muted">No circuits have passed both fresh-case checks in a completed study yet.</p>');
 }
 
-function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archive = false): string
+function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archive = false, bool $refresh = false): string
 {
     $base = $app->base();
     $inverse = $app->inverseGalleryEnabled() && !$archive;
@@ -1196,13 +1201,19 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archiv
         $list .= '<p class="muted" style="padding:8px">' . ($inverse ? 'Waiting for the first inverse-design job to finish.' : 'No discoveries yet. Finished SpikeFoundry runs upload them.') . '</p>';
     }
     $data = ['items' => $items, 'series' => $series, 'board' => $board, 'genomeUrl' => $base . '/discoveries/genome?hash=', 'now' => $app->now(), 'mineCount' => count($mineIds), 'inverse' => $inverse];
+    $verification = $inverse ? '' : verifiedDiscoveries($app->recentSequenceStudies());
+    if ($refresh) {
+        return jsonForHtml(['data' => $data, 'list' => $list, 'verification' => $verification]);
+    }
     $description = $inverse
         ? '<p>Top ' . h((string) $app->discoveriesTopN()) . ' inverse designs for each metric, newest first. Playback uses examples held out from training.</p><a href="' . h($base . '/discoveries?archive=1') . '">Legacy discoveries archive</a>'
         : '<p>Browse search results, newest first, and play back their wiring. Ranking badges describe the cases used during search.</p>';
     $body = '<section class="heading"><div><div class="eyebrow">Discoveries · frozen designs</div><h1>What the network has found</h1>' . $description . '</div></section>'
-        . '<div class="split"><section class="panel" aria-label="Discoveries"><div class="panelhead"><div class="paneltitle">Discoveries</div><span class="subtag">' . h((string) count($items)) . ' DESIGNS</span></div><div class="list-scroll" id="disc-list">' . $list . '</div></section>'
+        . '<div class="split"><section class="panel" aria-label="Discoveries"><div class="panelhead"><div class="paneltitle">Discoveries</div>'
+        . '<div class="disc-summary"><span id="disc-refresh" class="disc-refresh" role="status">Auto-refresh on</span><span class="subtag" id="disc-count">' . h((string) count($items)) . ' DESIGNS</span></div></div>'
+        . '<div class="list-scroll" id="disc-list">' . $list . '</div></section>'
         . '<section class="panel" aria-label="Discovery viewer"><div class="panelhead"><div class="paneltitle" id="v-title">Overview</div><span class="subtag" id="v-tag">ALL TASKS</span></div><div class="viewer-scroll" id="viewer"></div></section></div>'
-        . ($inverse ? '' : '<template id="disc-verification">' . verifiedDiscoveries($app->recentSequenceStudies()) . '</template>')
+        . '<template id="disc-verification">' . $verification . '</template>'
         . '<script type="application/json" id="disc-data">' . jsonForHtml($data) . '</script>';
     $engine = (string) ($app->config['engine_js'] ?? '');
     $version = is_readable($engine) ? hash_file('sha256', $engine) : 'missing';
@@ -1341,7 +1352,7 @@ script.addEventListener('error',function(){resolve(false);},{once:true});
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function ago(iso){var d=(Date.parse(D.now)-Date.parse(iso))/1000;if(!(d>=0))return iso;if(d<90)return 'just now';if(d<5400)return Math.round(d/60)+' min ago';if(d<129600)return Math.round(d/3600)+' h ago';return Math.round(d/86400)+' days ago';}
 function when(iso){var d=new Date(iso);if(isNaN(d.getTime()))return String(iso||'');var o={month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'};if(d.getFullYear()!==new Date().getFullYear())o.year='numeric';try{return d.toLocaleString(undefined,o);}catch(e){return d.toLocaleString();}}
-[].forEach.call(document.querySelectorAll('#disc-list time.disc-when'),function(t){var iso=t.getAttribute('datetime');t.textContent='Found '+when(iso);t.title=ago(iso);});
+function formatFindTimes(){[].forEach.call(document.querySelectorAll('#disc-list time.disc-when'),function(t){var iso=t.getAttribute('datetime');t.textContent='Found '+when(iso);t.title=ago(iso);});}
 function metric(l,v,n,a){return '<div class="metric'+(a?' accent':'')+'"><div class="metriclabel">'+esc(l)+'</div><div class="metricvalue">'+v+'</div><div class="metricnote">'+esc(n||'')+'</div></div>';}
 function f3(x){return x==null?'—':Number(x).toFixed(3);}
 function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
@@ -1383,11 +1394,77 @@ function priv(){if(selection!==generation)return;document.getElementById('net-no
 if(it.inverse)return draw(it.inverse);
 if(cache[hash]===false)return priv();if(cache[hash])return draw(cache[hash]);
 fetch(D.genomeUrl+encodeURIComponent(hash),{credentials:'same-origin'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(g){cache[hash]=g;draw(g);}).catch(function(){cache[hash]=false;priv();});}
-var player=null,generation=0,btns=[].slice.call(document.querySelectorAll('#disc-list .disc'));
-function pick(b){btns.forEach(function(x){x.classList.toggle('active',x===b);});show(+b.getAttribute('data-index'),true);}
-btns.forEach(function(b){b.addEventListener('click',function(){pick(b);});});
-document.getElementById('disc-list').addEventListener('keydown',function(e){if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;var i=btns.indexOf(document.activeElement);if(i<0)return;var n=btns[i+(e.key==='ArrowDown'?1:-1)];if(n){e.preventDefault();n.focus();pick(n);n.scrollIntoView({block:'nearest'});}});
+var player=null,generation=0,btns=[],list=document.getElementById('disc-list'),selectedHash=null,listMarkup=list.innerHTML;
+function pick(b){
+  var index=+b.getAttribute('data-index');
+  selectedHash=index<0?null:D.items[index].hash;
+  btns.forEach(function(x){x.classList.toggle('active',x===b);});
+  show(index,true);
+}
+function bindButtons(){
+  btns=[].slice.call(document.querySelectorAll('#disc-list .disc'));
+  btns.forEach(function(b){b.addEventListener('click',function(){pick(b);});});
+}
+bindButtons();
+formatFindTimes();
+list.addEventListener('keydown',function(e){if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;var i=btns.indexOf(document.activeElement);if(i<0)return;var n=btns[i+(e.key==='ArrowDown'?1:-1)];if(n){e.preventDefault();n.focus();pick(n);n.scrollIntoView({block:'nearest'});}});
 overview();
+var refreshStatus=document.getElementById('disc-refresh');
+if(refreshStatus){
+  var interval=30000,timer=null,request=null,lastCheck=Date.now();
+  var refreshUrl=new URL(window.location.href);
+  refreshUrl.searchParams.set('refresh','1');
+  function updateDiscoveries(snapshot){
+    var focus=btns.indexOf(document.activeElement);
+    var focusedIndex=focus<0?null:+btns[focus].getAttribute('data-index');
+    var focusedHash=focusedIndex===null||focusedIndex<0?null:D.items[focusedIndex].hash;
+    D=snapshot.data;
+    if(snapshot.list!==listMarkup){
+      var scroll=list.scrollTop;
+      listMarkup=snapshot.list;
+      list.innerHTML=listMarkup;
+      bindButtons();
+      btns.forEach(function(button){
+        var index=+button.getAttribute('data-index');
+        var hash=index<0?null:D.items[index].hash;
+        button.classList.toggle('active',hash===selectedHash);
+        if(focusedIndex!==null&&hash===focusedHash)button.focus({preventScroll:true});
+      });
+      list.scrollTop=scroll;
+    }
+    formatFindTimes();
+    document.getElementById('disc-count').textContent=D.items.length+' DESIGNS';
+    document.getElementById('disc-verification').innerHTML=snapshot.verification;
+    if(selectedHash===null)overview();
+  }
+  function refresh(){
+    if(document.hidden||request)return;
+    request=new AbortController();
+    var current=request,timeout=setTimeout(function(){current.abort();},15000);
+    lastCheck=Date.now();
+    refreshStatus.classList.add('is-loading');
+    refreshStatus.textContent='Checking for new designs…';
+    fetch(refreshUrl,{credentials:'same-origin',cache:'no-store',signal:current.signal})
+      .then(function(response){if(!response.ok)throw new Error('Refresh failed');return response.json();})
+      .then(function(snapshot){
+        if(document.hidden||current.signal.aborted)return;
+        updateDiscoveries(snapshot);
+        refreshStatus.textContent='Checked '+new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',second:'2-digit'});
+      })
+      .catch(function(){if(!document.hidden)refreshStatus.textContent='Refresh delayed';})
+      .finally(function(){clearTimeout(timeout);request=null;refreshStatus.classList.remove('is-loading');});
+  }
+  function stopRefresh(){clearInterval(timer);timer=null;if(request)request.abort();refreshStatus.textContent='Auto-refresh on';}
+  function startRefresh(){
+    if(document.hidden||timer)return;
+    if(Date.now()-lastCheck>=interval)refresh();
+    timer=setInterval(refresh,interval);
+  }
+  document.addEventListener('visibilitychange',function(){if(document.hidden)stopRefresh();else startRefresh();});
+  window.addEventListener('pagehide',stopRefresh);
+  window.addEventListener('pageshow',startRefresh);
+  startRefresh();
+}
 })();
 JS;
 }

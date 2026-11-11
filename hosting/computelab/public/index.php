@@ -401,7 +401,14 @@ try {
         foreach (coord_home_computers($app) ?? [] as $w) {
             $ids[] = (string) $w['id'];
         }
-        coord_html(pageDiscoveries($app, coord_who($app, 'discoveries'), $ids, ($_GET['archive'] ?? '') === '1'));
+        $archive = ($_GET['archive'] ?? '') === '1';
+        if (($_GET['refresh'] ?? '') === '1') {
+            header('Content-Type: application/json; charset=utf-8');
+            header('Cache-Control: private, no-store');
+            echo pageDiscoveries($app, coord_who($app, 'discoveries'), $ids, $archive, true);
+            return;
+        }
+        coord_html(pageDiscoveries($app, coord_who($app, 'discoveries'), $ids, $archive));
         return;
     }
     if ($path === '/discoveries/genome' && $method === 'GET') {

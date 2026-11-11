@@ -239,6 +239,11 @@ http($base . '/owner/resources', 'POST', http_build_query(['csrf' => $pauseField
 $disc = http($base . '/discoveries', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
 check($disc['status'] === 200 && str_contains($disc['body'], '<html lang="en" class="fit">') && str_contains($disc['body'], 'class="list-scroll"') && str_contains($disc['body'], 'id="viewer"') && str_contains($disc['body'], 'badge-mine') && str_contains($disc['body'], 'class="disc mine"'), 'Discoveries is a split view and marks your own computer\'s designs');
 $dd = preg_match('#<script type="application/json" id="disc-data">(.*?)</script>#s', $disc['body'], $dm) === 1 ? json_decode($dm[1], true) : [];
+$discRefresh = http($base . '/discoveries?refresh=1', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
+$refreshed = json_decode($discRefresh['body'], true);
+check($discRefresh['status'] === 200 && ($refreshed['data']['items'] ?? null) === ($dd['items'] ?? [])
+    && str_contains($refreshed['list'] ?? '', 'class="disc mine"') && str_contains($disc['body'], 'id="disc-refresh"'),
+    'Discoveries refresh returns the same participant-aware list and has a visible refresh status');
 $gh = (string) ($dd['items'][0]['hash'] ?? '');
 check(str_contains($disc['body'], 'root.SnnPlayer=') && str_contains($disc['body'], "prefers-reduced-motion: reduce") && str_contains($disc['body'], "addEventListener('visibilitychange'") && str_contains($disc['body'], 'requestAnimationFrame(loop)') && str_contains($disc['body'], 'This design never fires on this input') && strpos($disc['body'], 'root.SnnPlayer=') < strpos($disc['body'], 'P.mount(box'), 'Discoveries plays the frozen network back in the browser, pauses for reduced motion and hidden tabs, and says when a design is silent');
 check(preg_match('#<div class="row3"><time class="disc-when" datetime="\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ">Found [A-Z][a-z]{2} \\d{1,2}, \\d{1,2}:\\d\\d [AP]M UTC</time></div>#', $disc['body']) === 1 && str_contains($disc['body'], "toLocaleString(undefined,o)") && str_contains($disc['body'], "timeZoneName:'short'") && str_contains($disc['body'], 'chip disc-found" title="'), 'each discovery card and the viewer show when it was found, in the viewer\'s time zone, with the age as a tooltip');
