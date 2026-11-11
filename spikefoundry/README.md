@@ -1,5 +1,34 @@
 # SpikeFoundry on this computer
 
+## Design a circuit from input/output examples
+
+Run the local inverse-design study with Node 18 or later.
+
+```sh
+node spikefoundry/inverse_designer.js study inverse-results
+node spikefoundry/inverse_designer.js design inverse-results/model.json examples.json
+```
+
+For temporal inputs, `examples.json` is an array of objects such as
+`{"x":[[1,0],[0,0],[0,1],[0,0]],"y":1}`. Each input has four time steps
+and two binary channels. The target says whether the output should fire.
+The model emits wire weights, delays, threshold, leak, and recurrence for
+a circuit supported by the frozen simulator. It ranks up to eight proposals
+by their agreement with the supplied examples.
+
+The study creates a corpus from a bounded circuit grammar and splits source
+tasks by their complete behavior before training. It gives the model a
+random subset of examples for each test task and evaluates the emitted
+circuit on the remaining inputs. The report includes the first model proposal,
+selection among eight model proposals, eight random proposals, and the
+closest circuit from the training library. Corpus and training CPU time are
+recorded separately.
+
+For complete random truth tables, run
+`node spikefoundry/inverse_designer.js table examples.json` with all 16 rows
+in the form `{"x":[0,1,1,0],"y":1}`. This command constructs a circuit
+directly from the table and serves as an exact construction reference.
+
 ## Sequence designer experiment
 
 Run the capped study locally with Node 18 or later. Save the following as

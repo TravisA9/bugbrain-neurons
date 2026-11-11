@@ -489,7 +489,6 @@ $researchJob = http($base . '/owner/job', 'POST', http_build_query([
 ]), $oh);
 check(in_array($researchJob['status'], [302, 303], true), 'the owner can queue the sequence experiment');
 $researchPoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
-unlink($researchToken);
 $researchUrl = $base . '/owner/sequence-experiment.json?job=sf-sequence-experiment-1729';
 $researchReport = http($researchUrl, 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
 $researchJson = json_decode($researchReport['body'], true);
@@ -497,6 +496,20 @@ check(str_contains($researchPoll ?? '', 'sf-sequence-experiment-1729') && $resea
     && count($researchJson['research']['rounds'] ?? []) === 6 && ($researchJson['research']['composition']['composed'] ?? false),
     'the donor worker runs the study and its report reaches the owner');
 check(http($researchUrl)['status'] === 403, 'the study report requires an owner session');
+
+$inverseJob = http($base . '/owner/job', 'POST', http_build_query([
+    'csrf' => $oCsrf[1] ?? '', 'template' => 'sf-inverse-experiment',
+    'title' => 'Inverse experiment smoke test', 'priority' => 5, 'seed' => 1729,
+]), $oh);
+$inversePoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
+unlink($researchToken);
+$inverseUrl = $base . '/owner/inverse-experiment.json?seed=1729';
+$inverseReport = http($inverseUrl, 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
+$inverseJson = json_decode($inverseReport['body'], true);
+check(in_array($inverseJob['status'], [302, 303], true) && str_contains($inversePoll ?? '', 'sf-inverse-experiment-1729')
+    && $inverseReport['status'] === 200 && ($inverseJson['research']['checkpoint']['encoding'] ?? '') === 'f32le-gzip',
+    'an updated donor trains the inverse designer and sends its model and report to the owner');
+check(http($inverseUrl)['status'] === 403, 'the inverse experiment report requires an owner session');
 
 proc_terminate($proc);
 echo "http checks done\n";

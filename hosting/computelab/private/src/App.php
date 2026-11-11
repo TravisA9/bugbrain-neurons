@@ -534,6 +534,9 @@ final class App
             ['sf-sequence-experiment', 'spikefoundry', 'Run a capped sequence experiment', 'spikefoundry/run.js', json_encode([
                 'mode' => 'sequence-experiment', 'batches' => 1,
             ], JSON_THROW_ON_ERROR), $hash],
+            ['sf-inverse-experiment', 'spikefoundry', 'Train an SNN designer from examples', 'spikefoundry/run.js', json_encode([
+                'mode' => 'inverse-experiment', 'batches' => 1,
+            ], JSON_THROW_ON_ERROR), $hash],
             ['sf-vision', 'spikefoundry', 'Synthetic vision check', 'spikefoundry/run.js', json_encode([
                 'scenario' => 'vision', 'batches' => 1,
                 'scenarioParams' => ['batch' => 2, 'channels' => 1, 'height' => 4, 'width' => 4, 'steps' => 6],
@@ -1039,7 +1042,7 @@ final class App
         return $n;
     }
 
-    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1): ?array
+    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false): ?array
     {
         $this->replenishJobs();
         $this->expireLeases();
@@ -1086,6 +1089,9 @@ final class App
                     }
                     if (($spec['mode'] ?? '') === 'sequence-experiment'
                         && (!$sequenceExperiment || $studyVersion < (int) ($spec['experiment']['studyVersion'] ?? 1))) {
+                        continue;
+                    }
+                    if (($spec['mode'] ?? '') === 'inverse-experiment' && !$inverseExperiment) {
                         continue;
                     }
                     if ($this->legacySearchPaused((string) $project['id'], $spec)) {
@@ -1293,7 +1299,8 @@ final class App
             if (!$row || (string) $row['status'] !== 'leased') {
                 throw new InvalidArgumentException('This computer does not hold that job.');
             }
-            if (strlen($raw) > ($row['template_id'] === 'sf-sequence-experiment' ? 60000 : $maxBytes)) {
+            $isInverse = $row['template_id'] === 'sf-inverse-experiment';
+            if (strlen($raw) > ($row['template_id'] === 'sf-sequence-experiment' || $isInverse ? 60000 : $maxBytes)) {
                 throw new InvalidArgumentException('Result is too large.');
             }
             if ($row['project_id'] === 'spikefoundry' && empty($body['synthetic'])) {
@@ -1311,6 +1318,15 @@ final class App
                     || !is_array($report['rounds'] ?? null)
                     || count($report['rounds']) !== (int) ($options['rounds'] ?? 0)) {
                     throw new InvalidArgumentException('Sequence experiment report does not match the job.');
+                }
+            }
+            if ($status === 'done' && $isInverse) {
+                $report = $body['research'] ?? [];
+                $checkpoint = $report['checkpoint'] ?? [];
+                if (($report['version'] ?? '') !== 'inverse-designer-1' || ($report['seed'] ?? null) !== (int) $row['seed']
+                    || ($checkpoint['version'] ?? '') !== 'inverse-designer-1' || ($checkpoint['encoding'] ?? '') !== 'f32le-gzip'
+                    || !is_string($checkpoint['payload'] ?? null) || base64_decode($checkpoint['payload'], true) === false) {
+                    throw new InvalidArgumentException('Inverse experiment report does not match the job.');
                 }
             }
             $this->db->prepare('INSERT INTO results (job_id, worker_id, status, summary, body_json, seconds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
@@ -1467,6 +1483,8 @@ final class App
                 $spec['experiment']['initialCheckpoint'] = $options['initialCheckpoint'];
             }
             $id = 'sf-sequence-experiment-' . $seed;
+        } elseif ($templateId === 'sf-inverse-experiment') {
+            $id = 'sf-inverse-experiment-' . $seed;
         } else {
             $id = strtolower(preg_replace('/[^a-z0-9]+/', '-', $templateId) . '-' . $seed . '-' . bin2hex(random_bytes(3)));
         }
@@ -1474,8 +1492,9 @@ final class App
             $this->db->prepare('INSERT INTO jobs (id, project_id, template_id, title, spec_json, code_hash, priority, status, created_at, seed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
                 ->execute([$id, $tpl['project_id'], $tpl['id'], $title, json_encode($spec), $this->protocolHash(), $priority, 'queued', $this->now(), $seed]);
         } catch (PDOException $e) {
-            if ($templateId === 'sf-sequence-experiment' && (string) $e->getCode() === '23000') {
-                throw new InvalidArgumentException('A sequence experiment already uses that seed.');
+            if (in_array($templateId, ['sf-sequence-experiment', 'sf-inverse-experiment'], true) && (string) $e->getCode() === '23000') {
+                throw new InvalidArgumentException($templateId === 'sf-sequence-experiment'
+                    ? 'A sequence experiment already uses that seed.' : 'An inverse experiment already uses that seed.');
             }
             throw $e;
         }
@@ -1496,6 +1515,17 @@ final class App
         $row = $st->fetch();
         $body = $row ? json_decode((string) $row['body_json'], true) : null;
         return is_array($body['research'] ?? null) ? ['jobId' => $row['id'], 'research' => $body['research']] : null;
+    }
+
+    public function inverseExperimentReport(int $seed): ?array
+    {
+        $st = $this->db->prepare("SELECT r.job_id, r.body_json FROM results r JOIN jobs j ON j.id = r.job_id
+            WHERE j.template_id = 'sf-inverse-experiment' AND r.status = 'done' AND (? = 0 OR j.seed = ?)
+            ORDER BY r.id DESC LIMIT 1");
+        $st->execute([$seed, $seed]);
+        $row = $st->fetch();
+        $body = $row ? json_decode((string) $row['body_json'], true) : null;
+        return is_array($body['research'] ?? null) ? ['jobId' => $row['job_id'], 'research' => $body['research']] : null;
     }
 
     public function recentSequenceStudies(): array

@@ -26,6 +26,22 @@ function execute(job, outDir) {
   const batches = +job.batches || +((job.budget && job.budget.batches) || 1);
   if (batches < 1 || batches > 20) throw new Error('batches must be from 1 to 20.');
   fs.mkdirSync(outDir, { recursive: true });
+  if (job.mode === 'inverse-experiment') {
+    const { study, packModel } = require('./inverse_designer');
+    const summaryPath = path.join(outDir, 'summary.json');
+    if (fs.existsSync(summaryPath)) {
+      const saved = readJson(summaryPath);
+      if (saved.research?.version === 'inverse-designer-1' && saved.research.seed === +job.seed) return saved;
+    }
+    const { model, report } = study({ seed: +job.seed });
+    const { results, ...research } = report;
+    research.checkpoint = packModel(model);
+    const note = 'Inverse design verified ' + report.metrics.learned.verified + '/' + report.testTasks +
+      ' held-out tasks. Random proposals verified ' + report.metrics.random.verified + '/' + report.testTasks + '.';
+    const summary = { synthetic: true, batches: 1, tasks: [], note, research };
+    writeJson(summaryPath, summary);
+    return summary;
+  }
   if (job.mode === 'sequence-experiment') {
     const { runExperiment, experimentReport } = require('./experiment');
     const progress = path.join(outDir, 'progress.json');

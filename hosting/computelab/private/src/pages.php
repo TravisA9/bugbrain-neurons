@@ -1570,7 +1570,8 @@ function sequenceStudySection(App $app, string $csrf): string
         . '<form method="post" action="' . h($base) . '/owner/sequence-study"><input type="hidden" name="csrf" value="' . h($csrf) . '">'
         . '<label>First seed <input name="seed" type="number" min="1" max="999998" required></label>'
         . '<button class="small" type="submit">Queue three capped study jobs</button></form>'
-        . '<p class="quiet"><a href="' . h($base) . '/owner/sequence-experiment.json">Latest sequence experiment report (JSON)</a></p>';
+        . '<p class="quiet"><a href="' . h($base) . '/owner/sequence-experiment.json">Latest sequence experiment report (JSON)</a></p>'
+        . '<p class="quiet"><a href="' . h($base) . '/owner/inverse-experiment.json">Latest inverse design report and model (JSON)</a></p>';
 }
 
 function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', string $status = 'all', int $page = 1): string
