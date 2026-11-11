@@ -755,7 +755,10 @@ body.fit .shell.split-shell{height:calc(100vh - 56px);height:calc(100dvh - 56px)
 .snn-net .pe{fill:#9dffd6;filter:drop-shadow(0 0 4px #69e2b1)}.snn-net .pi{fill:#ff6fb0;filter:drop-shadow(0 0 4px #ff4f9a)}
 .snn-net .halo{fill:#69e2b1;pointer-events:none}.snn-net .node-inhib-g .halo{fill:#ff6fb0}.snn-net .node-output-g .halo{fill:#ffca76}.snn-net .node-input-g .halo{fill:#9dffd6}
 .snn-net .charge{fill:#e6edf3;opacity:.5;pointer-events:none}.snn-net .node-input{stroke:#69e2b1}.snn-net .node-output{stroke:#ffca76;stroke-width:2}
+.snn-net .node-hidden{fill:#173754;stroke:#65c7f2;stroke-width:2}.snn-net .node-hidden-g .halo{fill:#65c7f2}
+.snn-net .node-inhib{fill:#542343;stroke:#ff6fb0;stroke-width:2}
 .snn-net .fire .body{fill:#e9fff5;stroke:#fff}.snn-net .node-inhib-g.fire .body{fill:#ffd0e6}.snn-net .node-output-g.fire .body{fill:#fff0d2}.snn-net .unused{opacity:.35}
+.snn-net .neuron-sign{fill:#fff;font:700 14px var(--mono);pointer-events:none}.snn-net .fire .neuron-sign{fill:#17212b}
 .snn-io-label{fill:#c9d6df;font:9px var(--mono);letter-spacing:.06em}.snn-silent{fill:var(--amber);font:11px var(--mono)}
 .snn-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 6px}
 .snn-btn{width:32px;height:28px;padding:0;border:1px solid #2a3b47;border-radius:7px;background:#0f1a22;color:var(--mint);font:600 13px var(--display);cursor:pointer;line-height:1}.snn-btn:hover{border-color:#3d6f5c;background:#12241d}
@@ -773,6 +776,7 @@ body.fit .shell.split-shell{height:calc(100vh - 56px);height:calc(100dvh - 56px)
 .snn-raster-key{margin:6px 0;color:#aeb9c2;font:10px var(--mono)}
 .snn-key i,.snn-raster-key i{display:inline-block;width:9px;height:9px;margin-right:5px;background:var(--key-color);border-radius:50%;vertical-align:baseline}
 .snn-key .port{border-radius:2px}.snn-key .wire-key{width:14px;height:3px;border-radius:0;vertical-align:middle}
+.snn-key .diamond{border-radius:0;transform:rotate(45deg) scale(.8)}
 @media (max-width:560px){.snn-bar .snn-scrub{flex-basis:100%;order:9;margin:2px 0}.snn-io{font-size:10px}.snn-net .net-label,.snn-io-label{font-size:17px}.snn-trace .rl{font-size:16px}}
 @media (prefers-reduced-motion:reduce){.snn-net .pe,.snn-net .pi{filter:none}}
 .node-input{fill:#132c2b;stroke:#3a755f;stroke-width:1.5}.node-hidden{fill:#1e2336;stroke:#7769c3;stroke-width:1.5}.node-inhib{fill:#2a1e36;stroke:#b58fff;stroke-width:1.5}.node-output{fill:#352719;stroke:#a87636;stroke-width:1.5}
@@ -1163,6 +1167,9 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = []): string
     $base = $app->base();
     $payload = $app->discoveriesPayload();
     $items = $payload['items'];
+    usort($items, static function (array $a, array $b): int {
+        return strcmp($b['when'], $a['when']) ?: strcmp($a['hash'], $b['hash']);
+    });
     $mine = array_flip($mineIds);
     $series = $payload['series'];
     foreach ($items as $i => $item) {
@@ -1174,12 +1181,7 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = []): string
         $board[] = ['name' => (string) $row['name'], 'genomes' => (int) $row['genomes'], 'records' => (int) $row['records'], 'hours' => round((float) $row['hours'], 2)];
     }
     $list = '<button class="disc active" type="button" data-index="-1"><div class="row1"><span class="t">Overview</span><span class="s">' . h((string) count($items)) . '</span></div><div class="row2"><span>All tasks · contributors</span><span></span></div></button>';
-    $lastTask = '';
     foreach ($items as $i => $item) {
-        if ($item['task'] !== $lastTask) {
-            $list .= '<div class="group-label">Level ' . h((string) $item['level']) . ' · ' . h($item['task']) . '</div>';
-            $lastTask = $item['task'];
-        }
         $badges = '';
         foreach (isset($item['badges']) && is_array($item['badges']) ? $item['badges'] : [] as $b) {
             $badges .= '<span class="badge-m">' . h((string) $b) . '</span>';
@@ -1193,7 +1195,7 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = []): string
         $list .= '<p class="muted" style="padding:8px">No discoveries yet. Finished SpikeFoundry runs upload them.</p>';
     }
     $data = ['items' => $items, 'series' => $series, 'board' => $board, 'genomeUrl' => $base . '/discoveries/genome?hash=', 'now' => $app->now(), 'mineCount' => count($mineIds)];
-    $body = '<section class="heading"><div><div class="eyebrow">Discoveries · frozen designs</div><h1>What the network has found</h1><p>Browse promising search results and play back their wiring. Ranking badges describe the cases used during search. The Overview lists circuits that passed separate fresh-case checks. Repeat finds earn confirmations in the credit system.</p></div></section>'
+    $body = '<section class="heading"><div><div class="eyebrow">Discoveries · frozen designs</div><h1>What the network has found</h1><p>Browse promising search results, newest first, and play back their wiring. Ranking badges describe the cases used during search. The Overview lists circuits that passed separate fresh-case checks. Repeat finds earn confirmations in the credit system.</p></div></section>'
         . '<div class="split"><section class="panel" aria-label="Discoveries"><div class="panelhead"><div class="paneltitle">Discoveries</div><span class="subtag">' . h((string) count($items)) . ' DESIGNS</span></div><div class="list-scroll" id="disc-list">' . $list . '</div></section>'
         . '<section class="panel" aria-label="Discovery viewer"><div class="panelhead"><div class="paneltitle" id="v-title">Overview</div><span class="subtag" id="v-tag">ALL TASKS</span></div><div class="viewer-scroll" id="viewer"></div></section></div>'
         . '<template id="disc-verification">' . verifiedDiscoveries($app->recentSequenceStudies()) . '</template>'
@@ -1256,8 +1258,17 @@ net.mods.forEach(function(m,mi){var x=60+(net.mods.length>1?mi*(W-120)/(net.mods
 net.edges.forEach(function(e,ei){var q=lay.curves[ei];s+='<path class="wire'+(e.weight<0?' inhib':' excit')+(e.delay>0?' delay':'')+'" d="M'+q[0][0]+' '+q[0][1]+' Q'+q[1][0]+' '+q[1][1]+' '+q[2][0]+' '+q[2][1]+'" stroke-width="'+(1+Math.min(2.5,Math.abs(e.weight)*1.2)).toFixed(1)+'"><title>'+esc(lbl(e.from)+' → '+lbl(e.to))+' · weight '+e.weight.toFixed(2)+' · arrives after '+(e.delay+1)+' step'+(e.delay?'s':'')+'</title></path>';});
 s+='</g><g class="snn-pulses"></g><g class="snn-nodes">';
 net.neurons.forEach(function(n,i){var p=lay.pos[i],c=n.kind==='input'?'node-input':n.kind==='output'?'node-output':n.sign<0?'node-inhib':'node-hidden',io=n.kind==='input'?net.inputs.indexOf(i):-1,unused=n.kind==='input'&&io>=nm.inputs.length&&nm.inputs.length>0;
-s+='<g class="snn-n '+c+'-g'+(unused?' unused':'')+'"><circle class="halo" cx="'+p[0]+'" cy="'+p[1]+'" r="19" opacity="0" filter="url(#snn-glow)"/>'+(n.kind==='input'?'<rect class="'+c+' body" x="'+(p[0]-11)+'" y="'+(p[1]-11)+'" width="22" height="22" rx="5"/>':n.kind==='output'?'<rect class="'+c+' body" x="'+(p[0]-12)+'" y="'+(p[1]-12)+'" width="24" height="24" rx="12" transform="rotate(45 '+p[0]+' '+p[1]+')"/>':'<circle class="'+c+' body" cx="'+p[0]+'" cy="'+p[1]+'" r="11"/>')+'<circle class="charge" cx="'+p[0]+'" cy="'+p[1]+'" r="0"/>'
-+((n.kind!=='lif')?'<text class="snn-io-label" x="'+p[0]+'" y="'+(p[1]+(n.kind==='input'?-17:-19))+'" text-anchor="middle">'+esc(unused?'unused':lbl(i))+'</text>':'')+'<title>'+esc(lbl(i)+(n.kind==='lif'?' · threshold '+n.thr.toFixed(2)+' · leak '+n.leak.toFixed(2):''))+'</title></g>';});
+var x=p[0],y=p[1],body;
+if(n.kind==='input')body='<rect class="'+c+' body" x="'+(x-11)+'" y="'+(y-11)+'" width="22" height="22" rx="5"/>';
+else if(n.kind==='lif'&&n.sign<0)body='<polygon class="'+c+' body" points="'+x+','+(y-14)+' '+(x+14)+','+y+' '+x+','+(y+14)+' '+(x-14)+','+y+'"/>';
+else body='<circle class="'+c+' body" cx="'+x+'" cy="'+y+'" r="'+(n.kind==='output'?12:11)+'"/>';
+var label=n.kind==='lif'
+  ?'<text class="neuron-sign" x="'+x+'" y="'+y+'" text-anchor="middle" dominant-baseline="central">'+(n.sign<0?'−':'+')+'</text>'
+  :'<text class="snn-io-label" x="'+x+'" y="'+(y+(n.kind==='input'?-17:-19))+'" text-anchor="middle">'+esc(unused?'unused':lbl(i))+'</text>';
+var detail=n.kind==='lif'?(n.sign<0?'Inhibitory':'Excitatory')+' neuron '+lbl(i)+' · threshold '+n.thr.toFixed(2)+' · leak '+n.leak.toFixed(2):lbl(i);
+s+='<g class="snn-n '+c+'-g'+(unused?' unused':'')+'"><circle class="halo" cx="'+x+'" cy="'+y+'" r="19" opacity="0" filter="url(#snn-glow)"/>'
+  +body+'<circle class="charge" cx="'+x+'" cy="'+y+'" r="0"/>'+label+'<title>'+esc(detail)+'</title></g>';
+});
 s+='</g><text class="snn-silent" x="'+W/2+'" y="'+(NH-12)+'" text-anchor="middle"></text></svg>';
 var tw=W,lx=72,rows=net.inputs.concat(net.outputs),RH=15,TH=rows.length*RH+40;
 function ctl(){var c='<div class="snn-bar"><button type="button" class="snn-btn" data-a="play" aria-label="Play">▶</button><button type="button" class="snn-btn" data-a="restart" aria-label="Restart" title="Restart">↺</button><button type="button" class="snn-btn" data-a="back" aria-label="Step back" title="Step back">‹</button><button type="button" class="snn-btn" data-a="fwd" aria-label="Step forward" title="Step forward">›</button>'
@@ -1265,8 +1276,8 @@ function ctl(){var c='<div class="snn-bar"><button type="button" class="snn-btn"
 c+='<div class="snn-cases"><span>Held-out case</span>';cases.forEach(function(cs,i){c+='<button type="button" class="snn-case'+(i===ci?' on':'')+'" data-c="'+i+'" title="'+(correct(all[i].outputs,cs.label)?'scored correct':'scored wrong')+'">'+(i+1)+'<i>'+(correct(all[i].outputs,cs.label)?'✓':'✗')+'</i></button>';});return c+'</div>';}
 var key='<details class="snn-key" open><summary>Network legend</summary><ul>'
   +'<li><i class="port" style="--key-color:#69e2b1" aria-hidden="true"></i>Input</li>'
-  +'<li><i style="--key-color:#7769c3" aria-hidden="true"></i>Excitatory neuron</li>'
-  +'<li><i style="--key-color:#b58fff" aria-hidden="true"></i>Inhibitory neuron</li>'
+  +'<li><i style="--key-color:#65c7f2" aria-hidden="true"></i>Excitatory neuron (+)</li>'
+  +'<li><i class="diamond" style="--key-color:#ff6fb0" aria-hidden="true"></i>Inhibitory neuron (−)</li>'
   +'<li><i style="--key-color:#ffca76" aria-hidden="true"></i>Output</li>'
   +'<li><i class="wire-key" style="--key-color:#2f7a60" aria-hidden="true"></i>Nonnegative weight</li>'
   +'<li><i class="wire-key" style="--key-color:#b8457e" aria-hidden="true"></i>Inhibitory weight</li></ul>'
@@ -1331,7 +1342,7 @@ function metric(l,v,n,a){return '<div class="metric'+(a?' accent':'')+'"><div cl
 function f3(x){return x==null?'—':Number(x).toFixed(3);}
 function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
 function rasterSvg(net,r){var N=net.neurons.length,T=r.length,W=360,rh=Math.max(8,Math.min(16,180/N)),H=N*rh+26,cw=(W-50)/T,s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Spike raster">';
-for(var i=0;i<N;i++){var n=net.neurons[i],col=n.kind==='input'?'#69e2b1':n.kind==='output'?'#ffca76':n.sign<0?'#b5a4ff':'#65c7f2';s+='<text x="2" y="'+(i*rh+rh*.75+4)+'" fill="#6e808e" font-size="8" font-family="monospace">'+(n.kind==='input'?'in':n.kind==='output'?'out':(n.sign<0?'i':'e'))+n.idx+'</text>';
+for(var i=0;i<N;i++){var n=net.neurons[i],col=n.kind==='input'?'#69e2b1':n.kind==='output'?'#ffca76':n.sign<0?'#ff6fb0':'#65c7f2';s+='<text x="2" y="'+(i*rh+rh*.75+4)+'" fill="'+col+'" font-size="8" font-family="monospace">'+(n.kind==='input'?'in':n.kind==='output'?'out':(n.sign<0?'i':'e'))+n.idx+'</text>';
 for(var t=0;t<T;t++)if(r[t][i])s+='<rect x="'+(40+t*cw)+'" y="'+(i*rh+2)+'" width="'+Math.max(2,cw-2)+'" height="'+(rh-3)+'" rx="2" fill="'+col+'"/>';}
 s+='<text x="40" y="'+(H-6)+'" fill="#6e808e" font-size="9" font-family="monospace">time step 0 → '+(T-1)+'</text>';return s+'</svg>';}
 function historySvg(pts,mark){if(!pts||pts.length<2)return '<p class="muted">The score history appears after two job summaries.</p>';var W=360,H=150,n=pts.length,b='',d='';pts.forEach(function(p,i){var x=8+i*(W-16)/(n-1);b+=(i?' ':'')+x.toFixed(1)+','+(8+(1-clamp(p[0],0,1))*(H-16)).toFixed(1);d+='<circle cx="'+x.toFixed(1)+'" cy="'+(8+(1-clamp(p[1],0,1))*(H-16)).toFixed(1)+'" r="1.6" fill="#65c7f2" opacity=".6"/>';});
@@ -1345,7 +1356,7 @@ var h='<div class="chips" style="margin-bottom:12px"><span class="chip">genome <
 h+='<div class="metrics">'+metric('Held-out score',f3(it.held),'size penalty included',true)+metric('Train score',f3(it.train),it.accuracy!=null?'accuracy '+f3(it.accuracy):'')+metric('Circuit size',it.neurons+'<small> / '+it.synapses+'</small>','neurons / synapses')+metric('Spikes',it.spikes,'on held-out cases · '+it.evalMs+' ms')+'</div>';
 h+='<div class="viz-title"><strong>Frozen network · playback</strong><span id="net-note">loading…</span></div><div id="net"><div class="stage"><div class="private">Loading the wiring…</div></div></div>';
 h+='<div class="viz-grid"><div><div class="viz-title"><strong>Spike raster</strong><span id="raster-note">every neuron · held-out case</span></div><div class="stage" id="raster"><div class="private">Needs the wiring.</div></div>'
-  +'<ul class="snn-raster-key" aria-label="Spike raster legend"><li><i style="--key-color:#69e2b1" aria-hidden="true"></i>in · input</li><li><i style="--key-color:#65c7f2" aria-hidden="true"></i>e · excitatory</li><li><i style="--key-color:#b5a4ff" aria-hidden="true"></i>i · inhibitory</li><li><i style="--key-color:#ffca76" aria-hidden="true"></i>out · output</li></ul></div>'
+  +'<ul class="snn-raster-key" aria-label="Spike raster legend"><li><i style="--key-color:#69e2b1" aria-hidden="true"></i>in · input</li><li><i style="--key-color:#65c7f2" aria-hidden="true"></i>e · excitatory</li><li><i style="--key-color:#ff6fb0" aria-hidden="true"></i>i · inhibitory</li><li><i style="--key-color:#ffca76" aria-hidden="true"></i>out · output</li></ul></div>'
   +'<div><div class="viz-title"><strong>Score history · '+esc(it.task)+' (whole task)</strong><span>'+((D.series[it.task]||[]).length)+' jobs, same for every design of this task</span></div>'+historySvg(D.series[it.task],it.held)+'</div></div>';
 V.innerHTML=h;V.scrollTop=0;var hash=it.hash;
 function draw(g){return engineReady.then(function(ready){if(selection!==generation)return;var P=window.SnnPlayer,R=document.getElementById('raster'),box=document.getElementById('net'),note=document.getElementById('net-note');
