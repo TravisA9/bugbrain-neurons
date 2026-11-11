@@ -413,6 +413,23 @@
     return { outputs: fired.map(Boolean), spikeCount: total };
   }
   function network(g, taskId) { return compileSNN(g, taskId); }
+  const INVERSE_GENES = [[-0.8, 0, 0.8, 1.2], [-0.8, 0, 0.8, 1.2], [0, 1, 2], [0, 1, 2], [0.65, 1.25], [0, 0.65], [0, 0.4]];
+  function inverseCircuit(genes) {
+    if (!Array.isArray(genes) || genes.length !== INVERSE_GENES.length ||
+        !genes.every((value, i) => Number.isInteger(value) && value >= 0 && value < INVERSE_GENES[i].length)) {
+      throw new Error('Invalid temporal circuit genes');
+    }
+    const [a, b, delayA, delayB, threshold, leak, feedback] = genes.map((index, i) => INVERSE_GENES[i][index]);
+    const neurons = [
+      { kind: 'input', thr: 1, leak: 0 }, { kind: 'input', thr: 1, leak: 0 },
+      { kind: 'lif', thr: threshold, leak }, { kind: 'output', thr: 1, leak: 0 },
+    ];
+    const edges = [{ from: 2, to: 3, weight: 1, delay: 0 }];
+    if (a) edges.push({ from: 0, to: 2, weight: a, delay: delayA });
+    if (b) edges.push({ from: 1, to: 2, weight: b, delay: delayB });
+    if (feedback) edges.push({ from: 2, to: 2, weight: feedback, delay: 0 });
+    return { neurons, edges, inputs: [0, 1], outputs: [3] };
+  }
   function sampleCase(taskId, index) {
     const sample = makeSample(taskId, index || 0, true, 0, mulberry32(1));
     return { task: publicTask(BASE_TASKS[taskId]), seq: sample.seq, label: sample.label, synthetic: true };
@@ -426,5 +443,5 @@
     return out;
   }
 
-  return { TOPOLOGIES, LAB_BUDGET, FULL_BUDGET, PILOT_BUDGET, taskList, createState, runBatch, checkpoint, restore, summary, scoreDesign, robustScore, network, sampleCase, taskSamples, compileSNN, simulateSNN, simulateFrozen, heldOutPromotion, BASE_TASKS };
+  return { TOPOLOGIES, LAB_BUDGET, FULL_BUDGET, PILOT_BUDGET, taskList, createState, runBatch, checkpoint, restore, summary, scoreDesign, robustScore, network, sampleCase, taskSamples, compileSNN, simulateSNN, simulateFrozen, heldOutPromotion, BASE_TASKS, INVERSE_GENES, inverseCircuit };
 });

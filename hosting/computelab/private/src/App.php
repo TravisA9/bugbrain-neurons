@@ -211,6 +211,30 @@ final class App
             seed INTEGER NOT NULL,
             result_id INTEGER NOT NULL
         )');
+        $this->db->exec('CREATE TABLE IF NOT EXISTS inverse_discoveries (
+            id VARCHAR(64) PRIMARY KEY,
+            worker_id VARCHAR(191) NOT NULL,
+            seed INTEGER NOT NULL,
+            case_count INTEGER NOT NULL,
+            accuracy DOUBLE NOT NULL,
+            recall DOUBLE,
+            specificity DOUBLE,
+            demo_accuracy DOUBLE NOT NULL,
+            circuit_json TEXT NOT NULL,
+            created_at VARCHAR(40) NOT NULL
+        )');
+        $this->ensureIndexes('inverse_discoveries', [
+            'idx_inverse_accuracy' => 'accuracy, created_at',
+            'idx_inverse_recall' => 'recall, created_at',
+            'idx_inverse_specificity' => 'specificity, created_at',
+            'idx_inverse_demo' => 'demo_accuracy, created_at',
+            'idx_inverse_created' => 'created_at',
+        ]);
+        $this->db->exec('CREATE TABLE IF NOT EXISTS inverse_worker_models (
+            worker_id VARCHAR(191) PRIMARY KEY,
+            seed INTEGER NOT NULL,
+            checkpoint TEXT NOT NULL
+        )');
         $this->db->exec('CREATE TABLE IF NOT EXISTS design_genomes (
             hash VARCHAR(191) PRIMARY KEY,
             genome_json TEXT NOT NULL,
@@ -1046,7 +1070,7 @@ final class App
         return $n;
     }
 
-    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false): ?array
+    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false, bool $inverseGallery = false): ?array
     {
         $this->replenishJobs();
         $this->expireLeases();
@@ -1095,7 +1119,7 @@ final class App
                         && (!$sequenceExperiment || $studyVersion < (int) ($spec['experiment']['studyVersion'] ?? 1))) {
                         continue;
                     }
-                    if (($spec['mode'] ?? '') === 'inverse-experiment' && !$inverseExperiment) {
+                    if (($spec['mode'] ?? '') === 'inverse-experiment' && (!$inverseExperiment || (!empty($spec['inverseGallery']) && !$inverseGallery))) {
                         continue;
                     }
                     if ($this->legacySearchPaused((string) $project['id'], $spec)) {
@@ -1332,6 +1356,18 @@ final class App
                     || !is_string($checkpoint['payload'] ?? null) || base64_decode($checkpoint['payload'], true) === false) {
                     throw new InvalidArgumentException('Inverse experiment report does not match the job.');
                 }
+                $spec = json_decode((string) $row['spec_json'], true);
+                $discoveries = $report['discoveries'] ?? [];
+                if (!is_array($discoveries) || (!empty($spec['inverseGallery']) && !$discoveries)) {
+                    throw new InvalidArgumentException('Automatic inverse jobs must include circuits.');
+                }
+                $this->saveInverseDiscoveries((string) $worker['id'], (int) $row['seed'], $discoveries);
+                if (!empty($spec['inverseGallery'])) {
+                    $this->db->prepare('REPLACE INTO inverse_worker_models (worker_id, seed, checkpoint) VALUES (?, ?, ?)')
+                        ->execute([$worker['id'], (int) $row['seed'], json_encode($checkpoint)]);
+                    unset($body['research']['checkpoint'], $body['research']['discoveries']);
+                    $raw = json_encode($body);
+                }
             }
             $this->db->prepare('INSERT INTO results (job_id, worker_id, status, summary, body_json, seconds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
                 ->execute([$jobId, $worker['id'], $status, $summary, $raw, $seconds, $this->now()]);
@@ -1489,6 +1525,9 @@ final class App
             $id = 'sf-sequence-experiment-' . $seed;
         } elseif ($templateId === 'sf-inverse-experiment') {
             $id = 'sf-inverse-experiment-' . $seed;
+            if (!empty($extra['inverseGallery'])) {
+                $spec['inverseGallery'] = true;
+            }
         } else {
             $id = strtolower(preg_replace('/[^a-z0-9]+/', '-', $templateId) . '-' . $seed . '-' . bin2hex(random_bytes(3)));
         }
@@ -1523,13 +1562,115 @@ final class App
 
     public function inverseExperimentReport(int $seed): ?array
     {
-        $st = $this->db->prepare("SELECT r.job_id, r.body_json FROM results r JOIN jobs j ON j.id = r.job_id
+        $st = $this->db->prepare("SELECT r.job_id, r.body_json, m.checkpoint FROM results r JOIN jobs j ON j.id = r.job_id
+            LEFT JOIN inverse_worker_models m ON m.worker_id = r.worker_id AND m.seed = j.seed
             WHERE j.template_id = 'sf-inverse-experiment' AND r.status = 'done' AND (? = 0 OR j.seed = ?)
             ORDER BY r.id DESC LIMIT 1");
         $st->execute([$seed, $seed]);
         $row = $st->fetch();
         $body = $row ? json_decode((string) $row['body_json'], true) : null;
+        if (isset($row['checkpoint']) && is_array($body['research'] ?? null)) {
+            $body['research']['checkpoint'] = json_decode($row['checkpoint'], true);
+        }
         return is_array($body['research'] ?? null) ? ['jobId' => $row['job_id'], 'research' => $body['research']] : null;
+    }
+
+    public function inverseGalleryEnabled(): bool
+    {
+        return !empty($this->config['inverse_gallery']);
+    }
+
+    private function saveInverseDiscoveries(string $worker, int $seed, array $rows): void
+    {
+        if (count($rows) > 32) {
+            throw new InvalidArgumentException('Too many inverse discoveries.');
+        }
+        $insert = $this->db->prepare('REPLACE INTO inverse_discoveries
+            (id, worker_id, seed, case_count, accuracy, recall, specificity, demo_accuracy, circuit_json, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $widths = [4, 4, 3, 3, 2, 2, 2];
+        foreach (array_values($rows) as $index => $row) {
+            $genes = $row['genes'] ?? null;
+            $replay = $row['replay'] ?? null;
+            $cases = $row['freshCount'] ?? null;
+            if (!is_array($genes) || count($genes) !== count($widths) || !is_array($replay)
+                || count($replay) < 1 || count($replay) > 4 || !is_int($cases) || $cases < count($replay) || $cases > 256) {
+                throw new InvalidArgumentException('Invalid inverse circuit or replay cases.');
+            }
+            $genes = array_values($genes);
+            foreach ($genes as $i => $gene) {
+                if (!is_int($gene) || $gene < 0 || $gene >= $widths[$i]) {
+                    throw new InvalidArgumentException('Invalid inverse circuit gene.');
+                }
+            }
+            foreach ($replay as $case) {
+                if (!is_array($case) || count($case) !== 2 || !is_int($case[0] ?? null)
+                    || $case[0] < 0 || $case[0] > 255 || !in_array($case[1] ?? null, [0, 1], true)) {
+                    throw new InvalidArgumentException('Invalid inverse replay case.');
+                }
+            }
+            $scores = [];
+            foreach (['accuracy', 'recall', 'specificity', 'demoAccuracy'] as $name) {
+                $value = $row[$name] ?? null;
+                if ($value === null && in_array($name, ['recall', 'specificity'], true)) {
+                    $scores[] = null;
+                    continue;
+                }
+                if ((!is_int($value) && !is_float($value)) || $value < 0 || $value > 1) {
+                    throw new InvalidArgumentException('Invalid inverse discovery score.');
+                }
+                $scores[] = $value;
+            }
+            $id = hash('sha256', 'inverse-designer-1:' . $seed . ':' . $index);
+            $insert->execute(array_merge([$id, $worker, $seed, $cases], $scores, [
+                json_encode(['genes' => $genes, 'replay' => $replay, 'candidate' => $index + 1]), $this->now(),
+            ]));
+        }
+    }
+
+    public function inverseDiscoveries(?int $limit = null): array
+    {
+        $items = [];
+        $limit = $limit === null ? $this->discoveriesTopN() : max(1, min(20, $limit));
+        foreach (['accuracy' => 'Accuracy', 'recall' => 'Recall', 'specificity' => 'Specificity', 'demo_accuracy' => 'Demo match'] as $column => $label) {
+            $rows = $this->db->query("SELECT d.*, w.name, w.public_credit FROM inverse_discoveries d
+                LEFT JOIN workers w ON w.id = d.worker_id WHERE d.$column IS NOT NULL
+                ORDER BY d.$column DESC, d.created_at DESC, d.id ASC LIMIT $limit")->fetchAll();
+            foreach ($rows as $rank => $row) {
+                $id = $row['id'];
+                if (!isset($items[$id])) {
+                    $circuit = json_decode($row['circuit_json'], true);
+                    $g = $circuit['genes'];
+                    $items[$id] = [
+                        'hash' => $id, 'rank' => $rank + 1, 'task' => 'Inverse design', 'level' => 1,
+                        'label' => 'Circuit ' . $row['seed'] . '–' . ($circuit['candidate'] ?? substr($id, 0, 6)),
+                        'worker' => $row['worker_id'], 'finder' => $this->creditName($row),
+                        'when' => $row['created_at'], 'seed' => (int) $row['seed'], 'cases' => (int) $row['case_count'],
+                        'held' => (float) $row['accuracy'], 'accuracy' => (float) $row['accuracy'], 'train' => (float) $row['demo_accuracy'],
+                        'recall' => $row['recall'] === null ? null : (float) $row['recall'],
+                        'specificity' => $row['specificity'] === null ? null : (float) $row['specificity'],
+                        'neurons' => 4, 'synapses' => 1 + (int) ($g[0] !== 1) + (int) ($g[1] !== 1) + $g[6],
+                        'inverse' => $circuit, 'badges' => [],
+                    ];
+                }
+                $items[$id]['badges'][] = $label . ' #' . ($rank + 1);
+            }
+        }
+        return array_values($items);
+    }
+
+    private function trimInverseDiscoveries(): void
+    {
+        $older = $this->db->query('SELECT id FROM inverse_discoveries ORDER BY created_at DESC, id ASC LIMIT 256 OFFSET 1000')
+            ->fetchAll(PDO::FETCH_COLUMN);
+        if (!$older) {
+            return;
+        }
+        $remove = array_values(array_diff($older, array_column($this->inverseDiscoveries(20), 'hash')));
+        if ($remove) {
+            $this->db->prepare('DELETE FROM inverse_discoveries WHERE id IN (' . implode(',', array_fill(0, count($remove), '?')) . ')')
+                ->execute($remove);
+        }
     }
 
     public function recentSequenceStudies(): array
@@ -3833,6 +3974,9 @@ final class App
             return 0;
         }
         $this->db->prepare('REPLACE INTO supply_state (id, ran_at, note) VALUES (?, ?, ?)')->execute(['global', $this->now(), 'running']);
+        if ($this->inverseGalleryEnabled()) {
+            $this->trimInverseDiscoveries();
+        }
         $globalCap = (int) ($this->config['supply_cap'] ?? 24);
         if ($globalCap < 1) {
             $globalCap = 24;
@@ -3860,13 +4004,14 @@ final class App
         $topMemo = [];
         $projects = $this->db->query('SELECT * FROM projects WHERE enabled = 1 ORDER BY priority DESC, id ASC')->fetchAll();
         foreach ($projects as $project) {
-            if ($this->legacySearchPaused((string) $project['id'], ['mode' => 'propose'])) {
+            $inverse = $project['id'] === 'spikefoundry' && $this->inverseGalleryEnabled();
+            if (!$inverse && $this->legacySearchPaused((string) $project['id'], ['mode' => 'propose'])) {
                 continue;
             }
             if (!$this->projectAutoOn($project)) {
                 continue;
             }
-            $template = $this->supplyTemplate((string) $project['id']);
+            $template = $inverse ? 'sf-inverse-experiment' : $this->supplyTemplate((string) $project['id']);
             if ($template === '') {
                 continue;
             }
@@ -3875,7 +4020,7 @@ final class App
             $queued = $this->claimableQueued((string) $project['id']);
             $guard = 0;
             while ($queued < $low && $queued < $cap && $queuedAll < $globalCap && $guard < 20) {
-                $task = $this->supplyTask((string) $project['id']);
+                $task = $inverse ? 'inverse design' : $this->supplyTask((string) $project['id']);
                 if ($task === '') {
                     break;
                 }
@@ -3887,7 +4032,9 @@ final class App
                 $keepTop = (int) ($project['keep_top'] ?? 0) > 0 ? (int) $project['keep_top'] : 50;
                 $keepRandom = array_key_exists('keep_random', $project) ? (int) $project['keep_random'] : 500;
                 $extra = ['taskId' => $task, 'evals' => $evals, 'targetSeconds' => $seconds, 'keepTop' => $keepTop, 'keepRandom' => $keepRandom];
-                if ((string) $project['id'] !== 'bugbrain' && (string) ($project['family'] ?? '') !== 'bugbrain') {
+                if ($inverse) {
+                    $extra = ['inverseGallery' => true];
+                } elseif ((string) $project['id'] !== 'bugbrain' && (string) ($project['family'] ?? '') !== 'bugbrain') {
                     $extra['mode'] = 'propose';
                     try {
                         if (!isset($topMemo[$task])) {

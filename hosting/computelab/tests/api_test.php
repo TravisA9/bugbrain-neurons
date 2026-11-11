@@ -1065,5 +1065,27 @@ check($research->sequenceExperimentReport('')['research'] === $report, 'the coor
 check(count($research->recentSequenceStudies()) === 1 && count($research->queueSequenceStudy(200)) === 3,
     'the owner can compare completed studies and queue three distinct seeds');
 
+$inverseLab = labWith(['inverse_gallery' => true, 'pause_legacy_spikefoundry_search' => true, 'discoveries_top_n' => 1]);
+$inverseApp = $inverseLab['app'];
+$inverseApp->saveSupply('spikefoundry', true, 2, 2, 0);
+$inverseWorker = $inverseApp->workerByToken($inverseApp->enroll('inverse-worker', ['spikefoundry'], 2, true)['token']);
+check($inverseApp->claim($inverseWorker, 0, false, 1, true) === null, 'older inverse workers cannot claim jobs that require circuit publication');
+$inverseJob = $inverseApp->claim($inverseWorker, 0, false, 1, true, true);
+check($inverseJob && !empty($inverseJob['spec']['inverseGallery']) && $inverseApp->claimableQueued('spikefoundry') === 1,
+    'automatic supply keeps a queue of inverse circuit jobs for updated workers');
+$inverseSeed = $inverseJob['spec']['seed'];
+$checkpoint = ['version' => 'inverse-designer-1', 'encoding' => 'f32le-gzip', 'payload' => base64_encode('checkpoint')];
+$candidate = ['genes' => [1, 2, 0, 0, 0, 0, 0], 'freshCount' => 192, 'replay' => [[0, 0], [2, 1]]];
+$report = ['version' => 'inverse-designer-1', 'seed' => $inverseSeed, 'checkpoint' => $checkpoint, 'discoveries' => [
+    $candidate + ['accuracy' => 0.6, 'recall' => 0.8, 'specificity' => 0.4, 'demoAccuracy' => 0.6],
+    $candidate + ['accuracy' => 0.5, 'recall' => 0.1, 'specificity' => 0.9, 'demoAccuracy' => 0.7],
+]];
+$inverseApp->submitResult($inverseWorker, $inverseJob['id'], ['status' => 'done', 'synthetic' => true, 'research' => $report]);
+$inverseCards = $inverseApp->inverseDiscoveries();
+check(count($inverseCards) === 2 && $inverseCards[0]['badges'] === ['Accuracy #1', 'Recall #1']
+    && $inverseCards[1]['badges'] === ['Specificity #1', 'Demo match #1'], 'the gallery picks the top result in each metric even when scores are low');
+check($inverseApp->inverseExperimentReport($inverseSeed)['research']['checkpoint'] === $checkpoint,
+    'the latest automatic model is available from the owner report');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

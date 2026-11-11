@@ -401,7 +401,7 @@ try {
         foreach (coord_home_computers($app) ?? [] as $w) {
             $ids[] = (string) $w['id'];
         }
-        coord_html(pageDiscoveries($app, coord_who($app, 'discoveries'), $ids));
+        coord_html(pageDiscoveries($app, coord_who($app, 'discoveries'), $ids, ($_GET['archive'] ?? '') === '1'));
         return;
     }
     if ($path === '/discoveries/genome' && $method === 'GET') {
@@ -917,7 +917,7 @@ try {
             $worker['code_hash'] = (string) $body['codeHash'];
             $slot = isset($body['slot']) && is_numeric($body['slot']) ? (int) $body['slot'] : 0;
             $job = $app->claim($worker, $slot, ($body['sequenceExperiment'] ?? false) === true, (int) ($body['studyVersion'] ?? 1),
-                ($body['inverseExperiment'] ?? false) === true);
+                ($body['inverseExperiment'] ?? false) === true, ($body['inverseGallery'] ?? false) === true);
             coord_json(200, ['job' => $job]);
             return;
         }

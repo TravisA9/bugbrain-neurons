@@ -209,7 +209,7 @@ function score(circuit, task, indices) {
 }
 
 function study({ seed = 1729, epochs = 120, demoCount = 64, count = 8 } = {}) {
-  for (const [value, min, max] of [[seed, 1, 1e9], [epochs, 1, 240], [demoCount, 8, 128], [count, 1, 32]]) {
+  for (const [value, min, max] of [[seed, 1, 1e9], [epochs, 1, 2400], [demoCount, 8, 128], [count, 1, 32]]) {
     if (!Number.isInteger(value) || value < min || value > max) throw new Error('Invalid study options');
   }
   const rng = random(seed);
@@ -227,6 +227,7 @@ function study({ seed = 1729, epochs = 120, demoCount = 64, count = 8 } = {}) {
     const shuffled = shuffle(indices, rng);
     const examples = shuffled.slice(0, demoCount).map(i => ({ x: PROBES[i], y: task.labels[i] }));
     const fresh = shuffled.slice(demoCount);
+    const replay = [0, 1].flatMap(label => fresh.filter(i => task.labels[i] === label).slice(0, 2).map(i => [i, label]));
     const modelStart = process.cpuUsage();
     const learnedGenes = proposals(model, encode(examples), count);
     const learned = choose(learnedGenes, examples);
@@ -248,7 +249,7 @@ function study({ seed = 1729, epochs = 120, demoCount = 64, count = 8 } = {}) {
     }
     const libraryCpuMs = cpuMs(libraryStart);
     return {
-      sourceGenes: task.genes, examples, freshCount: fresh.length,
+      sourceGenes: task.genes, examples, freshCount: fresh.length, replay,
       direct: score(temporalCircuit(learnedGenes[0]), task, fresh),
       learned: { ...score(learned.circuit, task, fresh), genes: learned.genes, demoAccuracy: learned.demoAccuracy, cpuMs: learnedCpuMs },
       random: { ...score(control.circuit, task, fresh), genes: control.genes, demoAccuracy: control.demoAccuracy, cpuMs: controlCpuMs },

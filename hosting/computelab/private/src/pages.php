@@ -1162,10 +1162,11 @@ function verifiedDiscoveries(array $studies): string
             : '<p class="muted">No circuits have passed both fresh-case checks in a completed study yet.</p>');
 }
 
-function pageDiscoveries(App $app, array $nav, array $mineIds = []): string
+function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archive = false): string
 {
     $base = $app->base();
-    $payload = $app->discoveriesPayload();
+    $inverse = $app->inverseGalleryEnabled() && !$archive;
+    $payload = $inverse ? ['items' => $app->inverseDiscoveries(), 'series' => [], 'board' => []] : $app->discoveriesPayload();
     $items = $payload['items'];
     usort($items, static function (array $a, array $b): int {
         return strcmp($b['when'], $a['when']) ?: strcmp($a['hash'], $b['hash']);
@@ -1186,19 +1187,22 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = []): string
         foreach (isset($item['badges']) && is_array($item['badges']) ? $item['badges'] : [] as $b) {
             $badges .= '<span class="badge-m">' . h((string) $b) . '</span>';
         }
-        $list .= '<button class="disc' . ($item['mine'] ? ' mine' : '') . '" type="button" data-index="' . $i . '"><div class="row1"><span class="t">#' . h((string) $item['rank']) . ' ' . h($item['task'])
+        $list .= '<button class="disc' . ($item['mine'] ? ' mine' : '') . '" type="button" data-index="' . $i . '"><div class="row1"><span class="t">' . h($item['label'] ?? '#' . $item['rank'] . ' ' . $item['task'])
             . ($item['mine'] ? '<span class="badge-mine">Your computer</span>' : '') . $badges . '</span><span class="s">' . h(number_format((float) $item['held'], 3)) . '</span></div>'
             . '<div class="row2"><span>' . h($item['finder']) . (($item['confirmations'] ?? 0) > 0 ? ' · ✓' . h((string) $item['confirmations']) : '') . (($item['variants'] ?? 0) > 0 ? ' · +' . h((string) $item['variants']) . ' alike' : '') . '</span><span>' . h((string) $item['neurons']) . 'n · ' . h((string) $item['synapses']) . 's</span></div>'
             . discWhenHtml((string) ($item['when'] ?? '')) . '</button>';
     }
     if ($items === []) {
-        $list .= '<p class="muted" style="padding:8px">No discoveries yet. Finished SpikeFoundry runs upload them.</p>';
+        $list .= '<p class="muted" style="padding:8px">' . ($inverse ? 'Waiting for the first inverse-design job to finish.' : 'No discoveries yet. Finished SpikeFoundry runs upload them.') . '</p>';
     }
-    $data = ['items' => $items, 'series' => $series, 'board' => $board, 'genomeUrl' => $base . '/discoveries/genome?hash=', 'now' => $app->now(), 'mineCount' => count($mineIds)];
-    $body = '<section class="heading"><div><div class="eyebrow">Discoveries · frozen designs</div><h1>What the network has found</h1><p>Browse promising search results, newest first, and play back their wiring. Ranking badges describe the cases used during search. The Overview lists circuits that passed separate fresh-case checks. Repeat finds earn confirmations in the credit system.</p></div></section>'
+    $data = ['items' => $items, 'series' => $series, 'board' => $board, 'genomeUrl' => $base . '/discoveries/genome?hash=', 'now' => $app->now(), 'mineCount' => count($mineIds), 'inverse' => $inverse];
+    $description = $inverse
+        ? '<p>Top ' . h((string) $app->discoveriesTopN()) . ' inverse designs for each metric, newest first. Playback uses examples held out from training.</p><a href="' . h($base . '/discoveries?archive=1') . '">Legacy discoveries archive</a>'
+        : '<p>Browse search results, newest first, and play back their wiring. Ranking badges describe the cases used during search.</p>';
+    $body = '<section class="heading"><div><div class="eyebrow">Discoveries · frozen designs</div><h1>What the network has found</h1>' . $description . '</div></section>'
         . '<div class="split"><section class="panel" aria-label="Discoveries"><div class="panelhead"><div class="paneltitle">Discoveries</div><span class="subtag">' . h((string) count($items)) . ' DESIGNS</span></div><div class="list-scroll" id="disc-list">' . $list . '</div></section>'
         . '<section class="panel" aria-label="Discovery viewer"><div class="panelhead"><div class="paneltitle" id="v-title">Overview</div><span class="subtag" id="v-tag">ALL TASKS</span></div><div class="viewer-scroll" id="viewer"></div></section></div>'
-        . '<template id="disc-verification">' . verifiedDiscoveries($app->recentSequenceStudies()) . '</template>'
+        . ($inverse ? '' : '<template id="disc-verification">' . verifiedDiscoveries($app->recentSequenceStudies()) . '</template>')
         . '<script type="application/json" id="disc-data">' . jsonForHtml($data) . '</script>';
     $engine = (string) ($app->config['engine_js'] ?? '');
     $version = is_readable($engine) ? hash_file('sha256', $engine) : 'missing';
@@ -1246,7 +1250,7 @@ var NS='http://www.w3.org/2000/svg',W=760,NH=260;
 function layout(net){var cols=net.mods.length,pos=[];net.neurons.forEach(function(n){var m=net.mods[n.mod],x=60+(cols>1?n.mod*(W-120)/(cols-1):W/2),y=NH/2+(n.idx-(m.n-1)/2)*Math.min(44,(NH-60)/Math.max(1,m.n));pos.push([x,y]);});
 var curves=net.edges.map(function(e){var a=pos[e.from],b=pos[e.to],dx=b[0]-a[0],bend=dx<=0?-60:0,c=[(a[0]+b[0])/2,(a[1]+b[1])/2+bend+(dx===0?-30:0)];if(e.from===e.to){a=[a[0]-8,a[1]-9];b=[b[0]+8,b[1]-9];c=[a[0]+8,a[1]-70];}return[a,c,b];});return{pos:pos,curves:curves};}
 function qpt(q,u){var v=1-u;return[v*v*q[0][0]+2*v*u*q[1][0]+u*u*q[2][0],v*v*q[0][1]+2*v*u*q[1][1]+u*u*q[2][1]];}
-function names(task){var SF=root.SpikeFoundry,t=SF&&SF.BASE_TASKS&&SF.BASE_TASKS[task];return t?{inputs:t.inputs,outputs:t.outputs}:{inputs:[],outputs:[]};}
+function names(task){if(task==='Inverse design')return{inputs:['A','B'],outputs:['Output']};var SF=root.SpikeFoundry,t=SF&&SF.BASE_TASKS&&SF.BASE_TASKS[task];return t?{inputs:t.inputs,outputs:t.outputs}:{inputs:[],outputs:[]};}
 function mount(box,o){
 var net=o.net,lay=layout(net),cases=o.cases||[],nm=names(o.task),reduce=!!(root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches);
 var all=cases.map(function(c){return trace(net,c.seq);}),ci=0;for(var k=0;k<cases.length;k++){if(cases[k].label.some(Boolean)&&all[k].spikeCount>0){ci=k;break;}}
@@ -1348,24 +1352,35 @@ s+='<text x="40" y="'+(H-6)+'" fill="#6e808e" font-size="9" font-family="monospa
 function historySvg(pts,mark){if(!pts||pts.length<2)return '<p class="muted">The score history appears after two job summaries.</p>';var W=360,H=150,n=pts.length,b='',d='';pts.forEach(function(p,i){var x=8+i*(W-16)/(n-1);b+=(i?' ':'')+x.toFixed(1)+','+(8+(1-clamp(p[0],0,1))*(H-16)).toFixed(1);d+='<circle cx="'+x.toFixed(1)+'" cy="'+(8+(1-clamp(p[1],0,1))*(H-16)).toFixed(1)+'" r="1.6" fill="#65c7f2" opacity=".6"/>';});
 var my=(8+(1-clamp(mark,0,1))*(H-16)).toFixed(1);return '<svg class="chart-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Score history">'+d+'<polyline fill="none" stroke="#69e2b1" stroke-width="2" points="'+b+'"/><line x1="8" x2="'+(W-8)+'" y1="'+my+'" y2="'+my+'" stroke="#ffca76" stroke-dasharray="4 3"/></svg><div class="legend"><span><i></i>Best held-out</span><span class="b"><i></i>Each job</span><span class="c"><i></i>This design</span></div>';}
 function overview(){T.textContent='Overview';G.textContent='ALL TASKS';var by={};D.items.forEach(function(it){if(!by[it.task]||it.held>by[it.task].held)by[it.task]=it;});
+if(D.inverse){G.textContent='INVERSE DESIGN';V.innerHTML='<div class="metrics">'+metric('Designs listed',D.items.length,'top results by metric',true)+'</div><p class="muted">Select a design to see its scores, wiring, and replay cases.</p>';return;}
 var h='<div class="metrics">'+metric('Designs listed',D.items.length,'top N per quality measure',true)+metric('Tasks',Object.keys(by).length,'curriculum levels reached')+metric('Yours',D.items.filter(function(i){return i.mine;}).length,D.mineCount?'found by your computer':'link a computer on Home')+metric('Contributors',D.board.length,'with public credit or Anonymous')+'</div>';
 h+='<div class="viz-title"><strong>Best per task</strong><span>held-out score</span></div><div class="tasks">';Object.keys(by).forEach(function(k){var it=by[k];h+='<div class="taskcard"><div class="taskline"><span class="taskname">Level '+it.level+' · '+esc(k)+'</span><span class="taskscore">'+f3(it.held)+'</span></div><div class="taskdesc2">'+esc(it.finder)+' · '+it.neurons+' neurons · '+it.synapses+' synapses · '+'<span title="'+esc(ago(it.when))+'">'+esc(when(it.when))+'</span></div><div class="prog"><i style="width:'+Math.round(100*clamp(it.held,0,1))+'%"></i></div></div>';});
 h+='</div><div class="viz-title"><strong>Contributors</strong><span>evaluation time donated</span></div><div class="log">';D.board.forEach(function(b){h+='<div class="logline"><span class="logtime">'+b.hours.toFixed(2)+' h</span><span class="logtext">'+esc(b.name)+'</span><span class="logscore">'+b.genomes+' designs</span></div>';});if(!D.board.length)h+='<p class="muted">No public results yet.</p>';var verified=document.getElementById('disc-verification');V.innerHTML=(verified?verified.innerHTML:'')+h+'</div>';}
-function show(i,auto){var selection=++generation;if(player){player.destroy();player=null;}if(i<0)return overview();var it=D.items[i];var badges=(it.badges||[]).map(function(b){return '<span class="badge-m">'+esc(b)+'</span>';}).join('');T.innerHTML=esc('#'+it.rank+' '+it.task)+(it.mine?'<span class="badge-mine">Your computer</span>':'')+badges;G.textContent='LEVEL '+it.level;
+function show(i,auto){var selection=++generation;if(player){player.destroy();player=null;}if(i<0)return overview();var it=D.items[i];var badges=(it.badges||[]).map(function(b){return '<span class="badge-m">'+esc(b)+'</span>';}).join('');T.innerHTML=esc(it.label||('#'+it.rank+' '+it.task))+(it.mine?'<span class="badge-mine">Your computer</span>':'')+badges;G.textContent=it.inverse?'INVERSE DESIGN':'LEVEL '+it.level;
 var h='<div class="chips" style="margin-bottom:12px"><span class="chip">genome <b>'+esc(it.hash.slice(0,12))+'</b></span><span class="chip'+(it.mine?' mine':'')+'">found by '+esc(it.finder)+'</span><span class="chip disc-found" title="'+esc(ago(it.when))+'">found <b>'+esc(when(it.when))+'</b></span>'+(it.public?'<span class="chip"><b>public</b></span>':'')+(it.confirmations?'<span class="chip" title="Found again by later jobs">confirmed <b>'+it.confirmations+'×</b>'+(it.confirmedBy&&it.confirmedBy.length?' by '+esc(it.confirmedBy.join(', ')):'')+'</span>':'')+(it.variants?'<span class="chip" title="Other circuits with the same scores, size and spikes">+'+it.variants+' equivalent variant'+(it.variants>1?'s':'')+'</span>':'')+(it.badges&&it.badges.length?it.badges.map(function(b){return '<span class="chip" title="Among the top designs of this task on this measure">'+esc(b)+'</span>';}).join(''):'')+'</div>';
-h+='<div class="metrics">'+metric('Held-out score',f3(it.held),'size penalty included',true)+metric('Train score',f3(it.train),it.accuracy!=null?'accuracy '+f3(it.accuracy):'')+metric('Circuit size',it.neurons+'<small> / '+it.synapses+'</small>','neurons / synapses')+metric('Spikes',it.spikes,'on held-out cases · '+it.evalMs+' ms')+'</div>';
+h+='<div class="metrics">'+(it.inverse
+  ?metric('Accuracy',f3(it.accuracy),it.cases+' held-out cases',true)+metric('Recall',f3(it.recall),'positive cases')+metric('Specificity',f3(it.specificity),'negative cases')+metric('Demo match',f3(it.train),'examples used to select the proposal')
+  :metric('Held-out score',f3(it.held),'size penalty included',true)+metric('Train score',f3(it.train),it.accuracy!=null?'accuracy '+f3(it.accuracy):'')+metric('Circuit size',it.neurons+'<small> / '+it.synapses+'</small>','neurons / synapses')+metric('Spikes',it.spikes,'on held-out cases · '+it.evalMs+' ms'))+'</div>';
 h+='<div class="viz-title"><strong>Frozen network · playback</strong><span id="net-note">loading…</span></div><div id="net"><div class="stage"><div class="private">Loading the wiring…</div></div></div>';
 h+='<div class="viz-grid"><div><div class="viz-title"><strong>Spike raster</strong><span id="raster-note">every neuron · held-out case</span></div><div class="stage" id="raster"><div class="private">Needs the wiring.</div></div>'
   +'<ul class="snn-raster-key" aria-label="Spike raster legend"><li><i style="--key-color:#69e2b1" aria-hidden="true"></i>in · input</li><li><i style="--key-color:#65c7f2" aria-hidden="true"></i>e · excitatory</li><li><i style="--key-color:#ff6fb0" aria-hidden="true"></i>i · inhibitory</li><li><i style="--key-color:#ffca76" aria-hidden="true"></i>out · output</li></ul></div>'
-  +'<div><div class="viz-title"><strong>Score history · '+esc(it.task)+' (whole task)</strong><span>'+((D.series[it.task]||[]).length)+' jobs, same for every design of this task</span></div>'+historySvg(D.series[it.task],it.held)+'</div></div>';
+  +(it.inverse?'':'<div><div class="viz-title"><strong>Score history · '+esc(it.task)+' (whole task)</strong><span>'+((D.series[it.task]||[]).length)+' jobs, same for every design of this task</span></div>'+historySvg(D.series[it.task],it.held)+'</div>')+'</div>';
 V.innerHTML=h;V.scrollTop=0;var hash=it.hash;
 function draw(g){return engineReady.then(function(ready){if(selection!==generation)return;var P=window.SnnPlayer,R=document.getElementById('raster'),box=document.getElementById('net'),note=document.getElementById('net-note');
 if(!ready){note.textContent='unavailable';box.textContent='The simulator could not load. Reload the page to try again.';R.textContent='Playback unavailable.';return;}
-try{var net=P.compile(g),cases=P.heldCases(it.task,4);note.textContent=net.neurons.length+' neurons · '+net.edges.length+' synapses · weights fixed';
+try{var net,cases;
+if(it.inverse){
+  net=window.SpikeFoundry.inverseCircuit(g.genes);
+  net.mods=[{id:'in',kind:'input',n:2},{id:'gate',kind:'lif',sign:1,n:1},{id:'out',kind:'output',n:1}];
+  net.neurons.forEach(function(n,i){n.mod=i<2?0:i-1;n.idx=i<2?i:0;n.sign=1;});
+  cases=g.replay.map(function(pair){return{seq:[0,1,2,3].map(function(t){return[(pair[0]>>(2*t))&1,(pair[0]>>(2*t+1))&1];}),label:[pair[1]]};});
+}else{net=P.compile(g);cases=P.heldCases(it.task,4);}
+note.textContent=net.neurons.length+' neurons · '+net.edges.length+' synapses · weights fixed';
 if(!cases.length){box.textContent='Playback cases are unavailable for this task.';R.textContent='Playback unavailable.';return;}
-player=P.mount(box,{net:net,task:it.task,cases:cases,record:{spikes:it.spikes,accuracy:it.accuracy},autoplay:auto,onCase:function(k,tr){R.innerHTML=rasterSvg(net,tr.spikes);document.getElementById('raster-note').textContent='every neuron · held-out case '+(k+1);}});
+player=P.mount(box,{net:net,task:it.task,cases:cases,record:it.inverse?null:{spikes:it.spikes,accuracy:it.accuracy},autoplay:auto,onCase:function(k,tr){R.innerHTML=rasterSvg(net,tr.spikes);document.getElementById('raster-note').textContent='every neuron · held-out case '+(k+1);}});
 R.innerHTML=rasterSvg(net,player.trace().spikes);document.getElementById('raster-note').textContent='every neuron · held-out case '+(player.caseIndex()+1);}catch(e){box.innerHTML='<div class="stage"><div class="private">Could not simulate this design here.</div></div>';R.innerHTML='<div class="private">Could not simulate this design here.</div>';}});}
 function priv(){if(selection!==generation)return;document.getElementById('net-note').textContent='private';document.getElementById('net').innerHTML='<div class="private">The wiring of this design is private until the owner publishes it.<br>Its size: '+it.neurons+' neurons and '+it.synapses+' synapses.</div>';document.getElementById('raster').innerHTML='<div class="private">Shown with the wiring.</div>';}
+if(it.inverse)return draw(it.inverse);
 if(cache[hash]===false)return priv();if(cache[hash])return draw(cache[hash]);
 fetch(D.genomeUrl+encodeURIComponent(hash),{credentials:'same-origin'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(g){cache[hash]=g;draw(g);}).catch(function(){cache[hash]=false;priv();});}
 var player=null,generation=0,btns=[].slice.call(document.querySelectorAll('#disc-list .disc'));

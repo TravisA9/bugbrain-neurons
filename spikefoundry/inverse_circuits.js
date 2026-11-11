@@ -1,19 +1,10 @@
 'use strict';
 
-const { simulateFrozen } = require('./engine');
+const { simulateFrozen, INVERSE_GENES: GENES, inverseCircuit: temporalCircuit } = require('./engine');
 
 const CHANNELS = 2;
 const STEPS = 4;
 const PROBE_COUNT = 2 ** (CHANNELS * STEPS);
-const GENES = [
-  [-0.8, 0, 0.8, 1.2], // weight from A
-  [-0.8, 0, 0.8, 1.2], // weight from B
-  [0, 1, 2],           // delay from A
-  [0, 1, 2],           // delay from B
-  [0.65, 1.25],        // gate threshold
-  [0, 0.65],           // gate leak
-  [0, 0.4],            // recurrent weight
-];
 
 const neuron = (kind, thr = 1, leak = 0) => ({ kind, thr, leak });
 const edge = (from, to, weight, delay = 0) => ({ from, to, weight, delay });
@@ -31,20 +22,6 @@ function probeIndex(seq) {
     throw new Error('Each spike train must have four steps with two binary inputs per step');
   }
   return seq.flat().reduce((index, bit, i) => index | (bit << i), 0);
-}
-
-function temporalCircuit(genes) {
-  if (!Array.isArray(genes) || genes.length !== GENES.length ||
-      !genes.every((value, i) => Number.isInteger(value) && value >= 0 && value < GENES[i].length)) {
-    throw new Error('Invalid temporal circuit genes');
-  }
-  const [a, b, delayA, delayB, threshold, leak, feedback] = genes.map((index, i) => GENES[i][index]);
-  const edges = [edge(2, 3, 1)];
-  if (a) edges.push(edge(0, 2, a, delayA));
-  if (b) edges.push(edge(1, 2, b, delayB));
-  if (feedback) edges.push(edge(2, 2, feedback));
-  return { neurons: [neuron('input'), neuron('input'), neuron('lif', threshold, leak), neuron('output')],
-    edges, inputs: [0, 1], outputs: [3] };
 }
 
 function output(circuit, seq) {

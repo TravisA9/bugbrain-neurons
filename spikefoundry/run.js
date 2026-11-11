@@ -33,9 +33,13 @@ function execute(job, outDir) {
       const saved = readJson(summaryPath);
       if (saved.research?.version === 'inverse-designer-1' && saved.research.seed === +job.seed) return saved;
     }
-    const { model, report } = study({ seed: +job.seed });
+    const { model, report } = study({ seed: +job.seed, epochs: job.inverseGallery ? 2400 : 120 });
     const { results, ...research } = report;
     research.checkpoint = packModel(model);
+    research.discoveries = results.map(({ learned, replay, freshCount }) => ({
+      genes: learned.genes, accuracy: learned.accuracy, recall: learned.recall,
+      specificity: learned.specificity, demoAccuracy: learned.demoAccuracy, replay, freshCount,
+    }));
     const note = 'Inverse design verified ' + report.metrics.learned.verified + '/' + report.testTasks +
       ' held-out tasks. Random proposals verified ' + report.metrics.random.verified + '/' + report.testTasks + '.';
     const summary = { synthetic: true, batches: 1, tasks: [], note, research };
