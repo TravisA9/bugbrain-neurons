@@ -1081,6 +1081,10 @@ $report = ['version' => 'inverse-designer-1', 'seed' => $inverseSeed, 'checkpoin
     $candidate + ['accuracy' => 0.5, 'recall' => 0.1, 'specificity' => 0.9, 'demoAccuracy' => 0.7],
 ]];
 $inverseApp->submitResult($inverseWorker, $inverseJob['id'], ['status' => 'done', 'synthetic' => true, 'research' => $report]);
+$inverseApp->submitResult($inverseWorker, $inverseJob['id'], ['status' => 'done', 'synthetic' => true, 'research' => $report]);
+$resultCount = $inverseLab['db']->prepare('SELECT COUNT(*) FROM results WHERE job_id = ?');
+$resultCount->execute([$inverseJob['id']]);
+check((int) $resultCount->fetchColumn() === 1, 'a repeated completion is acknowledged without storing the job twice');
 $inverseCards = $inverseApp->inverseDiscoveries();
 check(count($inverseCards) === 2 && $inverseCards[0]['badges'] === ['Accuracy #1', 'Recall #1']
     && $inverseCards[1]['badges'] === ['Specificity #1', 'Demo match #1'], 'the gallery picks the top result in each metric even when scores are low');

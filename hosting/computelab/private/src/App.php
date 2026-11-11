@@ -1308,10 +1308,20 @@ final class App
         }
         $this->db->beginTransaction();
         try {
-            $lease = $this->db->prepare('SELECT worker_id, started_at FROM leases WHERE job_id = ? AND worker_id = ?');
+            $lock = ($this->config['driver'] ?? '') === 'sqlite' ? '' : ' FOR UPDATE';
+            $lease = $this->db->prepare('SELECT worker_id, started_at FROM leases WHERE job_id = ? AND worker_id = ?' . $lock);
             $lease->execute([$jobId, $worker['id']]);
             $leaseRow = $lease->fetch();
             if (!$leaseRow) {
+                if ($status === 'done') {
+                    $completed = $this->db->prepare("SELECT 1 FROM results r JOIN jobs j ON j.id = r.job_id
+                        WHERE r.job_id = ? AND r.worker_id = ? AND r.status = 'done' AND j.status = 'done' LIMIT 1");
+                    $completed->execute([$jobId, $worker['id']]);
+                    if ($completed->fetchColumn()) {
+                        $this->db->commit();
+                        return;
+                    }
+                }
                 throw new InvalidArgumentException('This computer does not hold that job.');
             }
             $seconds = null;

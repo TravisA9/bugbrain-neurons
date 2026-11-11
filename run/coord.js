@@ -109,8 +109,8 @@ async function submitJobResult(base, token, jobId, result) {
     try {
       return await api(base, token, '/api/v1/result', { jobId, result });
     } catch (error) {
-      if (error.status !== 429 || attempt >= 3) throw error;
-      await sleep(error.retryAfterMs || 5000);
+      if (!isRetryable(error) || attempt >= 3) throw error;
+      await sleep(error.retryAfterMs || 1000 * 2 ** attempt);
     }
   }
 }
