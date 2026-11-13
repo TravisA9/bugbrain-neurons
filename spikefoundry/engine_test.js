@@ -21,6 +21,10 @@ const s2 = SF.scoreDesign(g, 'coincidence', true, 0, SF.PILOT_BUDGET, SF.createS
 check(s1.accuracy === s2.accuracy && s1.quality === s2.quality && s1.synthetic === true, 'validation score is seeded and marked synthetic');
 check(s1.accuracy >= 0 && s1.accuracy <= 1, 'synthetic match stays between 0 and 1');
 
+const silentG = { topology: 'parallel', wa: 0, wb: 0, thr: 99, decay: .4, nodes: 2, depth: 1 };
+const silent = SF.scoreDesign(silentG, 'sequence', true, 0, SF.PILOT_BUDGET, SF.createState(1).rng);
+check(silent.recall === 0 && silent.spikes === 0 && silent.accuracy > 0.5 && silent.quality === 0, 'a silent net that only matches true negatives gets no quality on sequence');
+
 const code = fs.readFileSync(path.join(__dirname, 'engine.js'), 'utf8');
 const sandbox = {};
 vm.runInNewContext(code, sandbox, { filename: 'engine.js' });

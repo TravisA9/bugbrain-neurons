@@ -291,6 +291,23 @@ $deskA = $ux['app']->enroll('desk-a', ['spikefoundry'], 2, true);
 $deskB = $ux['app']->enroll('desk-b', ['bugbrain'], 2, true, $deskA['participantId']);
 $linked = $ux['app']->computersFor($deskA['participantId']);
 check(count($linked) === 2 && $ux['app']->workerOwns($deskA['participantId'], $deskB['workerId']), 'one participant can link more than one computer');
+$ux['app']->setOwnerHome($deskA['workerId'], true);
+$homes = $ux['app']->ownerHomeComputers();
+check(count($homes) === 1 && $homes[0]['id'] === $deskA['workerId'] && $ux['app']->isOwnerHome($deskA['workerId']) && !$ux['app']->isOwnerHome($deskB['workerId']), 'Show on My computer is per computer');
+$ux['app']->setOwnerHome($deskA['workerId'], false);
+check(count($ux['app']->ownerHomeComputers()) === 0, 'the owner can hide a computer from My computer again');
+
+$seedLab = lab();
+$tv = $seedLab['app']->enroll('travirtual', ['spikefoundry'], 2, true);
+$an = $seedLab['app']->enroll('analinux', ['spikefoundry'], 2, true);
+check(count($seedLab['app']->ownerHomeComputers()) === 0, 'joining a computer named travirtual after the first schema pass does not auto-flag it');
+$seedLab['db']->exec("DELETE FROM supply_state WHERE id = 'seed-owner-home-travirtual'");
+$seedLab['app']->migrateNow();
+$seeded = $seedLab['app']->ownerHomeComputers();
+check(count($seeded) === 1 && $seeded[0]['name'] === 'travirtual' && !$seedLab['app']->isOwnerHome($an['workerId']), 'the first schema pass marks existing travirtual for My computer and leaves analinux alone');
+$seedLab['app']->setOwnerHome($tv['workerId'], false);
+$seedLab['app']->migrateNow();
+check(count($seedLab['app']->ownerHomeComputers()) === 0, 'later schema passes do not put travirtual back on My computer');
 $badRunner = false;
 try { $ux['app']->createProject('Nope', 'No runner.', 'run/evil.js', 1, true); } catch (InvalidArgumentException $e) { $badRunner = true; }
 check($badRunner, 'a project runner outside the allowlist is refused');
@@ -313,7 +330,812 @@ require dirname(__DIR__) . '/private/src/setup.php';
 $unix = setup_script('unix', $deskA['token'], 'https://zaga.info/computelab', 'https://github.com/TravisA9/bugbrain-neurons.git', 'cursor/worker-console-22bf');
 $windows = setup_script('windows', $deskA['token'], 'https://zaga.info/computelab', 'https://github.com/TravisA9/bugbrain-neurons.git', 'cursor/worker-console-22bf');
 check(strpos($unix, $deskA['token']) !== false && strpos($unix, 'set -x') === false && strpos($unix, 'nodejs.org') !== false && strpos($unix, 'BB_COORDINATOR_URL') !== false, 'the Mac/Linux setup file saves the token without tracing the shell');
-check(strpos($windows, '@echo off') === 0 && strpos($windows, $deskA['token']) !== false && strpos($windows, 'echo ' . $deskA['token']) === false && strpos($windows, 'nodejs.org') !== false, 'the Windows setup file saves the token and does not echo it');
+preg_match('/-EncodedCommand ([A-Za-z0-9+\/=]+)/', $windows, $winEnc);
+$windowsAll = $windows . str_replace("\0", '', base64_decode($winEnc[1] ?? ''));
+check(strpos($windows, '@echo off') === 0 && strpos($windowsAll, $deskA['token']) !== false && strpos($windows, 'echo ' . $deskA['token']) === false && strpos($windows, 'nodejs.org') !== false, 'the Windows setup file saves the token and does not echo it');
+check(strpos($windows, 'BB_CODE_BRANCH') !== false && strpos($windows, 'cursor/worker-console-22bf') !== false && strpos($windows, 'core.autocrlf=false') !== false && strpos($windows, 'run\\install-windows.ps1') !== false && strpos($windows, '.bugbrain\\logs') !== false && strpos($windows, 'uninstall-computelab.cmd') !== false, 'the Windows setup pins the worker branch, keeps LF, and installs through the per-user installer with logs and uninstall');
+$verifyAt = strpos($windows, 'run\\verify-start.js');
+$runningAt = strpos($windows, 'Compute Lab is running in the background');
+$gateAt = strpos($windows, 'if errorlevel 1 goto notrunning');
+check($verifyAt !== false && $gateAt !== false && $runningAt !== false && $verifyAt < $gateAt && $gateAt < $runningAt && substr_count($windows, 'is running in the background') === 1 && strpos($windows, ':notrunning') !== false && strpos($windows, 'FAIL: Compute Lab is NOT running') !== false && strpos($windows, 'exit /b 1') !== false, 'the Windows setup says the worker is running only after verify-start passes, and prints FAIL otherwise');
+check(strpos($windowsAll, "'.previous-'") !== false && strpos($windows, 'Register-ScheduledTask') === false, 'the Windows setup keeps an existing token from another computer entry instead of overwriting it, and leaves task registration to the installer');
+$installer = (string) file_get_contents(dirname(__DIR__, 3) . '/run/install-windows.ps1');
+check(strpos($installer, '-LogonType Interactive -RunLevel Limited') !== false && strpos($installer, '-AtLogOn -User $user') !== false && strpos($installer, '/SC ONLOGON /RL LIMITED /IT /RU $user') !== false && strpos($installer, "GetFolderPath('Startup')") !== false && strpos($installer, '-WindowStyle Hidden') !== false && strpos($installer, 'Start-Process') !== false, 'the Windows installer registers a per-user task without admin, falls back to schtasks and then the Startup folder, and starts the worker hidden');
+check(strpos($installer, "'ComputeLab Worker'") !== false && strpos($installer, "'ComputeLabWorker'") !== false && strpos($installer, 'computelab-worker\.ps1') !== false && strpos($installer, 'Disable-ScheduledTask') !== false && strpos($installer, 'Unregister-ScheduledTask') === false && strpos($installer, 'taskkill.exe /T /F') !== false, 'the Windows installer reuses an existing Compute Lab task, disables extra copies without deleting them, and stops a running worker first');
+check(stripos($installer, 'is running') === false && strpos($installer, 'exit 1') !== false, 'the Windows installer never claims the worker is running; verify-start decides');
+check(strpos($unix, 'computelab-watchdog.timer') !== false && strpos($unix, 'OnUnitActiveSec=3min') !== false && strpos($unix, 'StartLimitIntervalSec=0') !== false && strpos($unix, '*/3 * * * * BB_INSTALL=cron /bin/sh $ST/computelab-worker.sh') !== false && strpos($unix, 'systemctl --user stop computelab-watchdog.timer computelab.service') !== false && strpos($unix, 'grep -v "# computelab-watchdog"') !== false, 'new Mac/Linux installs get a 3-minute watchdog (systemd timer or cron) that the stop script also stops');
+$installer2 = (string) file_get_contents(dirname(__DIR__, 3) . '/run/install-windows.ps1');
+check(strpos($installer2, "'--headless powershell.exe ' + \$psArgs") !== false && strpos($installer2, '-RepetitionInterval (New-TimeSpan -Minutes 3)') !== false && strpos($installer2, '-MultipleInstances IgnoreNew') !== false, 'new Windows installs run the worker in a headless console (no Terminal window to close) with a 3-minute watchdog trigger');
+$uVerify = strpos($unix, 'run/verify-start.js');
+$uRunning = strpos($unix, 'Compute Lab is running in the background');
+check($uVerify !== false && $uRunning !== false && $uVerify < $uRunning && strpos($unix, 'FAIL: Compute Lab is NOT running') !== false, 'the Mac/Linux setup also says the worker is running only after verify-start passes');
+check(strpos($unix, 'BB_CODE_BRANCH') !== false && strpos($unix, 'cursor/worker-console-22bf') !== false && strpos($unix, 'core.autocrlf=false') !== false && strpos($unix, 'systemctl --user') !== false && strpos($unix, '@reboot') !== false && strpos($unix, 'LaunchAgents') !== false && strpos($unix, 'worker.log') !== false && strpos($unix, 'uninstall-computelab.sh') !== false && strpos($unix, 'echo "' . $deskA['token']) === false, 'the Mac/Linux setup pins the branch and installs systemd, cron, or launchd with logs and uninstall');
+
+$lib = lab();
+$libWorker = $lib['app']->enroll('lib-pc', ['spikefoundry'], 2, true);
+$genomeJson = '{"decay":0.4,"topology":"parallel","wa":1.1}';
+$genomeHash = hash('sha256', $genomeJson);
+$one = ['taskId' => 'coincidence', 'taskVersion' => 'base-1', 'genomeJson' => $genomeJson, 'genomeHash' => $genomeHash, 'genomeVersion' => 1, 'metrics' => ['quality' => 0.4, 'accuracy' => 0.5], 'neurons' => 3, 'synapses' => 4, 'spikes' => 8, 'evalMs' => 2, 'seed' => 7, 'jobId' => 'sf-vision-7-aaa', 'engineVersion' => 'spikefoundry-1'];
+$better = $one;
+$better['metrics'] = ['quality' => 0.8, 'accuracy' => 0.9];
+$better['seed'] = 8;
+$bad = $one;
+$bad['genomeHash'] = str_repeat('ab', 32);
+$first = $lib['app']->ingestDesigns($lib['app']->workerByToken($libWorker['token']), [$one, $bad], $lib['app']->protocolHash());
+$again = $lib['app']->ingestDesigns($lib['app']->workerByToken($libWorker['token']), [$one, $better], $lib['app']->protocolHash());
+$top = $lib['app']->topDesigns('coincidence', 5);
+check($first['stored'] === 1 && $first['skipped'] === 1 && $again['stored'] === 0 && $again['skipped'] === 1 && $again['confirmed'] === 1, 'design uploads dedupe a genome and reject a bad hash');
+check(count($top) === 1 && $top[0]['quality'] == 0.8 && $lib['app']->designGenome($genomeHash)['genome_json'] === $genomeJson, 'the library keeps one genome and ranks the better score');
+check($lib['app']->designsByWorker($libWorker['workerId']) === 1, 'a computer can see how many designs it found (a repeat of its own design is not a second one)');
+check(count($lib['app']->designExportRows('coincidence', 10)) === 1, 'export returns the compact rows');
+$seeded = $lib['app']->seedJobFromDesigns('sf-vision', 'coincidence', 3, 11);
+$seedRow = $lib['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $lib['db']->quote($seeded))->fetch();
+check($seeded && strpos((string) $seedRow['spec_json'], $genomeHash) !== false, 'the owner can seed a job from the top designs');
+check($lib['app']->codeApproved('4b0e21855d9ce104a96633047e8199874524044d399c6150d02eb77e4edca4c4'), 'the previous protocol hash stays approved');
+$train = $lib['app']->createJob('sf-train', 'Train model', 5, 4);
+$held = $lib['app']->claim($lib['app']->workerByToken($libWorker['token']));
+$modelId = $lib['app']->saveModel($lib['app']->workerByToken($libWorker['token']), $held['id'], '{"format":"spikefoundry-designer","designerVersion":"spikefoundry-designer-3","spearman":0.77}', ['spearman' => 0.77, 'heldOut' => 6]);
+$current = $lib['app']->currentModel();
+check($held && $held['id'] === $train && $modelId && $current && strpos((string) $current['body_json'], '0.77') !== false, 'a leased worker can store a versioned model checkpoint');
+
+function designRecord(string $json, int $seed, float $train, float $held, string $arm, int $ms): array
+{
+    return [
+        'taskId' => 'coincidence', 'taskVersion' => 'base-1', 'genomeJson' => $json, 'genomeHash' => hash('sha256', $json),
+        'metrics' => ['quality' => $held, 'train' => $train, 'heldOut' => $held, 'arm' => $arm],
+        'neurons' => 2, 'synapses' => 2, 'spikes' => 1, 'evalMs' => $ms, 'seed' => $seed, 'jobId' => 'plateau-job', 'engineVersion' => 'spikefoundry-1',
+    ];
+}
+$plateau = lab();
+$pw = $plateau['app']->enroll('plateau-pc', ['spikefoundry'], 2, true);
+$pworker = $plateau['app']->workerByToken($pw['token']);
+$rise = [];
+foreach ([0.2, 0.45, 0.7] as $i => $score) {
+    $json = '{"arm":"rise","n":' . $i . '}';
+    $rise[] = designRecord($json, 10 + $i, $score, $score, $i === 0 ? 'random' : 'designer', 1000);
+}
+$plateau['app']->ingestDesigns($pworker, $rise, $plateau['app']->protocolHash());
+$rising = $plateau['app']->taskStatus('spikefoundry', 'coincidence');
+check($rising['status'] === 'Improving' && strpos($rising['designer']['label'], 'beating random') !== false, 'a climbing held-out score is Improving and the designer is ahead of random');
+$plateau['app']->saveTaskPolicy('spikefoundry', 'coincidence', 0.005, 4, 0, 'pause');
+$flat = [];
+for ($i = 0; $i < 4; $i++) {
+    $flat[] = designRecord('{"arm":"flat","n":' . $i . '}', 20 + $i, 0.7, 0.7, 'designer', 1000);
+}
+$plateau['app']->ingestDesigns($pworker, $flat, $plateau['app']->protocolHash());
+$stalled = $plateau['app']->taskStatus('spikefoundry', 'coincidence');
+check($stalled['status'] === 'Stalled' && $plateau['app']->taskPaused('spikefoundry', 'coincidence'), 'a flat window pauses the task when that action is selected');
+$over = lab();
+$ow = $over['app']->enroll('over-pc', ['spikefoundry'], 2, true);
+$oworker = $over['app']->workerByToken($ow['token']);
+$split = [];
+foreach ([[0.2, 0.6], [0.2, 0.6], [0.8, 0.4], [0.9, 0.3]] as $i => $pair) {
+    $split[] = designRecord('{"arm":"over","n":' . $i . '}', 30 + $i, $pair[0], $pair[1], 'designer', 1000);
+}
+$over['app']->ingestDesigns($oworker, $split, $over['app']->protocolHash());
+check($over['app']->taskStatus('spikefoundry', 'coincidence')['status'] === 'Overfitting', 'train rising while held-out falls is Overfitting');
+require dirname(__DIR__) . '/private/src/pages.php';
+$svg = scoreChart($rising['points']);
+check(strpos($svg, '<svg') !== false && strpos($svg, 'polyline') !== false, 'the owner chart is inline SVG');
+
+$credit = lab();
+$person = $credit['app']->enroll('pat-pc', ['spikefoundry'], 2, true);
+$pw2 = $credit['app']->workerByToken($person['token']);
+$low = '{"k":1}';
+$high = '{"k":2}';
+$credit['app']->ingestDesigns($pw2, [[
+    'taskId' => 'coincidence', 'taskVersion' => 'base-1', 'genomeJson' => $low, 'genomeHash' => hash('sha256', $low),
+    'metrics' => ['quality' => 0.2, 'heldOut' => 0.2, 'train' => 0.2], 'neurons' => 1, 'synapses' => 1, 'spikes' => 1, 'evalMs' => 1000, 'seed' => 1, 'jobId' => 'credit-job',
+]], $credit['app']->protocolHash());
+$credit['app']->ingestDesigns($pw2, [[
+    'taskId' => 'sequence', 'taskVersion' => 'base-1', 'genomeJson' => $high, 'genomeHash' => hash('sha256', $high),
+    'metrics' => ['quality' => 0.9, 'heldOut' => 0.9, 'train' => 0.9], 'neurons' => 1, 'synapses' => 1, 'spikes' => 1, 'evalMs' => 3600000, 'seed' => 2, 'jobId' => 'credit-job',
+]], $credit['app']->protocolHash());
+$feed = $credit['app']->highlights([$person['workerId']]);
+$feedText = '';
+foreach ($feed as $event) {
+    $feedText .= $event['detail'] . ' ';
+}
+check(strpos($feedText, 'New best') !== false && strpos($feedText, 'moved up') !== false && strpos($feedText, '1 hours') !== false, 'highlights include a best, a promotion, and an hour milestone');
+check($credit['app']->creditName($pw2) === 'pat-pc', 'credit uses the computer name by default');
+$credit['app']->setCredit($person['participantId'], false);
+$hidden = $credit['app']->db->prepare('SELECT name, public_credit FROM workers WHERE id = ?');
+$hidden->execute([$person['workerId']]);
+check($credit['app']->creditName($hidden->fetch()) === 'Anonymous', 'opt-out credit shows Anonymous');
+$board = $credit['app']->leaderboard(5);
+check($board && $board[0]['name'] === 'Anonymous' && $board[0]['records'] === 2, 'the leaderboard respects the opt-out');
+$credit['app']->setGenomePublic(hash('sha256', $high), true);
+$pub = $credit['app']->designGenome(hash('sha256', $high));
+check($pub && (int) $pub['is_public'] === 1, 'the owner can mark a genome public');
+
+// t48u: removing revoked computers keeps their history.
+$credit['app']->setCredit($person['participantId'], true);
+$other = $credit['app']->enroll('still-on', ['spikefoundry'], 2, true);
+check($credit['app']->removeRevoked($person['workerId']) === false && $credit['app']->removeRevoked($other['workerId']) === false, 'an active computer cannot be removed');
+$credit['app']->revoke($person['workerId']);
+$credit['app']->db->prepare('INSERT INTO worker_diagnostics (worker_id, kind, ok, summary, body_json, created_at) VALUES (?, ?, 1, ?, ?, ?)')->execute([$person['workerId'], 'startup', 'x', '{}', $credit['app']->now()]);
+$recBefore = (int) $credit['app']->db->query('SELECT COUNT(*) FROM design_records')->fetchColumn();
+$gone = $credit['app']->removeRevokedOnce();
+$again = $credit['app']->removeRevokedOnce();
+$row = $credit['app']->db->prepare('SELECT name, revoked, removed_at FROM workers WHERE id = ?');
+$row->execute([$person['workerId']]);
+$tomb = $row->fetch();
+$diag = (int) $credit['app']->db->query('SELECT COUNT(*) FROM worker_diagnostics WHERE worker_id = ' . $credit['app']->db->quote($person['workerId']))->fetchColumn();
+$board2 = $credit['app']->leaderboard(5);
+$disc = json_encode($credit['app']->discoveries());
+check($gone['ran'] && $gone['removed'] === ['pat-pc'] && !$again['ran'] && $tomb && $tomb['name'] === 'pat-pc' && !empty($tomb['removed_at']) && $diag === 0, 'the one-time cleanup removes only revoked computers, once, keeping a tombstone with the name');
+check((int) $credit['app']->db->query('SELECT COUNT(*) FROM design_records')->fetchColumn() === $recBefore && $board2 && $board2[0]['name'] === 'pat-pc' && strpos($disc, 'pat-pc') !== false && $credit['app']->creditName($pw2) === 'pat-pc', 'design records, the leaderboard, Discoveries and credit still show a removed computer');
+check($credit['app']->removeRevoked($person['workerId']) === false && $credit['app']->workerByToken($person['token']) === null, 'removing twice does nothing and a removed computer still cannot sign in');
+
+$supply = lab();
+$sw = $supply['app']->enroll('supply-pc', ['spikefoundry', 'bugbrain'], 2, true);
+$supply['db']->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$supply['clock']->t, $sw['workerId']]);
+$supply['db']->exec("UPDATE projects SET auto_jobs = 1 WHERE id = 'spikefoundry'");
+$got = $supply['app']->claim($supply['app']->workerByToken($sw['token']));
+$auto = (int) $supply['db']->query("SELECT auto_created FROM projects WHERE id = 'spikefoundry'")->fetchColumn();
+$spec = json_decode((string) $supply['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $supply['db']->quote((string) $got['id']))->fetchColumn(), true);
+$bbQueued = (int) $supply['db']->query("SELECT COUNT(*) FROM jobs WHERE project_id = 'bugbrain'")->fetchColumn();
+check($got && $got['project'] === 'spikefoundry' && $spec['mode'] === 'propose' && (int) $spec['evals'] === 0 && (int) $spec['targetSeconds'] === 180 && (int) $spec['keepTop'] === 50 && (int) $spec['keepRandom'] === 500 && $auto === 1 && $bbQueued === 0, 'an empty SpikeFoundry queue grows one propose job and BugBrain stays off');
+$second = $supply['app']->claim($supply['app']->workerByToken($sw['token']));
+$jobsAfter = (int) $supply['db']->query("SELECT COUNT(*) FROM jobs WHERE project_id = 'spikefoundry'")->fetchColumn();
+$autoAfter = (int) $supply['db']->query("SELECT auto_created FROM projects WHERE id = 'spikefoundry'")->fetchColumn();
+check(($second === null || (string) $second['id'] === (string) $got['id']) && $jobsAfter === 1 && $autoAfter === 1, 'supply does not add another job until the throttle window passes');
+$supply['clock']->t = gmdate('c', strtotime($supply['clock']->t) + 20);
+$supply['app']->saveSupply('spikefoundry', true, 2, 2, 12);
+$id = substr(hash('sha256', 'spikefoundry|coincidence'), 0, 32);
+$supply['db']->prepare('REPLACE INTO task_policies (id, project_id, task_id, stall_delta, stall_evals, stall_hours, stall_action, paused, pause_reason, advanced_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    ->execute([$id, 'spikefoundry', 'coincidence', 0.005, 3000, 6, 'pause', 1, 'stall', 'sequence']);
+$again = $supply['app']->claim($supply['app']->workerByToken($sw['token']));
+$againSpec = $again ? json_decode((string) $supply['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $supply['db']->quote((string) $again['id']))->fetchColumn(), true) : [];
+check($again && $againSpec['taskId'] === 'sequence' && (int) $againSpec['evals'] === 12, 'auto jobs skip a paused task and use the next level');
+
+$lfText = "computelab-protocol-2\nkeep this line\n";
+$crlfPath = sys_get_temp_dir() . '/computelab-protocol-crlf.txt';
+$lfPath = sys_get_temp_dir() . '/computelab-protocol-lf.txt';
+file_put_contents($lfPath, $lfText);
+file_put_contents($crlfPath, str_replace("\n", "\r\n", $lfText));
+$lfApp = new App($db, array_merge($config, ['protocol' => $lfPath]), static function () use (&$now): string { return $now; });
+$crlfApp = new App($db, array_merge($config, ['protocol' => $crlfPath]), static function () use (&$now): string { return $now; });
+check($lfApp->protocolHash() === $crlfApp->protocolHash(), 'a CRLF protocol file hashes the same as the LF file');
+
+$pins = lab();
+$legacy = '4b0e21855d9ce104a96633047e8199874524044d399c6150d02eb77e4edca4c4';
+$currentHash = $pins['app']->protocolHash();
+$staleJob = $pins['app']->createJob('sf-vision', 'Stale hash job', 0.2, 9);
+$finished = $pins['app']->createJob('bb-order3', 'Finished old hash', 0.2, 10);
+$pins['db']->prepare('UPDATE templates SET code_hash = ? WHERE id IN (?, ?)')->execute([$legacy, 'sf-vision', 'bb-order3']);
+$pins['db']->prepare('UPDATE jobs SET code_hash = ? WHERE id = ?')->execute([$legacy, $staleJob]);
+$pins['db']->prepare("UPDATE jobs SET code_hash = ?, status = 'done' WHERE id = ?")->execute([$legacy, $finished]);
+$changedPins = $pins['app']->refreshProtocolPins();
+$visionHash = (string) $pins['db']->query("SELECT code_hash FROM templates WHERE id = 'sf-vision'")->fetchColumn();
+$orderHash = (string) $pins['db']->query("SELECT code_hash FROM templates WHERE id = 'bb-order3'")->fetchColumn();
+$queuedHash = (string) $pins['db']->query('SELECT code_hash FROM jobs WHERE id = ' . $pins['db']->quote($staleJob))->fetchColumn();
+$doneHash = (string) $pins['db']->query('SELECT code_hash FROM jobs WHERE id = ' . $pins['db']->quote($finished))->fetchColumn();
+check($changedPins >= 3 && $visionHash === $currentHash && $orderHash === $currentHash && $queuedHash === $currentHash && $doneHash === $legacy, 'old accepted template and queued hashes move to the current protocol');
+check($pins['app']->refreshProtocolPins() === 0, 'refreshing protocol pins a second time changes nothing');
+$pins['db']->prepare('UPDATE templates SET code_hash = ? WHERE id = ?')->execute([$legacy, 'sf-propose']);
+$stamped = $pins['app']->createJob('sf-propose', 'New from old template', 0.2, 11);
+$stampedHash = (string) $pins['db']->query('SELECT code_hash FROM jobs WHERE id = ' . $pins['db']->quote($stamped))->fetchColumn();
+check($stampedHash === $currentHash, 'a new job is stamped with the current protocol hash');
+
+$blocked = false;
+try {
+    $app->ingestDesigns($worker, [[
+        'taskId' => 'coincidence', 'taskVersion' => 'base-1', 'genomeJson' => '{"v":2,"old":1}', 'genomeHash' => hash('sha256', '{"v":2,"old":1}'),
+        'genomeVersion' => 2, 'metrics' => ['quality' => 0.744, 'arm' => 'designer'], 'neurons' => 8, 'synapses' => 14, 'spikes' => 15,
+        'evalMs' => 1, 'seed' => 1, 'jobId' => 'sf-propose-1-old', 'engineVersion' => 'spikefoundry-designer-1',
+    ]], $app->protocolHash());
+} catch (InvalidArgumentException $e) {
+    $blocked = strpos($e->getMessage(), 'spikefoundry-designer-1') !== false;
+}
+check($blocked, 'a placeholder designer upload is rejected');
+
+$clean = lab();
+$clean['db']->exec("DELETE FROM supply_state WHERE id = 'purge-designer-1'");
+$oldPc = $clean['app']->enroll('old-pc', ['spikefoundry'], 2, true);
+$oldWorker = $clean['app']->workerByToken($oldPc['token']);
+$keepPc = $clean['app']->enroll('keep-pc', ['spikefoundry'], 2, true);
+$keepWorker = $clean['app']->workerByToken($keepPc['token']);
+$stamp = $clean['clock']->t;
+$insertGenome = $clean['db']->prepare('INSERT INTO design_genomes (hash, genome_json, version, created_at) VALUES (?, ?, ?, ?)');
+$insertRecord = $clean['db']->prepare('INSERT INTO design_records (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, job_id, arm, seq, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+$oldJson = '{"v":2,"old":1}';
+$oldHash = hash('sha256', $oldJson);
+$keepJson = '{"v":2,"keep":1}';
+$keepHash = hash('sha256', $keepJson);
+$midJson = '{"v":2,"mid":1}';
+$midHash = hash('sha256', $midJson);
+$sigJson = '{"v":1,"sig":1}';
+$sigHash = hash('sha256', $sigJson);
+$insertGenome->execute([$oldHash, $oldJson, 2, $stamp]);
+$insertGenome->execute([$keepHash, $keepJson, 2, $stamp]);
+$insertGenome->execute([$midHash, $midJson, 2, $stamp]);
+$insertGenome->execute([$sigHash, $sigJson, 1, $stamp]);
+$insertRecord->execute(['old-row', $oldHash, 'coincidence', 'base-1', '{"quality":0.744,"heldOut":0.744,"train":0.744,"arm":"designer"}', 8, 14, 15, 1, 'spikefoundry-designer-1', 'abc', $oldWorker['id'], 1, 'sf-propose-1-old', 'designer', 1, $stamp]);
+$insertRecord->execute(['keep-row', $keepHash, 'coincidence', 'base-1', '{"quality":0.744,"heldOut":0.744,"train":0.744,"arm":"designer"}', 8, 14, 4, 1, 'spikefoundry-designer-3', 'abc', $keepWorker['id'], 2, 'sf-propose-3-new', 'designer', 2, $stamp]);
+$insertRecord->execute(['mid-row', $midHash, 'coincidence', 'base-1', '{"quality":0.5,"heldOut":0.5,"train":0.5,"arm":"designer"}', 9, 20, 4, 1, 'spikefoundry-designer-2', 'abc', $oldWorker['id'], 4, 'sf-propose-2-mid', 'designer', 4, $stamp]);
+$insertRecord->execute(['sig-row', $sigHash, 'coincidence', 'base-1', '{"quality":0.744,"arm":"designer"}', 8, 14, 15, 1, 'spikefoundry-1', 'abc', $keepWorker['id'], 3, 'sf-vision-3-sig', 'designer', 3, $stamp]);
+$clean['db']->prepare('INSERT INTO design_events (id, worker_id, task_id, kind, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)')->execute(['evt-old', $oldWorker['id'], 'coincidence', 'best', 'New best design on coincidence', $stamp]);
+$clean['db']->prepare('INSERT INTO model_checkpoints (id, label, body_json, metric_json, created_at) VALUES (?, ?, ?, ?, ?)')->execute(['ckpt-old', 'designer', '{"format":"spikefoundry-designer","spearman":0.1}', '{}', $stamp]);
+$clean['db']->prepare('INSERT INTO model_checkpoints (id, label, body_json, metric_json, created_at) VALUES (?, ?, ?, ?, ?)')->execute(['ckpt-new', 'designer', '{"format":"spikefoundry-designer","designerVersion":"spikefoundry-designer-3"}', '{}', $stamp]);
+$clean['db']->prepare('INSERT INTO model_checkpoints (id, label, body_json, metric_json, created_at) VALUES (?, ?, ?, ?, ?)')->execute(['ckpt-mid', 'designer', '{"format":"spikefoundry-designer","designerVersion":"spikefoundry-designer-2"}', '{}', $stamp]);
+$removed = $clean['app']->purgePlaceholderDesigns();
+$sigLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_records WHERE id = 'sig-row'")->fetchColumn();
+$keepLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_records WHERE id = 'keep-row'")->fetchColumn();
+$oldLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_records WHERE id = 'old-row'")->fetchColumn();
+check($removed === 1 && $oldLeft === 0 && $keepLeft === 1 && $sigLeft === 1, 'only the designer-1 stamp is removed, not a real score that happens to look similar');
+$clean['db']->exec("DELETE FROM supply_state WHERE id = 'purge-designer-2'");
+$removed2 = $clean['app']->purgeDesigner2();
+$midLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_records WHERE id = 'mid-row'")->fetchColumn();
+$keepLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_records WHERE id = 'keep-row'")->fetchColumn();
+$eventLeft = (int) $clean['db']->query("SELECT COUNT(*) FROM design_events WHERE id = 'evt-old'")->fetchColumn();
+$oldCkpt = (int) $clean['db']->query("SELECT COUNT(*) FROM model_checkpoints WHERE id = 'ckpt-old'")->fetchColumn();
+$midCkpt = (int) $clean['db']->query("SELECT COUNT(*) FROM model_checkpoints WHERE id = 'ckpt-mid'")->fetchColumn();
+$newCkpt = (int) $clean['db']->query("SELECT COUNT(*) FROM model_checkpoints WHERE id = 'ckpt-new'")->fetchColumn();
+$note = (string) $clean['db']->query("SELECT note FROM supply_state WHERE id = 'purge-designer-2'")->fetchColumn();
+check($removed2 === 1 && $midLeft === 0 && $keepLeft === 1 && $eventLeft === 0 && $midCkpt === 0 && $newCkpt === 1 && $oldCkpt === 0 && strpos($note, 'spikefoundry-designer-2') !== false, 'designer-2 rows are purged once and designer-3 rows stay');
+check($clean['app']->purgeDesigner2() === 0, 'the designer-2 purge does not run a second time');
+$real = [
+    'taskId' => 'coincidence', 'taskVersion' => 'base-1', 'genomeJson' => '{"v":2,"real":1}', 'genomeHash' => hash('sha256', '{"v":2,"real":1}'),
+    'genomeVersion' => 2, 'metrics' => ['quality' => 0.744, 'heldOut' => 0.744, 'train' => 0.744, 'arm' => 'designer'],
+    'neurons' => 8, 'synapses' => 14, 'spikes' => 15, 'evalMs' => 1, 'seed' => 1, 'jobId' => 'sf-propose-3-real', 'engineVersion' => 'spikefoundry-designer-3',
+];
+$accepted = $clean['app']->ingestDesigns($keepWorker, [$real], $clean['app']->protocolHash());
+$blocked2 = false;
+try {
+    $clean['app']->ingestDesigns($keepWorker, [array_merge($real, ['engineVersion' => 'spikefoundry-designer-2', 'genomeJson' => '{"v":2,"old2":1}', 'genomeHash' => hash('sha256', '{"v":2,"old2":1}')])], $clean['app']->protocolHash());
+} catch (InvalidArgumentException $e) {
+    $blocked2 = strpos($e->getMessage(), 'spikefoundry-designer-2') !== false;
+}
+check($accepted['stored'] === 1 && $blocked2, 'designer-3 records are accepted even at 8 neurons and quality 0.744, and designer-2 is refused');
+$clean['app']->ingestSummary($keepWorker, [
+    'taskId' => 'coincidence', 'jobId' => 'sf-propose-3-sum', 'engineVersion' => 'spikefoundry-designer-3',
+    'evals' => 4000, 'designerEvals' => 3600, 'randomEvals' => 400, 'evalMs' => 180000,
+    'bestHeld' => 0.5, 'bestTrain' => 0.5, 'designerMean' => 0.42, 'randomMean' => 0.2,
+    'histogram' => [0, 0, 0, 0, 4000],
+    'curve' => [
+        ['n' => 1, 'held' => 0.2, 'train' => 0.2, 'bestHeld' => 0.2, 'bestTrain' => 0.2],
+        ['n' => 4000, 'held' => 0.5, 'train' => 0.5, 'bestHeld' => 0.5, 'bestTrain' => 0.5],
+    ],
+]);
+$series = $clean['app']->taskSeries('coincidence', 80);
+$health = $clean['app']->designerHealthForTask('coincidence');
+check($series && (int) $series[count($series) - 1]['n'] >= 4000 && $health && strpos($health['label'], 'beating random') !== false, 'plateau charts count evaluations from the job summary');
+
+$solve = lab();
+$solveReg = $solve['app']->enroll('solve-pc', ['spikefoundry'], 2, true);
+$solveWorker = $solve['app']->workerByToken($solveReg['token']);
+$solve['db']->exec("UPDATE projects SET auto_jobs = 1 WHERE id = 'spikefoundry'");
+$queuedId = $solve['app']->createJob('sf-propose', 'Auto coincidence', 0.6, 77, ['taskId' => 'coincidence', 'mode' => 'propose', 'seedGenomes' => ['abc']]);
+$manualId = $solve['app']->createJob('sf-propose', 'Owner coincidence run', 0.6, 78, ['taskId' => 'coincidence', 'mode' => 'propose']);
+$flatSummary = function (string $job, float $best) {
+    return [
+        'taskId' => 'coincidence', 'jobId' => $job, 'engineVersion' => 'spikefoundry-designer-3',
+        'evals' => 500000, 'designerEvals' => 450000, 'randomEvals' => 50000, 'evalMs' => 180000,
+        'bestHeld' => $best, 'bestTrain' => $best, 'designerMean' => 0.24, 'randomMean' => 0.12, 'histogram' => [1, 2, 3],
+        'curve' => [
+            ['n' => 1, 'held' => 0.5, 'train' => 0.5, 'bestHeld' => $best, 'bestTrain' => $best],
+            ['n' => 250000, 'held' => 0.3, 'train' => 0.3, 'bestHeld' => $best, 'bestTrain' => $best],
+            ['n' => 500000, 'held' => 0.2, 'train' => 0.2, 'bestHeld' => $best, 'bestTrain' => $best],
+        ],
+    ];
+};
+$solve['app']->ingestSummary($solveWorker, $flatSummary('sf-propose-1-a', 0.982));
+$solve['app']->ingestSummary($solveWorker, $flatSummary('sf-propose-2-b', 0.982));
+check(!$solve['app']->taskPaused('spikefoundry', 'coincidence'), 'a high flat score with fewer job summaries than required does not advance yet');
+$solve['app']->ingestSummary($solveWorker, $flatSummary('sf-propose-3-c', 0.982));
+$solvedPolicy = $solve['app']->taskPolicy('spikefoundry', 'coincidence');
+$movedSpec = json_decode((string) $solve['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $solve['db']->quote($queuedId))->fetchColumn(), true);
+$movedTitle = (string) $solve['db']->query('SELECT title FROM jobs WHERE id = ' . $solve['db']->quote($queuedId))->fetchColumn();
+$manualSpec = json_decode((string) $solve['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $solve['db']->quote($manualId))->fetchColumn(), true);
+$advanceNote = (string) $solve['db']->query("SELECT note FROM supply_state WHERE id = 'advance-coincidence'")->fetchColumn();
+check($solvedPolicy['paused'] === 1 && $solvedPolicy['pause_reason'] === 'solved' && $solvedPolicy['advanced_to'] === 'sequence' && $solvedPolicy['stall_action'] === 'flag', 'a solved task advances by default without waiting for the stall window');
+check($movedSpec['taskId'] === 'sequence' && !isset($movedSpec['seedGenomes']) && $movedTitle === 'Auto sequence' && $manualSpec['taskId'] === 'coincidence' && strpos($advanceNote, 'solved at held-out 0.982') !== false && strpos($advanceNote, 'sequence') !== false, 'queued auto jobs move to the next task and the advance is noted');
+$solve['db']->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$solve['clock']->t, $solveReg['workerId']]);
+$nextJob = $solve['app']->claim($solve['app']->workerByToken($solveReg['token']));
+$nextSpec = $nextJob ? json_decode((string) $solve['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $solve['db']->quote((string) $nextJob['id']))->fetchColumn(), true) : [];
+check($nextJob && $nextSpec['taskId'] === 'sequence', 'claims after the advance get the next task');
+$solve['app']->saveTaskPolicy('spikefoundry', 'coincidence', 0.005, 3000, 6, 'flag', false, 0.97, 3);
+check(!$solve['app']->taskPaused('spikefoundry', 'coincidence') && (int) $solve['app']->taskPolicy('spikefoundry', 'coincidence')['auto_advance'] === 0, 'turning auto-advance off returns a solved task to supply');
+$solve['app']->saveTaskPolicy('spikefoundry', 'coincidence', 0.005, 3000, 6, 'flag', true, 0.99, 3);
+check(!$solve['app']->taskPaused('spikefoundry', 'coincidence'), 'a solved score above the best held-out score keeps the task active');
+$solve['app']->saveTaskPolicy('spikefoundry', 'coincidence', 0.005, 3000, 6, 'flag', true, 0.97, 3);
+check($solve['app']->taskPaused('spikefoundry', 'coincidence') && $solve['app']->nextCurriculumTask('scenario-control') === '' && !in_array('digits', App::CURRICULUM, true), 'the default threshold advances again, and the last designer task has no next step');
+$solve['app']->ingestDesigns($solveWorker, [designRecord('{"arm":"solved","n":1}', 90, 0.982, 0.982, 'designer', 1000)], $solve['app']->protocolHash());
+$ownerHtml = implode('', taskHealthSection($solve['app'], 'csrf-x', '/computelab'));
+check(strpos($ownerHtml, 'name="auto_advance" value="1" checked') !== false && strpos($ownerHtml, 'name="solve_score"') !== false && strpos($ownerHtml, 'Solved. Jobs moved on automatically.') !== false && strpos($ownerHtml, 'Next level: sequence') !== false, 'the owner console shows the solved state and the per-task auto-advance settings');
+$bigEvals = $flatSummary('sf-propose-4-d', 0.5);
+$bigEvals['taskId'] = 'sequence';
+$bigEvals['evals'] = 5000000;
+$solve['app']->ingestSummary($solveWorker, $bigEvals);
+check((int) $solve['db']->query("SELECT COUNT(*) FROM design_summaries WHERE job_id = 'sf-propose-4-d'")->fetchColumn() === 1, 'a summary from a long time-budget job with millions of evaluations is accepted');
+
+$two = lab();
+$twoReg = $two['app']->enroll('two-pc', ['spikefoundry'], 2, true);
+$twoSeen = function () use ($two, $twoReg) {
+    $two['db']->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$two['clock']->t, $twoReg['workerId']]);
+    return $two['app']->workerByToken($twoReg['token']);
+};
+$two['app']->saveSupply('spikefoundry', false, 1, 1, 0);
+$two['app']->createJob('sf-propose', 'Left behind', 0.9, 551402, ['taskId' => 'sequence', 'mode' => 'propose']);
+$two['app']->createJob('sf-propose', 'Next run', 0.5, 601809, ['taskId' => 'sequence', 'mode' => 'propose']);
+$oldRun = $two['app']->claim($twoSeen());
+$two['clock']->t = gmdate('c', strtotime($two['clock']->t) + 60);
+$newRun = $two['app']->claim($twoSeen());
+$twoBeat = $two['app']->heartbeat($twoSeen());
+$oldRow = $two['db']->query('SELECT status, attempts FROM jobs WHERE id = ' . $two['db']->quote((string) $oldRun['id']))->fetch();
+$leaseCount = (int) $two['db']->query('SELECT COUNT(*) FROM leases')->fetchColumn();
+check($oldRun && $newRun && (string) $newRun['id'] !== (string) $oldRun['id'] && $twoBeat['jobId'] === (string) $newRun['id'] && $leaseCount === 1 && (string) $oldRow['status'] === 'queued' && (int) $oldRow['attempts'] === 1, 'a restarted computer that claims again drops its old lease, and the heartbeat follows the new job');
+
+$gap = lab();
+$gapReg = $gap['app']->enroll('gap-pc', ['spikefoundry'], 2, true);
+$gapSeen = function () use ($gap, $gapReg) {
+    $gap['db']->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$gap['clock']->t, $gapReg['workerId']]);
+    return $gap['app']->workerByToken($gapReg['token']);
+};
+$gap['app']->saveSupply('spikefoundry', false, 1, 1, 0);
+$staleId = $gap['app']->createJob('sf-propose', 'Auto coincidence', 0.6, 91, ['taskId' => 'coincidence', 'mode' => 'propose', 'seedGenomes' => ['old']]);
+$leasedJob = $gap['app']->claim($gapSeen());
+$gapPolicy = substr(hash('sha256', 'spikefoundry|coincidence'), 0, 32);
+$gap['db']->prepare('REPLACE INTO task_policies (id, project_id, task_id, stall_delta, stall_evals, stall_hours, stall_action, paused, pause_reason, advanced_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    ->execute([$gapPolicy, 'spikefoundry', 'coincidence', 0.005, 3000, 6, 'flag', 1, 'solved', 'sequence']);
+$gap['app']->saveSupply('spikefoundry', true, 1, 1, 0);
+$gap['clock']->t = gmdate('c', strtotime($gap['clock']->t) + 4000);
+$afterExpiry = $gap['app']->claim($gapSeen());
+$staleSpec = json_decode((string) $gap['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $gap['db']->quote($staleId))->fetchColumn(), true);
+$afterSpec = $afterExpiry ? json_decode((string) $gap['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $gap['db']->quote((string) $afterExpiry['id']))->fetchColumn(), true) : [];
+check($leasedJob && (string) $leasedJob['id'] === $staleId && $staleSpec['taskId'] === 'sequence' && !isset($staleSpec['seedGenomes']) && $afterExpiry && $afterSpec['taskId'] === 'sequence', 'an auto job whose lease expires on a solved task moves to the next task and is claimed again');
+$gap['clock']->t = gmdate('c', strtotime($gap['clock']->t) + 4000);
+$gap['db']->exec("UPDATE jobs SET status = 'done' WHERE status IN ('queued', 'leased')");
+$gap['db']->exec('DELETE FROM leases');
+$ownerJob = $gap['app']->createJob('sf-propose', 'Owner coincidence run', 0.6, 92, ['taskId' => 'coincidence', 'mode' => 'propose']);
+$madeBefore = (int) $gap['db']->query("SELECT auto_created FROM projects WHERE id = 'spikefoundry'")->fetchColumn();
+$fresh = $gap['app']->claim($gapSeen());
+$freshSpec = $fresh ? json_decode((string) $gap['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $gap['db']->quote((string) $fresh['id']))->fetchColumn(), true) : [];
+$ownerSpec = json_decode((string) $gap['db']->query('SELECT spec_json FROM jobs WHERE id = ' . $gap['db']->quote($ownerJob))->fetchColumn(), true);
+$madeAfter = (int) $gap['db']->query("SELECT auto_created FROM projects WHERE id = 'spikefoundry'")->fetchColumn();
+check($fresh && $freshSpec['taskId'] === 'sequence' && $ownerSpec['taskId'] === 'coincidence' && $madeAfter === $madeBefore + 1 && $gap['app']->claimableQueued('spikefoundry') === 0, 'a queued job for a paused task does not count toward the queue, so supply still adds a next-task job');
+
+/* ---- Resource control: Off / Allowance / Full blast, several job slots ---- */
+$res = lab();
+$resOn = $res['app']->enroll('res-on', ['spikefoundry'], 20, true);
+$resOff = $res['app']->enroll('res-off', ['spikefoundry'], 20, true);
+check((string) $res['db']->query("SELECT resource_mode || ':' || allowance_pct FROM workers WHERE id = " . $res['db']->quote($resOn['workerId']))->fetchColumn() === 'allowance:50', 'a new computer starts in Allowance at 50%');
+$res['db']->prepare('UPDATE workers SET paused = 1 WHERE id = ?')->execute([$resOff['workerId']]);
+foreach (['resource_mode', 'allowance_pct', 'runtime_json'] as $col) {
+    $res['db']->exec('ALTER TABLE workers DROP COLUMN ' . $col);
+}
+$res['app']->migrate();
+$modes = [];
+foreach ($res['db']->query('SELECT id, resource_mode FROM workers')->fetchAll() as $row) {
+    $modes[(string) $row['id']] = (string) $row['resource_mode'];
+}
+check(($modes[$resOn['workerId']] ?? '') === 'full' && ($modes[$resOff['workerId']] ?? '') === 'off', 'upgrading keeps what each computer did: On becomes Full blast and Off stays Off');
+$res['app']->setResources($resOn['workerId'], 'allowance', 73);
+$w = $res['app']->workerByToken($resOn['token']);
+check($res['app']->resourcesOf($w)['mode'] === 'allowance' && $res['app']->resourcesOf($w)['allowancePct'] === 70 && App::clampAllowance(3) === 10 && App::clampAllowance(100) === 90, 'the allowance is kept between 10% and 90% in steps of 10');
+$res['app']->createJob('sf-vision', 'Slot A', 1, 41);
+$res['app']->createJob('sf-vision', 'Slot B', 1, 42);
+$a = $res['app']->claim($w, 0);
+$b = $res['app']->claim($res['app']->workerByToken($resOn['token']), 1);
+$leaseCount = (int) $res['db']->query('SELECT COUNT(*) FROM leases WHERE worker_id = ' . $res['db']->quote($resOn['workerId']))->fetchColumn();
+check($a && $b && $a['id'] !== $b['id'] && $b['slot'] === 1 && $leaseCount === 2, 'one computer can hold one job per slot');
+$before = (string) $res['db']->query('SELECT until_at FROM leases WHERE job_id = ' . $res['db']->quote((string) $a['id']))->fetchColumn();
+$res['clock']->t = gmdate('c', strtotime($res['clock']->t) + 30);
+$ctl = $res['app']->heartbeat($w, ['control' => true, 'runtime' => ['mode' => 'allowance', 'pct' => 70, 'slots' => 3, 'cores' => 4, 'duty' => 0.933, 'priority' => 'low', 'running' => 2, 'token' => 'x']]);
+$after = (string) $res['db']->query('SELECT until_at FROM leases WHERE job_id = ' . $res['db']->quote((string) $a['id']))->fetchColumn();
+$rt = json_decode((string) $res['db']->query('SELECT runtime_json FROM workers WHERE id = ' . $res['db']->quote($resOn['workerId']))->fetchColumn(), true);
+check($ctl['resources'] === ['mode' => 'allowance', 'allowancePct' => 70, 'maxJobs' => 0] && $ctl['jobId'] === null && $before === $after && ($rt['slots'] ?? 0) === 3 && !isset($rt['token']), 'a control check-in reads the setting and saves what the worker applied, without renewing a lease');
+$res['app']->setResources($resOn['workerId'], 'allowance', null, 3);
+$ctl3 = $res['app']->heartbeat($res['app']->workerByToken($resOn['token']), ['control' => true, 'runtime' => ['mode' => 'allowance', 'pct' => 70, 'slots' => 3, 'cores' => 4, 'maxJobs' => 3]]);
+$rt3 = json_decode((string) $res['db']->query('SELECT runtime_json FROM workers WHERE id = ' . $res['db']->quote($resOn['workerId']))->fetchColumn(), true);
+check($ctl3['resources'] === ['mode' => 'allowance', 'allowancePct' => 70, 'maxJobs' => 3] && ($rt3['maxJobs'] ?? null) === 3, 'Experiments at once is saved per computer, sent on the check-in, and the applied value is recorded');
+$res['app']->setResources($resOn['workerId'], 'full', null, null);
+$keep = $res['app']->resourcesOf($res['app']->workerByToken($resOn['token']));
+$res['app']->setResources($resOn['workerId'], 'allowance', 70, 500);
+$big = $res['app']->resourcesOf($res['app']->workerByToken($resOn['token']));
+$res['app']->setResources($resOn['workerId'], 'allowance', 70, 0);
+$auto = $res['app']->resourcesOf($res['app']->workerByToken($resOn['token']));
+check($keep['maxJobs'] === 3 && $keep['mode'] === 'full' && $big['maxJobs'] === 64 && $auto['maxJobs'] === 0 && App::clampMaxJobs(-4) === 0, 'changing the mode keeps Experiments at once, numbers are capped at 64, and 0 is Auto');
+$beatB = $res['app']->heartbeat($w, ['jobId' => (string) $b['id'], 'progress' => 40]);
+check($beatB['jobId'] === (string) $b['id'] && (int) $res['db']->query('SELECT progress FROM leases WHERE job_id = ' . $res['db']->quote((string) $b['id']))->fetchColumn() === 40, 'a job heartbeat renews exactly that job');
+$res['app']->setResources($resOn['workerId'], 'off');
+check($res['app']->claim($res['app']->workerByToken($resOn['token']), 2) === null && (int) $res['db']->query('SELECT COUNT(*) FROM leases WHERE worker_id = ' . $res['db']->quote($resOn['workerId']))->fetchColumn() === 2, 'Off takes no new job and lets running jobs finish');
+$res['app']->setResources($resOn['workerId'], 'full');
+$res['app']->heartbeat($res['app']->workerByToken($resOn['token']), ['control' => true, 'reset' => true]);
+check((int) $res['db']->query('SELECT COUNT(*) FROM leases WHERE worker_id = ' . $res['db']->quote($resOn['workerId']))->fetchColumn() === 0, 'a restarted worker hands back the jobs it held');
+
+$idx = lab();
+$names = [];
+foreach ($idx['db']->query('PRAGMA index_list(design_records)')->fetchAll() as $row) {
+    $names[] = (string) $row['name'];
+}
+$idx['app']->migrate();
+$again = [];
+foreach ($idx['db']->query('PRAGMA index_list(design_records)')->fetchAll() as $row) {
+    $again[] = (string) $row['name'];
+}
+check(count(array_intersect(['idx_dr_seq', 'idx_dr_task_seq', 'idx_dr_worker_task', 'idx_dr_task_held', 'idx_dr_task_quality', 'idx_dr_job'], $names)) === 6 && !in_array('idx_dr_engine_task', $names, true) && count($again) === count($names), 'design records are indexed for uploads, pages and the kept set (no engine/task index), and a second upgrade adds nothing');
+$iw = $idx['app']->enroll('batch-pc', ['spikefoundry'], 2, true);
+$iworker = $idx['app']->workerByToken($iw['token']);
+$batch = [];
+for ($i = 0; $i < 12; $i++) {
+    $batch[] = designRecord('{"arm":"batch","n":' . $i . '}', 500 + $i, 0.1 + $i / 100, 0.1 + $i / 100, 'designer', 400000);
+}
+$idx['app']->ingestDesigns($iworker, $batch, $idx['app']->protocolHash());
+$tenth = (int) $idx['db']->query("SELECT COUNT(*) FROM design_events WHERE worker_id = " . $idx['db']->quote((string) $iworker['id']) . " AND kind = 'evals' AND detail = '10 evaluations'")->fetchColumn();
+$hour = (int) $idx['db']->query("SELECT COUNT(*) FROM design_events WHERE worker_id = " . $idx['db']->quote((string) $iworker['id']) . " AND kind = 'hours' AND detail = '1 hours donated'")->fetchColumn();
+check($tenth === 1 && $hour === 1, 'milestones counted within one upload batch still fire once (10 evaluations, 1 hour donated)');
+
+// t44u: one entry per distinct design, repeats counted as confirmations, unique job seeds.
+check(App::designHash('{"modules":[{"id":"in","kind":"input","leak":0.8,"motif":"feedforward","n":5,"sign":1,"thr":1},{"id":"e","kind":"lif","leak":0.3409,"motif":"coincidence","n":1,"sign":1,"thr":2.0069},{"id":"i","kind":"lif","leak":0.7961,"motif":"wta","n":1,"sign":-1,"thr":2.4083},{"id":"out","kind":"output","leak":0.8,"motif":"feedforward","n":1,"sign":1,"thr":1.0}],"v":2,"wires":[{"delay":0,"from":"in","pattern":"all","to":"e","weight":0.8},{"delay":2,"from":"e","pattern":"one","to":"i","weight":-0.1636},{"delay":1,"from":"i","pattern":"lateral","to":"e","weight":1.8566},{"delay":0,"from":"e","pattern":"feedforward","to":"out","weight":1}]}') === '55099528cf18e80b3abafe79a78032bbe43b0bb6b258768a1056e10ab8976b33', 'PHP and the worker compute the same canonical design hash');
+$dd = lab();
+$wa = $dd['app']->workerByToken($dd['app']->enroll('find-a', ['spikefoundry'], 2, true)['token']);
+$wb = $dd['app']->workerByToken($dd['app']->enroll('find-b', ['spikefoundry'], 2, true)['token']);
+$gA = '{"modules":[{"id":"a","n":1},{"id":"b","n":2}],"v":2,"wires":[{"from":"a","to":"b","weight":0.5}]}';
+$gB = '{"modules":[{"id":"b","n":2},{"id":"a","n":1}],"v":2,"wires":[{"from":"a","to":"b","weight":0.5}]}';
+$recA = designRecord($gA, 31, 0.6, 0.6, 'designer', 5); $recA['jobId'] = 'job-a';
+$recB = designRecord($gB, 32, 0.6, 0.6, 'designer', 5); $recB['jobId'] = 'job-b';
+$r1 = $dd['app']->ingestDesigns($wa, [$recA], $dd['app']->protocolHash());
+$dd['clock']->t = '2026-11-09T04:01:00+00:00';
+$r2 = $dd['app']->ingestDesigns($wb, [$recB], $dd['app']->protocolHash());
+$retry = $recA; $retry['seed'] = 99;
+$r3 = $dd['app']->ingestDesigns($wa, [$retry], $dd['app']->protocolHash());
+$rowsDd = $dd['db']->query("SELECT worker_id, confirmations FROM design_records WHERE task_id = 'coincidence'")->fetchAll();
+$conf = $dd['db']->query('SELECT worker_id, n FROM design_confirmations')->fetchAll();
+check($r1['stored'] === 1 && $r2['stored'] === 0 && $r2['confirmed'] === 1 && count($rowsDd) === 1 && $rowsDd[0]['worker_id'] === $wa['id'] && (int) $rowsDd[0]['confirmations'] === 1
+    && count($conf) === 1 && $conf[0]['worker_id'] === $wb['id'], 'the same design from another computer (listed in another order) is one entry: the first finder keeps it and the second is noted as a confirmation');
+check($r3['stored'] === 0 && (int) $dd['db']->query('SELECT confirmations FROM design_records')->fetchColumn() === 1, 'a retried job re-uploading its design adds nothing');
+$disc = $dd['app']->discoveries(12);
+check(count($disc) === 1 && $disc[0]['finder'] === 'find-a' && $disc[0]['confirmations'] === 1 && $disc[0]['confirmedBy'] === ['find-b'], 'Discoveries lists the design once, credits the first finder, and names the computer that confirmed it');
+// Same scores and size but different wiring: one Discoveries entry, the rest counted as equivalent variants.
+$gC = '{"modules":[{"id":"a","n":1},{"id":"b","n":2}],"v":2,"wires":[{"from":"a","to":"b","weight":0.7}]}';
+$recC = designRecord($gC, 33, 0.6, 0.6, 'designer', 5); $recC['jobId'] = 'job-c';
+$dd['app']->ingestDesigns($wb, [$recC], $dd['app']->protocolHash());
+$disc2 = $dd['app']->discoveries(12);
+check(count($disc2) === 1 && $disc2[0]['variants'] === 1 && $disc2[0]['finder'] === 'find-a' && (int) $dd['db']->query('SELECT COUNT(*) FROM design_records')->fetchColumn() === 2, 'circuits that score the same with the same size show as one discovery with an equivalent-variant count, and both records are kept');
+// Records stored by the old code (no design hash): the upgrade marks later copies, keeps every row, and is safe to repeat.
+$old = lab();
+$ow = [];
+foreach (['old-a', 'old-b', 'old-c'] as $nm) {
+    $ow[] = $old['app']->enroll($nm, ['spikefoundry'], 2, true)['workerId'];
+}
+$legacyRow = function (string $id, string $genomeJson, string $worker, string $job, int $seq, float $q) use ($old) {
+    $gh = hash('sha256', $genomeJson);
+    $old['db']->prepare('INSERT OR IGNORE INTO design_genomes (hash, genome_json, version, created_at) VALUES (?, ?, 2, ?)')->execute([$gh, $genomeJson, '2026-11-09T03:00:00+00:00']);
+    $old['db']->prepare("INSERT INTO design_records (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, job_id, arm, seq, created_at) VALUES (?, ?, 'sequence', 'base-1', ?, 5, 5, 0, 1, 'spikefoundry-designer-3', 'p', ?, 1, ?, 'designer', ?, ?)")
+        ->execute([$id, $gh, json_encode(['quality' => $q, 'train' => $q, 'heldOut' => $q, 'accuracy' => 0.75]), $worker, $job, $seq, '2026-11-09T03:00:0' . $seq . '+00:00']);
+};
+$legacyRow('r1', $gA, $ow[0], 'j1', 1, 0.70);
+$legacyRow('r2', $gA, $ow[1], 'j2', 2, 0.72);
+$legacyRow('r3', $gB, $ow[2], 'j3', 3, 0.70);
+$legacyRow('r4', $gA, $ow[0], 'j1', 4, 0.70);
+$legacyRow('r5', $gC, $ow[2], 'j5', 5, 0.65);
+$m1 = $old['app']->mergeDuplicateDesigns(60);
+$m2 = $old['app']->mergeDuplicateDesigns(60);
+$rows = [];
+foreach ($old['db']->query('SELECT id, duplicate_of, confirmations, score_json FROM design_records ORDER BY id')->fetchAll() as $row) {
+    $rows[$row['id']] = $row;
+}
+$best = json_decode((string) $rows['r1']['score_json'], true);
+check(count($rows) === 5 && $rows['r1']['duplicate_of'] === null && $rows['r2']['duplicate_of'] === 'r1' && $rows['r3']['duplicate_of'] === 'r1' && $rows['r4']['duplicate_of'] === 'r1' && $rows['r5']['duplicate_of'] === null
+    && (int) $rows['r1']['confirmations'] === 2 && abs((float) $best['quality'] - 0.72) < 1e-9, 'the upgrade marks later copies (including one listed in another order) as duplicate_of the first find, keeps every row, counts other jobs as confirmations, and keeps the best score');
+check($m1['groups'] === 1 && $m1['marked'] === 3 && $m1['canonicalOnly'] === 1 && $m2['groups'] === 0 && $m2['marked'] === 0, 'the duplicate merge reports what it did and is safe to run again');
+// Every auto job gets its own seed, even when the queue is refilled twice in the same second.
+$sd = lab();
+$seeds = [];
+for ($i = 0; $i < 60; $i++) {
+    $seed = $sd['app']->freshSeed();
+    $sd['app']->createJob('sf-vision', 'Auto coincidence', 0.6, $seed, ['taskId' => 'coincidence', 'knownHashes' => [substr(hash('sha256', (string) $i), 0, 16), 'not-hex']]);
+    $seeds[] = $seed;
+}
+$stored = $sd['db']->query('SELECT COUNT(DISTINCT seed) FROM jobs WHERE seed IS NOT NULL')->fetchColumn();
+$spec = json_decode((string) $sd['db']->query('SELECT spec_json FROM jobs LIMIT 1')->fetchColumn(), true);
+check(count(array_unique($seeds)) === 60 && (int) $stored >= 60 && count($spec['knownHashes'] ?? []) === 1, 'each new job gets a seed no other job used, and carries the short hashes of designs the library already has');
+$src = (string) file_get_contents(dirname(__DIR__) . '/private/src/App.php');
+check(strpos($src, "\$project['id'] . '|' . \$this->now() . '|' . \$made") === false && strpos($src, '$seed = $this->freshSeed();') !== false, 'auto jobs no longer derive their seed from the clock second');
+
+/* Discoveries cache: built once per TTL, a stale copy is served while another request rebuilds it. */
+$builds = 0;
+$mk = function () use (&$builds) { $builds++; return ['n' => $builds]; };
+$now = '2026-11-10T14:00:00+00:00';
+$a1 = $app->cached('t-cache', 120, $mk);
+$now = '2026-11-10T14:01:00+00:00';
+$a2 = $app->cached('t-cache', 120, $mk);
+$now = '2026-11-10T14:03:00+00:00';
+$app->db->prepare('UPDATE page_cache SET building_until = ? WHERE k = ?')->execute([strtotime($now) + 30, 't-cache']);
+$a3 = $app->cached('t-cache', 120, $mk);
+$app->db->prepare('UPDATE page_cache SET building_until = 0 WHERE k = ?')->execute(['t-cache']);
+$a4 = $app->cached('t-cache', 120, $mk);
+$a5 = $app->cached('t-cache', 120, $mk);
+check($a1 === ['n' => 1] && $a2 === ['n' => 1] && $a3 === ['n' => 1] && $a4 === ['n' => 2] && $a5 === ['n' => 2] && $builds === 2, 'the Discoveries cache builds once per two minutes and serves the old copy while another request rebuilds it');
+$pl = $app->discoveriesPayload();
+check(isset($pl['items'], $pl['series'], $pl['board']) && $app->discoveriesPayload() === $pl, 'the Discoveries payload comes from the shared cache');
+check(strpos($src, "engine_version NOT IN (\\'spikefoundry-designer-1\\', \\'spikefoundry-designer-2\\') ORDER BY seq DESC LIMIT 400") !== false && strpos($src, 'ORDER BY created_at DESC LIMIT 400') === false, 'topDesigns reads the newest records through the (task_id, seq) index; created_at is TEXT and cannot be indexed on MySQL');
+$tot = [];
+foreach ([$lib, $plateau, $over] as $env) { foreach ($env['app']->db->query("SELECT t.worker_id, t.n, t.ms, (SELECT COUNT(*) FROM design_records r WHERE r.worker_id = t.worker_id AND r.engine_version NOT IN ('spikefoundry-designer-1', 'spikefoundry-designer-2')) AS real_n, (SELECT COALESCE(SUM(eval_ms), 0) FROM design_records r WHERE r.worker_id = t.worker_id AND r.engine_version NOT IN ('spikefoundry-designer-1', 'spikefoundry-designer-2')) AS real_ms FROM worker_totals t")->fetchAll() as $r) { $tot[] = $r; } }
+$same = $tot !== [];
+foreach ($tot as $r) { if ((int) $r['n'] !== (int) $r['real_n'] || (int) $r['ms'] !== (int) $r['real_ms']) { $same = false; echo "  totals {$r['worker_id']}: {$r['n']}/{$r['real_n']} {$r['ms']}/{$r['real_ms']}\n"; } }
+check($same, 'running worker totals match a full count after every upload in this test (' . count($tot) . ' computers)');
+check(strpos($src, 'SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id') === strrpos($src, 'SELECT COUNT(*) AS n, COALESCE(SUM(eval_ms), 0) AS ms FROM design_records WHERE worker_id'), 'uploads scan a computer\'s records only once, in scanWorkerTotals');
+
+/* ---- Storage cap: keep each task's best designs, count the rest, prune, size guard ---- */
+function labWith(array $over): array
+{
+    global $config;
+    $box = new stdClass();
+    $box->t = '2026-11-10T16:00:00+00:00';
+    $db = new PDO('sqlite::memory:');
+    $app = new App($db, $over + $config, static function () use ($box): string { return $box->t; });
+    $app->migrate();
+    return ['app' => $app, 'db' => $db, 'clock' => $box];
+}
+function capRecord(int $i, float $held, string $job, string $task = 'coincidence'): array
+{
+    $json = '{"cap":' . $i . ',"t":"' . $task . '"}';
+    return ['taskId' => $task, 'taskVersion' => 'base-1', 'genomeJson' => $json, 'genomeHash' => hash('sha256', $json),
+        'metrics' => ['quality' => $held, 'train' => $held, 'heldOut' => $held, 'arm' => 'designer'],
+        'neurons' => 2, 'synapses' => 2, 'spikes' => 1, 'evalMs' => 10, 'seed' => $i, 'jobId' => $job, 'engineVersion' => 'spikefoundry-designer-3'];
+}
+$cap = labWith(['design_keep_per_task' => 50, 'prune_every_seconds' => 0]);
+$cw = $cap['app']->enroll('cap-pc', ['spikefoundry'], 2, true);
+$cworker = $cap['app']->workerByToken($cw['token']);
+$first = [];
+for ($i = 0; $i < 60; $i++) {
+    $first[] = capRecord($i, 0.36 - $i / 1000, 'cap-job-1');
+}
+$r1 = $cap['app']->ingestDesigns($cworker, $first, $cap['app']->protocolHash());
+$low = [];
+for ($i = 100; $i < 140; $i++) {
+    $low[] = capRecord($i, 0.1, 'cap-job-2');
+}
+$low[] = capRecord(999, 0.9, 'cap-job-2');
+$r2 = $cap['app']->ingestDesigns($cworker, $low, $cap['app']->protocolHash());
+$rows = (int) $cap['db']->query('SELECT COUNT(*) FROM design_records')->fetchColumn();
+$genomes = (int) $cap['db']->query('SELECT COUNT(*) FROM design_genomes')->fetchColumn();
+$best = (int) $cap['db']->query("SELECT COUNT(*) FROM design_records WHERE held > 0.89")->fetchColumn();
+check($r1['stored'] === 50 && $r1['capped'] === 10 && $r2['stored'] === 1 && $r2['capped'] === 40 && $rows === 51 && $genomes === 51 && $best === 1,
+    'with room for 50 designs a task stores only designs that rank among its best (or beat the best); the rest keep no row and no genome');
+$board = $cap['app']->leaderboard(10);
+$tt = $cap['app']->taskTotals();
+check(count($board) === 1 && $board[0]['records'] === 101 && $board[0]['genomes'] === 101 && abs($board[0]['hours'] - 1010 / 3600000) < 1e-12 && $cap['app']->designsByWorker((string) $cworker['id']) === 101
+    && $tt['coincidence']['seen'] === 101 && $tt['coincidence']['kept'] === 51, 'credit and the leaderboard count every evaluated design, kept or not, and the task counts what it saw and kept');
+$again = $cap['app']->ingestDesigns($cworker, $low, $cap['app']->protocolHash());
+check($again['stored'] === 0 && $cap['app']->designsByWorker((string) $cworker['id']) === 101 && $cap['app']->taskTotals()['coincidence']['seen'] === 101, 'a retried upload of the same batch is not counted twice');
+$floor = (float) $cap['db']->query('SELECT MIN(held) FROM design_records')->fetchColumn();
+check($cap['app']->designFits('coincidence', 0.95) && !$cap['app']->designFits('coincidence', $floor - 0.001), 'designFits compares with the lowest kept held-out score once the task is full');
+
+// Prune: keep the best per measure, confirmed designs and what Discoveries shows; drop the rest with their genomes.
+$pr = labWith(['design_keep_per_task' => 50, 'prune_every_seconds' => 0]);
+$pa = $pr['app'];
+$pw1 = $pa->workerByToken($pa->enroll('prune-a', ['spikefoundry'], 2, true)['token']);
+$pw2 = $pa->workerByToken($pa->enroll('prune-b', ['spikefoundry'], 2, true)['token']);
+$seq = 0;
+$ins = $pr['db']->prepare('INSERT INTO design_records (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, job_id, arm, seq, created_at, design_hash, canon_key, held, quality, duplicate_of) VALUES (?, ?, ?, ?, ?, 2, 2, 1, 10, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+$gins = $pr['db']->prepare('INSERT INTO design_genomes (hash, genome_json, version, created_at, design_hash) VALUES (?, ?, 1, ?, ?)');
+for ($i = 0; $i < 400; $i++) {
+    $held = ($i * 37 % 400) / 400;
+    $gh = hash('sha256', 'g' . $i);
+    $gins->execute([$gh, '{"g":' . $i . '}', '2026-11-10T00:00:00+00:00', $gh]);
+    $w = $i % 2 === 0 ? $pw1 : $pw2;
+    $ins->execute(['p' . $i, $gh, 'sequence', 'base-1', json_encode(['quality' => $held, 'heldOut' => $held]), 'spikefoundry-designer-3', 'x', $w['id'], $i, 'pj', 'designer', ++$seq, '2026-11-10T00:00:00+00:00', $gh, $gh, $held, $held, null]);
+}
+$ins->execute(['dup1', hash('sha256', 'g5'), 'sequence', 'base-1', json_encode(['quality' => 0.01, 'heldOut' => 0.01]), 'spikefoundry-designer-3', 'x', $pw2['id'], 1, 'pj2', 'designer', ++$seq, '2026-11-10T00:00:00+00:00', 'z', null, 0.01, 0.01, 'p5']);
+$pr['db']->exec("UPDATE design_records SET confirmations = 1 WHERE id = 'p5'");
+$pr['db']->exec("INSERT INTO design_confirmations (design_id, worker_id, n, first_at, last_at) VALUES ('p7', '" . $pw2['id'] . "', 1, 'a', 'a')");
+$pr['db']->prepare('INSERT INTO page_cache (k, body, built_at, building_until) VALUES (?, ?, 0, 0)')->execute(['discoveries-v1', json_encode(['items' => [['id' => 'p9']]])]);
+$pr['db']->exec("INSERT INTO worker_totals (worker_id, n, ms, tasks, genomes) VALUES ('" . $pw1['id'] . "', 200, 2000, '[\"sequence\"]', 200), ('" . $pw2['id'] . "', 201, 2010, '[\"sequence\"]', 200)");
+$boardBefore = $pa->leaderboard(10);
+$res = $pa->pruneDesigns(50, 20, 10);
+$left = [];
+foreach ($pr['db']->query('SELECT id, held FROM design_records')->fetchAll() as $row) {
+    $left[$row['id']] = (float) $row['held'];
+}
+$top50 = (int) $pr['db']->query('SELECT COUNT(*) FROM design_records WHERE held >= 0.875')->fetchColumn();
+$orphans = (int) $pr['db']->query('SELECT COUNT(*) FROM design_genomes g WHERE NOT EXISTS (SELECT 1 FROM design_records r WHERE r.genome_hash = g.hash)')->fetchColumn();
+$latestOnly = 0;
+for ($i = 380; $i < 400; $i++) {
+    if (isset($left['p' . $i]) && $left['p' . $i] < 0.875) {
+        $latestOnly++;
+    }
+}
+check($res['finished'] && $top50 === 50 && $latestOnly === 0 && isset($left['p5'], $left['p7'], $left['p9'], $left['dup1']) && $orphans === 0 && count($left) < 80 && $res['records'] === 401 - count($left),
+    'the prune keeps the 50 best per quality measure, confirmed designs, duplicate targets and their copies, and what Discoveries shows, and drops the rest (including a mere recency window) with their genomes');
+check($pa->leaderboard(10) === $boardBefore, 'the leaderboard is the same before and after a prune (credit comes from worker_totals)');
+check(count($left) === (int) $pr['db']->query('SELECT COUNT(*) FROM design_records')->fetchColumn() && $pa->pruneDesigns(50, 20, 10)['records'] === 0, 'a second prune with the same policy removes nothing');
+
+// Size guard: over the soft limit the prune keeps fewer designs and the owner console warns.
+$sg = labWith(['design_keep_per_task' => 200, 'prune_every_seconds' => 3600, 'db_soft_limit_mb' => 0.001]);
+$sgw = $sg['app']->workerByToken($sg['app']->enroll('guard-pc', ['spikefoundry'], 2, true)['token']);
+$recs = [];
+for ($i = 0; $i < 120; $i++) {
+    $recs[] = capRecord($i, $i / 200, 'guard-job');
+}
+$sg['app']->ingestDesigns($sgw, $recs, $sg['app']->protocolHash());
+$afterGuard = (int) $sg['db']->query('SELECT COUNT(*) FROM design_records')->fetchColumn();
+$status = $sg['app']->storageStatus();
+$sg['clock']->t = '2026-11-10T16:20:00+00:00';
+$skip = $sg['app']->maybePrune();
+$sg['clock']->t = '2026-11-10T17:01:00+00:00';
+$runs = $sg['app']->maybePrune();
+check($afterGuard === 50 && $status['warn'] && $skip === null && is_array($runs) && $runs['hard'] && $runs['keep'] === 50,
+    'the prune runs after an upload and then once per interval; over db_soft_limit_mb it keeps a quarter as many designs per measure (here 50) and the owner console is warned');
+$guardRows = (int) $sg['db']->query('SELECT COUNT(*) FROM design_records')->fetchColumn();
+check($guardRows <= 120 && $guardRows >= 50 && $sg['app']->designsByWorker((string) $sgw['id']) === 120, 'a hard prune keeps the credit');
+$html = pageOwner($sg['app'], 'csrf', []);
+check(strpos($html, 'storage-warn') !== false && strpos($html, 'Keeps the best 200 designs per task for each quality measure') !== false, 'the owner console shows the storage warning and the keep policy');
+
+// Showcase floor: a silent high-accuracy design is not listed; a weaker design that actually fires is.
+$sil = labWith(['discoveries_top_n' => 5, 'prune_every_seconds' => 0]);
+$sw = $sil['app']->workerByToken($sil['app']->enroll('floor-pc', ['spikefoundry'], 2, true)['token']);
+$silentRec = capRecord(1, 0.738, 'floor-job', 'sequence');
+$silentRec['spikes'] = 0;
+$silentRec['neurons'] = 4;
+$silentRec['synapses'] = 4;
+$silentRec['metrics'] = ['quality' => 0.738, 'train' => 0.238, 'heldOut' => 0.738, 'accuracy' => 0.75, 'recall' => 0, 'f1' => 0, 'arm' => 'designer'];
+$goodRec = capRecord(2, 0.62, 'floor-job', 'sequence');
+$goodRec['spikes'] = 8;
+$goodRec['neurons'] = 6;
+$goodRec['synapses'] = 8;
+$goodRec['metrics'] = ['quality' => 0.62, 'train' => 0.70, 'heldOut' => 0.62, 'accuracy' => 0.70, 'recall' => 0.5, 'f1' => 0.5, 'arm' => 'designer'];
+$tinyRec = capRecord(3, 0.60, 'floor-job', 'sequence');
+$tinyRec['spikes'] = 4;
+$tinyRec['neurons'] = 3;
+$tinyRec['synapses'] = 3;
+$tinyRec['metrics'] = ['quality' => 0.60, 'train' => 0.55, 'heldOut' => 0.60, 'accuracy' => 0.65, 'recall' => 0.4, 'f1' => 0.4, 'arm' => 'designer'];
+$sil['app']->ingestDesigns($sw, [$silentRec, $goodRec, $tinyRec], $sil['app']->protocolHash());
+$shown = $sil['app']->discoveries();
+$shownHeld = [];
+$shownBadges = [];
+foreach ($shown as $item) {
+    if ($item['task'] === 'sequence') {
+        $shownHeld[] = $item['held'];
+        $shownBadges[sprintf('%.2f', $item['held'])] = $item['badges'];
+    }
+}
+sort($shownHeld);
+check(count($shown) === 2 && $shownHeld === [0.6, 0.62] && !in_array(0.738, $shownHeld, true)
+    && in_array('held-out', $shownBadges['0.62'], true) && in_array('efficiency', $shownBadges['0.60'], true) && in_array('train', $shownBadges['0.62'], true),
+    'Discoveries hides a silent high-accuracy design and lists firing designs with badges for the measures they lead');
+$legacySilent = $sil['db']->prepare("INSERT INTO design_records
+    (id, genome_hash, task_id, task_version, score_json, neurons, synapses, spikes, eval_ms, engine_version, protocol_hash, worker_id, seed, seq, created_at, held, quality)
+    VALUES (?, ?, 'sequence', 'base-1', ?, 4, 4, 0, 1, 'spikefoundry-designer-3', 'p', ?, ?, ?, ?, 0.99, 0.99)");
+$firing = [];
+for ($i = 30; $i < 48; $i++) {
+    $firing[] = capRecord($i, 0.50 + ($i - 30) / 1000, 'floor-job', 'sequence');
+}
+$sil['app']->ingestDesigns($sw, $firing, $sil['app']->protocolHash());
+for ($i = 0; $i < 20; $i++) {
+    $legacySilent->execute(['old-silent-' . $i, 'old-silent-' . $i, json_encode(['heldOut' => 0.99, 'train' => 0.99, 'recall' => 0]), $sw['id'], 100 + $i, 100 + $i, $sil['clock']->t]);
+}
+$reloaded = new App($sil['db'], ['design_keep_per_measure' => 20] + $sil['app']->config);
+$newRec = capRecord(20, 0.64, 'floor-job-2', 'sequence');
+$newRec['neurons'] = 10;
+$newRec['synapses'] = 10;
+$newResult = $reloaded->ingestDesigns($sw, [$newRec], $reloaded->protocolHash());
+$prunedFloor = $reloaded->pruneDesigns();
+check($newResult['stored'] === 1 && $prunedFloor['records'] === 20
+    && in_array(0.64, array_column($reloaded->discoveries(), 'held'), true),
+    'historical silent scores cannot fill the retention slots or crowd newer firing designs out of Discoveries');
+
+// Credit totals saved before a prune are applied once the schema step runs.
+$seedFile = sys_get_temp_dir() . '/totals-seed-' . bin2hex(random_bytes(3)) . '.json';
+file_put_contents($seedFile, json_encode(['aaaaaaaaaaaaaaaa' => ['n' => 30120, 'ms' => 5, 'tasks' => ['sequence'], 'genomes' => 30058]]));
+$sd2 = labWith(['totals_seed' => $seedFile]);
+$seeded = $sd2['db']->query("SELECT n, genomes FROM worker_totals WHERE worker_id = 'aaaaaaaaaaaaaaaa'")->fetch();
+check($seeded && (int) $seeded['n'] === 30120 && (int) $seeded['genomes'] === 30058 && !is_file($seedFile) && is_file($seedFile . '.applied'), 'saved credit totals are applied once by the schema step');
+@unlink($seedFile . '.applied');
+
+$researchLab = labWith(['pause_legacy_spikefoundry_search' => true]);
+$research = $researchLab['app'];
+$participant = $research->enroll('research-pc', ['spikefoundry'], 2, true);
+$researchWorker = $research->workerByToken($participant['token']);
+$research->createJob('sf-propose', 'Legacy proposal', 5, 100);
+$researchId = $research->createJob('sf-sequence-experiment', 'Sequence study', 1, 101);
+check($research->claimableQueued() === 1 && $research->claim($researchWorker) === null, 'paused legacy search and incompatible workers do not start a research job');
+$researchJob = $research->claim($researchWorker, 0, true, 2);
+check($researchJob && $researchJob['id'] === $researchId && $researchJob['spec']['experiment']['rounds'] === 6, 'a capable worker receives one capped sequence experiment');
+try {
+    $research->createJob('sf-sequence-experiment', 'Duplicate study', 1, 101);
+    $duplicateRefused = false;
+} catch (InvalidArgumentException $e) {
+    $duplicateRefused = true;
+}
+check($duplicateRefused, 'a second experiment with the same seed is rejected');
+$snapshot = ['completedRounds' => 2, 'payload' => base64_encode('two completed rounds')];
+check($research->sequenceCheckpoint($researchWorker, $researchId, $snapshot) === $snapshot
+    && $research->sequenceCheckpoint($researchWorker, $researchId, ['completedRounds' => 1, 'payload' => base64_encode('older')]) === $snapshot,
+    'shared sequence checkpoints keep the newest completed round');
+$research->dropLeasesOf((string) $researchWorker['id']);
+$otherResearch = $research->enroll('replacement-research-pc', ['spikefoundry'], 2, true);
+$replacement = $research->workerByToken($otherResearch['token']);
+$replacementJob = $research->claim($replacement, 0, true, 2);
+check($replacementJob && $replacementJob['id'] === $researchId && $research->sequenceCheckpoint($replacement, $researchId, null) === $snapshot,
+    'a replacement donor can recover completed rounds');
+try {
+    $research->sequenceCheckpoint($researchWorker, $researchId, null);
+    $oldLeaseRejected = false;
+} catch (InvalidArgumentException $e) {
+    $oldLeaseRejected = true;
+}
+check($oldLeaseRejected, 'a donor without the current lease cannot read a study checkpoint');
+$report = ['version' => 'sequence-experiment-2', 'config' => ['seed' => 101, 'cpuBudgetMs' => 1000, 'cap' => 3000], 'rounds' => array_fill(0, 6, [])];
+$research->submitResult($replacement, $researchId, ['status' => 'done', 'synthetic' => true, 'research' => $report]);
+check($research->sequenceExperimentReport('')['research'] === $report, 'the coordinator persists and reads the experiment report');
+check(count($research->recentSequenceStudies()) === 1 && count($research->queueSequenceStudy(200)) === 3,
+    'the owner can compare completed studies and queue three distinct seeds');
+
+$inverseLab = labWith(['inverse_gallery' => true, 'pause_legacy_spikefoundry_search' => true, 'discoveries_top_n' => 1]);
+$inverseApp = $inverseLab['app'];
+$inverseApp->saveSupply('spikefoundry', true, 2, 2, 0);
+$inverseWorker = $inverseApp->workerByToken($inverseApp->enroll('inverse-worker', ['spikefoundry'], 2, true)['token']);
+check($inverseApp->claim($inverseWorker, 0, false, 1, true) === null, 'older inverse workers cannot claim jobs that require circuit publication');
+$inverseJob = $inverseApp->claim($inverseWorker, 0, false, 1, true, true);
+check($inverseJob && !empty($inverseJob['spec']['inverseGallery']) && $inverseApp->claimableQueued('spikefoundry') === 1,
+    'automatic supply keeps a queue of inverse circuit jobs for updated workers');
+$inverseSeed = $inverseJob['spec']['seed'];
+$checkpoint = ['version' => 'inverse-designer-1', 'encoding' => 'f32le-gzip', 'payload' => base64_encode('checkpoint')];
+$candidate = ['genes' => [1, 2, 0, 0, 0, 0, 0], 'freshCount' => 192, 'replay' => [[0, 0], [2, 1]]];
+$report = ['version' => 'inverse-designer-1', 'seed' => $inverseSeed, 'checkpoint' => $checkpoint, 'discoveries' => [
+    $candidate + ['accuracy' => 0.6, 'recall' => 0.8, 'specificity' => 0.4, 'demoAccuracy' => 0.6],
+    $candidate + ['accuracy' => 0.5, 'recall' => 0.1, 'specificity' => 0.9, 'demoAccuracy' => 0.7],
+]];
+$inverseApp->submitResult($inverseWorker, $inverseJob['id'], ['status' => 'done', 'synthetic' => true, 'research' => $report]);
+$inverseApp->submitResult($inverseWorker, $inverseJob['id'], ['status' => 'done', 'synthetic' => true, 'research' => $report]);
+$resultCount = $inverseLab['db']->prepare('SELECT COUNT(*) FROM results WHERE job_id = ?');
+$resultCount->execute([$inverseJob['id']]);
+check((int) $resultCount->fetchColumn() === 1, 'a repeated completion is acknowledged without storing the job twice');
+$inverseCards = $inverseApp->inverseDiscoveries();
+check(count($inverseCards) === 2 && $inverseCards[0]['badges'] === ['Accuracy #1', 'Recall #1']
+    && $inverseCards[1]['badges'] === ['Specificity #1', 'Demo match #1'], 'the gallery picks the top result in each metric even when scores are low');
+check($inverseApp->inverseExperimentReport($inverseSeed)['research']['checkpoint'] === $checkpoint,
+    'the latest automatic model is available from the owner report');
+
+$sharedLab = labWith(['inverse_gallery' => true, 'inverse_shared_training' => true]);
+$shared = $sharedLab['app'];
+$sharedA = $shared->workerByToken($shared->enroll('shared-a', ['spikefoundry'], 2, true)['token']);
+$sharedB = $shared->workerByToken($shared->enroll('shared-b', ['spikefoundry'], 2, true)['token']);
+for ($seed = 200; $seed < 205; $seed++) {
+    $shared->createJob('sf-inverse-experiment', 'Shared candidate', 1, $seed, ['inverseGallery' => true]);
+}
+check($shared->claim($sharedA, 0, false, 1, true, true) === null, 'older workers cannot claim shared inverse assignments');
+$first = $shared->claim($sharedA, 0, false, 1, true, true, true);
+$parallel = $shared->claim($sharedB, 0, false, 1, true, true, true);
+check($first['spec']['inverseShared']['generation'] === 0 && $parallel['spec']['inverseShared']['checkpoint'] === null,
+    'shared training bootstraps on the common benchmark');
+$validCheckpoint = ['version' => 'inverse-designer-1', 'encoding' => 'f32le-gzip', 'payload' => base64_encode(gzencode(str_repeat("\0", 38064)))];
+$submitShared = static function ($worker, $job, $candidatePasses, $incumbent) use ($shared, $validCheckpoint, $candidate) {
+    $assigned = $job['spec']['inverseShared'];
+    $shared->submitResult($worker, $job['id'], ['status' => 'done', 'synthetic' => true, 'research' => [
+        'version' => 'inverse-designer-1', 'seed' => $job['spec']['seed'], 'checkpoint' => $validCheckpoint,
+        'discoveries' => [$candidate + ['accuracy' => 0.6, 'recall' => 0.8, 'specificity' => 0.4, 'demoAccuracy' => 0.6]],
+        'promotion' => ['benchmark' => $assigned['benchmark'], 'parentGeneration' => $assigned['generation'],
+            'candidate' => $candidatePasses, 'incumbent' => $incumbent, 'auditPassed' => 12, 'auditTrials' => 36,
+            'incumbentAuditPassed' => $incumbent === null ? null : 12],
+    ]]);
+    return $shared->inverseExperimentReport($job['spec']['seed'])['research']['promotion']['outcome'];
+};
+$originalPasses = array_merge(array_fill(0, 12, 1), array_fill(0, 24, 0));
+check($submitShared($sharedA, $first, $originalPasses, null) === 'promoted'
+    && $submitShared($sharedB, $parallel, array_fill(0, 36, 1), null) === 'stale',
+    'the first eligible checkpoint is promoted and a stale assignment cannot replace it');
+$small = $shared->claim($sharedB, 0, false, 1, true, true, true);
+check($small['spec']['inverseShared']['generation'] === 1 && $small['spec']['inverseShared']['checkpoint'] === $validCheckpoint,
+    'another donor starts its next job from the promoted model');
+$oneTask = $originalPasses;
+$oneTask[12] = $oneTask[13] = $oneTask[14] = 1;
+check($submitShared($sharedB, $small, $oneTask, $originalPasses) === 'below-margin',
+    'a three-trial gain confined to one task does not promote');
+$win = $shared->claim($sharedA, 0, false, 1, true, true, true);
+$twoTasks = $originalPasses;
+$twoTasks[12] = $twoTasks[13] = $twoTasks[15] = 1;
+check($submitShared($sharedA, $win, $twoTasks, $originalPasses) === 'promoted'
+    && $shared->inverseChampion()['generation'] === 2 && $shared->inverseChampion()['passes'] === $twoTasks,
+    'paired improvement across tasks promotes a new fleet checkpoint');
+
+$any = $app->enroll('any-task-worker', ['*', 'spikefoundry'], 1, true);
+check(json_decode($app->workerByToken($any['token'])['allowed_json'], true) === ['*'],
+    'enrollment preserves consent for future projects');
 
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

@@ -25,3 +25,22 @@ if ($config['driver'] === 'sqlite') {
 $app = new App($db, $config);
 $app->migrate();
 echo "Schema is current. Added any missing job, project, worker, lease, and result columns. Existing rows were kept.\n";
+// One entry per distinct design: fill canonical design hashes and mark later copies as duplicate_of the first find.
+$merge = $app->mergeDuplicateDesigns((int) (getenv('MERGE_SECONDS') ?: 900));
+echo 'Designs: hashed ' . $merge['genomes'] . ' genomes and ' . $merge['records'] . ' records; merged ' . $merge['groups'] . ' repeated designs (' . $merge['canonicalOnly'] . ' only equal after canonical ordering), marked ' . $merge['marked'] . ' later copies as duplicates (rows kept); filled ' . $merge['jobSeeds'] . ' job seeds' . ($merge['finished'] ? '' : '; time budget reached, run again to finish') . ".\n";
+// Keep the design library to each task's best designs per quality measure (see App::pruneDesigns) and record the database size.
+$pruned = $app->pruneNow();
+echo 'Design library: kept the best ' . $pruned['keep'] . ' per measure per task; removed ' . $pruned['records'] . ' records and ' . $pruned['genomes'] . ' genomes; database ' . ($pruned['mbAfter'] === null ? 'size unknown' : $pruned['mbAfter'] . ' MB') . ($pruned['hard'] ? ' (was over the soft limit: pruned harder and rebuilt the tables)' : '') . ".\n";
+// One-time: hide revoked computers from the Owner console (rows kept as tombstones for credit and history).
+$gone = $app->removeRevokedOnce();
+echo $gone['ran'] ? 'Removed revoked computers: ' . ($gone['removed'] === [] ? 'none' : implode(', ', $gone['removed'])) . " (rows kept for credit and history).\n" : "Revoked computers were already cleaned up.\n";
+foreach ($app->watchedTasks() as $health) {
+    $policy = $health['policy'];
+    $best = 0.0;
+    foreach ($health['points'] as $point) {
+        $best = max($best, (float) $point['bestHeld']);
+    }
+    echo 'Task ' . $health['task_id'] . ': ' . $health['status'] . ', best held-out ' . sprintf('%.3f', $best)
+        . ((int) $policy['paused'] === 1 ? ', paused (' . $policy['pause_reason'] . ')' . ($policy['advanced_to'] !== '' ? ', next ' . $policy['advanced_to'] : '') : ', active') . ".\n";
+}
+
