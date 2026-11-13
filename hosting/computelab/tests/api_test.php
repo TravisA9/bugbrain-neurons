@@ -1133,5 +1133,9 @@ check($submitShared($sharedA, $win, $twoTasks, $originalPasses) === 'promoted'
     && $shared->inverseChampion()['generation'] === 2 && $shared->inverseChampion()['passes'] === $twoTasks,
     'paired improvement across tasks promotes a new fleet checkpoint');
 
+$any = $app->enroll('any-task-worker', ['*', 'spikefoundry'], 1, true);
+check(json_decode($app->workerByToken($any['token'])['allowed_json'], true) === ['*'],
+    'enrollment preserves consent for future projects');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

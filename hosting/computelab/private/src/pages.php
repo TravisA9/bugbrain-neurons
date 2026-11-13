@@ -1036,7 +1036,9 @@ function pageJoin(App $app, string $error = '', array $nav = []): string
     $body = '<section class="heading"><div><div class="eyebrow">Join · one download</div><h1>Join with this computer</h1><p>This does not share a GitHub token or the owner password. A background program on your computer does the work. This browser tab is not the worker.</p></div></section>'
         . $err
         . '<section class="panel"><div class="panelhead"><div class="paneltitle">Your computer</div><span class="subtag">STARTS AT 50% ALLOWANCE</span></div><div class="panelbody"><form method="post" action="' . h($base) . '/join"><label>Computer name <input name="name" required maxlength="32" autocomplete="off" placeholder="kitchen-pc"></label>'
-        . '<label><input type="checkbox" name="consent" value="1"> I agree this computer may run the projects I tick. SpikeFoundry comes first. BugBrain runs when SpikeFoundry is idle.</label>'
+        . '<label><input type="checkbox" name="consent" value="1" required> I agree this computer may run tasks according to the choices below.</label>'
+        . '<label><input type="checkbox" name="project[]" value="*" checked> Run any available ComputeLab task, including future projects</label>'
+        . '<p class="quiet">To limit participation, uncheck “Run any available ComputeLab task” and choose specific projects below.</p>'
         . '<label><input type="checkbox" name="project[]" value="spikefoundry" checked> SpikeFoundry synthetic design jobs</label>'
         . '<label><input type="checkbox" name="project[]" value="bugbrain"> BugBrain template tests</label>'
         . '<p class="quiet">New computers start in Allowance at 50%: about half of the cores, at low priority, so you can keep using the computer. Change it any time on Home. Job length and the rest are picked for you.</p>'

@@ -754,7 +754,7 @@ final class App
         if (!preg_match('/^[a-z0-9._-]{2,32}$/', $name)) {
             throw new InvalidArgumentException('Computer name must be 2–32 letters, digits, dot, underscore, or hyphen.');
         }
-        $allowed = array_values(array_intersect($projects, ['spikefoundry', 'bugbrain']));
+        $allowed = in_array('*', $projects, true) ? ['*'] : array_values(array_intersect($projects, ['spikefoundry', 'bugbrain']));
         if ($allowed === []) {
             throw new InvalidArgumentException('Choose at least one project.');
         }
@@ -1124,7 +1124,7 @@ final class App
             $find = $this->db->prepare($findSql);
             foreach ($projects as $project) {
                 $family = (string) ($project['family'] ?? '');
-                if (!in_array($project['id'], $allowed, true) && !in_array($family, $allowed, true)) {
+                if (!in_array('*', $allowed, true) && !in_array($project['id'], $allowed, true) && !in_array($family, $allowed, true)) {
                     continue;
                 }
                 $args = [$project['id'], 'queued', $now];
