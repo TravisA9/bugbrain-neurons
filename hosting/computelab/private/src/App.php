@@ -1114,6 +1114,7 @@ final class App
         $this->db->beginTransaction();
         try {
             $ranked = [];
+            $arenaJobs = [];
             $codeHash = (string) ($worker['code_hash'] ?? '');
             $findSql = 'SELECT * FROM jobs WHERE project_id = ? AND status = ? AND (not_before IS NULL OR not_before <= ?)';
             if ($codeHash !== '') {
@@ -1167,9 +1168,15 @@ final class App
                     if ($taskId !== '' && $this->taskPaused((string) $project['id'], $taskId)) {
                         continue;
                     }
-                    $ranked[] = ['job' => $job, 'spec' => $spec, 'shared' => $shared];
+                    $entry = ['job' => $job, 'spec' => $spec, 'shared' => $shared];
+                    if ($job['template_id'] === 'bb-arena-pilot' && $slot === 0) {
+                        $arenaJobs[] = $entry;
+                    } else {
+                        $ranked[] = $entry;
+                    }
                 }
             }
+            $ranked = array_merge($arenaJobs, $ranked);
             $hasOther = false;
             foreach ($ranked as $item) {
                 if ((string) ($item['job']['last_worker'] ?? '') !== (string) $worker['id']) {
