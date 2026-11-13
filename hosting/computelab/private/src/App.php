@@ -1090,7 +1090,7 @@ final class App
         return $n;
     }
 
-    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false, bool $inverseGallery = false, bool $inverseShared = false, bool $inverseComposition = false): ?array
+    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false, bool $inverseGallery = false, bool $inverseShared = false, bool $inverseComposition = false, bool $inverseSequence = false): ?array
     {
         $this->replenishJobs();
         $this->expireLeases();
@@ -1143,7 +1143,8 @@ final class App
                         continue;
                     }
                     $composition = !empty($spec['inverseComposition']);
-                    if ($composition && (!$inverseComposition || empty($this->config['inverse_composition']))) {
+                    if ($composition && (!$inverseComposition || empty($this->config['inverse_composition'])
+                        || (!empty($spec['inverseSequence']) && !$inverseSequence))) {
                         continue;
                     }
                     $shared = !$composition && ($spec['mode'] ?? '') === 'inverse-experiment' && !empty($spec['inverseGallery'])
@@ -1402,11 +1403,12 @@ final class App
             $composition = $isInverse && !empty(json_decode((string) $row['spec_json'], true)['inverseComposition']);
             if ($status === 'done' && $composition) {
                 $report = $body['research'] ?? [];
+                $sequence = !empty(json_decode((string) $row['spec_json'], true)['inverseSequence']);
                 if (($report['version'] ?? '') !== 'inverse-composition-1' || ($report['seed'] ?? null) !== (int) $row['seed']
-                    || !is_array($report['discoveries'] ?? null)) {
+                    || !is_array($report['discoveries'] ?? null) || (($report['family'] ?? '') === 'Two-stream sequence') !== $sequence) {
                     throw new InvalidArgumentException('Composition report does not match the job.');
                 }
-                $this->saveInverseDiscoveries((string) $worker['id'], (int) $row['seed'], $report['discoveries'], true);
+                $this->saveInverseDiscoveries((string) $worker['id'], (int) $row['seed'], $report['discoveries'], true, $sequence);
                 unset($body['research']['discoveries']);
                 $raw = json_encode($body);
             } elseif ($status === 'done' && $isInverse) {
@@ -1599,6 +1601,9 @@ final class App
             }
             if (!empty($extra['inverseComposition'])) {
                 $spec['inverseComposition'] = true;
+                if (!empty($extra['inverseSequence'])) {
+                    $spec['inverseSequence'] = true;
+                }
             }
         } else {
             $id = strtolower(preg_replace('/[^a-z0-9]+/', '-', $templateId) . '-' . $seed . '-' . bin2hex(random_bytes(3)));
@@ -1723,7 +1728,7 @@ final class App
         return $update->rowCount() === 1 ? 'promoted' : 'stale';
     }
 
-    private function saveInverseDiscoveries(string $worker, int $seed, array $rows, bool $composition = false): void
+    private function saveInverseDiscoveries(string $worker, int $seed, array $rows, bool $composition = false, bool $sequence = false): void
     {
         if (count($rows) > 32) {
             throw new InvalidArgumentException('Too many inverse discoveries.');
@@ -1741,7 +1746,10 @@ final class App
                 throw new InvalidArgumentException('Invalid inverse circuit or replay cases.');
             }
             if ($composition) {
-                $circuit = ['graph' => $this->validateInverseGraph($row['graph'] ?? null)];
+                $circuit = ['graph' => $this->validateInverseGraph($row['graph'] ?? null, $sequence)];
+                if ($sequence) {
+                    $circuit['timing'] = 'first-spike';
+                }
             } else {
                 if (!is_array($genes) || count($genes) !== count($widths)) {
                     throw new InvalidArgumentException('Invalid inverse circuit genes.');
@@ -1756,7 +1764,10 @@ final class App
             }
             foreach ($replay as $case) {
                 if (!is_array($case) || count($case) !== 2 || !is_int($case[0] ?? null)
-                    || $case[0] < 0 || $case[0] > 255 || !in_array($case[1] ?? null, [0, 1], true)) {
+                    || $case[0] < 0 || $case[0] > 255
+                    || ($sequence ? (!is_array($case[1] ?? null) || count($case[1]) !== 2
+                        || count(array_filter($case[1], static fn ($time) => $time === null || (is_int($time) && $time >= 0 && $time < 8))) !== 2)
+                        : !in_array($case[1] ?? null, [0, 1], true))) {
                     throw new InvalidArgumentException('Invalid inverse replay case.');
                 }
             }
@@ -1779,18 +1790,20 @@ final class App
         }
     }
 
-    private function validateInverseGraph($graph): array
+    private function validateInverseGraph($graph, bool $sequence): array
     {
         $nodes = $graph['neurons'] ?? null;
         $edges = $graph['edges'] ?? null;
-        if (($graph['version'] ?? null) !== 'snn-graph-1' || !is_array($nodes) || !is_array($edges)
-            || count($nodes) !== 6 || count($edges) > 30 || ($graph['inputs'] ?? null) !== [0, 1]
-            || ($graph['outputs'] ?? null) !== [5]) {
+        $count = is_array($nodes) ? count($nodes) : 0;
+        $outputs = $sequence ? [$count - 2, $count - 1] : [5];
+        if (($graph['version'] ?? null) !== 'snn-graph-1' || !is_array($edges)
+            || ($sequence ? ($count < 8 || $count > 10) : $count !== 6) || count($edges) > 30
+            || ($graph['inputs'] ?? null) !== [0, 1] || ($graph['outputs'] ?? null) !== $outputs) {
             throw new InvalidArgumentException('Invalid composition graph.');
         }
         $cleanNodes = [];
         foreach (array_values($nodes) as $i => $node) {
-            $kind = $i < 2 ? 'input' : ($i === 5 ? 'output' : 'lif');
+            $kind = $i < 2 ? 'input' : (in_array($i, $outputs, true) ? 'output' : 'lif');
             $thr = $node['thr'] ?? null;
             $leak = $node['leak'] ?? null;
             if (($node['kind'] ?? null) !== $kind || !is_numeric($thr) || $thr <= 0 || $thr > 16
@@ -1805,24 +1818,24 @@ final class App
             $to = $edge['to'] ?? null;
             $weight = $edge['weight'] ?? null;
             $delay = $edge['delay'] ?? null;
-            if (!is_int($from) || !is_int($to) || $from < 0 || $from >= $to || $to < 2 || $to > 5
+            if (!is_int($from) || !is_int($to) || $from < 0 || $from >= $to || $to < 2 || $to >= $count
                 || !is_numeric($weight) || abs((float) $weight) > 16 || !is_int($delay) || $delay < 0 || $delay > 4) {
                 throw new InvalidArgumentException('Invalid composition connection.');
             }
             $cleanEdges[] = ['from' => $from, 'to' => $to, 'weight' => (float) $weight, 'delay' => $delay];
         }
-        return ['version' => 'snn-graph-1', 'neurons' => $cleanNodes, 'edges' => $cleanEdges, 'inputs' => [0, 1], 'outputs' => [5]];
+        return ['version' => 'snn-graph-1', 'neurons' => $cleanNodes, 'edges' => $cleanEdges, 'inputs' => [0, 1], 'outputs' => $outputs];
     }
 
     public function inverseDiscoveries(?int $limit = null): array
     {
         $items = [];
         $limit = $limit === null ? $this->discoveriesTopN() : max(1, min(20, $limit));
-        foreach ([true, false] as $composition) {
-            $format = $composition ? "LIKE" : "NOT LIKE";
+        foreach (["d.circuit_json LIKE '%first-spike%'", "d.circuit_json LIKE '%snn-graph-1%' AND d.circuit_json NOT LIKE '%first-spike%'",
+            "d.circuit_json NOT LIKE '%snn-graph-1%'"] as $format) {
             foreach (['accuracy' => 'Accuracy', 'recall' => 'Recall', 'specificity' => 'Specificity', 'demo_accuracy' => 'Demo match'] as $column => $label) {
                 $rows = $this->db->query("SELECT d.*, w.name, w.public_credit FROM inverse_discoveries d
-                    LEFT JOIN workers w ON w.id = d.worker_id WHERE d.$column IS NOT NULL AND d.circuit_json $format '%snn-graph-1%'
+                    LEFT JOIN workers w ON w.id = d.worker_id WHERE d.$column IS NOT NULL AND $format
                     ORDER BY d.$column DESC, d.created_at DESC, d.id ASC LIMIT $limit")->fetchAll();
                 foreach ($rows as $rank => $row) {
                     $id = $row['id'];
@@ -1830,8 +1843,11 @@ final class App
                         $circuit = json_decode($row['circuit_json'], true);
                         $g = $circuit['genes'] ?? null;
                         $graph = $circuit['graph'] ?? null;
+                        $hidden = $graph ? count($graph['neurons']) - count($graph['inputs']) - count($graph['outputs']) : 1;
                         $items[$id] = [
-                            'hash' => $id, 'rank' => $rank + 1, 'task' => $graph ? 'Three-neuron pilot' : 'Inverse design', 'level' => $graph ? 3 : 1,
+                            'hash' => $id, 'rank' => $rank + 1,
+                            'task' => isset($circuit['timing']) ? 'Two-stream sequence' : ($graph ? 'Three-neuron pilot' : 'Inverse design'),
+                            'level' => $hidden,
                             'label' => 'Circuit ' . $row['seed'] . '–' . ($circuit['candidate'] ?? substr($id, 0, 6)),
                             'worker' => $row['worker_id'], 'finder' => $this->creditName($row),
                             'when' => $row['created_at'], 'seed' => (int) $row['seed'], 'cases' => (int) $row['case_count'],
@@ -1848,6 +1864,28 @@ final class App
             }
         }
         return array_values($items);
+    }
+
+    public function compositionResults(): array
+    {
+        $rows = $this->db->query("SELECT r.body_json FROM results r JOIN jobs j ON j.id = r.job_id
+            WHERE j.template_id = 'sf-inverse-experiment' AND j.spec_json LIKE '%inverseComposition%'
+            AND r.status = 'done' ORDER BY r.id DESC LIMIT 120")->fetchAll(PDO::FETCH_COLUMN);
+        $families = [];
+        foreach ($rows as $body) {
+            $report = json_decode($body, true)['research'] ?? [];
+            $family = $report['family'] ?? '';
+            if (!is_string($family) || !isset($report['learned']['trials'], $report['learned']['passed'], $report['baseline']['passed'])) {
+                continue;
+            }
+            $total = $families[$family] ?? ['jobs' => 0, 'trials' => 0, 'learned' => 0, 'baseline' => 0];
+            $total['jobs']++;
+            $total['trials'] += (int) $report['learned']['trials'];
+            $total['learned'] += (int) $report['learned']['passed'];
+            $total['baseline'] += (int) $report['baseline']['passed'];
+            $families[$family] = $total;
+        }
+        return $families;
     }
 
     private function trimInverseDiscoveries(): void
@@ -4212,8 +4250,10 @@ final class App
             if ($inverse && !empty($this->config['inverse_composition']) && $queuedAll < $globalCap
                 && !$this->db->query("SELECT 1 FROM jobs WHERE template_id = 'sf-inverse-experiment'
                     AND status IN ('queued','leased') AND spec_json LIKE '%inverseComposition%' LIMIT 1")->fetchColumn()) {
-                $this->createJob($template, 'Three-hidden-neuron pilot', 0.7, $this->freshSeed(),
-                    ['inverseGallery' => true, 'inverseComposition' => true]);
+                $seed = $this->freshSeed();
+                $sequence = !empty($this->config['inverse_sequence']) && $seed % 2 === 0;
+                $this->createJob($template, $sequence ? 'Two-stream sequence pilot' : 'Three-hidden-neuron pilot', 0.7, $seed,
+                    ['inverseGallery' => true, 'inverseComposition' => true, 'inverseSequence' => $sequence]);
                 $queued++;
                 $queuedAll++;
                 $made++;

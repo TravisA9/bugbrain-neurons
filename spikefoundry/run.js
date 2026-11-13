@@ -30,10 +30,12 @@ function execute(job, outDir) {
     const summaryPath = path.join(outDir, 'summary.json');
     if (fs.existsSync(summaryPath)) {
       const saved = readJson(summaryPath);
-      if (saved.research?.version === 'inverse-composition-1' && saved.research.seed === +job.seed) return saved;
+      if (saved.research?.version === 'inverse-composition-1' && saved.research.seed === +job.seed
+          && (saved.research.family === 'Two-stream sequence') === Boolean(job.inverseSequence)) return saved;
     }
-    const research = require('./inverse_composition_experiment').compositionPilot(+job.seed);
-    const note = 'Three-hidden-neuron pilot: ' + research.learned.passed + '/' + research.learned.trials +
+    const research = job.inverseSequence ? require('./inverse_sequence_pilot').sequencePilot(+job.seed)
+      : require('./inverse_composition_experiment').compositionPilot(+job.seed);
+    const note = research.family + ': ' + research.learned.passed + '/' + research.learned.trials +
       ' timing trials passed; random-start search passed ' + research.baseline.passed + '.';
     const summary = { synthetic: true, batches: 1, tasks: [], note, research };
     writeJson(summaryPath, summary);

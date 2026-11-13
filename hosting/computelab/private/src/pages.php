@@ -1167,12 +1167,15 @@ function verifiedDiscoveries(array $studies): string
             : '<p class="muted">No circuits have passed both fresh-case checks in a completed study yet.</p>');
 }
 
-function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archive = false, bool $refresh = false): string
+function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archive = false, bool $refresh = false, bool $larger = false): string
 {
     $base = $app->base();
     $inverse = $app->inverseGalleryEnabled() && !$archive;
     $payload = $inverse ? ['items' => $app->inverseDiscoveries(), 'series' => [], 'board' => []] : $app->discoveriesPayload();
     $items = $payload['items'];
+    if ($inverse && $larger) {
+        $items = array_values(array_filter($items, static fn ($item) => isset($item['inverse']['graph'])));
+    }
     usort($items, static function (array $a, array $b): int {
         return strcmp($b['when'], $a['when']) ?: strcmp($a['hash'], $b['hash']);
     });
@@ -1195,6 +1198,7 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archiv
         $list .= '<button class="disc' . ($item['mine'] ? ' mine' : '') . '" type="button" data-index="' . $i . '"><div class="row1"><span class="t">' . h($item['label'] ?? '#' . $item['rank'] . ' ' . $item['task'])
             . ($item['mine'] ? '<span class="badge-mine">Your computer</span>' : '') . $badges . '</span><span class="s">' . h(number_format((float) $item['held'], 3)) . '</span></div>'
             . '<div class="row2"><span>' . h($item['finder']) . (($item['confirmations'] ?? 0) > 0 ? ' · ✓' . h((string) $item['confirmations']) : '') . (($item['variants'] ?? 0) > 0 ? ' · +' . h((string) $item['variants']) . ' alike' : '') . '</span><span>' . h((string) $item['neurons']) . 'n · ' . h((string) $item['synapses']) . 's</span></div>'
+            . (isset($item['inverse']['graph']) ? '<div class="row2">' . h($item['task']) . ' · ' . h((string) $item['level']) . ' hidden neurons</div>' : '')
             . discWhenHtml((string) ($item['when'] ?? '')) . '</button>';
     }
     if ($items === []) {
@@ -1206,7 +1210,9 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archiv
         return jsonForHtml(['data' => $data, 'list' => $list, 'verification' => $verification]);
     }
     $description = $inverse
-        ? '<p>Top ' . h((string) $app->discoveriesTopN()) . ' inverse designs per metric and pilot, newest first. Playback uses examples held out from training.</p><a href="' . h($base . '/discoveries?archive=1') . '">Legacy discoveries archive</a>'
+        ? '<p>Top ' . h((string) $app->discoveriesTopN()) . ' inverse designs per metric and pilot, newest first. Playback uses held-out examples.</p>'
+            . '<a href="' . h($base . '/discoveries' . ($larger ? '' : '?larger=1')) . '">' . ($larger ? 'All designs' : 'Multi-neuron designs') . '</a> · '
+            . '<a href="' . h($base . '/discoveries?archive=1') . '">Legacy discoveries archive</a>'
         : '<p>Browse search results, newest first, and play back their wiring. Ranking badges describe the cases used during search.</p>';
     $body = '<section class="heading"><div><div class="eyebrow">Discoveries · frozen designs</div><h1>What the network has found</h1>' . $description . '</div></section>'
         . '<div class="split"><section class="panel" aria-label="Discoveries"><div class="panelhead"><div class="paneltitle">Discoveries</div>'
@@ -1251,6 +1257,7 @@ steps.push(spk.slice());volt.push(v);
 for(e=0;e<net.edges.length;e++){var ed=net.edges[e];if(!spk[ed.from])continue;var w=t+ed.delay+1;if(w<inbox.length){inbox[w][ed.to]+=ed.weight;sent.push({t:t,e:e,at:w});}}}
 return{H:H,spikes:steps,volt:volt,sent:sent,outputs:fired.map(Boolean),spikeCount:total};}
 /* designer.js scoreSet: exact match needs as many outputs as labels, all equal. */
+function caseCorrect(net,tr,c){return c.timing?net.outputs.every(function(id,i){var tick=tr.spikes.findIndex(function(row){return !!row[id];});return (tick<0?null:tick)===c.timing[i];}):correct(tr.outputs,c.label);}
 function correct(outs,label){var lab=(label||[]).map(function(x){return!!x;}),m=outs.length===lab.length&&lab.length>0;for(var j=0;j<Math.max(outs.length,lab.length);j++)if(!!outs[j]!==lab[j])m=false;return m;}
 function score(net,cases){var sp=0,ex=0,positives=0,tp=0;cases.forEach(function(c){var r=trace(net,c.seq);sp+=r.spikeCount;if(correct(r.outputs,c.label))ex++;c.label.forEach(function(want,i){if(want){positives++;if(r.outputs[i])tp++;}});});var n=Math.max(1,cases.length),acc=cases.length?ex/cases.length:0,quality=positives&&!tp?0:clamp(acc-.0015*(net.neurons.length+net.edges.length)-.00025*sp/n,0,1);return{spikes:sp,correct:ex,n:cases.length,accuracy:acc,quality:quality};}
 /* The evaluator scores 4 held-out cases (designer.js scoreGenome default). Held-out cases do not depend on the job seed. */
@@ -1261,7 +1268,7 @@ var NS='http://www.w3.org/2000/svg',W=760,NH=260;
 function layout(net){var cols=net.mods.length,pos=[];net.neurons.forEach(function(n){var m=net.mods[n.mod],x=60+(cols>1?n.mod*(W-120)/(cols-1):W/2),y=NH/2+(n.idx-(m.n-1)/2)*Math.min(44,(NH-60)/Math.max(1,m.n));pos.push([x,y]);});
 var curves=net.edges.map(function(e){var a=pos[e.from],b=pos[e.to],dx=b[0]-a[0],bend=dx<=0?-60:0,c=[(a[0]+b[0])/2,(a[1]+b[1])/2+bend+(dx===0?-30:0)];if(e.from===e.to){a=[a[0]-8,a[1]-9];b=[b[0]+8,b[1]-9];c=[a[0]+8,a[1]-70];}return[a,c,b];});return{pos:pos,curves:curves};}
 function qpt(q,u){var v=1-u;return[v*v*q[0][0]+2*v*u*q[1][0]+u*u*q[2][0],v*v*q[0][1]+2*v*u*q[1][1]+u*u*q[2][1]];}
-function names(task){if(task==='Inverse design'||task==='Three-neuron pilot')return{inputs:['A','B'],outputs:['Output']};var SF=root.SpikeFoundry,t=SF&&SF.BASE_TASKS&&SF.BASE_TASKS[task];return t?{inputs:t.inputs,outputs:t.outputs}:{inputs:[],outputs:[]};}
+function names(task){if(task==='Two-stream sequence')return{inputs:['A','B'],outputs:['Stream A','Stream B']};if(task==='Inverse design'||task==='Three-neuron pilot')return{inputs:['A','B'],outputs:['Output']};var SF=root.SpikeFoundry,t=SF&&SF.BASE_TASKS&&SF.BASE_TASKS[task];return t?{inputs:t.inputs,outputs:t.outputs}:{inputs:[],outputs:[]};}
 function mount(box,o){
 var net=o.net,lay=layout(net),cases=o.cases||[],nm=names(o.task),reduce=!!(root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches);
 var all=cases.map(function(c){return trace(net,c.seq);}),ci=0;for(var k=0;k<cases.length;k++){if(cases[k].label.some(Boolean)&&all[k].spikeCount>0){ci=k;break;}}
@@ -1288,7 +1295,7 @@ s+='</g><text class="snn-silent" x="'+W/2+'" y="'+(NH-12)+'" text-anchor="middle
 var tw=W,lx=72,rows=net.inputs.concat(net.outputs),RH=15,TH=rows.length*RH+40;
 function ctl(){var c='<div class="snn-bar"><button type="button" class="snn-btn" data-a="play" aria-label="Play">▶</button><button type="button" class="snn-btn" data-a="restart" aria-label="Restart" title="Restart">↺</button><button type="button" class="snn-btn" data-a="back" aria-label="Step back" title="Step back">‹</button><button type="button" class="snn-btn" data-a="fwd" aria-label="Step forward" title="Step forward">›</button>'
 +'<input type="range" class="snn-scrub" min="0" max="1000" value="0" aria-label="Time"><span class="snn-time">t 0.0</span><label class="snn-speed">speed <select aria-label="Speed"><option value=".25">0.25×</option><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label></div>';
-c+='<div class="snn-cases"><span>Held-out case</span>';cases.forEach(function(cs,i){c+='<button type="button" class="snn-case'+(i===ci?' on':'')+'" data-c="'+i+'" title="'+(correct(all[i].outputs,cs.label)?'scored correct':'scored wrong')+'">'+(i+1)+'<i>'+(correct(all[i].outputs,cs.label)?'✓':'✗')+'</i></button>';});return c+'</div>';}
+c+='<div class="snn-cases"><span>Held-out case</span>';cases.forEach(function(cs,i){c+='<button type="button" class="snn-case'+(i===ci?' on':'')+'" data-c="'+i+'" title="'+(caseCorrect(net,all[i],cs)?'scored correct':'scored wrong')+'">'+(i+1)+'<i>'+(caseCorrect(net,all[i],cs)?'✓':'✗')+'</i></button>';});return c+'</div>';}
 var key='<details class="snn-key" open><summary>Network legend</summary><ul>'
   +'<li><i class="port" style="--key-color:#69e2b1" aria-hidden="true"></i>Input</li>'
   +'<li><i style="--key-color:#65c7f2" aria-hidden="true"></i>Excitatory neuron (+)</li>'
@@ -1306,7 +1313,7 @@ for(var t=0;t<H;t++)if(tr.spikes[t][i])h+='<rect x="'+(lx+t*cw+2)+'" y="'+(y+1)+
 if(isOut){var want=oi<cases[ci].label.length?!!cases[ci].label[oi]:null;h+='<text x="'+(tw-84)+'" y="'+(y+10)+'" class="rl xp">'+(want===null?'not scored':'want '+(want?'●':'○')+' got '+(tr.outputs[oi]?'●':'○'))+'</text>';}});
 h+='<text x="'+lx+'" y="'+(TH-8)+'" class="rl">time step 0 → '+(H-1)+' · inputs stop at '+(cases[ci].seq.length-1)+'</text><line class="playhead" x1="'+lx+'" x2="'+lx+'" y1="4" y2="'+(TH-22)+'"/>';tsvg.innerHTML=h;head=tsvg.querySelector('.playhead');tsvg._cw=cw;}
 function io(){var c=cases[ci],ins=[];c.seq.forEach(function(row,t){row.forEach(function(v,j){if(v)ins.push((nm.inputs[j]||'in'+j)+' at t'+t);});});
-var exp=nm.outputs.map(function(nmo,j){return nmo+' '+(c.label[j]?'fires':'stays quiet');}).join(', '),got=net.outputs.map(function(i,j){return lbl(i)+' '+(tr.outputs[j]?'fires':'stays quiet');}).join(', '),ok=correct(tr.outputs,c.label);
+var exp=nm.outputs.map(function(nmo,j){return nmo+' '+(c.timing&&c.timing[j]!==null?'fires at tick '+c.timing[j]:c.label[j]?'fires':'stays quiet');}).join(', '),got=net.outputs.map(function(i,j){return lbl(i)+' '+(tr.outputs[j]?(c.timing?'fires at tick '+tr.spikes.findIndex(function(row){return !!row[i];}):'fires'):'stays quiet');}).join(', '),ok=caseCorrect(net,tr,c);
 var miss=nm.inputs.slice(net.inputs.length);box.querySelector('.snn-io').innerHTML='<span><b>Input</b> '+esc(ins.join(' · ')||'no spikes')+(miss.length?' <em class="muted">('+esc(miss.join(', '))+' '+(miss.length>1?'have':'has')+' no input neuron in this design)</em>':'')+'</span><span><b>Expected</b> '+esc(exp)+'</span><span class="'+(ok?'ok':'err')+'"><b>Network</b> '+esc(got||'no output neuron')+' '+(ok?'✓':'✗')+(net.outputs.length!==nm.outputs.length&&nm.outputs.length?' (has '+net.outputs.length+' outputs, the task has '+nm.outputs.length+')':'')+'</span>';
 silent.textContent=tr.spikeCount===0?'This design never fires on this input'+(all.every(function(r){return r.spikeCount===0;})?' (nor on any held-out case)':'')+'.':'';}
 function check(){var sc=score(net,cases),r=o.record||{},same=r.spikes==null||(sc.spikes===r.spikes&&(r.accuracy==null||Math.abs(sc.accuracy-r.accuracy)<6e-5));
@@ -1367,7 +1374,7 @@ if(D.inverse){G.textContent='INVERSE DESIGN';V.innerHTML='<div class="metrics">'
 var h='<div class="metrics">'+metric('Designs listed',D.items.length,'top N per quality measure',true)+metric('Tasks',Object.keys(by).length,'curriculum levels reached')+metric('Yours',D.items.filter(function(i){return i.mine;}).length,D.mineCount?'found by your computer':'link a computer on Home')+metric('Contributors',D.board.length,'with public credit or Anonymous')+'</div>';
 h+='<div class="viz-title"><strong>Best per task</strong><span>held-out score</span></div><div class="tasks">';Object.keys(by).forEach(function(k){var it=by[k];h+='<div class="taskcard"><div class="taskline"><span class="taskname">Level '+it.level+' · '+esc(k)+'</span><span class="taskscore">'+f3(it.held)+'</span></div><div class="taskdesc2">'+esc(it.finder)+' · '+it.neurons+' neurons · '+it.synapses+' synapses · '+'<span title="'+esc(ago(it.when))+'">'+esc(when(it.when))+'</span></div><div class="prog"><i style="width:'+Math.round(100*clamp(it.held,0,1))+'%"></i></div></div>';});
 h+='</div><div class="viz-title"><strong>Contributors</strong><span>evaluation time donated</span></div><div class="log">';D.board.forEach(function(b){h+='<div class="logline"><span class="logtime">'+b.hours.toFixed(2)+' h</span><span class="logtext">'+esc(b.name)+'</span><span class="logscore">'+b.genomes+' designs</span></div>';});if(!D.board.length)h+='<p class="muted">No public results yet.</p>';var verified=document.getElementById('disc-verification');V.innerHTML=(verified?verified.innerHTML:'')+h+'</div>';}
-function show(i,auto){var selection=++generation;if(player){player.destroy();player=null;}if(i<0)return overview();var it=D.items[i];var badges=(it.badges||[]).map(function(b){return '<span class="badge-m">'+esc(b)+'</span>';}).join('');T.innerHTML=esc(it.label||('#'+it.rank+' '+it.task))+(it.mine?'<span class="badge-mine">Your computer</span>':'')+badges;G.textContent=it.inverse?'INVERSE DESIGN':'LEVEL '+it.level;
+function show(i,auto){var selection=++generation;if(player){player.destroy();player=null;}if(i<0)return overview();var it=D.items[i];var badges=(it.badges||[]).map(function(b){return '<span class="badge-m">'+esc(b)+'</span>';}).join('');T.innerHTML=esc(it.label||('#'+it.rank+' '+it.task))+(it.mine?'<span class="badge-mine">Your computer</span>':'')+badges;G.textContent=it.inverse?it.level+' HIDDEN '+(it.level===1?'NEURON':'NEURONS'):'LEVEL '+it.level;
 var h='<div class="chips" style="margin-bottom:12px"><span class="chip">genome <b>'+esc(it.hash.slice(0,12))+'</b></span><span class="chip'+(it.mine?' mine':'')+'">found by '+esc(it.finder)+'</span><span class="chip disc-found" title="'+esc(ago(it.when))+'">found <b>'+esc(when(it.when))+'</b></span>'+(it.public?'<span class="chip"><b>public</b></span>':'')+(it.confirmations?'<span class="chip" title="Found again by later jobs">confirmed <b>'+it.confirmations+'×</b>'+(it.confirmedBy&&it.confirmedBy.length?' by '+esc(it.confirmedBy.join(', ')):'')+'</span>':'')+(it.variants?'<span class="chip" title="Other circuits with the same scores, size and spikes">+'+it.variants+' equivalent variant'+(it.variants>1?'s':'')+'</span>':'')+(it.badges&&it.badges.length?it.badges.map(function(b){return '<span class="chip" title="Among the top designs of this task on this measure">'+esc(b)+'</span>';}).join(''):'')+'</div>';
 h+='<div class="metrics">'+(it.inverse
   ?metric('Accuracy',f3(it.accuracy),it.cases+' held-out cases',true)+metric('Recall',f3(it.recall),'positive cases')+metric('Specificity',f3(it.specificity),'negative cases')+metric('Demo match',f3(it.train),'examples used to select the proposal')
@@ -1385,7 +1392,7 @@ if(it.inverse){
   net.mods=[{id:'in',kind:'input',n:2}];
   net.neurons.slice(2).forEach(function(n,i){net.mods.push({id:n.kind==='output'?'out':'h'+(i+1),kind:n.kind,sign:1,n:1});});
   net.neurons.forEach(function(n,i){n.mod=i<2?0:i-1;n.idx=i<2?i:0;n.sign=1;});
-  cases=g.replay.map(function(pair){return{seq:[0,1,2,3].map(function(t){return[(pair[0]>>(2*t))&1,(pair[0]>>(2*t+1))&1];}),label:[pair[1]]};});
+  cases=g.replay.map(function(pair){return{seq:[0,1,2,3].map(function(t){return[(pair[0]>>(2*t))&1,(pair[0]>>(2*t+1))&1];}),label:g.timing?pair[1].map(function(t){return t!==null;}):[pair[1]],timing:g.timing?pair[1]:null};});
 }else{net=P.compile(g);cases=P.heldCases(it.task,4);}
 note.textContent=net.neurons.length+' neurons · '+net.edges.length+' synapses · weights fixed';
 if(!cases.length){box.textContent='Playback cases are unavailable for this task.';R.textContent='Playback unavailable.';return;}
@@ -1614,6 +1621,20 @@ function diagnosticsPanel(App $app, string $workerId): string
     return $html . '</div></details>';
 }
 
+function compositionResultsSection(App $app): string
+{
+    $rows = '';
+    foreach ($app->compositionResults() as $family => $result) {
+        $trials = (string) $result['trials'];
+        $rows .= '<tr><td>' . h($family) . '</td><td>' . h((string) $result['jobs']) . '</td><td>'
+            . h($result['learned'] . '/' . $trials) . '</td><td>' . h($result['baseline'] . '/' . $trials) . '</td></tr>';
+    }
+    return $rows === '' ? '' : '<section class="panel"><h2>Multi-neuron pilot results</h2>'
+        . '<p>Held-out timing passes across the latest 120 completed pilot jobs.</p>'
+        . '<table><thead><tr><th>Family</th><th>Jobs</th><th>DNN</th><th>Random</th></tr></thead><tbody>'
+        . $rows . '</tbody></table></section>';
+}
+
 function sequenceStudySection(App $app, string $csrf): string
 {
     $labels = ['current' => 'Current proposer', 'evolution' => 'Simple evolution', 'learned' => 'Learned designer'];
@@ -1776,6 +1797,7 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         . '<label>Priority <input name="priority" type="number" min="0" max="5" step="0.1" value="0.5"></label>'
         . '<label>Seed <input name="seed" type="number" min="1" max="1000000" value="7"></label></div>'
         . '<button class="small" type="submit">Queue job</button></form>'
+        . compositionResultsSection($app)
         . sequenceStudySection($app, $csrf)
         . '<h2 style="margin-top:18px">Task thresholds</h2>' . ($thresholds !== '' ? $thresholds : '<p class="muted">Thresholds appear after the first design upload.</p>')
         . '</div></details>';

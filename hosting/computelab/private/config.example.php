@@ -27,6 +27,7 @@ return [
     'inverse_gallery' => false,
     'inverse_shared_training' => false,
     'inverse_composition' => false,
+    'inverse_sequence' => false,
     'sequence_experiment' => ['rounds' => 6, 'cpuBudgetMs' => 1000, 'cap' => 3000],
     'login_per_minute' => 8,
     'api_per_minute' => 120,

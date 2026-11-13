@@ -402,13 +402,14 @@ try {
             $ids[] = (string) $w['id'];
         }
         $archive = ($_GET['archive'] ?? '') === '1';
+        $larger = ($_GET['larger'] ?? '') === '1';
         if (($_GET['refresh'] ?? '') === '1') {
             header('Content-Type: application/json; charset=utf-8');
             header('Cache-Control: private, no-store');
-            echo pageDiscoveries($app, coord_who($app, 'discoveries'), $ids, $archive, true);
+            echo pageDiscoveries($app, coord_who($app, 'discoveries'), $ids, $archive, true, $larger);
             return;
         }
-        coord_html(pageDiscoveries($app, coord_who($app, 'discoveries'), $ids, $archive));
+        coord_html(pageDiscoveries($app, coord_who($app, 'discoveries'), $ids, $archive, false, $larger));
         return;
     }
     if ($path === '/discoveries/genome' && $method === 'GET') {
@@ -933,7 +934,8 @@ try {
             $slot = isset($body['slot']) && is_numeric($body['slot']) ? (int) $body['slot'] : 0;
             $job = $app->claim($worker, $slot, ($body['sequenceExperiment'] ?? false) === true, (int) ($body['studyVersion'] ?? 1),
                 ($body['inverseExperiment'] ?? false) === true, ($body['inverseGallery'] ?? false) === true,
-                ($body['inverseShared'] ?? false) === true, ($body['inverseComposition'] ?? false) === true);
+                ($body['inverseShared'] ?? false) === true, ($body['inverseComposition'] ?? false) === true,
+                ($body['inverseSequence'] ?? false) === true);
             coord_json(200, ['job' => $job]);
             return;
         }

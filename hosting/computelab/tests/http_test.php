@@ -542,7 +542,6 @@ check(http($championUrl)['status'] === 403, 'the shared checkpoint requires an o
 $app->createJob('sf-inverse-experiment', 'Composition smoke test', 5, 2311,
     ['inverseGallery' => true, 'inverseComposition' => true]);
 $compositionPoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
-unlink($researchToken);
 $composition = $app->inverseExperimentReport(2311)['research'] ?? [];
 $graphs = array_filter($app->inverseDiscoveries(), static fn ($item) => isset($item['inverse']['graph']));
 check(str_contains($compositionPoll ?? '', 'sf-inverse-experiment-2311')
@@ -550,6 +549,17 @@ check(str_contains($compositionPoll ?? '', 'sf-inverse-experiment-2311')
     && ($composition['learned']['trials'] ?? 0) === ($composition['baseline']['trials'] ?? -1)
     && $graphs && count(reset($graphs)['inverse']['graph']['neurons']) === 6,
     'a donor publishes a three-hidden-neuron graph and paired timing results');
+
+$app->createJob('sf-inverse-experiment', 'Two-stream smoke test', 5, 2320,
+    ['inverseGallery' => true, 'inverseComposition' => true, 'inverseSequence' => true]);
+$sequencePoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
+unlink($researchToken);
+$sequence = $app->inverseExperimentReport(2320)['research'] ?? [];
+$sequenceGraphs = array_filter($app->inverseDiscoveries(), static fn ($item) => $item['task'] === 'Two-stream sequence');
+check(str_contains($sequencePoll ?? '', 'sf-inverse-experiment-2320') && ($sequence['learned']['trials'] ?? 0) === 12
+    && $sequenceGraphs && min(array_column($sequenceGraphs, 'level')) >= 4
+    && isset($app->compositionResults()['Two-stream sequence']),
+    'a donor publishes two-output timing graphs and the owner sees family results');
 
 proc_terminate($proc);
 echo "http checks done\n";
