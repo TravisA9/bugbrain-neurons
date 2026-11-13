@@ -26,6 +26,14 @@ recorded separately.
 
 ### Shared training
 
+Set `inverse_composition` and `inverse_gallery` to true to run the
+three-hidden-neuron pilot. The coordinator supplies one pilot job at a time
+under its normal queue limits. Pilot jobs train a separate timing designer,
+compare it with random-start search on the same held-out behavior at the
+same evaluation budget, and publish explicit `snn-graph-1` circuits to
+Discoveries. Gallery scores describe firing versus silence. The owner job
+report also records first-spike timing results for both methods.
+
 Set `inverse_shared_training` to true in the coordinator configuration when
 the fleet supports shared assignments. Automatic inverse jobs then load the
 current shared checkpoint at claim time. The first eligible model starts the
@@ -37,6 +45,59 @@ and improve on at least two behaviors. The coordinator accepts a promotion
 only while the assigned generation is current. Future assignments receive
 the promoted checkpoint. The owner can inspect the model and its benchmark
 results at `/owner/inverse-champion.json`.
+
+### First-spike timing experiment
+
+Run `node spikefoundry/inverse_timing_experiment.js 8` for eight paired seeds
+per held-out circuit family. The local experiment compares one reference
+wiring, simulator feedback that treats each timing mismatch equally, and
+simulator feedback that discounts small timing errors. All arms use the same
+demonstrations and number of model updates. The audit reports both exact
+first-spike timing and graded timing scores on fresh inputs. It also checks
+how often exhaustive search can recover a circuit from the same demonstrations.
+
+Run `node spikefoundry/inverse_timing_experiment.js 8 search` to compare
+the DNN's fixed shortlist, random circuits, and simulator-guided single-gene
+edits at budgets of 8 and 32 distinct circuit evaluations per demonstration
+set. The revision arms compare DNN starts with DNN edit priorities, random
+starts with DNN edit priorities, and random starts with random edit
+priorities. All arms select circuits using only the demonstrations before
+scoring them on fresh inputs.
+
+Run `node spikefoundry/inverse_timing_experiment.js 8 augment` to recover
+training circuits with random-start search. The search uses 64 demonstrations
+and accepts a circuit only if it matches the target first-spike time or
+silence on all 256 inputs. Each fold holds out a whole two-excitatory-input
+delay-order family and excludes equivalent behaviors from its audit. The
+experiment compares recovered designs, reference designs for the same new
+behaviors, and replay of existing behaviors at equal training update counts.
+
+Run `node spikefoundry/inverse_composition_experiment.js 4` to test whether
+source-verified three-hidden-neuron examples improve a timing designer over
+replaying two-hidden-neuron examples. Each fold reserves the distinct
+behaviors of one three-hidden-neuron circuit family. Both DNNs and
+random-start simulator search evaluate 32 distinct circuits per trial.
+
+Run `node spikefoundry/inverse_composition_experiment.js 6 hybrid` to
+compare those baselines with a 16-evaluation DNN search followed by a
+16-evaluation random-start search. The second search skips wirings the
+first already evaluated. Both search arms select using the demonstrations,
+with new demonstration sets and a separate sample of serial-cascade
+behaviors for this experiment.
+
+Run `node spikefoundry/inverse_composition_experiment.js 4 balanced` to
+compare equal family sampling within each circuit size with uniform
+behavior sampling and two-hidden-neuron replay. Checkpoints are selected
+using the weakest family pass rate on reserved two-hidden-neuron behaviors,
+with mean family pass rate and timing accuracy as tie-breakers. Each
+selected checkpoint is then scored on the reserved three-hidden-neuron
+family at the same 32-circuit budget.
+
+Run `node spikefoundry/inverse_composition_experiment.js 4 diverse` to
+generate additional behaviors with five new detector variants. The diverse
+arm replaces repeated training rows with simulator-generated behaviors
+from the same family and circuit size. The replay, oversampled, and diverse
+arms share the expanded design space and the same audit.
 
 A second set of 12 reserved behaviors measures generalization. The report
 shows audit results for both models. Promotion uses the first set.

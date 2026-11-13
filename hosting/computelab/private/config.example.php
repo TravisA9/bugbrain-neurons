@@ -26,6 +26,7 @@ return [
     'pause_legacy_spikefoundry_search' => false,
     'inverse_gallery' => false,
     'inverse_shared_training' => false,
+    'inverse_composition' => false,
     'sequence_experiment' => ['rounds' => 6, 'cpuBudgetMs' => 1000, 'cap' => 3000],
     'login_per_minute' => 8,
     'api_per_minute' => 120,

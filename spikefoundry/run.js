@@ -26,6 +26,19 @@ function execute(job, outDir) {
   const batches = +job.batches || +((job.budget && job.budget.batches) || 1);
   if (batches < 1 || batches > 20) throw new Error('batches must be from 1 to 20.');
   fs.mkdirSync(outDir, { recursive: true });
+  if (job.mode === 'inverse-experiment' && job.inverseComposition) {
+    const summaryPath = path.join(outDir, 'summary.json');
+    if (fs.existsSync(summaryPath)) {
+      const saved = readJson(summaryPath);
+      if (saved.research?.version === 'inverse-composition-1' && saved.research.seed === +job.seed) return saved;
+    }
+    const research = require('./inverse_composition_experiment').compositionPilot(+job.seed);
+    const note = 'Three-hidden-neuron pilot: ' + research.learned.passed + '/' + research.learned.trials +
+      ' timing trials passed; random-start search passed ' + research.baseline.passed + '.';
+    const summary = { synthetic: true, batches: 1, tasks: [], note, research };
+    writeJson(summaryPath, summary);
+    return summary;
+  }
   if (job.mode === 'inverse-experiment') {
     const { study, sharedStudy, packModel } = require('./inverse_designer');
     const summaryPath = path.join(outDir, 'summary.json');

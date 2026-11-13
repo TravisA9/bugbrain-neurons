@@ -14,6 +14,7 @@ file_put_contents($config, '<?php return ' . var_export([
     'login_per_minute' => 8,
     'api_per_minute' => 120,
     'inverse_shared_training' => true,
+    'inverse_composition' => true,
     'engine_js' => $root . '/spikefoundry/engine.js',
     'lab_html' => $root . '/spikefoundry/lab.html',
     'protocol' => dirname(__DIR__) . '/PROTOCOL.txt',
@@ -530,7 +531,6 @@ check(http($inverseUrl)['status'] === 403, 'the inverse experiment report requir
 
 $app->createJob('sf-inverse-experiment', 'Shared inverse smoke test', 5, 1735, ['inverseGallery' => true]);
 $sharedPoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
-unlink($researchToken);
 $championUrl = $base . '/owner/inverse-champion.json';
 $championResponse = http($championUrl, 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
 $champion = json_decode($championResponse['body'], true);
@@ -538,6 +538,18 @@ check(str_contains($sharedPoll ?? '', 'sf-inverse-experiment-1735') && $champion
     && ($champion['generation'] ?? null) === 1 && count($champion['passes'] ?? []) === 36,
     'a donor trains and publishes a shared checkpoint through HTTP');
 check(http($championUrl)['status'] === 403, 'the shared checkpoint requires an owner session');
+
+$app->createJob('sf-inverse-experiment', 'Composition smoke test', 5, 2311,
+    ['inverseGallery' => true, 'inverseComposition' => true]);
+$compositionPoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
+unlink($researchToken);
+$composition = $app->inverseExperimentReport(2311)['research'] ?? [];
+$graphs = array_filter($app->inverseDiscoveries(), static fn ($item) => isset($item['inverse']['graph']));
+check(str_contains($compositionPoll ?? '', 'sf-inverse-experiment-2311')
+    && ($composition['version'] ?? '') === 'inverse-composition-1'
+    && ($composition['learned']['trials'] ?? 0) === ($composition['baseline']['trials'] ?? -1)
+    && $graphs && count(reset($graphs)['inverse']['graph']['neurons']) === 6,
+    'a donor publishes a three-hidden-neuron graph and paired timing results');
 
 proc_terminate($proc);
 echo "http checks done\n";

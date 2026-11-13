@@ -1206,7 +1206,7 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archiv
         return jsonForHtml(['data' => $data, 'list' => $list, 'verification' => $verification]);
     }
     $description = $inverse
-        ? '<p>Top ' . h((string) $app->discoveriesTopN()) . ' inverse designs for each metric, newest first. Playback uses examples held out from training.</p><a href="' . h($base . '/discoveries?archive=1') . '">Legacy discoveries archive</a>'
+        ? '<p>Top ' . h((string) $app->discoveriesTopN()) . ' inverse designs per metric and pilot, newest first. Playback uses examples held out from training.</p><a href="' . h($base . '/discoveries?archive=1') . '">Legacy discoveries archive</a>'
         : '<p>Browse search results, newest first, and play back their wiring. Ranking badges describe the cases used during search.</p>';
     $body = '<section class="heading"><div><div class="eyebrow">Discoveries · frozen designs</div><h1>What the network has found</h1>' . $description . '</div></section>'
         . '<div class="split"><section class="panel" aria-label="Discoveries"><div class="panelhead"><div class="paneltitle">Discoveries</div>'
@@ -1261,7 +1261,7 @@ var NS='http://www.w3.org/2000/svg',W=760,NH=260;
 function layout(net){var cols=net.mods.length,pos=[];net.neurons.forEach(function(n){var m=net.mods[n.mod],x=60+(cols>1?n.mod*(W-120)/(cols-1):W/2),y=NH/2+(n.idx-(m.n-1)/2)*Math.min(44,(NH-60)/Math.max(1,m.n));pos.push([x,y]);});
 var curves=net.edges.map(function(e){var a=pos[e.from],b=pos[e.to],dx=b[0]-a[0],bend=dx<=0?-60:0,c=[(a[0]+b[0])/2,(a[1]+b[1])/2+bend+(dx===0?-30:0)];if(e.from===e.to){a=[a[0]-8,a[1]-9];b=[b[0]+8,b[1]-9];c=[a[0]+8,a[1]-70];}return[a,c,b];});return{pos:pos,curves:curves};}
 function qpt(q,u){var v=1-u;return[v*v*q[0][0]+2*v*u*q[1][0]+u*u*q[2][0],v*v*q[0][1]+2*v*u*q[1][1]+u*u*q[2][1]];}
-function names(task){if(task==='Inverse design')return{inputs:['A','B'],outputs:['Output']};var SF=root.SpikeFoundry,t=SF&&SF.BASE_TASKS&&SF.BASE_TASKS[task];return t?{inputs:t.inputs,outputs:t.outputs}:{inputs:[],outputs:[]};}
+function names(task){if(task==='Inverse design'||task==='Three-neuron pilot')return{inputs:['A','B'],outputs:['Output']};var SF=root.SpikeFoundry,t=SF&&SF.BASE_TASKS&&SF.BASE_TASKS[task];return t?{inputs:t.inputs,outputs:t.outputs}:{inputs:[],outputs:[]};}
 function mount(box,o){
 var net=o.net,lay=layout(net),cases=o.cases||[],nm=names(o.task),reduce=!!(root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches);
 var all=cases.map(function(c){return trace(net,c.seq);}),ci=0;for(var k=0;k<cases.length;k++){if(cases[k].label.some(Boolean)&&all[k].spikeCount>0){ci=k;break;}}
@@ -1381,8 +1381,9 @@ function draw(g){return engineReady.then(function(ready){if(selection!==generati
 if(!ready){note.textContent='unavailable';box.textContent='The simulator could not load. Reload the page to try again.';R.textContent='Playback unavailable.';return;}
 try{var net,cases;
 if(it.inverse){
-  net=window.SpikeFoundry.inverseCircuit(g.genes);
-  net.mods=[{id:'in',kind:'input',n:2},{id:'gate',kind:'lif',sign:1,n:1},{id:'out',kind:'output',n:1}];
+  net=g.graph?JSON.parse(JSON.stringify(g.graph)):window.SpikeFoundry.inverseCircuit(g.genes);
+  net.mods=[{id:'in',kind:'input',n:2}];
+  net.neurons.slice(2).forEach(function(n,i){net.mods.push({id:n.kind==='output'?'out':'h'+(i+1),kind:n.kind,sign:1,n:1});});
   net.neurons.forEach(function(n,i){n.mod=i<2?0:i-1;n.idx=i<2?i:0;n.sign=1;});
   cases=g.replay.map(function(pair){return{seq:[0,1,2,3].map(function(t){return[(pair[0]>>(2*t))&1,(pair[0]>>(2*t+1))&1];}),label:[pair[1]]};});
 }else{net=P.compile(g);cases=P.heldCases(it.task,4);}

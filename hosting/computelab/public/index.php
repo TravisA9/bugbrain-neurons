@@ -933,7 +933,7 @@ try {
             $slot = isset($body['slot']) && is_numeric($body['slot']) ? (int) $body['slot'] : 0;
             $job = $app->claim($worker, $slot, ($body['sequenceExperiment'] ?? false) === true, (int) ($body['studyVersion'] ?? 1),
                 ($body['inverseExperiment'] ?? false) === true, ($body['inverseGallery'] ?? false) === true,
-                ($body['inverseShared'] ?? false) === true);
+                ($body['inverseShared'] ?? false) === true, ($body['inverseComposition'] ?? false) === true);
             coord_json(200, ['job' => $job]);
             return;
         }

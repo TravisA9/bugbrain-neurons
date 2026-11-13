@@ -3,6 +3,23 @@
 const assert = require('node:assert/strict');
 const { encode, design, study, packModel, sharedStudy } = require('./inverse_designer');
 const { designTruthTable, output, probe, temporalCircuit } = require('./inverse_circuits');
+const { simulateFrozen } = require('./engine');
+const { timingLoss } = require('./inverse_timing_experiment');
+
+const onTime = temporalCircuit([3, 1, 0, 0, 0, 0, 0]);
+const late = temporalCircuit([3, 1, 1, 0, 0, 0, 0]);
+const onTimeResult = simulateFrozen(onTime, probe(1), true);
+const lateResult = simulateFrozen(late, probe(1), true);
+assert.deepEqual(onTimeResult.outputs, lateResult.outputs);
+assert.deepEqual(onTimeResult.firstSpike, [2]);
+assert.deepEqual(lateResult.firstSpike, [3]);
+assert.deepEqual(simulateFrozen(onTime, probe(0), true).firstSpike, [null]);
+assert.deepEqual(simulateFrozen(onTime, probe(1)), { outputs: onTimeResult.outputs, spikeCount: onTimeResult.spikeCount });
+assert.equal(timingLoss(2, 2), 0);
+assert.equal(timingLoss(null, null), 0);
+assert.equal(timingLoss(3, 2), 0.25);
+assert.equal(timingLoss(null, 2), 1);
+assert.equal(timingLoss(2, null), 1);
 
 for (const value of [0, 1]) {
   const table = Array.from({ length: 16 }, (_, i) => ({ x: probe(i, 4, 1)[0], y: i === 0 ? 1 - value : value }));

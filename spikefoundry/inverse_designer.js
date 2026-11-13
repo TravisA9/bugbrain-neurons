@@ -8,7 +8,8 @@ const { GENES, PROBES, probe, probeIndex, temporalCircuit, designTruthTable, out
 
 const VERSION = 'inverse-designer-1';
 const SHARED_BENCHMARK = 'inverse-shared-1';
-const TARGETS = GENES.reduce((sum, values) => sum + values.length, 0);
+const HEAD_SIZES = GENES.map(values => values.length);
+const TARGETS = HEAD_SIZES.reduce((sum, size) => sum + size, 0);
 const accuracy = (predicted, expected) => predicted.reduce((sum, bit, i) => sum + Number(bit === expected[i]), 0) / expected.length;
 
 function random(seed) {
@@ -77,11 +78,11 @@ function forwardLayer(input, layer, activation) {
   });
 }
 
-function probabilities(logits) {
+function probabilities(logits, sizes) {
   let offset = 0;
-  return GENES.map(values => {
-    const slice = logits.slice(offset, offset + values.length);
-    offset += values.length;
+  return sizes.map(size => {
+    const slice = logits.slice(offset, offset + size);
+    offset += size;
     const max = Math.max(...slice);
     const exps = slice.map(value => Math.exp(value - max));
     const total = exps.reduce((sum, value) => sum + value, 0);
@@ -92,7 +93,7 @@ function probabilities(logits) {
 function forward(model, input) {
   const hidden = forwardLayer(input, model.first, Math.tanh);
   const embedding = forwardLayer(hidden, model.second, Math.tanh);
-  const heads = probabilities(forwardLayer(embedding, model.out, value => value));
+  const heads = probabilities(forwardLayer(embedding, model.out, value => value), model.headSizes ?? HEAD_SIZES);
   return { hidden, embedding, heads };
 }
 
@@ -110,17 +111,24 @@ function backprop(layer, input, gradient, rate) {
   return prior;
 }
 
-function fit(tasks, rng, epochs, demoCount, checkpoint = null) {
+function fit(tasks, rng, epochs, demoCount, checkpoint = null, demonstration = bit => bit ? 1 : -1, headSizes = null) {
+  if (checkpoint && headSizes) throw Error('Experimental heads require a fresh model');
+  const width = headSizes ? headSizes.reduce((sum, size) => sum + size, 0) : TARGETS;
   const model = checkpoint ? unpackModel(checkpoint)
-    : { version: VERSION, first: layer(PROBES.length, 32, rng), second: layer(32, 24, rng), out: layer(24, TARGETS, rng) };
+    : { version: VERSION, first: layer(PROBES.length, 32, rng), second: layer(32, 24, rng), out: layer(24, width, rng) };
+  if (headSizes) {
+    model.version = 'experimental-heads';
+    model.headSizes = headSizes;
+  }
   const indices = PROBES.map((_, i) => i);
   for (let epoch = 0; epoch < epochs; epoch++) {
     for (const task of shuffle(tasks, rng)) {
       Throttle.pace();
       const input = Array(PROBES.length).fill(0);
-      for (const index of shuffle(indices, rng).slice(0, demoCount)) input[index] = task.labels[index] ? 1 : -1;
+      for (const index of shuffle(indices, rng).slice(0, demoCount)) input[index] = demonstration(task.labels[index]);
       const { hidden, embedding, heads } = forward(model, input);
-      const gradient = heads.flatMap((head, i) => head.map((p, j) => (p - Number(j === task.genes[i])) / GENES.length));
+      const gradient = heads.flatMap((head, i) => head.map((p, j) =>
+        (p - (task.targets?.[i][j] ?? Number(j === task.genes[i]))) / heads.length));
       const rate = (checkpoint ? 0.04 : 0.12) / (1 + epoch / 120);
       const secondGradient = backprop(model.out, embedding, gradient, rate).map((g, i) => g * (1 - embedding[i] ** 2));
       const firstGradient = backprop(model.second, hidden, secondGradient, rate).map((g, i) => g * (1 - hidden[i] ** 2));
@@ -135,6 +143,7 @@ function fit(tasks, rng, epochs, demoCount, checkpoint = null) {
 }
 
 function packModel(model) {
+  if (model.version !== VERSION) throw Error('Incompatible designer checkpoint');
   const values = [model.first, model.second, model.out].flatMap(layer => [...layer.w.flat(), ...layer.b]);
   const bytes = Buffer.alloc(values.length * 4);
   values.forEach((value, i) => bytes.writeFloatLE(value, i * 4));
@@ -157,7 +166,10 @@ function unpackModel(checkpoint) {
 
 function proposals(model, input, count) {
   if (model?.version !== VERSION) throw new Error('Incompatible designer checkpoint');
-  const { heads } = forward(model, input);
+  return rankProposals(forward(model, input).heads, count);
+}
+
+function rankProposals(heads, count) {
   let beam = [{ genes: [], logp: 0 }];
   for (const head of heads) {
     beam = beam.flatMap(candidate => head.map((p, i) => ({
@@ -348,4 +360,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { encode, design, study, packModel, sharedStudy };
+module.exports = { encode, design, study, packModel, sharedStudy, fit, forward, proposals, rankProposals, random, shuffle };

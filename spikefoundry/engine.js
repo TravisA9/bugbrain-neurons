@@ -380,11 +380,12 @@
     }));
     return { synthetic: true, batches: state.batch, tested: state.tested, phase: state.activePhase, tasks: rows, note: 'Synthetic spike-pattern match on generated examples. Not BugBrain accuracy.' };
   }
-  function simulateFrozen(net, seq) {
+  function simulateFrozen(net, seq, traceTiming = false) {
     const count = net.neurons.length;
     const mem = Array(count).fill(0);
     const spike = Array(count).fill(0);
     const fired = Array(net.outputs.length).fill(false);
+    const firstSpike = traceTiming ? Array(net.outputs.length).fill(null) : null;
     let total = 0;
     const horizon = seq.length + 4;
     const inbox = Array.from({ length: horizon + 6 }, () => Array(count).fill(0));
@@ -400,7 +401,10 @@
           mem[i] = 0;
           total++;
           const outIndex = net.outputs.indexOf(i);
-          if (outIndex >= 0) fired[outIndex] = true;
+          if (outIndex >= 0) {
+            if (firstSpike && !fired[outIndex]) firstSpike[outIndex] = t;
+            fired[outIndex] = true;
+          }
         }
       }
       for (let e = 0; e < net.edges.length; e++) {
@@ -410,7 +414,9 @@
         if (when < inbox.length) inbox[when][edge.to] += edge.weight;
       }
     }
-    return { outputs: fired.map(Boolean), spikeCount: total };
+    const result = { outputs: fired.map(Boolean), spikeCount: total };
+    if (firstSpike) result.firstSpike = firstSpike;
+    return result;
   }
   function network(g, taskId) { return compileSNN(g, taskId); }
   const INVERSE_GENES = [[-0.8, 0, 0.8, 1.2], [-0.8, 0, 0.8, 1.2], [0, 1, 2], [0, 1, 2], [0.65, 1.25], [0, 0.65], [0, 0.4]];

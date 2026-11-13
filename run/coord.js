@@ -188,6 +188,7 @@ function runnerArgs(job, out) {
       experiment: spec.experiment,
       inverseGallery: spec.inverseGallery,
       inverseShared: spec.inverseShared,
+      inverseComposition: spec.inverseComposition,
       taskId: spec.taskId,
       seedGenomes: spec.seedGenomes,
       knownHashes: spec.knownHashes,
@@ -291,7 +292,8 @@ async function runSpec(job, opts) {
       result.research = summary.research;
     }
     if (job.spec?.mode === 'inverse-experiment') {
-      if (summary.research?.version !== 'inverse-designer-1') throw new Error('Inverse design report is missing');
+      const version = job.spec?.inverseComposition ? 'inverse-composition-1' : 'inverse-designer-1';
+      if (summary.research?.version !== version) throw new Error('Inverse design report is missing');
       result.research = summary.research;
     }
   } else {
@@ -573,7 +575,7 @@ async function multi(a, base, token, hash) {
       if (slot >= plan.slots) { await sleep(Math.min(3000, controlMs)); continue; }
       let claimed;
       try {
-        claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, slot: slot, sequenceExperiment: true, studyVersion: 2, inverseExperiment: true, inverseGallery: true, inverseShared: true });
+        claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, slot: slot, sequenceExperiment: true, studyVersion: 2, inverseExperiment: true, inverseGallery: true, inverseShared: true, inverseComposition: true });
         wait = 0;
       } catch (e) {
         const d = decideRetry(e, wait);
@@ -671,7 +673,7 @@ async function main() {
         await sleep(poll);
         continue;
       }
-      const claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, sequenceExperiment: true, studyVersion: 2, inverseExperiment: true, inverseGallery: true, inverseShared: true });
+      const claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, sequenceExperiment: true, studyVersion: 2, inverseExperiment: true, inverseGallery: true, inverseShared: true, inverseComposition: true });
       if (!claimed.job) {
         console.log(JSON.stringify({ ok: true, job: null }));
         if (a.once) return;
