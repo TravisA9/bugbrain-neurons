@@ -553,13 +553,24 @@ check(str_contains($compositionPoll ?? '', 'sf-inverse-experiment-2311')
 $app->createJob('sf-inverse-experiment', 'Two-stream smoke test', 5, 2320,
     ['inverseGallery' => true, 'inverseComposition' => true, 'inverseSequence' => true]);
 $sequencePoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
-unlink($researchToken);
 $sequence = $app->inverseExperimentReport(2320)['research'] ?? [];
 $sequenceGraphs = array_filter($app->inverseDiscoveries(), static fn ($item) => $item['task'] === 'Two-stream sequence');
 check(str_contains($sequencePoll ?? '', 'sf-inverse-experiment-2320') && ($sequence['learned']['trials'] ?? 0) === 12
     && $sequenceGraphs && min(array_column($sequenceGraphs, 'level')) >= 4
     && isset($app->compositionResults()['Two-stream sequence']),
     'a donor publishes two-output timing graphs and the owner sees family results');
+
+$arenaWorker = $app->enroll('arena-test', ['bugbrain'], 1, true);
+file_put_contents($researchToken, $arenaWorker['token']);
+$arenaJob = $app->createJob('bb-arena-pilot', 'Arena mutation smoke test', 5, 1);
+$arenaPoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
+unlink($researchToken);
+$st = $app->db->prepare("SELECT body_json FROM results WHERE job_id = ? AND status = 'done'");
+$st->execute([$arenaJob]);
+$arena = json_decode((string) $st->fetchColumn(), true)['research'] ?? [];
+check(str_contains($arenaPoll ?? '', $arenaJob) && ($arena['version'] ?? '') === 'arena-mutation-1'
+    && count($arena['audit']['edit']['tasks'][1]['scores'] ?? []) === 4,
+    'a BugBrain donor submits paired arena mutation results');
 
 proc_terminate($proc);
 echo "http checks done\n";

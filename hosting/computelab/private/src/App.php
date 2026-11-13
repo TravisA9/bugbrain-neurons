@@ -585,6 +585,7 @@ final class App
                 'scenario' => 'vision', 'batches' => 1,
                 'scenarioParams' => ['batch' => 2, 'channels' => 1, 'height' => 4, 'width' => 4, 'steps' => 6],
             ], JSON_THROW_ON_ERROR), $hash],
+            ['bb-arena-pilot', 'bugbrain', 'Paired arena mutation', 'run/arena-pilot.js', '{}', $hash],
             ['bb-order3', 'bugbrain', 'One order-3 growth', 'run/r42.js', json_encode([
                 'plan' => 'deepURSx3',
                 'task' => ['env' => 'seq', 'params' => ['source' => 'order3', 'K' => 8, 'readIn' => 0.01]],
@@ -732,7 +733,7 @@ final class App
     /** @return list<string> */
     public function allowedRunners(): array
     {
-        return ['spikefoundry/run.js', 'run/r42.js', 'run/gen.js'];
+        return ['spikefoundry/run.js', 'run/r42.js', 'run/gen.js', 'run/arena-pilot.js'];
     }
 
     public function runnerFamily(string $runner): string
@@ -1090,7 +1091,7 @@ final class App
         return $n;
     }
 
-    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false, bool $inverseGallery = false, bool $inverseShared = false, bool $inverseComposition = false, bool $inverseSequence = false): ?array
+    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false, bool $inverseGallery = false, bool $inverseShared = false, bool $inverseComposition = false, bool $inverseSequence = false, bool $arenaPilot = false): ?array
     {
         $this->replenishJobs();
         $this->expireLeases();
@@ -1143,6 +1144,9 @@ final class App
                         continue;
                     }
                     $composition = !empty($spec['inverseComposition']);
+                    if ($job['template_id'] === 'bb-arena-pilot' && !$arenaPilot) {
+                        continue;
+                    }
                     if ($composition && (!$inverseComposition || empty($this->config['inverse_composition'])
                         || (!empty($spec['inverseSequence']) && !$inverseSequence))) {
                         continue;
@@ -1380,6 +1384,24 @@ final class App
                 throw new InvalidArgumentException('This computer does not hold that job.');
             }
             $isInverse = $row['template_id'] === 'sf-inverse-experiment';
+            if ($status === 'done' && $row['template_id'] === 'bb-arena-pilot') {
+                $arena = $body['research'] ?? [];
+                if (($arena['version'] ?? '') !== 'arena-mutation-1' || ($arena['seed'] ?? null) !== (int) $row['seed']
+                    || !is_array($arena['genome'] ?? null)) {
+                    throw new InvalidArgumentException('Arena report does not match the job.');
+                }
+                foreach (['screen', 'audit'] as $phase) {
+                    foreach (['parent', 'edit'] as $arm) {
+                        foreach ([0, 1] as $task) {
+                            $scores = $arena[$phase][$arm]['tasks'][$task]['scores'] ?? null;
+                            if (!is_array($scores) || count($scores) !== 4
+                                || count(array_filter($scores, static fn ($score) => is_int($score) || is_float($score))) !== 4) {
+                                throw new InvalidArgumentException('Arena report is missing paired scores.');
+                            }
+                        }
+                    }
+                }
+            }
             if (strlen($raw) > ($row['template_id'] === 'sf-sequence-experiment' || $isInverse ? 60000 : $maxBytes)) {
                 throw new InvalidArgumentException('Result is too large.');
             }
@@ -1552,6 +1574,9 @@ final class App
             $spec = [];
         }
         $spec['seed'] = $seed;
+        if ($templateId === 'bb-arena-pilot' && $seed > 16) {
+            throw new InvalidArgumentException('Arena pilot seeds run from 1 to 16.');
+        }
         if (isset($extra['seedGenomes']) && is_array($extra['seedGenomes'])) {
             $spec['seedGenomes'] = array_values(array_slice($extra['seedGenomes'], 0, 10));
         }
@@ -1605,6 +1630,8 @@ final class App
                     $spec['inverseSequence'] = true;
                 }
             }
+        } elseif ($templateId === 'bb-arena-pilot') {
+            $id = 'bb-arena-pilot-' . $seed;
         } else {
             $id = strtolower(preg_replace('/[^a-z0-9]+/', '-', $templateId) . '-' . $seed . '-' . bin2hex(random_bytes(3)));
         }
@@ -1886,6 +1913,13 @@ final class App
             $families[$family] = $total;
         }
         return $families;
+    }
+
+    public function arenaPilotResults(): array
+    {
+        $rows = $this->db->query("SELECT r.body_json FROM results r JOIN jobs j ON j.id = r.job_id
+            WHERE j.template_id = 'bb-arena-pilot' AND r.status = 'done' ORDER BY j.seed")->fetchAll(PDO::FETCH_COLUMN);
+        return array_map(static fn ($body) => json_decode($body, true)['research'], $rows);
     }
 
     private function trimInverseDiscoveries(): void

@@ -20,7 +20,7 @@ function args(argv) {
   }
   return a;
 }
-const ALLOWED = new Set(['spikefoundry/run.js', 'run/r42.js', 'run/gen.js']);
+const ALLOWED = new Set(['spikefoundry/run.js', 'run/r42.js', 'run/gen.js', 'run/arena-pilot.js']);
 
 function normalizeProtocol(text) {
   return String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -174,6 +174,9 @@ function startLeaseHeartbeat(opts) {
 function runnerArgs(job, out) {
   if (!ALLOWED.has(job.runner)) throw new Error('Runner is not on the allowlist: ' + job.runner);
   const spec = job.spec || {};
+  if (job.runner === 'run/arena-pilot.js') {
+    return [path.join(ROOT, job.runner), String(spec.seed), path.join(out, 'arena-report.json')];
+  }
   if (job.runner === 'spikefoundry/run.js') {
     const file = path.join(out, 'job.json');
     fs.writeFileSync(file, JSON.stringify(Object.assign({
@@ -300,6 +303,9 @@ async function runSpec(job, opts) {
   } else {
     const text = 'Template ' + job.runner + ' finished.';
     result = { status: 'done', summary: text, synthetic: false, digest: require('crypto').createHash('sha256').update(text).digest('hex') };
+    if (job.runner === 'run/arena-pilot.js') {
+      result.research = JSON.parse(fs.readFileSync(path.join(out, 'arena-report.json'), 'utf8'));
+    }
   }
   result.pauseAfter = !!beats.state.pauseAfter;
   result.outDir = out;
@@ -576,7 +582,7 @@ async function multi(a, base, token, hash) {
       if (slot >= plan.slots) { await sleep(Math.min(3000, controlMs)); continue; }
       let claimed;
       try {
-        claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, slot: slot, sequenceExperiment: true, studyVersion: 2, inverseExperiment: true, inverseGallery: true, inverseShared: true, inverseComposition: true, inverseSequence: true });
+        claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, slot: slot, sequenceExperiment: true, studyVersion: 2, inverseExperiment: true, inverseGallery: true, inverseShared: true, inverseComposition: true, inverseSequence: true, arenaPilot: true });
         wait = 0;
       } catch (e) {
         const d = decideRetry(e, wait);
@@ -674,7 +680,7 @@ async function main() {
         await sleep(poll);
         continue;
       }
-      const claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, sequenceExperiment: true, studyVersion: 2, inverseExperiment: true, inverseGallery: true, inverseShared: true, inverseComposition: true, inverseSequence: true });
+      const claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, sequenceExperiment: true, studyVersion: 2, inverseExperiment: true, inverseGallery: true, inverseShared: true, inverseComposition: true, inverseSequence: true, arenaPilot: true });
       if (!claimed.job) {
         console.log(JSON.stringify({ ok: true, job: null }));
         if (a.once) return;
