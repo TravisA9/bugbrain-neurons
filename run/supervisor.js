@@ -37,6 +37,19 @@ function newerCode() {
 }
 const keyOf = s => JSON.stringify([s.version, WC.dqArgs(s, NAME), s.mode]);
 let child = null, childStart = 0, fails = 0, restartWhy = '', backoffTimer = null, S, KEY, FORCE;
+const HEARTBEAT_STALE_MS = 5 * 60e3;
+function recoverStaleCoordinator() {
+  if (!child?.pid || !process.env.BB_COORDINATOR_URL || restartWhy ||
+      process.platform !== 'linux' || process.env.BB_INSTALL !== 'systemd') return;
+  let alive;
+  try { alive = JSON.parse(fs.readFileSync(path.join(ST, 'coord-alive.json'), 'utf8')); }
+  catch (e) { return; }
+  const at = Date.parse(alive.at);
+  if (alive.pid !== child.pid || at < childStart || !(Date.now() - at > HEARTBEAT_STALE_MS)) return;
+  // Exit via the normal child handler, which cleans up jobs and backs off before retrying.
+  say('no acknowledged coordinator heartbeat for five minutes; restarting worker');
+  try { process.kill(-child.pid, 'SIGKILL'); } catch (e) { if (e.code !== 'ESRCH') say(e.message); }
+}
 let errTail = [];
 /* Compute Lab: tell the coordinator when the worker crashes (exit code + last stderr lines), so the owner sees why a
  * computer went quiet. run/diag.js scrubs the token, rate-limits, and caps the size. Never blocks the restart. */
@@ -125,5 +138,6 @@ function main() {
   }, 3000).unref();
   const every = +(process.env.BB_POLL_MS || Math.max(1, +S.pollMinutes || 10) * 60e3);
   setInterval(poll, every);
+  setInterval(recoverStaleCoordinator, 30e3).unref();
 }
 main();
