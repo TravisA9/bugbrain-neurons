@@ -22,6 +22,8 @@
     [955, 180, 1110, 180], [865, 465, 1015, 465], [1015, 465, 1015, 545],
   ] };
   let selected, agent, baseline, seed, playing = true, previous = 0, frame = 0, finishedAt = null;
+  let elapsed = 0;
+  const msPerTick = 25;
 
   async function load() {
     const response = await fetch(championUrl, { cache: 'no-store' });
@@ -66,6 +68,7 @@
     }
     playing = true;
     finishedAt = null;
+    elapsed = 0;
     pause.textContent = 'Pause';
     draw();
     if (!frame) frame = requestAnimationFrame(tick);
@@ -73,15 +76,24 @@
 
   function tick(now) {
     frame = requestAnimationFrame(tick);
-    if (!playing || document.hidden || now - previous < 32) return;
+    const delta = Math.min(50, now - previous);
     previous = now;
+    if (!playing || document.hidden) {
+      elapsed = 0;
+      return;
+    }
     if (agent.done) {
       if (finishedAt === null) finishedAt = now;
       if (now - finishedAt >= 2000) start();
       return;
     }
-    agent.tick();
-    if (baseline && !baseline.done) baseline.tick();
+    elapsed += delta;
+    if (elapsed < msPerTick) return;
+    while (elapsed >= msPerTick && !agent.done) {
+      elapsed -= msPerTick;
+      agent.tick();
+      if (baseline && !baseline.done) baseline.tick();
+    }
     draw();
   }
 

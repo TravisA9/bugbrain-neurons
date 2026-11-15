@@ -864,7 +864,7 @@ function pageBugArena(string $base, array $nav, bool $compare = false): string
         . h($base . '/explore/bugbrain-champion.json') . '"></canvas>'
         . ($compare ? '</div><div><h2>Original BugBrain</h2><p id="bug-baseline-score"></p>'
             . '<canvas id="bug-baseline" width="1120" height="700" aria-label="Original BugBrain foraging arena"></canvas></div></div>' : '')
-        . '</section><script defer src="' . h($base . '/assets/bugbrain.js?v=4') . '"></script>';
+        . '</section><script defer src="' . h($base . '/assets/bugbrain.js?v=5') . '"></script>';
     $style = '<style>.bug-shell{max-width:none;margin:auto;padding:12px 16px 16px}'
         . '.bug-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin:0 auto 10px}'
         . '.bug-toolbar h1,.bug-toolbar p{margin:0}.bug-toolbar h1{font-size:clamp(18px,2vw,24px)}'
@@ -1195,6 +1195,36 @@ function verifiedDiscoveries(array $studies): string
             : '<p class="muted">No circuits have passed both fresh-case checks in a completed study yet.</p>');
 }
 
+function arenaDiscoveryResults(App $app): string
+{
+    $rows = [];
+    $champion = $app->arenaChampion();
+    $names = ['axonLen' => 'Axon length', 'rSyn' => 'Synapse reach', 'pruneFrac' => 'Pruning',
+        'wHid' => 'Hidden connection weight', 'theta' => 'Firing threshold', 'homeoTarget' => 'Target firing rate'];
+    foreach ($app->arenaPilotResults() as $report) {
+        if (($report['version'] ?? '') !== 'arena-targeted-1') continue;
+        $audit = $report['audit'];
+        $delta = static fn (int $task): float =>
+            (array_sum($audit['edit']['tasks'][$task]['scores']) - array_sum($audit['parent']['tasks'][$task]['scores']))
+            / count($audit['parent']['tasks'][$task]['scores']);
+        $field = $report['change']['field'] ?? '';
+        $percent = ((float) ($report['change']['factor'] ?? 1) - 1) * 100;
+        $rows[] = ['change' => ($names[$field] ?? 'Growth parameter') . ' ' . sprintf('%+.0f%%', $percent),
+            'flash' => $delta(0), 'visible' => $delta(1), 'winner' => $champion['id'] === 'arena-' . $report['seed']];
+    }
+    if (!$rows) return '';
+    usort($rows, static fn ($a, $b) => $b['flash'] <=> $a['flash']);
+    $table = '';
+    foreach ($rows as $row) {
+        $table .= '<tr><td>' . h($row['change']) . ($row['winner'] ? ' · Champion' : '') . '</td><td>'
+            . h(sprintf('%+.2f', $row['flash'])) . '</td><td>' . h(sprintf('%+.2f', $row['visible'])) . '</td></tr>';
+    }
+    return '<section><h2>BugBrain arena results</h2><p>Fitness change versus the original BugBrain across 16 matched audit runs per condition. '
+        . ($champion['id'] === 'v3h' ? 'The original remains the champion.' : 'A verified edit is now the champion.')
+        . '</p><table><thead><tr><th>Growth edit</th><th>Flashing food</th><th>Always-visible food</th></tr></thead><tbody>'
+        . $table . '</tbody></table><p><a href="' . h($app->base() . '/explore?compare=1') . '">Compare brains in Explore</a></p></section>';
+}
+
 function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archive = false, bool $refresh = false, bool $larger = false): string
 {
     $base = $app->base();
@@ -1233,7 +1263,7 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archiv
         $list .= '<p class="muted" style="padding:8px">' . ($inverse ? 'Waiting for the first inverse-design job to finish.' : 'No discoveries yet. Finished SpikeFoundry runs upload them.') . '</p>';
     }
     $data = ['items' => $items, 'series' => $series, 'board' => $board, 'genomeUrl' => $base . '/discoveries/genome?hash=', 'now' => $app->now(), 'mineCount' => count($mineIds), 'inverse' => $inverse];
-    $verification = $inverse ? '' : verifiedDiscoveries($app->recentSequenceStudies());
+    $verification = $inverse ? ($larger ? '' : arenaDiscoveryResults($app)) : verifiedDiscoveries($app->recentSequenceStudies());
     if ($refresh) {
         return jsonForHtml(['data' => $data, 'list' => $list, 'verification' => $verification]);
     }
