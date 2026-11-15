@@ -1247,7 +1247,12 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archiv
     foreach ($payload['board'] as $row) {
         $board[] = ['name' => (string) $row['name'], 'genomes' => (int) $row['genomes'], 'records' => (int) $row['records'], 'hours' => round((float) $row['hours'], 2)];
     }
+    $arena = $inverse && !$larger ? arenaDiscoveryResults($app) : '';
     $list = '<button class="disc active" type="button" data-index="-1"><div class="row1"><span class="t">Overview</span><span class="s">' . h((string) count($items)) . '</span></div><div class="row2"><span>All tasks · contributors</span><span></span></div></button>';
+    if ($arena !== '') {
+        $list .= '<button class="disc" type="button" data-index="-2"><div class="row1"><span class="t">BugBrain arena results</span></div>'
+            . '<div class="row2"><span>Growth edits · matched audit runs</span></div></button>';
+    }
     foreach ($items as $i => $item) {
         $badges = '';
         foreach (isset($item['badges']) && is_array($item['badges']) ? $item['badges'] : [] as $b) {
@@ -1263,7 +1268,7 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archiv
         $list .= '<p class="muted" style="padding:8px">' . ($inverse ? 'Waiting for the first inverse-design job to finish.' : 'No discoveries yet. Finished SpikeFoundry runs upload them.') . '</p>';
     }
     $data = ['items' => $items, 'series' => $series, 'board' => $board, 'genomeUrl' => $base . '/discoveries/genome?hash=', 'now' => $app->now(), 'mineCount' => count($mineIds), 'inverse' => $inverse];
-    $verification = $inverse ? ($larger ? '' : arenaDiscoveryResults($app)) : verifiedDiscoveries($app->recentSequenceStudies());
+    $verification = $inverse ? $arena : verifiedDiscoveries($app->recentSequenceStudies());
     if ($refresh) {
         return jsonForHtml(['data' => $data, 'list' => $list, 'verification' => $verification]);
     }
@@ -1432,7 +1437,7 @@ if(D.inverse){G.textContent='INVERSE DESIGN';V.innerHTML='<div class="metrics">'
 var h='<div class="metrics">'+metric('Designs listed',D.items.length,'top N per quality measure',true)+metric('Tasks',Object.keys(by).length,'curriculum levels reached')+metric('Yours',D.items.filter(function(i){return i.mine;}).length,D.mineCount?'found by your computer':'link a computer on Home')+metric('Contributors',D.board.length,'with public credit or Anonymous')+'</div>';
 h+='<div class="viz-title"><strong>Best per task</strong><span>held-out score</span></div><div class="tasks">';Object.keys(by).forEach(function(k){var it=by[k];h+='<div class="taskcard"><div class="taskline"><span class="taskname">Level '+it.level+' · '+esc(k)+'</span><span class="taskscore">'+f3(it.held)+'</span></div><div class="taskdesc2">'+esc(it.finder)+' · '+it.neurons+' neurons · '+it.synapses+' synapses · '+'<span title="'+esc(ago(it.when))+'">'+esc(when(it.when))+'</span></div><div class="prog"><i style="width:'+Math.round(100*clamp(it.held,0,1))+'%"></i></div></div>';});
 h+='</div><div class="viz-title"><strong>Contributors</strong><span>evaluation time donated</span></div><div class="log">';D.board.forEach(function(b){h+='<div class="logline"><span class="logtime">'+b.hours.toFixed(2)+' h</span><span class="logtext">'+esc(b.name)+'</span><span class="logscore">'+b.genomes+' designs</span></div>';});if(!D.board.length)h+='<p class="muted">No public results yet.</p>';var verified=document.getElementById('disc-verification');V.innerHTML=(verified?verified.innerHTML:'')+h+'</div>';}
-function show(i,auto){var selection=++generation;if(player){player.destroy();player=null;}if(i<0)return overview();var it=D.items[i];var badges=(it.badges||[]).map(function(b){return '<span class="badge-m">'+esc(b)+'</span>';}).join('');T.innerHTML=esc(it.label||('#'+it.rank+' '+it.task))+(it.mine?'<span class="badge-mine">Your computer</span>':'')+badges;G.textContent=it.inverse?it.level+' HIDDEN '+(it.level===1?'NEURON':'NEURONS'):'LEVEL '+it.level;
+function show(i,auto){var selection=++generation;if(player){player.destroy();player=null;}if(i===-2)return arenaResults();if(i<0)return overview();var it=D.items[i];var badges=(it.badges||[]).map(function(b){return '<span class="badge-m">'+esc(b)+'</span>';}).join('');T.innerHTML=esc(it.label||('#'+it.rank+' '+it.task))+(it.mine?'<span class="badge-mine">Your computer</span>':'')+badges;G.textContent=it.inverse?it.level+' HIDDEN '+(it.level===1?'NEURON':'NEURONS'):'LEVEL '+it.level;
 var h='<div class="chips" style="margin-bottom:12px"><span class="chip">genome <b>'+esc(it.hash.slice(0,12))+'</b></span><span class="chip'+(it.mine?' mine':'')+'">found by '+esc(it.finder)+'</span><span class="chip disc-found" title="'+esc(ago(it.when))+'">found <b>'+esc(when(it.when))+'</b></span>'+(it.public?'<span class="chip"><b>public</b></span>':'')+(it.confirmations?'<span class="chip" title="Found again by later jobs">confirmed <b>'+it.confirmations+'×</b>'+(it.confirmedBy&&it.confirmedBy.length?' by '+esc(it.confirmedBy.join(', ')):'')+'</span>':'')+(it.variants?'<span class="chip" title="Other circuits with the same scores, size and spikes">+'+it.variants+' equivalent variant'+(it.variants>1?'s':'')+'</span>':'')+(it.badges&&it.badges.length?it.badges.map(function(b){return '<span class="chip" title="Among the top designs of this task on this measure">'+esc(b)+'</span>';}).join(''):'')+'</div>';
 h+='<div class="metrics">'+(it.inverse
   ?metric('Accuracy',f3(it.accuracy),it.cases+' held-out cases',true)+metric('Recall',f3(it.recall),'positive cases')+metric('Specificity',f3(it.specificity),'negative cases')+metric('Demo match',f3(it.train),'examples used to select the proposal')
@@ -1461,9 +1466,11 @@ if(it.inverse)return draw(it.inverse);
 if(cache[hash]===false)return priv();if(cache[hash])return draw(cache[hash]);
 fetch(D.genomeUrl+encodeURIComponent(hash),{credentials:'same-origin'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(g){cache[hash]=g;draw(g);}).catch(function(){cache[hash]=false;priv();});}
 var player=null,generation=0,btns=[],list=document.getElementById('disc-list'),selectedHash=null,listMarkup=list.innerHTML;
+function arenaResults(){T.textContent='BugBrain arena results';G.textContent='MATCHED AUDIT';V.innerHTML=document.getElementById('disc-verification').innerHTML;V.scrollTop=0;}
+function selectionKey(index){return index===-2?'arena-results':index<0?null:D.items[index].hash;}
 function pick(b){
   var index=+b.getAttribute('data-index');
-  selectedHash=index<0?null:D.items[index].hash;
+  selectedHash=selectionKey(index);
   btns.forEach(function(x){x.classList.toggle('active',x===b);});
   show(index,true);
 }
@@ -1474,7 +1481,8 @@ function bindButtons(){
 bindButtons();
 formatFindTimes();
 list.addEventListener('keydown',function(e){if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;var i=btns.indexOf(document.activeElement);if(i<0)return;var n=btns[i+(e.key==='ArrowDown'?1:-1)];if(n){e.preventDefault();n.focus();pick(n);n.scrollIntoView({block:'nearest'});}});
-overview();
+var arenaButton=list.querySelector('[data-index="-2"]');
+if(location.hash==='#bugbrain'&&arenaButton)pick(arenaButton);else overview();
 var refreshStatus=document.getElementById('disc-refresh');
 if(refreshStatus){
   var interval=30000,timer=null,request=null,lastCheck=Date.now();
@@ -1483,7 +1491,7 @@ if(refreshStatus){
   function updateDiscoveries(snapshot){
     var focus=btns.indexOf(document.activeElement);
     var focusedIndex=focus<0?null:+btns[focus].getAttribute('data-index');
-    var focusedHash=focusedIndex===null||focusedIndex<0?null:D.items[focusedIndex].hash;
+    var focusedHash=focusedIndex===null?null:selectionKey(focusedIndex);
     D=snapshot.data;
     if(snapshot.list!==listMarkup){
       var scroll=list.scrollTop;
@@ -1492,7 +1500,7 @@ if(refreshStatus){
       bindButtons();
       btns.forEach(function(button){
         var index=+button.getAttribute('data-index');
-        var hash=index<0?null:D.items[index].hash;
+        var hash=selectionKey(index);
         button.classList.toggle('active',hash===selectedHash);
         if(focusedIndex!==null&&hash===focusedHash)button.focus({preventScroll:true});
       });
@@ -1501,7 +1509,7 @@ if(refreshStatus){
     formatFindTimes();
     document.getElementById('disc-count').textContent=D.items.length+' DESIGNS';
     document.getElementById('disc-verification').innerHTML=snapshot.verification;
-    if(selectedHash===null)overview();
+    if(selectedHash==='arena-results'){if(snapshot.verification)arenaResults();else{selectedHash=null;overview();}}else if(selectedHash===null)overview();
   }
   function refresh(){
     if(document.hidden||request)return;
