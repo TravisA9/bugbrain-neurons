@@ -582,7 +582,7 @@ async function multi(a, base, token, hash) {
       if (slot >= plan.slots) { await sleep(Math.min(3000, controlMs)); continue; }
       let claimed;
       try {
-        claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, slot: slot, sequenceExperiment: true, studyVersion: 2, inverseExperiment: true, inverseGallery: true, inverseShared: true, inverseComposition: true, inverseSequence: true, arenaPilot: true, arenaTargeted: true });
+        claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, slot: slot, sequenceExperiment: true, studyVersion: 2, inverseExperiment: true, inverseGallery: true, inverseShared: true, inverseComposition: true, inverseSequence: true, arenaPilot: true, arenaTargeted: true, arenaMemory: true });
         wait = 0;
       } catch (e) {
         const d = decideRetry(e, wait);
@@ -680,7 +680,7 @@ async function main() {
         await sleep(poll);
         continue;
       }
-      const claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, sequenceExperiment: true, studyVersion: 2, inverseExperiment: true, inverseGallery: true, inverseShared: true, inverseComposition: true, inverseSequence: true, arenaPilot: true, arenaTargeted: true });
+      const claimed = await api(base, token, '/api/v1/claim', { codeHash: hash, sequenceExperiment: true, studyVersion: 2, inverseExperiment: true, inverseGallery: true, inverseShared: true, inverseComposition: true, inverseSequence: true, arenaPilot: true, arenaTargeted: true, arenaMemory: true });
       if (!claimed.job) {
         console.log(JSON.stringify({ ok: true, job: null }));
         if (a.once) return;

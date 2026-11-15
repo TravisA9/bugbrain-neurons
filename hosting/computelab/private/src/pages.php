@@ -864,7 +864,7 @@ function pageBugArena(string $base, array $nav, bool $compare = false): string
         . h($base . '/explore/bugbrain-champion.json') . '"></canvas>'
         . ($compare ? '</div><div><h2>Original BugBrain</h2><p id="bug-baseline-score"></p>'
             . '<canvas id="bug-baseline" width="1120" height="700" aria-label="Original BugBrain foraging arena"></canvas></div></div>' : '')
-        . '</section><script defer src="' . h($base . '/assets/bugbrain.js?v=5') . '"></script>';
+        . '</section><script defer src="' . h($base . '/assets/bugbrain.js?v=6') . '"></script>';
     $style = '<style>.bug-shell{max-width:none;margin:auto;padding:12px 16px 16px}'
         . '.bug-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin:0 auto 10px}'
         . '.bug-toolbar h1,.bug-toolbar p{margin:0}.bug-toolbar h1{font-size:clamp(18px,2vw,24px)}'
@@ -1198,10 +1198,25 @@ function verifiedDiscoveries(array $studies): string
 function arenaDiscoveryResults(App $app): string
 {
     $rows = [];
+    $memoryRows = '';
     $champion = $app->arenaChampion();
     $names = ['axonLen' => 'Axon length', 'rSyn' => 'Synapse reach', 'pruneFrac' => 'Pruning',
         'wHid' => 'Hidden connection weight', 'theta' => 'Firing threshold', 'homeoTarget' => 'Target firing rate'];
     foreach ($app->arenaPilotResults() as $report) {
+        if (($report['version'] ?? '') === 'arena-memory-1') {
+            $memoryNames = ['leak' => 'Memory leak setting', 's7' => 'Memory recurrence', 'motor' => 'Memory-to-motor drive',
+                'clen' => 'Memory collateral reach', 'homeoTarget' => 'Target firing rate'];
+            $change = $report['change'] ?? [];
+            $memoryRows .= '<tr><td>' . h(($memoryNames[$change['field'] ?? ''] ?? 'Growth edit') . ' ' . (string) ($change['value'] ?? ''))
+                . ($champion['id'] === 'arena-' . $report['seed'] ? ' · Champion' : '') . '</td><td>' . h((string) ($report['parent'] ?? '')) . '</td>';
+            foreach ([0, 1, 2] as $i) {
+                $before = $report['audit']['parent']['tasks'][$i]['scores'];
+                $after = $report['audit']['edit']['tasks'][$i]['scores'];
+                $memoryRows .= '<td>' . h(sprintf('%+.2f', (array_sum($after) - array_sum($before)) / count($before))) . '</td>';
+            }
+            $memoryRows .= '</tr>';
+            continue;
+        }
         if (($report['version'] ?? '') !== 'arena-targeted-1') continue;
         $audit = $report['audit'];
         $delta = static fn (int $task): float =>
@@ -1222,7 +1237,11 @@ function arenaDiscoveryResults(App $app): string
     return '<section><h2>BugBrain arena results</h2><p>Fitness change versus the original BugBrain across 16 matched audit runs per condition. '
         . ($champion['id'] === 'v3h' ? 'The original remains the champion.' : 'A verified edit is now the champion.')
         . '</p><table><thead><tr><th>Growth edit</th><th>Flashing food</th><th>Always-visible food</th></tr></thead><tbody>'
-        . $table . '</tbody></table><p><a href="' . h($app->base() . '/explore?compare=1') . '">Compare brains in Explore</a></p></section>';
+        . $table . '</tbody></table>' . ($memoryRows === '' ? '' : '<h3>Memory and steering edits</h3>'
+            . '<p>Fitness change versus each edit’s own parent across 12 matched audit runs per condition.</p>'
+            . '<table><thead><tr><th>Edit setting</th><th>Parent</th><th>Flashing food</th><th>Always-visible food</th><th>Explore maze</th></tr></thead><tbody>'
+            . $memoryRows . '</tbody></table>')
+        . '<p><a href="' . h($app->base() . '/explore?compare=1') . '">Compare brains in Explore</a></p></section>';
 }
 
 function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archive = false, bool $refresh = false, bool $larger = false): string

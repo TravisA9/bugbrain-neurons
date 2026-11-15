@@ -1091,7 +1091,7 @@ final class App
         return $n;
     }
 
-    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false, bool $inverseGallery = false, bool $inverseShared = false, bool $inverseComposition = false, bool $inverseSequence = false, bool $arenaPilot = false, bool $arenaTargeted = false): ?array
+    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false, bool $inverseGallery = false, bool $inverseShared = false, bool $inverseComposition = false, bool $inverseSequence = false, bool $arenaPilot = false, bool $arenaTargeted = false, bool $arenaMemory = false): ?array
     {
         $this->replenishJobs();
         $this->expireLeases();
@@ -1145,7 +1145,8 @@ final class App
                         continue;
                     }
                     $composition = !empty($spec['inverseComposition']);
-                    if ($job['template_id'] === 'bb-arena-pilot' && (!$arenaPilot || ((int) $job['seed'] >= 5 && !$arenaTargeted))) {
+                    if ($job['template_id'] === 'bb-arena-pilot' && (!$arenaPilot || ((int) $job['seed'] >= 5 && !$arenaTargeted)
+                        || ((int) $job['seed'] >= 17 && !$arenaMemory))) {
                         continue;
                     }
                     if ($composition && (!$inverseComposition || empty($this->config['inverse_composition'])
@@ -1394,14 +1395,16 @@ final class App
             if ($status === 'done' && $row['template_id'] === 'bb-arena-pilot') {
                 $arena = $body['research'] ?? [];
                 $targeted = (int) $row['seed'] >= 5;
-                if (($arena['version'] ?? '') !== ($targeted ? 'arena-targeted-1' : 'arena-mutation-1') || ($arena['seed'] ?? null) !== (int) $row['seed']
+                $memory = (int) $row['seed'] >= 17;
+                $version = $memory ? 'arena-memory-1' : ($targeted ? 'arena-targeted-1' : 'arena-mutation-1');
+                if (($arena['version'] ?? '') !== $version || ($arena['seed'] ?? null) !== (int) $row['seed']
                     || !is_array($arena['genome'] ?? null)) {
                     throw new InvalidArgumentException('Arena report does not match the job.');
                 }
                 foreach (['screen', 'audit'] as $phase) {
-                    $count = $targeted ? ($phase === 'screen' ? 8 : 16) : 4;
+                    $count = $memory ? ($phase === 'screen' ? 6 : 12) : ($targeted ? ($phase === 'screen' ? 8 : 16) : 4);
                     foreach (['parent', 'edit'] as $arm) {
-                        foreach ([0, 1] as $task) {
+                        foreach ($memory && $phase === 'audit' ? [0, 1, 2] : [0, 1] as $task) {
                             $scores = $arena[$phase][$arm]['tasks'][$task]['scores'] ?? null;
                             if (!is_array($scores) || count($scores) !== $count
                                 || count(array_filter($scores, static fn ($score) => (is_int($score) || is_float($score)) && is_finite((float) $score))) !== $count) {
@@ -1583,8 +1586,8 @@ final class App
             $spec = [];
         }
         $spec['seed'] = $seed;
-        if ($templateId === 'bb-arena-pilot' && $seed > 16) {
-            throw new InvalidArgumentException('Arena pilot seeds run from 1 to 16.');
+        if ($templateId === 'bb-arena-pilot' && $seed > 32) {
+            throw new InvalidArgumentException('Arena pilot seeds run from 1 to 32.');
         }
         if (isset($extra['seedGenomes']) && is_array($extra['seedGenomes'])) {
             $spec['seedGenomes'] = array_values(array_slice($extra['seedGenomes'], 0, 10));
@@ -1935,7 +1938,8 @@ final class App
     {
         $best = ['id' => 'v3h', 'change' => null];
         $fields = ['axonLen', 'rSyn', 'pruneFrac', 'wHid', 'theta', 'homeoTarget'];
-        foreach ($this->arenaPilotResults() as $report) {
+        $results = $this->arenaPilotResults();
+        foreach ($results as $report) {
             if (($report['version'] ?? '') !== 'arena-targeted-1') {
                 continue;
             }
@@ -1953,6 +1957,26 @@ final class App
                 $seed = (int) $report['seed'];
                 $best = ['id' => 'arena-' . $seed, 'gain' => $gain,
                     'change' => ['field' => $fields[intdiv($seed - 5, 2)], 'factor' => $seed % 2 ? 0.9 : 1.1]];
+            }
+        }
+        // These edits were paired against v3h, so replacing another promoted parent needs a new audit.
+        if ($best['id'] !== 'v3h') return $best;
+        $memoryEdits = [['leak', .25], ['leak', 1.75], ['s7', -.35], ['s7', .95],
+            ['motor', -.65], ['motor', .65], ['clen', -.75], ['homeoTarget', .9]];
+        foreach ($results as $report) {
+            $seed = (int) $report['seed'];
+            if (($report['version'] ?? '') !== 'arena-memory-1' || $seed < 17 || $seed > 24) continue;
+            $delta = static fn ($phase, $i) =>
+                (array_sum($report[$phase]['edit']['tasks'][$i]['scores']) - array_sum($report[$phase]['parent']['tasks'][$i]['scores']))
+                / count($report[$phase]['parent']['tasks'][$i]['scores']);
+            $wins = array_map(static fn ($edit, $parent) => $edit > $parent,
+                $report['audit']['edit']['tasks'][0]['scores'], $report['audit']['parent']['tasks'][0]['scores']);
+            $gain = $delta('audit', 0);
+            if ($delta('screen', 0) > 0 && $delta('screen', 1) >= 0 && $delta('audit', 1) >= 0 && $delta('audit', 2) >= 0
+                && count(array_filter($wins)) >= 10 && $gain >= 1 && $gain > ($best['gain'] ?? 0)) {
+                [$field, $value] = $memoryEdits[$seed - 17];
+                $best = ['id' => 'arena-' . $seed, 'gain' => $gain, 'change' => $field === 'homeoTarget'
+                    ? ['field' => $field, 'factor' => $value] : ['tune' => [$field => $value]]];
             }
         }
         return $best;

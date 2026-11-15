@@ -563,14 +563,15 @@ check(str_contains($sequencePoll ?? '', 'sf-inverse-experiment-2320') && ($seque
 
 $arenaWorker = $app->enroll('arena-test', ['bugbrain'], 1, true);
 file_put_contents($researchToken, $arenaWorker['token']);
-$arenaJob = $app->createJob('bb-arena-pilot', 'Targeted arena smoke test', 5, 5);
+$arenaJob = $app->createJob('bb-arena-pilot', 'Memory arena smoke test', 5, 17);
 $arenaPoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
 unlink($researchToken);
 $st = $app->db->prepare("SELECT body_json FROM results WHERE job_id = ? AND status = 'done'");
 $st->execute([$arenaJob]);
 $arena = json_decode((string) $st->fetchColumn(), true)['research'] ?? [];
-check(str_contains($arenaPoll ?? '', $arenaJob) && ($arena['version'] ?? '') === 'arena-targeted-1'
-    && count($arena['audit']['edit']['tasks'][1]['scores'] ?? []) === 16,
+check(str_contains($arenaPoll ?? '', $arenaJob) && ($arena['version'] ?? '') === 'arena-memory-1'
+    && count($arena['audit']['edit']['tasks'][2]['scores'] ?? []) === 12
+    && isset($arena['audit']['edit']['tasks'][0]['approachedAfterLoss']),
     'a BugBrain donor submits paired arena mutation results');
 
 proc_terminate($proc);

@@ -963,7 +963,7 @@ try {
                 ($body['inverseExperiment'] ?? false) === true, ($body['inverseGallery'] ?? false) === true,
                 ($body['inverseShared'] ?? false) === true, ($body['inverseComposition'] ?? false) === true,
                 ($body['inverseSequence'] ?? false) === true, ($body['arenaPilot'] ?? false) === true,
-                ($body['arenaTargeted'] ?? false) === true);
+                ($body['arenaTargeted'] ?? false) === true, ($body['arenaMemory'] ?? false) === true);
             coord_json(200, ['job' => $job]);
             return;
         }

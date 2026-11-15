@@ -6,7 +6,11 @@ const os = require('node:os');
 const L = require('./lib');
 
 const seed = Number(process.argv[2]);
-if (!Number.isInteger(seed) || seed < 1 || seed > 16) throw Error('Invalid arena pilot seed');
+if (!Number.isInteger(seed) || seed < 1 || seed > 32) throw Error('Invalid arena pilot seed');
+if (seed >= 17) {
+  fs.writeFileSync(process.argv[3], JSON.stringify(require('./arena-memory').arenaMemory(seed)));
+  return;
+}
 const parent = L.startGenome('v3h');
 const targeted = seed >= 5;
 const changes = ['axonLen', 'rSyn', 'pruneFrac', 'wHid', 'theta', 'homeoTarget'];

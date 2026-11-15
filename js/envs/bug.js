@@ -52,6 +52,15 @@ function makeWalls() {
   return w;
 }
 const WALLS = makeWalls();
+const GARDEN = { width: 1120, height: 700, itemCount: 66, walls: [
+  [10, 10, 1110, 10], [1110, 10, 1110, 690], [1110, 690, 10, 690], [10, 690, 10, 10],
+  [225, 10, 225, 205], [225, 300, 225, 520], [225, 610, 225, 690],
+  [535, 10, 535, 115], [535, 210, 535, 415], [535, 520, 535, 690],
+  [865, 10, 865, 240], [865, 340, 865, 540], [865, 625, 865, 690],
+  [10, 335, 135, 335], [315, 160, 455, 160], [325, 545, 535, 545],
+  [535, 285, 705, 285], [705, 285, 705, 420], [625, 535, 780, 535],
+  [955, 180, 1110, 180], [865, 465, 1015, 465], [1015, 465, 1015, 545],
+] };
 function pointSegDist2(px, py, s) {
   const [x1, y1, x2, y2] = s, dx = x2 - x1, dy = y2 - y1;
   let t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy); t = clamp(t, 0, 1);
@@ -137,7 +146,7 @@ class World {
     const a = this.agent, EYE_RANGE = this.P.eyeRange;
     for (let k = 0; k < NUM_EYES; k++) {
       const ang = a.angle + EYE_ANGLES[k], dx = Math.cos(ang), dy = Math.sin(ang);
-      let best = EYE_RANGE, type = -1;
+      let best = EYE_RANGE, type = -1, target = null;
       for (const s of this.walls) {                 // ray vs segment
         const sx = s[2] - s[0], sy = s[3] - s[1], den = dx * sy - dy * sx;
         if (Math.abs(den) < 1e-9) continue;
@@ -152,7 +161,7 @@ class World {
         const b = fx * dx + fy * dy, c = fx * fx + fy * fy - ITEM_R * ITEM_R, disc = b * b - c;
         if (disc < 0) continue;
         let t = -b - Math.sqrt(disc); if (t < 0) t = 0;
-        if (t < best && -b + Math.sqrt(disc) > 0) { best = t; type = it.type; }
+        if (t < best && -b + Math.sqrt(disc) > 0) { best = t; type = it.type; target = it; }
       }
       for (const p of this.predators) {             // the predator: a bigger "poison-coloured" disc
         const fx = a.x - p.x, fy = a.y - p.y;
@@ -161,7 +170,7 @@ class World {
         let t = -b - Math.sqrt(disc); if (t < 0) t = 0;
         if (t < best && -b + Math.sqrt(disc) > 0) { best = t; type = this.predColor(); }
       }
-      a.eyes[k].dist = best; a.eyes[k].type = type;
+      a.eyes[k].dist = best; a.eyes[k].type = type; a.eyes[k].target = target;
     }
     // touch: which side of the body is against a wall (left / front / right sector)
     const c = a.contact; c[0] = c[1] = c[2] = 0; const R2 = (AGENT_R + 3) ** 2;
@@ -309,6 +318,6 @@ registerEnv({
   io: bugIO,
   create(seed, P) { return new World(seed, P); },
 });
-SpikingArena.bug = { World, worldScore, WORLD_W, WORLD_H, AGENT_R, ITEM_R, PRED_R, HARD, FLASH, WALLS, EYE_ANGLES, NUM_EYES, SENSE_TYPES, TONIC, BUMP0, GYRO0, N_INPUT,
+SpikingArena.bug = { World, worldScore, WORLD_W, WORLD_H, AGENT_R, ITEM_R, PRED_R, HARD, FLASH, WALLS, GARDEN, EYE_ANGLES, NUM_EYES, SENSE_TYPES, TONIC, BUMP0, GYRO0, N_INPUT,
   BUMP_NAMES, GYRO_NAMES, MOTOR_NAMES, FIXED_CLASSES, TAG_NAMES, SPEED_REF, bugIO };
 })();
