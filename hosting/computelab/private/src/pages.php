@@ -853,15 +853,20 @@ function layout(string $title, string $body, string $base, array $nav = [], arra
  * stylesheet, and a few overrides that map its colors and type onto the design palette. */
 function pageBugArena(string $base, array $nav): string
 {
-    $body = '<section class="heading"><div><h1>BugBrain arena</h1></div></section>'
-        . '<section class="panel"><div class="panelbody"><canvas id="bug-arena" width="700" height="500" '
-        . 'style="display:block;width:100%;max-width:700px;height:auto;background:#f4f1ea" aria-label="BugBrain foraging arena" data-champion="'
-        . h($base . '/explore/bugbrain-champion.json') . '"></canvas>'
-        . '<p id="bug-status" role="status">Loading the arena…</p>'
+    $body = '<section aria-labelledby="bug-title"><div class="bug-toolbar"><h1 id="bug-title">BugBrain arena</h1>'
+        . '<p id="bug-status" role="status">Loading the arena…</p><div class="head-actions">'
         . '<button class="button small" id="bug-pause" type="button" disabled>Pause</button> '
-        . '<button class="button small" id="bug-restart" type="button" disabled>New arena</button></div></section>'
+        . '<button class="button small" id="bug-restart" type="button" disabled>New arena</button></div></div>'
+        . '<canvas id="bug-arena" width="700" height="500" aria-label="BugBrain foraging arena" data-champion="'
+        . h($base . '/explore/bugbrain-champion.json') . '"></canvas></section>'
         . '<script defer src="' . h($base . '/assets/bugbrain.js?v=1') . '"></script>';
-    return layout('BugBrain arena', $body, $base, $nav);
+    $style = '<style>.bug-shell{max-width:none;margin:auto;padding:12px 16px 16px}'
+        . '.bug-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin:0 auto 10px}'
+        . '.bug-toolbar h1,.bug-toolbar p{margin:0}.bug-toolbar h1{font-size:clamp(18px,2vw,24px)}'
+        . '#bug-arena{display:block;margin:auto;width:min(100%,max(310px,calc((100vh - 150px)*1.4)));height:auto;background:#f4f1ea}'
+        . '@supports(height:100dvh){#bug-arena{width:min(100%,max(310px,calc((100dvh - 150px)*1.4)))}}'
+        . '@media(max-width:620px){.bug-shell{padding:10px}.bug-toolbar p{flex-basis:100%;order:1}}</style>';
+    return layout('BugBrain arena', $body, $base, $nav, ['shell' => 'bug-shell', 'head' => $style]);
 }
 
 function exploreBar(string $base, array $nav): string
