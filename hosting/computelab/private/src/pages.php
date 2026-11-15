@@ -851,6 +851,19 @@ function layout(string $title, string $body, string $base, array $nav = [], arra
 
 /* The Explore lab keeps its own page and script. It gets the shared header, the shared
  * stylesheet, and a few overrides that map its colors and type onto the design palette. */
+function pageBugArena(string $base, array $nav): string
+{
+    $body = '<section class="heading"><div><h1>BugBrain arena</h1></div></section>'
+        . '<section class="panel"><div class="panelbody"><canvas id="bug-arena" width="700" height="500" '
+        . 'style="display:block;width:100%;max-width:700px;height:auto;background:#f4f1ea" aria-label="BugBrain foraging arena" data-champion="'
+        . h($base . '/explore/bugbrain-champion.json') . '"></canvas>'
+        . '<p id="bug-status" role="status">Loading the arena…</p>'
+        . '<button class="button small" id="bug-pause" type="button" disabled>Pause</button> '
+        . '<button class="button small" id="bug-restart" type="button" disabled>New arena</button></div></section>'
+        . '<script defer src="' . h($base . '/assets/bugbrain.js?v=1') . '"></script>';
+    return layout('BugBrain arena', $body, $base, $nav);
+}
+
 function exploreBar(string $base, array $nav): string
 {
     return siteHeaderCss() . siteHeader($base, $nav);

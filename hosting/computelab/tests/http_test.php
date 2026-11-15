@@ -62,9 +62,10 @@ function http(string $url, string $method = 'GET', ?string $body = null, array $
 $home = http($base . '/');
 check($home['status'] === 200 && str_contains($home['body'], 'Join with your computer') && str_contains($home['body'], 'Explore in your browser') && str_contains($home['body'], 'aria-current="page"') && str_contains($home['body'], '>Home<') && !str_contains($home['body'], 'Run 1 batch'), 'home explains Compute Lab and highlights Home');
 $explore = http($base . '/explore');
-check($explore['status'] === 200 && str_contains($explore['body'], 'Run 1 batch') && !str_contains($explore['body'], 'Create a worker token'), 'explore serves the lab and does not enroll anyone');
+check($explore['status'] === 200 && str_contains($explore['body'], 'id="bug-arena"') && !str_contains($explore['body'], 'Create a worker token'), 'explore serves the arena and does not enroll anyone');
 check(str_contains($explore['body'], 'aria-current="page"') && str_contains($explore['body'], '>Explore<'), 'explore keeps a way back to the rest of the site');
-check(str_contains($explore['body'], '/computelab/assets/engine.js'), 'the lab loads the engine from this site path');
+check(str_contains($explore['body'], '/computelab/assets/bugbrain.js'), 'the arena loads the BugBrain engine from this site path');
+check(json_decode(http($base . '/explore/bugbrain-champion.json')['body'], true)['id'] === 'v3h', 'the arena starts with the default BugBrain before a verified edit');
 $engine = http($base . '/assets/engine.js');
 check($engine['status'] === 200 && str_contains($engine['body'], 'SpikeFoundry'), 'the engine script is served');
 
@@ -562,14 +563,14 @@ check(str_contains($sequencePoll ?? '', 'sf-inverse-experiment-2320') && ($seque
 
 $arenaWorker = $app->enroll('arena-test', ['bugbrain'], 1, true);
 file_put_contents($researchToken, $arenaWorker['token']);
-$arenaJob = $app->createJob('bb-arena-pilot', 'Arena mutation smoke test', 5, 1);
+$arenaJob = $app->createJob('bb-arena-pilot', 'Targeted arena smoke test', 5, 5);
 $arenaPoll = shell_exec('node ' . escapeshellarg($root . '/run/coord.js') . ' --once --url ' . escapeshellarg($base) . ' --token-file ' . escapeshellarg($researchToken) . ' 2>&1');
 unlink($researchToken);
 $st = $app->db->prepare("SELECT body_json FROM results WHERE job_id = ? AND status = 'done'");
 $st->execute([$arenaJob]);
 $arena = json_decode((string) $st->fetchColumn(), true)['research'] ?? [];
-check(str_contains($arenaPoll ?? '', $arenaJob) && ($arena['version'] ?? '') === 'arena-mutation-1'
-    && count($arena['audit']['edit']['tasks'][1]['scores'] ?? []) === 4,
+check(str_contains($arenaPoll ?? '', $arenaJob) && ($arena['version'] ?? '') === 'arena-targeted-1'
+    && count($arena['audit']['edit']['tasks'][1]['scores'] ?? []) === 16,
     'a BugBrain donor submits paired arena mutation results');
 
 proc_terminate($proc);

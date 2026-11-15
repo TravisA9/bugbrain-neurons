@@ -1091,7 +1091,7 @@ final class App
         return $n;
     }
 
-    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false, bool $inverseGallery = false, bool $inverseShared = false, bool $inverseComposition = false, bool $inverseSequence = false, bool $arenaPilot = false): ?array
+    public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false, bool $inverseGallery = false, bool $inverseShared = false, bool $inverseComposition = false, bool $inverseSequence = false, bool $arenaPilot = false, bool $arenaTargeted = false): ?array
     {
         $this->replenishJobs();
         $this->expireLeases();
@@ -1145,7 +1145,7 @@ final class App
                         continue;
                     }
                     $composition = !empty($spec['inverseComposition']);
-                    if ($job['template_id'] === 'bb-arena-pilot' && !$arenaPilot) {
+                    if ($job['template_id'] === 'bb-arena-pilot' && (!$arenaPilot || ((int) $job['seed'] >= 5 && !$arenaTargeted))) {
                         continue;
                     }
                     if ($composition && (!$inverseComposition || empty($this->config['inverse_composition'])
@@ -1393,16 +1393,18 @@ final class App
             $isInverse = $row['template_id'] === 'sf-inverse-experiment';
             if ($status === 'done' && $row['template_id'] === 'bb-arena-pilot') {
                 $arena = $body['research'] ?? [];
-                if (($arena['version'] ?? '') !== 'arena-mutation-1' || ($arena['seed'] ?? null) !== (int) $row['seed']
+                $targeted = (int) $row['seed'] >= 5;
+                if (($arena['version'] ?? '') !== ($targeted ? 'arena-targeted-1' : 'arena-mutation-1') || ($arena['seed'] ?? null) !== (int) $row['seed']
                     || !is_array($arena['genome'] ?? null)) {
                     throw new InvalidArgumentException('Arena report does not match the job.');
                 }
                 foreach (['screen', 'audit'] as $phase) {
+                    $count = $targeted ? ($phase === 'screen' ? 8 : 16) : 4;
                     foreach (['parent', 'edit'] as $arm) {
                         foreach ([0, 1] as $task) {
                             $scores = $arena[$phase][$arm]['tasks'][$task]['scores'] ?? null;
-                            if (!is_array($scores) || count($scores) !== 4
-                                || count(array_filter($scores, static fn ($score) => is_int($score) || is_float($score))) !== 4) {
+                            if (!is_array($scores) || count($scores) !== $count
+                                || count(array_filter($scores, static fn ($score) => (is_int($score) || is_float($score)) && is_finite((float) $score))) !== $count) {
                                 throw new InvalidArgumentException('Arena report is missing paired scores.');
                             }
                         }
@@ -1927,6 +1929,33 @@ final class App
         $rows = $this->db->query("SELECT r.body_json FROM results r JOIN jobs j ON j.id = r.job_id
             WHERE j.template_id = 'bb-arena-pilot' AND r.status = 'done' ORDER BY j.seed")->fetchAll(PDO::FETCH_COLUMN);
         return array_map(static fn ($body) => json_decode($body, true)['research'], $rows);
+    }
+
+    public function arenaChampion(): array
+    {
+        $best = ['id' => 'v3h', 'change' => null];
+        $fields = ['axonLen', 'rSyn', 'pruneFrac', 'wHid', 'theta', 'homeoTarget'];
+        foreach ($this->arenaPilotResults() as $report) {
+            if (($report['version'] ?? '') !== 'arena-targeted-1') {
+                continue;
+            }
+            $screen = $report['screen'];
+            $audit = $report['audit'];
+            $delta = static fn ($phase, $task) =>
+                (array_sum($phase['edit']['tasks'][$task]['scores']) - array_sum($phase['parent']['tasks'][$task]['scores']))
+                / count($phase['parent']['tasks'][$task]['scores']);
+            $paired = array_map(static fn ($edit, $parent) => $edit - $parent,
+                $audit['edit']['tasks'][0]['scores'], $audit['parent']['tasks'][0]['scores']);
+            $gain = $delta($audit, 0);
+            if ($delta($screen, 0) > 0 && $delta($screen, 1) >= 0 && $delta($audit, 1) >= 0
+                && count(array_filter($paired, static fn ($d) => $d > 0)) >= 12
+                && $gain >= 1 && $gain > ($best['gain'] ?? 0)) {
+                $seed = (int) $report['seed'];
+                $best = ['id' => 'arena-' . $seed, 'gain' => $gain,
+                    'change' => ['field' => $fields[intdiv($seed - 5, 2)], 'factor' => $seed % 2 ? 0.9 : 1.1]];
+            }
+        }
+        return $best;
     }
 
     private function trimInverseDiscoveries(): void

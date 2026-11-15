@@ -386,7 +386,26 @@ try {
         coord_json(200, $live);
         return;
     }
-    if (($path === '/explore' || $path === '/lab') && $method === 'GET') {
+    if ($path === '/assets/bugbrain.js' && $method === 'GET') {
+        $asset = (string) ($app->config['bugbrain_js'] ?? $private . '/bugbrain.js');
+        if (!is_file($asset)) {
+            http_response_code(404);
+            return;
+        }
+        header('Content-Type: application/javascript; charset=utf-8');
+        readfile($asset);
+        return;
+    }
+    if ($path === '/explore/bugbrain-champion.json' && $method === 'GET') {
+        header('Cache-Control: no-store');
+        coord_json(200, $app->arenaChampion());
+        return;
+    }
+    if ($path === '/explore' && $method === 'GET') {
+        coord_html(pageBugArena($base, coord_who($app, 'explore')));
+        return;
+    }
+    if ($path === '/lab' && $method === 'GET') {
         $html = (string) file_get_contents((string) $app->config['lab_html']);
         $html = str_replace('/spikefoundry/engine.js', $base . '/assets/engine.js', $html);
         $html = str_replace('src="engine.js"', 'src="' . h($base . '/assets/engine.js') . '"', $html);
@@ -943,7 +962,8 @@ try {
             $job = $app->claim($worker, $slot, ($body['sequenceExperiment'] ?? false) === true, (int) ($body['studyVersion'] ?? 1),
                 ($body['inverseExperiment'] ?? false) === true, ($body['inverseGallery'] ?? false) === true,
                 ($body['inverseShared'] ?? false) === true, ($body['inverseComposition'] ?? false) === true,
-                ($body['inverseSequence'] ?? false) === true, ($body['arenaPilot'] ?? false) === true);
+                ($body['inverseSequence'] ?? false) === true, ($body['arenaPilot'] ?? false) === true,
+                ($body['arenaTargeted'] ?? false) === true);
             coord_json(200, ['job' => $job]);
             return;
         }
