@@ -9,6 +9,18 @@
   const baselineCanvas = document.getElementById('bug-baseline');
   const baselineCtx = baselineCanvas?.getContext('2d');
   const championUrl = canvas.dataset.champion;
+  const width = canvas.width, height = canvas.height;
+  const garden = { width, height, itemCount: 66, walls: [
+    [10, 10, width - 10, 10], [width - 10, 10, width - 10, height - 10],
+    [width - 10, height - 10, 10, height - 10], [10, height - 10, 10, 10],
+    // Staggered gates connect the side passages to the central route.
+    [225, 10, 225, 205], [225, 300, 225, 520], [225, 610, 225, 690],
+    [535, 10, 535, 115], [535, 210, 535, 415], [535, 520, 535, 690],
+    [865, 10, 865, 240], [865, 340, 865, 540], [865, 625, 865, 690],
+    [10, 335, 135, 335], [315, 160, 455, 160], [325, 545, 535, 545],
+    [535, 285, 705, 285], [705, 285, 705, 420], [625, 535, 780, 535],
+    [955, 180, 1110, 180], [865, 465, 1015, 465], [1015, 465, 1015, 545],
+  ] };
   let selected, agent, baseline, seed, playing = true, previous = 0, frame = 0;
 
   async function load() {
@@ -18,10 +30,12 @@
   }
 
   function drawBrain(brain, surface, context, id) {
-    brain.task.render(context, surface.width, surface.height);
+    brain.task.render(context, surface.width, surface.height, { showStats: false });
     const stats = brain.task.stats();
     return 'Brain ' + id + ' · Food ' + stats.food + ' · Poison ' + stats.poison +
-      ' · Score ' + brain.fitness.toFixed(1);
+      ' · Fitness ' + brain.fitness.toFixed(1) + ' · Tick ' + brain.t + '/' + brain.task.horizon +
+      ' · Wall contact ' + (100 * brain.task.contactTicks / Math.max(1, brain.t)).toFixed(0) + '%' +
+      ' · Stuck ' + (100 * stats.stuck / Math.max(1, brain.t)).toFixed(0) + '%';
   }
 
   function draw() {
@@ -39,7 +53,8 @@
   function start() {
     const params = SA.recommendedEnvParams('bug', { task: 'flash' }, ['task']);
     SA.setEnv('bug', { ...params, task: 'flash' });
-    const env = SA.currentEnv();
+    const current = SA.currentEnv();
+    const env = { ...current, def: { ...current.def, create: (seed, params) => new SA.bug.World(seed, params, garden) } };
     const genome = SA.PLANS.v3h.make();
     if (selected.change) genome.sc[selected.change.field] *= selected.change.factor;
     seed = Math.floor(Math.random() * 0xffffffff);
