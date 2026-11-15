@@ -6,8 +6,10 @@
   const pause = document.getElementById('bug-pause');
   const restart = document.getElementById('bug-restart');
   const ctx = canvas.getContext('2d');
+  const baselineCanvas = document.getElementById('bug-baseline');
+  const baselineCtx = baselineCanvas?.getContext('2d');
   const championUrl = canvas.dataset.champion;
-  let selected, agent, playing = true, previous = 0, frame = 0;
+  let selected, agent, baseline, seed, playing = true, previous = 0, frame = 0;
 
   async function load() {
     const response = await fetch(championUrl, { cache: 'no-store' });
@@ -15,11 +17,23 @@
     selected = await response.json();
   }
 
+  function drawBrain(brain, surface, context, id) {
+    brain.task.render(context, surface.width, surface.height);
+    const stats = brain.task.stats();
+    return 'Brain ' + id + ' · Food ' + stats.food + ' · Poison ' + stats.poison +
+      ' · Score ' + brain.fitness.toFixed(1);
+  }
+
   function draw() {
-    agent.task.render(ctx, canvas.width, canvas.height);
-    const stats = agent.task.stats();
-    status.textContent = 'Brain ' + selected.id + ' · Food ' + stats.food + ' · Poison ' + stats.poison +
-      ' · Score ' + agent.fitness.toFixed(1);
+    const score = drawBrain(agent, canvas, ctx, selected.id);
+    if (!baseline) {
+      status.textContent = score;
+      return;
+    }
+    document.getElementById('bug-champion-score').textContent = score;
+    document.getElementById('bug-baseline-score').textContent = drawBrain(baseline, baselineCanvas, baselineCtx, 'v3h');
+    status.textContent = 'Shared seed ' + seed + ' · Tick ' + agent.t +
+      (selected.change ? '' : ' · The original is still the champion');
   }
 
   function start() {
@@ -28,8 +42,12 @@
     const env = SA.currentEnv();
     const genome = SA.PLANS.v3h.make();
     if (selected.change) genome.sc[selected.change.field] *= selected.change.factor;
-    const seed = Math.floor(Math.random() * 0xffffffff);
+    seed = Math.floor(Math.random() * 0xffffffff);
     agent = new SA.Agent(genome, seed, SA.growCell(genome, { seed, spec: env.spec }), env);
+    if (baselineCanvas) {
+      const original = SA.PLANS.v3h.make();
+      baseline = new SA.Agent(original, seed, SA.growCell(original, { seed, spec: env.spec }), env);
+    }
     playing = true;
     pause.textContent = 'Pause';
     draw();
@@ -41,6 +59,7 @@
     if (!playing || document.hidden || agent.done || now - previous < 32) return;
     previous = now;
     agent.tick();
+    if (baseline && !baseline.done) baseline.tick();
     draw();
   }
 

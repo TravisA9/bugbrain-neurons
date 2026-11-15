@@ -851,20 +851,28 @@ function layout(string $title, string $body, string $base, array $nav = [], arra
 
 /* The Explore lab keeps its own page and script. It gets the shared header, the shared
  * stylesheet, and a few overrides that map its colors and type onto the design palette. */
-function pageBugArena(string $base, array $nav): string
+function pageBugArena(string $base, array $nav, bool $compare = false): string
 {
     $body = '<section aria-labelledby="bug-title"><div class="bug-toolbar"><h1 id="bug-title">BugBrain arena</h1>'
         . '<p id="bug-status" role="status">Loading the arena…</p><div class="head-actions">'
         . '<button class="button small" id="bug-pause" type="button" disabled>Pause</button> '
-        . '<button class="button small" id="bug-restart" type="button" disabled>New arena</button></div></div>'
+        . '<button class="button small" id="bug-restart" type="button" disabled>New arena</button> '
+        . '<a class="button small" href="' . h($base . '/explore' . ($compare ? '' : '?compare=1')) . '">'
+        . ($compare ? 'Single arena' : 'Compare brains') . '</a></div></div>'
+        . ($compare ? '<div class="bug-pair"><div><h2>Champion</h2><p id="bug-champion-score"></p>' : '')
         . '<canvas id="bug-arena" width="700" height="500" aria-label="BugBrain foraging arena" data-champion="'
-        . h($base . '/explore/bugbrain-champion.json') . '"></canvas></section>'
-        . '<script defer src="' . h($base . '/assets/bugbrain.js?v=1') . '"></script>';
+        . h($base . '/explore/bugbrain-champion.json') . '"></canvas>'
+        . ($compare ? '</div><div><h2>Original BugBrain</h2><p id="bug-baseline-score"></p>'
+            . '<canvas id="bug-baseline" width="700" height="500" aria-label="Original BugBrain foraging arena"></canvas></div></div>' : '')
+        . '</section><script defer src="' . h($base . '/assets/bugbrain.js?v=2') . '"></script>';
     $style = '<style>.bug-shell{max-width:none;margin:auto;padding:12px 16px 16px}'
         . '.bug-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin:0 auto 10px}'
         . '.bug-toolbar h1,.bug-toolbar p{margin:0}.bug-toolbar h1{font-size:clamp(18px,2vw,24px)}'
         . '#bug-arena{display:block;margin:auto;width:min(100%,max(310px,calc((100vh - 150px)*1.4)));height:auto;background:#f4f1ea}'
         . '@supports(height:100dvh){#bug-arena{width:min(100%,max(310px,calc((100dvh - 150px)*1.4)))}}'
+        . '.bug-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.bug-pair h2,.bug-pair p{margin:0 0 6px}'
+        . '.bug-pair canvas,.bug-pair #bug-arena{display:block;width:100%;height:auto;background:#f4f1ea}'
+        . '@media(max-width:620px){.bug-pair{grid-template-columns:1fr}}'
         . '@media(max-width:620px){.bug-shell{padding:10px}.bug-toolbar p{flex-basis:100%;order:1}}</style>';
     return layout('BugBrain arena', $body, $base, $nav, ['shell' => 'bug-shell', 'head' => $style]);
 }

@@ -402,7 +402,7 @@ try {
         return;
     }
     if ($path === '/explore' && $method === 'GET') {
-        coord_html(pageBugArena($base, coord_who($app, 'explore')));
+        coord_html(pageBugArena($base, coord_who($app, 'explore'), ($_GET['compare'] ?? '') === '1'));
         return;
     }
     if ($path === '/lab' && $method === 'GET') {
