@@ -21,7 +21,7 @@
     [535, 285, 705, 285], [705, 285, 705, 420], [625, 535, 780, 535],
     [955, 180, 1110, 180], [865, 465, 1015, 465], [1015, 465, 1015, 545],
   ] };
-  let selected, agent, baseline, seed, playing = true, previous = 0, frame = 0;
+  let selected, agent, baseline, seed, playing = true, previous = 0, frame = 0, finishedAt = null;
 
   async function load() {
     const response = await fetch(championUrl, { cache: 'no-store' });
@@ -40,14 +40,15 @@
 
   function draw() {
     const score = drawBrain(agent, canvas, ctx, selected.id);
+    const completed = agent.done ? ' · Round complete' : '';
     if (!baseline) {
-      status.textContent = score;
+      status.textContent = score + completed;
       return;
     }
     document.getElementById('bug-champion-score').textContent = score;
     document.getElementById('bug-baseline-score').textContent = drawBrain(baseline, baselineCanvas, baselineCtx, 'v3h');
     status.textContent = 'Shared seed ' + seed + ' · Tick ' + agent.t +
-      (selected.change ? '' : ' · The original is still the champion');
+      (selected.change ? '' : ' · The original is still the champion') + completed;
   }
 
   function start() {
@@ -64,6 +65,7 @@
       baseline = new SA.Agent(original, seed, SA.growCell(original, { seed, spec: env.spec }), env);
     }
     playing = true;
+    finishedAt = null;
     pause.textContent = 'Pause';
     draw();
     if (!frame) frame = requestAnimationFrame(tick);
@@ -71,8 +73,13 @@
 
   function tick(now) {
     frame = requestAnimationFrame(tick);
-    if (!playing || document.hidden || agent.done || now - previous < 32) return;
+    if (!playing || document.hidden || now - previous < 32) return;
     previous = now;
+    if (agent.done) {
+      if (finishedAt === null) finishedAt = now;
+      if (now - finishedAt >= 2000) start();
+      return;
+    }
     agent.tick();
     if (baseline && !baseline.done) baseline.tick();
     draw();

@@ -864,7 +864,7 @@ function pageBugArena(string $base, array $nav, bool $compare = false): string
         . h($base . '/explore/bugbrain-champion.json') . '"></canvas>'
         . ($compare ? '</div><div><h2>Original BugBrain</h2><p id="bug-baseline-score"></p>'
             . '<canvas id="bug-baseline" width="1120" height="700" aria-label="Original BugBrain foraging arena"></canvas></div></div>' : '')
-        . '</section><script defer src="' . h($base . '/assets/bugbrain.js?v=3') . '"></script>';
+        . '</section><script defer src="' . h($base . '/assets/bugbrain.js?v=4') . '"></script>';
     $style = '<style>.bug-shell{max-width:none;margin:auto;padding:12px 16px 16px}'
         . '.bug-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin:0 auto 10px}'
         . '.bug-toolbar h1,.bug-toolbar p{margin:0}.bug-toolbar h1{font-size:clamp(18px,2vw,24px)}'
