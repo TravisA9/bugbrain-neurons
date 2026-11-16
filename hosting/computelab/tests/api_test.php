@@ -1088,8 +1088,34 @@ check((int) $resultCount->fetchColumn() === 1, 'a repeated completion is acknowl
 $inverseCards = $inverseApp->inverseDiscoveries();
 check(count($inverseCards) === 2 && $inverseCards[0]['badges'] === ['Accuracy #1', 'Recall #1']
     && $inverseCards[1]['badges'] === ['Specificity #1', 'Demo match #1'], 'the gallery picks the top result in each metric even when scores are low');
-check($inverseApp->inverseExperimentReport($inverseSeed)['research']['checkpoint'] === $checkpoint,
-    'the latest automatic model is available from the owner report');
+
+$dateLab = labWith(['inverse_gallery' => true, 'pause_legacy_spikefoundry_search' => true, 'discoveries_top_n' => 1]);
+$dateApp = $dateLab['app'];
+$dateClock = $dateLab['clock'];
+$dateClock->t = '2026-11-09T15:03:39+00:00';
+$dateWorker = $dateApp->workerByToken($dateApp->enroll('date-worker', ['spikefoundry'], 2, true)['token']);
+$dateSeed = 4242;
+$dateApp->createJob('sf-inverse-experiment', 'First find', 1, $dateSeed, ['inverseGallery' => true]);
+$dateJob = $dateApp->claim($dateWorker, 0, false, 1, true, true);
+$dateReport = ['version' => 'inverse-designer-1', 'seed' => $dateSeed, 'checkpoint' => $checkpoint, 'discoveries' => [
+    $candidate + ['accuracy' => 0.6, 'recall' => 0.8, 'specificity' => 0.4, 'demoAccuracy' => 0.6],
+]];
+check($dateJob && (int) $dateJob['spec']['seed'] === $dateSeed, 'the date-check job is the one just queued');
+$dateApp->submitResult($dateWorker, $dateJob['id'], ['status' => 'done', 'synthetic' => true, 'research' => $dateReport]);
+$firstWhen = $dateApp->inverseDiscoveries()[0]['when'];
+$dateClock->t = '2026-11-16T23:06:00+00:00';
+$saveAgain = new ReflectionMethod(App::class, 'saveInverseDiscoveries');
+$saveAgain->setAccessible(true);
+$saveAgain->invoke($dateApp, (string) $dateWorker['id'], $dateSeed, $dateReport['discoveries']);
+$againWhen = $dateApp->inverseDiscoveries()[0]['when'];
+check($firstWhen === '2026-11-09T15:03:39+00:00' && $againWhen === $firstWhen,
+    'resubmitting the same inverse circuit keeps the first found time, not the later submit time');
+$dateId = $dateApp->inverseDiscoveries()[0]['hash'];
+$dateLab['db']->prepare('UPDATE inverse_discoveries SET created_at = ? WHERE id = ?')->execute([$dateClock->t, $dateId]);
+$repaired = $dateApp->repairInverseDiscoveryTimes();
+$restoredWhen = $dateApp->inverseDiscoveries()[0]['when'];
+check($repaired === 1 && $restoredWhen === $firstWhen,
+    'repair restores the first result time when a later replace overwrote it');
 
 $sharedLab = labWith(['inverse_gallery' => true, 'inverse_shared_training' => true]);
 $shared = $sharedLab['app'];

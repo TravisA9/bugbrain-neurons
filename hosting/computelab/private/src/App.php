@@ -1823,9 +1823,20 @@ final class App
                 $scores[] = $value;
             }
             $id = hash('sha256', 'inverse-designer-1:' . $seed . ':' . $index);
-            $insert->execute(array_merge([$id, $worker, $seed, $cases], $scores, [
-                json_encode($circuit + ['replay' => $replay, 'candidate' => $index + 1]), $this->now(),
-            ]));
+            $circuitJson = json_encode($circuit + ['replay' => $replay, 'candidate' => $index + 1]);
+            $foundAt = $this->now();
+            $finder = $worker;
+            $have = $this->db->prepare('SELECT created_at, worker_id, circuit_json FROM inverse_discoveries WHERE id = ?');
+            $have->execute([$id]);
+            $existing = $have->fetch();
+            /* The same seed and slot is uploaded again whenever that job is rerun. Keep the first
+             * finder's time (and name) when the circuit has not changed; only start the clock over
+             * when this slot now holds a different circuit. */
+            if ($existing && (string) $existing['circuit_json'] === $circuitJson) {
+                $foundAt = (string) $existing['created_at'];
+                $finder = (string) $existing['worker_id'];
+            }
+            $insert->execute(array_merge([$id, $finder, $seed, $cases], $scores, [$circuitJson, $foundAt]));
         }
     }
 
@@ -1903,6 +1914,25 @@ final class App
             }
         }
         return array_values($items);
+    }
+
+    /** If a later submit overwrote created_at, put back the earliest done result for that seed. */
+    public function repairInverseDiscoveryTimes(): int
+    {
+        $rows = $this->db->query('SELECT d.id, d.created_at, d.seed,
+            (SELECT MIN(r.created_at) FROM results r JOIN jobs j ON j.id = r.job_id
+             WHERE j.seed = d.seed AND r.status = \'done\') AS first_at
+            FROM inverse_discoveries d')->fetchAll();
+        $upd = $this->db->prepare('UPDATE inverse_discoveries SET created_at = ? WHERE id = ?');
+        $n = 0;
+        foreach ($rows as $row) {
+            $first = (string) ($row['first_at'] ?? '');
+            if ($first !== '' && strcmp($first, (string) $row['created_at']) < 0) {
+                $upd->execute([$first, $row['id']]);
+                $n++;
+            }
+        }
+        return $n;
     }
 
     public function compositionResults(): array

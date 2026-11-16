@@ -249,7 +249,21 @@ check($discRefresh['status'] === 200 && ($refreshed['data']['items'] ?? null) ==
     'Discoveries refresh returns the same participant-aware list and has a visible refresh status');
 $gh = (string) ($dd['items'][0]['hash'] ?? '');
 check(str_contains($disc['body'], 'root.SnnPlayer=') && str_contains($disc['body'], "prefers-reduced-motion: reduce") && str_contains($disc['body'], "addEventListener('visibilitychange'") && str_contains($disc['body'], 'requestAnimationFrame(loop)') && str_contains($disc['body'], 'This design never fires on this input') && strpos($disc['body'], 'root.SnnPlayer=') < strpos($disc['body'], 'P.mount(box'), 'Discoveries plays the frozen network back in the browser, pauses for reduced motion and hidden tabs, and says when a design is silent');
-check(preg_match('#<div class="row3"><time class="disc-when" datetime="\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ">Found [A-Z][a-z]{2} \\d{1,2}, \\d{1,2}:\\d\\d [AP]M UTC</time></div>#', $disc['body']) === 1 && str_contains($disc['body'], "toLocaleString(undefined,o)") && str_contains($disc['body'], "timeZoneName:'short'") && str_contains($disc['body'], 'chip disc-found" title="'), 'each discovery card and the viewer show when it was found, in the viewer\'s time zone, with the age as a tooltip');
+check(preg_match('#<div class="row3"><time class="disc-when" datetime="\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ">Found [A-Z][a-z]{2} \\d{1,2}, \\d{1,2}:\\d\\d [AP]M C[DS]T</time></div>#', $disc['body']) === 1 && str_contains($disc['body'], "timeZone:'America/Chicago'") && str_contains($disc['body'], "timeZoneName:'short'") && str_contains($disc['body'], 'chip disc-found" title="'), 'each discovery card and the viewer show when it was found, in Central time, with the age as a tooltip');
+$knownFound = '2026-11-09T15:03:39+00:00';
+$app->db->exec("UPDATE design_records SET created_at = '$knownFound'");
+$app->db->exec('DELETE FROM page_cache');
+$discDated = http($base . '/discoveries', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
+$archDated = http($base . '/discoveries?archive=1', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
+$foundRe = '#<time class="disc-when" datetime="2026-11-09T15:03:39Z">Found Nov 9, 9:03 AM CST</time>#';
+$renderStamp = gmdate('M j, g:i A');
+check(preg_match($foundRe, $discDated['body']) === 1 && preg_match($foundRe, $archDated['body']) === 1
+    && str_contains($discDated['body'], '"when":"2026-11-09T15:03:39+00:00"')
+    && str_contains($archDated['body'], '"when":"2026-11-09T15:03:39+00:00"')
+    && str_contains($discDated['body'], 'chip disc-found" title="')
+    && str_contains($archDated['body'], "timeZone:'America/Chicago'")
+    && !preg_match('#<time class="disc-when"[^>]*>Found ' . preg_quote($renderStamp, '#') . '#', $discDated['body']),
+    'each discovery card, the archive view, and the viewer data use the record\'s first-found time in Central time, not the page render time');
 $gMine = http($base . '/discoveries/genome?hash=' . $gh, 'GET', null, ['Cookie: lab_participant=' . $cookie]);
 $gAnon = http($base . '/discoveries/genome?hash=' . $gh);
 $gOwner = http($base . '/discoveries/genome?hash=' . $gh, 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);

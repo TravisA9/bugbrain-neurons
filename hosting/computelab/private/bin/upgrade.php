@@ -25,6 +25,10 @@ if ($config['driver'] === 'sqlite') {
 $app = new App($db, $config);
 $app->migrate();
 echo "Schema is current. Added any missing job, project, worker, lease, and result columns. Existing rows were kept.\n";
+$restored = $app->repairInverseDiscoveryTimes();
+echo $restored
+    ? 'Inverse discoveries: restored the first-found time on ' . $restored . " circuits that had been overwritten by a later submit.\n"
+    : "Inverse discoveries: first-found times were already intact.\n";
 // One entry per distinct design: fill canonical design hashes and mark later copies as duplicate_of the first find.
 $merge = $app->mergeDuplicateDesigns((int) (getenv('MERGE_SECONDS') ?: 900));
 echo 'Designs: hashed ' . $merge['genomes'] . ' genomes and ' . $merge['records'] . ' records; merged ' . $merge['groups'] . ' repeated designs (' . $merge['canonicalOnly'] . ' only equal after canonical ordering), marked ' . $merge['marked'] . ' later copies as duplicates (rows kept); filled ' . $merge['jobSeeds'] . ' job seeds' . ($merge['finished'] ? '' : '; time budget reached, run again to finish') . ".\n";

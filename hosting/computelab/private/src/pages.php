@@ -1141,15 +1141,19 @@ function scoreChart(array $points): string
         . '<div class="legend"><span><i></i>Best held-out</span><span class="b"><i></i>Best train</span></div>';
 }
 
-/* When a discovery was first found. The server writes UTC; the page script rewrites it in the viewer's own time
- * zone ("Nov 10, 7:42 AM CST") with the relative age as a tooltip. */
+/* When a discovery was first found. The machine-readable datetime is UTC; the visible text is Central time
+ * ("Nov 10, 9:03 AM CST"). The page script rewrites it the same way, with the relative age as a tooltip. */
 function discWhenHtml(string $iso): string
 {
     $t = $iso !== '' ? strtotime($iso) : false;
     if ($t === false) {
         return '';
     }
-    return '<div class="row3"><time class="disc-when" datetime="' . h(gmdate('Y-m-d\\TH:i:s\\Z', $t)) . '">Found ' . h(gmdate('M j, g:i A', $t)) . ' UTC</time></div>';
+    $dt = new DateTime('@' . $t);
+    $dt->setTimezone(new DateTimeZone('America/Chicago'));
+    $fmt = $dt->format('Y') !== (new DateTime('now', new DateTimeZone('America/Chicago')))->format('Y')
+        ? 'M j, Y, g:i A T' : 'M j, g:i A T';
+    return '<div class="row3"><time class="disc-when" datetime="' . h(gmdate('Y-m-d\TH:i:s\Z', $t)) . '">Found ' . h($dt->format($fmt)) . '</time></div>';
 }
 
 function verifiedDiscoveries(array $studies): string
@@ -1440,7 +1444,7 @@ script.addEventListener('error',function(){resolve(false);},{once:true});
 });
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function ago(iso){var d=(Date.parse(D.now)-Date.parse(iso))/1000;if(!(d>=0))return iso;if(d<90)return 'just now';if(d<5400)return Math.round(d/60)+' min ago';if(d<129600)return Math.round(d/3600)+' h ago';return Math.round(d/86400)+' days ago';}
-function when(iso){var d=new Date(iso);if(isNaN(d.getTime()))return String(iso||'');var o={month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'};if(d.getFullYear()!==new Date().getFullYear())o.year='numeric';try{return d.toLocaleString(undefined,o);}catch(e){return d.toLocaleString();}}
+function when(iso){var d=new Date(iso);if(isNaN(d.getTime()))return String(iso||'');var o={month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZone:'America/Chicago',timeZoneName:'short'};if(d.getFullYear()!==new Date().getFullYear())o.year='numeric';try{return d.toLocaleString('en-US',o);}catch(e){return d.toLocaleString();}}
 function formatFindTimes(){[].forEach.call(document.querySelectorAll('#disc-list time.disc-when'),function(t){var iso=t.getAttribute('datetime');t.textContent='Found '+when(iso);t.title=ago(iso);});}
 function metric(l,v,n,a){return '<div class="metric'+(a?' accent':'')+'"><div class="metriclabel">'+esc(l)+'</div><div class="metricvalue">'+v+'</div><div class="metricnote">'+esc(n||'')+'</div></div>';}
 function f3(x){return x==null?'—':Number(x).toFixed(3);}
