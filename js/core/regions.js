@@ -85,15 +85,21 @@ function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, g
   if (gd && gd.lrT > 0) G.granSch = { T: gd.lrT, late: gd.lrLate > 0 ? gd.lrLate : 0 };   // v47 (R114): plan gene d.gran.lrT / lrLate = the granule step schedule (net.js granStep; P.granLrT overrides, P.granLrT=0 = fixed granLr)
   // R102 granDemand (P.granDemand > 0): do not draw random claws. The same granN cells stay reserved (the cap) and net.js
   // wires a claw when that lag window has co-occurred granCo times. Off: the loop below is the v41–v44 random claw, unchanged.
+  const packSrc = () => C.map(m => { const keys = [...m.keys()].sort((a, b) => a - b), off = new Int32Array(keys.length + 1); let n = 0; for (const k of keys) n += m.get(k).length; const cells = new Int32Array(n); let p = 0;
+    for (let i = 0; i < keys.length; i++) { off[i] = p; const S = m.get(keys[i]); for (let t = 0; t < S.length; t++) cells[p++] = S[t]; } off[keys.length] = p; return { keys: Int32Array.from(keys), off, cells }; });
+  const chunkPart = gd && gd.chunkFrac > 0 ? parts.find(p => p.R && p.R.name === 'chunk context') : null;
+  const Cchunk = chunkPart ? colsOf([chunkPart, 2]) : null, jChunk0 = Cchunk && Cchunk.size ? Math.floor(nG * (1 - gd.chunkFrac)) : nG;
   if (!(params.granDemand > 0)) {
+    const pk = packSrc(), keyIdx = pk.map(s => { const m = new Map(); for (let i = 0; i < s.keys.length; i++) m.set(s.keys[i], i); return m; }), initKeys = new Array(nG);
   for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk;
     const k = Km === K ? K : Km + ((r() * (K - Km + 1)) | 0);   // R84 granKmin: each granule takes k in [granKmin, granK] claws from the first k sources (lags t .. t-k+1; a mixture of n-gram orders)
-    for (let c = 0; c < k; c++) { const m = C[c], keys = [...m.keys()]; if (!keys.length) continue; const S = m.get(keys[(r() * keys.length) | 0]), ws = W / k / S.length; for (const A of S) acc.add(A, b, ws, 0, 0); } }
+    let ik = String(k);
+    for (let c = 0; c < k; c++) { const useCh = j >= jChunk0 && c === k - 1, m = useCh ? Cchunk : C[c], keys = [...m.keys()]; if (!keys.length) continue; const chosen = keys[(r() * keys.length) | 0], S = m.get(chosen), ws = W / k / S.length; for (const A of S) acc.add(A, b, ws, 0, 0); ik += ',' + (useCh ? 'c' + chosen : keyIdx[c].get(chosen)); }
+    initKeys[j] = ik; }
+    Object.defineProperty(G, 'granSrc', { value: { K, Km, W, nG, gOff, src: pk, initKeys }, writable: true, configurable: true, enumerable: false });
   } else {
     for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk; }
-    const src = C.map(m => { const keys = [...m.keys()].sort((a, b) => a - b), off = new Int32Array(keys.length + 1); let n = 0; for (const k of keys) n += m.get(k).length; const cells = new Int32Array(n); let p = 0;
-      for (let i = 0; i < keys.length; i++) { off[i] = p; const S = m.get(keys[i]); for (let t = 0; t < S.length; t++) cells[p++] = S[t]; } off[keys.length] = p; return { keys: Int32Array.from(keys), off, cells }; });
-    Object.defineProperty(G, 'granDemand', { value: { K, Km, W, nG, gOff, src }, writable: true, configurable: true, enumerable: false });
+    Object.defineProperty(G, 'granDemand', { value: { K, Km, W, nG, gOff, src: packSrc() }, writable: true, configurable: true, enumerable: false });
   }
   // taught prediction cells: cells of the output region with plastic inputs that an env input contacts
   const pl = new Uint8Array(G.N), ins = new Uint8Array(G.N);
@@ -119,7 +125,7 @@ function growRegions(d, opts) {
   // (instead of f x more synapses each f x weaker). bit 1: 'all' tracts (cortex mixing / M2 / M3 -> striatum): pair probability p / f_src;
   // bit 2: claw / topo tracts (context columns -> mixing, M2 -> context): each target keeps ~S / f of the column's cells at f x weight;
   // bit 4: plastic synapses inside a sized region (C / mixing -> prediction) kept with probability 1 / f at f x strength.
-  const thF = params.thinF | 0, hash01 = (a, b, s) => { let h = (Math.imul(a, 0x9e3779b1) ^ Math.imul(b + 0x632be5ab, 0x85ebca6b) ^ (s | 0)) >>> 0; h = Math.imul(h ^ (h >>> 16), 0x7feb352d) >>> 0; h = Math.imul(h ^ (h >>> 15), 0x846ca68b) >>> 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+  const thF = (params.thinF | 0) || (params.scaleInvariant > 0 ? 7 : 0), hash01 = (a, b, s) => { let h = (Math.imul(a, 0x9e3779b1) ^ Math.imul(b + 0x632be5ab, 0x85ebca6b) ^ (s | 0)) >>> 0; h = Math.imul(h ^ (h >>> 16), 0x7feb352d) >>> 0; h = Math.imul(h ^ (h >>> 15), 0x846ca68b) >>> 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
   // R83 GRANULE LAYER (global param granN, 0/undefined = off, bit-identical off): a dedicated combination population of granN cells
   // (cerebellar-granule-like), appended after the grown hidden cells. Each granule cell takes a sparse claw: ONE letter column from each of
   // granK sources (the output region's current-symbol memory cells cls 0 = t at read time (granC0), its M2 cells cls 2 = t-1, the first other region's cls 2 = t-2),
@@ -175,6 +181,12 @@ function growRegions(d, opts) {
     else if (T.map === 'outReset') {   // R43 (I55): the output (prediction) cell named T.from.out inhibits every cell of class T.to.cls of the target region (a predicted word boundary resets it)
       const m = envSpec.outputs.findIndex(o => o.name === T.from.out); if (m >= 0) { const A = nIn + nHid + m;
         for (let i = dst.g.nIn; i < dst.g.nIn + dst.g.nHid; i++) if (dst.g.cellType[i] === N_FIXED + T.to.cls) { acc.add(A, node(dst, i), -T.to.w, 0, 0); nSyn++; } }
+    } else if (T.map === 'chunkGate') {   // Two-timescale hierarchical chunking gate: pulses target region's gate cells (tract 'cgate') on chunk boundaries / high cortical prediction surprise
+      const gNodes = [], gW = [], tName = (T.to && T.to.tract) || 'cgate';
+      for (const [name, , B, w] of dst.arrivals || []) if (name === tName) { gNodes.push(B); gW.push(w * (T.gain || 1)); nSyn++; }
+      const go2Ids = []; for (let i = 0; i < nIn; i++) if (envSpec.inputs[i] && envSpec.inputs[i].group === 'go2') go2Ids.push(i);
+      if (!G.chunkGates) Object.defineProperty(G, 'chunkGates', { value: [], writable: true, configurable: true, enumerable: false });
+      G.chunkGates.push({ region: T.to.region, nodes: Int32Array.from(gNodes), weights: Float32Array.from(gW), go2: Int32Array.from(go2Ids), thr: T.thr != null ? T.thr : 0.4, delimSym: T.delimSym != null ? T.delimSym : 0, maxLag: T.maxLag || 6 });
     }
     tractStats.push({ name: T.name, from: src.R.name, to: dst.R.name, columns: cols.size, synapses: nSyn });
   }

@@ -66,6 +66,12 @@ const params = {
   granDemand: 0, granCo: 2, granRecycle: 1, granMap: 0, granHold: 0,
   // R107 granSparse (1 = on; P.granSparse=0 = the old dense loop): the granule NLMS event visits only granules that spiked in the read window (bit-identical, faster)
   granSparse: 1,
+  // I106 granFast (1 = on; P.granFast=0 = the old dense granule membrane/homeostasis loops): bit-identical active-granule bitset + lazy float32 threshold homeostasis in fastEngine mode
+  granFast: 1,
+  // Utility-pruned structural plasticity for granule claws (0 = off, bit-identical): starts with grown random claws and rewires lowest-utility mature claws onto unowned active lag tuples on prediction errors
+  granUtility: 0,
+  // Unified intensive scale-invariance (0 = off, bit-identical): when sizeF > 1, normalizes trophic survival, cone/division speed, tract fan-in, inhibitory receiver budget, mixing pool inhibition, and 1x-equivalent fan-in learning rate
+  scaleInvariant: 0,
   plasticity: true,    // lifetime learning (reward-modulated STDP); false = frozen genome weights
   cellStart: 'env',    // a new population starts from mutants of this body plan ('env' = the environment's default)
   cellMut: 0.02,       // chance per genome number to mutate
