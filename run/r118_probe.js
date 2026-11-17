@@ -22,6 +22,10 @@ function metrics(s) { const words = s.split(/[ .]+/).slice(1, -1).filter(Boolean
   return { wordValid: wv, words: words.length, distinct4: g4.length ? new Set(g4).size / g4.length : 0, triBits: triBits(s), nonSpace: s.length ? ns / s.length : 0 }; }
 const T0 = Date.now(), p = L.seedPlan({ valGrowths: Math.max(64, k + 1), valArenas: Math.max(64, k + 1) }, 0, true), env = L.setupTask(task), nS = env.P.nSyms;
 const g = L.deserialize(gc).g, brain = SA.growCell(g, { seed: p.growSeeds[k], spec: env.spec }), a = new SA.Agent(L.deserialize(gc).g, p.arenaSeeds[k], brain, env); L.dropDense(brain);
+// R120 BB_ABL='<preType>><postType>:<scale>[:region]' (box diagnostic, not a core flag): scale the grown weights of every synapse from hidden cells of
+// cellType preType to hidden cells of cellType postType (same region, optional region index) before the life, e.g. 21>17:0 = cut tag-5 -> symbol cells.
+const ABL = { n: 0, w: 0 }; if (process.env.BB_ABL) { const [pp, sc, rg] = process.env.BB_ABL.split(':'), [ta, tb] = pp.split('>').map(Number), n = a.net, R = brain.region;
+  for (let i = brain.nIn; i < brain.nIn + brain.nHid; i++) { if (brain.cellType[i] !== ta || (rg != null && R[i] !== +rg)) continue; for (let q = n.start[i]; q < n.start[i + 1]; q++) { const j = n.posts[q]; if (j < brain.nIn + brain.nHid && brain.cellType[j] === tb && R[j] === R[i]) { ABL.n++; ABL.w += n.ws[q]; n.ws[q] *= +sc; n.w0[q] *= +sc; } } } }
 const nIn = brain.nIn, nH = brain.nHid, o0 = nIn + nH, T = a.task, cnt = new Uint8Array(nH), S = [];
 const hook = n => { const sp = n.spk; for (let s = 0; s < n.nSpk; s++) { const i = sp[s]; if (i >= nIn && i < o0) cnt[i - nIn] = 1; } };
 let lastPos = T.pos; const tGrow = Date.now() - T0;
@@ -45,8 +49,12 @@ if (process.env.BB_DUMP) { const fs = require('fs'), tot = S.reduce((x, c) => x 
   fs.writeFileSync(process.env.BB_DUMP + '.json', JSON.stringify({ nH, K, hf, nS, seq: Array.from(seq.slice(0, S.length + 1)), hits: Array.from(hits.slice(0, S.length)), gran: Array.from(gran0()) })); }
 const gran = new Uint8Array(nH), all = new Uint8Array(nH).fill(1), nonGran = new Uint8Array(nH); for (let i = 0; i < nH; i++) { if (brain.gran && brain.gran[nIn + i]) gran[i] = 1; else nonGran[i] = 1; }
 const probe = { all: fit(all), granules: fit(gran), nonGranule: fit(nonGran) };
+const rate = new Float64Array(nH); for (const c of S) for (const i of c) rate[i]++; for (let i = 0; i < nH; i++) rate[i] /= S.length || 1;
+const dense = {}; for (let i = 0; i < nH; i++) { if (gran[i]) continue; const n = nIn + i, rg = brain.regions && brain.regions[brain.region[n]] ? brain.regions[brain.region[n]].name : brain.region[n], ty = brain.typeInfo && brain.typeInfo[brain.cellType[n]] ? brain.typeInfo[brain.cellType[n]].label.replace(/^tag | cells$/g, '') : brain.cellType[n];
+  const key = rg + '/' + ty + (brain.slow && brain.slow[n] ? '/slow' : ''), d = dense[key] || (dense[key] = { n: 0, gt50: 0, mean: 0 }); d.n++; if (rate[i] > 0.5) d.gt50++; d.mean += rate[i]; }
+for (const d of Object.values(dense)) d.mean = +(d.mean / d.n).toFixed(3);
 const text = T.gen.map(i => A[i]).join(''), st = T.stats();
 const OUT = { plan, task: tj, variant, k, heldAcc: +st.heldAcc.toFixed(4), brainHeld: +acc(held, t => hits[t]).toFixed(4), trainAcc: +(st.trainAcc || 0).toFixed(4), heldSlots: held.length, probeTrainSlots: trL.length,
   probe, gen: text.length ? Object.assign(metrics(text), { sample: text.slice(0, 160) }) : null, nHid: nH, meanActive: +(S.reduce((x, c) => x + c.length, 0) / S.length).toFixed(1),
-  growS: +(tGrow / 1000).toFixed(1), lifeS: +(tLife / 1000).toFixed(1), totalS: +((Date.now() - T0) / 1000).toFixed(1), rssMB: Math.round(process.memoryUsage().rss / 1e6), gu: a.net && a.net.granUtilityStats ? a.net.granUtilityStats() : null, hot: a.net && a.net.gu && a.net.gu.xc ? Array.from(a.net.gu.xc, (n, j) => [j, n]).sort((x, y) => y[1] - x[1]).slice(0, 20).map(([j, n]) => ({ j, n, key: a.net.gu.keyBy[j] })) : null };
+  growS: +(tGrow / 1000).toFixed(1), lifeS: +(tLife / 1000).toFixed(1), totalS: +((Date.now() - T0) / 1000).toFixed(1), rssMB: Math.round(process.memoryUsage().rss / 1e6), dense, abl: process.env.BB_ABL ? Object.assign({ spec: process.env.BB_ABL }, ABL) : undefined, denseCeil: a.net && a.net.denseStats ? a.net.denseStats() : null, gu: a.net && a.net.granUtilityStats ? a.net.granUtilityStats() : null, hot: a.net && a.net.gu && a.net.gu.xc ? Array.from(a.net.gu.xc, (n, j) => [j, n]).sort((x, y) => y[1] - x[1]).slice(0, 20).map(([j, n]) => ({ j, n, key: a.net.gu.keyBy[j] })) : null };
 console.log(JSON.stringify(OUT));

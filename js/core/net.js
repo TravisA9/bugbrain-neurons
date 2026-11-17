@@ -111,7 +111,8 @@ class SpikingNet {
     if (this.p.actNoise > 0 || this.p.actFb > 0 || this.p.outInh > 0) this.initActNoise();
     if (this.p.rcvHomeo > 0) { if (!this.thr) this.thr = Float32Array.from(g.thresh); const r = new Uint8Array(N); for (const k of this.plastic) if (this.w0[k] > 0) r[this.posts[k]] = 1;
       const L = []; for (let i = 0; i < N; i++) if (r[i]) L.push(i); this.rhList = Int32Array.from(L); }
-    if ((this.p.thrAdd !== 0 || this.p.hidHomeo > 0 || this.p.regInh > 0) && !(opts && opts.noNeed)) this.initSparse();   // R67 sparser-activity genes (off by default)
+    if ((this.p.thrAdd !== 0 || this.p.hidHomeo > 0 || this.p.regInh > 0) && !(opts && opts.noNeed)) this.initSparse();
+    if (params.denseCeil > 0 && !(opts && opts.noNeed)) this.initDense();   // R120 dense-cell ceiling (off by default)   // R67 sparser-activity genes (off by default)
     if (NG) this.initNeed();
     this.initFast();
     if (params.fastEngine && !globalThis.__bbSlow && !(opts && opts.noNeed)) this.initFastE();   // R66 event-driven engine (selectable; see initFastE)
@@ -294,6 +295,24 @@ class SpikingNet {
       this.riId = id; this.riN = R; this.riInv = Float64Array.from(sz, n => n ? 100 / n : 0); this.riCnt = new Float64Array(R); this.riP = new Float64Array(R);
       this.riD = p.regInhTau > 0 ? Math.exp(-1 / p.regInhTau) : 0; this.riH0 = h0; this.riH1 = h1; }
   }
+  // R120 P.denseCeil (mV per substep, 0 = off, bit-identical off, no RNG): activity-RELATIVE ceiling homeostasis for the always-on
+  // non-granule hidden cells. Each cell keeps an EMA of its own spike rate (tau 2000 substeps); a cell firing more than denseK (default 4)
+  // x the mean rate of its region's cells (measured once, over the first 4000 substeps, then frozen: a running mean would chase
+  // the cells it silences) gets its threshold raised (at most to twice its grown distance from rest) by denseCeil every substep; otherwise the threshold relaxes back
+  // (denseCeil / 10) toward the grown threshold (never below it). Self-calibrating: no target rate, only "much busier than its
+  // neighbours". Granules and the 'go' / 'tonic' tagged relays (clock / tonic drive, constant by design) are exempt. Learning phase only.
+  initDense() { const g = this.g, h0 = g.nIn, h1 = g.nIn + g.nHid, ti = g.typeInfo || [], ex = new Set(); ti.forEach((t, j) => { if (/ (go|go2|go3|tonic) cells$/.test(t.label)) ex.add(16 + j); });
+    if (!this.thr) this.thr = Float32Array.from(g.thresh); const L = [];
+    const inh = i => { const st = this.start, w0 = this.w0; if (!st || !w0) return false; for (let k = st[i]; k < st[i + 1]; k++) if (w0[k] < 0) return true; return false; };   // inhibitory cells (the brake) are exempt
+    for (let i = h0; i < h1; i++) if (!(g.gran && g.gran[i]) && !ex.has(g.cellType[i]) && !inh(i)) L.push(i);
+    const reg = g.region, rid = Int32Array.from(L, i => reg && reg[i] !== 255 ? reg[i] : 0), R = rid.reduce((m, x) => Math.max(m, x + 1), 1);
+    this.dc = { L: Int32Array.from(L), F: Float32Array.from(L, i => this.thr[i]), e: new Float32Array(L.length), rid, R, mr: new Float64Array(R).fill(1), n: Float64Array.from({ length: R }, (_, r) => rid.filter(x => x === r).length), t: 0, K: params.denseK > 0 ? params.denseK : 4, up: 0 }; }
+  denseStep(sp, mk) { const dc = this.dc; if (!dc || !params.plasticity) return; const { L, F, e, rid, mr } = dc, h = params.denseCeil, thr = this.thr, v = this.v, R0 = V_REST, d = 1 / 2000;
+    if ((++dc.t & 255) === 0 && !dc.frz) { if (dc.t > 4000) dc.frz = 1; const s = new Float64Array(dc.R); for (let q = 0; q < L.length; q++) s[rid[q]] += e[q]; for (let r = 0; r < dc.R; r++) mr[r] = dc.n[r] ? s[r] / dc.n[r] : 1; }
+    const warm = dc.t > 4000, K = dc.K;
+    for (let q = 0; q < L.length; q++) { const i = L[q]; e[q] += d * (sp[i] - e[q]); if (!warm) continue;
+      if (e[q] > K * mr[rid[q]]) { if (thr[i] < F[q] + (F[q] - R0)) { thr[i] += h; dc.up++; } } else if (thr[i] > F[q]) { let x = thr[i] - 0.1 * h; if (x < F[q]) x = F[q]; thr[i] = x; if (mk && x <= (v[i] > R0 ? v[i] : R0)) mk[i] = 1; } } }
+  denseStats() { const dc = this.dc; if (!dc) return null; let n = 0, raised = 0, mx = 0; for (let q = 0; q < dc.L.length; q++) { if (dc.e[q] > dc.K * dc.mr[dc.rid[q]]) n++; const x = this.thr[dc.L[q]] - dc.F[q]; if (x > 0.01) raised++; if (x > mx) mx = x; } return { cells: dc.L.length, over: n, raised, maxRaise: +mx.toFixed(2), ups: dc.up, regMean: Array.from(dc.mr, x => +x.toFixed(4)) }; }
   sparseStep(sp, spk, nSpk, mk) {            // R67: hidden-cell homeostasis + pooled region inhibition (mk: event-engine marks or null)
     const p = this.p, v = this.v, R0 = V_REST;
     if (this.hhList && params.plasticity) { const L = this.hhList, F = this.hhFloor, h = p.hidHomeo, r0 = p.hidRate, thr = this.thr;
@@ -355,6 +374,7 @@ class SpikingNet {
     else for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = posts[k]; syn[j] += ws[k]; mk[j] = 1; } }
     if (this.rhList && params.plasticity) { const L = this.rhList, h = this.p.rcvHomeo, r0 = this.p.rcvRate, thr = this.thr; for (let q = 0; q < L.length; q++) { const i = L[q]; thr[i] += h * (sp[i] - r0); if (thr[i] <= (v[i] > R ? v[i] : R)) mk[i] = 1; } }
     if (this.hhList || this.riId) this.sparseStep(sp, spk, nSpk, this.fDense ? null : mk);
+    if (this.dc) this.denseStep(sp, this.fDense ? null : mk);
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp);   // v20 action noise / feedback (as the exact engine)
       if (!this.fDense) { const A = this.anList, C = this.acList, o0 = this.g.nIn + this.g.nHid; for (let q = 0; q < A.length; q++) mk[A[q]] = 1; for (let q = 0; q < C.length; q++) mk[C[q]] = 1; for (let m = 0; m < this.g.nOut; m++) mk[o0 + m] = 1; } }
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];
@@ -810,7 +830,8 @@ class SpikingNet {
     if (params.granUtility === 2) { this.gu.match = new Float32Array(nG); this.gu.st.matched = 0; if (d.rsv0 >= 0 && d.rsv0 < nG) { this.gu.rsv0 = d.rsv0; this.gu.st.reserve = nG - d.rsv0; if (d.rsv0 > 0 && this.gFast0 == null) this.granLn = d.rsv0; }
       if (params.granExact > 0) this.initGranExact(); }   // granLn: the shared homeostasis loop covers the random granules only   // R119 granUtility 2: utility = exact claw-tuple matches (see granUtilityEvent)
   }
-  granUtilityStats() { return this.gu ? this.gu.st : null; }
+  granUtilityStats() { const gu = this.gu; if (!gu) return null; if (gu.cr && (params.granExactGuard & 2)) { const g = []; for (let s2 = 1; s2 < gu.cr.length; s2++) for (let c = 0; c < gu.cr[s2].length; c++) if (gu.cr[s2][c] > this.guColCap(s2)) g.push(s2 + ':' + c + ':' + gu.cr[s2][c].toFixed(2)); gu.st.guarded = g; gu.st.thr = +(this.guColCap(1)).toFixed(3); gu.st.crMax = gu.cr.map(a => +Math.max(...a).toFixed(3)); }
+    return gu.st; }
   /* R119 granExact (needs granUtility 2): every granule becomes an EXACT coincidence detector of its claw tuple. The grown random claw
    * synapses are silenced and re-registered as claw lists; a granule fires (one injected suprathreshold input) only in a read window in
    * which every one of its claw columns has fired, and granule homeostasis is off (fixed thresholds), so the code is sparse: only the
@@ -821,22 +842,26 @@ class SpikingNet {
     gu.xm = new Uint8Array(nG); gu.xn = new Uint8Array(nG); gu.xf = new Uint8Array(nG); gu.xT = new Int32Array(nG); gu.xTn = 0; gu.xF = new Int32Array(nG); gu.xFn = 0; gu.xc = new Uint32Array(nG); gu.xr = new Float32Array(nG); gu.st.capped = 0;
     gu.cHit = src.map(S => new Uint8Array(S.keys.length)); gu.cT = []; gu.st.exact = 0; gu.cr = src.map(S => new Float32Array(S.keys.length)); gu.ban = new Set();
     for (let j = 0; j < nG; j++) { for (let q = inS[j]; q < inS[j + 1]; q++) ws[inK[q]] = 0;
-      const key = keyBy[j]; if (key == null) continue; const a = key.split(','), n = +a[0]; if (!(n > 0) || a.length !== n + 1 || a.some((x, i) => i > 0 && !/^[0-9]+$/.test(x))) { keyBy[j] = null; continue; }
+      const key = keyBy[j]; if (key == null) continue; if ((params.granExactGuard & 1) && gu.owned.get(key) !== j) { keyBy[j] = null; gu.st.dedup = (gu.st.dedup || 0) + 1; continue; }   // R120 guard: one detector per tuple (grown duplicates start free)
+      const a = key.split(','), n = +a[0]; if (!(n > 0) || a.length !== n + 1 || a.some((x, i) => i > 0 && !/^[0-9]+$/.test(x))) { keyBy[j] = null; continue; }
       gu.xn[j] = n; for (let c = 0; c < n; c++) lists[c][+a[c + 1]].push({ j, w: 0, gen: gu.gen[j], c }); }
     if (this.gFast0 == null) this.granLn = 0;   // fixed thresholds: no granule homeostasis
   }
   guExact(i, gc, s, syn, mk, gB) {   // first hit of claw column gc (source s) in this read window: set the claw bit of every granule listening to it
     const gu = this.gu, ch = gu.cHit[s], c = gc - gu.hOff[s]; if (ch[c] >= 250) return;
-    const hM = params.granExactHits > 1 ? params.granExactHits : 1; if (ch[c] === 0) gu.cT.push(s, c); ch[c]++; if (ch[c] < hM) return; ch[c] = 250; if (params.granExactColCap && gu.cr[s][c] > this.guColCap(s)) return;   // R119 granExactColCap: a claw column active in > colCap of the windows (saturated lag cells) carries no context: it never completes a tuple   // R119 granExactHits: a claw column counts once it has fired hM spikes in this window (stale lag letters fire fewer)
+    const hM = params.granExactHits > 1 ? params.granExactHits : 1; if (ch[c] === 0) gu.cT.push(s, c); ch[c]++; if (ch[c] < hM) return; ch[c] = 250; if ((params.granExactColCap || (params.granExactGuard & 2)) && gu.cr[s][c] > this.guColCap(s)) return;   // R119 granExactColCap: a claw column active in > colCap of the windows (saturated lag cells) carries no context: it never completes a tuple   // R119 granExactHits: a claw column counts once it has fired hM spikes in this window (stale lag letters fire fewer)
     const L = gu.lists[s][c], gen = gu.gen, xm = gu.xm, xn = gu.xn, xf = gu.xf, gOff = gu.gOff, T = this.thr || this.g.thresh;
     for (let r = 0, m = L.length; r < m; r++) { const e = L[r]; if (e.gen !== gen[e.j]) continue; const j = e.j, bit = 1 << e.c;
       if (!(xm[j] & bit)) { if (!xm[j]) gu.xT[gu.xTn++] = j; xm[j] |= bit; }
       if (!xf[j] && xm[j] === (1 << xn[j]) - 1) { xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++; const b = gOff + j; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31); gu.st.exact++; } }
   }
-  guColCap(s) { const v = params.granExactColCap; if (v > 0) return v; const gu = this.gu, a = gu.cr[s]; if (!gu.crM || gu.crE !== gu.st.events) { gu.crE = gu.st.events; gu.crM = gu.cr.map(x => { let t = 0; for (let c = 0; c < x.length; c++) t += x[c]; return t / x.length; }); }
+  guColCap(s) { const v = params.granExactColCap;
+    if (!v) { const gu = this.gu; if (s === 0 || gu.st.events < 3000) return 2; if (gu.crE0 !== gu.st.events) { gu.crE0 = gu.st.events; let m = 0; const a0 = gu.cr[0]; for (let c = 0; c < a0.length; c++) if (a0[c] > m) m = a0[c]; gu.crMax0 = Math.min(0.9, 3 * m); } return gu.crMax0; }
+    // R120 granExactGuard (self-calibrating): a lag column is saturated when it is active in more windows than 3x the most frequent CURRENT letter's column (source 0) - no letter can explain that; capped at 0.9 (small alphabets)
+    if (v > 0) return v; const gu = this.gu, a = gu.cr[s]; if (!gu.crM || gu.crE !== gu.st.events) { gu.crE = gu.st.events; gu.crM = gu.cr.map(x => { let t = 0; for (let c = 0; c < x.length; c++) t += x[c]; return t / x.length; }); }
     return gu.st.events < 3000 ? 2 : Math.max(-v * gu.crM[s], 0.05); }   // < 0 = self-calibrating: |v| x the source's mean column activity (a saturated column vs its alphabet)
   guExactReset() { const gu = this.gu, xm = gu.xm, xf = gu.xf, xT = gu.xT; for (let q = 0; q < gu.xTn; q++) { xm[xT[q]] = 0; xf[xT[q]] = 0; } gu.xTn = 0; gu.xFn = 0;
-    const cT = gu.cT; if (params.granExactColCap) { const cr = gu.cr; for (let s2 = 0; s2 < cr.length; s2++) { const a = cr[s2]; for (let c = 0; c < a.length; c++) a[c] *= 0.999; } for (let q = 0; q < cT.length; q += 2) if (gu.cHit[cT[q]][cT[q + 1]] >= 250) cr[cT[q]][cT[q + 1]] += 0.001; }
+    const cT = gu.cT; if (params.granExactColCap || (params.granExactGuard & 2)) { const cr = gu.cr; for (let s2 = 0; s2 < cr.length; s2++) { const a = cr[s2]; for (let c = 0; c < a.length; c++) a[c] *= 0.999; } for (let q = 0; q < cT.length; q += 2) if (gu.cHit[cT[q]][cT[q + 1]] >= 250) cr[cT[q]][cT[q + 1]] += 0.001; }
     for (let q = 0; q < cT.length; q += 2) gu.cHit[cT[q]][cT[q + 1]] = 0; cT.length = 0; }
   guDrive(spk, nSpk, syn, mk) {
     const gu = this.gu, colOf = gu.colOf, hits = gu.hits, lists = gu.lists, gOff = gu.gOff, gEnd = gOff + gu.nG, use = gu.use, gen = gu.gen, K = gu.K, hOff = gu.hOff, gB = this.gBits;
@@ -871,7 +896,7 @@ class SpikingNet {
     let key = String(n); for (let c = 0; c < n; c++) key += ',' + win[c];
     if (gu.xm) { let kk = String(Km); for (let c = 0; c < Km; c++) kk += ',' + win[c];   // exact mode: recruit the shortest missing window first (3 letters, then 4)
       for (let m = Km; m <= n; m++) { if (m > Km) kk = String(m) + kk.slice(kk.indexOf(',')) + ',' + win[m - 1]; if (!owned.has(kk) && !gu.ban.has(kk)) { key = kk; n = m; break; } }
-      if (gu.ban.has(key)) return; if (params.granExactColCap) for (let c = 0; c < n; c++) if (gu.cr[c][win[c]] > this.guColCap(c)) return; }
+      if (gu.ban.has(key)) return; if (params.granExactColCap || (params.granExactGuard & 2)) for (let c = 0; c < n; c++) if (gu.cr[c][win[c]] > this.guColCap(c)) { st.guardSkip = (st.guardSkip || 0) + 1; return; } }
     if (owned.has(key)) return;
     const cnt = (pending.get(key) || 0) + 1;
     if (cnt < co) { pending.set(key, cnt); return; }
@@ -1092,6 +1117,7 @@ class SpikingNet {
     }
     if (this.rhList && params.plasticity) { const L = this.rhList, h = this.p.rcvHomeo, r0 = this.p.rcvRate, thr = this.thr; for (let q = 0; q < L.length; q++) { const i = L[q]; thr[i] += h * (sp[i] - r0); } }
     if (this.hhList || this.riId) this.sparseStep(sp, spk, nSpk, null);   // R67
+    if (this.dc) this.denseStep(sp, null);
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp); }   // v20 exploration noise of the action channels
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];   // v14: feedforward inhibition of mixing cells
       if (n) { const d = this.mixInhD * n, ml = this.mixList; if (this.mlS) { const S = this.mlS, P = this.mlP, D = this.mlD; for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = S[i], e = S[i + 1]; k < e; k++) syn[P[k]] -= D[k]; } } else for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d;

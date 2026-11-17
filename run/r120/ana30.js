@@ -1,0 +1,8 @@
+const fs = require('fs'), rdj = f => fs.existsSync(f) ? fs.readFileSync(f, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse).filter(o => /30000/.test(o.task)) : [];
+const A = { v47: [...rdj('/workspace/tf/base.jsonl'), ...rdj('/workspace/hr/b30.jsonl')].filter(o => !/granExact/.test(o.variant)), gx: rdj('/workspace/hr/ex30.jsonl'), gd: rdj('/workspace/hr2/' + (process.argv[2] || 'gd30') + '.jsonl') };
+const ks = [2944, 2945, 2946, 2947, 2948, 2949, 2951, 2952, 2953], get = (a, k) => A[a].filter(o => o.k === k).pop();
+const f = (o, m) => !o ? NaN : m === 'held' ? o.heldAcc : m === 'probe' ? o.probe.all.held : m === 'pgran' ? o.probe.granules.held : o.gen[m];
+for (const m of ['held', 'probe', 'pgran', 'distinct4', 'triBits', 'wordValid']) { console.log('## ' + m); const D = { 'gd-v47': [], 'gd-gx': [], 'gx-v47': [] };
+  for (const k of ks) { const v = ['v47', 'gx', 'gd'].map(a => f(get(a, k), m)); D['gd-v47'].push(v[2] - v[0]); D['gd-gx'].push(v[2] - v[1]); D['gx-v47'].push(v[1] - v[0]); console.log(k, v.map(x => x.toFixed(4)).join(' ')); }
+  for (const [n, d] of Object.entries(D)) { const x = d.filter(v => !isNaN(v)), mu = x.reduce((s, v) => s + v, 0) / x.length, sd = Math.sqrt(x.reduce((s, v) => s + (v - mu) ** 2, 0) / (x.length - 1)); console.log(' ', n, 'mean', mu.toFixed(4), 'sd', sd.toFixed(4), 't', (mu / (sd / Math.sqrt(x.length))).toFixed(2), x.filter(v => v > 0).length + '+/' + x.filter(v => v < 0).length + '-'); } }
+for (const k of ks) { const o = get('gd', k); if (o) console.log(k, 'dedup', o.gu.dedup, 'guardSkip', o.gu.guardSkip || 0, 'guarded', JSON.stringify(o.gu.guarded), 'thr', o.gu.thr); }

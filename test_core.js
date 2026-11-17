@@ -339,4 +339,16 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   assert.ok(u.s === z.s && u.spk === z.spk && u.w.every((v, i) => v === z.w[i]), 'granUtility/granExact/granReserve 0 are bit-identical to unset');
   assert.ok(x.st && x.st.exact > 0 && x.st.rewired > 0 && x.s > 1 / x.K, `granExact: exact detectors fire and are recycled (${JSON.stringify(x.st)}, score ${x.s.toFixed(3)})`);
   console.log(`R119 granExact: off bit-identical (score ${u.s.toFixed(3)}), on: ${x.st.exact} exact spikes, ${x.st.rewired} recruits, score ${x.s.toFixed(3)}: ok`); }
+// 7. R120 saturation guard (granExactGuard bit 1 = dedup grown duplicate tuples, bit 2 = self-calibrating lag-column guard) and denseCeil
+{ const run = ex => { const S = require('./js/node_load.js')(); S.params.granN = 256; if (ex) Object.assign(S.params, ex);
+    const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 240 });
+    const E = S.setEnv('seq', envP), D = S.PLANS.deepURSx3.make(), b = S.growCell(D, { seed: 5, spec: E.spec }), a = S.runEpisode(D, 7, b, E);
+    return { s: a.task.score(), spk: a.net.spikeCount, w: Array.from(a.net.ws), st: a.net.granUtilityStats(), K: a.task.K, dc: a.net.denseStats ? a.net.denseStats() : null }; };
+  const same = (u, z) => u.s === z.s && u.spk === z.spk && u.w.every((v, i) => v === z.w[i]);
+  const u = run(), z = run({ granExactGuard: 0, denseCeil: 0 }), X = { granUtility: 2, granExact: 1, granCo: 1 }, x = run(X), x2 = run(Object.assign({ granExactGuard: 2 }, X)), x3 = run(Object.assign({ granExactGuard: 3 }, X)), d = run({ denseCeil: 0.1, denseK: 12 });
+  assert.ok(same(u, z), 'granExactGuard / denseCeil 0 are bit-identical to unset');
+  assert.ok(same(x, x2), 'granExactGuard 2 (column guard) does not trigger on a healthy short run: identical to granExact');
+  assert.ok((x3.st.dedup || 0) >= 0 && x3.st.exact > 0 && x3.s > 1 / x3.K, `granExactGuard 3: runs, exact detectors fire (${x3.st.exact}, dedup ${x3.st.dedup || 0}, score ${x3.s.toFixed(3)})`);
+  assert.ok(d.dc && d.dc.cells > 0 && d.s > 0, 'denseCeil: list built, runs');
+  console.log(`R120 granExactGuard: off bit-identical, guard-only = granExact (no trigger), guard 3 score ${x3.s.toFixed(3)} (dedup ${x3.st.dedup || 0}); denseCeil on: ${d.dc.cells} cells, ${d.dc.raised} raised, score ${d.s.toFixed(3)}: ok`); }
 console.log('ALL OK');
