@@ -118,4 +118,23 @@ function tunedBugGenome(tune) {
 }
 registerPlan('v3h', 'plan v3h (v3 + hunger)', () => tunedBugGenome(),
   'v3 + hunger signals: under-connected motors / sensors attract axons until satisfied (no orphan motors)');
-Object.assign(SpikingArena, { createHandCellGenomeV1, createHandCellGenomeV2, createHandCellGenome, tunedBugGenome });
+
+// SOTA BugBrain foraging plan (bugSOTA):
+//   - F (green-eye pursuit): crosses midline -> opposite wheel (CO.S+4 = +5), directly drives forward speed motor
+//     (CO.S+5 = +5) for enthusiastic pursuit, and excites contralateral M working-memory cells (CO.S+7 = +3.5).
+//   - P (red-eye poison avoidance): strictly ipsilateral (CO.G+0 = -5, never crosses midline), strongly drives
+//     same-side wheel (CO.S+4 = +5) to veer sharply away from red poison/predators, never drives speed motor (CO.S+5 = -5).
+//   - W / Wi (bump & close-wall escape): W drives same-side wheel (CO.S+4 = +4.5); Wi (inhibitory, commissural XSYN)
+//     brakes opposite wheel on bump (CO.T+3 = +5) so the bug pivots cleanly off walls without getting caught.
+//   - M / X (central recurrent working-memory & WTA): M holds post-flash/turn pursuit direction and drives wheel + speed;
+//     X (commissural inhibitory) mediates decisive left/right winner-take-all turning and gyro path integration.
+function createSotaBugGenome(tune) {
+  const d = tunedBugGenome(tune);
+  d.ch = [Object.assign(defaultChannel(), { gFood: 1.5, gPoison: 1.5, gWall: 0.02, tauMod: 12 })];
+  d.sotaBug = true;
+  d.label = 'SOTA BugBrain (enthusiastic pursuit, poison avoidance, anti-stuck wall reflex)';
+  return d;
+}
+registerPlan('bugSOTA', 'SOTA BugBrain (foraging + memory + reflex)', () => createSotaBugGenome(),
+  'state-of-the-art foraging brain: enthusiastic green pursuit, strict ipsilateral red-poison avoidance, commissural bump-escape reflex, recurrent working memory');
+Object.assign(SpikingArena, { createHandCellGenomeV1, createHandCellGenomeV2, createHandCellGenome, tunedBugGenome, createSotaBugGenome });

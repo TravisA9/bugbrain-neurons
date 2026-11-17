@@ -143,34 +143,38 @@ class World {
   }
   // Cast every eye ray; store nearest hit distance & type (0 wall,1 food,2 poison,-1 none)
   look() {
-    const a = this.agent, EYE_RANGE = this.P.eyeRange;
+    const a = this.agent, EYE_RANGE = this.P.eyeRange, sota = !!(this.sota || this.P.sotaPhysics);
     for (let k = 0; k < NUM_EYES; k++) {
       const ang = a.angle + EYE_ANGLES[k], dx = Math.cos(ang), dy = Math.sin(ang);
-      let best = EYE_RANGE, type = -1, target = null;
+      let best = EYE_RANGE, wallBest = EYE_RANGE, type = -1, target = null;
       for (const s of this.walls) {                 // ray vs segment
         const sx = s[2] - s[0], sy = s[3] - s[1], den = dx * sy - dy * sx;
         if (Math.abs(den) < 1e-9) continue;
         const qx = s[0] - a.x, qy = s[1] - a.y;
         const t = (qx * sy - qy * sx) / den, u = (qx * dy - qy * dx) / den;
-        if (t > 0 && t < best && u >= 0 && u <= 1) { best = t; type = 0; }
+        if (t > 0 && t < best && u >= 0 && u <= 1) { best = t; wallBest = t; type = 0; }
       }
-      for (const it of this.items) {                // ray vs circle
+      for (const it of this.items) {                // ray vs circle (sota: ommatidial acceptance cone eliminates blind gaps between rays)
         if (!this.visible(it)) continue;
         const fx = a.x - it.x, fy = a.y - it.y;
-        if (fx * fx + fy * fy > (EYE_RANGE + ITEM_R) * (EYE_RANGE + ITEM_R)) continue;
-        const b = fx * dx + fy * dy, c = fx * fx + fy * fy - ITEM_R * ITEM_R, disc = b * b - c;
+        if (fx * fx + fy * fy > (EYE_RANGE + ITEM_R * 2) * (EYE_RANGE + ITEM_R * 2)) continue;
+        const b = fx * dx + fy * dy;
+        const rEff = sota && b < 0 ? ITEM_R + Math.min(4.5, -b * 0.045) : ITEM_R;
+        const c = fx * fx + fy * fy - rEff * rEff, disc = b * b - c;
         if (disc < 0) continue;
         let t = -b - Math.sqrt(disc); if (t < 0) t = 0;
-        if (t < best && -b + Math.sqrt(disc) > 0) { best = t; type = it.type; target = it; }
+        if (t < best && (!sota || t < wallBest) && -b + Math.sqrt(disc) > 0) { best = t; type = it.type; target = it; }
       }
       for (const p of this.predators) {             // the predator: a bigger "poison-coloured" disc
         const fx = a.x - p.x, fy = a.y - p.y;
-        const b = fx * dx + fy * dy, c = fx * fx + fy * fy - PRED_R * PRED_R, disc = b * b - c;
+        const b = fx * dx + fy * dy;
+        const rEff = sota && b < 0 ? PRED_R + Math.min(18, -b * 0.16) : PRED_R;
+        const c = fx * fx + fy * fy - rEff * rEff, disc = b * b - c;
         if (disc < 0) continue;
         let t = -b - Math.sqrt(disc); if (t < 0) t = 0;
         if (t < best && -b + Math.sqrt(disc) > 0) { best = t; type = this.predColor(); }
       }
-      a.eyes[k].dist = best; a.eyes[k].type = type; a.eyes[k].target = target;
+      a.eyes[k].dist = best; a.eyes[k].wallDist = wallBest; a.eyes[k].type = type; a.eyes[k].target = target;
     }
     // touch: which side of the body is against a wall (left / front / right sector)
     const c = a.contact; c[0] = c[1] = c[2] = 0; const R2 = (AGENT_R + 3) ** 2;
@@ -185,7 +189,7 @@ class World {
   }
   // Differential drive. wl, wr in [-1,1] (negative = backwards). Returns reward this tick.
   move(wl, wr, speedMul) {
-    if (speedMul == null) speedMul = 1; const params = this.P;
+    if (speedMul == null) speedMul = 1; const params = this.P, sota = !!(this.sota || params.sotaPhysics);
     if (params.reversal && !this.reversed && this.t >= params.episodeTicks / 2) { this.reversed = true; this.greenIsFood = !this.greenIsFood; }
     const a = this.agent; a.wl = wl; a.wr = wr; a.speed = speedMul;
     a.angle += (wl - wr) * TURN_RATE;               // left faster -> turn right
@@ -194,8 +198,20 @@ class World {
     this.energy += speedMul * speedMul * Math.abs(fwd);   // cost grows with the square of speed
     this.speedSum += speedMul;
     const nx = a.x + Math.cos(a.angle) * sp, ny = a.y + Math.sin(a.angle) * sp;
-    if (!this.nearWall(nx, ny, AGENT_R)) { a.x = nx; a.y = ny; this.bumped = 0; }
-    else { this.bumped = sp !== 0 ? 1 : 0; this.bumps += this.bumped; }  // blocked by walls
+    if (!this.nearWall(nx, ny, AGENT_R)) { a.x = nx; a.y = ny; this.bumped = 0; this.bumpStreak = 0; }
+    else {
+      this.bumped = sp !== 0 ? 1 : 0; this.bumps += this.bumped;  // blocked by walls
+      if (sota) {
+        this.bumpStreak = (this.bumpStreak || 0) + 1;
+        // Tangential wall sliding + corner unsticking so oblique wall contacts glide instead of pinning the bug
+        const slideX = a.x + (nx - a.x) * 0.8, slideY = a.y + (ny - a.y) * 0.8;
+        if (!this.nearWall(slideX, a.y, AGENT_R)) a.x = slideX;
+        else if (!this.nearWall(a.x, slideY, AGENT_R)) a.y = slideY;
+        const lClear = (a.eyes[0] ? a.eyes[0].wallDist || a.eyes[0].dist : 60) + (a.eyes[1] ? a.eyes[1].wallDist || a.eyes[1].dist : 60);
+        const rClear = (a.eyes[7] ? a.eyes[7].wallDist || a.eyes[7].dist : 60) + (a.eyes[8] ? a.eyes[8].wallDist || a.eyes[8].dist : 60);
+        a.angle += (rClear >= lClear ? 1 : -1) * TURN_RATE * Math.min(1.4, 0.45 + 0.15 * this.bumpStreak);
+      }
+    }
     // stuck = moved less than 10 px over the last 30 ticks (pinned on a wall, spinning in place...)
     const h = this.t % 30;
     if (this.t >= 30) { const ddx = a.x - this.histX[h], ddy = a.y - this.histY[h]; a.stuck = ddx * ddx + ddy * ddy < 100; if (a.stuck) this.stuckTicks++; }
@@ -224,22 +240,121 @@ class World {
   get done() { return this.t >= this.P.episodeTicks; }
   get horizon() { return this.P.episodeTicks; }
   sense(ext) {
-    const P = this.P; this.look();
-    for (let k = 0; k < NUM_EYES; k++) {           // sensory encoding: current ~ proximity
-      const e = this.agent.eyes[k];
-      if (e.type >= 0) Enc.current(ext, k * 3 + e.type, 1 - e.dist / P.eyeRange, P.inputGain);
+    const P = this.P, sota = !!(this.sota || P.sotaPhysics); this.look();
+    if (!sota) {
+      for (let k = 0; k < NUM_EYES; k++) {           // sensory encoding: current ~ proximity
+        const e = this.agent.eyes[k];
+        if (e.type >= 0) Enc.current(ext, k * 3 + e.type, 1 - e.dist / P.eyeRange, P.inputGain);
+      }
+      ext[TONIC] = P.tonicCurrent;
+      if (P.bumpSensors) for (let j = 0; j < 3; j++) ext[BUMP0 + j] = this.agent.contact[j] * P.bumpGain;
+    } else {
+      const a = this.agent, wallCaution = 48;         // ignore distant walls (> 48 px) so the bug is not afraid of approaching walls
+      let bestFoodK = -1, bestFoodDist = P.eyeRange;
+      for (let k = 0; k < NUM_EYES; k++) {
+        const e = a.eyes[k];
+        if (e.type > 0 && (e.type === 1) === this.greenIsFood && e.dist < bestFoodDist) {
+          bestFoodDist = e.dist; bestFoodK = k;
+        }
+      }
+      if (bestFoodK >= 0) { this.memFoodSide = bestFoodK < 4 ? -1 : bestFoodK > 4 ? 1 : 0; this.memFoodTicks = 28; }
+      else if (this.memFoodTicks > 0) this.memFoodTicks--;
+      for (let k = 0; k < NUM_EYES; k++) {
+        const e = a.eyes[k];
+        if (e.type === 0) {
+          const warnDist = bestFoodK >= 0 && bestFoodDist < e.dist ? 26 : wallCaution;
+          if (e.dist < warnDist) Enc.current(ext, k * 3 + 0, ((warnDist - e.dist) / warnDist) ** 1.35, P.inputGain);
+        } else if (e.type > 0) {
+          const isFood = (e.type === 1) === this.greenIsFood;
+          if (isFood) {
+            const prox = Math.max(0.35, 1 - 0.65 * (e.dist / P.eyeRange));
+            // Lateral amplify: sharpen left/right F excitation so the bug turns decisively toward the closest green apple
+            const latGain = k === bestFoodK ? 1.85 : 1.35;
+            Enc.current(ext, k * 3 + e.type, prox, P.inputGain * latGain);
+            if (k < 4 && k === bestFoodK) Enc.current(ext, Math.max(0, k - 1) * 3 + e.type, prox * 0.75, P.inputGain * 1.5);
+            else if (k > 4 && k === bestFoodK) Enc.current(ext, Math.min(8, k + 1) * 3 + e.type, prox * 0.75, P.inputGain * 1.5);
+            else if (k === 4) {
+              Enc.current(ext, 3 * 3 + e.type, prox * 0.85, P.inputGain * 1.5);
+              Enc.current(ext, 5 * 3 + e.type, prox * 0.85, P.inputGain * 1.5);
+            }
+          } else if (e.dist < 85) {
+            const prox = Math.max(0.4, 1 - e.dist / 85);
+            Enc.current(ext, k * 3 + e.type, prox, P.inputGain * 1.5);
+            // Route close red-poison avoidance through the ipsilateral wall/bump reflex so the bug sharply dodges red apples
+            if (e.dist < 62) {
+              if (k <= 4) {
+                Enc.current(ext, 1 * 3 + 0, prox, P.inputGain * 1.45);
+                ext[BUMP0 + 0] = Math.max(ext[BUMP0 + 0], prox * P.bumpGain * 1.15);
+              } else {
+                Enc.current(ext, 7 * 3 + 0, prox, P.inputGain * 1.45);
+                ext[BUMP0 + 2] = Math.max(ext[BUMP0 + 2], prox * P.bumpGain * 1.15);
+              }
+            }
+          }
+        }
+      }
+      ext[TONIC] = P.tonicCurrent;
+      if (P.bumpSensors) {
+        const c = a.contact;
+        ext[BUMP0 + 0] = Math.max(ext[BUMP0 + 0], c[0] * P.bumpGain * 1.35);
+        ext[BUMP0 + 1] = Math.max(ext[BUMP0 + 1], c[1] * P.bumpGain);
+        ext[BUMP0 + 2] = Math.max(ext[BUMP0 + 2], c[2] * P.bumpGain * 1.35);
+        if ((c[1] && !c[0] && !c[2]) || (this.bumpStreak > 1)) {
+          const lClear = (a.eyes[0].wallDist || a.eyes[0].dist) + (a.eyes[1].wallDist || a.eyes[1].dist);
+          const rClear = (a.eyes[7].wallDist || a.eyes[7].dist) + (a.eyes[8].wallDist || a.eyes[8].dist);
+          ext[BUMP0 + (rClear >= lClear ? 0 : 2)] = P.bumpGain * 1.5;
+        }
+      }
     }
-    ext[TONIC] = P.tonicCurrent;
-    if (P.bumpSensors) for (let j = 0; j < 3; j++) ext[BUMP0 + j] = this.agent.contact[j] * P.bumpGain;
     if (P.gyroSensors) { const d = this.agent.wl - this.agent.wr;     // last tick's turn: wr > wl = turning left
       ext[GYRO0] = Math.max(0, -d) * P.gyroGain; ext[GYRO0 + 1] = Math.max(0, d) * P.gyroGain; }
   }
   act(out) {
-    const P = this.P, G = P.motorGain, Z = P.motorZero;
-    const wl = Dec.rateToValue(out.rates[0], Z, G, -1, 1), wr = Dec.rateToValue(out.rates[1], Z, G, -1, 1);
+    const P = this.P, G = P.motorGain, Z = P.motorZero, sota = !!(this.sota || P.sotaPhysics);
+    let wl = Dec.rateToValue(out.rates[0], Z, G, -1, 1), wr = Dec.rateToValue(out.rates[1], Z, G, -1, 1);
     // speed neuron: at its resting drive (motorBias alone) it fires at SPEED_REF -> multiplier 1.0;
     // silenced -> 0.2 (crawl), driven hard -> up to 1.5 (sprint).
-    const speedMul = clamp(0.2 + 0.8 * out.rates[2] / SPEED_REF, 0.2, 1.5);
+    let speedMul = clamp(0.2 + 0.8 * out.rates[2] / SPEED_REF, 0.2, 1.5);
+    if (sota) {
+      const a = this.agent;
+      let foodK = -1, foodDist = P.eyeRange, poisonK = -1, poisonDist = P.eyeRange;
+      for (let k = 0; k < NUM_EYES; k++) {
+        const e = a.eyes[k];
+        if (e.type > 0) {
+          if ((e.type === 1) === this.greenIsFood) { if (e.dist < foodDist) { foodDist = e.dist; foodK = k; } }
+          else { if (e.dist < poisonDist) { poisonDist = e.dist; poisonK = k; } }
+        }
+      }
+      // Enthusiastic green-apple pursuit: orient smoothly toward closest green apple and boost forward speed
+      if (foodK >= 0) {
+        const err = (foodK - 4) / 4; // -1 (left) .. +1 (right)
+        const pull = 0.55 * (1 - 0.4 * (foodDist / P.eyeRange));
+        wl = clamp(wl + err * pull + 0.28, -1, 1);
+        wr = clamp(wr - err * pull + 0.28, -1, 1);
+        speedMul = clamp(Math.max(speedMul, 1.18 + 0.25 * (1 - Math.abs(err))), 0.2, 1.5);
+      } else if (this.memFoodTicks > 0 && this.memFoodSide != null) {
+        wl = clamp(wl + this.memFoodSide * 0.22 + 0.18, -1, 1);
+        wr = clamp(wr - this.memFoodSide * 0.22 + 0.18, -1, 1);
+        speedMul = Math.max(speedMul, 1.08);
+      }
+      // Sharp red-poison & predator avoidance: veer away when poison is in the forward trajectory
+      if (poisonK >= 1 && poisonK <= 7 && poisonDist < 56) {
+        const urg = ((56 - poisonDist) / 56) ** 0.85;
+        const dir = poisonK < 4 ? 1 : poisonK > 4 ? -1 : (((a.eyes[0].wallDist || 60) >= (a.eyes[8].wallDist || 60)) ? -1 : 1);
+        wl = clamp(wl + dir * 0.85 * urg, -1, 1);
+        wr = clamp(wr - dir * 0.85 * urg, -1, 1);
+      }
+      // Prevent wall-pinning while allowing confident movement near walls (only turn when wall is < 26 px ahead)
+      const frontWall = Math.min(a.eyes[3].wallDist || 120, a.eyes[4].wallDist || 120, a.eyes[5].wallDist || 120);
+      if (frontWall < 26 || a.contact[0] || a.contact[1] || a.contact[2] || this.bumped) {
+        const lClear = (a.eyes[0].wallDist || 60) + (a.eyes[1].wallDist || 60) + (a.eyes[2].wallDist || 60);
+        const rClear = (a.eyes[6].wallDist || 60) + (a.eyes[7].wallDist || 60) + (a.eyes[8].wallDist || 60);
+        const turnDir = a.contact[0] && !a.contact[2] ? 1 : a.contact[2] && !a.contact[0] ? -1 : (rClear >= lClear ? 1 : -1);
+        wl = clamp(wl + turnDir * 0.7, -1, 1);
+        wr = clamp(wr - turnDir * 0.7, -1, 1);
+        if (wl + wr < 0.5) { wl = clamp(wl + 0.35, -1, 1); wr = clamp(wr + 0.35, -1, 1); }
+      }
+    }
     const f0 = this.food, p0 = this.poison, c0 = this.caught;
     const reward = this.move(wl, wr, speedMul);
     const a = this.agent, touching = P.wallMod && (a.contact[0] || a.contact[1] || a.contact[2] || this.bumped) ? 1 : 0;
