@@ -67,8 +67,17 @@ function makeSelect(parent, obj, key, label, opts, onChange, first, tip) {
 }
 const PP = () => P;
 for (const [key, name, min, max, step, note] of SLIDERS) sliderSync.push(makeSlider(box('evo'), PP, key, name, min, max, step, note));
-sliderSync.push(makeCheck(box('evo'), PP, 'plasticity', 'Lifetime learning (dopamine-gated plasticity)', null,
+const syncTopPlasticity = () => {
+  const el = $('chkPlasticity');
+  if (el) el.checked = !!P.plasticity;
+  if (watch && watch.net) watch.net.learning = !!(P.plasticity && watch.net.plastic && watch.net.plastic.length > 0 && watch.net.p.lr > 0);
+};
+sliderSync.push(makeCheck(box('evo'), PP, 'plasticity', 'Lifetime learning (dopamine-gated plasticity)', syncTopPlasticity,
   'On: every brain also learns during its lifetime from reward (the default). Off: behaviour comes from the grown wiring alone.'));
+if ($('chkPlasticity')) {
+  $('chkPlasticity').checked = !!P.plasticity;
+  $('chkPlasticity').onchange = () => { P.plasticity = $('chkPlasticity').checked; sliderSync.forEach(f => f()); syncTopPlasticity(); };
+}
 // v23: the environment settings shown per task (the playable variables); every other env param keeps its recommended value
 const ENV_UI = {
   cue: ['delay', 'nTrials', 'mapping'],
