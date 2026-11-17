@@ -88,5 +88,14 @@ check(lab.includes('Not a BugBrain') || lab.includes('not a BugBrain'), 'the lab
 const original = fs.readFileSync(path.join(__dirname, 'original', 'SpikeFoundry-SNN-Design-Lab.html'));
 check(original.length === 61592 && original.includes('SpikeFoundry — SNN Design Lab'), 'the supplied HTML is stored unchanged');
 
+const Comp = require('./composition.js');
+const wm = Comp.workingMemoryLatchMotif(), sb = Comp.surpriseBoundaryMotif(), rf = Comp.roleFillerBindMotif(true);
+check(Comp.verify(wm, [{ seq: [[1, 0, 0], [0, 0, 0], [0, 0, 1], [0, 0, 0]], label: [1] }, { seq: [[1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 0, 0]], label: [0] }]), 'workingMemoryLatchMotif latches on set and clears on reset');
+check(Comp.verify(sb, [{ seq: [[1, 0], [0, 0]], label: [1] }, { seq: [[1, 1], [0, 0]], label: [0] }]), 'surpriseBoundaryMotif fires on unpredicted sensory input only');
+const pRes = SF.simulatePlastic(rf, [[1, 0, 1, 0], [0, 0, 0, 0]], { reward: 1, lr: 0.2, homeo: 0.05 });
+check(pRes.outputs[0] === true && pRes.weights[0] > rf.edges[0].weight && pRes.thresholds[4] > rf.neurons[4].thr, 'simulatePlastic updates plastic synapses and homeostatic thresholds');
+const bg = Comp.compileToBugBrain(wm);
+check(bg.kind === 'direct' && bg.nIn === 3 && bg.nOut === 1 && bg.N === 6, 'compileToBugBrain expands delay lines into relay interneurons in a direct genome');
+
 console.log(n + ' checks');
 if (process.exitCode) process.exit(process.exitCode);

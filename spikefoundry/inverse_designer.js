@@ -124,8 +124,10 @@ function fit(tasks, rng, epochs, demoCount, checkpoint = null, demonstration = b
   for (let epoch = 0; epoch < epochs; epoch++) {
     for (const task of shuffle(tasks, rng)) {
       Throttle.pace();
-      const input = Array(PROBES.length).fill(0);
-      for (const index of shuffle(indices, rng).slice(0, demoCount)) input[index] = demonstration(task.labels[index]);
+      const input = task.input ?? Array(PROBES.length).fill(0);
+      if (!task.input) {
+        for (const index of shuffle(indices, rng).slice(0, demoCount)) input[index] = demonstration(task.labels[index]);
+      }
       const { hidden, embedding, heads } = forward(model, input);
       const gradient = heads.flatMap((head, i) => head.map((p, j) =>
         (p - (task.targets?.[i][j] ?? Number(j === task.genes[i]))) / heads.length));
