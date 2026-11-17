@@ -192,4 +192,32 @@ function createSlowCtx(T) { T = Object.assign({ leak: 0.995, w: 30 }, T); const 
 for (const [n, T] of [['slowCtxA', { leak: 0.98 }], ['slowCtxB', { leak: 0.995 }], ['slowCtxC', { leak: 0.999 }], ['slowCtxB15', { leak: 0.995, w: 15 }], ['slowCtxB0', { leak: 0.995, cls: 0 }], ['slowCtxB1', { leak: 0.995, cls: 1 }], ['slowCtxN0', { leak: 0, cls: 0 }], ['slowCtxA0', { leak: 0.98, cls: 0 }], ['slowCtxC0', { leak: 0.999, cls: 0 }], ['slowCtxA1', { leak: 0.98, cls: 1 }], ['slowCtxC1', { leak: 0.999, cls: 1 }]])
   SA.registerPlan(n, 'R47 I48: deepURSx3 + slow context layer ' + JSON.stringify(T), () => createSlowCtx(T), 'experimental, off by default');
 for (const lk of [0.98, 0.995, 0.999]) for (const wIn of [0.5, 1, 2, 4, 8]) { const T = { leak: lk, wIn, cls: 0 }; SA.registerPlan('slowS' + String(lk).slice(2) + 'w' + wIn, 'R47 I48: slow context layer ' + JSON.stringify(T), () => createSlowCtx(T), 'experimental, off by default'); }
-SA.createSlowCtx = createSlowCtx; })();
+SA.createSlowCtx = createSlowCtx;
+
+/* TWO-TIMESCALE HIERARCHICAL CHUNKING (deepURSx3_chunk / createChunkUR):
+ * Adds a higher-order cortical region ('chunk context') alongside the fast character-level delay chain (M1..M5).
+ * Instead of shifting on every go2 phase clock tick, 'chunk context' receives its shift gate via a 'chunkGate' tract
+ * that fires only on explicit delimiter symbols (sym 0 = space) or when cortical prediction surprise exceeds thr.
+ * Its sustained columns project via claws to both cortex mixing cells and cerebellar granule cells. */
+function createChunkUR(T) {
+  T = Object.assign({ thr: 0.75, delimSym: 0, maxLag: 8, w: 0, chunkFrac: 0.2 }, T);
+  const d = SA.PLANS.deepURSx3.make();
+  const g = SA.createPredict2Plan(Object.assign({}, SA.PREDICT3_CTX));
+  g.sc = Object.assign({}, g.sc, SA.DEMAND_SC);
+  const k = d.regions.length;
+  d.regions.push({
+    name: 'chunk context', color: '#ffd166', g,
+    area: Object.assign({}, d.regions[1].area, { o: -20 }),
+    inputs: [{ tract: 'prev', like: 'symbol', tag: 1 }, { tract: 'cgate', like: 'go2', tag: 3 }, { env: 'go3', tag: 8 }, { env: 'tonic' }]
+  });
+  d.tracts.push(
+    { name: 'M2 -> chunk context', from: { region: 1, cls: 2 }, map: 'topo', to: { region: k, tract: 'prev' }, salt: 131 },
+    { name: 'cortex -> chunk gate', from: { region: 0, cls: 2 }, map: 'chunkGate', thr: T.thr, delimSym: T.delimSym, maxLag: T.maxLag, to: { region: k, tract: 'cgate', w: 50 }, salt: 132 }
+  );
+  if (T.w > 0) d.tracts.push({ name: 'chunk context -> mixing', from: { region: k, cls: 2 }, map: 'claw', to: { region: 0, mix: true, w: T.w }, salt: 133 });
+  d.gran = Object.assign({}, d.gran, { chunkFrac: T.chunkFrac });
+  d.label += ' + two-timescale event-gated chunk context';
+  return d;
+}
+SA.registerPlan('deepURSx3_chunk', 'Two-timescale hierarchical chunking: deepURSx3 + event-gated chunk context region (shifts on delimiters or cortical surprise, feeding cortex mixing and granule claws)', () => createChunkUR(), 'hierarchical two-timescale sequence prediction');
+SA.createChunkUR = createChunkUR; })();

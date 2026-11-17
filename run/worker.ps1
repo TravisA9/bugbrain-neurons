@@ -1,7 +1,7 @@
 # run/worker.ps1 (R61): stable launcher for an always-on BugBrain worker on Windows. Never needs editing:
 # install-windows.ps1 copies it to %USERPROFILE%\.bugbrain\worker.ps1; all logic lives in run/supervisor.js (updated from git).
 # Loop: fetch + reset the checkout to origin/neuro/distributed-queue (local edits stashed), run the supervisor,
-# restart at once on exit 10 (update), wait for a new token on exit 3, back off on crashes.
+# restart at once on exit 10 (update), wait for a new token on exit 3, back off on crashes; every other exit relaunches too.
 $ErrorActionPreference = 'Continue'
 $ST = if ($env:BB_STATE_DIR) { $env:BB_STATE_DIR } else { Join-Path $env:USERPROFILE '.bugbrain' }
 $DIR = if ($env:BB_HOME) { $env:BB_HOME } else { Join-Path $env:USERPROFILE 'bugbrain-neurons' }
@@ -10,7 +10,9 @@ $REPO = if ($env:BB_REPO) { $env:BB_REPO } else { 'https://github.com/TravisA9/b
 $LOG = Join-Path $ST 'worker.log'
 New-Item -ItemType Directory -Force -Path $ST | Out-Null
 $mutex = New-Object System.Threading.Mutex($false, 'Global\BugBrainWorker')
-if (-not $mutex.WaitOne(0)) { exit 0 }   # already running
+if (-not $mutex.WaitOne(0)) { exit 0 }   # already running (the repeating task trigger lands here while a worker runs)
+# Holding the mutex means no worker runs, so a stop file is left over from one that died; it would stop the new one at once.
+Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $ST 'dq.stop')
 $env:GIT_TERMINAL_PROMPT = '0'
 function Log($m) { [IO.File]::AppendAllText($LOG, ("[{0}] [launcher] {1}`r`n" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $m)) }
 # R61b: PowerShell names are case-insensitive, so a helper called "Git" called itself (endless recursion, worker never started).
@@ -33,8 +35,11 @@ while ($true) {
   $rt = (Get-Command node -ErrorAction SilentlyContinue); if (-not $rt) { $rt = (Get-Command bun -ErrorAction SilentlyContinue) }
   if (-not $rt) { Log 'node (or bun) not found; retry in 5 min'; Start-Sleep 300; continue }
   $t0 = Get-Date
-  & $rt.Source run/supervisor.js 2>&1 | ToLog   # one encoding in the log (*>> wrote UTF-16 in PowerShell 5.1)
-  $code = $LASTEXITCODE; $ran = ((Get-Date) - $t0).TotalSeconds
+  # Any failure here (log file locked, node killed) is logged and the loop goes on: the launcher relaunches on every exit.
+  try { & $rt.Source run/supervisor.js 2>&1 | ToLog; $code = $LASTEXITCODE }   # one encoding in the log (*>> wrote UTF-16 in PowerShell 5.1)
+  catch { $code = -1; try { Log ("supervisor run failed: " + $_.Exception.Message) } catch {} }
+  if ($null -eq $code) { $code = -1 }
+  $ran = ((Get-Date) - $t0).TotalSeconds
   if ($code -eq 10) { $fails = 0; continue }
   if ($code -eq 3) {
     Log "token refused: put a valid token in $ST\token; checking again every minute"

@@ -67,17 +67,26 @@ function evaluateGenome(gc, tasks, plan) {
   const t0 = Date.now(), g = deserialize(gc).g, out = { tasks: [], brain: null, ticks: 0 };
   for (const t of tasks) {
     try {
-      const env = setupTask(t), scores = [], st = {}; let n = 0;
+      const current = setupTask(t);
+      const env = t.garden ? { ...current, def: { ...current.def,
+        create: (seed, params) => new SA.bug.World(seed, params, SA.bug.GARDEN) } } : current;
+      const scores = [], st = {}; let n = 0, spikes = 0;
+      const countSpikes = plan.countSpikes ? net => {
+        for (const spike of net.spiked) spikes += spike;
+      } : undefined;
+      let ticks = 0;
       for (let k = 0; k < plan.G; k++) {
         const brain = plan.growSeeds[k] == null ? SA.phenotype(g, env.spec) : SA.growCell(g, { seed: plan.growSeeds[k], spec: env.spec });
         if (!out.brain) { let s = 0; const sp = brain.sp; if (sp) { for (let i = 0; i < sp.w.length; i++) if (sp.w[i] !== 0) s++; } else for (let i = 0; i < brain.W.length; i++) if (brain.W[i] !== 0) s++; out.brain = { hidden: brain.nHid, synapses: s }; }   // R100: synapse count from the sparse list (reading brain.W built the dense N x N matrix, ~6 bytes x N^2: Out of memory at 32000 granule cells)
         let acc = 0;
         for (let e = 0; e < plan.A; e++) {
           const a = new SA.Agent(g, plan.arenaSeeds[k * plan.A + e], brain, env);
+          const observer = plan.observe ? plan.observe(a.task) : null;
           if (plan.dropDense && e === plan.A - 1 && plan.growSeeds[k] != null) dropDense(brain);   // R65: the dense growth matrices are not needed once the net is built
-          while (!a.done) { a.tick(); out.ticks++; }
+          while (!a.done) { a.tick(countSpikes); if (observer) observer.tick(); out.ticks++; ticks++; }
           acc += a.fitness; n++;
           const x = a.task.stats ? a.task.stats() : {};
+          if (observer) Object.assign(x, observer.stats());
           if (a.net && a.net.granDemandStats) { const z = a.net.granDemandStats(); if (z) { x.granAsg = z.assigned; x.granRec = z.recycled; x.granPend = z.pending; } }   // R102: demand-grown claw counts (absent when P.granDemand is off)
           if (x.silent != null && x.trials) x.silentFrac = x.silent / x.trials;
           for (const q in x) if (typeof x[q] === 'number' && isFinite(x[q])) st[q] = (st[q] || 0) + x[q];
@@ -85,6 +94,7 @@ function evaluateGenome(gc, tasks, plan) {
         scores.push(acc / plan.A);
       }
       for (const q in st) st[q] /= n;
+      if (countSpikes) st.spikesPerTick = spikes / ticks;
       const rs = SA.robustScore(scores);
       out.tasks.push({ fit: rs.fit, mean: rs.mean, sd: rs.sd, min: rs.min, stats: st, scores });   // (scores: per-growth fitness, used by racing)
     } catch (e) { out.tasks.push({ fit: 0, mean: 0, sd: 0, min: 0, stats: {}, error: String(e && e.message || e) }); out.error = String(e && e.message || e); }

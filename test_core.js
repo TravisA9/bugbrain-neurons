@@ -1,4 +1,4 @@
-// Headless test of the engine + all environments (about 45 s unloaded):  node test_core.js
+// Headless test of the engine + all environments (about 2 min unloaded):  node test_core.js
 // Loads the same js/ files as index.html (js/node_load.js). Also checks v6 compatibility against legacy/v6/index_v6.html.
 'use strict';
 const fs = require('fs'), vm = require('vm'), path = require('path'), assert = require('assert');
@@ -6,23 +6,30 @@ const load = require('./js/node_load.js');
 let SA = load(), P = SA.params;
 console.log('environments: ' + SA.envList().map(e => e.id).join(', ') + ' | plans: ' + Object.keys(SA.PLANS).join(', '));
 // 1. every environment: grow its default plan, run an episode, 2 generations, session + brain round trips
+// deepURSx3 envs (seqchoice, chunk) grow a 1600+ neuron brain; use pop=1 + granN=0 to keep the loop under 2 min.
+// seq and bandit use pop=2 with a small episode cap. All other envs keep the original pop=6 settings.
 for (const env of SA.envList()) {
   SA = load(); P = SA.params; const E = SA.setEnv(env.id);
-  const quick = { bug: { episodeTicks: 300 }, cue: { nTrials: 4 }, recall: { nTrials: 4 }, text: { nChars: 60 } }[env.id] || {};
+  const quick = { bug: { episodeTicks: 300 }, cue: { nTrials: 4 }, recall: { nTrials: 4 }, text: { nChars: 60 },
+                  seq: { nSyms: 20 }, seqchoice: { nSyms: 20 }, chunk: { nSyms: 20 }, bandit: { nTrials: 8 } }[env.id] || {};
   SA.setEnv(env.id, quick);
+  const deepEnv = SA.planFor('env').id === 'deepURSx3';
+  if (deepEnv) P.granN = 0;
+  const popSize = deepEnv ? 1 : ['seq', 'bandit'].includes(env.id) ? 2 : 6;
+  const valArenas = deepEnv ? 1 : 2, valGrowths = deepEnv ? 1 : 2, growths = deepEnv ? 1 : 2;
   const d = SA.planFor('env').make(), b = SA.phenotype(d, SA.currentEnv().spec);
   assert.strictEqual(b.nIn, SA.currentEnv().spec.inputs.length); assert.strictEqual(b.nOut, SA.currentEnv().spec.outputs.length);
   const a = SA.runEpisode(d, 5, null, SA.currentEnv(), 20000); assert.ok(a.done, env.id + ' episode did not end');
-  Object.assign(P, { popSize: 6, valArenas: 2, valGrowths: 2, growths: 2, episodes: 1 });
+  Object.assign(P, { popSize, valArenas, valGrowths, growths, episodes: 1 });
   const e = new SA.Evolution(1); e.runGeneration(); e.runGeneration();
   const s = JSON.stringify(e.toJSON()); const SB = load(); const e2 = SB.Evolution.fromJSON(s, true);
-  assert.strictEqual(SB.params.env, env.id); assert.strictEqual(e2.pop.length, 6); assert.deepStrictEqual(Object.assign({}, SB.envParams[env.id]), Object.assign({}, SA.envParams[env.id]));
+  assert.strictEqual(SB.params.env, env.id); assert.strictEqual(e2.pop.length, popSize); assert.deepStrictEqual(Object.assign({}, SB.envParams[env.id]), Object.assign({}, SA.envParams[env.id]));
   const j = SA.genomeToJSON(e.champion.genome, { label: 'test' }, SA.currentEnv()); const r = SB.brainFromFile(JSON.stringify(j));
   assert.strictEqual(r.env, env.id); assert.strictEqual(SA.countSynapses(SB.phenotype(r.genome, SB.setEnv(r.env, r.envParams).spec)), SA.countSynapses(SA.phenotype(e.champion.genome, SA.currentEnv().spec)));
   const gj = SA.genomeFromJSON(j); assert.strictEqual(SA.countSynapses(gj), SA.countSynapses(SA.phenotype(e.champion.genome, SA.currentEnv().spec)));   // generic neurons+edges loader
   const st = a.task.stats ? a.task.stats() : {};
-  console.log(`${env.id.padEnd(7)} plan ${SA.planFor('env').id}: ${b.nIn} in / ${b.nHid} hidden / ${b.nOut} out, ${SA.countSynapses(b)} synapses; episode ${a.t} ticks score ${a.task.score().toFixed(2)} ` +
-    `${JSON.stringify(st)}; 2 generations, champion ${e.champion.val.toFixed(2)}; session + brain round trips ok`);
+  console.log(`${env.id.padEnd(9)} plan ${SA.planFor('env').id}: ${b.nIn} in / ${b.nHid} hidden / ${b.nOut} out, ${SA.countSynapses(b)} synapses; episode ${a.t} ticks score ${a.task.score().toFixed(2)} ` +
+    `${JSON.stringify(st)}; 2 generations pop=${popSize}, champion ${e.champion.val.toFixed(2)}; session + brain round trips ok`);
 }
 // 2. legacy rejection
 SA = load();
@@ -241,7 +248,7 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   console.log('v40 deepURSx3 = v39 + cortex preNorm 55: ok'); }
 { const S = require('./js/node_load.js')(), E = S.setEnv('seq', S.recommendedEnvParams('seq', { source: 'order3', K: 8 }, ['source'])), D = S.PLANS.deepURSx3.make(), D1 = JSON.parse(JSON.stringify(D));
   D1.regions.forEach(R => Object.assign(R.g.sc, { sizeF: 1, sizeNorm: 1, divReach: 1, divRep: 1 }));   // R71 size-scaling genes at their neutral values
-  const h = b => { let s = 0, n = 0; for (const k of Object.keys(b)) { const v = b[k]; if (ArrayBuffer.isView(v)) for (let i = 0; i < v.length; i++) { s = (s * 31 + (v[i] * 1000 | 0)) | 0; n++; } } return s + ':' + n + ':' + b.N; };
+  const h = b => { let s = 0, n = 0; for (const k of Object.keys(b)) { if (b.sp && (k === 'W' || k === 'P' || k === 'C')) continue; const v = b[k]; if (ArrayBuffer.isView(v)) for (let i = 0; i < v.length; i++) { s = (s * 31 + (v[i] * 1000 | 0)) | 0; n++; } } if (b.sp) for (const v of [b.sp.pre, b.sp.post, b.sp.w, b.sp.p, b.sp.c]) for (let i = 0; i < v.length; i++) { s = (s * 31 + (v[i] * 1000 | 0)) | 0; n++; } return s + ':' + n + ':' + b.N; };
   assert.ok(D.regions.every(R => !(R.g.sc.sizeF > 1) && !(R.g.sc.sizeNorm > 1) && !(R.g.sc.divReach > 1) && !(R.g.sc.divRep > 1)) && !(S.params.fanRef > 0) && !(S.params.fanRefR > 0) && h(S.growCell(D, { seed: 5, spec: E.spec })) === h(S.growCell(D1, { seed: 5, spec: E.spec })), 'R71 size genes (sizeF, sizeNorm, divReach, divRep, fanRef, fanRefR) off by default and neutral when 1');
   console.log('R71 size-scaling genes off by default, neutral values bit-identical: ok'); }
 { const S = require('./js/node_load.js')(); assert.ok(!(S.params.postCap > 0) && !(S.params.postCapRel > 0) && !(S.params.allMax > 0) && !(S.params.postN > 0) && !(S.params.trophic > 0), 'R72 / R73 genes (postCap, postCapRel, postN, allMax, trophic) off by default');
@@ -269,4 +276,49 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const bR = S.growCell(plan(), { seed: 9, spec: E.spec }), aR = S.runEpisode(plan(), 9, bR, E), stR = aR.net.granDemandStats();
   assert.ok(stR.assigned <= 3 && stR.recycled > 0 && stR.pending <= 48, 'full pool recycles the least-used granule and the pattern table stays capped: ' + JSON.stringify(stR));
   console.log(`R102 granDemand (off by default): born ${st.assigned}/${st.cap} (fired ${use}), recycle ${stR.recycled} at cap ${stR.cap}: ok`); }
+// 1. I106 Bit-identical sparse granule forward & lazy threshold homeostasis (granFast = 1 vs granFast = 0)
+{ const S = require('./js/node_load.js')();
+  assert.ok(S.params.granFast === 1 && S.params.granUtility === 0 && S.params.scaleInvariant === 0, 'granFast=1 by default; granUtility and scaleInvariant opt-in (0)');
+  const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 160 });
+  const E = S.setEnv('seq', envP); S.params.granN = 512;
+  const D = S.PLANS.deepURSx3.make(), bFast = S.growCell(D, { seed: 5, spec: E.spec }), bSlow = S.growCell(D, { seed: 5, spec: E.spec });
+  S.params.granFast = 1; const aFast = S.runEpisode(D, 7, bFast, E); aFast.net.syncState();
+  S.params.granFast = 0; const aSlow = S.runEpisode(D, 7, bSlow, E); aSlow.net.syncState();
+  const sameW = aFast.net.ws.length === aSlow.net.ws.length && aFast.net.ws.every((w, i) => w === aSlow.net.ws[i]);
+  const sameTh = aFast.net.thr.length === aSlow.net.thr.length && aFast.net.thr.every((t, i) => t === aSlow.net.thr[i]);
+  assert.ok(aFast.task.score() === aSlow.task.score() && aFast.net.spikeCount === aSlow.net.spikeCount && sameW && sameTh,
+    `I106 granFast=1 is 100% bit-identical to granFast=0 (score ${aFast.task.score()} vs ${aSlow.task.score()}, spikes ${aFast.net.spikeCount} vs ${aSlow.net.spikeCount}, sameW=${sameW}, sameTh=${sameTh})`);
+  console.log('I106 bit-identical event-driven granule forward & lazy threshold homeostasis: ok'); }
+// 2. Unified scale-invariant developmental & plasticity equations (params.scaleInvariant = 1)
+{ const S = require('./js/node_load.js')(); S.params.scaleInvariant = 1; S.params.granN = 128;
+  const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'order3', K: 8 }, ['source']), { nSyms: 160 });
+  const E = S.setEnv('seq', envP);
+  const mkSized = f => { const D = S.PLANS.deepURSx3.make(); D.regions.forEach(R => { R.g.sc.sizeF = f; }); return D; };
+  const D1 = mkSized(1), D2 = mkSized(2), D4 = mkSized(4);
+  const b1 = S.growCell(D1, { seed: 5, spec: E.spec }), b2 = S.growCell(D2, { seed: 5, spec: E.spec }), b4 = S.growCell(D4, { seed: 5, spec: E.spec });
+  const a1 = S.runEpisode(D1, 7, b1, E), a2 = S.runEpisode(D2, 7, b2, E), a4 = S.runEpisode(D4, 7, b4, E);
+  const s1 = a1.task.score(), s2 = a2.task.score(), s4 = a4.task.score();
+  assert.ok(b2.N > b1.N * 1.4 && b4.N > b2.N * 1.4 && a2.net.lrF8 && a4.net.lrF8 && s1 > 0.15 && s2 > 0.15 && s4 > 0.15,
+    `scaleInvariant=1 scales tissue and keeps learning stable across 1x (${b1.N} cells, ${s1.toFixed(3)}), 2x (${b2.N} cells, ${s2.toFixed(3)}), 4x (${b4.N} cells, ${s4.toFixed(3)})`);
+  console.log(`scaleInvariant=1 across 1x/2x/4x (N=${b1.N}/${b2.N}/${b4.N}, score=${s1.toFixed(3)}/${s2.toFixed(3)}/${s4.toFixed(3)}): ok`); }
+// 3. Utility-pruned structural plasticity for granule claws (params.granUtility = 1)
+{ const S = require('./js/node_load.js')(); S.params.granUtility = 1; S.params.granN = 32; S.params.granHold = 4; S.params.granCo = 1;
+  const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 240 });
+  const E = S.setEnv('seq', envP), D = S.PLANS.deepURSx3.make();
+  const bU = S.growCell(D, { seed: 5, spec: E.spec });
+  const clawIn = b => { const sp = b.sp, g = b.gran; let n = 0; for (let k = 0; k < sp.pre.length; k++) if (g[sp.post[k]] && !g[sp.pre[k]]) n++; return n; };
+  assert.ok(bU.granSrc && clawIn(bU) > 0 && !Object.keys(bU).includes('granSrc'), 'granUtility starts with grown random claws (no empty-pool starvation) and non-enumerable granSrc');
+  const aU = S.runEpisode(D, 7, bU, E), stU = aU.net.granUtilityStats();
+  assert.ok(stU && stU.rewired > 0 && stU.events > 50, 'granUtility rewires low-utility mature claws onto active lag tuples: ' + JSON.stringify(stU));
+  console.log(`granUtility=1 (grown claws=${clawIn(bU)}, rewired=${stU.rewired}/${stU.cap} over ${stU.events} events): ok`); }
+// 4. Two-timescale hierarchical event-gated chunking (deepURSx3_chunk)
+{ const S = require('./js/node_load.js')(); S.params.granN = 128;
+  const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 200 });
+  const E = S.setEnv('seq', envP), D = S.PLANS.deepURSx3_chunk.make();
+  const bC = S.growCell(D, { seed: 5, spec: E.spec });
+  assert.ok(bC.regions.some(r => r.name === 'chunk context') && bC.chunkGates && bC.chunkGates.length === 1, 'deepURSx3_chunk grows chunk context region and chunkGates tract');
+  const aC = S.runEpisode(D, 7, bC, E), sC = aC.task.score();
+  assert.ok(aC.net.cg && aC.net.cg.shifts > 0 && aC.net.cg.shifts < aC.net.tickNo && sC > 0.15,
+    `deepURSx3_chunk gates chunk shifts selectively (${aC.net.cg.shifts} shifts in ${aC.net.tickNo} ticks, score=${sC.toFixed(3)})`);
+  console.log(`deepURSx3_chunk two-timescale gating (${aC.net.cg.shifts} shifts, score ${sC.toFixed(3)}): ok`); }
 console.log('ALL OK');

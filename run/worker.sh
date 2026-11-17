@@ -10,6 +10,8 @@ mkdir -p "$ST"; chmod 700 "$ST" 2>/dev/null
 op="$(cat "$ST/worker.pid" 2>/dev/null)"
 if [ -n "$op" ] && [ "$op" != $$ ] && kill -0 "$op" 2>/dev/null && { [ ! -r "/proc/$op/cmdline" ] || grep -q worker.sh "/proc/$op/cmdline"; }; then echo "worker already running (pid $(cat "$ST/worker.pid"))"; exit 0; fi
 echo $$ > "$ST/worker.pid"
+# No other launcher runs (checked above), so a stop file is left over from a worker that died; it would stop this one at once.
+rm -f "$ST/dq.stop"
 log() { echo "[$(date '+%F %T')] [launcher] $*" >> "$LOG"; }
 RT="$(command -v node || command -v bun)"; export GIT_TERMINAL_PROMPT=0
 fails=0

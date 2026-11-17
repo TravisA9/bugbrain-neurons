@@ -213,7 +213,7 @@ function growCell(d, opts) {
   //   instead of the raw gene. A region whose gene is < 1 (striatum 0.5) moves 1 site per step at 1x; without this its scaled speed stays
   //   round(0.5 x sqrt f) = 1 site on a sqrt(f) x finer grid up to f ~ 5, so axons reach 1 / sqrt(f) as far and the output-projecting cells lose
   //   all afferents (afferent survival kills them: seqchoice outputs orphaned at striatum sizeF >= 1.5, R76).
-  if (sc.sizeF > 1) { const q = Math.sqrt(sc.sizeF); sc.grid = (sc.grid > 24.5 ? sc.grid : CG) * q; sc.maxCells *= sc.sizeF; sc.coneSpeed = params.sizeCone > 0 ? Math.ceil(Math.max(1, Math.round(sc.coneSpeed || 1)) * q - 1e-9) : (sc.coneSpeed || 1) * q; sc.axonLen *= q; }
+  if (sc.sizeF > 1) { const q = Math.sqrt(sc.sizeF), si = params.scaleInvariant > 0 || sc.scaleInvariant > 0; sc.grid = (sc.grid > 24.5 ? sc.grid : CG) * q; sc.maxCells *= sc.sizeF; sc.coneSpeed = (params.sizeCone > 0 || si) ? Math.ceil(Math.max(1, Math.round(sc.coneSpeed || 1)) * q - 1e-9) : (sc.coneSpeed || 1) * q; sc.axonLen *= q; if (si) { sc.trophMin /= sc.sizeF; sc.divRep = Math.max(sc.divRep || 1, Math.ceil(Math.log2(sc.sizeF))); sc.divReach = Math.max(sc.divReach || 1, Math.ceil(q - 1e-9)); } }
   const GS = sc.grid > 24.5 ? Math.round(sc.grid) : CG, h = 2 / GS, NS = GS * GS, H = CH_H;
   const sx = i => -1 + (i + 0.5) * h, cidx = v => clamp(Math.floor((v + 1) / h), 0, GS - 1);
   // fixed morphogen fields (analytic steady state of diffusion + decay from the sources)

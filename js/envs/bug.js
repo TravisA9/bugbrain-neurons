@@ -52,12 +52,20 @@ function makeWalls() {
   return w;
 }
 const WALLS = makeWalls();
+const GARDEN = { width: 1120, height: 700, itemCount: 66, walls: [
+  [10, 10, 1110, 10], [1110, 10, 1110, 690], [1110, 690, 10, 690], [10, 690, 10, 10],
+  [225, 10, 225, 205], [225, 300, 225, 520], [225, 610, 225, 690],
+  [535, 10, 535, 115], [535, 210, 535, 415], [535, 520, 535, 690],
+  [865, 10, 865, 240], [865, 340, 865, 540], [865, 625, 865, 690],
+  [10, 335, 135, 335], [315, 160, 455, 160], [325, 545, 535, 545],
+  [535, 285, 705, 285], [705, 285, 705, 420], [625, 535, 780, 535],
+  [955, 180, 1110, 180], [865, 465, 1015, 465], [1015, 465, 1015, 545],
+] };
 function pointSegDist2(px, py, s) {
   const [x1, y1, x2, y2] = s, dx = x2 - x1, dy = y2 - y1;
   let t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy); t = clamp(t, 0, 1);
   const ex = x1 + t * dx - px, ey = y1 + t * dy - py; return ex * ex + ey * ey;
 }
-function nearWall(x, y, r) { for (const s of WALLS) if (pointSegDist2(x, y, s) < r * r) return true; return false; }
 
 // The 'hard' task.
 const HARD = { nItems: 30, foodFrac: 0.4, itemSpeed: 0.6, nPredators: 1, predSpeed: 1.6, predRange: 200, caughtCost: 2 };
@@ -65,10 +73,12 @@ const PRED_R = 9;
 // The 'flash' memory task: food flashes visible for FLASH.on ticks every FLASH.period ticks (own phase).
 const FLASH = { nItems: 30, foodFrac: 0.5, on: 8, period: 100 };
 class World {
-  constructor(seed, P) {
+  constructor(seed, P, layout) {
     this.P = P = P || envParams.bug; const params = P;
     this.rng = mulberry32(seed >>> 0);
-    this.walls = WALLS; this.items = [];
+    this.width = layout ? layout.width : WORLD_W;
+    this.height = layout ? layout.height : WORLD_H;
+    this.walls = layout ? layout.walls : WALLS; this.items = [];
     this.hard = params.task === 'hard'; this.flash = params.task === 'flash' || params.task === 'flashvis'; this.flashHide = params.task === 'flash';
     this.t = 0; this.food = 0; this.poison = 0; this.caught = 0; this.bumps = 0; this.bumped = 0; this.energy = 0; this.speedSum = 0;
     this.contactTicks = 0; this.stuckTicks = 0;
@@ -81,16 +91,22 @@ class World {
     this.poisonLog = [];
     this.rewardLog = [];               // [tick, reward] (generic learning read-out)
     this.predators = [];
-    for (let i = 0; i < (this.hard ? HARD.nItems : this.flash ? FLASH.nItems : params.nItems); i++) this.items.push(this.spawnItem());
+    const itemCount = layout ? layout.itemCount : this.hard ? HARD.nItems : this.flash ? FLASH.nItems : params.nItems;
+    for (let i = 0; i < itemCount; i++) this.items.push(this.spawnItem());
     const a = this.agent = { x: 0, y: 0, angle: 0, wl: 0, wr: 0, speed: 1, eyes: [], contact: [0, 0, 0], stuck: false };
-    do { a.x = 20 + this.rng() * (WORLD_W - 40); a.y = 20 + this.rng() * (WORLD_H - 40); } while (nearWall(a.x, a.y, 25));
+    do { a.x = 20 + this.rng() * (this.width - 40); a.y = 20 + this.rng() * (this.height - 40); } while (this.nearWall(a.x, a.y, 25));
     a.angle = this.rng() * Math.PI * 2;
     if (this.hard) for (let i = 0; i < HARD.nPredators; i++) this.predators.push(this.spawnPredator());
     for (let k = 0; k < NUM_EYES; k++) a.eyes.push({ dist: params.eyeRange, type: -1 });
   }
+  nearWall(x, y, r) {
+    const distance = r * r;
+    for (const wall of this.walls) if (pointSegDist2(x, y, wall) < distance) return true;
+    return false;
+  }
   spawnItem() {
     let x, y; const r = this.rng;
-    do { x = 20 + r() * (WORLD_W - 40); y = 20 + r() * (WORLD_H - 40); } while (nearWall(x, y, ITEM_R + 8));
+    do { x = 20 + r() * (this.width - 40); y = 20 + r() * (this.height - 40); } while (this.nearWall(x, y, ITEM_R + 8));
     if (this.flash) { const food = r() < FLASH.foodFrac; return { x, y, type: food === this.greenIsFood ? 1 : 2, phase: (r() * FLASH.period) | 0 }; }
     if (!this.hard) return { x, y, type: r() < 0.5 ? 1 : 2 };   // type = colour: 1 = green, 2 = red
     const food = r() < HARD.foodFrac, ang = r() * Math.PI * 2, v = HARD.itemSpeed * (0.5 + r());
@@ -99,8 +115,8 @@ class World {
   // Predator: placed far from the bug; it looks like poison (the colour that is currently bad).
   spawnPredator() {
     let x, y, n = 0; const r = this.rng, a = this.agent;
-    do { x = 20 + r() * (WORLD_W - 40); y = 20 + r() * (WORLD_H - 40); n++; }
-    while ((nearWall(x, y, PRED_R + 4) || (x - a.x) ** 2 + (y - a.y) ** 2 < 250 * 250) && n < 200);
+    do { x = 20 + r() * (this.width - 40); y = 20 + r() * (this.height - 40); n++; }
+    while ((this.nearWall(x, y, PRED_R + 4) || (x - a.x) ** 2 + (y - a.y) ** 2 < 250 * 250) && n < 200);
     return { x, y, angle: r() * Math.PI * 2 };
   }
   predColor() { return this.greenIsFood ? 2 : 1; }
@@ -110,7 +126,7 @@ class World {
   stepThings() {
     for (const it of this.items) {
       const nx = it.x + it.vx, ny = it.y + it.vy;
-      if (nearWall(nx, ny, ITEM_R + 2)) { const ang = this.rng() * Math.PI * 2, v = Math.hypot(it.vx, it.vy); it.vx = Math.cos(ang) * v; it.vy = Math.sin(ang) * v; }
+      if (this.nearWall(nx, ny, ITEM_R + 2)) { const ang = this.rng() * Math.PI * 2, v = Math.hypot(it.vx, it.vy); it.vx = Math.cos(ang) * v; it.vy = Math.sin(ang) * v; }
       else { it.x = nx; it.y = ny; }
     }
     const a = this.agent;
@@ -122,7 +138,7 @@ class World {
       } else p.angle += (this.rng() - 0.5) * 0.3;                 // wander
       const sp = d2 < HARD.predRange * HARD.predRange ? HARD.predSpeed : HARD.predSpeed * 0.5;
       const nx = p.x + Math.cos(p.angle) * sp, ny = p.y + Math.sin(p.angle) * sp;
-      if (nearWall(nx, ny, PRED_R)) p.angle += Math.PI * (0.5 + this.rng()); else { p.x = nx; p.y = ny; }
+      if (this.nearWall(nx, ny, PRED_R)) p.angle += Math.PI * (0.5 + this.rng()); else { p.x = nx; p.y = ny; }
     }
   }
   // Cast every eye ray; store nearest hit distance & type (0 wall,1 food,2 poison,-1 none)
@@ -130,7 +146,7 @@ class World {
     const a = this.agent, EYE_RANGE = this.P.eyeRange;
     for (let k = 0; k < NUM_EYES; k++) {
       const ang = a.angle + EYE_ANGLES[k], dx = Math.cos(ang), dy = Math.sin(ang);
-      let best = EYE_RANGE, type = -1;
+      let best = EYE_RANGE, type = -1, target = null;
       for (const s of this.walls) {                 // ray vs segment
         const sx = s[2] - s[0], sy = s[3] - s[1], den = dx * sy - dy * sx;
         if (Math.abs(den) < 1e-9) continue;
@@ -145,7 +161,7 @@ class World {
         const b = fx * dx + fy * dy, c = fx * fx + fy * fy - ITEM_R * ITEM_R, disc = b * b - c;
         if (disc < 0) continue;
         let t = -b - Math.sqrt(disc); if (t < 0) t = 0;
-        if (t < best && -b + Math.sqrt(disc) > 0) { best = t; type = it.type; }
+        if (t < best && -b + Math.sqrt(disc) > 0) { best = t; type = it.type; target = it; }
       }
       for (const p of this.predators) {             // the predator: a bigger "poison-coloured" disc
         const fx = a.x - p.x, fy = a.y - p.y;
@@ -154,7 +170,7 @@ class World {
         let t = -b - Math.sqrt(disc); if (t < 0) t = 0;
         if (t < best && -b + Math.sqrt(disc) > 0) { best = t; type = this.predColor(); }
       }
-      a.eyes[k].dist = best; a.eyes[k].type = type;
+      a.eyes[k].dist = best; a.eyes[k].type = type; a.eyes[k].target = target;
     }
     // touch: which side of the body is against a wall (left / front / right sector)
     const c = a.contact; c[0] = c[1] = c[2] = 0; const R2 = (AGENT_R + 3) ** 2;
@@ -178,7 +194,7 @@ class World {
     this.energy += speedMul * speedMul * Math.abs(fwd);   // cost grows with the square of speed
     this.speedSum += speedMul;
     const nx = a.x + Math.cos(a.angle) * sp, ny = a.y + Math.sin(a.angle) * sp;
-    if (!nearWall(nx, ny, AGENT_R)) { a.x = nx; a.y = ny; this.bumped = 0; }
+    if (!this.nearWall(nx, ny, AGENT_R)) { a.x = nx; a.y = ny; this.bumped = 0; }
     else { this.bumped = sp !== 0 ? 1 : 0; this.bumps += this.bumped; }  // blocked by walls
     // stuck = moved less than 10 px over the last 30 ticks (pinned on a wall, spinning in place...)
     const h = this.t % 30;
@@ -246,7 +262,7 @@ function worldScore(w) { return w.food - w.poison - HARD.caughtCost * w.caught; 
 
 function drawWorld(w, c, opts) {
   const a = w.agent;
-  c.clearRect(0, 0, WORLD_W, WORLD_H); c.fillStyle = '#f4f1ea'; c.fillRect(0, 0, WORLD_W, WORLD_H);
+  c.clearRect(0, 0, w.width, w.height); c.fillStyle = '#f4f1ea'; c.fillRect(0, 0, w.width, w.height);
   c.lineWidth = 2; c.strokeStyle = '#222'; c.beginPath();
   for (const s of w.walls) { c.moveTo(s[0], s[1]); c.lineTo(s[2], s[3]); } c.stroke();
   for (const it of w.items) {
@@ -272,6 +288,7 @@ function drawWorld(w, c, opts) {
   c.beginPath(); c.arc(a.x, a.y, AGENT_R, 0, 7); c.fill(); c.stroke();
   c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(a.x + Math.cos(a.angle) * 14, a.y + Math.sin(a.angle) * 14); c.stroke();
   if (a.contact[0] || a.contact[1] || a.contact[2]) { c.strokeStyle = '#ff9f43'; c.lineWidth = 3; c.beginPath(); c.arc(a.x, a.y, AGENT_R + 4, 0, 7); c.stroke(); }
+  if (opts.showStats === false) return;
   c.fillStyle = 'rgba(244,241,234,.85)'; c.fillRect(14, 14, 560, 40); c.fillStyle = '#222'; c.font = '13px system-ui';
   c.fillText(`food ${w.food}   poison ${w.poison}` + (w.hard ? `   caught ${w.caught}` : '') + `   t ${w.t}/${w.P.episodeTicks}   ` +
              (w.greenIsFood ? 'GREEN = food' : 'RED = food (colours swapped)'), 18, 30);
@@ -301,6 +318,6 @@ registerEnv({
   io: bugIO,
   create(seed, P) { return new World(seed, P); },
 });
-SpikingArena.bug = { World, worldScore, WORLD_W, WORLD_H, AGENT_R, ITEM_R, PRED_R, HARD, FLASH, WALLS, EYE_ANGLES, NUM_EYES, SENSE_TYPES, TONIC, BUMP0, GYRO0, N_INPUT,
+SpikingArena.bug = { World, worldScore, WORLD_W, WORLD_H, AGENT_R, ITEM_R, PRED_R, HARD, FLASH, WALLS, GARDEN, EYE_ANGLES, NUM_EYES, SENSE_TYPES, TONIC, BUMP0, GYRO0, N_INPUT,
   BUMP_NAMES, GYRO_NAMES, MOTOR_NAMES, FIXED_CLASSES, TAG_NAMES, SPEED_REF, bugIO };
 })();
