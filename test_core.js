@@ -321,4 +321,13 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   assert.ok(aC.net.cg && aC.net.cg.shifts > 0 && aC.net.cg.shifts < aC.net.tickNo && sC > 0.15,
     `deepURSx3_chunk gates chunk shifts selectively (${aC.net.cg.shifts} shifts in ${aC.net.tickNo} ticks, score=${sC.toFixed(3)})`);
   console.log(`deepURSx3_chunk two-timescale gating (${aC.net.cg.shifts} shifts, score ${sC.toFixed(3)}): ok`); }
+// 5. R118 three-factor readout (params.readoutRule = 'threeFactor'; unset = the R83b NLMS, bit-identical, no extra RNG)
+{ const run = rr => { const S = require('./js/node_load.js')(); S.params.granN = 128; if (rr !== undefined) S.params.readoutRule = rr;
+    const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'order3', K: 8 }, ['source']), { nSyms: 240 });
+    const E = S.setEnv('seq', envP), D = S.PLANS.deepURSx3.make(), b = S.growCell(D, { seed: 5, spec: E.spec }), a = S.runEpisode(D, 7, b, E);
+    return { s: a.task.score(), spk: a.net.spikeCount, w: Array.from(a.net.ws), K: a.task.K }; };
+  const u = run(), z = run(0), f = run('threeFactor');
+  assert.ok(u.s === z.s && u.spk === z.spk && u.w.length === z.w.length && u.w.every((x, i) => x === z.w[i]), 'readoutRule=0 is bit-identical to unset');
+  assert.ok(f.w.some((x, i) => x !== u.w[i]) && f.s > 1 / f.K + 0.3, `readoutRule=threeFactor changes the readout weights and learns (score ${f.s.toFixed(3)}, chance ${(1 / f.K).toFixed(3)})`);
+  console.log(`R118 readoutRule: off bit-identical (score ${u.s.toFixed(3)}, ${u.spk} spikes), threeFactor learns (score ${f.s.toFixed(3)}): ok`); }
 console.log('ALL OK');

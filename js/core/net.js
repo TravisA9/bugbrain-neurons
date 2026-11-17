@@ -646,7 +646,8 @@ class SpikingNet {
       Bs = B.subarray(0, nB); Bs.sort(); off.fill(0); for (let b = 0; b < nB; b++) off[Q[Bs[b]] + 1]++; for (let q = 0; q < nL; q++) off[q + 1] += off[q];
     }
     let dPs = 0, yTgt = 0;
-    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
+    if (params.readoutRule === 1 || params.readoutRule === 'threeFactor') { yTgt = this.gran3F(L, K, ws, pr, wMax, lr, ref, D, U, gA, gG, oS, nO, Bs, off, W, pos, Uw); dPs = this.g3dPs; }
+    else for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
       for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], x = gA[pr[K[r]]] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += x * x; }
       const i = L[q], y = Math.min(1, d / ref), er = t - y, g = xx > 0 ? lr * ref / xx : 0;
       if (t) yTgt = y;
@@ -657,6 +658,30 @@ class SpikingNet {
     for (let a = 0; a < nA; a++) gA[aL[a]] = 0; this.gActN = 0; if (gG) for (let q = 0; q < nO; q++) gA[o0 + q] = 0;
     this.lastSurprise = 1 - yTgt;
     if (this.gu) this.granUtilityEvent(yTgt);
+  }
+  /* R118 readoutRule 'threeFactor' (global params.readoutRule = 'threeFactor' or 1; unset / 0 = the R83b NLMS above, bit-identical, no RNG):
+   * a three-factor local rule on the same granule -> output synapses, same teaching events and read window (sparse path only).
+   *   eligibility  e_jq = x_j (presynaptic read-window activity) for the LTP term, x_j x p_q (pre x post) for the LTD term
+   *   third factor M_q  = t_q - p_q: teacher-forced per-output error, p_q = softmax_q(rf3Beta x d_q / granRef) over the outputs' granule drive
+   *                       (the shared normalisation = one global inhibitory-pool signal; t_q = climbing fibre of the arriving symbol)
+   *   dw = g_q x x_j x M_q - lr x rf3Decay x w,  g_q = lr x granRef / sum_j x_j^2 (bounded NLMS step), w in [0, wMax]; decay on visited synapses only
+   * i.e. the local form of the cross-entropy gradient (competitive across outputs) instead of independent clipped LMS targets.
+   * Params: rf3Beta (default 8; tuned at book10k on held-out growth k=2950: beta 4 0.371, 8 0.392, off 0.386), rf3Decay (default 0.001), rf3Lr (step multiplier, default 1). */
+  gran3F(L, K, ws, pr, wMax, lr, ref, D, U, gA, gG, oS, nO, Bs, off, W, pos, Uw) {
+    const nL = L.length, dq = this.g3d || (this.g3d = new Float64Array(nL)), xq = this.g3x || (this.g3x = new Float64Array(nL)), pq = this.g3p || (this.g3p = new Float64Array(nL));
+    const beta = params.rf3Beta > 0 ? params.rf3Beta : 8, lam = params.rf3Decay != null ? +params.rf3Decay : 0.001, lm = params.rf3Lr > 0 ? params.rf3Lr : 1, l = lr * lm;
+    let mx = -Infinity, yTgt = 0, dPs = 0;
+    for (let q = 0; q < nL; q++) { let d = 0, xx = 0; for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], x = gA[pr[K[r]]] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += x * x; }
+      dq[q] = d; xq[q] = xx; const z = beta * d / ref; if (z > mx) mx = z; }
+    let sm = 0; for (let q = 0; q < nL; q++) { pq[q] = Math.exp(beta * dq[q] / ref - mx); sm += pq[q]; } for (let q = 0; q < nL; q++) pq[q] /= sm;
+    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0, i = L[q], y = Math.min(1, dq[q] / ref), M = t - pq[q], xx = xq[q], g = xx > 0 ? l * ref / xx : 0, dec = l * lam;
+      if (t) yTgt = y;
+      if (gG) { const n = oS > 0 ? gA[i] / oS : 1 / nO, cc = n + this.gPsi * (y - n); dPs += (t - cc) * (y - n); }
+      if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; }
+      for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], x = gA[pr[k]] / W;
+        if (U) { const u = U[r] + g * x * M - dec * U[r]; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; }
+        const w = ws[k] + g * x * M - dec * ws[k]; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
+    this.g3dPs = dPs; return yTgt;
   }
   // R85 granIso (global param, 0/undefined = off): with granTgt 1, the granule -> output synapses do not make the output cells
   // 'receivers' of the prediction-cell machinery (teacher AHP, trust, receiver pool): the output cells keep their v40 dynamics
