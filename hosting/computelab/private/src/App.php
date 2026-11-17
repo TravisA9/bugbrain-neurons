@@ -1093,7 +1093,13 @@ final class App
 
     public function claim(array $worker, int $slot = 0, bool $sequenceExperiment = false, int $studyVersion = 1, bool $inverseExperiment = false, bool $inverseGallery = false, bool $inverseShared = false, bool $inverseComposition = false, bool $inverseSequence = false, bool $arenaPilot = false, bool $arenaTargeted = false, bool $arenaMemory = false): ?array
     {
-        $this->replenishJobs();
+        try {
+            $this->replenishJobs();
+        } catch (InvalidArgumentException $e) {
+            if (!$this->isDuplicateSeedMessage($e->getMessage())) {
+                throw $e;
+            }
+        }
         $this->expireLeases();
         $fresh = $this->db->prepare('SELECT paused, resource_mode FROM workers WHERE id = ?');
         $fresh->execute([$worker['id']]);
@@ -1574,8 +1580,9 @@ final class App
         if ($priority < 0 || $priority > 5) {
             throw new InvalidArgumentException('Job priority must be from 0 to 5.');
         }
-        if ($seed < 1 || $seed > 1000000) {
-            throw new InvalidArgumentException('Seed must be from 1 to 1000000.');
+        $seedMax = $this->seedExtendedMax();
+        if ($seed < 1 || $seed > $seedMax) {
+            throw new InvalidArgumentException('Seed must be from 1 to ' . $seedMax . '.');
         }
         $title = trim($title);
         if ($title === '' || strlen($title) > 120) {
@@ -2097,19 +2104,87 @@ final class App
         return $row ? ['completedRounds' => (int) $row['completed_rounds'], 'payload' => $row['payload']] : null;
     }
 
-    /** A seed no other job has used, so two jobs never repeat the same search. */
-    public function freshSeed(): int
+    public function isDuplicateSeedMessage(string $message): bool
     {
-        $check = $this->db->prepare('SELECT 1 FROM jobs WHERE seed = ? LIMIT 1');
-        $seed = random_int(1, 1000000);
-        for ($try = 0; $try < 40; $try++) {
+        return (bool) preg_match('/already uses that seed\.?$/', $message);
+    }
+
+    private function seedPrimaryMax(): int
+    {
+        $max = (int) ($this->config['seed_max'] ?? 1000000);
+        if ($max < 1) {
+            $max = 1000000;
+        }
+        return min(2000000000, $max);
+    }
+
+    private function seedExtendedMax(): int
+    {
+        $max = (int) ($this->config['seed_max_extended'] ?? 2000000000);
+        $primary = $this->seedPrimaryMax();
+        if ($max < $primary) {
+            $max = $primary;
+        }
+        return min(2000000000, $max);
+    }
+
+    /** Try random unused seeds in [$lo, $hi]. Returns null if none were free in $tries attempts. */
+    private function tryFreshSeed($check, int $lo, int $hi, int $tries): ?int
+    {
+        if ($hi < $lo) {
+            return null;
+        }
+        for ($try = 0; $try < $tries; $try++) {
+            $seed = random_int($lo, $hi);
             $check->execute([$seed]);
             if (!$check->fetch()) {
                 return $seed;
             }
-            $seed = random_int(1, 1000000);
         }
-        return $seed;
+        return null;
+    }
+
+    /**
+     * Pick a seed no other job has used. If 1..seed_max is packed, use the extended range
+     * so auto-create can keep going (about a million completed jobs fills the default range).
+     */
+    public function freshSeed(): int
+    {
+        $primary = $this->seedPrimaryMax();
+        $extended = $this->seedExtendedMax();
+        $check = $this->db->prepare('SELECT 1 FROM jobs WHERE seed = ? LIMIT 1');
+        $seed = $this->tryFreshSeed($check, 1, $primary, 40);
+        if ($seed !== null) {
+            return $seed;
+        }
+        if ($extended > $primary) {
+            $seed = $this->tryFreshSeed($check, $primary + 1, $extended, 40);
+            if ($seed !== null) {
+                return $seed;
+            }
+            $seed = $this->tryFreshSeed($check, 1, $extended, 40);
+            if ($seed !== null) {
+                return $seed;
+            }
+        }
+        return random_int(1, $extended);
+    }
+
+    /** Create an auto job, retrying if a concurrent refill already took the seed. */
+    private function createJobWithFreshSeed(string $templateId, float $priority, callable $make): ?string
+    {
+        for ($try = 0; $try < 24; $try++) {
+            $seed = $this->freshSeed();
+            $built = $make($seed);
+            try {
+                return $this->createJob($templateId, $built[0], $priority, $seed, $built[1]);
+            } catch (InvalidArgumentException $e) {
+                if (!$this->isDuplicateSeedMessage($e->getMessage())) {
+                    throw $e;
+                }
+            }
+        }
+        return null;
     }
 
     /** Short canonical hashes of designs the library already has for a task, so a job can skip re-evaluating them. */
@@ -4374,13 +4449,18 @@ final class App
             if ($inverse && !empty($this->config['inverse_composition']) && $queuedAll < $globalCap
                 && !$this->db->query("SELECT 1 FROM jobs WHERE template_id = 'sf-inverse-experiment'
                     AND status IN ('queued','leased') AND spec_json LIKE '%inverseComposition%' LIMIT 1")->fetchColumn()) {
-                $seed = $this->freshSeed();
-                $sequence = !empty($this->config['inverse_sequence']) && $seed % 2 === 0;
-                $this->createJob($template, $sequence ? 'Two-stream sequence pilot' : 'Three-hidden-neuron pilot', 0.7, $seed,
-                    ['inverseGallery' => true, 'inverseComposition' => true, 'inverseSequence' => $sequence]);
-                $queued++;
-                $queuedAll++;
-                $made++;
+                $created = $this->createJobWithFreshSeed($template, 0.7, function ($seed) {
+                    $sequence = !empty($this->config['inverse_sequence']) && $seed % 2 === 0;
+                    return [
+                        $sequence ? 'Two-stream sequence pilot' : 'Three-hidden-neuron pilot',
+                        ['inverseGallery' => true, 'inverseComposition' => true, 'inverseSequence' => $sequence],
+                    ];
+                });
+                if ($created !== null) {
+                    $queued++;
+                    $queuedAll++;
+                    $made++;
+                }
             }
             $guard = 0;
             while ($queued < $low && $queued < $cap && $queuedAll < $globalCap && $guard < 20) {
@@ -4390,7 +4470,6 @@ final class App
                 }
                 // Random and checked against every earlier job: the old time-based seed repeated when two requests
                 // refilled the queue in the same second, so two computers ran the very same search.
-                $seed = $this->freshSeed();
                 $evals = max(0, (int) ($project['evals_per_job'] ?? 0));
                 $seconds = (int) ($project['target_seconds'] ?? 0) > 0 ? (int) $project['target_seconds'] : 180;
                 $keepTop = (int) ($project['keep_top'] ?? 0) > 0 ? (int) $project['keep_top'] : 50;
@@ -4417,7 +4496,12 @@ final class App
                         $hashes = [];
                     }
                 }
-                $this->createJob($template, 'Auto ' . $task, 0.6, $seed, $extra);
+                $created = $this->createJobWithFreshSeed($template, 0.6, function ($seed) use ($task, $extra) {
+                    return ['Auto ' . $task, $extra];
+                });
+                if ($created === null) {
+                    break;
+                }
                 $queued++;
                 $queuedAll++;
                 $made++;

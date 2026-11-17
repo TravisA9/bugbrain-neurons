@@ -48,9 +48,13 @@ function nextBackoff(current) {
   if (now < BACKOFF_START_MS) return BACKOFF_START_MS;
   return Math.min(BACKOFF_CAP_MS, now * 2);
 }
+function isSeedConflict(err) {
+  return !!(err && err.status === 400 && /already uses that seed/i.test(String(err.message || '')));
+}
 function isRetryable(err) {
   if (!err) return false;
   if (err.network) return true;
+  if (isSeedConflict(err)) return true;
   return err.status === 429 || (typeof err.status === 'number' && err.status >= 500 && err.status <= 599);
 }
 function decideRetry(err, delay) {
@@ -747,4 +751,4 @@ async function main() {
   }
 }
 if (require.main === module) main().catch(e => { console.error(e.message || e); process.exit(1); });
-module.exports = { clearStaleStop, withDigest, timeoutSignal, resourcePlan, samePlan, settingsFrom, applyPriority, osPriority, logicalCores, writeThrottle, ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isRetryable, decideRetry, stopChild, readProgress, shouldWait, packUploadBatches, uploadDesigns, cleanupJobDir, cleanupStaleCoordDirs, retryAfterMs };
+module.exports = { clearStaleStop, withDigest, timeoutSignal, resourcePlan, samePlan, settingsFrom, applyPriority, osPriority, logicalCores, writeThrottle, ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isSeedConflict, isRetryable, decideRetry, stopChild, readProgress, shouldWait, packUploadBatches, uploadDesigns, cleanupJobDir, cleanupStaleCoordDirs, retryAfterMs };

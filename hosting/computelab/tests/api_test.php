@@ -833,7 +833,7 @@ $stored = $sd['db']->query('SELECT COUNT(DISTINCT seed) FROM jobs WHERE seed IS 
 $spec = json_decode((string) $sd['db']->query('SELECT spec_json FROM jobs LIMIT 1')->fetchColumn(), true);
 check(count(array_unique($seeds)) === 60 && (int) $stored >= 60 && count($spec['knownHashes'] ?? []) === 1, 'each new job gets a seed no other job used, and carries the short hashes of designs the library already has');
 $src = (string) file_get_contents(dirname(__DIR__) . '/private/src/App.php');
-check(strpos($src, "\$project['id'] . '|' . \$this->now() . '|' . \$made") === false && strpos($src, '$seed = $this->freshSeed();') !== false, 'auto jobs no longer derive their seed from the clock second');
+check(strpos($src, "\$project['id'] . '|' . \$this->now() . '|' . \$made") === false && strpos($src, 'createJobWithFreshSeed') !== false && strpos($src, 'function freshSeed') !== false, 'auto jobs no longer derive their seed from the clock second');
 
 /* Discoveries cache: built once per TTL, a stale copy is served while another request rebuilds it. */
 $builds = 0;
@@ -1162,6 +1162,65 @@ check($submitShared($sharedA, $win, $twoTasks, $originalPasses) === 'promoted'
 $any = $app->enroll('any-task-worker', ['*', 'spikefoundry'], 1, true);
 check(json_decode($app->workerByToken($any['token'])['allowed_json'], true) === ['*'],
     'enrollment preserves consent for future projects');
+
+$seedLab = labWith([
+    'inverse_gallery' => true,
+    'pause_legacy_spikefoundry_search' => true,
+    'seed_max' => 5,
+    'seed_max_extended' => 20,
+]);
+for ($s = 1; $s <= 5; $s++) {
+    $seedLab['app']->createJob('sf-inverse-experiment', 'Taken ' . $s, 1, $s, ['inverseGallery' => true]);
+}
+try {
+    $seedLab['app']->createJob('sf-inverse-experiment', 'Duplicate', 1, 3, ['inverseGallery' => true]);
+    $dupSeedRefused = false;
+} catch (InvalidArgumentException $e) {
+    $dupSeedRefused = $seedLab['app']->isDuplicateSeedMessage($e->getMessage());
+}
+$fresh = $seedLab['app']->freshSeed();
+check($dupSeedRefused && $fresh >= 6 && $fresh <= 20, 'a packed primary seed range still rejects a duplicate and freshSeed moves into the extended range');
+
+$seedPc = $seedLab['app']->enroll('seed-pc', ['spikefoundry'], 2, true);
+$seedLab['db']->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$seedLab['clock']->t, $seedPc['workerId']]);
+$seedLab['db']->exec("UPDATE projects SET auto_jobs = 1, low_water = 2, queue_cap = 8 WHERE id = 'spikefoundry'");
+$seedLab['db']->exec("UPDATE jobs SET status = 'done'");
+$seedLab['clock']->t = gmdate('c', strtotime($seedLab['clock']->t) + 30);
+$seedClaimThrew = false;
+$seedClaimed = null;
+try {
+    $seedClaimed = $seedLab['app']->claim($seedLab['app']->workerByToken($seedPc['token']), 0, false, 1, true, true);
+} catch (Exception $e) {
+    $seedClaimThrew = true;
+}
+$autoSeed = is_array($seedClaimed) ? (int) ($seedClaimed['spec']['seed'] ?? 0) : 0;
+check(!$seedClaimThrew && $seedClaimed && strpos((string) $seedClaimed['id'], 'sf-inverse-experiment-') === 0 && $autoSeed >= 6 && $autoSeed <= 20,
+    'claim still creates an inverse job after every primary seed is already used');
+
+$fullLab = labWith([
+    'inverse_gallery' => true,
+    'pause_legacy_spikefoundry_search' => true,
+    'seed_max' => 3,
+    'seed_max_extended' => 3,
+]);
+for ($s = 1; $s <= 3; $s++) {
+    $fullLab['app']->createJob('sf-inverse-experiment', 'Full ' . $s, 1, $s, ['inverseGallery' => true]);
+}
+$fullPc = $fullLab['app']->enroll('full-seed-pc', ['spikefoundry'], 2, true);
+$fullLab['db']->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$fullLab['clock']->t, $fullPc['workerId']]);
+$fullLab['db']->exec("UPDATE projects SET auto_jobs = 1, low_water = 2, queue_cap = 8 WHERE id = 'spikefoundry'");
+$fullLab['db']->exec("UPDATE jobs SET status = 'done'");
+$fullLab['clock']->t = gmdate('c', strtotime($fullLab['clock']->t) + 30);
+$fullThrew = false;
+$fullClaimed = null;
+try {
+    $fullClaimed = $fullLab['app']->claim($fullLab['app']->workerByToken($fullPc['token']), 0, false, 1, true, true);
+} catch (Exception $e) {
+    $fullThrew = true;
+}
+$left = (int) $fullLab['db']->query("SELECT COUNT(*) FROM jobs WHERE status = 'queued'")->fetchColumn();
+check(!$fullThrew && $fullClaimed === null && $left === 0,
+    'when every seed is taken, claim returns nothing instead of failing');
 
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

@@ -49,6 +49,17 @@ const job = {
     'a rate-limited coordinator response retries after the server delay');
   check(coord.decideRetry(denied, 1000).action === 'stop', 'a revoked token stops the worker');
   check(coord.decideRetry(bad, 1000).action === 'crash', 'a protocol mismatch is not retried as a transient error');
+  const usedSeed = new Error('An inverse experiment already uses that seed.');
+  usedSeed.status = 400;
+  const usedSeq = new Error('A sequence experiment already uses that seed.');
+  usedSeq.status = 400;
+  const badRequest = new Error('Slot must be from 0 to 63.');
+  badRequest.status = 400;
+  check(coord.isSeedConflict(usedSeed) && coord.isRetryable(usedSeed)
+    && coord.decideRetry(usedSeed, 0).action === 'retry' && coord.decideRetry(usedSeed, 0).delay === 1000,
+    'a duplicate inverse seed on claim is retried, not a crash');
+  check(coord.decideRetry(usedSeq, 1000).action === 'retry', 'a duplicate sequence seed is retried the same way');
+  check(coord.decideRetry(badRequest, 1000).action === 'crash', 'other HTTP 400 errors are still not retried as transient');
   let delay = 0;
   for (let i = 0; i < 20; i++) delay = coord.nextBackoff(delay);
   check(delay === 5 * 60 * 1000, 'backoff caps at about 5 minutes');
