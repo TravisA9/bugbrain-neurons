@@ -213,20 +213,34 @@ function growCell(d, opts) {
   //   instead of the raw gene. A region whose gene is < 1 (striatum 0.5) moves 1 site per step at 1x; without this its scaled speed stays
   //   round(0.5 x sqrt f) = 1 site on a sqrt(f) x finer grid up to f ~ 5, so axons reach 1 / sqrt(f) as far and the output-projecting cells lose
   //   all afferents (afferent survival kills them: seqchoice outputs orphaned at striatum sizeF >= 1.5, R76).
-  if (sc.sizeF > 1) { const q = Math.sqrt(sc.sizeF), si = params.scaleInvariant > 0 || sc.scaleInvariant > 0; sc.grid = (sc.grid > 24.5 ? sc.grid : CG) * q; sc.maxCells *= sc.sizeF; sc.coneSpeed = (params.sizeCone > 0 || si) ? Math.ceil(Math.max(1, Math.round(sc.coneSpeed || 1)) * q - 1e-9) : (sc.coneSpeed || 1) * q; sc.axonLen *= q; if (si) { sc.trophMin /= sc.sizeF; sc.divRep = Math.max(sc.divRep || 1, Math.ceil(Math.log2(sc.sizeF))); sc.divReach = Math.max(sc.divReach || 1, Math.ceil(q - 1e-9)); } }
+  // R123 relGrowth (global P.relGrowth = 1; 0 / unset = off, bit-identical, no RNG change): RELATIVE growth rules for sized regions (sizeF > 1):
+  //   (a) trophic survival: a neuron below the absolute sc.trophMin still survives if it gets >= relGrowthAlpha (0.5) x its FAIR share
+  //       sum_t supply_t / n_t (n_t = inputs of target t), so equal-weight afferents of a big target no longer all die at once (R123 sweep: the 2.5x-4x collapse);
+  //   (b) while the grid is < 1.5 x the 1x grid (sizeF < 2.25) the GRN reads the fixed morphogen fields at the centre of the 1x site each fine site
+  //       lies in, so a fate stripe one 1x row thick can never fall between fine rows (R123 sweep: 1.05-1.7x unwired clock inputs, K4 1.2x 0.00);
+  //       growth-cone guidance always keeps the smooth fields; at >= 1.5 rows per 1x row a stripe cannot vanish and snapping only cost (3x K8 0.80 vs 0.88);
+  //   (c) growth-cone speed as sizeCone (ceil); (d) mixing feedforward inhibition per spike x 1x pool / pool (net.js, as scaleInvariant).
+  //   P.relGrowthOff (diagnostic bitmask, 0 = all parts on): 1 trophic, 2 1x-lattice morphogens, 4 cone speed, 8 mixing inhibition.
+  const rgOff = params.relGrowthOff | 0, rgOn = params.relGrowth > 0 && sc.sizeF > 1, rgT = rgOn && !(rgOff & 1), rgL = rgOn && !(rgOff & 2), grid1 = sc.grid > 24.5 ? Math.round(sc.grid) : CG;
+  if (sc.sizeF > 1) { const q = Math.sqrt(sc.sizeF), si = params.scaleInvariant > 0 || sc.scaleInvariant > 0, rgC = params.relGrowth > 0 && !(rgOff & 4); sc.grid = (sc.grid > 24.5 ? sc.grid : CG) * q; sc.maxCells *= sc.sizeF; sc.coneSpeed = (params.sizeCone > 0 || si || rgC) ? Math.ceil(Math.max(1, Math.round(sc.coneSpeed || 1)) * q - 1e-9) : (sc.coneSpeed || 1) * q; sc.axonLen *= q; if (si) { sc.trophMin /= sc.sizeF; sc.divRep = Math.max(sc.divRep || 1, Math.ceil(Math.log2(sc.sizeF))); sc.divReach = Math.max(sc.divReach || 1, Math.ceil(q - 1e-9)); } }
   const GS = sc.grid > 24.5 ? Math.round(sc.grid) : CG, h = 2 / GS, NS = GS * GS, H = CH_H;
   const sx = i => -1 + (i + 0.5) * h, cidx = v => clamp(Math.floor((v + 1) / h), 0, GS - 1);
   // fixed morphogen fields (analytic steady state of diffusion + decay from the sources)
+  const gL = grid1, snap = rgL && GS < 1.5 * grid1, h1 = 2 / gL, s1 = v => -1 + (Math.min(gL - 1, Math.max(0, Math.floor((v + 1) / h1))) + 0.5) * h1;   // R123 relGrowth (b): centre of the nested-lattice site
   const lam = d.lam, chem = Array.from({ length: CH_NCHEM }, () => new Float32Array(NS));
   const eyes = spec.cueSources, motors = OUT.map(o => o.pos);
-  for (let j = 0; j < GS; j++) for (let i = 0; i < GS; i++) {
-    const x = sx(i), y = sx(j), q = j * GS + i;
-    chem[0][q] = Math.exp(-Math.abs(x) / lam[0]);
-    chem[1][q] = Math.exp(-(1 - y) / lam[1]);
-    let e = 0; for (const p of eyes) e = Math.max(e, Math.exp(-Math.hypot(x - p[0], y - p[1]) / lam[2])); chem[2][q] = e;
-    let m = 0; for (const p of motors) m = Math.max(m, Math.exp(-Math.hypot(x - p[0], y - p[1]) / lam[3])); chem[3][q] = m;
-    chem[6][q] = Math.exp(-Math.abs(y - Y_CENTRAL) / lam[6]);
-  }
+  const fixedAt = (F, x, y, q) => {
+    F[0][q] = Math.exp(-Math.abs(x) / lam[0]);
+    F[1][q] = Math.exp(-(1 - y) / lam[1]);
+    let e = 0; for (const p of eyes) e = Math.max(e, Math.exp(-Math.hypot(x - p[0], y - p[1]) / lam[2])); F[2][q] = e;
+    let m = 0; for (const p of motors) m = Math.max(m, Math.exp(-Math.hypot(x - p[0], y - p[1]) / lam[3])); F[3][q] = m;
+    F[6][q] = Math.exp(-Math.abs(y - Y_CENTRAL) / lam[6]);
+  };
+  for (let j = 0; j < GS; j++) for (let i = 0; i < GS; i++) fixedAt(chem, sx(i), sx(j), j * GS + i);
+  // R123 relGrowth (b): the GRN (fate) reads the fixed fields on the 1x lattice; growth cones keep the smooth fine fields (snapping them too
+  // flattened the guidance gradients: 3x / 4x seed 11 0.81 / 0.79 vs 0.96)
+  const chemG = snap ? chem.map((a, k) => [0, 1, 2, 3, 6].includes(k) ? new Float32Array(NS) : a) : chem;
+  if (snap) for (let j = 0; j < GS; j++) for (let i = 0; i < GS; i++) fixedAt(chemG, s1(sx(i)), s1(sx(j)), j * GS + i);
   if (rec) rec.fixedChem = [0, 1, 2, 3, 6].map(k => Float32Array.from(chem[k]));
   const coneSpeed = Math.max(1, Math.round(sc.coneSpeed || 1));   // v11: growth-cone steps per developmental step (fine grids: same distances in the same time)
   const difBuf = new Float32Array(NS), srcBuf = new Float32Array(NS), Dif = 0.2, kDec = [4, 5].map(c => Dif * (h / lam[c]) ** 2);
@@ -250,7 +264,7 @@ function growCell(d, opts) {
   const u = new Float32Array(CH_NIN), sNew = new Float32Array(H), Wg = d.Wg, R = d.R, nRO = Math.min(CH_NO, Math.floor(R.length / (H + 1)));   // (older genomes: missing outputs stay 0 = off)
   const express = (c, tf) => {
     const q = c.j * GS + c.i;
-    for (let k = 0; k < CH_NCHEM; k++) u[k] = Math.min(2, chem[k][q]);
+    for (let k = 0; k < CH_NCHEM; k++) u[k] = Math.min(2, chemG[k][q]);
     for (let k = 0; k < H; k++) u[CH_NCHEM + k] = c.s[k];
     u[CH_NCHEM + H] = tf; u[CH_NCHEM + H + 1] = 1;
     for (let g = 0; g < H; g++) { let a = 0; const o = g * CH_NIN; for (let k = 0; k < CH_NIN; k++) a += Wg[o + k] * u[k]; sNew[g] = Math.tanh(a); }
@@ -550,7 +564,7 @@ function growCell(d, opts) {
   // 4. neurotrophic competition
   let trophicDeaths = 0;
   if (params.cellTrophic) {
-    const tro = new Map();
+    const tro = new Map(); let fair = null;
     for (let it = 0; it < 4; it++) {
       const supply = new Map(); for (let m = 0; m < nOut; m++) supply.set('m' + m, 1);
       for (const [id, v] of tro) supply.set(id, 0.7 * v + sc.trophHid);   // hidden targets give some factor too (gene trophHid)
@@ -559,9 +573,12 @@ function growCell(d, opts) {
       for (const s of live) if (s.pre >= 0) inSum.set(s.post, (inSum.get(s.post) || 0) + Math.abs(s.w));
       const nt = new Map(); for (const c of neurons) nt.set(c.id, 0);
       for (const s of live) if (s.pre >= 0 && supply.has(s.post)) nt.set(s.pre, nt.get(s.pre) + supply.get(s.post) * Math.abs(s.w) / inSum.get(s.post));
+      if (rgT && it === 3) { const nIn_ = new Map(); for (const s of live) if (s.pre >= 0) nIn_.set(s.post, (nIn_.get(s.post) || 0) + 1);   // R123 relGrowth (a): fair share
+        fair = new Map(); for (const s of live) if (s.pre >= 0 && supply.has(s.post)) fair.set(s.pre, (fair.get(s.pre) || 0) + supply.get(s.post) / nIn_.get(s.post)); }
       tro.clear(); for (const [k, v] of nt) tro.set(k, v);
     }
-    for (const c of neurons) if (tro.get(c.id) < sc.trophMin) { kill(c, T + 1, 'trophic'); trophicDeaths++; }   // (t: recorder timeline only)
+    const rgA = params.relGrowthAlpha > 0 ? params.relGrowthAlpha : 0.5;
+    for (const c of neurons) if (tro.get(c.id) < sc.trophMin && !(fair && tro.get(c.id) >= rgA * (fair.get(c.id) || 0) && fair.has(c.id))) { kill(c, T + 1, 'trophic'); trophicDeaths++; }   // (t: recorder timeline only)
     neurons = neurons.filter(c => c.alive);
     { const b = live; live = live.filter(s => (s.pre < 0 || cells[s.pre].alive) && (typeof s.post !== 'number' || cells[s.post].alive)); markGone(b, live, T + 1, 4); }
   }

@@ -93,7 +93,7 @@ class SpikingNet {
       // reads the MEAN activity of its presynaptic pool, not the raw spike count: with a pool of n > mixInhRef cells each spike
       // inhibits by mixInh x mixInhRef / n. Without it the pool (and so the inhibition) grows with region size while every mixing
       // cell's excitation is normalised (mixNorm, claw w / column), so bigger brains silence the mixing layer (R78: order3 at 4x).
-      let np = 0, np1x = 0; const si = params.scaleInvariant > 0 && g.regions && g.regions.some(r => r.sizeF > 1) ? this.trophicS() : null;
+      let np = 0, np1x = 0; const si = (params.scaleInvariant > 0 || (params.relGrowth > 0 && !((params.relGrowthOff | 0) & 8))) && g.regions && g.regions.some(r => r.sizeF > 1) ? this.trophicS() : null;
       for (let i = 0; i < N; i++) if (mp[i]) { np++; if (si) np1x += si[i]; }
       const iR = params.mixInhRef > 0 ? params.mixInhRef : (si && np1x > 0 ? np1x : 0);
       this.mixInhD = iR && np > iR ? this.p.mixInh * Math.pow(iR / np, params.mixInhPow > 0 ? params.mixInhPow : 1) : this.p.mixInh; }   // mixInhPow (default 1 = mean field; 0.5 = inhibition grows with the square root of the pool)

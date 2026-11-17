@@ -301,6 +301,19 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   assert.ok(b2.N > b1.N * 1.4 && b4.N > b2.N * 1.4 && a2.net.lrF8 && a4.net.lrF8 && s1 > 0.15 && s2 > 0.15 && s4 > 0.15,
     `scaleInvariant=1 scales tissue and keeps learning stable across 1x (${b1.N} cells, ${s1.toFixed(3)}), 2x (${b2.N} cells, ${s2.toFixed(3)}), 4x (${b4.N} cells, ${s4.toFixed(3)})`);
   console.log(`scaleInvariant=1 across 1x/2x/4x (N=${b1.N}/${b2.N}/${b4.N}, score=${s1.toFixed(3)}/${s2.toFixed(3)}/${s4.toFixed(3)}): ok`); }
+// 2b. R123 relative (share-based) growth for scaled brains (params.relGrowth = 1, default off)
+{ const S = require('./js/node_load.js')(); S.params.granN = 128;
+  assert.ok(S.params.relGrowth === 0, 'relGrowth opt-in (0 by default)');
+  const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'order3', K: 8 }, ['source']), { nSyms: 160 });
+  const E = S.setEnv('seq', envP);
+  const mkSized = f => { const D = S.PLANS.deepURSx3.make(); D.regions.forEach(R => { R.g.sc.sizeF = f; }); return D; };
+  const run = (f, rg) => { S.params.relGrowth = rg; const D = mkSized(f), b = S.growCell(D, { seed: 5, spec: E.spec }), a = S.runEpisode(D, 7, b, E); a.net.syncState(); S.params.relGrowth = 0; return { b, a, s: a.task.score() }; };
+  const o1 = run(1, 0), r1 = run(1, 1);
+  const same = o1.s === r1.s && o1.a.net.spikeCount === r1.a.net.spikeCount && o1.a.net.ws.length === r1.a.net.ws.length && o1.a.net.ws.every((w, i) => w === r1.a.net.ws[i]);
+  assert.ok(same, `relGrowth=1 is bit-identical at 1x (score ${o1.s} vs ${r1.s})`);
+  const r12 = run(1.2, 1), silent = r12.b.regions.reduce((t, R) => t + ((R.devStats && R.devStats.silentIn) | 0), 0);
+  assert.ok(r12.s > 0.5 && silent === 0, `relGrowth=1 wires every input at an awkward 1.2x size (score ${r12.s.toFixed(3)}, silent inputs ${silent})`);
+  console.log(`R123 relGrowth: bit-identical at 1x, 1.2x score ${r12.s.toFixed(3)} with 0 silent inputs: ok`); }
 // 3. Utility-pruned structural plasticity for granule claws (params.granUtility = 1)
 { const S = require('./js/node_load.js')(); S.params.granUtility = 1; S.params.granN = 32; S.params.granHold = 4; S.params.granCo = 1;
   const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 240 });

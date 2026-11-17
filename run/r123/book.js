@@ -1,0 +1,6 @@
+// node sw/book.js : paired per-seed heldAcc (held-out next-char accuracy, 2000 held symbols) for book10k / book30k arms vs 1x os
+const fs=require('fs'),R=[];for(const f of ['sw/out/book.jsonl','sw/out/book3.jsonl'])if(fs.existsSync(f))for(const l of fs.readFileSync(f,'utf8').trim().split('\n').filter(Boolean)){const r=JSON.parse(l);if(/book/.test(r.task))R.push(r);}
+for(const l of fs.readFileSync('/workspace/hr2/os30.jsonl','utf8').trim().split('\n')){const r=JSON.parse(l);if([2951,2952,2953].includes(r.k))R.push({k:r.k,arm:'os',task:'book30k',stats:{heldAcc:r.heldAcc},ref:1});}
+const K=[2951,2952,2953];for(const task of ['book10k','book30k']){const arms=[...new Set(R.filter(r=>r.task===task).map(r=>r.arm))];const g=(a,k)=>{const r=R.find(r=>r.task===task&&r.arm===a&&r.k===k);return r?r.stats.heldAcc:null};
+ console.log(`\n${task} heldAcc | ${K.join(' | ')} | mean | delta vs 1x (per seed) | wins`);for(const a of arms){const v=K.map(k=>g(a,k)),b=K.map(k=>g('os',k));const ok=v.filter(x=>x!=null);const m=ok.length?ok.reduce((s,x)=>s+x,0)/ok.length:NaN;
+ const d=v.map((x,i)=>x!=null&&b[i]!=null?x-b[i]:null);console.log(`${a} | ${v.map(x=>x==null?'-':x.toFixed(4)).join(' | ')} | ${m.toFixed(4)} | ${d.map(x=>x==null?'-':(x>=0?'+':'')+x.toFixed(4)).join(' ')} | ${d.filter(x=>x>0).length}+/${d.filter(x=>x!=null&&x<0).length}-`);}}

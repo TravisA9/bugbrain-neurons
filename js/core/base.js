@@ -72,6 +72,9 @@ const params = {
   granUtility: 0,
   // Unified intensive scale-invariance (0 = off, bit-identical): when sizeF > 1, normalizes trophic survival, cone/division speed, tract fan-in, inhibitory receiver budget, mixing pool inhibition, and 1x-equivalent fan-in learning rate
   scaleInvariant: 0,
+  // R123 relGrowth (0 = off, bit-identical): relative growth rules for sized regions: trophic survival vs fair share (relGrowthAlpha, default 0.5),
+  //   GRN reads the fixed morphogens on the 1x lattice below 2.25x, ceil cone speed, mixing inhibition x 1x pool / pool. See develop.js / net.js.
+  relGrowth: 0, relGrowthAlpha: 0, relGrowthOff: 0,   // relGrowthOff: diagnostic bitmask disabling parts (1 trophic, 2 lattice, 4 cone, 8 mixing)
   plasticity: true,    // lifetime learning (reward-modulated STDP); false = frozen genome weights
   cellStart: 'env',    // a new population starts from mutants of this body plan ('env' = the environment's default)
   cellMut: 0.02,       // chance per genome number to mutate
