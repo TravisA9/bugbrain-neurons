@@ -179,6 +179,9 @@ $login = http($base . '/owner/login', 'POST', http_build_query(['username' => 'l
 preg_match('/Set-Cookie: lab_owner=([^;]+)/', $login['header'], $oc);
 $owner = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
 check(str_contains($owner['body'], 'SpikeFoundry') && str_contains($owner['body'], 'priority 2') && preg_match('/name="csrf" value="([a-f0-9]+)"/', $owner['body'], $csrf), 'owner page shows SpikeFoundry ahead of the form');
+check(str_contains($owner['body'], 'id="active-projects"') && str_contains($owner['body'], 'name="active[]" value="spikefoundry"') && str_contains($owner['body'], 'name="active[]" value="bugbrain"') && str_contains($owner['body'], 'Save active projects'), 'the owner console has a control for which projects are active');
+$joinPage = http($base . '/join');
+check($joinPage['status'] === 200 && !str_contains($joinPage['body'], 'name="project[]" value="spikefoundry"') && !str_contains($joinPage['body'], 'BugBrain template tests') && str_contains($joinPage['body'], 'how much compute to donate'), 'Join does not offer per-project choices to volunteers');
 $noCsrf = http($base . '/owner/job', 'POST', http_build_query(['template' => 'sf-vision', 'title' => 'nope', 'priority' => '1', 'seed' => '3']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
 check($noCsrf['status'] === 403, 'owner actions without the security token are refused');
 $with = http($base . '/owner/job', 'POST', http_build_query(['csrf' => $csrf[1] ?? '', 'template' => 'sf-vision', 'title' => 'Another synthetic check', 'priority' => '0.4', 'seed' => '9']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
@@ -193,6 +196,11 @@ check($projPart['status'] === 403, 'a participant cookie cannot create a project
 $proj = http($base . '/owner/project-create', 'POST', http_build_query(['csrf' => $csrf[1] ?? '', 'title' => 'Evening vision', 'summary' => 'A small extra project.', 'runner' => 'spikefoundry/run.js', 'priority' => '4', 'enabled' => '1']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
 $ownerAfter = http($base . '/owner?status=all&page=1', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
 check(in_array($proj['status'], [303, 302], true) && str_contains($ownerAfter['body'], 'Evening vision') && str_contains($ownerAfter['body'], 'Queued'), 'the owner can create a project and see the job list');
+$activeOff = http($base . '/owner/active-projects', 'POST', http_build_query(['csrf' => $csrf[1] ?? '', 'active' => ['bugbrain']]), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
+$ownerActive = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check(in_array($activeOff['status'], [303, 302], true) && str_contains($ownerActive['body'], 'value="bugbrain" checked') && !preg_match('/name="active\[\]" value="spikefoundry" checked/', $ownerActive['body']) && str_contains($ownerActive['body'], 'value="evening-vision"') && !preg_match('/name="active\[\]" value="evening-vision" checked/', $ownerActive['body']), 'the owner can deactivate SpikeFoundry and a new project from the Active projects control');
+$activeOn = http($base . '/owner/active-projects', 'POST', http_build_query(['csrf' => $csrf[1] ?? '', 'active' => ['spikefoundry', 'bugbrain', 'evening-vision']]), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check(in_array($activeOn['status'], [303, 302], true), 'the owner can turn the projects back on');
 
 $hash = trim((string) shell_exec('php -r ' . escapeshellarg('echo hash("sha256", file_get_contents(' . var_export(dirname(__DIR__) . '/PROTOCOL.txt', true) . '));')));
 $genomeJson = '{"decay":0.4,"topology":"parallel"}';

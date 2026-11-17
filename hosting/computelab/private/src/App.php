@@ -461,7 +461,6 @@ final class App
         $this->purgeDesigner2();
         $this->db->exec("UPDATE projects SET family = 'spikefoundry' WHERE id = 'spikefoundry' AND (family IS NULL OR family = '')");
         $this->db->exec("UPDATE projects SET family = 'bugbrain' WHERE id = 'bugbrain' AND (family IS NULL OR family = '')");
-        $this->db->exec("UPDATE workers SET allowed_json = '[\"*\"]' WHERE allowed_json IS NULL OR allowed_json <> '[\"*\"]'");
     }
 
     private function hasColumn(string $table, string $column): bool
@@ -757,7 +756,12 @@ final class App
         return 'bugbrain';
     }
 
-    /** @param list<string> $projects */
+    /**
+     * $projects is ignored: volunteers do not choose projects. The owner decides
+     * which projects are active, and every worker may receive work from those.
+     * allowed_json is stored as ["*"] so older rows and posted allow-lists stay compatible.
+     * @param list<string> $projects
+     */
     public function enroll(string $name, array $projects, int $maxBatches, bool $consent, ?string $participantId = null): array
     {
         if (!$consent) {
@@ -1072,10 +1076,17 @@ final class App
         return $moved;
     }
 
-    /* Queued jobs a worker could claim now: jobs for a paused task are skipped by claim(),
-     * so they do not count toward the low-water mark or the caps. */
+    /* Queued jobs a worker could claim now: jobs for a paused task or an inactive
+     * project are skipped by claim(), so they do not count toward the low-water mark or the caps. */
     public function claimableQueued(?string $projectId = null): int
     {
+        $enabled = [];
+        foreach ($this->db->query('SELECT id FROM projects WHERE enabled = 1')->fetchAll() as $row) {
+            $enabled[(string) $row['id']] = true;
+        }
+        if ($projectId !== null && !isset($enabled[$projectId])) {
+            return 0;
+        }
         if ($projectId === null) {
             $st = $this->db->query("SELECT project_id, spec_json FROM jobs WHERE status = 'queued'");
         } else {
@@ -1088,6 +1099,9 @@ final class App
         }
         $n = 0;
         foreach ($st->fetchAll() as $job) {
+            if ($projectId === null && !isset($enabled[(string) $job['project_id']])) {
+                continue;
+            }
             $spec = json_decode((string) $job['spec_json'], true);
             if ($this->legacySearchPaused((string) $job['project_id'], $spec)) {
                 continue;
@@ -1121,9 +1135,10 @@ final class App
             throw new InvalidArgumentException('Slot must be from 0 to 63.');
         }
         $this->dropLeasesOf((string) $worker['id'], $slot);
-        $allowed = ['*'];
+        /* Worker allow-lists (including older configs) are ignored. Assignment follows
+         * the owner's active projects only. */
         $now = $this->now();
-        $projects = $this->db->query('SELECT * FROM projects WHERE enabled = 1 ORDER BY priority DESC, id ASC')->fetchAll();
+        $projects = $this->activeProjects();
         $this->db->beginTransaction();
         try {
             $ranked = [];
@@ -1136,10 +1151,6 @@ final class App
             $findSql .= ' ORDER BY priority DESC, attempts ASC, id ASC';
             $find = $this->db->prepare($findSql);
             foreach ($projects as $project) {
-                $family = (string) ($project['family'] ?? '');
-                if (!in_array('*', $allowed, true) && !in_array($project['id'], $allowed, true) && !in_array($family, $allowed, true)) {
-                    continue;
-                }
                 $args = [$project['id'], 'queued', $now];
                 if ($codeHash !== '') {
                     $args[] = $codeHash;
@@ -2216,6 +2227,35 @@ final class App
         }
         if ($enabled !== null) {
             $this->db->prepare('UPDATE projects SET enabled = ? WHERE id = ?')->execute([$enabled ? 1 : 0, $id]);
+        }
+    }
+
+    /** Projects the owner has made active, highest priority first. */
+    public function activeProjects(): array
+    {
+        return $this->db->query('SELECT * FROM projects WHERE enabled = 1 ORDER BY priority DESC, id ASC')->fetchAll();
+    }
+
+    /**
+     * Replace the set of active projects. Unknown ids are ignored.
+     * Deactivating a project stops new claims and auto-create; running leases finish.
+     * @param list<mixed> $ids
+     */
+    public function setActiveProjects(array $ids): void
+    {
+        $want = [];
+        foreach ($ids as $id) {
+            if (is_string($id) || is_int($id)) {
+                $id = (string) $id;
+                if ($id !== '') {
+                    $want[$id] = true;
+                }
+            }
+        }
+        $st = $this->db->prepare('UPDATE projects SET enabled = ? WHERE id = ?');
+        foreach ($this->db->query('SELECT id FROM projects')->fetchAll() as $row) {
+            $id = (string) $row['id'];
+            $st->execute([isset($want[$id]) ? 1 : 0, $id]);
         }
     }
 
@@ -4437,7 +4477,7 @@ final class App
         }
         $made = 0;
         $topMemo = [];
-        $projects = $this->db->query('SELECT * FROM projects WHERE enabled = 1 ORDER BY priority DESC, id ASC')->fetchAll();
+        $projects = $this->activeProjects();
         foreach ($projects as $project) {
             $inverse = $project['id'] === 'spikefoundry' && $this->inverseGalleryEnabled();
             if (!$inverse && $this->legacySearchPaused((string) $project['id'], ['mode' => 'propose'])) {

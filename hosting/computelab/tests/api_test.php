@@ -74,7 +74,12 @@ $other = $app->enroll('other-pc', ['spikefoundry', 'bugbrain'], 2, true);
 $now = '2026-11-09T03:00:30+00:00';
 $second = $app->claim($app->workerByToken($other['token']));
 check($second && $second['id'] === $bb, 'the second computer gets BugBrain while the first lease is still valid');
-$now = '2026-11-09T03:02:30+00:00';
+/* Keep the SpikeFoundry lease alive so only the BugBrain lease expires.
+ * Volunteers no longer filter by project, so a later claim would otherwise
+ * take SpikeFoundry first (higher project priority) after both leases lapsed. */
+$now = '2026-11-09T03:00:50+00:00';
+$app->heartbeat($app->workerByToken($made['token']), ['jobId' => $job['id']]);
+$now = '2026-11-09T03:01:35+00:00';
 $third = $app->enroll('third-pc', ['bugbrain'], 2, true);
 $re = $app->claim($app->workerByToken($third['token']));
 $expiredAttempts = (int) $db->query('SELECT attempts FROM jobs WHERE id = ' . $db->quote($bb))->fetchColumn();
@@ -696,15 +701,61 @@ $ownerSpec = json_decode((string) $gap['db']->query('SELECT spec_json FROM jobs 
 $madeAfter = (int) $gap['db']->query("SELECT auto_created FROM projects WHERE id = 'spikefoundry'")->fetchColumn();
 check($fresh && $freshSpec['taskId'] === 'sequence' && $ownerSpec['taskId'] === 'coincidence' && $madeAfter === $madeBefore + 1 && $gap['app']->claimableQueued('spikefoundry') === 0, 'a queued job for a paused task does not count toward the queue, so supply still adds a next-task job');
 
+function dropColumns(PDO $db, string $table, array $columns): void
+{
+    if (!preg_match('/^[a-z_]+$/', $table)) {
+        throw new InvalidArgumentException('Bad table.');
+    }
+    foreach ($columns as $col) {
+        if (!preg_match('/^[a-z_]+$/', (string) $col)) {
+            throw new InvalidArgumentException('Bad column.');
+        }
+    }
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pending = $columns;
+    foreach ($columns as $col) {
+        try {
+            $db->exec('ALTER TABLE ' . $table . ' DROP COLUMN ' . $col);
+            $pending = array_values(array_diff($pending, [$col]));
+        } catch (PDOException $e) {
+            break;
+        }
+    }
+    if ($pending === []) {
+        return;
+    }
+    $driver = (string) $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+    if ($driver === 'sqlite') {
+        $keep = [];
+        foreach ($db->query('PRAGMA table_info(' . $table . ')')->fetchAll() as $row) {
+            $name = (string) $row['name'];
+            if (!in_array($name, $columns, true)) {
+                $keep[] = $name;
+            }
+        }
+        if ($keep === []) {
+            throw new RuntimeException('Refusing to drop every column of ' . $table);
+        }
+        $cols = implode(', ', $keep);
+        $tmp = $table . '_drop_tmp';
+        $db->exec('DROP TABLE IF EXISTS ' . $tmp);
+        $db->exec('CREATE TABLE ' . $tmp . ' AS SELECT ' . $cols . ' FROM ' . $table);
+        $db->exec('DROP TABLE ' . $table);
+        $db->exec('ALTER TABLE ' . $tmp . ' RENAME TO ' . $table);
+        return;
+    }
+    foreach ($pending as $col) {
+        $db->exec('ALTER TABLE ' . $table . ' DROP COLUMN ' . $col);
+    }
+}
+
 /* ---- Resource control: Off / Allowance / Full blast, several job slots ---- */
 $res = lab();
 $resOn = $res['app']->enroll('res-on', ['spikefoundry'], 20, true);
 $resOff = $res['app']->enroll('res-off', ['spikefoundry'], 20, true);
 check((string) $res['db']->query("SELECT resource_mode || ':' || allowance_pct FROM workers WHERE id = " . $res['db']->quote($resOn['workerId']))->fetchColumn() === 'allowance:50', 'a new computer starts in Allowance at 50%');
 $res['db']->prepare('UPDATE workers SET paused = 1 WHERE id = ?')->execute([$resOff['workerId']]);
-foreach (['resource_mode', 'allowance_pct', 'runtime_json'] as $col) {
-    $res['db']->exec('ALTER TABLE workers DROP COLUMN ' . $col);
-}
+dropColumns($res['db'], 'workers', ['resource_mode', 'allowance_pct', 'runtime_json']);
 $res['app']->migrate();
 $modes = [];
 foreach ($res['db']->query('SELECT id, resource_mode FROM workers')->fetchAll() as $row) {
@@ -1159,9 +1210,44 @@ check($submitShared($sharedA, $win, $twoTasks, $originalPasses) === 'promoted'
     && $shared->inverseChampion()['generation'] === 2 && $shared->inverseChampion()['passes'] === $twoTasks,
     'paired improvement across tasks promotes a new fleet checkpoint');
 
-$any = $app->enroll('any-task-worker', ['*', 'spikefoundry'], 1, true);
+$any = $app->enroll('any-task-worker', ['spikefoundry'], 1, true);
 check(json_decode($app->workerByToken($any['token'])['allowed_json'], true) === ['*'],
-    'enrollment preserves consent for future projects');
+    'enrollment ignores a posted project allow-list and records every active project');
+
+$pick = lab();
+$pickW = $pick['app']->enroll('pick-pc', ['bugbrain'], 2, true);
+$pick['db']->prepare('UPDATE workers SET allowed_json = ? WHERE id = ?')->execute(['["bugbrain"]', $pickW['workerId']]);
+$sfOnly = $pick['app']->createJob('sf-vision', 'Admin SpikeFoundry', 0.2, 21);
+$bbOnly = $pick['app']->createJob('bb-order3', 'Admin BugBrain', 0.99, 8001);
+$legacyClaim = $pick['app']->claim($pick['app']->workerByToken($pickW['token']));
+check($legacyClaim && $legacyClaim['id'] === $sfOnly && $legacyClaim['project'] === 'spikefoundry',
+    'an older BugBrain-only worker config is ignored and follows the owner\'s project priority');
+$pick['app']->setProject('spikefoundry', null, false);
+$afterOff = $pick['app']->claim($pick['app']->workerByToken($pickW['token']), 1);
+check($afterOff && $afterOff['id'] === $bbOnly && $afterOff['project'] === 'bugbrain',
+    'deactivating SpikeFoundry hands out the remaining active BugBrain job');
+$heldSf = (string) $pick['db']->query('SELECT status FROM jobs WHERE id = ' . $pick['db']->quote($sfOnly))->fetchColumn();
+$pick['app']->setActiveProjects(['spikefoundry']);
+$pick['clock']->t = gmdate('c', strtotime($pick['clock']->t) + 30);
+$stillHeld = $pick['app']->heartbeat($pick['app']->workerByToken($pickW['token']), ['jobId' => $afterOff['id']]);
+$noNew = $pick['app']->claim($pick['app']->workerByToken($pickW['token']), 2);
+check($heldSf === 'leased' && ($stillHeld['jobId'] ?? '') === $afterOff['id'] && $noNew === null,
+    'deactivating a project leaves a running lease in place and stops new claims for it');
+$pick['app']->setActiveProjects([]);
+check($pick['app']->claimableQueued() === 0 && $pick['app']->claim($pick['app']->workerByToken($pickW['token']), 2) === null,
+    'with no active projects, queued work does not count toward supply and is not claimed');
+
+$autoOff = lab();
+$autoW = $autoOff['app']->enroll('auto-off-pc', ['*'], 2, true);
+$autoOff['db']->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute([$autoOff['clock']->t, $autoW['workerId']]);
+$autoOff['app']->saveSupply('spikefoundry', true, 1, 2, 0);
+$autoOff['app']->saveSupply('bugbrain', true, 1, 2, 0);
+$autoOff['app']->setProject('bugbrain', null, false);
+$autoOff['clock']->t = gmdate('c', strtotime($autoOff['clock']->t) + 30);
+$autoJob = $autoOff['app']->claim($autoOff['app']->workerByToken($autoW['token']));
+$bbAuto = (int) $autoOff['db']->query("SELECT COUNT(*) FROM jobs WHERE project_id = 'bugbrain'")->fetchColumn();
+check($autoJob && $autoJob['project'] === 'spikefoundry' && $bbAuto === 0,
+    'auto-create only fills queues for projects the owner has left active');
 
 $seedLab = labWith([
     'inverse_gallery' => true,

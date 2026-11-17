@@ -627,6 +627,11 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .owner-computers .computer-name.is-allowance{color:var(--amber)}
 .owner-computers .computer-name.is-dead{color:var(--red)}
 .owner-computers .computer-name.is-off{color:var(--muted)}
+.active-projects-form{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px}
+.active-projects-list{display:flex;flex-wrap:wrap;gap:8px 10px;flex:1 1 auto}
+.active-project{display:inline-flex;align-items:center;gap:8px;margin:0;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:#0c131a;cursor:pointer}
+.active-project.is-on{border-color:#2a5a48;background:#132629}
+.active-project .ap-name{font-weight:600}
 .owner-computers .computer-name.is-starting{color:var(--amber)}
 .owner-computers .computer-jobs{font:500 14px/1.3 var(--display);color:var(--text)}
 .owner-computers .owner-meta{margin:0 0 6px}
@@ -1100,7 +1105,7 @@ function pageJoin(App $app, string $error = '', array $nav = []): string
         . '<section class="panel"><div class="panelhead"><div class="paneltitle">Your computer</div><span class="subtag">STARTS AT 50% ALLOWANCE</span></div><div class="panelbody"><form method="post" action="' . h($base) . '/join"><label>Computer name <input name="name" required maxlength="32" autocomplete="off" placeholder="kitchen-pc"></label>'
         . '<input type="hidden" name="project[]" value="*">'
         . '<label><input type="checkbox" name="consent" value="1" required> I agree this computer may run Compute Lab experiments and tests in the background according to my compute allowance setting.</label>'
-        . '<p class="quiet">All connected computers automatically participate in any active SpikeFoundry or BugBrain experiment. You control how much compute to donate at any time on Home (Off, Allowance %, or Full blast)—job selection and length are handled automatically.</p>'
+        . '<p class="quiet">This computer will run whatever projects the owner has made active. You only choose how much compute to donate, any time on Home (Off, Allowance %, or Full blast)—job selection and length are handled automatically.</p>'
         . '<p class="quiet">Running setup again on a computer that is already added is safe: it keeps that computer\'s entry, updates and restarts its worker, and does not add a duplicate.</p>'
         . '<button class="button primary" type="submit">Create a worker token</button></form></div></section>';
     return layout('Join Compute Lab', $body, $base, $nav, ['shell' => 'shell narrow']);
@@ -1817,6 +1822,21 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
     $base = $app->base();
     $err = $error !== '' ? '<p class="err">' . h($error) . '</p>' : '';
     $projects = $app->db->query('SELECT * FROM projects ORDER BY priority DESC, id ASC')->fetchAll();
+    $activeN = 0;
+    $activeChecks = '';
+    foreach ($projects as $p) {
+        $on = (int) $p['enabled'] === 1;
+        if ($on) {
+            $activeN++;
+        }
+        $activeChecks .= '<label class="active-project' . ($on ? ' is-on' : '') . '"><input type="checkbox" name="active[]" value="' . h((string) $p['id']) . '"' . ($on ? ' checked' : '') . '> '
+            . '<span class="ap-name">' . h(projectNiceName((string) $p['id'], (string) $p['title'])) . '</span></label>';
+    }
+    $activePanel = '<section class="panel" id="active-projects"><div class="panelhead"><div class="paneltitle">Active projects</div><span class="subtag">' . h((string) $activeN) . ' ACTIVE</span></div><div class="panelbody">'
+        . '<p class="quiet">You choose which projects run. Volunteers only set how much CPU to lend. Turning a project off stops new claims and auto-created jobs; a job that is already running finishes normally.</p>'
+        . '<form method="post" action="' . h($base) . '/owner/active-projects" class="active-projects-form"><input type="hidden" name="csrf" value="' . h($csrf) . '">'
+        . '<div class="active-projects-list">' . $activeChecks . '</div>'
+        . '<button class="button small primary" type="submit">Save active projects</button></form></div></section>';
     $templates = $app->db->query('SELECT * FROM templates ORDER BY id')->fetchAll();
     $workers = $app->db->query('SELECT * FROM workers WHERE removed_at IS NULL ORDER BY created_at DESC')->fetchAll();
     $removedCount = (int) $app->db->query('SELECT COUNT(*) FROM workers WHERE removed_at IS NOT NULL')->fetchColumn();
@@ -1929,6 +1949,7 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         $err .= '<p class="err storage-warn">Database storage is high: ' . h(number_format((float) $store['mb'], 0)) . ' MB, over the ' . h(number_format($store['soft'], 0)) . ' MB guard (the host stops accepting writes at 3072 MB). The hourly prune is keeping fewer designs per task until it is back under.</p>';
     }
     $body = $err . '<section class="heading"><div><div class="eyebrow">Owner console</div><h1>Owner</h1><p>Computers, jobs, and task health. A running job stays with its computer while its heartbeat renews the lease. The detailed job settings are under Advanced.</p></div><div class="head-actions"><div class="chips">' . $summary . '</div></div></section>'
+        . $activePanel
         . '<section class="panel owner-computers" id="computers"><div class="panelhead"><div class="paneltitle">Computers</div><span class="subtag">' . h((string) count(array_filter($workers, function ($w) { return (int) $w['revoked'] !== 1; }))) . ' ENROLLED</span></div><div class="panelbody">' . addComputerButton($base) . ($people !== '' ? $people : '<p class="muted">None enrolled.</p>')
         . ($revokedRows !== '' ? '<details class="revoked-list"><summary>Revoked (' . substr_count($revokedRows, '<li ') . ') — remove to clean up this list</summary><ul>' . $revokedRows . '</ul></details>' : '')
         . ($removedCount > 0 ? '<p class="quiet removed-note">' . h((string) $removedCount) . ' removed ' . ($removedCount === 1 ? 'computer is' : 'computers are') . ' hidden here; ' . ($removedCount === 1 ? 'its' : 'their') . ' discoveries and credit stay.</p>' : '')

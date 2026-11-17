@@ -826,6 +826,9 @@ try {
         }
         if ($path === '/owner/project') {
             $app->setProject((string) ($_POST['id'] ?? ''), isset($_POST['priority']) ? (int) $_POST['priority'] : null, isset($_POST['enabled']));
+        } elseif ($path === '/owner/active-projects') {
+            $ids = isset($_POST['active']) && is_array($_POST['active']) ? array_map('strval', $_POST['active']) : [];
+            $app->setActiveProjects($ids);
         } elseif ($path === '/owner/job') {
             $app->createJob((string) ($_POST['template'] ?? ''), (string) ($_POST['title'] ?? ''), (float) ($_POST['priority'] ?? 0.5), (int) ($_POST['seed'] ?? 1));
         } elseif ($path === '/owner/sequence-study') {
