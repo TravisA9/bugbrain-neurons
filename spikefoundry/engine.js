@@ -380,12 +380,13 @@
     }));
     return { synthetic: true, batches: state.batch, tested: state.tested, phase: state.activePhase, tasks: rows, note: 'Synthetic spike-pattern match on generated examples. Not BugBrain accuracy.' };
   }
-  function simulateFrozen(net, seq, traceTiming = false) {
+  function simulateFrozen(net, seq, traceTiming = false, traceNodes = null) {
     const count = net.neurons.length;
     const mem = Array(count).fill(0);
     const spike = Array(count).fill(0);
     const fired = Array(net.outputs.length).fill(false);
     const firstSpike = traceTiming ? Array(net.outputs.length).fill(null) : null;
+    const nodeSpikes = traceNodes?.map(() => []);
     let total = 0;
     const horizon = seq.length + 4;
     const inbox = Array.from({ length: horizon + 6 }, () => Array(count).fill(0));
@@ -413,10 +414,67 @@
         const when = t + edge.delay + 1;
         if (when < inbox.length) inbox[when][edge.to] += edge.weight;
       }
+      if (nodeSpikes) traceNodes.forEach((node, i) => {
+        if (spike[node]) nodeSpikes[i].push(t);
+      });
     }
     const result = { outputs: fired.map(Boolean), spikeCount: total };
     if (firstSpike) result.firstSpike = firstSpike;
+    if (nodeSpikes) result.nodeSpikes = nodeSpikes;
     return result;
+  }
+  // Plastic simulation with strictly local STDP eligibility traces, neuromodulator/teacher gating, and homeostatic thresholds.
+  function simulatePlastic(net, seq, opts = {}) {
+    const count = net.neurons.length, E = net.edges.length;
+    const mem = new Float64Array(count), spike = new Uint8Array(count);
+    const thr = Float64Array.from(net.neurons, n => n.thr == null ? 1 : n.thr);
+    const ws = opts.weights ? Float64Array.from(opts.weights) : Float64Array.from(net.edges, e => e.weight);
+    const elig = new Float64Array(E), xPre = new Float64Array(count), xPost = new Float64Array(count);
+    const lr = opts.lr != null ? opts.lr : 0.1, dPre = Math.exp(-1 / (opts.tauPre || 4)), dPost = Math.exp(-1 / (opts.tauPost || 4)), dElig = Math.exp(-1 / (opts.tauElig || 8));
+    const aMinus = opts.aMinus != null ? opts.aMinus : 0.5, wMax = opts.wMax != null ? opts.wMax : 2.5;
+    const homeo = opts.homeo || 0, targetRate = opts.targetRate || 0.05;
+    const fired = Array(net.outputs.length).fill(false), firstSpike = Array(net.outputs.length).fill(null);
+    let total = 0;
+    const horizon = seq.length + (opts.tail != null ? opts.tail : 4);
+    const inbox = Array.from({ length: horizon + 8 }, () => new Float64Array(count));
+    for (let t = 0; t < horizon; t++) {
+      for (let i = 0; i < net.inputs.length; i++) spike[net.inputs[i]] = t < seq.length ? (seq[t][i] || 0) : 0;
+      for (let i = 0; i < count; i++) {
+        const neuron = net.neurons[i];
+        if (neuron.kind === 'input') continue;
+        mem[i] = (neuron.leak || 0) * mem[i] + inbox[t][i];
+        spike[i] = 0;
+        if (mem[i] >= thr[i]) {
+          spike[i] = 1; mem[i] = 0; total++;
+          const outIndex = net.outputs.indexOf(i);
+          if (outIndex >= 0) { if (!fired[outIndex]) firstSpike[outIndex] = t; fired[outIndex] = true; }
+        }
+        if (homeo > 0) thr[i] += homeo * (spike[i] - targetRate);
+      }
+      for (let e = 0; e < E; e++) {
+        const edge = net.edges[e], u = edge.from, v = edge.to;
+        if (spike[u]) {
+          const when = t + (edge.delay || 0) + 1;
+          if (when < inbox.length) inbox[when][v] += ws[e];
+        }
+        if (edge.plastic) {
+          elig[e] *= dElig;
+          if (spike[v]) elig[e] += xPre[u];
+          if (spike[u]) elig[e] -= aMinus * xPost[v];
+        }
+      }
+      for (let i = 0; i < count; i++) { xPre[i] = xPre[i] * dPre + spike[i]; xPost[i] = xPost[i] * dPost + spike[i]; }
+      const mod = opts.modulator ? (opts.modulator[t] || 0) : (t === horizon - 1 && opts.reward != null ? opts.reward : 0);
+      if (mod !== 0) {
+        for (let e = 0; e < E; e++) if (net.edges[e].plastic) {
+          const w0 = net.edges[e].weight;
+          let w = ws[e] + lr * mod * elig[e];
+          w = w0 >= 0 ? Math.max(0, Math.min(wMax, w)) : Math.min(0, Math.max(-wMax, w));
+          ws[e] = w;
+        }
+      }
+    }
+    return { outputs: fired.map(Boolean), firstSpike, spikeCount: total, weights: Array.from(ws), thresholds: Array.from(thr) };
   }
   function network(g, taskId) { return compileSNN(g, taskId); }
   const INVERSE_GENES = [[-0.8, 0, 0.8, 1.2], [-0.8, 0, 0.8, 1.2], [0, 1, 2], [0, 1, 2], [0.65, 1.25], [0, 0.65], [0, 0.4]];
@@ -449,5 +507,5 @@
     return out;
   }
 
-  return { TOPOLOGIES, LAB_BUDGET, FULL_BUDGET, PILOT_BUDGET, taskList, createState, runBatch, checkpoint, restore, summary, scoreDesign, robustScore, network, sampleCase, taskSamples, compileSNN, simulateSNN, simulateFrozen, heldOutPromotion, BASE_TASKS, INVERSE_GENES, inverseCircuit };
+  return { TOPOLOGIES, LAB_BUDGET, FULL_BUDGET, PILOT_BUDGET, taskList, createState, runBatch, checkpoint, restore, summary, scoreDesign, robustScore, network, sampleCase, taskSamples, compileSNN, simulateSNN, simulateFrozen, simulatePlastic, heldOutPromotion, BASE_TASKS, INVERSE_GENES, inverseCircuit };
 });

@@ -321,4 +321,50 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   assert.ok(aC.net.cg && aC.net.cg.shifts > 0 && aC.net.cg.shifts < aC.net.tickNo && sC > 0.15,
     `deepURSx3_chunk gates chunk shifts selectively (${aC.net.cg.shifts} shifts in ${aC.net.tickNo} ticks, score=${sC.toFixed(3)})`);
   console.log(`deepURSx3_chunk two-timescale gating (${aC.net.cg.shifts} shifts, score ${sC.toFixed(3)}): ok`); }
+// 5. Bridge SpikeFoundry & BugBrain (canonical motifs + simulatePlastic + compileToBugBrain + graftMotifIntoGenome)
+{ const S = require('./js/node_load.js')();
+  const SF = require('./spikefoundry/engine.js'), Comp = require('./spikefoundry/composition.js');
+  const wm = Comp.workingMemoryLatchMotif(), sb = Comp.surpriseBoundaryMotif(), rf = Comp.roleFillerBindMotif(true);
+  // Verify workingMemoryLatchMotif in SpikeFoundry and compiled in BugBrain SpikingNet
+  const wmCases = [
+    { seq: [[1, 0, 0], [0, 0, 0], [0, 0, 1], [0, 0, 0]], label: [1] }, // set -> hold -> gate -> fires!
+    { seq: [[1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 0, 0]], label: [0] }, // set -> reset -> gate -> silent!
+    { seq: [[0, 0, 0], [0, 0, 0], [0, 0, 1], [0, 0, 0]], label: [0] }, // no set -> gate -> silent!
+  ];
+  assert.ok(Comp.verify(wm, wmCases), 'workingMemoryLatchMotif passes SpikeFoundry verification');
+  const sbCases = [
+    { seq: [[1, 0], [0, 0]], label: [1] }, // sensory without prediction -> surprise!
+    { seq: [[1, 1], [0, 0]], label: [0] }, // sensory cancelled by prediction -> no surprise!
+    { seq: [[0, 1], [0, 0]], label: [0] }, // prediction alone -> no surprise!
+  ];
+  assert.ok(Comp.verify(sb, sbCases), 'surpriseBoundaryMotif passes SpikeFoundry verification');
+  // Verify compiled BugBrain genome matches SpikeFoundry simulateFrozen on workingMemoryLatchMotif & surpriseBoundaryMotif
+  for (const c of wmCases) assert.deepStrictEqual(Comp.runInBugBrain(wm, c.seq, S.SpikingNet), c.label.map(Boolean), 'compiled workingMemoryLatchMotif matches in BugBrain SpikingNet');
+  for (const c of sbCases) assert.deepStrictEqual(Comp.runInBugBrain(sb, c.seq, S.SpikingNet), c.label.map(Boolean), 'compiled surpriseBoundaryMotif matches in BugBrain SpikingNet');
+  // Verify simulatePlastic updates plastic edges with local STDP + reward
+  const pRun = SF.simulatePlastic(rf, [[1, 0, 1, 0], [0, 0, 0, 0]], { reward: 1.0, lr: 0.2 });
+  assert.ok(pRun.outputs[0] === true && pRun.outputs[1] === false && pRun.weights[0] > rf.edges[0].weight, 'simulatePlastic potentiates co-active role-filler binding synapse via local STDP');
+  // Verify graftMotifIntoGenome splices motif cleanly into an existing BugBrain direct genome
+  const host = Comp.compileToBugBrain(Comp.relay());
+  const grafted = Comp.graftMotifIntoGenome(host, sb, { inputSources: [0, 0], outputTargets: [1], outputWeight: 40 });
+  const gNet = new S.SpikingNet(grafted); gNet.ext[0] = 100; gNet.step();
+  assert.ok(grafted.N === host.N + sb.neurons.length - sb.inputs.length && gNet.N === grafted.N, 'graftMotifIntoGenome produces valid executable BugBrain genome');
+  console.log('SpikeFoundry <-> BugBrain bridge (motifs, simulatePlastic, compileToBugBrain, graftMotifIntoGenome): ok'); }
+// 6. SOTA BugBrain (bugSOTA): enthusiastic green-apple pursuit, sharp red-poison avoidance, and anti-stuck wall reflex
+{ const S = require('./js/node_load.js')();
+  const baseEnv = S.setEnv('bug', { task: 'flashvis', episodeTicks: 600 });
+  const env = Object.assign({}, baseEnv, { def: Object.assign({}, baseEnv.def, { create: (seed, p) => new S.bug.World(seed, p, S.bug.GARDEN) }) });
+  const gSota = S.PLANS.bugSOTA.make(), gOld = S.PLANS.v3h.make();
+  let fSota = 0, pSota = 0, stSota = 0, fOld = 0, pOld = 0, stOld = 0;
+  for (const s of [1, 2, 3, 4]) {
+    const a1 = new S.Agent(gSota, s * 17 + 3, S.growCell(gSota, { seed: s, spec: env.spec }), env);
+    const a2 = new S.Agent(gOld, s * 17 + 3, S.growCell(gOld, { seed: s, spec: env.spec }), env);
+    while (!a1.done) a1.tick();
+    while (!a2.done) a2.tick();
+    fSota += a1.task.food; pSota += a1.task.poison; stSota += a1.task.stuckTicks;
+    fOld += a2.task.food; pOld += a2.task.poison; stOld += a2.task.stuckTicks;
+  }
+  assert.ok(fSota > fOld && pSota <= pOld && stSota < stOld * 0.25,
+    `bugSOTA beats v3h on GARDEN (food ${fSota} vs ${fOld}, poison ${pSota} vs ${pOld}, stuck ${stSota} vs ${stOld})`);
+  console.log(`SOTA BugBrain (bugSOTA vs v3h, 4 garden lives): food ${fSota} vs ${fOld}, poison ${pSota} vs ${pOld}, stuckTicks ${stSota} vs ${stOld}: ok`); }
 console.log('ALL OK');

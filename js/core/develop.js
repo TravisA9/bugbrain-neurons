@@ -149,9 +149,11 @@ function migrateCell(d) {
 function cloneCell(d) {
   if (d.kind === 'regions') return cloneRegions(d);   // v21: multi-region genome (core/regions.js)
   d = migrateCell(d);
-  return { kind: 'cell', seed: d.seed, Wg: d.Wg.slice(), R: d.R.slice(), lam: d.lam.slice(), seeds: d.seeds.map(p => p.slice()),
+  const out = { kind: 'cell', seed: d.seed, Wg: d.Wg.slice(), R: d.R.slice(), lam: d.lam.slice(), seeds: d.seeds.map(p => p.slice()),
            s0: d.s0.slice(), sc: Object.assign(cellDefaults(), d.sc), pl: cleanPl(d.pl), nCh: d.nCh || 1,
            ch: (d.ch || [defaultChannel()]).map(c => Object.assign({}, c)), label: d.label || '', fitness: null };
+  if (d.sotaBug) out.sotaBug = true;
+  return out;
 }
 function cellParamCount(d) { if (d.kind === 'regions') return d.regions.reduce((s, R) => s + cellParamCount(R.g), 0); return d.Wg.length + d.R.length + d.lam.length + d.seeds.length * 2 + d.s0.length + Object.keys(CELL_SC).length + Object.keys(PL_DEFAULTS).length + d.nCh * 6; }
 function createRandomCellGenome(r) {
@@ -645,6 +647,7 @@ function growCell(d, opts) {
       [T + 1, 'neurotrophic competition: neurons without useful output die'], [T + 2, 'juvenile spontaneous activity 1/4 (waves + homeostasis)'], [T + 3, 'juvenile activity 2/4'],
       [T + 4, 'juvenile activity 3/4'], [T + 5, 'juvenile activity 4/4'], [T + 6, 'Hebbian refinement + pruning: the final brain']];
     g.devLog = rec; }
+  if (d.sotaBug) g.sotaBug = true;
   return g;
 }
 // R66 growth helpers (same results as the dense loops they replace, in small functions the JIT optimises)

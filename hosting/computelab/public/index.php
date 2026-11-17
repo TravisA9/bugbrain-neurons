@@ -388,12 +388,42 @@ try {
     }
     if ($path === '/assets/bugbrain.js' && $method === 'GET') {
         $asset = (string) ($app->config['bugbrain_js'] ?? $private . '/bugbrain.js');
-        if (!is_file($asset)) {
+        if (is_file($asset)) {
+            header('Content-Type: application/javascript; charset=utf-8');
+            readfile($asset);
+            return;
+        }
+        $repoRoot = dirname($private, 2);
+        $parts = [
+            $repoRoot . '/js/core/base.js',
+            $repoRoot . '/js/core/io.js',
+            $repoRoot . '/js/core/develop.js',
+            $repoRoot . '/js/core/regions.js',
+            $repoRoot . '/js/core/plans.js',
+            $repoRoot . '/js/core/net.js',
+            $repoRoot . '/js/core/files.js',
+            $repoRoot . '/js/core/agent.js',
+            $repoRoot . '/js/core/evolve.js',
+            $repoRoot . '/js/envs/bug.js',
+            $repoRoot . '/js/envs/memory.js',
+            $repoRoot . '/js/envs/text.js',
+            $repoRoot . '/js/envs/sequence.js',
+            $repoRoot . '/js/envs/seqchoice.js',
+            $repoRoot . '/js/envs/bandit.js',
+            $repoRoot . '/js/envs/reward_evolved.js',
+            $private . '/bugbrain-view.js',
+        ];
+        if (!is_file($parts[0])) {
             http_response_code(404);
             return;
         }
         header('Content-Type: application/javascript; charset=utf-8');
-        readfile($asset);
+        foreach ($parts as $part) {
+            if (is_file($part)) {
+                readfile($part);
+                echo "\n";
+            }
+        }
         return;
     }
     if ($path === '/explore/bugbrain-champion.json' && $method === 'GET') {

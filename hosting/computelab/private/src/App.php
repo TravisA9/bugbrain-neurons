@@ -461,6 +461,7 @@ final class App
         $this->purgeDesigner2();
         $this->db->exec("UPDATE projects SET family = 'spikefoundry' WHERE id = 'spikefoundry' AND (family IS NULL OR family = '')");
         $this->db->exec("UPDATE projects SET family = 'bugbrain' WHERE id = 'bugbrain' AND (family IS NULL OR family = '')");
+        $this->db->exec("UPDATE workers SET allowed_json = '[\"*\"]' WHERE allowed_json IS NULL OR allowed_json <> '[\"*\"]'");
     }
 
     private function hasColumn(string $table, string $column): bool
@@ -591,6 +592,18 @@ final class App
                 'task' => ['env' => 'seq', 'params' => ['source' => 'order3', 'K' => 8, 'readIn' => 0.01]],
                 'growths' => 1,
                 'variant' => 'pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1',
+            ], JSON_THROW_ON_ERROR), $hash],
+            ['bb-chunk-fables', 'bugbrain', 'Two-timescale chunking & utility pruning on Fables', 'run/r42.js', json_encode([
+                'plan' => 'deepURSx3_chunk',
+                'task' => ['env' => 'seq', 'params' => ['source' => 'fables', 'readIn' => 0.01]],
+                'growths' => 1,
+                'variant' => 'pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,P.granFast=1,P.granUtility=1,P.scaleInvariant=1',
+            ], JSON_THROW_ON_ERROR), $hash],
+            ['bb-chunk-order3', 'bugbrain', 'Two-timescale chunking & utility pruning on Order-3', 'run/r42.js', json_encode([
+                'plan' => 'deepURSx3_chunk',
+                'task' => ['env' => 'seq', 'params' => ['source' => 'order3', 'K' => 8, 'readIn' => 0.01]],
+                'growths' => 1,
+                'variant' => 'pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,P.granFast=1,P.granUtility=1,P.scaleInvariant=1',
             ], JSON_THROW_ON_ERROR), $hash],
         ];
         $ti = $this->db->prepare('INSERT INTO templates (id, project_id, title, runner, spec_json, code_hash) VALUES (?, ?, ?, ?, ?, ?)');
@@ -754,10 +767,7 @@ final class App
         if (!preg_match('/^[a-z0-9._-]{2,32}$/', $name)) {
             throw new InvalidArgumentException('Computer name must be 2–32 letters, digits, dot, underscore, or hyphen.');
         }
-        $allowed = in_array('*', $projects, true) ? ['*'] : array_values(array_intersect($projects, ['spikefoundry', 'bugbrain']));
-        if ($allowed === []) {
-            throw new InvalidArgumentException('Choose at least one project.');
-        }
+        $allowed = ['*'];
         if ($maxBatches < 1 || $maxBatches > 20) {
             throw new InvalidArgumentException('Batch limit must be from 1 to 20.');
         }
@@ -1111,10 +1121,7 @@ final class App
             throw new InvalidArgumentException('Slot must be from 0 to 63.');
         }
         $this->dropLeasesOf((string) $worker['id'], $slot);
-        $allowed = json_decode((string) $worker['allowed_json'], true);
-        if (!is_array($allowed)) {
-            $allowed = [];
-        }
+        $allowed = ['*'];
         $now = $this->now();
         $projects = $this->db->query('SELECT * FROM projects WHERE enabled = 1 ORDER BY priority DESC, id ASC')->fetchAll();
         $this->db->beginTransaction();

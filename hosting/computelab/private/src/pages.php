@@ -853,27 +853,63 @@ function layout(string $title, string $body, string $base, array $nav = [], arra
  * stylesheet, and a few overrides that map its colors and type onto the design palette. */
 function pageBugArena(string $base, array $nav, bool $compare = false): string
 {
-    $body = '<section aria-labelledby="bug-title"><div class="bug-toolbar"><h1 id="bug-title">BugBrain arena</h1>'
-        . '<p id="bug-status" role="status">Loading the arena…</p><div class="head-actions">'
+    $showcases = [
+        ['bug-forage', 'BugBrain Foraging', 'SOTA bugSOTA · Garden maze'],
+        ['bug-flash', 'Spatial Memory Flash', 'SOTA bugSOTA · Unseen food memory'],
+        ['bug-reversal', 'Valence Reversal', 'SOTA bugSOTA · Dopamine flip'],
+        ['bug-hard', 'Predator Survival', 'SOTA bugSOTA · Moving targets'],
+        ['seq-fables', 'English Fables Prediction', 'SOTA deepURSx3_chunk · 2-timescale chunking'],
+        ['seq-order3', '3rd-Order Grammar', 'SOTA deepURSx3_chunk · Temporal context'],
+        ['memory-recall', 'Associative Recall', 'SOTA unifiedR · Working memory'],
+        ['rl-bandit', 'Dopamine Bandit RL', 'SOTA unifiedR · TD reward prediction error'],
+    ];
+    $tabs = '<div class="showcase-tabs" role="tablist" aria-label="Spiking brain showcases">';
+    foreach ($showcases as $idx => $sc) {
+        $on = $idx === 0 ? ' is-active' : '';
+        $tabs .= '<button type="button" class="showcase-tab' . $on . '" data-showcase="' . h($sc[0]) . '" role="tab" aria-selected="' . ($idx === 0 ? 'true' : 'false') . '">'
+            . '<span class="sc-title">' . h($sc[1]) . '</span><span class="sc-sub">' . h($sc[2]) . '</span></button>';
+    }
+    $tabs .= '</div>';
+    $body = '<section aria-labelledby="bug-title">'
+        . $tabs
+        . '<div class="bug-toolbar"><div class="bug-title-group"><h1 id="bug-title">BugBrain arena</h1>'
+        . '<p id="bug-arch-desc" class="quiet">State-of-the-Art grown spiking brain (`bugSOTA`): compound ommatidia, enthusiastic green-apple pursuit, strict ipsilateral red-poison avoidance, commissural bump-escape reflex, and central working-memory attractors.</p></div>'
+        . '<div class="head-actions">'
+        . '<button class="button small is-learning-on" id="bug-learning" type="button" aria-pressed="true" title="Toggle lifetime dopamine/eligibility synaptic plasticity on or off">Learning: On</button> '
         . '<button class="button small" id="bug-pause" type="button" disabled>Pause</button> '
         . '<button class="button small" id="bug-restart" type="button" disabled>New arena</button> '
-        . '<a class="button small" href="' . h($base . '/explore' . ($compare ? '' : '?compare=1')) . '">'
+        . '<a class="button small" id="bug-compare-link" href="' . h($base . '/explore' . ($compare ? '' : '?compare=1')) . '">'
         . ($compare ? 'Single arena' : 'Compare brains') . '</a></div></div>'
-        . ($compare ? '<div class="bug-pair"><div><h2>Champion</h2><p id="bug-champion-score"></p>' : '')
+        . '<p id="bug-status" class="bug-status-bar" role="status">Loading the arena…</p>'
+        . ($compare ? '<div class="bug-pair"><div><h2 id="bug-left-heading">Champion (SOTA · Learning On)</h2><p id="bug-champion-score"></p>' : '')
         . '<canvas id="bug-arena" width="1120" height="700" aria-label="BugBrain foraging arena" data-champion="'
         . h($base . '/explore/bugbrain-champion.json') . '"></canvas>'
-        . ($compare ? '</div><div><h2>Original BugBrain</h2><p id="bug-baseline-score"></p>'
+        . ($compare ? '</div><div><h2 id="bug-right-heading">Original BugBrain / Learning Off</h2><p id="bug-baseline-score"></p>'
             . '<canvas id="bug-baseline" width="1120" height="700" aria-label="Original BugBrain foraging arena"></canvas></div></div>' : '')
-        . '</section><script defer src="' . h($base . '/assets/bugbrain.js?v=6') . '"></script>';
+        . '<div class="showcase-donate-bar"><div><strong>Every brain above grows from a compact developmental genome (~1,800 numbers) and learns online with 100% local biological rules—no backpropagation.</strong> '
+        . '<span class="quiet">Your donated compute evolves stronger developmental programs, utility-pruned cerebellar granule layers, and composed SpikeFoundry micro-motifs.</span></div>'
+        . '<a class="button primary small" href="' . h($base) . '/join">Donate compute</a></div>'
+        . '</section><script defer src="' . h($base . '/assets/bugbrain.js?v=7') . '"></script>';
     $style = '<style>.bug-shell{max-width:none;margin:auto;padding:12px 16px 16px}'
-        . '.bug-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin:0 auto 10px}'
-        . '.bug-toolbar h1,.bug-toolbar p{margin:0}.bug-toolbar h1{font-size:clamp(18px,2vw,24px)}'
-        . '#bug-arena{display:block;margin:auto;width:min(100%,1120px,max(310px,calc((100vh - 150px)*1.6)));height:auto;background:#f4f1ea}'
-        . '@supports(height:100dvh){#bug-arena{width:min(100%,1120px,max(310px,calc((100dvh - 150px)*1.6)))}}'
+        . '.showcase-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:6px;margin:0 auto 10px}'
+        . '.showcase-tab{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:7px 10px;border-radius:8px;border:1px solid var(--line,#202d39);background:#101821;color:var(--text,#e6edf3);cursor:pointer;text-align:left;transition:border-color .15s,background .15s}'
+        . '.showcase-tab:hover{border-color:#3b5368;background:#15202b}'
+        . '.showcase-tab.is-active{border-color:var(--mint,#69e2b1);background:#132629;box-shadow:0 0 0 1px var(--mint,#69e2b1) inset}'
+        . '.showcase-tab .sc-title{font-weight:600;font-size:12.5px;color:#fff}'
+        . '.showcase-tab .sc-sub{font-size:10.5px;color:var(--muted,#8b9baa);font-family:var(--mono,monospace)}'
+        . '.bug-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin:0 auto 6px}'
+        . '.bug-title-group{flex:1 1 380px;min-width:0}.bug-title-group p{margin:2px 0 0;font-size:12.5px}'
+        . '.bug-toolbar h1{margin:0;font-size:clamp(18px,2vw,24px)}'
+        . '.bug-status-bar{margin:0 0 8px;font-family:var(--mono,monospace);font-size:12px;color:var(--mint,#69e2b1)}'
+        . '#bug-learning.is-learning-on{background:var(--mint,#69e2b1);color:#061510;border-color:var(--mint,#69e2b1);font-weight:700}'
+        . '#bug-learning.is-learning-off{background:#2a1b1e;color:#ff9b9b;border-color:#6e343b}'
+        . '#bug-arena{display:block;margin:auto;width:min(100%,1120px,max(310px,calc((100vh - 230px)*1.6)));height:auto;background:#f4f1ea;border-radius:8px}'
+        . '@supports(height:100dvh){#bug-arena{width:min(100%,1120px,max(310px,calc((100dvh - 230px)*1.6)))}}'
         . '.bug-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.bug-pair h2,.bug-pair p{margin:0 0 6px}'
-        . '.bug-pair canvas,.bug-pair #bug-arena{display:block;width:100%;height:auto;background:#f4f1ea}'
+        . '.bug-pair canvas,.bug-pair #bug-arena{display:block;width:100%;height:auto;background:#f4f1ea;border-radius:8px}'
+        . '.showcase-donate-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-top:10px;padding:10px 14px;border-radius:8px;border:1px solid var(--line,#202d39);background:#0f1720;font-size:12.5px}'
         . '@media(max-width:620px){.bug-pair{grid-template-columns:1fr}}'
-        . '@media(max-width:620px){.bug-shell{padding:10px}.bug-toolbar p{flex-basis:100%;order:1}}</style>';
+        . '@media(max-width:620px){.bug-shell{padding:10px}}</style>';
     return layout('BugBrain arena', $body, $base, $nav, ['shell' => 'bug-shell', 'head' => $style]);
 }
 
@@ -1062,12 +1098,9 @@ function pageJoin(App $app, string $error = '', array $nav = []): string
     $body = '<section class="heading"><div><div class="eyebrow">Join · one download</div><h1>Join with this computer</h1><p>This does not share a GitHub token or the owner password. A background program on your computer does the work. This browser tab is not the worker.</p></div></section>'
         . $err
         . '<section class="panel"><div class="panelhead"><div class="paneltitle">Your computer</div><span class="subtag">STARTS AT 50% ALLOWANCE</span></div><div class="panelbody"><form method="post" action="' . h($base) . '/join"><label>Computer name <input name="name" required maxlength="32" autocomplete="off" placeholder="kitchen-pc"></label>'
-        . '<label><input type="checkbox" name="consent" value="1" required> I agree this computer may run tasks according to the choices below.</label>'
-        . '<label><input type="checkbox" name="project[]" value="*" checked> Run any available ComputeLab task, including future projects</label>'
-        . '<p class="quiet">To limit participation, uncheck “Run any available ComputeLab task” and choose specific projects below.</p>'
-        . '<label><input type="checkbox" name="project[]" value="spikefoundry" checked> SpikeFoundry synthetic design jobs</label>'
-        . '<label><input type="checkbox" name="project[]" value="bugbrain"> BugBrain template tests</label>'
-        . '<p class="quiet">New computers start in Allowance at 50%: about half of the cores, at low priority, so you can keep using the computer. Change it any time on Home. Job length and the rest are picked for you.</p>'
+        . '<input type="hidden" name="project[]" value="*">'
+        . '<label><input type="checkbox" name="consent" value="1" required> I agree this computer may run Compute Lab experiments and tests in the background according to my compute allowance setting.</label>'
+        . '<p class="quiet">All connected computers automatically participate in any active SpikeFoundry or BugBrain experiment. You control how much compute to donate at any time on Home (Off, Allowance %, or Full blast)—job selection and length are handled automatically.</p>'
         . '<p class="quiet">Running setup again on a computer that is already added is safe: it keeps that computer\'s entry, updates and restarts its worker, and does not add a duplicate.</p>'
         . '<button class="button primary" type="submit">Create a worker token</button></form></div></section>';
     return layout('Join Compute Lab', $body, $base, $nav, ['shell' => 'shell narrow']);
