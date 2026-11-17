@@ -31,10 +31,12 @@ const hook = n => { const sp = n.spk; for (let s = 0; s < n.nSpk; s++) { const i
 // R121 BB_GUTRACE=<file>: log granule detector changes per slot (slot, granule, new key or null) + the initial keys, for coverage / recruitment analysis
 const GT = process.env.BB_GUTRACE ? { log: [], prev: null } : null;
 const guSnap = t => { const gu = a.net && a.net.gu; if (!GT || !gu || !gu.keyBy) return; const kb = gu.keyBy; if (!GT.prev) { GT.init = kb.slice(); GT.prev = kb.slice(); return; } const pv = GT.prev; for (let j = 0; j < kb.length; j++) if (kb[j] !== pv[j]) { GT.log.push([t, j, kb[j]]); pv[j] = kb[j]; } };
-let lastPos = T.pos; const tGrow = Date.now() - T0;
+let lastPos = T.pos; const GD = [];   // R122 BB_GENDUMP=<file>: active hidden cells per free-running generation slot (+ generated symbols)
+ const tGrow = Date.now() - T0;
 const was = SA.params.plasticity;
 try { while (!a.done && T.pos < nS) { a.tick(hook); if (T.pos !== lastPos) { lastPos = T.pos; guSnap(S.length); let na = 0; for (let i = 0; i < nH; i++) if (cnt[i]) na++; const c = new Int32Array(na); let q = 0; for (let i = 0; i < nH; i++) if (cnt[i]) c[q++] = i; S.push(c); cnt.fill(0); } }
-  if (!process.env.BB_GEN_LEARN) SA.params.plasticity = false; while (!a.done) a.tick(); } finally { SA.params.plasticity = was; }
+  if (!process.env.BB_GEN_LEARN) SA.params.plasticity = false; if (process.env.BB_GENDUMP) { cnt.fill(0); while (!a.done) { a.tick(hook); if (T.pos !== lastPos) { lastPos = T.pos; const c = []; for (let i = 0; i < nH; i++) if (cnt[i]) c.push(i); GD.push(c); cnt.fill(0); } } } else while (!a.done) a.tick(); } finally { SA.params.plasticity = was; }
+if (process.env.BB_GENDUMP) require('fs').writeFileSync(process.env.BB_GENDUMP, JSON.stringify({ gen: T.gen, act: GD }));
 if (GT) require('fs').writeFileSync(process.env.BB_GUTRACE, JSON.stringify({ init: GT.init, log: GT.log }));
 const tLife = Date.now() - T0 - tGrow, seq = T.seq, hits = T.hits, hf = T.heldFrom, held = [], tr = [];
 for (let t = 2; t < Math.min(S.length, nS) - 1; t++) (t >= hf ? held : tr).push(t);

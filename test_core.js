@@ -363,5 +363,6 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const zo = run({ granOneShot: 0 }), o = run({ granKal: 1, granOneShot: 0.05 });
   assert.ok(u.s === zo.s && u.spk === zo.spk && u.w.every((v, i) => v === zo.w[i]), 'granOneShot 0 is bit-identical to unset');
   assert.ok(o.s > 1 / o.K && o.w.some((v, i) => v !== x.w[i]), `granOneShot 0.05: recruit weights differ from granKal alone, score ${o.s.toFixed(3)} above chance`);
-  console.log(`R121 granOneShot: off bit-identical, 0.05+kal score ${o.s.toFixed(3)}: ok`); }
+  console.log(`R121 granOneShot: off bit-identical, 0.05+kal score ${o.s.toFixed(3)}: ok`);
+  const zf = run({ granFatigue: 0 }); assert.ok(u.s === zf.s && u.spk === zf.spk && u.w.every((v, i) => v === zf.w[i]), 'granFatigue 0 is bit-identical to unset'); console.log('R122 granFatigue: off bit-identical: ok'); }
 console.log('ALL OK');

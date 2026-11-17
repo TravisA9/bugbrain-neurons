@@ -862,6 +862,7 @@ class SpikingNet {
   initGranExact() {
     const gu = this.gu, { nG, gOff, src, lists, inS, inK, keyBy } = gu, ws = this.ws;
     gu.xm = new Uint8Array(nG); gu.xn = new Uint8Array(nG); gu.xf = new Uint8Array(nG); gu.xT = new Int32Array(nG); gu.xTn = 0; gu.xF = new Int32Array(nG); gu.xFn = 0; gu.xc = new Uint32Array(nG); gu.xr = new Float32Array(nG); gu.st.capped = 0;
+    if (params.granFatigue > 0) { gu.xL = new Float64Array(nG).fill(-1e12); gu.xE = new Uint32Array(nG); gu.tk = 0; gu.sps = 1e9; }   // R122 granFatigue: episode = the fires of one symbol (within sps = substeps per teaching event, measured in life, frozen in generation); xE = episodes, refractory is between episodes
     gu.cHit = src.map(S => new Uint8Array(S.keys.length)); gu.cT = []; gu.st.exact = 0; gu.cr = src.map(S => new Float32Array(S.keys.length)); gu.ban = new Set();
     for (let j = 0; j < nG; j++) { for (let q = inS[j]; q < inS[j + 1]; q++) ws[inK[q]] = 0;
       const key = keyBy[j]; if (key == null) continue; if ((params.granExactGuard & 1) && gu.owned.get(key) !== j) { keyBy[j] = null; gu.st.dedup = (gu.st.dedup || 0) + 1; continue; }   // R120 guard: one detector per tuple (grown duplicates start free)
@@ -873,9 +874,10 @@ class SpikingNet {
     const gu = this.gu, ch = gu.cHit[s], c = gc - gu.hOff[s]; if (ch[c] >= 250) return;
     const hM = params.granExactHits > 1 ? params.granExactHits : 1; if (ch[c] === 0) gu.cT.push(s, c); ch[c]++; if (ch[c] < hM) return; ch[c] = 250; if ((params.granExactColCap || (params.granExactGuard & 2)) && gu.cr[s][c] > this.guColCap(s)) return;   // R119 granExactColCap: a claw column active in > colCap of the windows (saturated lag cells) carries no context: it never completes a tuple   // R119 granExactHits: a claw column counts once it has fired hM spikes in this window (stale lag letters fire fewer)
     const L = gu.lists[s][c], gen = gu.gen, xm = gu.xm, xn = gu.xn, xf = gu.xf, gOff = gu.gOff, T = this.thr || this.g.thresh;
+    const xL = gu.xL, fz = params.granFatigue;   // R122 granFatigue = c (off by default): a detector that fired less than c x its OWN mean inter-fire interval (symbols / its fire count) ago is refractory (self-suppression after completing its tuple; self-calibrated per detector)
     for (let r = 0, m = L.length; r < m; r++) { const e = L[r]; if (e.gen !== gen[e.j]) continue; const j = e.j, bit = 1 << e.c;
       if (!(xm[j] & bit)) { if (!xm[j]) gu.xT[gu.xTn++] = j; xm[j] |= bit; }
-      if (!xf[j] && xm[j] === (1 << xn[j]) - 1) { xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++; const b = gOff + j; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31); gu.st.exact++; } }
+      if (!xf[j] && xm[j] === (1 << xn[j]) - 1) { if (xL) { const tk = gu.tk, dt = tk - xL[j]; if (dt > gu.sps) { if (gu.xE[j] > 2 && dt < fz * tk / gu.xE[j]) { gu.st.fatSkip = (gu.st.fatSkip || 0) + 1; continue; } xL[j] = tk; gu.xE[j]++; } } xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++; const b = gOff + j; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31); gu.st.exact++; } }
   }
   guColCap(s) { const v = params.granExactColCap;
     if (!v) { const gu = this.gu; if (s === 0 || gu.st.events < 3000) return 2; if (gu.crE0 !== gu.st.events) { gu.crE0 = gu.st.events; let m = 0; const a0 = gu.cr[0]; for (let c = 0; c < a0.length; c++) if (a0[c] > m) m = a0[c]; gu.crMax0 = Math.min(0.9, 3 * m); } return gu.crMax0; }
@@ -887,7 +889,7 @@ class SpikingNet {
     for (let q = 0; q < cT.length; q += 2) gu.cHit[cT[q]][cT[q + 1]] = 0; cT.length = 0; }
   guDrive(spk, nSpk, syn, mk) {
     const gu = this.gu, colOf = gu.colOf, hits = gu.hits, lists = gu.lists, gOff = gu.gOff, gEnd = gOff + gu.nG, use = gu.use, gen = gu.gen, K = gu.K, hOff = gu.hOff, gB = this.gBits;
-    if (gu.xm) { const inNow = nSpk > 0 && spk[0] < this.g.nIn; if (inNow && !gu.inPrev) this.guExactReset(); gu.inPrev = inNow; }   // R119: a new input symbol starts a new window (also in free-running generation, which has no teaching events)
+    if (gu.xm) { const inNow = nSpk > 0 && spk[0] < this.g.nIn; if (inNow && !gu.inPrev) this.guExactReset(); gu.inPrev = inNow; if (gu.xL) { gu.tk++; if (gu.st.events > 0) gu.sps = gu.tk / gu.st.events; } }   // R119: a new input symbol starts a new window (also in free-running generation, which has no teaching events)
     if (gu.xm && params.granExactHold !== 0 && gu.xFn) { const T = this.thr || this.g.thresh, F = gu.xF; for (let q = 0; q < gu.xFn; q++) { const b = gOff + F[q]; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; } }   // R119 granExactHold (default on): a matched detector keeps firing for the rest of the read window (sustained drive like the dense code)
     for (let q = 0; q < nSpk; q++) {
       const i = spk[q]; if (i >= gOff && i < gEnd) use[i - gOff]++;
