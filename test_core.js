@@ -330,4 +330,13 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   assert.ok(u.s === z.s && u.spk === z.spk && u.w.length === z.w.length && u.w.every((x, i) => x === z.w[i]), 'readoutRule=0 is bit-identical to unset');
   assert.ok(f.w.some((x, i) => x !== u.w[i]) && f.s > 1 / f.K + 0.3, `readoutRule=threeFactor changes the readout weights and learns (score ${f.s.toFixed(3)}, chance ${(1 / f.K).toFixed(3)})`);
   console.log(`R118 readoutRule: off bit-identical (score ${u.s.toFixed(3)}, ${u.spk} spikes), threeFactor learns (score ${f.s.toFixed(3)}): ok`); }
+// 6. R119 exact-coincidence granules (params.granExact = 1 with granUtility = 2; off = bit-identical, no RNG)
+{ const run = ex => { const S = require('./js/node_load.js')(); S.params.granN = 256; if (ex) Object.assign(S.params, ex);
+    const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 240 });
+    const E = S.setEnv('seq', envP), D = S.PLANS.deepURSx3.make(), b = S.growCell(D, { seed: 5, spec: E.spec }), a = S.runEpisode(D, 7, b, E);
+    return { s: a.task.score(), spk: a.net.spikeCount, w: Array.from(a.net.ws), st: a.net.granUtilityStats(), K: a.task.K }; };
+  const u = run(), z = run({ granUtility: 0, granExact: 0, granReserve: 0 }), x = run({ granUtility: 2, granExact: 1, granCo: 1 });
+  assert.ok(u.s === z.s && u.spk === z.spk && u.w.every((v, i) => v === z.w[i]), 'granUtility/granExact/granReserve 0 are bit-identical to unset');
+  assert.ok(x.st && x.st.exact > 0 && x.st.rewired > 0 && x.s > 1 / x.K, `granExact: exact detectors fire and are recycled (${JSON.stringify(x.st)}, score ${x.s.toFixed(3)})`);
+  console.log(`R119 granExact: off bit-identical (score ${u.s.toFixed(3)}), on: ${x.st.exact} exact spikes, ${x.st.rewired} recruits, score ${x.s.toFixed(3)}: ok`); }
 console.log('ALL OK');

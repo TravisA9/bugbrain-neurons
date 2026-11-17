@@ -48,5 +48,5 @@ const probe = { all: fit(all), granules: fit(gran), nonGranule: fit(nonGran) };
 const text = T.gen.map(i => A[i]).join(''), st = T.stats();
 const OUT = { plan, task: tj, variant, k, heldAcc: +st.heldAcc.toFixed(4), brainHeld: +acc(held, t => hits[t]).toFixed(4), trainAcc: +(st.trainAcc || 0).toFixed(4), heldSlots: held.length, probeTrainSlots: trL.length,
   probe, gen: text.length ? Object.assign(metrics(text), { sample: text.slice(0, 160) }) : null, nHid: nH, meanActive: +(S.reduce((x, c) => x + c.length, 0) / S.length).toFixed(1),
-  growS: +(tGrow / 1000).toFixed(1), lifeS: +(tLife / 1000).toFixed(1), totalS: +((Date.now() - T0) / 1000).toFixed(1), rssMB: Math.round(process.memoryUsage().rss / 1e6) };
+  growS: +(tGrow / 1000).toFixed(1), lifeS: +(tLife / 1000).toFixed(1), totalS: +((Date.now() - T0) / 1000).toFixed(1), rssMB: Math.round(process.memoryUsage().rss / 1e6), gu: a.net && a.net.granUtilityStats ? a.net.granUtilityStats() : null, hot: a.net && a.net.gu && a.net.gu.xc ? Array.from(a.net.gu.xc, (n, j) => [j, n]).sort((x, y) => y[1] - x[1]).slice(0, 20).map(([j, n]) => ({ j, n, key: a.net.gu.keyBy[j] })) : null };
 console.log(JSON.stringify(OUT));

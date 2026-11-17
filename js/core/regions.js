@@ -90,13 +90,15 @@ function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, g
   const chunkPart = gd && gd.chunkFrac > 0 ? parts.find(p => p.R && p.R.name === 'chunk context') : null;
   const Cchunk = chunkPart ? colsOf([chunkPart, 2]) : null, jChunk0 = Cchunk && Cchunk.size ? Math.floor(nG * (1 - gd.chunkFrac)) : nG;
   if (!(params.granDemand > 0)) {
+    const rsv0 = params.granReserve > 0 && params.granUtility === 2 ? Math.max(0, nG - Math.round(params.granReserve)) : -1;
     const pk = packSrc(), keyIdx = pk.map(s => { const m = new Map(); for (let i = 0; i < s.keys.length; i++) m.set(s.keys[i], i); return m; }), initKeys = new Array(nG);
   for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk;
+    if (rsv0 >= 0 && j >= rsv0) { initKeys[j] = null; continue; }   // R119 granReserve: the last granReserve granules grow no claws (recruited later by granUtility 2); no RNG draws
     const k = Km === K ? K : Km + ((r() * (K - Km + 1)) | 0);   // R84 granKmin: each granule takes k in [granKmin, granK] claws from the first k sources (lags t .. t-k+1; a mixture of n-gram orders)
     let ik = String(k);
     for (let c = 0; c < k; c++) { const useCh = j >= jChunk0 && c === k - 1, m = useCh ? Cchunk : C[c], keys = [...m.keys()]; if (!keys.length) continue; const chosen = keys[(r() * keys.length) | 0], S = m.get(chosen), ws = W / k / S.length; for (const A of S) acc.add(A, b, ws, 0, 0); ik += ',' + (useCh ? 'c' + chosen : keyIdx[c].get(chosen)); }
     initKeys[j] = ik; }
-    Object.defineProperty(G, 'granSrc', { value: { K, Km, W, nG, gOff, src: pk, initKeys }, writable: true, configurable: true, enumerable: false });
+    Object.defineProperty(G, 'granSrc', { value: rsv0 >= 0 ? { K, Km, W, nG, gOff, src: pk, initKeys, rsv0 } : { K, Km, W, nG, gOff, src: pk, initKeys }, writable: true, configurable: true, enumerable: false });
   } else {
     for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk; }
     Object.defineProperty(G, 'granDemand', { value: { K, Km, W, nG, gOff, src: packSrc() }, writable: true, configurable: true, enumerable: false });

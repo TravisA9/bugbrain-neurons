@@ -581,7 +581,9 @@ class SpikingNet {
     const gr = this.g.gran; let n = 0; for (let s = 0; s < nSpk; s++) n += gr[spk[s]];
     const L = this.granL, nL = this.granLn != null ? this.granLn : L.length;   // R102: demand mode keeps granLn = assigned granules only (unset = every granule, bit-identical)
     if (params.granRate > 0 && params.plasticity) { const sp = this.spiked, h = params.granHomeo > 0 ? params.granHomeo : 0.5, r0 = params.granRate, T = this.thr || this.g.thresh;   // R83 granule homeostatic threshold
-      for (let q = 0; q < nL; q++) { const i = L[q]; T[i] += h * (sp[i] - r0); if (mk) mk[i] = 1; } }
+      for (let q = 0; q < nL; q++) { const i = L[q]; T[i] += h * (sp[i] - r0); if (mk) mk[i] = 1; }
+      const gu = this.gu; if (gu && gu.rsv0 > 0) { const rR = params.granRecruitRate > 0 ? params.granRecruitRate : r0 / 10, kb = gu.keyBy, o = gu.gOff;   // R119 granReserve: recruited granules adapt to a sparser target rate (exact-tuple detectors); unclaimed ones stay silent (no drift)
+        for (let j = gu.rsv0; j < gu.nG; j++) if (kb[j] != null) { const i = o + j; T[i] += h * (sp[i] - rR); if (mk) mk[i] = 1; } } }
     if (!(params.granInh > 0) || !n) return;
     const d = params.granInh * n; for (let q = 0; q < nL; q++) { syn[L[q]] -= d; if (mk) mk[L[q]] = 1; } }
   /* R83b CEREBELLAR READOUT (global granLr > 0; needs granN): only the granule -> prediction synapses, once per teaching event
@@ -602,7 +604,7 @@ class SpikingNet {
     const gS = this.g.granSch, lT = params.granLrT != null ? (params.granLrT > 0 ? params.granLrT : 0) : gS && gS.T > 0 ? gS.T : 0, nEv = lT ? (this.gEv = (this.gEv || 0) + 1) : 0;   // R100 granLrT (global, 0 = off, bit-identical off; v47 R114: P.granLrT unset -> the plan gene d.gran.lrT / lrLate via G.granSch, deepURSx3 = 100000 / 0.05; pin P.granLrT=0 for the fixed step): granule step schedule tied to the teaching events seen (~ symbols): granLr until granLrT events, then granLrLate (default granLr / 2); granLrShape 1 = smooth: late + (granLr - late) x T / (T + events)
     const L = oT ? (this.gOutL || (this.gOutL = Int32Array.from({ length: nO }, (_, m) => o0 + m))) : L0;
     if (!this.gIn) { const S = [0], K = []; for (let q = 0; q < L.length; q++) { const i = L[q]; for (let r = this.inStart[i], e = this.inStart[i + 1]; r < e; r++) { const k = this.inEdges[r]; if (this.g.gran[this.pres[k]] && this.isPlastic[k]) K.push(k); } S.push(K.length); } this.gIn = { S: Int32Array.from(S), K: Int32Array.from(K) }; }
-    const S = this.gIn.S, K = this.gIn.K, ws = this.ws, pr = this.pres, wMax = params.wMax, lr = lT ? (() => { const a = params.granLr, b = params.granLrLate > 0 ? params.granLrLate : params.granLrT == null && gS && gS.late > 0 ? gS.late : a / 2; return params.granLrShape === 1 ? b + (a - b) * lT / (lT + nEv) : nEv > lT ? b : a; })() : params.granLr, ref = params.granRef > 0 ? params.granRef : 10, D = globalThis.__granDbg;
+    const S = this.gIn.S, K = this.gIn.K, ws = this.ws, pr = this.pres, wMax = this.gu && this.gu.xm ? params.wMax * (params.granExactW > 0 ? params.granExactW : 50) : params.wMax, lr = lT ? (() => { const a = params.granLr, b = params.granLrLate > 0 ? params.granLrLate : params.granLrT == null && gS && gS.late > 0 ? gS.late : a / 2; return params.granLrShape === 1 ? b + (a - b) * lT / (lT + nEv) : nEv > lT ? b : a; })() : params.granLr, ref = params.granRef > 0 ? params.granRef : 10, D = globalThis.__granDbg;
     let U = null; if (gG) { if (!this.gU) { this.gU = new Float32Array(K.length); for (let r = 0; r < K.length; r++) this.gU[r] = ws[K[r]]; this.gPsi = params.granGain0 > 0 ? params.granGain0 : 0; } U = this.gU; }
     const aT = params.granAnneal > 0 ? params.granAnneal : 0, aMn = params.granAnnealMin > 0 ? params.granAnnealMin : 0, gC = aT ? (this.gCnt || (this.gCnt = new Float32Array(this.N))) : null;   // R91 granAnneal: per-granule step decays with the granule's use count (a count-based / consolidating estimate: rare combinations learn fast, common ones average finely); floor granAnnealMin x granLr
     let oS = 0, dPs = 0, yTgt = 0; if (gG) for (let q = 0; q < nO; q++) oS += gA[o0 + q];
@@ -805,14 +807,46 @@ class SpikingNet {
       owned, pending: new Map(), rng: mulberry32((0x6775746c ^ N) >>> 0),
       co: params.granCo > 0 ? params.granCo | 0 : 2, hold: params.granHold > 0 ? params.granHold | 0 : 40,
       st: { rewired: 0, cap: nG, events: 0 } };
+    if (params.granUtility === 2) { this.gu.match = new Float32Array(nG); this.gu.st.matched = 0; if (d.rsv0 >= 0 && d.rsv0 < nG) { this.gu.rsv0 = d.rsv0; this.gu.st.reserve = nG - d.rsv0; if (d.rsv0 > 0 && this.gFast0 == null) this.granLn = d.rsv0; }
+      if (params.granExact > 0) this.initGranExact(); }   // granLn: the shared homeostasis loop covers the random granules only   // R119 granUtility 2: utility = exact claw-tuple matches (see granUtilityEvent)
   }
   granUtilityStats() { return this.gu ? this.gu.st : null; }
+  /* R119 granExact (needs granUtility 2): every granule becomes an EXACT coincidence detector of its claw tuple. The grown random claw
+   * synapses are silenced and re-registered as claw lists; a granule fires (one injected suprathreshold input) only in a read window in
+   * which every one of its claw columns has fired, and granule homeostasis is off (fixed thresholds), so the code is sparse: only the
+   * granules whose letter tuple is actually present fire, instead of ~2.4% of all granules on partial matches. Granules whose tuple never
+   * occurs (most random 4-claw tuples) earn no matches and are recycled by granUtility 2 onto missed 3- / 4-letter windows. */
+  initGranExact() {
+    const gu = this.gu, { nG, gOff, src, lists, inS, inK, keyBy } = gu, ws = this.ws;
+    gu.xm = new Uint8Array(nG); gu.xn = new Uint8Array(nG); gu.xf = new Uint8Array(nG); gu.xT = new Int32Array(nG); gu.xTn = 0; gu.xF = new Int32Array(nG); gu.xFn = 0; gu.xc = new Uint32Array(nG); gu.xr = new Float32Array(nG); gu.st.capped = 0;
+    gu.cHit = src.map(S => new Uint8Array(S.keys.length)); gu.cT = []; gu.st.exact = 0; gu.cr = src.map(S => new Float32Array(S.keys.length)); gu.ban = new Set();
+    for (let j = 0; j < nG; j++) { for (let q = inS[j]; q < inS[j + 1]; q++) ws[inK[q]] = 0;
+      const key = keyBy[j]; if (key == null) continue; const a = key.split(','), n = +a[0]; if (!(n > 0) || a.length !== n + 1 || a.some((x, i) => i > 0 && !/^[0-9]+$/.test(x))) { keyBy[j] = null; continue; }
+      gu.xn[j] = n; for (let c = 0; c < n; c++) lists[c][+a[c + 1]].push({ j, w: 0, gen: gu.gen[j], c }); }
+    if (this.gFast0 == null) this.granLn = 0;   // fixed thresholds: no granule homeostasis
+  }
+  guExact(i, gc, s, syn, mk, gB) {   // first hit of claw column gc (source s) in this read window: set the claw bit of every granule listening to it
+    const gu = this.gu, ch = gu.cHit[s], c = gc - gu.hOff[s]; if (ch[c] >= 250) return;
+    const hM = params.granExactHits > 1 ? params.granExactHits : 1; if (ch[c] === 0) gu.cT.push(s, c); ch[c]++; if (ch[c] < hM) return; ch[c] = 250; if (params.granExactColCap && gu.cr[s][c] > this.guColCap(s)) return;   // R119 granExactColCap: a claw column active in > colCap of the windows (saturated lag cells) carries no context: it never completes a tuple   // R119 granExactHits: a claw column counts once it has fired hM spikes in this window (stale lag letters fire fewer)
+    const L = gu.lists[s][c], gen = gu.gen, xm = gu.xm, xn = gu.xn, xf = gu.xf, gOff = gu.gOff, T = this.thr || this.g.thresh;
+    for (let r = 0, m = L.length; r < m; r++) { const e = L[r]; if (e.gen !== gen[e.j]) continue; const j = e.j, bit = 1 << e.c;
+      if (!(xm[j] & bit)) { if (!xm[j]) gu.xT[gu.xTn++] = j; xm[j] |= bit; }
+      if (!xf[j] && xm[j] === (1 << xn[j]) - 1) { xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++; const b = gOff + j; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31); gu.st.exact++; } }
+  }
+  guColCap(s) { const v = params.granExactColCap; if (v > 0) return v; const gu = this.gu, a = gu.cr[s]; if (!gu.crM || gu.crE !== gu.st.events) { gu.crE = gu.st.events; gu.crM = gu.cr.map(x => { let t = 0; for (let c = 0; c < x.length; c++) t += x[c]; return t / x.length; }); }
+    return gu.st.events < 3000 ? 2 : Math.max(-v * gu.crM[s], 0.05); }   // < 0 = self-calibrating: |v| x the source's mean column activity (a saturated column vs its alphabet)
+  guExactReset() { const gu = this.gu, xm = gu.xm, xf = gu.xf, xT = gu.xT; for (let q = 0; q < gu.xTn; q++) { xm[xT[q]] = 0; xf[xT[q]] = 0; } gu.xTn = 0; gu.xFn = 0;
+    const cT = gu.cT; if (params.granExactColCap) { const cr = gu.cr; for (let s2 = 0; s2 < cr.length; s2++) { const a = cr[s2]; for (let c = 0; c < a.length; c++) a[c] *= 0.999; } for (let q = 0; q < cT.length; q += 2) if (gu.cHit[cT[q]][cT[q + 1]] >= 250) cr[cT[q]][cT[q + 1]] += 0.001; }
+    for (let q = 0; q < cT.length; q += 2) gu.cHit[cT[q]][cT[q + 1]] = 0; cT.length = 0; }
   guDrive(spk, nSpk, syn, mk) {
     const gu = this.gu, colOf = gu.colOf, hits = gu.hits, lists = gu.lists, gOff = gu.gOff, gEnd = gOff + gu.nG, use = gu.use, gen = gu.gen, K = gu.K, hOff = gu.hOff, gB = this.gBits;
+    if (gu.xm) { const inNow = nSpk > 0 && spk[0] < this.g.nIn; if (inNow && !gu.inPrev) this.guExactReset(); gu.inPrev = inNow; }   // R119: a new input symbol starts a new window (also in free-running generation, which has no teaching events)
+    if (gu.xm && params.granExactHold !== 0 && gu.xFn) { const T = this.thr || this.g.thresh, F = gu.xF; for (let q = 0; q < gu.xFn; q++) { const b = gOff + F[q]; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; } }   // R119 granExactHold (default on): a matched detector keeps firing for the rest of the read window (sustained drive like the dense code)
     for (let q = 0; q < nSpk; q++) {
       const i = spk[q]; if (i >= gOff && i < gEnd) use[i - gOff]++;
       const gc = colOf[i]; if (gc < 0) continue; hits[gc]++;
       let s = 0; while (s + 1 < K && gc >= hOff[s + 1]) s++;
+      if (gu.xm) { this.guExact(i, gc, s, syn, mk, gB); continue; }
       const L = lists[s][gc - hOff[s]];
       for (let r = 0, m = L.length; r < m; r++) { const e = L[r]; if (e.gen !== gen[e.j]) continue; const b = gOff + e.j; syn[b] += e.w; if (mk) mk[b] = 1; if (gB) gB[e.j >>> 5] |= 1 << (e.j & 31); }
     }
@@ -820,15 +854,24 @@ class SpikingNet {
   granUtilityEvent(yTgt) {
     const gu = this.gu; if (!gu) return;
     const { K, Km, W, nG, gOff, src, hOff, hits, win, lists, inS, inK, outS, outK, use, born, gen, keyBy, owned, pending, rng, co, hold, st } = gu;
-    st.events++;
+    st.events++; const mt0 = gu.match, ev0 = j => st.events - born[j] >= hold;
     let n = 0;
     for (let s = 0; s < K; s++) { const a = hOff[s], m = src[s].keys.length; let bc = -1, bh = 0;
       for (let c = 0; c < m; c++) { const h = hits[a + c]; if (h > bh) { bh = h; bc = c; } }
       if (bc >= 0) win[n++] = bc; else break; }
-    hits.fill(0);
+    if (gu.xm && params.granExactCap) { const xr = gu.xr, F = gu.xF; let sm = 0, nl = 0; for (let j = 0; j < nG; j++) { xr[j] *= 0.999; if (keyBy[j] != null) { sm += xr[j]; nl++; } } for (let q = 0; q < gu.xFn; q++) xr[F[q]] += 0.001;
+      const cap = params.granExactCap > 0 ? params.granExactCap : st.events < 3000 ? 2 : Math.max(0.01, -params.granExactCap * (nl ? sm / nl : 0));   // < 0 = self-calibrating: |v| x the mean match rate of the live detectors   // R119 granExactCap: a detector matching in > cap of the windows (EMA) is too broad -> freed for recruitment
+      for (let q = 0; q < gu.xFn; q++) { const j = F[q]; if (xr[j] > cap && ev0(j)) { const kb = keyBy[j]; if (kb != null) gu.ban.add(kb); if (kb != null && owned.get(kb) === j) owned.delete(kb); keyBy[j] = null; gen[j]++; gu.xn[j] = 0; xr[j] = 0; if (mt0) mt0[j] = 0; st.capped++; } } }
+    hits.fill(0); if (gu.xm) this.guExactReset();
     for (let j = 0; j < nG; j++) use[j] *= 0.998;
+    const mt = gu.match;   // R119 granUtility 2 (match utility): credit the granules whose whole claw tuple (lags t .. t-m+1, m = Km .. n) is this window
+    if (mt) { for (let j = 0; j < nG; j++) mt[j] *= 0.998; let kk = String(Km); for (let c = 0; c < Km && c < n; c++) kk += ',' + win[c];
+      for (let m = Km; m <= n; m++) { if (m > Km) kk = String(m) + kk.slice(kk.indexOf(',')) + ',' + win[m - 1]; const j = owned.get(kk); if (j != null) { mt[j] += 1; st.matched++; } } }
     if (!(params.plasticity && this.learning) || yTgt >= 0.85 || n < Km) return;
     let key = String(n); for (let c = 0; c < n; c++) key += ',' + win[c];
+    if (gu.xm) { let kk = String(Km); for (let c = 0; c < Km; c++) kk += ',' + win[c];   // exact mode: recruit the shortest missing window first (3 letters, then 4)
+      for (let m = Km; m <= n; m++) { if (m > Km) kk = String(m) + kk.slice(kk.indexOf(',')) + ',' + win[m - 1]; if (!owned.has(kk) && !gu.ban.has(kk)) { key = kk; n = m; break; } }
+      if (gu.ban.has(key)) return; if (params.granExactColCap) for (let c = 0; c < n; c++) if (gu.cr[c][win[c]] > this.guColCap(c)) return; }
     if (owned.has(key)) return;
     const cnt = (pending.get(key) || 0) + 1;
     if (cnt < co) { pending.set(key, cnt); return; }
@@ -836,23 +879,24 @@ class SpikingNet {
     const ev = st.events, ws = this.ws, posts = this.posts;
     let best = -1, bu = Infinity;
     for (let t = 0; t < 48; t++) {
-      const j = (rng() * nG) | 0; if (ev - born[j] < hold) continue;
+      const r0 = gu.rsv0 > 0 ? gu.rsv0 : 0, j = r0 + ((rng() * (nG - r0)) | 0); if (ev - born[j] < hold) continue;   // R119 granReserve: recruit / recycle only inside the reserve (r0 = 0 = whole layer, same draw)
       let wSum = 0; for (let q = outS[j]; q < outS[j + 1]; q++) wSum += ws[outK[q]];
-      const u = use[j] * (0.01 + wSum);
+      const u = mt ? mt[j] : use[j] * (0.01 + wSum);   // R119: mode 2 ranks by exact-tuple matches (homeostasis keeps every granule spiking, so the spike-count utility never falls below 0.05 in v47)
       if (u < bu) { bu = u; best = j; if (u === 0) break; }
     }
     if (best < 0 || bu > 0.05) return;
     if (keyBy[best] != null && owned.get(keyBy[best]) === best) owned.delete(keyBy[best]);
     for (let q = inS[best]; q < inS[best + 1]; q++) ws[inK[q]] = 0;
     const gv = ++gen[best], b = gOff + best;
-    keyBy[best] = key; owned.set(key, best); born[best] = ev; use[best] = 1;
-    for (let c = 0; c < n; c++) { const col = win[c], sl = src[c].off[col + 1] - src[c].off[col]; if (sl > 0) lists[c][col].push({ j: best, w: W / n / sl, gen: gv }); }
+    keyBy[best] = key; owned.set(key, best); born[best] = ev; use[best] = 1; if (mt) mt[best] = 1;
+    if (gu.xm) { gu.xn[best] = n; for (let c = 0; c < n; c++) lists[c][win[c]].push({ j: best, w: 0, gen: gv, c }); }
+    else for (let c = 0; c < n; c++) { const col = win[c], sl = src[c].off[col + 1] - src[c].off[col]; if (sl > 0) lists[c][col].push({ j: best, w: W / n / sl, gen: gv }); }
     const U = this.gU, Uw = this.gRUw, pos = this.gRpos, wo = gu.wo, psi = this.gPsi || 0;
     const o0 = this.g.nIn + this.g.nHid, tgtNode = params.granTgt === 1 && this.gSym >= 0 ? o0 + this.gSym : -1;
     const wTgt = Math.min(params.wMax || 15, wo + (params.granLr || 0.1) * Math.max(0, 1 - yTgt));
     if (U && !gu.uAt && this.gIn) { const Ki = this.gIn.K, m = new Int32Array(ws.length).fill(-1); for (let r = 0; r < Ki.length; r++) m[Ki[r]] = r; gu.uAt = m; }
     const map = gu.uAt;
-    for (let q = outS[best]; q < outS[best + 1]; q++) { const e = outK[q], uVal = posts[e] === tgtNode ? wTgt : wo;
+    for (let q = outS[best]; q < outS[best + 1]; q++) { const e = outK[q], uVal = posts[e] === tgtNode ? wTgt : mt && params.granRecruitW0 !== 1 ? 0 : wo;   // R119 mode 2: a recruit starts silent on the non-target outputs (wo = the untrained initial weight would add uniform drive to every output; P.granRecruitW0=1 = old)
       if (U && map && map[e] >= 0) { const r = map[e]; U[r] = uVal; if (Uw && pos) Uw[pos[r]] = uVal; }
       ws[e] = U ? psi * uVal : uVal; }
     if (this.thr) { this.thr[b] = gu.thr0; if (this.gLastT) this.gLastT[best] = this.gThStep; }
