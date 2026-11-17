@@ -28,10 +28,14 @@ const ABL = { n: 0, w: 0 }; if (process.env.BB_ABL) { const [pp, sc, rg] = proce
   for (let i = brain.nIn; i < brain.nIn + brain.nHid; i++) { if (brain.cellType[i] !== ta || (rg != null && R[i] !== +rg)) continue; for (let q = n.start[i]; q < n.start[i + 1]; q++) { const j = n.posts[q]; if (j < brain.nIn + brain.nHid && brain.cellType[j] === tb && R[j] === R[i]) { ABL.n++; ABL.w += n.ws[q]; n.ws[q] *= +sc; n.w0[q] *= +sc; } } } }
 const nIn = brain.nIn, nH = brain.nHid, o0 = nIn + nH, T = a.task, cnt = new Uint8Array(nH), S = [];
 const hook = n => { const sp = n.spk; for (let s = 0; s < n.nSpk; s++) { const i = sp[s]; if (i >= nIn && i < o0) cnt[i - nIn] = 1; } };
+// R121 BB_GUTRACE=<file>: log granule detector changes per slot (slot, granule, new key or null) + the initial keys, for coverage / recruitment analysis
+const GT = process.env.BB_GUTRACE ? { log: [], prev: null } : null;
+const guSnap = t => { const gu = a.net && a.net.gu; if (!GT || !gu || !gu.keyBy) return; const kb = gu.keyBy; if (!GT.prev) { GT.init = kb.slice(); GT.prev = kb.slice(); return; } const pv = GT.prev; for (let j = 0; j < kb.length; j++) if (kb[j] !== pv[j]) { GT.log.push([t, j, kb[j]]); pv[j] = kb[j]; } };
 let lastPos = T.pos; const tGrow = Date.now() - T0;
 const was = SA.params.plasticity;
-try { while (!a.done && T.pos < nS) { a.tick(hook); if (T.pos !== lastPos) { lastPos = T.pos; let na = 0; for (let i = 0; i < nH; i++) if (cnt[i]) na++; const c = new Int32Array(na); let q = 0; for (let i = 0; i < nH; i++) if (cnt[i]) c[q++] = i; S.push(c); cnt.fill(0); } }
+try { while (!a.done && T.pos < nS) { a.tick(hook); if (T.pos !== lastPos) { lastPos = T.pos; guSnap(S.length); let na = 0; for (let i = 0; i < nH; i++) if (cnt[i]) na++; const c = new Int32Array(na); let q = 0; for (let i = 0; i < nH; i++) if (cnt[i]) c[q++] = i; S.push(c); cnt.fill(0); } }
   if (!process.env.BB_GEN_LEARN) SA.params.plasticity = false; while (!a.done) a.tick(); } finally { SA.params.plasticity = was; }
+if (GT) require('fs').writeFileSync(process.env.BB_GUTRACE, JSON.stringify({ init: GT.init, log: GT.log }));
 const tLife = Date.now() - T0 - tGrow, seq = T.seq, hits = T.hits, hf = T.heldFrom, held = [], tr = [];
 for (let t = 2; t < Math.min(S.length, nS) - 1; t++) (t >= hf ? held : tr).push(t);
 function gran0() { const gg = new Uint8Array(nH); for (let i = 0; i < nH; i++) if (brain.gran && brain.gran[nIn + i]) gg[i] = 1; return gg; }

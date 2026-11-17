@@ -351,4 +351,17 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   assert.ok((x3.st.dedup || 0) >= 0 && x3.st.exact > 0 && x3.s > 1 / x3.K, `granExactGuard 3: runs, exact detectors fire (${x3.st.exact}, dedup ${x3.st.dedup || 0}, score ${x3.s.toFixed(3)})`);
   assert.ok(d.dc && d.dc.cells > 0 && d.s > 0, 'denseCeil: list built, runs');
   console.log(`R120 granExactGuard: off bit-identical, guard-only = granExact (no trigger), guard 3 score ${x3.s.toFixed(3)} (dedup ${x3.st.dedup || 0}); denseCeil on: ${d.dc.cells} cells, ${d.dc.raised} raised, score ${d.s.toFixed(3)}: ok`); }
+// 8. R121 granKal (experience-weighted NLMS readout; off = bit-identical, no RNG)
+{ const run = ex => { const S = require('./js/node_load.js')(); S.params.granN = 256; Object.assign(S.params, { granUtility: 2, granExact: 1, granCo: 1 }, ex || {});
+    const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 240 });
+    const E = S.setEnv('seq', envP), D = S.PLANS.deepURSx3.make(), b = S.growCell(D, { seed: 5, spec: E.spec }), a = S.runEpisode(D, 7, b, E);
+    return { s: a.task.score(), spk: a.net.spikeCount, w: Array.from(a.net.ws), K: a.task.K, kn: a.net.gKn }; };
+  const u = run(), z = run({ granKal: 0 }), x = run({ granKal: 1 });
+  assert.ok(u.s === z.s && u.spk === z.spk && u.w.every((v, i) => v === z.w[i]), 'granKal 0 is bit-identical to unset');
+  assert.ok(x.kn && x.kn.some(v => v > 0) && x.s > 1 / x.K, `granKal 1: experience counts kept, score ${x.s.toFixed(3)} above chance`);
+  console.log(`R121 granKal: off bit-identical (score ${u.s.toFixed(3)}), on: score ${x.s.toFixed(3)}: ok`);
+  const zo = run({ granOneShot: 0 }), o = run({ granKal: 1, granOneShot: 0.05 });
+  assert.ok(u.s === zo.s && u.spk === zo.spk && u.w.every((v, i) => v === zo.w[i]), 'granOneShot 0 is bit-identical to unset');
+  assert.ok(o.s > 1 / o.K && o.w.some((v, i) => v !== x.w[i]), `granOneShot 0.05: recruit weights differ from granKal alone, score ${o.s.toFixed(3)} above chance`);
+  console.log(`R121 granOneShot: off bit-identical, 0.05+kal score ${o.s.toFixed(3)}: ok`); }
 console.log('ALL OK');

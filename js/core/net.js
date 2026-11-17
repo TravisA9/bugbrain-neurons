@@ -669,6 +669,7 @@ class SpikingNet {
     }
     let dPs = 0, yTgt = 0;
     if (params.readoutRule === 1 || params.readoutRule === 'threeFactor') { yTgt = this.gran3F(L, K, ws, pr, wMax, lr, ref, D, U, gA, gG, oS, nO, Bs, off, W, pos, Uw); dPs = this.g3dPs; }
+    else if (params.granKal > 0) { yTgt = this.granKalStep(L, K, ws, pr, wMax, lr, ref, D, U, gA, Bs, off, W, pos, Uw, nA, aL, gG, oS, nO); dPs = this.gKdPs; }
     else for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
       for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], x = gA[pr[K[r]]] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += x * x; }
       const i = L[q], y = Math.min(1, d / ref), er = t - y, g = xx > 0 ? lr * ref / xx : 0;
@@ -677,10 +678,31 @@ class SpikingNet {
       if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
       for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], x = gA[pr[k]] / W; if (U) { const u = U[r] + g * x * er; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; } const w = ws[k] + g * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
     if (gG) { const ps = this.gPsi = Math.min(1, Math.max(0, this.gPsi + params.granGain * dPs)), KS = this.gRKS; for (let p = 0; p < KS.length; p++) ws[KS[p]] = ps * Uw[p]; if (D) { D.psi = ps; D.pn = (D.pn || 0) + 1; D.ps = (D.ps || 0) + ps; } }   // (rescale in synapse order: same values, sequential writes)
+    if (params.granOneShot === 2) { let c = 0; for (let a = 0; a < nA; a++) if (gA[aL[a]] / W >= 0.01) c++; this.gLastNA = c; }
     for (let a = 0; a < nA; a++) gA[aL[a]] = 0; this.gActN = 0; if (gG) for (let q = 0; q < nO; q++) gA[o0 + q] = 0;
     this.lastSurprise = 1 - yTgt;
     if (this.gu) this.granUtilityEvent(yTgt);
   }
+  /* R121 granKal (global P.granKal = A > 0; 0 / unset = off, bit-identical, no RNG; sparse output path): EXPERIENCE-WEIGHTED NLMS. Each granule j
+   * carries n_j = the teaching events it was active in since it got its current claw tuple (reset when granUtility re-assigns it) and a gain
+   * a_j = max(granKalMin (default 0.02), A / (A + n_j)) (a per-feature uncertainty, as a diagonal Kalman / count estimate). The error of an
+   * output is split in proportion to a_j x_j^2 instead of x_j^2: dw_j = granLr x granRef x a_j x_j x err / sum_i a_i x_i^2. A brand-new specific
+   * detector active together with experienced ones takes most of the correction (one-shot, like a count model's first sighting), and the
+   * experienced ones are left alone (backoff-like credit). Only for LTP (err > 0, the arriving symbol): false alarms (err < 0) keep the plain NLMS
+   * split, since weights are bounded at 0 and a fresh detector has nothing to depress. With all a_j equal this is exactly the NLMS step. Local: each synapse needs only its
+   * presynaptic granule's own count. */
+  granKalStep(L, K, ws, pr, wMax, lr, ref, D, U, gA, Bs, off, W, pos, Uw, nA, aL, gG, oS, nO) {
+    const A = params.granKal, mn = params.granKalMin > 0 ? params.granKalMin : 0.02, n = this.gKn || (this.gKn = new Float32Array(this.N)), nL = L.length; let yTgt = 0, dPs = 0;
+    const av = j => { const v = A / (A + n[j]); return v < mn ? mn : v; };
+    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
+      let x2 = 0; for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], j = pr[K[r]], x = gA[j] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += av(j) * x * x; x2 += x * x; }
+      const y = Math.min(1, d / ref), er = t - y, kal = er > 0, g = kal ? (xx > 0 ? lr * ref / xx : 0) : (x2 > 0 ? lr * ref / x2 : 0); if (t) yTgt = y;
+      if (gG) { const i = L[q], m = oS > 0 ? gA[i] / oS : 1 / nO, cc = m + this.gPsi * (y - m); dPs += (t - cc) * (y - m); }   // (the granGain psi update, as the NLMS loop)
+      if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
+      for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], j = pr[k], x = gA[j] / W, gj = kal ? g * av(j) : g;
+        if (U) { const u = U[r] + gj * x * er; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; } const w = ws[k] + gj * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
+    for (let a = 0; a < nA; a++) { const j = aL[a]; if (gA[j] / W >= 0.01) n[j]++; }
+    this.gKdPs = dPs; return yTgt; }
   /* R118 readoutRule 'threeFactor' (global params.readoutRule = 'threeFactor' or 1; unset / 0 = the R83b NLMS above, bit-identical, no RNG):
    * a three-factor local rule on the same granule -> output synapses, same teaching events and read window (sparse path only).
    *   eligibility  e_jq = x_j (presynaptic read-window activity) for the LTP term, x_j x p_q (pre x post) for the LTD term
@@ -913,12 +935,15 @@ class SpikingNet {
     if (keyBy[best] != null && owned.get(keyBy[best]) === best) owned.delete(keyBy[best]);
     for (let q = inS[best]; q < inS[best + 1]; q++) ws[inK[q]] = 0;
     const gv = ++gen[best], b = gOff + best;
-    keyBy[best] = key; owned.set(key, best); born[best] = ev; use[best] = 1; if (mt) mt[best] = 1;
+    keyBy[best] = key; if (this.gKn) this.gKn[gu.gOff + best] = 0; owned.set(key, best); born[best] = ev; use[best] = 1; if (mt) mt[best] = 1;
     if (gu.xm) { gu.xn[best] = n; for (let c = 0; c < n; c++) lists[c][win[c]].push({ j: best, w: 0, gen: gv, c }); }
     else for (let c = 0; c < n; c++) { const col = win[c], sl = src[c].off[col + 1] - src[c].off[col]; if (sl > 0) lists[c][col].push({ j: best, w: W / n / sl, gen: gv }); }
     const U = this.gU, Uw = this.gRUw, pos = this.gRpos, wo = gu.wo, psi = this.gPsi || 0;
     const o0 = this.g.nIn + this.g.nHid, tgtNode = params.granTgt === 1 && this.gSym >= 0 ? o0 + this.gSym : -1;
-    const wTgt = Math.min(params.wMax || 15, wo + (params.granLr || 0.1) * Math.max(0, 1 - yTgt));
+    // R121 granOneShot (P.granOneShot = 1; off = bit-identical): the recruit's weight onto the symbol that just arrived is the readout's own NLMS
+    // step for a lone active input (granLr x granRef x (1 - y)), i.e. what the cell would have learned had it fired in the window it was recruited
+    // for (one-shot, like a count model's first sighting); granOneShot 2: / (1 + granules active in that window) = its NLMS share; 0 < granOneShot < 1: that fraction of the lone-input step; instead of the token granLr x (1 - y) on a weight scale of up to wMax x granExactW.
+    const os = params.granOneShot > 0 && gu.xm, wTgt = os ? Math.min(params.wMax * (params.granExactW > 0 ? params.granExactW : 50), wo + (params.granLr || 0.1) * (params.granRef > 0 ? params.granRef : 10) * Math.max(0, 1 - yTgt) * (params.granOneShot < 1 ? params.granOneShot : 1) / (params.granOneShot === 2 ? 1 + (this.gLastNA || 0) : 1)) : Math.min(params.wMax || 15, wo + (params.granLr || 0.1) * Math.max(0, 1 - yTgt));
     if (U && !gu.uAt && this.gIn) { const Ki = this.gIn.K, m = new Int32Array(ws.length).fill(-1); for (let r = 0; r < Ki.length; r++) m[Ki[r]] = r; gu.uAt = m; }
     const map = gu.uAt;
     for (let q = outS[best]; q < outS[best + 1]; q++) { const e = outK[q], uVal = posts[e] === tgtNode ? wTgt : mt && params.granRecruitW0 !== 1 ? 0 : wo;   // R119 mode 2: a recruit starts silent on the non-target outputs (wo = the untrained initial weight would add uniform drive to every output; P.granRecruitW0=1 = old)
