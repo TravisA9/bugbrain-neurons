@@ -683,7 +683,7 @@ class SpikingNet {
       if (gG) { const n = oS > 0 ? gA[i] / oS : 1 / nO, cc = n + this.gPsi * (y - n); dPs += (t - cc) * (y - n); }
       if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
       for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], x = gA[pr[k]] / W; if (U) { const u = U[r] + g * x * er; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; } const w = ws[k] + g * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
-    if (gG) { const ps = this.gPsi = Math.min(1, Math.max(0, this.gPsi + params.granGain * dPs)), KS = this.gRKS; for (let p = 0; p < KS.length; p++) ws[KS[p]] = ps * Uw[p]; if (D) { D.psi = ps; D.pn = (D.pn || 0) + 1; D.ps = (D.ps || 0) + ps; } }   // (rescale in synapse order: same values, sequential writes)
+    if (gG) { const ps = this.gPsi = Math.min(1, Math.max(0, this.gPsi + params.granGain * dPs)), KS = this.gRKS; for (let p = 0; p < KS.length; p++) ws[KS[p]] = ps * Uw[p]; if (this.gFA && params.granTrace > 0) { const FA = this.gFA; for (let p = 0; p < KS.length; p++) { const k = KS[p]; if (FA[k] !== 0) ws[k] += ps * FA[k]; } } if (D) { D.psi = ps; D.pn = (D.pn || 0) + 1; D.ps = (D.ps || 0) + ps; } }   // (rescale in synapse order: same values, sequential writes)
     if (params.granOneShot === 2) { let c = 0; for (let a = 0; a < nA; a++) if (gA[aL[a]] / W >= 0.01) c++; this.gLastNA = c; }
     for (let a = 0; a < nA; a++) gA[aL[a]] = 0; this.gActN = 0; if (gG) for (let q = 0; q < nO; q++) gA[o0 + q] = 0;
     this.lastSurprise = 1 - yTgt;
@@ -703,6 +703,8 @@ class SpikingNet {
     // R132 granKalLTD (global, 0 / unset = off, bit-identical): the experience-weighted split for false alarms (err < 0) too, so a recruit given a
     // one-shot weight (granOneShot) is averaged down like a count estimate instead of keeping its first-sighting weight under the plain NLMS split
     const wLo = params.granNeg > 0 ? -params.granNeg * wMax : 0;   // R132 granNeg (global, 0 / unset = off: lower bound 0, bit-identical): signed readout, weights in [-granNeg x wMax, wMax] (a specific context can veto a generic prediction, as count backoff does; biologically the granule -> basket/stellate -> Purkinje inhibitory path)
+    const F = params.granTrace > 0, FA = F ? (this.gFA || (this.gFA = new Float32Array(ws.length))) : null;   // R133 granTrace: the slow (granKal) update below sees only the slow weight (U = slow when granGain is on; else take the fast part out of ws)
+    if (F && !U) for (let b = 0, e = off[nL]; b < e; b++) { const k = K[Bs[b]]; if (FA[k] !== 0) { ws[k] -= FA[k]; FA[k] = 0; } }
     for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
       let x2 = 0; for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], j = pr[K[r]], x = gA[j] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += av(j) * x * x; x2 += x * x; }
       const y = Math.min(1, d / ref), er = t - y, kal = er > 0 || params.granKalLTD > 0, g = kal ? (xx > 0 ? lr * ref / xx : 0) : (x2 > 0 ? lr * ref / x2 : 0); if (t) yTgt = y;
@@ -711,7 +713,23 @@ class SpikingNet {
       for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], j = pr[k], x = gA[j] / W, gj = kal ? g * av(j) : g;
         if (U) { const u = U[r] + gj * x * er; U[r] = u < wLo ? wLo : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; } const w = ws[k] + gj * x * er; ws[k] = w < wLo ? wLo : w > wMax ? wMax : w; } }
     for (let a = 0; a < nA; a++) { const j = aL[a]; if (gA[j] / W >= 0.01) n[j]++; }
+    if (F) this.granTraceStep(L, K, ws, pr, wMax, ref, gA, Bs, off, W, nA, aL, n, A, U);
     this.gKdPs = dPs; return yTgt; }
+  /* R133 granTrace (global P.granTrace = 1; 0 / unset = off, bit-identical, no RNG; needs granKal, sparse path without granGain): a FAST ONE-SHOT TRACE on
+   * each granule -> output synapse, separate from the slow granKal weight (a short-term / eligibility-like component that the slow weight consolidates).
+   * Trace E_jq = the granule's own running frequency of each next symbol over its observations (step 1 / observations; a recruit starts with one
+   * observation = the symbol it was recruited on). Effective weight = slow + g_j x E_jq x granRef / xbar, gate g_j = A / (A + n_j) (granKal's own
+   * experience count n_j), xbar = the running mean granule activity per window (so the trace alone gives a full-strength vote on a context seen once).
+   * With granGain on (default), ws = psi x (U + FA) at the dense rescale. Self-calibrating: the fast/slow mix is set by each granule's measured experience; no new constant. The slow update never sees the fast part. */
+  granTraceStep(L, K, ws, pr, wMax, ref, gA, Bs, off, W, nA, aL, n, A, U) {
+    const FA = this.gFA, FE = this.gFE || (this.gFE = new Float32Array(ws.length)), FO = this.gFo || (this.gFo = new Float32Array(this.N)), nL = L.length;
+    let sx = 0, cx = 0; for (let a = 0; a < nA; a++) { const x = gA[aL[a]] / W; if (x >= 0.01) { sx += x; cx++; } }
+    if (cx) { this.gFxN = (this.gFxN || 0) + 1; this.gFx = (this.gFx || 0) + (sx / cx - (this.gFx || 0)) / this.gFxN; }
+    const xb = this.gFx > 0 ? this.gFx : 1;
+    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0;
+      for (let b = off[q], e = off[q + 1]; b < e; b++) { const k = K[Bs[b]], j = pr[k]; FE[k] += (t - FE[k]) / (FO[j] + 1);
+        const f = A / (A + n[j]) * FE[k] * ref / xb; if (U) { FA[k] = f; continue; } if (f > 0) { const w0 = ws[k], w1 = w0 + f > wMax ? wMax : w0 + f; ws[k] = w1; FA[k] = w1 - w0; } } }   // with granGain (U): FA = the fast part in u units, added as psi x FA at the dense rescale
+    for (let a = 0; a < nA; a++) { const j = aL[a]; if (gA[j] / W >= 0.01) FO[j]++; } }
   /* R118 readoutRule 'threeFactor' (global params.readoutRule = 'threeFactor' or 1; unset / 0 = the R83b NLMS above, bit-identical, no RNG):
    * a three-factor local rule on the same granule -> output synapses, same teaching events and read window (sparse path only).
    *   eligibility  e_jq = x_j (presynaptic read-window activity) for the LTP term, x_j x p_q (pre x post) for the LTD term
@@ -986,7 +1004,10 @@ class SpikingNet {
     const map = gu.uAt;
     for (let q = outS[best]; q < outS[best + 1]; q++) { const e = outK[q], uVal = posts[e] === tgtNode ? wTgt : mt && params.granRecruitW0 !== 1 ? 0 : wo;   // R119 mode 2: a recruit starts silent on the non-target outputs (wo = the untrained initial weight would add uniform drive to every output; P.granRecruitW0=1 = old)
       if (U && map && map[e] >= 0) { const r = map[e]; U[r] = uVal; if (Uw && pos) Uw[pos[r]] = uVal; }
-      ws[e] = U ? psi * uVal : uVal; }
+      ws[e] = U ? psi * uVal : uVal;
+      if (this.gFA) { const tg = posts[e] === tgtNode ? 1 : 0, f = tg && this.gFx > 0 ? (params.granRef > 0 ? params.granRef : 10) / this.gFx : 0, wX = params.wMax * (params.granExactW > 0 ? params.granExactW : 50), w1 = uVal + f > wX ? wX : uVal + f;   // R133 granTrace: the recruit's trace = its first observation, full vote (gate 1 at n = 0)
+        this.gFE[e] = tg; if (U) { this.gFA[e] = f; ws[e] = psi * (uVal + f); } else { ws[e] = w1; this.gFA[e] = w1 - uVal; } } }
+    if (this.gFA) this.gFo[b] = tgtNode >= 0 ? 1 : 0;
     if (this.thr) { this.thr[b] = gu.thr0; if (this.gLastT) this.gLastT[best] = this.gThStep; }
     this.v[b] = V_REST; if (this.gCnt) this.gCnt[b] = 0; if (this.gAcc) this.gAcc[b] = 0;
     st.rewired++;

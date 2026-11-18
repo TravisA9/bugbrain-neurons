@@ -429,7 +429,9 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const zn = run({ granKal: 1, granNeg: 0 }), xn = run({ granKal: 1, granNeg: 1 }); assert.ok(x.s === zn.s && x.spk === zn.spk && x.w.every((v, i) => v === zn.w[i]), 'granNeg 0 is bit-identical to unset (granKal on)');
   assert.ok(xn.s > 1 / xn.K && xn.w.some(v => v < 0), `granNeg 1: signed readout weights appear, learns (score ${xn.s.toFixed(3)})`); console.log(`R132 granNeg: off bit-identical, on: ${xn.w.filter(v => v < 0).length} negative weights, score ${xn.s.toFixed(3)}: ok`);
   const zk = run({ granKal: 1, granKalLTD: 0 }), xk = run({ granKal: 1, granKalLTD: 1, granOneShot: 1 }); assert.ok(x.s === zk.s && x.spk === zk.spk && x.w.every((v, i) => v === zk.w[i]), 'granKalLTD 0 is bit-identical to unset (granKal on)');
-  assert.ok(xk.s > 1 / xk.K && xk.w.some((v, i) => v !== x.w[i]), `granKalLTD 1 (+granOneShot 1) changes the readout, learns (score ${xk.s.toFixed(3)})`); console.log(`R132 granKalLTD: off bit-identical, on (+oneShot 1) score ${xk.s.toFixed(3)}: ok`); }
+  assert.ok(xk.s > 1 / xk.K && xk.w.some((v, i) => v !== x.w[i]), `granKalLTD 1 (+granOneShot 1) changes the readout, learns (score ${xk.s.toFixed(3)})`); console.log(`R132 granKalLTD: off bit-identical, on (+oneShot 1) score ${xk.s.toFixed(3)}: ok`);
+  const zf2 = run({ granKal: 1, granTrace: 0 }), xf = run({ granKal: 1, granTrace: 1 }); assert.ok(x.s === zf2.s && x.spk === zf2.spk && x.w.every((v, i) => v === zf2.w[i]), 'granTrace 0 is bit-identical to unset (granKal on)');
+  assert.ok(xf.s > 1 / xf.K && xf.w.some((v, i) => v !== x.w[i]), `granTrace 1 changes the readout, learns (score ${xf.s.toFixed(3)})`); console.log(`R133 granTrace: off bit-identical, on score ${xf.s.toFixed(3)}: ok`); }
 // 9. R131 anSize (exploration noise x sqrt(sizeF); off = bit-identical, 1x unchanged)
 { const run = (ex, f) => { const S = require('./js/node_load.js')(); Object.assign(S.params, ex || {});
     const envP = Object.assign({}, S.recommendedEnvParams('seqchoice', { source: 'order2' }, ['source']), { nSyms: 120 });

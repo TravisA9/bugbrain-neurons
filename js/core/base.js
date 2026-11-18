@@ -88,6 +88,8 @@ const params = {
   granNeg: 0,
   // R132 granKalLTD (0 = off, bit-identical): granKal's experience-weighted split for false alarms too (net.js granKalStep); negative on book30k, kept off
   granKalLTD: 0,
+  // R133 granTrace (0 = off, bit-identical): fast one-shot trace on the granule readout, gated by granKal experience (net.js granTraceStep)
+  granTrace: 0,
   // R126 fanInBudget (0 = off, bit-identical): sized regions keep each cell type's 1x mean in-region fan-in (strongest inputs), see develop.js
   fanInBudget: 0,
   // R127 pathBudget (0 = off, bit-identical): sized regions keep each (post type, presyn type, sign) pathway at its 1x mean in-degree, random (hash) selection, see develop.js

@@ -4700,3 +4700,37 @@ Scores: cross-task 'mean' fitness (0-10) from run/r42.js, book heldAcc on 2000 h
   partly (.425 -> .442). Pre-reg refuted. os .3 + kalLTD: .4745/.4595 (d -.0035/-.017).
   All one-shot variants trade the seen-once bin against the 5+ bin in the single linear readout; none is net positive. Flags kept off.
 - Tools: sw/countmodel.js (count ceilings, bins, brain hits by bin), bookdiag.js saves per-held hits.
+
+## R133 — fast one-shot trace on the granule readout (P.granFast) — PRE-REGISTRATION (written before any run)
+Mechanism: each granule -> output synapse gets a fast trace E (the granule's own running next-symbol frequency, step 1/observations; a recruit starts
+with its recruiting symbol) added to the effective weight as g_j x E x granRef / xbar, g_j = A/(A+n_j) from granKal's experience count (no new constant),
+xbar = running mean granule activity. The slow granKal update never sees the fast part. Off = bit-identical, no RNG.
+Predictions (best setting + granFast=1, paired vs best setting at the same size/seed):
+- book30k 4x: net >= +.005; seen-once 4-letter-context bin rises toward count4; 5+ bin drops by no more than .005.
+- book100k: the headroom check (count o5/o6 ~.53-.58); expect a gain at least as large as book30k.
+- If it works: 8x > 4x on book30k/100k would be the headline (size usable once the readout learns rare contexts fast).
+Procedure: tune on <= 2 seeds (k2951, k2953 book30k 4x), confirm on new seeds (k2954-2957), then cross-task (order3, seqchoice 8 seeds, K4, text, fables) and 1x/4x/8x.
+If negative: at most one principled variant, then stop.
+
+### R133 results (P.granTrace; the flag was first wired as "P.granFast", which clashed with the existing I106 engine flag granFast (default 1);
+renamed to granTrace before commit; I106 is bit-identical on/off, and a P.granTrace=1 rerun reproduced the book10k 1x k2956 run hit-for-hit)
+Implementation note: with granGain on (default), ws = psi x U is rewritten at every teaching event, so the fast part is added there as psi x FA.
+- **book30k 4x (pre-registered test), heldAcc vs best setting:** tune seeds k2951 .478 -> .4955 (+.0175), k2953 .4765 -> .493 (+.0165); no knob was tuned.
+  New seeds k2954 .481 -> .4945 (+.0135), k2955 .4585 -> .4675 (+.009), k2956 .5065 -> .516 (+.0095), k2957 .4685 -> .477 (+.0085).
+  6 seeds: +.0124 (se .0016), 6+/0-. Pre-registered net >= +.005: MET.
+- **Bins (vs best 4x, seeds with saved hits):** seen-once 2954 .441 -> .473, 2955 .487 -> .524, 2956 .506 -> .523, 2957 .524 -> .528 (count4 .527/.545/.585/.548);
+  5+ .518 -> .523, .472 -> .472, .54 -> .54, .481 -> .485 (no drop; pre-registered <= .005 drop: MET). The 2-4 bin gains most: .501 -> .55, .517 -> .533, .516 -> .555, .514 -> .52.
+- **Count-model reference:** granTrace 4x is now ~ the ORDER-4 count model (o4 .509/.496/.494/.4725/.525/.4795 vs .4955/.493/.4945/.4675/.516/.477; mean -.006),
+  up from ~order-3 before.
+- **Sizes (book30k, granTrace):** 1x .496/.483/.474/.4615/.5135/.4635 (base 1x .4765/.475/.4625/.4465/.498/.4515: +.0136, se .0016, 6+/0-);
+  4x - 1x with granTrace +.0087 (se .0031, 5+/1-; without trace +.0098) -> the size gain survives, the trace adds on top at every size.
+  8x k2951 .492, k2953 .492 vs 4x .4955/.493: 8x still flat (no headline).
+- **book100k 4x k2951 (headroom check):** best .4955 -> granTrace .504 (+.0085). Bins: seen-once .551 = .551, 2-4 .521 -> .596, 5+ .498 -> .50 (count4 5+ .52).
+  Count model 100k: o3 .49, o4 .527, o5 .5335. At 100k 79% of held letters are in the 5+ bin, where the brain is still at count3 level: the
+  remaining gap there is the slow weights on frequent contexts, which the trace (gated 1/(1+n)) does not touch. The pre-registered "at least as large as book30k": NOT met (+.0085 vs +.0124; 1 seed).
+- **Regression (fitness 0-10, paired vs best setting):** seqchoice order2 and cycle, 8 seeds 4x + k2951 1x: bit-identical (no granule readout in that task).
+  order3 4x 9.675 -> 9.7 x3, 1x 9.675 -> 9.7; K4 4x 9.85 -> 9.875 x3, 1x 9.85 -> 9.875; text1000 4x 7.805/7.805/7.745 -> 8.13/8.07/8.09, 1x 7.67 -> 7.98;
+  fables4000 4x 4.465/4.367/4.413 -> 4.556/4.489/4.588, 1x 4.3 -> 4.519. No task worse.
+- book10k 1x k2956 smoke: .4975 -> .492 (book10k is data-limited; count4 ~ count3 there). Not run further on book10k.
+- Next lead: the 8x plateau and the book100k 5+ gap are now the slow weights on frequent 4-letter contexts (brain ~ count3 there) and lag depth 4
+  (order 5/6 counts are .01 higher on 100k).
