@@ -134,7 +134,8 @@ function growRegions(d, opts) {
   // total weight granW, threshold / leak of a mixing cell (needs the coincidence), its own feedforward inhibition (granInh mV per granule
   // spike onto every granule cell, net.js), and plastic synapses onto every taught prediction cell (normalised like the other plastic inputs).
   const gN = params.granN != null ? params.granN : d.gran && d.gran.N > 0 ? d.gran.N : 0;   // v41: plan gene d.gran.N (deepURSx3), P.granN overrides
-  const nG = gN > 0 && parts.length > 1 && !envSpec.outcome ? Math.round(gN) : 0, gOff = off;   // (outcome tasks: no granule layer, like the outcome-repressed context areas)
+  const gF = params.granScale > 0 ? Math.max(1, Math.max(...parts.map(p => p.R.g && p.R.g.sc ? +p.R.g.sc.sizeF || 1 : 1)) / params.granScale) : 1;   // R135 granScale (P.granScale = r > 0; off = unchanged): pool x max(1, largest region sizeF / r)
+  const nG = gN > 0 && parts.length > 1 && !envSpec.outcome ? Math.round(gN * gF) : 0, gOff = off;   // (outcome tasks: no granule layer, like the outcome-repressed context areas)
   const nHid = off - nIn + nG, G = createNetGenome(nIn, nHid, nOut, true), N = G.N, acc = new SynAcc(1 << 16);
   const node = (p, i) => i < p.g.nIn ? (typeof p.map[i] === 'number' ? p.map[i] : -1) : i < p.g.nIn + p.g.nHid ? p.off + i - p.g.nIn : ((p === outPart || p.R.vote) ? nIn + nHid + i - p.g.nIn - p.g.nHid : -1);   // R43 (I53) vote: a module's own output copy sums onto the shared outputs
   G.pos = new Array(N); G.cellType = new Int16Array(N); G.region = new Uint8Array(N); G.topo = new Float32Array(N).fill(NaN);

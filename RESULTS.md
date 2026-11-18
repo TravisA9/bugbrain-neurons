@@ -4795,3 +4795,53 @@ recruits 4x/8x 20549/20528 (k2951), 21254/21255 (k2953); the chunk code is the s
 turnover rises 6.7k -> 27.5k (30k) and 70.7k (100k). (3) One level only: key = previous word + partial word + letter; the previous word is a stored string,
 not a node; there are no chunk-of-chunk units and nothing feeds a slower region. Implied next step (not started): chunk recruitment gated on recurrence
 (recruit on the 2nd sighting, like granCo) and a pool that grows with size, so 8x has room for more keys.
+
+## R135 — recurrence-gated chunk recruitment + pool that scales with size
+**PRE-REGISTRATION (written before any run).** P.granChunkGate=1: a chunk detector is recruited only on the 2nd sighting of its key (1-hash bit sketch of
+2^ceil(log2(32 x pool)) bits, self-sized by the pool; no constants tied to text length). P.granScale=4: granule pool = granN x max(1, largest sizeF / 4)
+(4x and 1x unchanged; 8x = 64000). Baselines R134 (best + granTrace [+ granChunk]). Predictions:
+- book100k 4x k2951: chunk+gate no longer loses vs trace .504; ideally >= +.005 (>= .509).
+- book30k 4x: chunk+gate keeps >= +.008 over trace (tune k2951/k2953: trace .4955/.493, ungated chunk .5155/.5065), then confirm on new seeds.
+- 8x (chunk+gate+granScale 4) >= 4x (chunk+gate) + .003 on 2 seeds.
+
+**R135 tune so far (heldAcc):** gate 1, book30k 4x: k2951 .498, k2953 .499 (trace .4955/.493, ungated chunk .5155/.5065): +.0025/+.006, 30k pre-reg (>= +.008) FAILS.
+book100k 4x k2951: **.5145** (trace .504, ungated .496): +.0105, 100k pre-reg MET; bins seen1 .551 (ungated .458), 2-4 .601 (.516), 5+ .512 (.508).
+Reading: recruiting on the 2nd sighting costs the keys that occur only 2-3 times (most useful keys at 30k) but stops the eviction at 100k.
+**PRE-REGISTRATION granChunkGate = 2 (pressure gate; written after the gate-1 results above, before any gate-2 run):** a first sighting recruits only into a
+free (never-matched) granule, otherwise it waits for the 2nd sighting; self-calibrating, no constant. Prediction: book30k ~ ungated (>= +.008 over trace,
+k2951/k2953), book100k ~ gate 1 (>= +.005 over .504). Then confirm on new seeds and 8x (+ granScale 4) vs 4x.
+
+**R135 results so far (heldAcc, 2000 held letters; trace = R133 setting best + granTrace):**
+- gate 1 (2nd sighting) 4x: book30k k2951 .498, k2953 .499 (+.0025/+.006: 30k pre-reg FAILS); book100k k2951 .5145 (+.0105: MET).
+- gate 2 (pressure gate) 4x book30k: k2951 .515, k2953 .5065, k2954 .504, k2955 .4815 vs trace .4955/.493/.4945/.4675 = +.0195/+.0135/+.0095/+.014,
+  identical to ungated chunks (the pool is ~never full at 30k: refused first sightings 3/21/0/-). book100k k2951 .5105 (+.0065).
+- pool size (granScale 2 = 64000 granules at 4x), book100k k2951: trace + 64k (no chunks) **.5015** (control; 32k .504); ungated chunk + 64k **.523** (+.019 over trace,
+  +.0215 over the 64k control). The book100k loss of R134 was pool capacity for chunks; a bigger pool alone does nothing.
+  Bins (seen0/1/2-4/5+): trace .327/.551/.596/.500; trace64k .327/.551/.577/.500; chunk64k .336/.542/.592/.525.
+- 8x (gate2 + granScale 4 = 64000) book30k: k2951 .5145, k2953 .507 vs gate2 4x .515/.5065 = -.0005/+.0005 (ungated 8x+64k k2951 .5145). **8x >= 4x+.003 FAILS.**
+
+**R135 FINAL.** Candidate = granChunk 1 + granChunkGate 2 + granScale 2 (pool 64000 at 4x), vs trace (R133 setting), heldAcc:
+
+| run | k2951 | k2953 | k2954 | k2955 |
+|---|---|---|---|---|
+| book30k trace | .4955 | .493 | .4945 | .4675 |
+| book30k gate2 (pool 32k) | .515 (+.0195) | .5065 (+.0135) | .504 (+.0095) | .4815 (+.014) |
+| book30k candidate | | | .5045 (+.010) | .484 (+.0165) |
+| book100k trace | .504 | .5015 | .502 | |
+| book100k trace + 64k pool, no chunks (control) | .5015 | | | |
+| book100k ungated chunk, 32k | .496 | | | |
+| book100k gate1 / gate2 (32k) | .5145 / .5105 | | | |
+| book100k candidate (k2951: ungated + 64k) | .523 (+.019) | .519 (+.0175) | .5265 (+.0245) | |
+| 8x gate2 + granScale 4 (64k), book30k | .5145 (-.0005 vs 4x) | .507 (+.0005) | | |
+
+Pre-registration: book100k no longer loses and >= +.005: MET (+.019/+.0175/+.0245; new seeds 2/2). book30k >= +.008: MET with gate 2 (4/4 + candidate 2/2);
+gate 1 FAILED (+.0025/+.006). 8x >= 4x + .003: FAILED (-.0005/+.0005). The control shows the 100k gain is the chunks given room, not the bigger pool.
+Regressions (candidate vs trace, fitness 0-10): order3, K4, seqchoice order2 + cycle (8 seeds) identical; text1000 4x +.78 (8.13/8.07/8.09 -> 8.86/8.85/8.92), 1x +.625;
+fables4000 4x +.085 (4.556/4.489/4.588 -> 4.629/4.571/4.688), 1x +.071. Flags stay off by default (granScale 2 is a size-anchored constant; the pool should
+ideally grow with demand, i.e. when the pressure gate starts refusing: chunkFull 68 / 9881 on k2954 / k2953 at 100k).
+**8x plateau:** both codes the readout sees (exact 4-letter tuples; chunk keys previous word + partial word + letter) are fixed symbol-level functions of
+the text, independent of network size; chunk recruits 8x/4x 20604/20511; the 8x cortex reaches the granules only through letter columns that already
+decode at ~1.0 at 4x; with the 64k pool not full at 30k, readout capacity is not the limit. 8x needs features 4x cannot hold: chunks of chunks / a longer
+word history at a slower level, and text long enough for those keys to recur.
+**Minimal next step (sketch, not built):** when a chunk completes (delimiter), its detector index becomes the "letter" of a second-level stream; the same
+guChunkEvent machinery keyed on (previous chunk id, current chunk id) recruits phrase detectors in the (demand-grown) pool, fired at word completion.

@@ -946,9 +946,18 @@ class SpikingNet {
     C.cnt[c0]++; if (C.delim < 0 || C.cnt[c0] > C.cnt[C.delim]) C.delim = c0;
     const key = 'C' + C.w + '|' + C.p + '|' + c0, j0 = gu.owned.get(key);
     if (j0 != null && gu.keyBy[j0] === key) { if (mt) mt[j0] += 1; }
-    else if (params.plasticity && this.learning && yTgt < 0.85 && C.w !== '') { gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; this.guRecruit(key, 0, yTgt); }
+    else if (params.granChunkGate === 2) { if (C.w !== '') { const seen = this.guChunkSeen(key); if (params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(key, 0, yTgt, !seen)) gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; } }   // R135 gate 2: first sighting recruits only into a free (never-matched) slot
+    else if (C.w !== '' && (!(params.granChunkGate > 0) || this.guChunkSeen(key)) && params.plasticity && this.learning && yTgt < 0.85) { gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; this.guRecruit(key, 0, yTgt); }
     if (c0 === C.delim) { if (C.p !== '') C.w = C.p; C.p = ''; } else C.p = C.p ? C.p + ',' + c0 : String(c0);
     C.next = 'C' + C.w + '|' + C.p + '|'; }
+  /* R135 granChunkGate (P.granChunkGate = 1; 0 / unset = off, bit-identical, no RNG): recruit a chunk detector only on the SECOND sighting of its key
+   * (surprising and seen before). Seen-before memory = a 1-hash bit sketch (FNV-1a) of 2^ceil(log2(32 nG)) bits: sized by the pool itself, so the false
+   * "seen" rate stays ~ (distinct keys) / (32 nG) (< 6% at book100k, 32000 granules). Returns true if the key was seen before; marks it seen.
+   * granChunkGate = 2 (pressure gate): a first sighting still recruits, but only into a free slot (a granule with zero exact matches among the 48 sampled
+   * candidates); once the pool holds no free slots, recruitment waits for the 2nd sighting. Self-calibrating: no gate while the pool has room (short text). */
+  guChunkSeen(key) { const gu = this.gu; if (!gu.chS) { let b = 1; while (b < 32 * gu.nG) b <<= 1; gu.chS = new Uint32Array(b >>> 5); gu.chM = b - 1; }
+    let h = 0x811c9dc5; for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 0x01000193); h = (h >>> 0) & gu.chM;
+    const w = h >>> 5, m = 1 << (h & 31); if (gu.chS[w] & m) return true; gu.chS[w] |= m; gu.st.chunkGated = (gu.st.chunkGated || 0) + 1; return false; }
   guChunkFire(c, syn, mk, gB) {   // first hit of current-letter column c in this window: fire the chunk detector of (chunk state, c)
     const gu = this.gu; if (gu.ch.won) return; gu.ch.won = 1;   // only the first current-letter column to fire in the window (latency winner = the letter that arrived)
     const key = gu.ch.next + c, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key || gu.xf[j]) return;
@@ -1000,7 +1009,7 @@ class SpikingNet {
     if (owned.has(key)) return;
     this.guRecruit(key, n, yTgt);
   }
-  guRecruit(key, n, yTgt) {   // (R134: the recruit tail of granUtilityEvent as a method, unchanged; n = 0 = a chunk detector with no claw lists)
+  guRecruit(key, n, yTgt, free) {   // R135: free = recruit only into a never-matched slot (granChunkGate 2); returns true when a granule was recruited   // (R134: the recruit tail of granUtilityEvent as a method, unchanged; n = 0 = a chunk detector with no claw lists)
     const gu = this.gu, { W, nG, gOff, src, win, lists, inS, inK, outS, outK, use, born, gen, keyBy, owned, pending, rng, co, hold, st } = gu, mt = gu.match;
     const cnt = (pending.get(key) || 0) + 1;
     if (cnt < co) { pending.set(key, cnt); return; }
@@ -1013,7 +1022,7 @@ class SpikingNet {
       const u = mt ? mt[j] : use[j] * (0.01 + wSum);   // R119: mode 2 ranks by exact-tuple matches (homeostasis keeps every granule spiking, so the spike-count utility never falls below 0.05 in v47)
       if (u < bu) { bu = u; best = j; if (u === 0) break; }
     }
-    if (best < 0 || bu > 0.05) return;
+    if (best < 0 || bu > 0.05) return false; if (free && bu > 0) { st.chunkFull = (st.chunkFull || 0) + 1; return false; }
     if (keyBy[best] != null && owned.get(keyBy[best]) === best) owned.delete(keyBy[best]);
     for (let q = inS[best]; q < inS[best + 1]; q++) ws[inK[q]] = 0;
     const gv = ++gen[best], b = gOff + best;
@@ -1036,7 +1045,7 @@ class SpikingNet {
     if (this.gFA) this.gFo[b] = tgtNode >= 0 ? 1 : 0;
     if (this.thr) { this.thr[b] = gu.thr0; if (this.gLastT) this.gLastT[best] = this.gThStep; }
     this.v[b] = V_REST; if (this.gCnt) this.gCnt[b] = 0; if (this.gAcc) this.gAcc[b] = 0;
-    st.rewired++;
+    st.rewired++; return true;
   }
   // Two-timescale event-gated chunk boundary shift (T.map === 'chunkGate'):
   // Gates higher-order context regions only on explicit chunk delimiters (e.g. space = sym 0) or high cortical surprise.
