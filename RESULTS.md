@@ -4734,3 +4734,64 @@ Implementation note: with granGain on (default), ws = psi x U is rewritten at ev
 - book10k 1x k2956 smoke: .4975 -> .492 (book10k is data-limited; count4 ~ count3 there). Not run further on book10k.
 - Next lead: the 8x plateau and the book100k 5+ gap are now the slow weights on frequent 4-letter contexts (brain ~ count3 there) and lag depth 4
   (order 5/6 counts are .01 higher on 100k).
+
+## R134 — longer context (Travis t127u/t118u: chunk nodes, higher levels earlier)
+**Headroom (sw/headroom.js; online argmax count models with backoff; held = last 2000 letters; k2951 / k2953):**
+
+| nSyms | o3 | o4 | o5 | o6 | o7 | o8 | partial word | prev word + partial word |
+|---|---|---|---|---|---|---|---|---|
+| 30k | .484/.474 | .509/.496 | .519/.491 | .525/.486 | .527/.477 | .527/.477 | .501/.500 | .528/.5115 |
+| 100k | .490/.494 | .527/.524 | .533/.520 | .540/.513 | .538/.507 | .535/.502 | .511/.5175 | .5465/.5365 |
+| 300k | .486/.508 | .525/.547 | .532/.553 | .546/.554 | .545/.548 | .534/.539 | .519/.543 | .552/.5765 |
+| 1M | .485/.509 | .532/.575 | .555/.589 | .562/.597 | .567/.593 | .559/.581 | .5245/.565 | .571/.6125 |
+
+Each letter past 4 is worth ~0..+.01 at 30k-100k (negative on k2953: too sparse to count) and +.02-.03 in total at 1M. The previous word plus the
+current partial word beats every letter order at every length: +.012..+.02 over order 4 at 30k/100k, +.04 at 1M.
+**Diagnosis:** lag depth 4 is hardcoded (regions.js granuleLayer K = min(4, granK); the claw sources are a fixed list of the plan's context-region chain:
+cortex t, cortex t-1, context t-2, context-2 t-3). (Superseded by the lag probes below: context 3 does hold t-4; the delay line ends there.)
+
+**PRE-REGISTRATION R134 P.granChunk (written before any run):** word-context chunk detectors in the granule pool (key = previous word, partial word,
+current letter; delimiter self-calibrated = most frequent letter; same recruit / readout as exact granules). Paired vs the R133 setting (best + granTrace)
+on book30k 4x, tune seeds k2951/k2953 (.4955/.493), then new seeds k2954-2957 (.4945/.4675/.516/.477):
+- net >= +.005 at 4x book30k; larger gain on book100k (k2951 trace .504); prediction: the gain grows with text length (count model: +.012..+.02 at 30k-100k).
+- 8x beating 4x would be the headline (more context -> more keys -> more use for a bigger pool); predicted only if the chunk detectors fill the pool.
+- If negative: one principled variant (e.g. lag depth that self-calibrates), then stop.
+
+**Lag probes (sw/lagprobe.js/.py; ridge one-hot probe of the letter at lag L from per-symbol hidden-cell spike counts; train first 70% of 10k symbols; k2951 1x; chance .20).**
+Read-window counts (what the claws see): cortex lags 0-4 = 1.0/.99/.91/.90/.89; context lags 1-2 .998/.991; context 2 lags 2-3 .99/.98; context 3 lags 3-4 .99/.98;
+all cells: lags 0-4 >= .98, lag 5 .36, lag 6 .26, lag 8 .15. Whole-slot counts: the same, shifted one lag later in each region (all cells lag 5 .98, lag 6 .34).
+**Corrected diagnosis:** the net is a 4-region delay line and holds exactly t..t-4; nothing beyond (structural, not decay or noise). The claws read t..t-3 only
+(hardcoded K <= 4, fixed source list); t-4 sits unused in context 3. So one letter is free; more needs more regions or a different (chunk) code.
+
+**PRE-REGISTRATION R134 P.granDeep (written after the granChunk k2951 result, before any granDeep result):** K cap = 1 + #regions and one extra claw source per
+further region (context 3 cls 2 = t-4), with P.granK=5 (granKmin 3). Prediction: small, ~+.000..+.005 at book30k (order-5 count over order-4 is +.010/-.005 on
+k2951/k2953); not a candidate for the headline. Combined with granChunk: additive or less.
+
+**R134 RESULTS** (heldAcc = held-out next-letter accuracy on 2000 held letters; baseline = R133 setting best + granTrace; task fitness 0-10):
+
+granChunk, book30k 4x (tune k2951/k2953, confirm k2954-2957):
+
+| k | trace | +granChunk | d |
+|---|---|---|---|
+| 2951 | .4955 | .5155 | +.020 |
+| 2953 | .4930 | .5065 | +.0135 |
+| 2954 | .4945 | .5040 | +.0095 |
+| 2955 | .4675 | .4815 | +.014 |
+| 2956 | .5160 | .5275 | +.0115 |
+| 2957 | .4770 | .4870 | +.010 |
+
+Mean +.0131 (6/6; new seeds only +.0113, 4/4). Pre-reg net >= +.005 at book30k: MET. Bins k2951 (trace -> chunk): seen0 .377->.373, seen1 .559->.569,
+2-4 .542->.563, 5+ .495->.522: word context resolves frequent letter contexts; the brain now beats count-5 in the 5+ bin (.514) and the order-4 count model overall (.509).
+- 1x k2951: .496 -> .5115 (+.0155). 8x: k2951 .492 -> .512, k2953 .492 -> .5025; **8x vs 4x with chunks: -.0035 / -.004. 8x still does not beat 4x** (headline not reached).
+- **book100k 4x k2951: .504 -> .496 (-.008). Pre-reg "larger gain at 100k" REFUTED.** Bins (trace -> chunk): seen0 .327->.318, seen1 .551->.458,
+  2-4 .596->.516, 5+ .500->.508. chunkRec 57353, granule turnover 70748 in a 32000 pool: single-use chunk detectors evict rare 4-letter detectors.
+- granDeep (K=5, context 3 t-4), 4x: k2951 .5055 (+.010), k2953 .4935 (+.0005); chunk+deep k2951 .511 (< chunk alone). Pre-reg +.000..+.005: roughly met, not robust; kept off.
+- Regressions granChunk vs trace (fitness): order3 4x 9.7 x3 =, 1x 9.7 =; seqchoice order2 and cycle 8 seeds each bit-identical (4x), 1x =; K4 9.875 x3 =, 1x =;
+  text1000 4x 8.13/8.07/8.09 -> 8.80/8.795/8.845 (+.717), 1x 7.98 -> 8.605; fables4000 4x 4.556/4.489/4.588 -> 4.633/4.599/4.669 (+.089), 1x 4.519 -> 4.59.
+
+**8x diagnosis (no new mechanism):** (1) the granule pool, where the chunk units live, is granN = 32000 at every size; sizeF grows the regions, not the pool. Chunk
+recruits 4x/8x 20549/20528 (k2951), 21254/21255 (k2953); the chunk code is the same symbol-level key at both sizes, so the extra 8x cells add nothing the readout uses.
+(2) Saturation: book30k has 21425 distinct chunk keys (3579 recurring), book100k 59051 (12463 recurring) > pool; nearly every surprising letter recruits one,
+turnover rises 6.7k -> 27.5k (30k) and 70.7k (100k). (3) One level only: key = previous word + partial word + letter; the previous word is a stored string,
+not a node; there are no chunk-of-chunk units and nothing feeds a slower region. Implied next step (not started): chunk recruitment gated on recurrence
+(recruit on the 2nd sighting, like granCo) and a pool that grows with size, so 8x has room for more keys.

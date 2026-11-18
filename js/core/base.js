@@ -90,6 +90,9 @@ const params = {
   granKalLTD: 0,
   // R133 granTrace (0 = off, bit-identical): fast one-shot trace on the granule readout, gated by granKal experience (net.js granTraceStep)
   granTrace: 0,
+  // R134 granChunk (0 = off, bit-identical): word-context chunk detectors in the granule pool (net.js guChunkEvent / guChunkFire)
+  granChunk: 0,
+  granDeep: 0,   // R134: 1 = claw lag depth = delay-line length (one more source per extra region, cls 2); 0 = fixed 4 sources
   // R126 fanInBudget (0 = off, bit-identical): sized regions keep each cell type's 1x mean in-region fan-in (strongest inputs), see develop.js
   fanInBudget: 0,
   // R127 pathBudget (0 = off, bit-identical): sized regions keep each (post type, presyn type, sign) pathway at its 1x mean in-degree, random (hash) selection, see develop.js

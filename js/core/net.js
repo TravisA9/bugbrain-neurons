@@ -926,19 +926,40 @@ class SpikingNet {
     gu.st.lhMax = +mx.toFixed(3); gu.st.lhS = gu.lh.map(L => L ? +(col ? 0 : L.hs).toFixed(3) : 0); }
   guExact(i, gc, s, syn, mk, gB) {   // first hit of claw column gc (source s) in this read window: set the claw bit of every granule listening to it
     const gu = this.gu, ch = gu.cHit[s], c = gc - gu.hOff[s]; if (ch[c] >= 250) return;
-    const hM = params.granExactHits > 1 ? params.granExactHits : 1; if (ch[c] === 0) gu.cT.push(s, c); ch[c]++; if (ch[c] < hM) return; ch[c] = 250; if ((params.granExactColCap || (params.granExactGuard & 2)) && gu.cr[s][c] > this.guColCap(s)) return; if (gu.wta && s > 0) { if (gu.wta[s] >= gu.wtaK) return; gu.wta[s]++; }   // R125 lagWTA: only the first k columns of a lag source to fire in this window count (see initGranExact)   // R119 granExactColCap: a claw column active in > colCap of the windows (saturated lag cells) carries no context: it never completes a tuple   // R119 granExactHits: a claw column counts once it has fired hM spikes in this window (stale lag letters fire fewer)
+    const hM = params.granExactHits > 1 ? params.granExactHits : 1; if (ch[c] === 0) gu.cT.push(s, c); ch[c]++; if (ch[c] < hM) return; ch[c] = 250; if (s === 0 && gu.ch && gu.ch.next != null) this.guChunkFire(c, syn, mk, gB); if ((params.granExactColCap || (params.granExactGuard & 2)) && gu.cr[s][c] > this.guColCap(s)) return; if (gu.wta && s > 0) { if (gu.wta[s] >= gu.wtaK) return; gu.wta[s]++; }   // R125 lagWTA: only the first k columns of a lag source to fire in this window count (see initGranExact)   // R119 granExactColCap: a claw column active in > colCap of the windows (saturated lag cells) carries no context: it never completes a tuple   // R119 granExactHits: a claw column counts once it has fired hM spikes in this window (stale lag letters fire fewer)
     const L = gu.lists[s][c], gen = gu.gen, xm = gu.xm, xn = gu.xn, xf = gu.xf, gOff = gu.gOff, T = this.thr || this.g.thresh;
     const xL = gu.xL, fz = params.granFatigue;   // R122 granFatigue = c (off by default): a detector that fired less than c x its OWN mean inter-fire interval (symbols / its fire count) ago is refractory (self-suppression after completing its tuple; self-calibrated per detector)
     for (let r = 0, m = L.length; r < m; r++) { const e = L[r]; if (e.gen !== gen[e.j]) continue; const j = e.j, bit = 1 << e.c;
       if (!(xm[j] & bit)) { if (!xm[j]) gu.xT[gu.xTn++] = j; xm[j] |= bit; }
       if (!xf[j] && xm[j] === (1 << xn[j]) - 1) { if (xL) { const tk = gu.tk, dt = tk - xL[j]; if (dt > gu.sps) { if (gu.xE[j] > 2 && dt < fz * tk / gu.xE[j]) { gu.st.fatSkip = (gu.st.fatSkip || 0) + 1; continue; } xL[j] = tk; gu.xE[j]++; } } xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++; const b = gOff + j; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31); gu.st.exact++; } }
   }
+  /* R134 granChunk (global P.granChunk = 1; 0 / unset = off, bit-identical, no RNG; needs granExact): CHUNK (WORD-CONTEXT) DETECTORS in the granule pool.
+   * A running chunk state: the current partial word p (letters since the last delimiter) and the previous completed word w; the delimiter is the
+   * most frequent current letter seen so far (self-calibrated; the space in text). A chunk detector is a pool granule recruited (same recruit rule,
+   * same pool, same one-shot / granKal / granTrace readout) on a surprising window for the key (w, p, current letter): it fires in a read window when
+   * the current letter's column fires and the chunk state before it equals its key (one detector per key, like the exact tuples). The key made with
+   * the delimiter as the current letter is the word-completion node; the previous word w is the slower second level held across the next word.
+   * Count-model reference (R134 headroom): previous word + partial word beats every letter order 3-12 at 30k-1M letters. */
+  guChunkEvent(yTgt, n) {
+    const gu = this.gu; if (n < 1) return; const c0 = gu.win[0], mt = gu.match;
+    const C = gu.ch || (gu.ch = { cnt: new Float64Array(gu.src[0].keys.length), delim: -1, w: '', p: '', next: null });
+    C.cnt[c0]++; if (C.delim < 0 || C.cnt[c0] > C.cnt[C.delim]) C.delim = c0;
+    const key = 'C' + C.w + '|' + C.p + '|' + c0, j0 = gu.owned.get(key);
+    if (j0 != null && gu.keyBy[j0] === key) { if (mt) mt[j0] += 1; }
+    else if (params.plasticity && this.learning && yTgt < 0.85 && C.w !== '') { gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; this.guRecruit(key, 0, yTgt); }
+    if (c0 === C.delim) { if (C.p !== '') C.w = C.p; C.p = ''; } else C.p = C.p ? C.p + ',' + c0 : String(c0);
+    C.next = 'C' + C.w + '|' + C.p + '|'; }
+  guChunkFire(c, syn, mk, gB) {   // first hit of current-letter column c in this window: fire the chunk detector of (chunk state, c)
+    const gu = this.gu; if (gu.ch.won) return; gu.ch.won = 1;   // only the first current-letter column to fire in the window (latency winner = the letter that arrived)
+    const key = gu.ch.next + c, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key || gu.xf[j]) return;
+    if (!gu.xm[j]) gu.xT[gu.xTn++] = j; gu.xm[j] |= 1; gu.xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++;
+    const b = gu.gOff + j, T = this.thr || this.g.thresh; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31); gu.st.chunkFired = (gu.st.chunkFired || 0) + 1; }
   guColCap(s) { const v = params.granExactColCap;
     if (!v) { const gu = this.gu; if (s === 0 || gu.st.events < 3000) return 2; if (gu.crE0 !== gu.st.events) { gu.crE0 = gu.st.events; let m = 0; const a0 = gu.cr[0]; for (let c = 0; c < a0.length; c++) if (a0[c] > m) m = a0[c]; gu.crMax0 = Math.min(0.9, 3 * m); } return gu.crMax0; }
     // R120 granExactGuard (self-calibrating): a lag column is saturated when it is active in more windows than 3x the most frequent CURRENT letter's column (source 0) - no letter can explain that; capped at 0.9 (small alphabets)
     if (v > 0) return v; const gu = this.gu, a = gu.cr[s]; if (!gu.crM || gu.crE !== gu.st.events) { gu.crE = gu.st.events; gu.crM = gu.cr.map(x => { let t = 0; for (let c = 0; c < x.length; c++) t += x[c]; return t / x.length; }); }
     return gu.st.events < 3000 ? 2 : Math.max(-v * gu.crM[s], 0.05); }   // < 0 = self-calibrating: |v| x the source's mean column activity (a saturated column vs its alphabet)
-  guExactReset() { const gu = this.gu, xm = gu.xm, xf = gu.xf, xT = gu.xT; for (let q = 0; q < gu.xTn; q++) { xm[xT[q]] = 0; xf[xT[q]] = 0; } gu.xTn = 0; gu.xFn = 0;
+  guExactReset() { const gu = this.gu, xm = gu.xm, xf = gu.xf, xT = gu.xT; if (gu.ch) gu.ch.won = 0; for (let q = 0; q < gu.xTn; q++) { xm[xT[q]] = 0; xf[xT[q]] = 0; } gu.xTn = 0; gu.xFn = 0;
     const cT = gu.cT; if (params.granExactColCap || (params.granExactGuard & 2) || params.lagHomeo > 0) { const cr = gu.cr; for (let s2 = 0; s2 < cr.length; s2++) { const a = cr[s2]; for (let c = 0; c < a.length; c++) a[c] *= 0.999; } for (let q = 0; q < cT.length; q += 2) if (gu.cHit[cT[q]][cT[q + 1]] >= 250) cr[cT[q]][cT[q + 1]] += 0.001; }
     for (let q = 0; q < cT.length; q += 2) gu.cHit[cT[q]][cT[q + 1]] = 0; cT.length = 0; if (gu.lh) this.lagHomeoStep(); if (gu.wta) gu.wta.fill(0); }
   guDrive(spk, nSpk, syn, mk) {
@@ -970,12 +991,17 @@ class SpikingNet {
     const mt = gu.match;   // R119 granUtility 2 (match utility): credit the granules whose whole claw tuple (lags t .. t-m+1, m = Km .. n) is this window
     if (mt) { for (let j = 0; j < nG; j++) mt[j] *= 0.998; let kk = String(Km); for (let c = 0; c < Km && c < n; c++) kk += ',' + win[c];
       for (let m = Km; m <= n; m++) { if (m > Km) kk = String(m) + kk.slice(kk.indexOf(',')) + ',' + win[m - 1]; const j = owned.get(kk); if (j != null) { mt[j] += 1; st.matched++; } } }
+    if (params.granChunk > 0 && gu.xm) this.guChunkEvent(yTgt, n);   // R134 granChunk (off by default): word-context chunk detectors (before the recruit early-returns)
     if (!(params.plasticity && this.learning) || yTgt >= 0.85 || n < Km) return;
     let key = String(n); for (let c = 0; c < n; c++) key += ',' + win[c];
     if (gu.xm) { let kk = String(Km); for (let c = 0; c < Km; c++) kk += ',' + win[c];   // exact mode: recruit the shortest missing window first (3 letters, then 4)
       for (let m = Km; m <= n; m++) { if (m > Km) kk = String(m) + kk.slice(kk.indexOf(',')) + ',' + win[m - 1]; if (!owned.has(kk) && !gu.ban.has(kk)) { key = kk; n = m; break; } }
       if (gu.ban.has(key)) return; if (params.granExactColCap || (params.granExactGuard & 2)) for (let c = 0; c < n; c++) if (gu.cr[c][win[c]] > this.guColCap(c)) { st.guardSkip = (st.guardSkip || 0) + 1; return; } }
     if (owned.has(key)) return;
+    this.guRecruit(key, n, yTgt);
+  }
+  guRecruit(key, n, yTgt) {   // (R134: the recruit tail of granUtilityEvent as a method, unchanged; n = 0 = a chunk detector with no claw lists)
+    const gu = this.gu, { W, nG, gOff, src, win, lists, inS, inK, outS, outK, use, born, gen, keyBy, owned, pending, rng, co, hold, st } = gu, mt = gu.match;
     const cnt = (pending.get(key) || 0) + 1;
     if (cnt < co) { pending.set(key, cnt); return; }
     pending.delete(key);

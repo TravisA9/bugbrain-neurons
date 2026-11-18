@@ -75,10 +75,10 @@ function attachSparse(G, sp) {              // G.W / P / C: dense on first read 
 function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, gd) {
   // v44 (R94): claw counts from P.granK / P.granKmin if set, else the plan gene d.gran.K / d.gran.Kmin (deepURSx3 v44: 4 / 3), else 3 (v41-v43); P.granK without P.granKmin = all granules granK claws
   const gK = params.granK != null ? (params.granK || 2) : gd && gd.K > 0 ? gd.K : 3, gKm = params.granKmin > 0 ? params.granKmin : params.granK == null && gd && gd.Kmin > 0 ? gd.Kmin : 0;
-  const oi = parts.indexOf(outPart), og = outPart.g, K = Math.max(1, Math.min(4, Math.round(gK))), Km = gKm > 0 ? Math.max(1, Math.min(K, Math.round(gKm))) : K, W = params.granW > 0 ? params.granW : 80;
+  const oi = parts.indexOf(outPart), og = outPart.g, K = Math.max(1, Math.min(params.granDeep > 0 ? 1 + parts.length : 4, Math.round(gK))), Km = gKm > 0 ? Math.max(1, Math.min(K, Math.round(gKm))) : K, W = params.granW > 0 ? params.granW : 80;
   let mi = -1; for (let i = og.nIn; i < og.nIn + og.nHid; i++) if (og.mix && og.mix[i]) { mi = i; break; }
   const th = params.granThr > 0 ? params.granThr : mi >= 0 ? og.thresh[mi] : 20, lk = mi >= 0 ? og.leak[mi] : 0.9;
-  const oth = parts.filter(p => p !== outPart), other = oth[0], srcs = [[outPart, params.granC0 >= 0 ? params.granC0 : 0], [outPart, 2], [other, 2], [oth[1] || other, 2]].slice(0, K);   // R84: 4th source = the second context region's cls 2 (t-3)
+  const oth = parts.filter(p => p !== outPart), other = oth[0], srcs = [[outPart, params.granC0 >= 0 ? params.granC0 : 0], [outPart, 2], [other, 2], [oth[1] || other, 2]].concat(params.granDeep > 0 ? oth.slice(2).map(p => [p, 2]) : []).slice(0, K);   // R84: 4th source = the second context region's cls 2 (t-3)   // R134 granDeep (P.granDeep = 1; off = unchanged): lag depth = the delay-line length: one claw source per further region's cls 2 (t-4, ...), K cap 1 + #regions
   const colsOf = ([p, c]) => { const m = new Map(); for (let i = p.g.nIn; i < p.g.nIn + p.g.nHid; i++) if (p.g.cellType[i] === N_FIXED + c && p.g.topo && !isNaN(p.g.topo[i])) { const k = Math.round(p.g.topo[i] * 1e4); if (!m.has(k)) m.set(k, []); m.get(k).push(node(p, i)); } return m; };
   const C = srcs.map(colsOf), r = mulberry32((seed ^ 0x6a7a11) >>> 0);
   G.gran = new Uint8Array(G.N);
