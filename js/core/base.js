@@ -78,6 +78,12 @@ const params = {
   lagHomeo: 0, lagHomeoMax: 0, lagHomeoCol: 0,
   // R125 lagWTA (0 = off, bit-identical): k-winner-take-all per lag source per read window on the lag-cell -> granule claw hits (first k columns to fire), see net.js
   lagWTA: 0,
+  // R131 anSize (0 = off, bit-identical): action-channel exploration noise (pl.actNoise) x sqrt(sizeF) in a brain grown with sizeF > 1 (largest region
+  //   size factor; 1x unchanged). R131: at size the arm pools start more unequal (first-trial output share max/mean 1x ~1.9-3.2, 2x up to 5.0), the same noise
+  //   explores too little and arms die (never chosen, never credited); seqchoice order2 rd2rb16 4x -.53 -> +.34 vs 1x.
+  anSize: 0,
+  // R131 anSelf (0 = off, bit-identical): self-calibrated exploration, noise x sqrt(max/mean recent output rate) (net.js anSelfF; anSelfTau substeps, default 4000)
+  anSelf: 0, anSelfTau: 4000,
   // R126 fanInBudget (0 = off, bit-identical): sized regions keep each cell type's 1x mean in-region fan-in (strongest inputs), see develop.js
   fanInBudget: 0,
   // R127 pathBudget (0 = off, bit-identical): sized regions keep each (post type, presyn type, sign) pathway at its 1x mean in-degree, random (hash) selection, see develop.js

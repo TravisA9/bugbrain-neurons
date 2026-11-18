@@ -512,6 +512,7 @@ class SpikingNet {
     const L = [], C = []; for (let i = 0; i < N; i++) if (ch[i] >= 0) { L.push(i); C.push(ch[i]); }
     this.anList = Int32Array.from(L); this.anCh = Int16Array.from(C); this.anVal = new Float32Array(nO);
     this.anA = Math.exp(-1 / Math.max(1, this.p.actNoiseTau)); this.anRng = mulberry32(0x9e3779b1 ^ g.N);
+    this.anF = 1; if (params.anSize > 0 && g.regions) { let f = 1; for (const r of g.regions) if (r && r.sizeF > f) f = r.sizeF; if (f > 1) this.anF = Math.sqrt(f); }   // R131 anSize (global, 0 = off, bit-identical; 1x unchanged): exploration noise x sqrt(size factor)
     const Lr = [], Cr = []; for (let i = 0; i < o0; i++) if (ch[i] >= 0) { Lr.push(i); Cr.push(ch[i]); } this.acList = Int32Array.from(Lr); this.acCh = Int16Array.from(Cr);   // the columns (without outputs)
   }
   actLoop(sp) {                               // output spikes -> own column +actFb, other columns -actFb, other outputs -outInh
@@ -520,9 +521,14 @@ class SpikingNet {
       if (fb > 0) for (let q = 0; q < L.length; q++) syn[L[q]] += C[q] === m ? fb : -fb;
       if (oi > 0) for (let j = 0; j < nO; j++) if (j !== m) syn[o0 + j] -= oi; }
   }
+  anSelfF() {                                // R131 anSelf (global, 0 = off, bit-identical): self-calibrated exploration: noise x sqrt(B), B = max / mean of the outputs'
+    const o0 = this.g.nIn + this.g.nHid, nO = this.g.nOut, sp = this.spiked;   //   recent spike rates (EMA, tau params.anSelfTau substeps; 1 = arms balanced), so a column that dominates by its wiring is explored away
+    if (!this.anS) { this.anS = new Float64Array(nO); this.anSa = 1 - 1 / Math.max(1, params.anSelfTau || 4000); }
+    const S = this.anS, aa = this.anSa; let mx = 0, sm = 0; for (let m = 0; m < nO; m++) { S[m] = aa * S[m] + (1 - aa) * sp[o0 + m]; sm += S[m]; if (S[m] > mx) mx = S[m]; }
+    return sm > 0 ? Math.sqrt(Math.max(1, mx * nO / sm)) : 1; }
   actNoiseStep() {
     const v = this.anVal, a = this.anA, kv = this.crit && this.p.actNoiseV > 0 ? 1 / (1 + this.p.actNoiseV * Math.max(0, this.value)) : 1,   // v20: less exploration where more reward is expected
-          sd = kv * this.p.actNoise * Math.sqrt(1 - a * a), r = this.anRng, L = this.anList, C = this.anCh, syn = this.syn;
+          sd = kv * this.p.actNoise * Math.sqrt(1 - a * a) * (this.anF > 1 ? this.anF : 1) * (params.anSelf > 0 ? this.anSelfF() : 1), r = this.anRng, L = this.anList, C = this.anCh, syn = this.syn;
     for (let m = 0; m < v.length; m++) { const u = r() || 1e-12, w = r(); v[m] = a * v[m] + sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185307 * w); }
     for (let q = 0; q < L.length; q++) syn[L[q]] += v[C[q]];
   }

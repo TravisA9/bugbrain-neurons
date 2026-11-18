@@ -426,4 +426,18 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const zl = run({ lagHomeo: 0 }), lw = run({ lagHomeo: 0.02 }); assert.ok(u.s === zl.s && u.spk === zl.spk && u.w.every((v, i) => v === zl.w[i]), 'lagHomeo 0 is bit-identical to unset'); assert.ok(lw.s > 1 / lw.K, 'lagHomeo 0.02 runs (score above chance)'); console.log(`R124 lagHomeo (negative, kept off): off bit-identical, on score ${lw.s.toFixed(3)}: ok`);
   const zw = run({ lagWTA: 0 }), xw = run({ lagWTA: 1 }); assert.ok(u.s === zw.s && u.spk === zw.spk && u.w.every((v, i) => v === zw.w[i]), 'lagWTA 0 is bit-identical to unset');
   assert.ok(xw.s > 1 / xw.K, `lagWTA 1 learns (score ${xw.s.toFixed(3)} above chance)`); console.log(`R125 lagWTA: off bit-identical, on score ${xw.s.toFixed(3)}: ok`); }
+// 9. R131 anSize (exploration noise x sqrt(sizeF); off = bit-identical, 1x unchanged)
+{ const run = (ex, f) => { const S = require('./js/node_load.js')(); Object.assign(S.params, ex || {});
+    const envP = Object.assign({}, S.recommendedEnvParams('seqchoice', { source: 'order2' }, ['source']), { nSyms: 120 });
+    const E = S.setEnv('seqchoice', envP), D = S.PLANS.deepURSx3.make(); if (f) D.regions.forEach(r => { r.g.sc.sizeF = f; });
+    const b = S.growCell(D, { seed: 5, spec: E.spec }), a = S.runEpisode(D, 7, b, E);
+    return { s: a.task.score(), spk: a.net.spikeCount, w: Array.from(a.net.ws), anF: a.net.anF, K: a.task.K }; };
+  const same = (u, z) => u.s === z.s && u.spk === z.spk && u.w.every((v, i) => v === z.w[i]);
+  const u = run(), z = run({ anSize: 0 }), o = run({ anSize: 1 });
+  assert.ok(same(u, z), 'anSize 0 is bit-identical to unset'); assert.ok(same(u, o), 'anSize 1 is a no-op at 1x');
+  const r = { relGrowth: 1, rgDiv: 2 }, v0 = run(r, 2), v1 = run(Object.assign({ anSize: 1 }, r), 2);
+  assert.ok(Math.abs(v1.anF - Math.SQRT2) < 1e-9 && !same(v0, v1), `anSize 1 at 2x: noise x ${v1.anF}, life differs`);
+  console.log(`R131 anSize: off bit-identical, 1x no-op, 2x noise x ${v1.anF.toFixed(3)} (score ${v0.s.toFixed(3)} -> ${v1.s.toFixed(3)}): ok`);
+  const zs = run({ anSelf: 0 }), xs = run({ anSelf: 1 }); assert.ok(same(u, zs), 'anSelf 0 is bit-identical to unset'); assert.ok(!same(u, xs) && xs.s > 1 / xs.K, `anSelf 1 changes exploration, learns (score ${xs.s.toFixed(3)})`);
+  console.log(`R131 anSelf: off bit-identical, on score ${xs.s.toFixed(3)}: ok`); }
 console.log('ALL OK');
