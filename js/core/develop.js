@@ -620,6 +620,29 @@ function growCell(d, opts) {
           for (let k = keep; k < L.length; k++) { const q = L[k] * N + b2; g.W[q] = 0; g.P[q] = 0; if (g.C) g.C[q] = 0; cut++; } } }
       g.fanCut = cut; }
   }
+  // R127 pathBudget (global P.pathBudget = 1; 0 / unset = off, bit-identical, no RNG; acts only on regions with sizeF > 1): SIZE-INDEPENDENT fan-in PER
+  //   AFFERENT PATHWAY. A pathway = (presynaptic hidden cell type, sign) into a postsynaptic cell type (e.g. letter column -> lag column = feed-forward,
+  //   lag column -> lag column = own-column recurrence, other in-region types, inhibitory types). A 1x reference growth of the same genome and seed (sizeF 1)
+  //   gives each (post type, pathway) its mean count B. Here every cell keeps ceil(n_i x B / mean) inputs of each pathway whose type mean exceeds B, chosen
+  //   at RANDOM within the pathway by a deterministic hash of (seed, pre, post) (no RNG stream used; never by weight: R126b showed weights carry a fixed
+  //   genome margin, so ranking by |w| deletes whole pathways). Env (sensory) inputs, tracts and granule claws are not touched. normE / normI follow.
+  if (opts.__pathRef || (params.pathBudget > 0 && sc.sizeF > 1)) {
+    const h0 = nIn, h1 = nIn + neurons.length, key = (a2, w) => g.cellType[a2] * 2 + (w < 0 ? 1 : 0), cnt = new Map(), byT = new Map();   // cnt: post cell -> Map(path -> n)
+    for (let b2 = h0; b2 < h1; b2++) { const m = new Map(); for (let a2 = h0; a2 < h1; a2++) { const w = g.W[a2 * N + b2]; if (w !== 0) { const k = key(a2, w); m.set(k, (m.get(k) || 0) + 1); } } cnt.set(b2, m);
+      const t = g.cellType[b2]; let e = byT.get(t); if (!e) byT.set(t, e = { n: 0, s: new Map() }); e.n++; for (const [k, v] of m) e.s.set(k, (e.s.get(k) || 0) + v); }
+    const mean = new Map(); for (const [t, e] of byT) { const mm = new Map(); for (const [k, v] of e.s) mm.set(k, v / e.n); mean.set(t, mm); }
+    if (opts.__pathRef) opts.__pathRef.B = mean;
+    else { const o1 = { seed: opts.seed, spec, __pathRef: {} }; growCell(Object.assign({}, d, { sc: Object.assign({}, d.sc, { sizeF: 1 }) }), o1); const B = o1.__pathRef.B; let cut = 0;
+      const sd = (opts.seed | 0) ^ 0x5bd1e995, hsh = (a2, b2) => { let h = Math.imul(sd ^ Math.imul(a2 + 1, 0x9e3779b1), 0x85ebca6b) ^ Math.imul(b2 + 1, 0xc2b2ae35); h ^= h >>> 15; h = Math.imul(h, 0x27d4eb2f); return (h ^ (h >>> 13)) >>> 0; };
+      const st = {};
+      for (let b2 = h0; b2 < h1; b2++) { const t = g.cellType[b2], Bt = B.get(t), Mt = mean.get(t); if (!Bt) continue;
+        for (const [k, n] of cnt.get(b2)) { const Bk = Bt.get(k) || 0, mk = Mt.get(k); if (!(mk > Bk) || !(Bk > 0)) continue;   // (pathways absent at 1x are left as grown)
+          const keep = Math.ceil(n * Bk / mk); if (keep >= n) continue; const L = [];
+          for (let a2 = h0; a2 < h1; a2++) { const w = g.W[a2 * N + b2]; if (w !== 0 && key(a2, w) === k) L.push(a2); }
+          L.sort((x, y) => hsh(x, b2) - hsh(y, b2) || x - y);
+          for (let q2 = keep; q2 < L.length; q2++) { const q = L[q2] * N + b2; g.W[q] = 0; g.P[q] = 0; if (g.C) g.C[q] = 0; cut++; } } }
+      g.pathCut = cut; }
+  }
   if (clawFibreCells && clawFibreCells.size && sc.clawNorm > 0) {   // cells whose fibres reach claw cells, and the claw cells they reach
     g._fib = new Set(); for (const id of clawFibreCells) if (idx.has(id)) g._fib.add(idx.get(id));
     g._fed = new Set(); for (const id of clawFed) if (idx.has(id)) g._fed.add(idx.get(id)); }

@@ -326,6 +326,22 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const f1 = ctxFan(a0), f2 = ctxFan(grow(2, 0)), f2b = ctxFan(grow(2, 1));
   assert.ok(f2 > 1.4 * f1 && Math.abs(f2b - f1) < 0.15 * f1, `fanInBudget keeps context in-region fan-in at 1x (${f1.toFixed(1)}; 2x ${f2.toFixed(1)} -> ${f2b.toFixed(1)})`);
   console.log(`R126 fanInBudget: no-op at 1x, context in-region fan-in 1x ${f1.toFixed(1)}, 2x ${f2.toFixed(1)} -> ${f2b.toFixed(1)}: ok`); }
+// 2d. R127 per-pathway afferent budget (params.pathBudget = 1, default off): 1x untouched; at 2x each (post type, presyn type, sign) pathway keeps ~its 1x mean in-degree
+{ const S = require('./js/node_load.js')(); S.params.granN = 128;
+  assert.ok(S.params.pathBudget === 0, 'pathBudget opt-in (0 by default)');
+  const E = S.setEnv('seq', Object.assign({}, S.recommendedEnvParams('seq', { source: 'order3', K: 8 }, ['source']), { nSyms: 160 }));
+  const grow = (f, pb) => { S.params.relGrowth = 1; S.params.pathBudget = pb; const D = S.PLANS.deepURSx3.make(); D.regions.forEach(R => { R.g.sc.sizeF = f; }); const b = S.growCell(D, { seed: 5, spec: E.spec }); S.params.relGrowth = 0; S.params.pathBudget = 0; return b; };
+  const paths = b => { const sp = b.sp, h1 = b.nIn + b.nHid, ct = b.cellType, n = new Map(), nc = new Map();   // mean in-region hidden in-degree per (region, post type, pre type, sign)
+    for (let q = b.nIn; q < h1; q++) if (!(b.gran && b.gran[q])) { const k = b.region[q] + ':' + ct[q]; nc.set(k, (nc.get(k) || 0) + 1); }
+    for (let k = 0; k < sp.pre.length; k++) { const a = sp.pre[k], q = sp.post[k]; if (a < b.nIn || q >= h1 || q < b.nIn || (b.gran && (b.gran[q] || b.gran[a])) || b.region[a] !== b.region[q]) continue;
+      const key = b.region[q] + ':' + ct[q] + '|' + ct[a] + (sp.w[k] < 0 ? '-' : '+'); n.set(key, (n.get(key) || 0) + 1); }
+    const o = new Map(); for (const [k, v] of n) o.set(k, v / nc.get(k.split('|')[0])); return o; };
+  const a0 = grow(1, 0), a1 = grow(1, 1);
+  assert.ok(a0.sp.pre.length === a1.sp.pre.length && a0.sp.w.every((w, i) => w === a1.sp.w[i] && a0.sp.pre[i] === a1.sp.pre[i]), 'pathBudget is a no-op at 1x');
+  const p1 = paths(a0), p2 = paths(grow(2, 0)), p2b = paths(grow(2, 1)); let big = 0, wr = 0, wb = 0, m = 0;
+  for (const [k, v] of p1) if (v >= 2) { big++; const r = p2.get(k) || 0, x = p2b.get(k) || 0; wr = Math.max(wr, r / v); wb = Math.max(wb, x / v); m++; }
+  assert.ok(m > 5 && wr > 1.4 && wb < 1.5, `pathBudget keeps every 1x pathway (>= 2 inputs) within 1.5x of 1x (max ratio off ${wr.toFixed(2)}, on ${wb.toFixed(2)}, ${m} pathways)`);
+  console.log(`R127 pathBudget: no-op at 1x, ${m} pathways, max in-degree ratio 2x/1x off ${wr.toFixed(2)} -> on ${wb.toFixed(2)}: ok`); }
 // 3. Utility-pruned structural plasticity for granule claws (params.granUtility = 1)
 { const S = require('./js/node_load.js')(); S.params.granUtility = 1; S.params.granN = 32; S.params.granHold = 4; S.params.granCo = 1;
   const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 240 });
