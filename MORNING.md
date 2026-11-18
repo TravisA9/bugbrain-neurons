@@ -64,4 +64,4 @@ The ablation at 4x book10k shows which parts matter:
 - Run the best setting on 8+ seeds for book10k/30k: the gain sits mainly on one seed.
 
 ## Commits (relgrowth, oldest first)
-8a472feb R123 relGrowth - a9271886 R124/R125 - 30d36c69 R126 - be277210 R126b - c47564ca R127 pathBudget - 92cfb92c R128/R129 rgDiv - b1c568f1 R130 cross-task/ablation - (R131 anSelf/anSize: see git log)
+8a472feb R123 relGrowth - a9271886 R124/R125 - 30d36c69 R126 - be277210 R126b - c47564ca R127 pathBudget - 92cfb92c R128/R129 rgDiv - b1c568f1 R130 cross-task/ablation - 42f35ee6 R131 anSelf/anSize + best setting + this file
