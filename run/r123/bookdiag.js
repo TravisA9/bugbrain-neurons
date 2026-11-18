@@ -20,6 +20,7 @@ const t0 = Date.now(); while (!a.done) a.tick();
 const st = a.task.stats ? a.task.stats() : {}, names = (gc.cell.regions || []).map(r => r.name || r.R && r.R.name);
 const R = {}; for (let r = 0; r < RN; r++) if (regC[r]) R[r === 254 ? 'granule' : (names[r] || 'r' + r)] = { cells: regC[r], rate: +(regS[r] / regC[r] / subs).toExponential(3) };
 const gu = net.granUtilityStats ? net.granUtilityStats() : null;
+const cr = net.gu && net.gu.cr ? net.gu.cr.map(x => { let t = 0, m = 0, h = 0; for (const v of x) { t += v; if (v > m) m = v; if (v > 0.5) h++; } return { cols: x.length, mean: +(t / x.length).toFixed(4), max: +m.toFixed(3), over05: h }; }) : null;
 const out = { k, tag, variant, heldAcc: st.heldAcc, trainAcc: st.trainAcc, N, nHid: G.nHid, subs, regions: R, outDrive: { gran: +dG.toExponential(3), other: +dO.toExponential(3), inh: +dI.toExponential(3), granFrac: +(dG / (dG + dO)).toFixed(4) },
-  granEvents: ev, meanActiveGran: +(nAs / Math.max(1, ev)).toFixed(1), meanX2: +(x2s / Math.max(1, ev)).toFixed(3), meanStep: +(steps / Math.max(1, ev)).toExponential(3), gu: gu && JSON.parse(JSON.stringify(gu, (kk, v) => Array.isArray(v) && v.length > 20 ? v.length : v)), sec: (Date.now() - t0) / 1000 };
+  granEvents: ev, meanActiveGran: +(nAs / Math.max(1, ev)).toFixed(1), meanX2: +(x2s / Math.max(1, ev)).toFixed(3), meanStep: +(steps / Math.max(1, ev)).toExponential(3), gu: gu && JSON.parse(JSON.stringify(gu, (kk, v) => Array.isArray(v) && v.length > 20 ? v.length : v)), cr, sec: (Date.now() - t0) / 1000 };
 fs.writeFileSync(`sw/out/bd_${tag}_${k}.json`, JSON.stringify(out)); console.log(JSON.stringify(out));

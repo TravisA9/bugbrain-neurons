@@ -74,6 +74,10 @@ const params = {
   scaleInvariant: 0,
   // R123 relGrowth (0 = off, bit-identical): relative growth rules for sized regions: trophic survival vs fair share (relGrowthAlpha, default 0.5),
   //   GRN reads the fixed morphogens on the 1x lattice below 2.25x, ceil cone speed, mixing inhibition x 1x pool / pool. See develop.js / net.js.
+  // R124 lagHomeo (0 = off, bit-identical): self-calibrated lag-source activity homeostat (target: one active letter column per lag source per window), see net.js
+  lagHomeo: 0, lagHomeoMax: 0, lagHomeoCol: 0,
+  // R125 lagWTA (0 = off, bit-identical): k-winner-take-all per lag source per read window on the lag-cell -> granule claw hits (first k columns to fire), see net.js
+  lagWTA: 0,
   relGrowth: 0, relGrowthAlpha: 0, relGrowthOff: 0,   // relGrowthOff: diagnostic bitmask disabling parts (1 trophic, 2 lattice, 4 cone, 8 mixing)
   plasticity: true,    // lifetime learning (reward-modulated STDP); false = frozen genome weights
   cellStart: 'env',    // a new population starts from mutants of this body plan ('env' = the environment's default)

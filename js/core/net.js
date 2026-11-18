@@ -869,10 +869,37 @@ class SpikingNet {
       const a = key.split(','), n = +a[0]; if (!(n > 0) || a.length !== n + 1 || a.some((x, i) => i > 0 && !/^[0-9]+$/.test(x))) { keyBy[j] = null; continue; }
       gu.xn[j] = n; for (let c = 0; c < n; c++) lists[c][+a[c + 1]].push({ j, w: 0, gen: gu.gen[j], c }); }
     if (this.gFast0 == null) this.granLn = 0;   // fixed thresholds: no granule homeostasis
+    if (params.lagHomeo > 0) this.initLagHomeo();
+    // R125 lagWTA (global P.lagWTA = k > 0; 0 / unset = off, bit-identical, no RNG; needs granExact): COMPETITIVE SELECTION within each lag source
+    // (s >= 1) as seen by the granules: in each read window only the first k letter columns of the source to fire count as claw hits (latency
+    // k-WTA: in a leaky integrate-and-fire population the most strongly driven column reaches threshold first; equivalent to fast lateral
+    // inhibition from the source's winner onto the other columns' granule synapses). The lag cells themselves keep firing for every other target.
+    // Size-independent by construction (a lag source holds one letter per window; R123 bookdiag healthy brains 0.94-0.99 active columns per
+    // window, hot 2x_si 2.9-6.4). Implemented on the lag-cell output to the granule claws, not as an inhibitory pool in the network dynamics.
+    if (params.lagWTA > 0) { gu.wta = new Uint8Array(src.length); gu.wtaK = Math.max(1, Math.round(params.lagWTA)); }
   }
+  /* R124 lagHomeo (global P.lagHomeo = eta > 0; 0 / unset = off, bit-identical, no RNG; needs granExact): SELF-CALIBRATED ACTIVITY HOMEOSTAT of the
+   * lag (claw) sources. A lag source represents ONE letter per read window, so the number of its letter columns active in a window should be 1.
+   * Each window, a source's summed column window rate R_s = sum_c r_sc (EMA, as the R120 guard) gives h_s += eta x (R_s - 1) (clamped +-lagHomeoMax,
+   * default 1) and every cell of the source's columns gets thr = V_REST + (thr0 - V_REST) x exp(h_s): hot (letter-unspecific) sources are raised,
+   * cold ones lowered. R123 bookdiag: healthy brains R_s 0.94-0.99, hot 2x_si 2.9-6.4, cold 4x_rg 0.62-0.70. No size-dependent constant.
+   * P.lagHomeoCol = 1: the first (negative) variant, one offset per column with target r_sc = the same letter's source-0 rate. Starts after 500 windows. */
+  initLagHomeo() {
+    const gu = this.gu, src = gu.src, k0 = new Map(); for (let c = 0; c < src[0].keys.length; c++) k0.set(src[0].keys[c], c);
+    if (!this.thr) this.thr = Float32Array.from(this.g.thresh);
+    gu.lh = src.map((S, s) => s === 0 ? null : { c0: Int32Array.from(S.keys, k => k0.has(k) ? k0.get(k) : -1), h: new Float32Array(S.keys.length), hs: 0, t0: Float32Array.from(S.cells, b => this.thr[b]) });
+    gu.lhN = 0; gu.st.lhMax = 0; }
+  lagHomeoStep() {
+    const gu = this.gu, cr = gu.cr, thr = this.thr, eta = params.lagHomeo, hM = params.lagHomeoMax > 0 ? params.lagHomeoMax : 1, col = params.lagHomeoCol === 1; if (++gu.lhN < 500) return;
+    let mx = 0; for (let s = 1; s < cr.length; s++) { const L = gu.lh[s], S = gu.src[s], a = cr[s], a0 = cr[0];
+      if (!col) { let R = 0; for (let c = 0; c < a.length; c++) R += a[c]; let h = L.hs + eta * (R - 1); h = h > hM ? hM : h < -hM ? -hM : h; L.hs = h; if (Math.abs(h) > mx) mx = Math.abs(h);
+        const f = Math.exp(h), cl = S.cells, t0 = L.t0; for (let q = 0; q < cl.length; q++) thr[cl[q]] = V_REST + (t0[q] - V_REST) * f; continue; }
+      for (let c = 0; c < a.length; c++) { if (L.c0[c] < 0) continue; let h = L.h[c] + eta * (a[c] - a0[L.c0[c]]); h = h > hM ? hM : h < -hM ? -hM : h; L.h[c] = h; if (Math.abs(h) > mx) mx = Math.abs(h);
+        const f = Math.exp(h); for (let q = S.off[c]; q < S.off[c + 1]; q++) thr[S.cells[q]] = V_REST + (L.t0[q] - V_REST) * f; } }
+    gu.st.lhMax = +mx.toFixed(3); gu.st.lhS = gu.lh.map(L => L ? +(col ? 0 : L.hs).toFixed(3) : 0); }
   guExact(i, gc, s, syn, mk, gB) {   // first hit of claw column gc (source s) in this read window: set the claw bit of every granule listening to it
     const gu = this.gu, ch = gu.cHit[s], c = gc - gu.hOff[s]; if (ch[c] >= 250) return;
-    const hM = params.granExactHits > 1 ? params.granExactHits : 1; if (ch[c] === 0) gu.cT.push(s, c); ch[c]++; if (ch[c] < hM) return; ch[c] = 250; if ((params.granExactColCap || (params.granExactGuard & 2)) && gu.cr[s][c] > this.guColCap(s)) return;   // R119 granExactColCap: a claw column active in > colCap of the windows (saturated lag cells) carries no context: it never completes a tuple   // R119 granExactHits: a claw column counts once it has fired hM spikes in this window (stale lag letters fire fewer)
+    const hM = params.granExactHits > 1 ? params.granExactHits : 1; if (ch[c] === 0) gu.cT.push(s, c); ch[c]++; if (ch[c] < hM) return; ch[c] = 250; if ((params.granExactColCap || (params.granExactGuard & 2)) && gu.cr[s][c] > this.guColCap(s)) return; if (gu.wta && s > 0) { if (gu.wta[s] >= gu.wtaK) return; gu.wta[s]++; }   // R125 lagWTA: only the first k columns of a lag source to fire in this window count (see initGranExact)   // R119 granExactColCap: a claw column active in > colCap of the windows (saturated lag cells) carries no context: it never completes a tuple   // R119 granExactHits: a claw column counts once it has fired hM spikes in this window (stale lag letters fire fewer)
     const L = gu.lists[s][c], gen = gu.gen, xm = gu.xm, xn = gu.xn, xf = gu.xf, gOff = gu.gOff, T = this.thr || this.g.thresh;
     const xL = gu.xL, fz = params.granFatigue;   // R122 granFatigue = c (off by default): a detector that fired less than c x its OWN mean inter-fire interval (symbols / its fire count) ago is refractory (self-suppression after completing its tuple; self-calibrated per detector)
     for (let r = 0, m = L.length; r < m; r++) { const e = L[r]; if (e.gen !== gen[e.j]) continue; const j = e.j, bit = 1 << e.c;
@@ -885,8 +912,8 @@ class SpikingNet {
     if (v > 0) return v; const gu = this.gu, a = gu.cr[s]; if (!gu.crM || gu.crE !== gu.st.events) { gu.crE = gu.st.events; gu.crM = gu.cr.map(x => { let t = 0; for (let c = 0; c < x.length; c++) t += x[c]; return t / x.length; }); }
     return gu.st.events < 3000 ? 2 : Math.max(-v * gu.crM[s], 0.05); }   // < 0 = self-calibrating: |v| x the source's mean column activity (a saturated column vs its alphabet)
   guExactReset() { const gu = this.gu, xm = gu.xm, xf = gu.xf, xT = gu.xT; for (let q = 0; q < gu.xTn; q++) { xm[xT[q]] = 0; xf[xT[q]] = 0; } gu.xTn = 0; gu.xFn = 0;
-    const cT = gu.cT; if (params.granExactColCap || (params.granExactGuard & 2)) { const cr = gu.cr; for (let s2 = 0; s2 < cr.length; s2++) { const a = cr[s2]; for (let c = 0; c < a.length; c++) a[c] *= 0.999; } for (let q = 0; q < cT.length; q += 2) if (gu.cHit[cT[q]][cT[q + 1]] >= 250) cr[cT[q]][cT[q + 1]] += 0.001; }
-    for (let q = 0; q < cT.length; q += 2) gu.cHit[cT[q]][cT[q + 1]] = 0; cT.length = 0; }
+    const cT = gu.cT; if (params.granExactColCap || (params.granExactGuard & 2) || params.lagHomeo > 0) { const cr = gu.cr; for (let s2 = 0; s2 < cr.length; s2++) { const a = cr[s2]; for (let c = 0; c < a.length; c++) a[c] *= 0.999; } for (let q = 0; q < cT.length; q += 2) if (gu.cHit[cT[q]][cT[q + 1]] >= 250) cr[cT[q]][cT[q + 1]] += 0.001; }
+    for (let q = 0; q < cT.length; q += 2) gu.cHit[cT[q]][cT[q + 1]] = 0; cT.length = 0; if (gu.lh) this.lagHomeoStep(); if (gu.wta) gu.wta.fill(0); }
   guDrive(spk, nSpk, syn, mk) {
     const gu = this.gu, colOf = gu.colOf, hits = gu.hits, lists = gu.lists, gOff = gu.gOff, gEnd = gOff + gu.nG, use = gu.use, gen = gu.gen, K = gu.K, hOff = gu.hOff, gB = this.gBits;
     if (gu.xm) { const inNow = nSpk > 0 && spk[0] < this.g.nIn; if (inNow && !gu.inPrev) this.guExactReset(); gu.inPrev = inNow; if (gu.xL) { gu.tk++; if (gu.st.events > 0) gu.sps = gu.tk / gu.st.events; } }   // R119: a new input symbol starts a new window (also in free-running generation, which has no teaching events)
