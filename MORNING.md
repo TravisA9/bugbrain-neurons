@@ -64,7 +64,7 @@ The ablation at 4x book10k shows which parts matter:
 - Run the best setting on 8+ seeds for book10k/30k: the gain sits mainly on one seed.
 
 ## Commits (relgrowth, oldest first)
-8a472feb R123 relGrowth - a9271886 R124/R125 - 30d36c69 R126 - be277210 R126b - c47564ca R127 pathBudget - 92cfb92c R128/R129 rgDiv - b1c568f1 R130 cross-task/ablation - 42f35ee6 R131 anSelf/anSize + best setting + this file
+8a472feb R123 relGrowth - a9271886 R124/R125 - 30d36c69 R126 - be277210 R126b - c47564ca R127 pathBudget - 92cfb92c R128/R129 rgDiv - b1c568f1 R130 cross-task/ablation - 42f35ee6 R131 anSelf/anSize + best setting + this file - 1b11b457 commit-list fixup - f9beabbc R132 validation, 8x diagnosis, granNeg/granKalLTD + "Update after 3 AM"
 
 ## Update after 3 AM (R132)
 **1. The 4x gain holds up on new seeds.** The best setting at 4x vs 1x, same seed, held-out next-letter accuracy on 2000 held letters:
