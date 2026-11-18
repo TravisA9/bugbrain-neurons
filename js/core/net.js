@@ -700,13 +700,16 @@ class SpikingNet {
   granKalStep(L, K, ws, pr, wMax, lr, ref, D, U, gA, Bs, off, W, pos, Uw, nA, aL, gG, oS, nO) {
     const A = params.granKal, mn = params.granKalMin > 0 ? params.granKalMin : 0.02, n = this.gKn || (this.gKn = new Float32Array(this.N)), nL = L.length; let yTgt = 0, dPs = 0;
     const av = j => { const v = A / (A + n[j]); return v < mn ? mn : v; };
+    // R132 granKalLTD (global, 0 / unset = off, bit-identical): the experience-weighted split for false alarms (err < 0) too, so a recruit given a
+    // one-shot weight (granOneShot) is averaged down like a count estimate instead of keeping its first-sighting weight under the plain NLMS split
+    const wLo = params.granNeg > 0 ? -params.granNeg * wMax : 0;   // R132 granNeg (global, 0 / unset = off: lower bound 0, bit-identical): signed readout, weights in [-granNeg x wMax, wMax] (a specific context can veto a generic prediction, as count backoff does; biologically the granule -> basket/stellate -> Purkinje inhibitory path)
     for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
       let x2 = 0; for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], j = pr[K[r]], x = gA[j] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += av(j) * x * x; x2 += x * x; }
-      const y = Math.min(1, d / ref), er = t - y, kal = er > 0, g = kal ? (xx > 0 ? lr * ref / xx : 0) : (x2 > 0 ? lr * ref / x2 : 0); if (t) yTgt = y;
+      const y = Math.min(1, d / ref), er = t - y, kal = er > 0 || params.granKalLTD > 0, g = kal ? (xx > 0 ? lr * ref / xx : 0) : (x2 > 0 ? lr * ref / x2 : 0); if (t) yTgt = y;
       if (gG) { const i = L[q], m = oS > 0 ? gA[i] / oS : 1 / nO, cc = m + this.gPsi * (y - m); dPs += (t - cc) * (y - m); }   // (the granGain psi update, as the NLMS loop)
       if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
       for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], j = pr[k], x = gA[j] / W, gj = kal ? g * av(j) : g;
-        if (U) { const u = U[r] + gj * x * er; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; } const w = ws[k] + gj * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
+        if (U) { const u = U[r] + gj * x * er; U[r] = u < wLo ? wLo : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; } const w = ws[k] + gj * x * er; ws[k] = w < wLo ? wLo : w > wMax ? wMax : w; } }
     for (let a = 0; a < nA; a++) { const j = aL[a]; if (gA[j] / W >= 0.01) n[j]++; }
     this.gKdPs = dPs; return yTgt; }
   /* R118 readoutRule 'threeFactor' (global params.readoutRule = 'threeFactor' or 1; unset / 0 = the R83b NLMS above, bit-identical, no RNG):

@@ -425,7 +425,11 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const zf = run({ granFatigue: 0 }); assert.ok(u.s === zf.s && u.spk === zf.spk && u.w.every((v, i) => v === zf.w[i]), 'granFatigue 0 is bit-identical to unset'); console.log('R122 granFatigue: off bit-identical: ok');
   const zl = run({ lagHomeo: 0 }), lw = run({ lagHomeo: 0.02 }); assert.ok(u.s === zl.s && u.spk === zl.spk && u.w.every((v, i) => v === zl.w[i]), 'lagHomeo 0 is bit-identical to unset'); assert.ok(lw.s > 1 / lw.K, 'lagHomeo 0.02 runs (score above chance)'); console.log(`R124 lagHomeo (negative, kept off): off bit-identical, on score ${lw.s.toFixed(3)}: ok`);
   const zw = run({ lagWTA: 0 }), xw = run({ lagWTA: 1 }); assert.ok(u.s === zw.s && u.spk === zw.spk && u.w.every((v, i) => v === zw.w[i]), 'lagWTA 0 is bit-identical to unset');
-  assert.ok(xw.s > 1 / xw.K, `lagWTA 1 learns (score ${xw.s.toFixed(3)} above chance)`); console.log(`R125 lagWTA: off bit-identical, on score ${xw.s.toFixed(3)}: ok`); }
+  assert.ok(xw.s > 1 / xw.K, `lagWTA 1 learns (score ${xw.s.toFixed(3)} above chance)`); console.log(`R125 lagWTA: off bit-identical, on score ${xw.s.toFixed(3)}: ok`);
+  const zn = run({ granKal: 1, granNeg: 0 }), xn = run({ granKal: 1, granNeg: 1 }); assert.ok(x.s === zn.s && x.spk === zn.spk && x.w.every((v, i) => v === zn.w[i]), 'granNeg 0 is bit-identical to unset (granKal on)');
+  assert.ok(xn.s > 1 / xn.K && xn.w.some(v => v < 0), `granNeg 1: signed readout weights appear, learns (score ${xn.s.toFixed(3)})`); console.log(`R132 granNeg: off bit-identical, on: ${xn.w.filter(v => v < 0).length} negative weights, score ${xn.s.toFixed(3)}: ok`);
+  const zk = run({ granKal: 1, granKalLTD: 0 }), xk = run({ granKal: 1, granKalLTD: 1, granOneShot: 1 }); assert.ok(x.s === zk.s && x.spk === zk.spk && x.w.every((v, i) => v === zk.w[i]), 'granKalLTD 0 is bit-identical to unset (granKal on)');
+  assert.ok(xk.s > 1 / xk.K && xk.w.some((v, i) => v !== x.w[i]), `granKalLTD 1 (+granOneShot 1) changes the readout, learns (score ${xk.s.toFixed(3)})`); console.log(`R132 granKalLTD: off bit-identical, on (+oneShot 1) score ${xk.s.toFixed(3)}: ok`); }
 // 9. R131 anSize (exploration noise x sqrt(sizeF); off = bit-identical, 1x unchanged)
 { const run = (ex, f) => { const S = require('./js/node_load.js')(); Object.assign(S.params, ex || {});
     const envP = Object.assign({}, S.recommendedEnvParams('seqchoice', { source: 'order2' }, ['source']), { nSyms: 120 });

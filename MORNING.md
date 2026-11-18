@@ -65,3 +65,34 @@ The ablation at 4x book10k shows which parts matter:
 
 ## Commits (relgrowth, oldest first)
 8a472feb R123 relGrowth - a9271886 R124/R125 - 30d36c69 R126 - be277210 R126b - c47564ca R127 pathBudget - 92cfb92c R128/R129 rgDiv - b1c568f1 R130 cross-task/ablation - 42f35ee6 R131 anSelf/anSize + best setting + this file
+
+## Update after 3 AM (R132)
+**1. The 4x gain holds up on new seeds.** The best setting at 4x vs 1x, same seed, held-out next-letter accuracy on 2000 held letters:
+- book10k, 11 seeds: +2.1 points on average (se 0.7), 10 better / 1 worse. Without seed 2952: +1.7, 9/1.
+- book30k, 7 seeds: +1.6 points (se 0.7), 7 better / 0 worse. Without seed 2952: +1.0 (se 0.3), 6/0.
+  New seeds 2954-2957: .4625->.481, .4465->.4585, .498->.5065, .4515->.4685.
+So the gain is not just seed 2952; it is smaller but consistent on the others.
+
+**2. Why 8x is flat.** 8x vs 4x: book10k .460/.494/.450 vs .4625/.4925/.447; book30k .471/.484 vs .478/.4765. Not a capacity problem:
+- The granule pool is not full: ~3.9k (book10k) / 6.7k (book30k) of 32000 granules are used, none hit the cap, ~4 granules fire per letter, the same at 4x and 8x.
+  Doubling the pool (64000) at 4x changed nothing (0/+.009/-.0005).
+- Lag columns are healthy at both sizes.
+- Comparing with a simple counting model on the same text (sw/countmodel.js): the 4x/8x brain predicts about as well as a model that counts
+  3-letter contexts (order 3), but not as well as one that counts 4-letter contexts (order 4) on book30k (.02-.03 short).
+- Splitting the test letters by how often their 4-letter context had been seen before shows where: on contexts seen ONCE before, the brain
+  scores like the 3-letter counter (.44-.49) while the 4-letter counter gets .53-.60. On contexts seen 5+ times the brain is close to the counter.
+  On book10k the 4-letter counter does not beat the 3-letter one, so book10k is data-limited; book30k has headroom the brain does not use.
+- So the limit is the readout's few-shot learning: how fast it trusts a 4-letter context it has seen once. More neurons don't change that.
+
+**3. Fixes tried (all pre-registered, all negative, kept off as default-off flags):**
+- granOneShot .1 (book10k): null.
+- granNeg (new flag: allow negative readout weights, so a specific context can veto the general guess): book10k -0.1, book30k -0.6 points. Refuted.
+- Strong one-shot (granOneShot 1): book30k -3.2/-4.0. It does fix the seen-once contexts (.47 -> .554, near the counter) but damages the
+  frequent ones (.48 -> .425). Self-calibrated share (granOneShot 2): -0.4/-2.2.
+- granKalLTD (new flag: also average the one-shot weight down on wrong guesses) + strong one-shot: -2.2/-2.6; frequent contexts recover only partly.
+  Weaker one-shot (.3) with it: -0.35/-1.7.
+Every variant trades the rare contexts against the frequent ones inside one linear readout; none is a net gain.
+
+**Next lead:** keep the readout's fast one-shot memory for rare contexts separate from the slow, averaged weights for frequent ones
+(two time-scales, e.g. a fast decaying trace on each granule synapse that is consolidated into the slow weight), and test on book30k/100k,
+where there is headroom. Growing the granule pool or the lag depth with size is not supported by the evidence yet.

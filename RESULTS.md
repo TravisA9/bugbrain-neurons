@@ -4678,3 +4678,25 @@ Scores: cross-task 'mean' fitness (0-10) from run/r42.js, book heldAcc on 2000 h
 - **Best single setting (one fixed setting, all sizes):** relGrowth=1, pathBudget=1, rgDiv=2, trophic=16, recvBudget=2, postCapRel=1.5, anSelf=1. At 1x it is bit-identical to the base on teacher tasks and neutral on seqchoice (anSelf -.08 order2, +.15 cycle). At 4x, vs 1x: book10k .4625/.4925/.447 (3+/0-, +.026), book30k .478/.526/.4765 (3+/0-, +.019), text1000 +.165 (3+), fables4000 +.26 (3+), K4 =, order3 -.017 (9.675 x3 vs 9.675/9.7/9.7), sc_order2 +.09 (8 seeds), sc_cycle +.33. 8x book10k (rd2, same on book) .460/.494/.450: flat from 4x.
 - **sc_cycle 8 seeds (k2951-2958, paired vs 1x mean 9.20):** anSelf 1x +.16 (se .05, 7+/1-); best setting 2x +.36 (se .17, 6+/2-), 4x +.10 (se .20, 5+/3-).
 - **book10k 2x best setting:** .4535/.493/.4355 vs 1x (1+/1=/1-; at 2x rgDiv=2 equals rgDiv=1, log2 2 = 1).
+
+## R132 — validation of the best setting, why 8x is flat, readout one-shot tests (book, heldAcc on 2000 held symbols)
+- **Validation, best setting 4x vs 1x (paired):** book10k 11 seeds (k2951-2961) mean +.0208 (se .0066), 10+/1-; without k2952 +.0174 (se .0063), 9+/1-.
+  book30k 7 seeds: k2951-53 .4765/.4735/.475 -> .478/.526/.4765; k2954-57 .4625/.4465/.498/.4515 -> .481/.4585/.5065/.4685; mean +.0159 (se .0066), 7+/0-;
+  without k2952 +.0098 (se .0030), 6+/0-. The gain is real beyond k2952.
+- **8x is flat:** book10k (rd2) .460/.494/.450 vs 4x .4625/.4925/.447; book30k k2951 .471 / k2953 .484 vs 4x .478/.4765 (mean +.0003).
+  Granule stats identical at 4x and 8x: rewired 3.9k (book10k) / 6.7k (book30k) of cap 32000, capped 0, ~4-4.4 active granules per event,
+  lag columns healthy. Distinct contexts book30k k2951: 2260 order-3, 6464 order-4 -> pool covers them; granN 64000 at 4x book10k: d 0/+.009/-.0005 (null, as pre-registered).
+- **Count-model ceiling (sw/countmodel.js, online backoff order-n on the same stream):** the brain at 4x/8x ~= the ORDER-3 count model
+  (book10k 2956 o3 .4935 / brain .4935; book30k 2951 .4845/.478, 2952 .521/.526, 2953 .4745/.4765) and below order 4/5 on book30k by .02-.03
+  (o4 .509/.5295/.496). Binned by how often the 4-letter context was seen before: seen-once contexts brain ~= count3 (.44-.49) << count4
+  (.525-.60); 5+ near count4. On book10k count4 ~= count3 in the seen-once bin, so book10k is data-limited; book30k is readout-limited.
+  => 8x adds cells the representation does not need; the limit is how fast the readout trusts a rarely seen specific context.
+- **granOneShot .1 (book10k 4x k2956-58):** d -.005/-.0035/+.0075 (null; pre-reg +.005..+.02 refuted).
+- **P.granNeg=1 (new flag, signed readout weights in granKalStep):** book10k d -.002/-.004/+.002, book30k d -.006/-.0055. Refuted: non-negativity is not the limit.
+- **granOneShot 1 (full lone-input NLMS step on recruit), book30k 4x:** .4465/.436 (d -.0315/-.0405). Seen-once bin UP (2951 .47 -> .554, near count4 .599;
+  2953 .461 -> .489) but 5+ bin DOWN (.48 -> .425, .523 -> .469): a strong first-sighting weight is not averaged down for frequent contexts.
+  granOneShot 2 (self-calibrated NLMS share): .474/.4545 (d -.004/-.022).
+- **P.granKalLTD=1 (new flag, experience-weighted split for false alarms too) + os1:** .456/.451 (d -.022/-.0255; +.01/+.015 vs os1 alone): 5+ recovers only
+  partly (.425 -> .442). Pre-reg refuted. os .3 + kalLTD: .4745/.4595 (d -.0035/-.017).
+  All one-shot variants trade the seen-once bin against the 5+ bin in the single linear readout; none is net positive. Flags kept off.
+- Tools: sw/countmodel.js (count ceilings, bins, brain hits by bin), bookdiag.js saves per-held hits.
