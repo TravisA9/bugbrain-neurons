@@ -413,7 +413,7 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
 { const run = ex => { const S = require('./js/node_load.js')(); S.params.granN = 256; Object.assign(S.params, { granUtility: 2, granExact: 1, granCo: 1 }, ex || {});
     const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 240 });
     const E = S.setEnv('seq', envP), D = S.PLANS.deepURSx3.make(), b = S.growCell(D, { seed: 5, spec: E.spec }), a = S.runEpisode(D, 7, b, E);
-    return { s: a.task.score(), spk: a.net.spikeCount, w: Array.from(a.net.ws), K: a.task.K, kn: a.net.gKn, ck: a.net.gu && a.net.gu.st ? a.net.gu.st.chunkRec : 0, gK: b.granStats ? b.granStats.K : a.net.g.granStats && a.net.g.granStats.K, gt: a.net.gu && a.net.gu.st ? a.net.gu.st.chunkGated : 0, nG: a.net.gu ? a.net.gu.nG : 0 }; };
+    return { s: a.task.score(), spk: a.net.spikeCount, w: Array.from(a.net.ws), K: a.task.K, kn: a.net.gKn, ck: a.net.gu && a.net.gu.st ? a.net.gu.st.chunkRec : 0, gK: b.granStats ? b.granStats.K : a.net.g.granStats && a.net.g.granStats.K, gt: a.net.gu && a.net.gu.st ? a.net.gu.st.chunkGated : 0, nG: a.net.gu ? a.net.gu.nG : 0, st: a.net.gu ? a.net.gu.st : {}, nAct: a.net.gu ? a.net.gu.nAct : 0 }; };
   const u = run(), z = run({ granKal: 0 }), x = run({ granKal: 1 });
   assert.ok(u.s === z.s && u.spk === z.spk && u.w.every((v, i) => v === z.w[i]), 'granKal 0 is bit-identical to unset');
   assert.ok(x.kn && x.kn.some(v => v > 0) && x.s > 1 / x.K, `granKal 1: experience counts kept, score ${x.s.toFixed(3)} above chance`);
@@ -438,7 +438,10 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   assert.ok(xd.gK === 5 && xd.s > 1 / xd.K, `granDeep 1 + granK 5: 5 claw sources (K ${xd.gK}), learns (score ${xd.s.toFixed(3)})`); console.log(`R134 granDeep: off bit-identical, on K ${xd.gK}, score ${xd.s.toFixed(3)}: ok`);
   const zg = run({ granKal: 1, granChunk: 1, granChunkGate: 0, granScale: 0 }), xg = run({ granKal: 1, granChunk: 1, granChunkGate: 1 }), xs = run({ granKal: 1, granScale: 0.5 }); assert.ok(xc.s === zg.s && xc.spk === zg.spk && xc.w.every((v, i) => v === zg.w[i]), 'granChunkGate / granScale 0 are bit-identical to unset (granChunk on)');
   assert.ok(xg.gt > 0 && xg.ck < xc.ck && xg.s > 1 / xg.K, `granChunkGate 1: first sightings gated (${xg.gt}), fewer recruits (${xg.ck} < ${xc.ck}), learns`); assert.ok(xs.nG === 2 * x.nG, `granScale 0.5 at 1x doubles the pool (${xs.nG})`);
-  console.log(`R135 granChunkGate: off bit-identical, on ${xg.gt} gated, ${xg.ck} recruits, score ${xg.s.toFixed(3)}; granScale pool ${x.nG} -> ${xs.nG}: ok`); }
+  console.log(`R135 granChunkGate: off bit-identical, on ${xg.gt} gated, ${xg.ck} recruits, score ${xg.s.toFixed(3)}; granScale pool ${x.nG} -> ${xs.nG}: ok`);
+  const G2 = { granKal: 1, granChunk: 1, granChunkGate: 2 }, zp = run(Object.assign({ granPhrase: 0, granGrow: 0 }, G2)), x2 = run(G2), xp = run(Object.assign({ granPhrase: 1, granGrow: 3 }, G2)); assert.ok(x2.s === zp.s && x2.spk === zp.spk && x2.w.every((v, i) => v === zp.w[i]), 'granPhrase / granGrow 0 are bit-identical to unset (granChunk + gate 2 on)');
+  assert.ok((xp.st.phraseRec || 0) > 0 && xp.nG === 3 * x.nG && xp.nAct >= x.nG && xp.s > 1 / xp.K, `granPhrase 1 + granGrow 3: phrase detectors recruited (${xp.st.phraseRec}), pool born ${x.nG} grown to ${xp.nAct} of ${xp.nG}, learns`);
+  console.log(`R136 granPhrase/granGrow: off bit-identical, on ${xp.st.phraseRec} phrase recruits, pool ${x.nG} -> ${xp.nAct} (cap ${xp.nG}), score ${xp.s.toFixed(3)}: ok`); }
 // 9. R131 anSize (exploration noise x sqrt(sizeF); off = bit-identical, 1x unchanged)
 { const run = (ex, f) => { const S = require('./js/node_load.js')(); Object.assign(S.params, ex || {});
     const envP = Object.assign({}, S.recommendedEnvParams('seqchoice', { source: 'order2' }, ['source']), { nSyms: 120 });

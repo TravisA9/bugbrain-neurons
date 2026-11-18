@@ -4845,3 +4845,39 @@ decode at ~1.0 at 4x; with the 64k pool not full at 30k, readout capacity is not
 word history at a slower level, and text long enough for those keys to recur.
 **Minimal next step (sketch, not built):** when a chunk completes (delimiter), its detector index becomes the "letter" of a second-level stream; the same
 guChunkEvent machinery keyed on (previous chunk id, current chunk id) recruits phrase detectors in the (demand-grown) pool, fired at word completion.
+
+## R136 — second level (phrase units) + pool grown on demand
+**Headroom (sw/headroom2.js; online argmax count models; k2951 / k2953; held = last 2000):** W2 = previous word + partial word (-> partial -> char o4),
+W3 = two previous words + partial (-> W2), W3m2 = W3 only from contexts seen >= 2 times:
+
+| nSyms | o4 (no backoff) | W2 | W3 | W3m2 |
+|---|---|---|---|---|
+| 30k | .456 / .447 | .499 / .4835 | .4995 / .484 | .4995 / .484 |
+| 100k | .5095 / .5005 | .5365 / .522 | .5335 / .5205 | .5345 / .521 |
+| 300k | .515 / .5405 | .545 / .572 | .5475 / .5665 | .548 / .5725 |
+
+The word-bigram context adds ~nothing over previous word + partial at 30k-300k (-.003..+.003): too sparse to count at these lengths.
+**PRE-REGISTRATION (written before any run).** P.granPhrase=1: phrase detectors keyed (word before last, last word, partial word, letter), same recruit
+rule / pressure gate / pool / readout as chunks. P.granGrow=3: pool allocated 3 x granN, born 1 x granN; a first sighting the pressure gate would refuse
+adds a slot instead (pool grows on demand; replaces granScale). Baseline: R135 candidate (chunk + gate2 + granScale 2), book100k k2951/k2953 .523/.519.
+Travis's targets: book100k >= +.005 over R135; book30k loss <= .003; 8x >= 4x + .003 on book100k.
+**My prediction from the headroom:** phrase units +.000..+.003 at book100k (target +.005 likely missed); granGrow ~ equal to granScale 2 at 100k and to
+gate2 at 30k (pool grows only when needed); 8x vs 4x unchanged (|d| < .003), because the phrase key is still a size-independent symbol function.
+
+**R136 tune results (heldAcc):** book100k 4x, R135 candidate .523/.519 (k2951/k2953):
+- granPhrase 1 + granGrow 3: k2951 .5115 (-.0115), k2953 .512 (-.007). Pool grew 32000 -> 96000 (cap) then refused 43120/50163 first sightings;
+  phrase recruits 55461/53753 vs chunk recruits 39377/41338 (R135 candidate 54925): the phrase level crowds out the chunk level.
+- granPhrase 1 + granScale 2 (no grow): k2951 .5085 (-.0145).
+**PRE-REGISTRATION (after the results above, before running):** granPhrase = 2 (phrase detectors always on the 2nd-sighting gate) + granGrow 3, and granGrow 3
+alone (no phrases). Prediction: grow-only ~ R135 candidate (within +-.004: the pool grows to what chunks need); phrase 2 + grow ~ grow-only (+-.003; W3 ~ W2).
+- book30k granPhrase 1 + granGrow 3: k2951 .5155 (gate2 .515, +.0005), k2953 .5045 (.5065, -.002): no loss beyond .003 (pool grew to 53655/54527, phrase recruits 27160/27225).
+**Diagnosis (why exact-string phrase units fail).** The headroom table already said the word-bigram context is too sparse to count at 30k-300k
+(W3 - W2 = -.003..+.003). An exact (word before last, last word, partial, letter) key recurs far less often than the chunk key, so nearly every phrase
+recruit is single-use: 55k phrase recruits at book100k, about as many as all chunk keys, competing for the same pool and the same pressure gate. A key that
+never recurs never earns a readout weight, and its recruitment evicts or blocks chunk detectors that would (chunk recruits fell 54925 -> 39377). Exact
+strings at a second level multiply sparsity: each level divides recurrence by the vocabulary.
+**What the second level should represent instead.** The evidence points to generalised units: chunk categories that pool many exact words whose
+continuations are similar (e.g. words grouped by the letter distribution that follows them, or by their learned readout vectors), so that the second
+level's keys (category before last, last category) recur often even when the word pair never has. That is also the only route found so far to features
+4x cannot hold: a category code is learned (not a fixed symbol function of the text), its resolution can grow with the pool, and 8x could hold finer
+categories. Not built (by instruction).

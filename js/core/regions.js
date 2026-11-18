@@ -91,14 +91,15 @@ function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, g
   const Cchunk = chunkPart ? colsOf([chunkPart, 2]) : null, jChunk0 = Cchunk && Cchunk.size ? Math.floor(nG * (1 - gd.chunkFrac)) : nG;
   if (!(params.granDemand > 0)) {
     const rsv0 = params.granReserve > 0 && params.granUtility === 2 ? Math.max(0, nG - Math.round(params.granReserve)) : -1;
+    const nB = params.granGrow > 1 && params.granUtility === 2 ? Math.round(nG / params.granGrow) : -1;   // R136 granGrow: born part of the pool
     const pk = packSrc(), keyIdx = pk.map(s => { const m = new Map(); for (let i = 0; i < s.keys.length; i++) m.set(s.keys[i], i); return m; }), initKeys = new Array(nG);
   for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk;
-    if (rsv0 >= 0 && j >= rsv0) { initKeys[j] = null; continue; }   // R119 granReserve: the last granReserve granules grow no claws (recruited later by granUtility 2); no RNG draws
+    if ((rsv0 >= 0 && j >= rsv0) || (nB >= 0 && j >= nB)) { initKeys[j] = null; continue; }   // (R136 granGrow: unborn cells too, no RNG draws)   // R119 granReserve: the last granReserve granules grow no claws (recruited later by granUtility 2); no RNG draws
     const k = Km === K ? K : Km + ((r() * (K - Km + 1)) | 0);   // R84 granKmin: each granule takes k in [granKmin, granK] claws from the first k sources (lags t .. t-k+1; a mixture of n-gram orders)
     let ik = String(k);
     for (let c = 0; c < k; c++) { const useCh = j >= jChunk0 && c === k - 1, m = useCh ? Cchunk : C[c], keys = [...m.keys()]; if (!keys.length) continue; const chosen = keys[(r() * keys.length) | 0], S = m.get(chosen), ws = W / k / S.length; for (const A of S) acc.add(A, b, ws, 0, 0); ik += ',' + (useCh ? 'c' + chosen : keyIdx[c].get(chosen)); }
     initKeys[j] = ik; }
-    Object.defineProperty(G, 'granSrc', { value: rsv0 >= 0 ? { K, Km, W, nG, gOff, src: pk, initKeys, rsv0 } : { K, Km, W, nG, gOff, src: pk, initKeys }, writable: true, configurable: true, enumerable: false });
+    Object.defineProperty(G, 'granSrc', { value: Object.assign(rsv0 >= 0 ? { K, Km, W, nG, gOff, src: pk, initKeys, rsv0 } : { K, Km, W, nG, gOff, src: pk, initKeys }, nB >= 0 ? { nAct0: nB } : {}), writable: true, configurable: true, enumerable: false });
   } else {
     for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk; }
     Object.defineProperty(G, 'granDemand', { value: { K, Km, W, nG, gOff, src: packSrc() }, writable: true, configurable: true, enumerable: false });
@@ -135,7 +136,8 @@ function growRegions(d, opts) {
   // spike onto every granule cell, net.js), and plastic synapses onto every taught prediction cell (normalised like the other plastic inputs).
   const gN = params.granN != null ? params.granN : d.gran && d.gran.N > 0 ? d.gran.N : 0;   // v41: plan gene d.gran.N (deepURSx3), P.granN overrides
   const gF = params.granScale > 0 ? Math.max(1, Math.max(...parts.map(p => p.R.g && p.R.g.sc ? +p.R.g.sc.sizeF || 1 : 1)) / params.granScale) : 1;   // R135 granScale (P.granScale = r > 0; off = unchanged): pool x max(1, largest region sizeF / r)
-  const nG = gN > 0 && parts.length > 1 && !envSpec.outcome ? Math.round(gN * gF) : 0, gOff = off;   // (outcome tasks: no granule layer, like the outcome-repressed context areas)
+  const gG = params.granGrow > 1 ? params.granGrow : 1;   // R136 granGrow (P.granGrow = cap factor > 1; off = unchanged): allocate gN x gF x granGrow cells, only the first gN x gF are born (claws); the rest are added on demand (net.js guRecruit)
+  const nG = gN > 0 && parts.length > 1 && !envSpec.outcome ? Math.round(gN * gF * gG) : 0, gOff = off;   // (outcome tasks: no granule layer, like the outcome-repressed context areas)
   const nHid = off - nIn + nG, G = createNetGenome(nIn, nHid, nOut, true), N = G.N, acc = new SynAcc(1 << 16);
   const node = (p, i) => i < p.g.nIn ? (typeof p.map[i] === 'number' ? p.map[i] : -1) : i < p.g.nIn + p.g.nHid ? p.off + i - p.g.nIn : ((p === outPart || p.R.vote) ? nIn + nHid + i - p.g.nIn - p.g.nHid : -1);   // R43 (I53) vote: a module's own output copy sums onto the shared outputs
   G.pos = new Array(N); G.cellType = new Int16Array(N); G.region = new Uint8Array(N); G.topo = new Float32Array(N).fill(NaN);
