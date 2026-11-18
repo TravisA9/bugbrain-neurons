@@ -314,6 +314,18 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const r12 = run(1.2, 1), silent = r12.b.regions.reduce((t, R) => t + ((R.devStats && R.devStats.silentIn) | 0), 0);
   assert.ok(r12.s > 0.5 && silent === 0, `relGrowth=1 wires every input at an awkward 1.2x size (score ${r12.s.toFixed(3)}, silent inputs ${silent})`);
   console.log(`R123 relGrowth: bit-identical at 1x, 1.2x score ${r12.s.toFixed(3)} with 0 silent inputs: ok`); }
+// 2c. R126 size-independent afferent budget (params.fanInBudget = 1, default off): 1x untouched; at 2x in-region fan-in stays at the 1x level
+{ const S = require('./js/node_load.js')(); S.params.granN = 128;
+  assert.ok(S.params.fanInBudget === 0, 'fanInBudget opt-in (0 by default)');
+  const E = S.setEnv('seq', Object.assign({}, S.recommendedEnvParams('seq', { source: 'order3', K: 8 }, ['source']), { nSyms: 160 }));
+  const grow = (f, fb) => { S.params.relGrowth = 1; S.params.fanInBudget = fb; const D = S.PLANS.deepURSx3.make(); D.regions.forEach(R => { R.g.sc.sizeF = f; }); const b = S.growCell(D, { seed: 5, spec: E.spec }); S.params.relGrowth = 0; S.params.fanInBudget = 0; return b; };
+  const ctxFan = b => { const sp = b.sp, n = new Float64Array(b.N), h1 = b.nIn + b.nHid; let s = 0, c = 0; for (let k = 0; k < sp.pre.length; k++) { const a = sp.pre[k], q = sp.post[k]; if (q >= b.nIn && q < h1 && !(b.gran && (b.gran[q] || b.gran[a])) && (a < b.nIn || b.region[a] === b.region[q])) n[q]++; }
+    for (let q = b.nIn; q < h1; q++) if (!(b.gran && b.gran[q]) && b.regions[b.region[q]].name === 'context') { s += n[q]; c++; } return s / c; };
+  const a0 = grow(1, 0), a1 = grow(1, 1);
+  assert.ok(a0.sp.pre.length === a1.sp.pre.length && a0.sp.w.every((w, i) => w === a1.sp.w[i] && a0.sp.pre[i] === a1.sp.pre[i]), 'fanInBudget is a no-op at 1x');
+  const f1 = ctxFan(a0), f2 = ctxFan(grow(2, 0)), f2b = ctxFan(grow(2, 1));
+  assert.ok(f2 > 1.4 * f1 && Math.abs(f2b - f1) < 0.15 * f1, `fanInBudget keeps context in-region fan-in at 1x (${f1.toFixed(1)}; 2x ${f2.toFixed(1)} -> ${f2b.toFixed(1)})`);
+  console.log(`R126 fanInBudget: no-op at 1x, context in-region fan-in 1x ${f1.toFixed(1)}, 2x ${f2.toFixed(1)} -> ${f2b.toFixed(1)}: ok`); }
 // 3. Utility-pruned structural plasticity for granule claws (params.granUtility = 1)
 { const S = require('./js/node_load.js')(); S.params.granUtility = 1; S.params.granN = 32; S.params.granHold = 4; S.params.granCo = 1;
   const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 240 });

@@ -601,6 +601,25 @@ function growCell(d, opts) {
     if (a == null || b == null || a === b) continue;
     const q = a * N + b; g.W[q] += s.w; if (s.plastic) g.P[q] = 1;
   }
+  // R126 fanInBudget (global P.fanInBudget = 1; 0 / unset = off, bit-identical, no RNG; acts only on regions with sizeF > 1): a SIZE-INDEPENDENT
+  //   afferent budget. A 1x reference growth of the same genome and seed (sizeF 1) gives each hidden cell type t its mean in-region fan-in B_t at this
+  //   stage (synapses placed, before normE / normI and the juvenile phase). Here, if the type's mean n_t > B_t, every cell of the type keeps only its
+  //   strongest (largest |w|) ceil(n_i x B_t / n_t) inputs of each sign (excitatory and inhibitory budgets separate; proportional cut: type mean ~ B_t); normE / normI then
+  //   re-normalise the kept inputs. Tracts and granule claws (regions.js) are not touched. (R123 RATIOS: sheet fan-in grows ~N^1.3 otherwise.)
+  if (opts.__fanRef || (params.fanInBudget > 0 && sc.sizeF > 1)) {   // (excitatory and inhibitory inputs are budgeted separately: one pooled |w| ranking dropped every inhibitory input, R126 v1)
+    const h0 = nIn, h1 = nIn + neurons.length, fanE = new Int32Array(N), fanI = new Int32Array(N), byT = new Map();
+    for (let b2 = h0; b2 < h1; b2++) { let ne = 0, ni = 0; for (let a2 = 0; a2 < h1; a2++) { const w = g.W[a2 * N + b2]; if (w > 0) ne++; else if (w < 0) ni++; } fanE[b2] = ne; fanI[b2] = ni;
+      const t = g.cellType[b2], e = byT.get(t) || [0, 0, 0]; e[0] += ne; e[1] += ni; e[2]++; byT.set(t, e); }
+    if (opts.__fanRef) opts.__fanRef.B = new Map([...byT].map(([t, e]) => [t, [e[0] / e[2], e[1] / e[2]]]));
+    else { const o1 = { seed: opts.seed, spec, __fanRef: {} }; growCell(Object.assign({}, d, { sc: Object.assign({}, d.sc, { sizeF: 1 }) }), o1); const B = o1.__fanRef.B; let cut = 0;
+      for (let b2 = h0; b2 < h1; b2++) { const t = g.cellType[b2], e = byT.get(t), Bt = B.get(t); if (!Bt) continue;
+        for (let sg = 0; sg < 2; sg++) { const n = sg ? fanI[b2] : fanE[b2], mean = e[sg] / e[2], Bs = Bt[sg]; if (!(Bs > 0) || !(mean > Bs)) continue;
+          const keep = Math.ceil(n * Bs / mean); if (keep >= n) continue; const L = [];
+          for (let a2 = 0; a2 < h1; a2++) { const w = g.W[a2 * N + b2]; if (sg ? w < 0 : w > 0) L.push(a2); }
+          L.sort((x, y) => Math.abs(g.W[y * N + b2]) - Math.abs(g.W[x * N + b2]) || x - y);
+          for (let k = keep; k < L.length; k++) { const q = L[k] * N + b2; g.W[q] = 0; g.P[q] = 0; if (g.C) g.C[q] = 0; cut++; } } }
+      g.fanCut = cut; }
+  }
   if (clawFibreCells && clawFibreCells.size && sc.clawNorm > 0) {   // cells whose fibres reach claw cells, and the claw cells they reach
     g._fib = new Set(); for (const id of clawFibreCells) if (idx.has(id)) g._fib.add(idx.get(id));
     g._fed = new Set(); for (const id of clawFed) if (idx.has(id)) g._fed.add(idx.get(id)); }
