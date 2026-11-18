@@ -82,6 +82,12 @@ const params = {
   fanInBudget: 0,
   // R127 pathBudget (0 = off, bit-identical): sized regions keep each (post type, presyn type, sign) pathway at its 1x mean in-degree, random (hash) selection, see develop.js
   pathBudget: 0,
+  // R128 fateSnap (0 = off, bit-identical): with relGrowth, cell fates read the 1x-lattice morphogens at every size (R123 (b) applied only below 2.25x), see develop.js
+  fateSnap: 0,
+  // R128 colInh (0 = off, bit-identical; needs pathBudget): 1 = a column with no inhibitory afferents gets the nearest interneurons added (v1); 2 = dedicated reset interneurons moved from neighbouring columns (v2); 3 = v2 also for columns below half the 1x inhibitory in-degree, see develop.js
+  colInh: 0,
+  // R129 rgDiv (0 = off, bit-identical): with relGrowth, division reach scales with the lattice (1), plus divisions per step ~ log2 size (2), see develop.js
+  rgDiv: 0,
   relGrowth: 0, relGrowthAlpha: 0, relGrowthOff: 0,   // relGrowthOff: diagnostic bitmask disabling parts (1 trophic, 2 lattice, 4 cone, 8 mixing)
   plasticity: true,    // lifetime learning (reward-modulated STDP); false = frozen genome weights
   cellStart: 'env',    // a new population starts from mutants of this body plan ('env' = the environment's default)

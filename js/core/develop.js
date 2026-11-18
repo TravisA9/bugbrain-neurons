@@ -222,11 +222,12 @@ function growCell(d, opts) {
   //   (c) growth-cone speed as sizeCone (ceil); (d) mixing feedforward inhibition per spike x 1x pool / pool (net.js, as scaleInvariant).
   //   P.relGrowthOff (diagnostic bitmask, 0 = all parts on): 1 trophic, 2 1x-lattice morphogens, 4 cone speed, 8 mixing inhibition.
   const rgOff = params.relGrowthOff | 0, rgOn = params.relGrowth > 0 && sc.sizeF > 1, rgT = rgOn && !(rgOff & 1), rgL = rgOn && !(rgOff & 2), grid1 = sc.grid > 24.5 ? Math.round(sc.grid) : CG;
-  if (sc.sizeF > 1) { const q = Math.sqrt(sc.sizeF), si = params.scaleInvariant > 0 || sc.scaleInvariant > 0, rgC = params.relGrowth > 0 && !(rgOff & 4); sc.grid = (sc.grid > 24.5 ? sc.grid : CG) * q; sc.maxCells *= sc.sizeF; sc.coneSpeed = (params.sizeCone > 0 || si || rgC) ? Math.ceil(Math.max(1, Math.round(sc.coneSpeed || 1)) * q - 1e-9) : (sc.coneSpeed || 1) * q; sc.axonLen *= q; if (si) { sc.trophMin /= sc.sizeF; sc.divRep = Math.max(sc.divRep || 1, Math.ceil(Math.log2(sc.sizeF))); sc.divReach = Math.max(sc.divReach || 1, Math.ceil(q - 1e-9)); } }
+  if (sc.sizeF > 1) { const q = Math.sqrt(sc.sizeF), si = params.scaleInvariant > 0 || sc.scaleInvariant > 0, rgC = params.relGrowth > 0 && !(rgOff & 4); sc.grid = (sc.grid > 24.5 ? sc.grid : CG) * q; sc.maxCells *= sc.sizeF; sc.coneSpeed = (params.sizeCone > 0 || si || rgC) ? Math.ceil(Math.max(1, Math.round(sc.coneSpeed || 1)) * q - 1e-9) : (sc.coneSpeed || 1) * q; sc.axonLen *= q; if (si) { sc.trophMin /= sc.sizeF; sc.divRep = Math.max(sc.divRep || 1, Math.ceil(Math.log2(sc.sizeF))); sc.divReach = Math.max(sc.divReach || 1, Math.ceil(q - 1e-9)); }
+    if (params.rgDiv > 0 && params.relGrowth > 0) { sc.divReach = Math.max(sc.divReach || 1, Math.ceil(q - 1e-9)); if (params.rgDiv >= 2) sc.divRep = Math.max(sc.divRep || 1, Math.ceil(Math.log2(sc.sizeF))); } }   // R129 rgDiv (global, 0 = off, bit-identical): clones spread the same PHYSICAL distance per developmental step at any size (division reach ~ lattice refinement; 2: also divisions per step ~ log2 size), so late edge territory is not fated differently (R128: edge columns lost their interneurons at 4x)
   const GS = sc.grid > 24.5 ? Math.round(sc.grid) : CG, h = 2 / GS, NS = GS * GS, H = CH_H;
   const sx = i => -1 + (i + 0.5) * h, cidx = v => clamp(Math.floor((v + 1) / h), 0, GS - 1);
   // fixed morphogen fields (analytic steady state of diffusion + decay from the sources)
-  const gL = grid1, snap = rgL && GS < 1.5 * grid1, h1 = 2 / gL, s1 = v => -1 + (Math.min(gL - 1, Math.max(0, Math.floor((v + 1) / h1))) + 0.5) * h1;   // R123 relGrowth (b): centre of the nested-lattice site
+  const gL = grid1, snap = rgL && (GS < 1.5 * grid1 || params.fateSnap > 0), h1 = 2 / gL, s1 = v => -1 + (Math.min(gL - 1, Math.max(0, Math.floor((v + 1) / h1))) + 0.5) * h1;   // R123 relGrowth (b): centre of the nested-lattice site   // R128 fateSnap (global, 0 = off, bit-identical): (b) at every size (cell fates read the 1x-lattice morphogens; edge fate stripes, e.g. a column's interneurons, cannot fall off the region)
   const lam = d.lam, chem = Array.from({ length: CH_NCHEM }, () => new Float32Array(NS));
   const eyes = spec.cueSources, motors = OUT.map(o => o.pos);
   const fixedAt = (F, x, y, q) => {
@@ -641,7 +642,43 @@ function growCell(d, opts) {
           for (let a2 = h0; a2 < h1; a2++) { const w = g.W[a2 * N + b2]; if (w !== 0 && key(a2, w) === k) L.push(a2); }
           L.sort((x, y) => hsh(x, b2) - hsh(y, b2) || x - y);
           for (let q2 = keep; q2 < L.length; q2++) { const q = L[q2] * N + b2; g.W[q] = 0; g.P[q] = 0; if (g.C) g.C[q] = 0; cut++; } } }
-      g.pathCut = cut; }
+      g.pathCut = cut;
+      // R128 colInh (global P.colInh = 1, needs pathBudget; 0 = off, bit-identical, no RNG; sizeF > 1 only): every column keeps its inhibitory loop.
+      //   A column = the cells of one type with one topo label. If a column of type T grew NO inhibitory afferents while T has inhibitory pathways at 1x
+      //   (R127: edge columns at 4x can fall outside the interneuron stripe), its cells get the 1x mean count of each inhibitory pathway J -> T from the
+      //   nearest cells of type J, and those J cells get the 1x mean count of T -> J excitatory inputs from the column (deterministic: nearest first,
+      //   index tie-break); new weights = this brain's mean weight of the pathway. normE / normI follow.
+      if (params.colInh > 0 && g.topo) { const cols = new Map(); let added = 0;
+        for (let b2 = h0; b2 < h1; b2++) { const tp = g.topo[b2]; if (tp !== tp) continue; const k = g.cellType[b2] + ':' + Math.round(tp * 1e4); if (!cols.has(k)) cols.set(k, []); cols.get(k).push(b2); }
+        const meanW = (pre, post, neg) => { let s2 = 0, n2 = 0; for (let a2 = h0; a2 < h1; a2++) { if (g.cellType[a2] !== pre) continue; for (let b2 = h0; b2 < h1; b2++) { if (g.cellType[b2] !== post) continue; const w = g.W[a2 * N + b2]; if (neg ? w < 0 : w > 0) { s2 += w; n2++; } } } return n2 ? s2 / n2 : 0; };
+        const mwC = new Map(), mw = (pre, post, neg) => { const k = pre + ',' + post + ',' + neg; if (!mwC.has(k)) mwC.set(k, meanW(pre, post, neg)); return mwC.get(k); };
+        const colOf = new Map(); for (const [k, C] of cols) for (const b2 of C) colOf.set(b2, k);
+        const home = (a2, T) => { const c = new Map(); for (let b3 = h0; b3 < h1; b3++) if (g.cellType[b3] === T && g.W[b3 * N + a2] > 0 && colOf.has(b3)) { const k = colOf.get(b3); c.set(k, (c.get(k) || 0) + 1); } let bk = null, bn = 0; for (const [k, n] of c) if (n > bn) { bn = n; bk = k; } return bk; };
+        for (const [ck, C] of cols) { const T = g.cellType[C[0]], Bt = B.get(T); if (!Bt) continue; let nI = 0; const have = new Set(); for (const b2 of C) for (let a2 = h0; a2 < h1; a2++) if (g.W[a2 * N + b2] < 0) { nI++; have.add(a2); }
+          let bI = 0; for (const [k, Bk] of Bt) if (k & 1) bI += Bk;
+          if (params.colInh >= 3 ? nI >= 0.5 * bI * C.length : nI > 0) continue;   // v3: also columns with less than half the 1x inhibitory in-degree (partial orphans); existing interneurons are kept
+          if (params.colInh >= 2) {   // v2: DEDICATED reset interneurons, moved from neighbouring columns (each donor keeps >= half of its own)
+            let cx = 0, cy = 0; for (const b2 of C) { cx += g.pos[b2][0]; cy += g.pos[b2][1]; } cx /= C.length; cy /= C.length;
+            for (const [k, Bk] of Bt) { if (!(k & 1) || !(Bk > 0)) continue; const J = k >> 1; let hJ = 0; for (const a2 of have) if (g.cellType[a2] === J) hJ++; const K = params.colInh >= 3 ? Math.max(0, Math.round(Bk) - hJ) : Math.max(1, Math.round(Bk)); if (!K) continue;
+              const cand = []; for (let a2 = h0; a2 < h1; a2++) if (g.cellType[a2] === J) cand.push(a2); cand.sort((x, y) => Math.hypot(g.pos[x][0] - cx, g.pos[x][1] - cy) - Math.hypot(g.pos[y][0] - cx, g.pos[y][1] - cy) || x - y);
+              const hc = new Map(); for (const a2 of cand) { const hk = home(a2, T); if (hk != null) hc.set(hk, (hc.get(hk) || 0) + 1); }
+              const taken = new Map(), pick = [];
+              for (const a2 of cand) { if (pick.length >= K) break; const hk = home(a2, T); if (hk == null || hk === ck || have.has(a2)) continue; const t2 = taken.get(hk) || 0; if (t2 + 1 > Math.floor((hc.get(hk) || 0) / 2)) continue; taken.set(hk, t2 + 1); pick.push(a2); }
+              for (const a2 of pick) { const eW = []; for (let b3 = h0; b3 < h1; b3++) if (g.cellType[b3] === T) { const q = b3 * N + a2; if (g.W[q] > 0) { eW.push(g.W[q]); g.W[q] = 0; g.P[q] = 0; if (g.C) g.C[q] = 0; } }
+                let iS = 0, iN = 0; for (let b2 = h0; b2 < h1; b2++) if (g.cellType[b2] === T) { const q = a2 * N + b2; if (g.W[q] < 0) { iS += g.W[q]; iN++; g.W[q] = 0; g.P[q] = 0; if (g.C) g.C[q] = 0; } }
+                const wI = iN ? iS / iN : mw(J, T, true), wE = eW.length ? eW.reduce((u, v) => u + v, 0) / eW.length : mw(T, J, false);
+                const src2 = C.slice().sort((x, y) => Math.hypot(g.pos[x][0] - g.pos[a2][0], g.pos[x][1] - g.pos[a2][1]) - Math.hypot(g.pos[y][0] - g.pos[a2][0], g.pos[y][1] - g.pos[a2][1]) || x - y).slice(0, Math.max(1, eW.length));
+                for (const b3 of src2) { g.W[b3 * N + a2] = wE; added++; }
+                for (const b2 of C) { g.W[a2 * N + b2] = wI; added++; } } }
+            continue; }
+          let cx = 0, cy = 0; for (const b2 of C) { cx += g.pos[b2][0]; cy += g.pos[b2][1]; } cx /= C.length; cy /= C.length;
+          for (const [k, Bk] of Bt) { if (!(k & 1) || !(Bk > 0)) continue; const J = k >> 1, nPer = Math.max(1, Math.round(Bk)), wI = mw(J, T, true); if (!wI) continue;
+            const cand = []; for (let a2 = h0; a2 < h1; a2++) if (g.cellType[a2] === J) cand.push(a2); cand.sort((x, y) => Math.hypot(g.pos[x][0] - cx, g.pos[x][1] - cy) - Math.hypot(g.pos[y][0] - cx, g.pos[y][1] - cy) || x - y);
+            const S2 = cand.slice(0, nPer); if (!S2.length) continue; const BJ = B.get(J), bE = BJ ? BJ.get(T * 2) || 0 : 0, nE = Math.max(1, Math.round(bE)), wE = mw(T, J, false);
+            for (const b2 of C) for (const a2 of S2) { const q = a2 * N + b2; if (g.W[q] === 0) { g.W[q] = wI; added++; } }
+            if (wE > 0) for (const a2 of S2) { const src2 = C.slice().sort((x, y) => Math.hypot(g.pos[x][0] - g.pos[a2][0], g.pos[x][1] - g.pos[a2][1]) - Math.hypot(g.pos[y][0] - g.pos[a2][0], g.pos[y][1] - g.pos[a2][1]) || x - y).slice(0, nE);
+              for (const b3 of src2) { const q = b3 * N + a2; if (g.W[q] === 0) { g.W[q] = wE; added++; } } } } }
+        g.colInhAdded = added; } }
   }
   if (clawFibreCells && clawFibreCells.size && sc.clawNorm > 0) {   // cells whose fibres reach claw cells, and the claw cells they reach
     g._fib = new Set(); for (const id of clawFibreCells) if (idx.has(id)) g._fib.add(idx.get(id));

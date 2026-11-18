@@ -342,6 +342,23 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   for (const [k, v] of p1) if (v >= 2) { big++; const r = p2.get(k) || 0, x = p2b.get(k) || 0; wr = Math.max(wr, r / v); wb = Math.max(wb, x / v); m++; }
   assert.ok(m > 5 && wr > 1.4 && wb < 1.5, `pathBudget keeps every 1x pathway (>= 2 inputs) within 1.5x of 1x (max ratio off ${wr.toFixed(2)}, on ${wb.toFixed(2)}, ${m} pathways)`);
   console.log(`R127 pathBudget: no-op at 1x, ${m} pathways, max in-degree ratio 2x/1x off ${wr.toFixed(2)} -> on ${wb.toFixed(2)}: ok`); }
+// 2e. R128 fateSnap (negative) and colInh (dedicated reset interneurons for columns that grew none): off by default, no-ops at 1x; at 2x colInh=3 leaves no column without inhibition
+{ const S = require('./js/node_load.js')(); S.params.granN = 128;
+  assert.ok(S.params.fateSnap === 0 && S.params.colInh === 0, 'fateSnap / colInh opt-in (0 by default)');
+  const E = S.setEnv('seq', Object.assign({}, S.recommendedEnvParams('seq', { source: 'order3', K: 8 }, ['source']), { nSyms: 160 }));
+  const grow = (f, ex) => { Object.assign(S.params, { relGrowth: 1, pathBudget: 1 }, ex); const D = S.PLANS.deepURSx3.make(); D.regions.forEach(R => { R.g.sc.sizeF = f; }); const b = S.growCell(D, { seed: 5, spec: E.spec }); Object.assign(S.params, { relGrowth: 0, pathBudget: 0, fateSnap: 0, colInh: 0, rgDiv: 0 }); return b; };
+  const same = (x, y) => x.sp.pre.length === y.sp.pre.length && x.sp.w.every((w, i) => w === y.sp.w[i] && x.sp.pre[i] === y.sp.pre[i]);
+  assert.ok(same(grow(1, {}), grow(1, { fateSnap: 1, colInh: 3 })), 'fateSnap / colInh are no-ops at 1x');
+  const orphans = b => { const h1 = b.nIn + b.nHid, nI = new Map(), cols = new Set(); for (let q = b.nIn; q < h1; q++) { const t = b.topo ? b.topo[q] : NaN; if (t === t && !(b.gran && b.gran[q]) && b.cellType[q] === 18) cols.add(b.region[q] + ':' + b.cellType[q] + ':' + Math.round(t * 1e4)); }
+    for (let k = 0; k < b.sp.pre.length; k++) { const q = b.sp.post[k], a = b.sp.pre[k], t = b.topo ? b.topo[q] : NaN; if (t === t && b.cellType[q] === 18 && b.sp.w[k] < 0 && a >= b.nIn && b.region[a] === b.region[q]) { const key = b.region[q] + ':' + b.cellType[q] + ':' + Math.round(t * 1e4); nI.set(key, (nI.get(key) || 0) + 1); } }
+    let o = 0; for (const c of cols) if (!nI.get(c)) o++; return { o, n: cols.size }; };
+  const o0 = orphans(grow(2, {})), o3 = orphans(grow(2, { colInh: 3 }));
+  assert.ok(o3.o === 0 && o0.n >= 10, `colInh=3 leaves no column without inhibition at 2x (off ${o0.o}/${o0.n}, on ${o3.o}/${o3.n})`);
+  console.log(`R128 fateSnap/colInh: no-ops at 1x; columns without inhibition at 2x off ${o0.o}/${o0.n} -> colInh=3 ${o3.o}/${o3.n}: ok`);
+  assert.ok(S.params.rgDiv === 0 && same(grow(1, {}), grow(1, { rgDiv: 2 })), 'rgDiv opt-in and a no-op at 1x');
+  const oR = orphans(grow(2, { rgDiv: 1 }));
+  assert.ok(oR.o === 0, `rgDiv=1 grows no column without inhibition at 2x (${oR.o}/${oR.n})`);
+  console.log(`R129 rgDiv: no-op at 1x; columns without inhibition at 2x ${oR.o}/${oR.n}: ok`); }
 // 3. Utility-pruned structural plasticity for granule claws (params.granUtility = 1)
 { const S = require('./js/node_load.js')(); S.params.granUtility = 1; S.params.granN = 32; S.params.granHold = 4; S.params.granCo = 1;
   const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 240 });
