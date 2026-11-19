@@ -4958,3 +4958,11 @@ does 4x + 128k match 8x (within .003)? If yes, size helps only through the pool,
 text, not with brain size. **My prediction:** 8x - 4x +.003..+.008 on k2953/k2954 (2/2 positive, 1-2 of 2 >= .003); 4x + 128k recovers most of it:
 within .003 of 8x on >= 2 of 3 seeds (the gain sits in rare contexts and in exact-tuple fires, both pool effects; the k2951 8x-vs-4x identical-pool
 comparison showed the bigger cortex alone adds nothing).
+
+## R139 (Nov 19): 8x vs 4x+128k pool, book100k k2951/2953/2954
+| run | k2951 | k2953 | k2954 | mean vs 4x 64k |
+|---|---|---|---|---|
+| 4x 64k (R135) | .523 | .519 | .5265 | - |
+| 4x 128k pool | .5295 | .5215 | .5255 | +.0027 |
+| 8x (64k x2 = 128k) | .530 | .5215 | .5255 | +.0028 |
+8x == 4x + 128k pool on every seed. Brain size beyond 4x contributes nothing; pool doubling gives a small, inconsistent gain. Not promoted.
