@@ -4927,7 +4927,7 @@ target likely missed. 4x + equal L2: -.002..+.003 (no-loss target met).
 | 4x + L2 64k phrases, recurrence gate (granPhrase 2) | .5215 (-.0015) | .5195 (+.0005) |
 | 4x + L2 64k categories (granCat 1) | .522 (-.001) | .5175 (-.0015) |
 | 8x + L2 64k categories (L1 64k) | .5155 (-.0075) | not run |
-| 8x R135 candidate (shared 128k) | CAND8X | not run |
+| 8x R135 candidate (shared 128k) | **.530 (+.007)** | not run |
 | 4x granGrow 3 + granEvGrow (no granScale) | .5165 (grow-only .5135) | .5115 (grow-only .51) |
 
 The separate pool removes the crowd-out (L1 exact-tuple fires 2.02-2.05M, chunk recruits ~51.5k, both ~R135), so 4x + equal L2 meets the no-loss
@@ -4943,3 +4943,10 @@ so exact-tuple fires stay 1.56M (fixed 64k: 2.06M). Born random-claw tuple cover
 recurrence-gated phrases, but the level-2 units themselves add no accuracy at book100k: they recur too rarely (ungated phrases ~1 fire each; gated
 phrases leave the L2 pool ~90% empty; categories ~2 fires each). The 8x gap (8x + L2 .5155 vs 4x same pools .522, k2951) is only 47 differing predictions
 (~1.9 sigma) with an identical granule side: noise from the larger non-granule cortex path, not a scaling collapse. All R138 flags stay off.
+**R138 cand_8x result (k2951, added last).** R135 candidate at 8x (one shared 128k pool, all born with random claws) **.530**: +.007 over R135 4x .523
+and +.0145 over 8x + L2 categories .5155. Exact-tuple fires 3.96M vs 2.06M at 4x, active granules 11.4 vs 5.4, granule share of output drive .458 vs .42,
+chunk recruits equal (54952). vs 4x: 78 of 2000 predictions differ (8x gains 46, loses 32: net +14, ~1.6 sigma), gains in rarely seen contexts
+(seen 1: +.028, seen 2-4: +.028; seen 5+: +.003; word end +.020). One seed only; k2953 not run.
+**Correction to the summary above:** the 8x network is not worse than 4x; the R138 L2 split is. Splitting the 8x pool into L1 64k + L2 64k (no claws)
+throws away the 64k extra random-claw tuple detectors that make 8x better. The "8x gap is noise" statement holds only for 8x vs 4x with identical pools.
+Read with the granEvGrow result: born random-claw tuple coverage is the thing that scales with size at book100k; level-2 keys are not.
