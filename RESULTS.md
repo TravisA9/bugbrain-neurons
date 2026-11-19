@@ -4881,3 +4881,24 @@ continuations are similar (e.g. words grouped by the letter distribution that fo
 level's keys (category before last, last category) recur often even when the word pair never has. That is also the only route found so far to features
 4x cannot hold: a category code is learned (not a fixed symbol function of the text), its resolution can grow with the pool, and 8x could hold finer
 categories. Not built (by instruction).
+
+**R136 follow-up (tune results, book100k 4x, vs R135 candidate .523/.519):**
+- granGrow 3 alone (chunk + gate2, no phrases): k2951 .5135 (-.0095), k2953 .51 (-.009). Pool grew 32000 -> 62262/68014 and never filled. **Negative: grow-only
+  does not replace granScale 2** (prediction "within +-.004" wrong).
+- granPhrase 2 + granGrow 3: k2951 .5105 (-.0125; grow-only .5135). Phrase recruits 6024 (gate 2 works), pool grew to 62949, exact fires 1.55M: phrases add nothing on top of grow (prediction "~ grow-only +-.003" held). Negative.
+**Why a demand-grown pool that never fills loses to a fixed 64k pool (existing logs, k2951/k2953):** chunk recruits are equal (54326 vs 54925) and turnover
+is equal (65942 vs 65456), but exact-tuple fires drop 2.06M/2.04M -> 1.56M/1.55M (trace-only 32k: 1.89M/1.84M) and mean active granules 5.4 -> 3.5.
+Accuracy by context count (k2951, seen 1 / 2-4 / 5+): fixed .542/.592/.525, grow .523/.573/.517: lower in every bin, most in rare contexts.
+The fixed 64k pool is born with 64k random-claw (4-letter tuple) detectors; the grown pool is born with 32k, adds slots only for refused first chunk
+sightings, while tuple recruits and 2nd-sighting chunk recruits keep evicting tuple detectors from the 32k from the start. The cause is the starting
+size (tuple coverage), not the timing of growth. A self-calibrating version would grow on any eviction of a used detector (or claw new slots); not built.
+
+## R137 — second level of learned word categories
+**Headroom (sw/headroom3.js, out in run/r137):** words of the training part clustered offline (k-means, cosine, on the next word's first-two-letter profile; K 4/16/64).
+Hard-backoff count models with category keys are all <= previous word + partial (W2). Evidence-summing (readout-like) model, categories added to {o4, partial, W2}
+(k2951 / k2953): 30k -.0035..-.005 / +.002..+.0065; 100k -.0075..-.0015 / -.002..+.0095; 300k +.005 / +.0035..+.0105. Upper bound ~0 at 100k, ~+.005 at 300k.
+**PRE-REGISTRATION (before any run).** P.granCat = 1 (Kmax = pool/1000: 64 categories with the R135 64k pool at 4x, 128 at 8x with granScale 4). Online
+competitive prototypes of each word's continuation profile (first letter of the next word), second-level key (category before last, last category, partial,
+letter), same gate / pool / readout. Baseline R135 candidate (book100k k2951/k2953 .523/.519; book30k k2951/k2953 .515/.5065). Travis's targets: book100k
+>= +.005, book30k loss <= .003, 8x >= 4x + .003 at book100k. **My prediction from the headroom:** book100k -.004..+.003 (target likely missed); book30k within
+.003; 8x vs 4x |d| < .003.

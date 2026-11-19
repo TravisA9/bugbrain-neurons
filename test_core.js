@@ -441,7 +441,10 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   console.log(`R135 granChunkGate: off bit-identical, on ${xg.gt} gated, ${xg.ck} recruits, score ${xg.s.toFixed(3)}; granScale pool ${x.nG} -> ${xs.nG}: ok`);
   const G2 = { granKal: 1, granChunk: 1, granChunkGate: 2 }, zp = run(Object.assign({ granPhrase: 0, granGrow: 0 }, G2)), x2 = run(G2), xp = run(Object.assign({ granPhrase: 1, granGrow: 3 }, G2)); assert.ok(x2.s === zp.s && x2.spk === zp.spk && x2.w.every((v, i) => v === zp.w[i]), 'granPhrase / granGrow 0 are bit-identical to unset (granChunk + gate 2 on)');
   assert.ok((xp.st.phraseRec || 0) > 0 && xp.nG === 3 * x.nG && xp.nAct >= x.nG && xp.s > 1 / xp.K, `granPhrase 1 + granGrow 3: phrase detectors recruited (${xp.st.phraseRec}), pool born ${x.nG} grown to ${xp.nAct} of ${xp.nG}, learns`);
-  console.log(`R136 granPhrase/granGrow: off bit-identical, on ${xp.st.phraseRec} phrase recruits, pool ${x.nG} -> ${xp.nAct} (cap ${xp.nG}), score ${xp.s.toFixed(3)}: ok`); }
+  console.log(`R136 granPhrase/granGrow: off bit-identical, on ${xp.st.phraseRec} phrase recruits, pool ${x.nG} -> ${xp.nAct} (cap ${xp.nG}), score ${xp.s.toFixed(3)}: ok`);
+  const zq = run(Object.assign({ granCat: 0 }, G2)), xq = run(Object.assign({ granCat: 20 }, G2)); assert.ok(x2.s === zq.s && x2.spk === zq.spk && x2.w.every((v, i) => v === zq.w[i]), 'granCat 0 is bit-identical to unset (granChunk + gate 2 on)');
+  assert.ok(xq.st.catN > 0 && xq.st.catN <= xq.st.catK && (xq.st.catRec || 0) > 0 && xq.s > 1 / xq.K, `granCat 20: ${xq.st.catN} of ${xq.st.catK} categories, ${xq.st.catRec} category detectors, learns`);
+  console.log(`R137 granCat: off bit-identical, on ${xq.st.catN}/${xq.st.catK} categories, ${xq.st.catRec} detectors, score ${xq.s.toFixed(3)}: ok`); }
 // 9. R131 anSize (exploration noise x sqrt(sizeF); off = bit-identical, 1x unchanged)
 { const run = (ex, f) => { const S = require('./js/node_load.js')(); Object.assign(S.params, ex || {});
     const envP = Object.assign({}, S.recommendedEnvParams('seqchoice', { source: 'order2' }, ['source']), { nSyms: 120 });

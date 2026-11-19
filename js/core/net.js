@@ -952,8 +952,27 @@ class SpikingNet {
     const P = params.granPhrase > 0; if (P && C.w2 != null && C.w2 !== '') { const kP = 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' + c0, jP = gu.owned.get(kP);   // R136 granPhrase: second level (see below)
       if (jP != null && gu.keyBy[jP] === kP) { if (mt) mt[jP] += 1; }
       else { const g2 = params.granPhrase === 2 ? 1 : params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kP) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kP, 0, yTgt, g2 === 2 && !seen)) gu.st.phraseRec = (gu.st.phraseRec || 0) + 1; } }
-    if (c0 === C.delim) { if (C.p !== '') { if (P) C.w2 = C.w; C.w = C.p; } C.p = ''; } else C.p = C.p ? C.p + ',' + c0 : String(c0);
-    C.next = 'C' + C.w + '|' + C.p + '|'; if (P) C.nextP = C.w2 ? 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' : null; }
+    const Q = params.granCat > 0; if (Q) { const K = C.K || this.guCatInit(C);   // R137 granCat: second level of learned word categories (see guCatInit)
+      if (C.p === '' && c0 !== C.delim && C.pw) this.guCatObs(C, C.pw, c0);   // first letter of the next word = one continuation sample of the previous word
+      if (C.q1 >= 0 && C.q2 >= 0) { const kQ = 'Q' + C.q2 + '|' + C.q1 + '|' + C.p + '|' + c0, jQ = gu.owned.get(kQ);
+        if (jQ != null && gu.keyBy[jQ] === kQ) { if (mt) mt[jQ] += 1; }
+        else { const g2 = params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kQ) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kQ, 0, yTgt, g2 === 2 && !seen)) gu.st.catRec = (gu.st.catRec || 0) + 1; } } }
+    if (c0 === C.delim) { if (C.p !== '') { if (P) C.w2 = C.w; C.w = C.p; if (Q) { C.q2 = C.q1; const q = C.wc.get(C.p); C.q1 = q != null ? q : -1; C.pw = C.p; } } C.p = ''; } else C.p = C.p ? C.p + ',' + c0 : String(c0);
+    C.next = 'C' + C.w + '|' + C.p + '|'; if (P) C.nextP = C.w2 ? 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' : null; if (Q) C.nextQ = C.q1 >= 0 && C.q2 >= 0 ? 'Q' + C.q2 + '|' + C.q1 + '|' + C.p + '|' : null; }
+  /* R137 granCat (P.granCat = f > 0; 0 / unset = off, bit-identical, no RNG; needs granChunk): a SECOND LEVEL OF LEARNED WORD CATEGORIES. Each completed word
+   * keeps a continuation profile (counts of the first letter of the word that follows it). Categories are competitive-learning prototypes of the normalised
+   * profiles, grown online: a word with >= 2 samples and no category seeds a new prototype while fewer than Kmax exist, otherwise joins the most similar
+   * (cosine); its prototype moves toward it (rate 1 / min(n+1, 100)). Kmax = max(2, round(f x pool / 1000)) (pool = born granules), so a bigger pool holds
+   * finer categories. Second-level detectors: key (category of the word before last, category of the last word, partial word, letter), recruited and fired
+   * like the chunk detectors (same gate, pool and readout). */
+  guCatInit(C) { const gu = this.gu, nB = gu.nAct != null ? gu.st.nAct0 : gu.nG; C.K = Math.max(2, Math.round(params.granCat * nB / 1000)); C.A = gu.src[0].keys.length;
+    C.prof = new Map(); C.wc = new Map(); C.cent = []; C.cn = []; C.q1 = -1; C.q2 = -1; C.pw = null; gu.st.catK = C.K; return C.K; }
+  guCatObs(C, w, c0) { let v = C.prof.get(w); if (!v) C.prof.set(w, v = new Float64Array(C.A + 1)); v[c0]++; v[C.A]++; if (v[C.A] < 2) return;
+    let z = 0; for (let i = 0; i < C.A; i++) z += v[i] * v[i]; z = Math.sqrt(z); const x = new Float64Array(C.A); for (let i = 0; i < C.A; i++) x[i] = v[i] / z;
+    let b = -1, bv = -2; for (let k = 0; k < C.cent.length; k++) { const c = C.cent[k]; let d = 0; for (let i = 0; i < C.A; i++) d += c[i] * x[i]; if (d > bv) { bv = d; b = k; } }
+    if (!C.wc.has(w) && C.cent.length < C.K) { b = C.cent.length; C.cent.push(Float64Array.from(x)); C.cn.push(1); this.gu.st.catN = C.cent.length; }
+    else { const c = C.cent[b], r = 1 / Math.min(C.cn[b] + 1, 100); C.cn[b]++; let q = 0; for (let i = 0; i < C.A; i++) { c[i] += r * (x[i] - c[i]); q += c[i] * c[i]; } q = Math.sqrt(q) || 1; for (let i = 0; i < C.A; i++) c[i] /= q; }
+    C.wc.set(w, b); }
   /* R136 granPhrase (P.granPhrase = 1; 0 / unset = off, bit-identical, no RNG; needs granChunk): SECOND LEVEL. Each completed word (chunk) becomes a symbol
    * of a slower stream; phrase detectors are recruited by the same rule (surprise, same gate, same pool and readout) on the key (word before last, last word,
    * partial word, current letter) = the chunk key extended by the previous chunk, and fire with the chunk detector in the read window.
@@ -968,11 +987,11 @@ class SpikingNet {
     const w = h >>> 5, m = 1 << (h & 31); if (gu.chS[w] & m) return true; gu.chS[w] |= m; gu.st.chunkGated = (gu.st.chunkGated || 0) + 1; return false; }
   guChunkFire(c, syn, mk, gB) {   // first hit of current-letter column c in this window: fire the chunk detector of (chunk state, c)
     const gu = this.gu; if (gu.ch.won) return; gu.ch.won = 1;   // only the first current-letter column to fire in the window (latency winner = the letter that arrived)
-    this.guKeyFire(gu.ch.next + c, syn, mk, gB, 0); if (gu.ch.nextP != null) this.guKeyFire(gu.ch.nextP + c, syn, mk, gB, 1); }
+    this.guKeyFire(gu.ch.next + c, syn, mk, gB, 0); if (gu.ch.nextP != null) this.guKeyFire(gu.ch.nextP + c, syn, mk, gB, 1); if (gu.ch.nextQ != null) this.guKeyFire(gu.ch.nextQ + c, syn, mk, gB, 2); }
   guKeyFire(key, syn, mk, gB, ph) { const gu = this.gu, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key || gu.xf[j]) return;
     if (!gu.xm[j]) gu.xT[gu.xTn++] = j; gu.xm[j] |= 1; gu.xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++;
     const b = gu.gOff + j, T = this.thr || this.g.thresh; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31);
-    if (ph) gu.st.phraseFired = (gu.st.phraseFired || 0) + 1; else gu.st.chunkFired = (gu.st.chunkFired || 0) + 1; }
+    if (ph === 2) gu.st.catFired = (gu.st.catFired || 0) + 1; else if (ph) gu.st.phraseFired = (gu.st.phraseFired || 0) + 1; else gu.st.chunkFired = (gu.st.chunkFired || 0) + 1; }
   guColCap(s) { const v = params.granExactColCap;
     if (!v) { const gu = this.gu; if (s === 0 || gu.st.events < 3000) return 2; if (gu.crE0 !== gu.st.events) { gu.crE0 = gu.st.events; let m = 0; const a0 = gu.cr[0]; for (let c = 0; c < a0.length; c++) if (a0[c] > m) m = a0[c]; gu.crMax0 = Math.min(0.9, 3 * m); } return gu.crMax0; }
     // R120 granExactGuard (self-calibrating): a lag column is saturated when it is active in more windows than 3x the most frequent CURRENT letter's column (source 0) - no letter can explain that; capped at 0.9 (small alphabets)

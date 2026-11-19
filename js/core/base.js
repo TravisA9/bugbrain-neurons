@@ -99,6 +99,8 @@ const params = {
   // R136: granPhrase 1 = second-level phrase detectors (word before last, last word, partial, letter); granGrow f > 1 = pool cap f x granN, grown on demand by the pressure gate (granChunkGate 2); 0 = off, bit-identical
   granPhrase: 0,
   granGrow: 0,
+  // R137 granCat f > 0: second level of learned word categories (competitive prototypes of continuation profiles), Kmax = f x pool / 1000; 0 = off, bit-identical
+  granCat: 0,
   // R126 fanInBudget (0 = off, bit-identical): sized regions keep each cell type's 1x mean in-region fan-in (strongest inputs), see develop.js
   fanInBudget: 0,
   // R127 pathBudget (0 = off, bit-identical): sized regions keep each (post type, presyn type, sign) pathway at its 1x mean in-degree, random (hash) selection, see develop.js
