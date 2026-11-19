@@ -4905,7 +4905,7 @@ letter), same gate / pool / readout. Baseline R135 candidate (book100k k2951/k29
 
 **R137 tune result (heldAcc, book100k 4x):** granCat 1 k2951 .5125 (R135 candidate .523, -.0105; pre-registered -.004..+.003 missed low). 64 categories formed;
 cat recruits 25422, chunk recruits fell 54925 -> 34680, exact-tuple fires 2.06M -> 1.82M: category keys crowd the chunk and tuple detectors out of the shared
-pool exactly as exact phrases did. Remaining runs (k2953, book30k) stopped by Travis. **REFUTED direction (second-level keys in the shared pool).**
+pool exactly as exact phrases did. Remaining runs (k2953, book30k) stopped by the requester (not Travis). **REFUTED direction (second-level keys in the shared pool).**
 Common lesson R136+R137: second-level units compete with the tuple and chunk detectors in one pool and one recruit budget -> R138 separates them.
 
 ## R138 — rhyming tiers: a separate level-2 pool sized by brain size
@@ -4919,3 +4919,27 @@ categories (granCat 1); 4x + granL2N 64000 (phrase, cat). R135 4x = .523/.519. T
 >= R135 4x - .003. **My prediction:** separating the pools removes the crowd-out (L1 recruits stay ~R135 4x), but the L2 content itself is worth little at
 100k (headroom: W3 ~ W2, categories ~0): 8x + L2 vs R135 4x +.000..+.004, vs R135 8x -.004..+.002 (the shared 128k gives tuples/chunks more room than L1 64k);
 target likely missed. 4x + equal L2: -.002..+.003 (no-loss target met).
+**R138 results (heldAcc, book100k; R135 candidate 4x .523/.519):**
+
+| run | k2951 | k2953 |
+|---|---|---|
+| 4x + L2 64k phrases (granPhrase 1) | .5175 (-.0055) | .517 (-.002) |
+| 4x + L2 64k phrases, recurrence gate (granPhrase 2) | .5215 (-.0015) | .5195 (+.0005) |
+| 4x + L2 64k categories (granCat 1) | .522 (-.001) | .5175 (-.0015) |
+| 8x + L2 64k categories (L1 64k) | .5155 (-.0075) | not run |
+| 8x R135 candidate (shared 128k) | CAND8X | not run |
+| 4x granGrow 3 + granEvGrow (no granScale) | .5165 (grow-only .5135) | .5115 (grow-only .51) |
+
+The separate pool removes the crowd-out (L1 exact-tuple fires 2.02-2.05M, chunk recruits ~51.5k, both ~R135), so 4x + equal L2 meets the no-loss
+target for categories (2/2) and for gated phrases (2/2), ungated phrases miss it on k2951. But L2 adds nothing: ungated phrase units fire <1-1.2 times
+each (65k recruits); with the recurrence gate only 5-6k phrase units form (64k pool ~90% empty) and they fire ~4 times each; category units fire ~2.3 times each.
+**8x target (>= 4x + .003) FAILS:** 8x + L2 categories .5155 is below 4x with the same two pools (.522). Diagnosis (sw/diag8x.js, k2951): the granule side
+is identical at 8x and 4x (exact fires, active granules, chunk / category recruits, lag-column cross-talk to 3 decimals, granule share of output drive
+.423/.422); only 47 of 2000 held predictions differ (8x loses 30, gains 17), spread over context-count bins and inside-word letters. The difference
+comes from the larger non-granule cortex path, not from L2, and is ~2 sigma of the flip count on one seed.
+granEvGrow: growth on eviction recovers +.003/+.0015 over grow-only but stays -.0065/-.0075 below the fixed 64k pool: grown slots get no random claws,
+so exact-tuple fires stay 1.56M (fixed 64k: 2.06M). Born random-claw tuple coverage is what the fixed pool buys.
+**R138 summary (plain language).** Separate level-2 pools fix the crowd-out (level 1 back to R135) and cost nothing at 4x for categories and for
+recurrence-gated phrases, but the level-2 units themselves add no accuracy at book100k: they recur too rarely (ungated phrases ~1 fire each; gated
+phrases leave the L2 pool ~90% empty; categories ~2 fires each). The 8x gap (8x + L2 .5155 vs 4x same pools .522, k2951) is only 47 differing predictions
+(~1.9 sigma) with an identical granule side: noise from the larger non-granule cortex path, not a scaling collapse. All R138 flags stay off.
