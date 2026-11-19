@@ -4950,3 +4950,11 @@ chunk recruits equal (54952). vs 4x: 78 of 2000 predictions differ (8x gains 46,
 **Correction to the summary above:** the 8x network is not worse than 4x; the R138 L2 split is. Splitting the 8x pool into L1 64k + L2 64k (no claws)
 throws away the 64k extra random-claw tuple detectors that make 8x better. The "8x gap is noise" statement holds only for 8x vs 4x with identical pools.
 Read with the granEvGrow result: born random-claw tuple coverage is the thing that scales with size at book100k; level-2 keys are not.
+
+## R139 — does 8x beat 4x on book100k, and is it the pool?
+**PRE-REGISTRATION (before any run).** (1) R135 candidate at 8x (shared 128k pool) book100k k2953, k2954 vs 4x .519/.5265 (k2951 already .530 vs .523).
+(2) R135 candidate at 4x with granScale 1 (pool 128k at 4x, same size as 8x) k2951/k2953/k2954. Questions: does 8x beat 4x by >= .003 on every seed;
+does 4x + 128k match 8x (within .003)? If yes, size helps only through the pool, and the self-calibrating rule should scale the pool with the amount of
+text, not with brain size. **My prediction:** 8x - 4x +.003..+.008 on k2953/k2954 (2/2 positive, 1-2 of 2 >= .003); 4x + 128k recovers most of it:
+within .003 of 8x on >= 2 of 3 seeds (the gain sits in rare contexts and in exact-tuple fires, both pool effects; the k2951 8x-vs-4x identical-pool
+comparison showed the bigger cortex alone adds nothing).
