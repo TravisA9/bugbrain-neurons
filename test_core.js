@@ -413,7 +413,7 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
 { const run = ex => { const S = require('./js/node_load.js')(); S.params.granN = 256; Object.assign(S.params, { granUtility: 2, granExact: 1, granCo: 1 }, ex || {});
     const envP = Object.assign({}, S.recommendedEnvParams('seq', { source: 'text' }, ['source']), { nSyms: 240 });
     const E = S.setEnv('seq', envP), D = S.PLANS.deepURSx3.make(), b = S.growCell(D, { seed: 5, spec: E.spec }), a = S.runEpisode(D, 7, b, E);
-    return { s: a.task.score(), spk: a.net.spikeCount, w: Array.from(a.net.ws), K: a.task.K, kn: a.net.gKn, ck: a.net.gu && a.net.gu.st ? a.net.gu.st.chunkRec : 0, gK: b.granStats ? b.granStats.K : a.net.g.granStats && a.net.g.granStats.K, gt: a.net.gu && a.net.gu.st ? a.net.gu.st.chunkGated : 0, nG: a.net.gu ? a.net.gu.nG : 0, st: a.net.gu ? a.net.gu.st : {}, nAct: a.net.gu ? a.net.gu.nAct : 0 }; };
+    return { s: a.task.score(), spk: a.net.spikeCount, w: Array.from(a.net.ws), K: a.task.K, kn: a.net.gKn, ck: a.net.gu && a.net.gu.st ? a.net.gu.st.chunkRec : 0, gK: b.granStats ? b.granStats.K : a.net.g.granStats && a.net.g.granStats.K, gt: a.net.gu && a.net.gu.st ? a.net.gu.st.chunkGated : 0, nG: a.net.gu ? a.net.gu.nG : 0, st: a.net.gu ? a.net.gu.st : {}, nAct: a.net.gu ? a.net.gu.nAct : 0, kb: a.net.gu ? a.net.gu.keyBy : null, l2: a.net.gu ? a.net.gu.l2 : null }; };
   const u = run(), z = run({ granKal: 0 }), x = run({ granKal: 1 });
   assert.ok(u.s === z.s && u.spk === z.spk && u.w.every((v, i) => v === z.w[i]), 'granKal 0 is bit-identical to unset');
   assert.ok(x.kn && x.kn.some(v => v > 0) && x.s > 1 / x.K, `granKal 1: experience counts kept, score ${x.s.toFixed(3)} above chance`);
@@ -444,7 +444,14 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   console.log(`R136 granPhrase/granGrow: off bit-identical, on ${xp.st.phraseRec} phrase recruits, pool ${x.nG} -> ${xp.nAct} (cap ${xp.nG}), score ${xp.s.toFixed(3)}: ok`);
   const zq = run(Object.assign({ granCat: 0 }, G2)), xq = run(Object.assign({ granCat: 20 }, G2)); assert.ok(x2.s === zq.s && x2.spk === zq.spk && x2.w.every((v, i) => v === zq.w[i]), 'granCat 0 is bit-identical to unset (granChunk + gate 2 on)');
   assert.ok(xq.st.catN > 0 && xq.st.catN <= xq.st.catK && (xq.st.catRec || 0) > 0 && xq.s > 1 / xq.K, `granCat 20: ${xq.st.catN} of ${xq.st.catK} categories, ${xq.st.catRec} category detectors, learns`);
-  console.log(`R137 granCat: off bit-identical, on ${xq.st.catN}/${xq.st.catK} categories, ${xq.st.catRec} detectors, score ${xq.s.toFixed(3)}: ok`); }
+  console.log(`R137 granCat: off bit-identical, on ${xq.st.catN}/${xq.st.catK} categories, ${xq.st.catRec} detectors, score ${xq.s.toFixed(3)}: ok`);
+  const zl2 = run(Object.assign({ granL2: 0, granL2N: 0, granEvGrow: 0 }, G2)); assert.ok(x2.s === zl2.s && x2.spk === zl2.spk && x2.w.every((v, i) => v === zl2.w[i]), 'granL2 / granL2N / granEvGrow 0 are bit-identical to unset (granChunk + gate 2 on)');
+  const l0 = run(Object.assign({ granL2: 1, granPhrase: 1 }, G2)), l1 = run(Object.assign({ granL2: 1, granL2N: 128, granPhrase: 1 }, G2));
+  assert.ok(l0.nG === x.nG && !(l0.st.phraseRec > 0), `granL2 1 at 1x: no level-2 pool, no phrase detectors (${l0.st.phraseRec || 0})`);
+  const pIdx = l1.kb.map((k, j) => k != null && k[0] === 'P' ? j : -1).filter(j => j >= 0), cIdx = l1.kb.map((k, j) => k != null && k[0] !== 'P' && k[0] !== 'Q' ? j : -1).filter(j => j >= 0);
+  assert.ok(l1.nG === x.nG + 128 && l1.l2 === x.nG && pIdx.length > 0 && pIdx.every(j => j >= l1.l2) && cIdx.every(j => j < l1.l2) && l1.s > 1 / l1.K, `granL2N 128: pool ${l1.nG}, ${pIdx.length} phrase detectors all in [${l1.l2}, ${l1.nG}), level-1 detectors below, learns`);
+  const eg = run(Object.assign({ granGrow: 3, granEvGrow: 1 }, G2)); assert.ok((eg.st.evGrown || 0) > 0 && eg.nAct > x.nG && eg.s > 1 / eg.K, `granEvGrow 1 + granGrow 3: ${eg.st.evGrown} eviction growths, pool ${eg.nAct}`);
+  console.log(`R138 granL2: off bit-identical, 1x no L2 pool -> no phrases; L2N 128: ${pIdx.length} phrase detectors in the L2 pool, score ${l1.s.toFixed(3)}; granEvGrow: ${eg.st.evGrown} growths, pool ${x.nG} -> ${eg.nAct}: ok`); }
 // 9. R131 anSize (exploration noise x sqrt(sizeF); off = bit-identical, 1x unchanged)
 { const run = (ex, f) => { const S = require('./js/node_load.js')(); Object.assign(S.params, ex || {});
     const envP = Object.assign({}, S.recommendedEnvParams('seqchoice', { source: 'order2' }, ['source']), { nSyms: 120 });

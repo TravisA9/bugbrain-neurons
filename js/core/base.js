@@ -101,6 +101,12 @@ const params = {
   granGrow: 0,
   // R137 granCat f > 0: second level of learned word categories (competitive prototypes of continuation profiles), Kmax = f x pool / 1000; 0 = off, bit-identical
   granCat: 0,
+  // R138 granL2 b > 0: second-level units (granPhrase / granCat keys) get their own pool of granN x max(0, sizeF - b) / granScale cells (no claws), appended
+  // after the level-1 pool, which keeps the R135 size computed with sizeF capped at b; the readout reads both. granL2N n > 0: L2 pool = n cells (overrides the
+  // size rule; needs granL2 > 0). granEvGrow 1: with granGrow, a recruit that would evict a used level-1 detector adds an unborn slot instead. 0 = off, bit-identical
+  granL2: 0,
+  granL2N: 0,
+  granEvGrow: 0,
   // R126 fanInBudget (0 = off, bit-identical): sized regions keep each cell type's 1x mean in-region fan-in (strongest inputs), see develop.js
   fanInBudget: 0,
   // R127 pathBudget (0 = off, bit-identical): sized regions keep each (post type, presyn type, sign) pathway at its 1x mean in-degree, random (hash) selection, see develop.js

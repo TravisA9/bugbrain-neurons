@@ -4902,3 +4902,20 @@ competitive prototypes of each word's continuation profile (first letter of the 
 letter), same gate / pool / readout. Baseline R135 candidate (book100k k2951/k2953 .523/.519; book30k k2951/k2953 .515/.5065). Travis's targets: book100k
 >= +.005, book30k loss <= .003, 8x >= 4x + .003 at book100k. **My prediction from the headroom:** book100k -.004..+.003 (target likely missed); book30k within
 .003; 8x vs 4x |d| < .003.
+
+**R137 tune result (heldAcc, book100k 4x):** granCat 1 k2951 .5125 (R135 candidate .523, -.0105; pre-registered -.004..+.003 missed low). 64 categories formed;
+cat recruits 25422, chunk recruits fell 54925 -> 34680, exact-tuple fires 2.06M -> 1.82M: category keys crowd the chunk and tuple detectors out of the shared
+pool exactly as exact phrases did. Remaining runs (k2953, book30k) stopped by Travis. **REFUTED direction (second-level keys in the shared pool).**
+Common lesson R136+R137: second-level units compete with the tuple and chunk detectors in one pool and one recruit budget -> R138 separates them.
+
+## R138 — rhyming tiers: a separate level-2 pool sized by brain size
+**Design.** P.granL2 = b: second-level units (granPhrase / granCat keys) recruit only in their own pool of granN x max(0, sizeF - b) / granScale cells (no claws,
+no RNG draws), appended after the level-1 pool; level 1 (tuples + chunks) keeps the R135 candidate size computed with sizeF capped at b and never recruits
+into L2. Both pools feed the same readout. With b = 4, granScale 2: 4x = R135 candidate exactly (no L2 pool, no second level); 8x = L1 64k + L2 64k (same
+128k cells as R135 at 8x, where all 128k are shared). P.granL2N = n overrides the L2 size (4x equal-pool test: L1 64k + L2 64k). Off = bit-identical.
+P.granEvGrow 1 (with granGrow): a recruit that would evict a used level-1 detector adds an unborn slot instead (grow on eviction); built, tested only if time.
+**PRE-REGISTRATION (before any run).** Tune book100k k2951/k2953: R135 candidate at 8x (shared 128k) baseline; 8x + granL2 4 with phrase (granPhrase 1) and with
+categories (granCat 1); 4x + granL2N 64000 (phrase, cat). R135 4x = .523/.519. Travis's targets: 8x + L2 >= max(R135 4x, R135 8x) + .003; 4x + equal L2 pool
+>= R135 4x - .003. **My prediction:** separating the pools removes the crowd-out (L1 recruits stay ~R135 4x), but the L2 content itself is worth little at
+100k (headroom: W3 ~ W2, categories ~0): 8x + L2 vs R135 4x +.000..+.004, vs R135 8x -.004..+.002 (the shared 128k gives tuples/chunks more room than L1 64k);
+target likely missed. 4x + equal L2: -.002..+.003 (no-loss target met).

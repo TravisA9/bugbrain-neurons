@@ -876,7 +876,8 @@ class SpikingNet {
       owned, pending: new Map(), rng: mulberry32((0x6775746c ^ N) >>> 0),
       co: params.granCo > 0 ? params.granCo | 0 : 2, hold: params.granHold > 0 ? params.granHold | 0 : 40,
       st: { rewired: 0, cap: nG, events: 0 } };
-    if (d.nAct0 != null) { this.gu.nAct = d.nAct0; this.gu.st.nAct0 = d.nAct0; }   // R136 granGrow: granules [nAct, nG) are unborn (no claws) until demand adds them
+    if (d.nAct0 != null) { this.gu.nAct = d.nAct0; this.gu.st.nAct0 = d.nAct0; }
+    if (d.l2 != null) { this.gu.l2 = d.l2; this.gu.st.l2 = nG - d.l2; }   // R138 granL2: granules [l2, nG) = the level-2 pool   // R136 granGrow: granules [nAct, nG) are unborn (no claws) until demand adds them
     if (params.granUtility === 2) { this.gu.match = new Float32Array(nG); this.gu.st.matched = 0; if (d.rsv0 >= 0 && d.rsv0 < nG) { this.gu.rsv0 = d.rsv0; this.gu.st.reserve = nG - d.rsv0; if (d.rsv0 > 0 && this.gFast0 == null) this.granLn = d.rsv0; }
       if (params.granExact > 0) this.initGranExact(); }   // granLn: the shared homeostasis loop covers the random granules only   // R119 granUtility 2: utility = exact claw-tuple matches (see granUtilityEvent)
   }
@@ -951,12 +952,12 @@ class SpikingNet {
     else if (C.w !== '' && (!(params.granChunkGate > 0) || this.guChunkSeen(key)) && params.plasticity && this.learning && yTgt < 0.85) { gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; this.guRecruit(key, 0, yTgt); }
     const P = params.granPhrase > 0; if (P && C.w2 != null && C.w2 !== '') { const kP = 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' + c0, jP = gu.owned.get(kP);   // R136 granPhrase: second level (see below)
       if (jP != null && gu.keyBy[jP] === kP) { if (mt) mt[jP] += 1; }
-      else { const g2 = params.granPhrase === 2 ? 1 : params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kP) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kP, 0, yTgt, g2 === 2 && !seen)) gu.st.phraseRec = (gu.st.phraseRec || 0) + 1; } }
+      else { const g2 = params.granPhrase === 2 ? 1 : params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kP) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kP, 0, yTgt, g2 === 2 && !seen, true)) gu.st.phraseRec = (gu.st.phraseRec || 0) + 1; } }
     const Q = params.granCat > 0; if (Q) { const K = C.K || this.guCatInit(C);   // R137 granCat: second level of learned word categories (see guCatInit)
       if (C.p === '' && c0 !== C.delim && C.pw) this.guCatObs(C, C.pw, c0);   // first letter of the next word = one continuation sample of the previous word
       if (C.q1 >= 0 && C.q2 >= 0) { const kQ = 'Q' + C.q2 + '|' + C.q1 + '|' + C.p + '|' + c0, jQ = gu.owned.get(kQ);
         if (jQ != null && gu.keyBy[jQ] === kQ) { if (mt) mt[jQ] += 1; }
-        else { const g2 = params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kQ) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kQ, 0, yTgt, g2 === 2 && !seen)) gu.st.catRec = (gu.st.catRec || 0) + 1; } } }
+        else { const g2 = params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kQ) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kQ, 0, yTgt, g2 === 2 && !seen, true)) gu.st.catRec = (gu.st.catRec || 0) + 1; } } }
     if (c0 === C.delim) { if (C.p !== '') { if (P) C.w2 = C.w; C.w = C.p; if (Q) { C.q2 = C.q1; const q = C.wc.get(C.p); C.q1 = q != null ? q : -1; C.pw = C.p; } } C.p = ''; } else C.p = C.p ? C.p + ',' + c0 : String(c0);
     C.next = 'C' + C.w + '|' + C.p + '|'; if (P) C.nextP = C.w2 ? 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' : null; if (Q) C.nextQ = C.q1 >= 0 && C.q2 >= 0 ? 'Q' + C.q2 + '|' + C.q1 + '|' + C.p + '|' : null; }
   /* R137 granCat (P.granCat = f > 0; 0 / unset = off, bit-identical, no RNG; needs granChunk): a SECOND LEVEL OF LEARNED WORD CATEGORIES. Each completed word
@@ -965,7 +966,7 @@ class SpikingNet {
    * (cosine); its prototype moves toward it (rate 1 / min(n+1, 100)). Kmax = max(2, round(f x pool / 1000)) (pool = born granules), so a bigger pool holds
    * finer categories. Second-level detectors: key (category of the word before last, category of the last word, partial word, letter), recruited and fired
    * like the chunk detectors (same gate, pool and readout). */
-  guCatInit(C) { const gu = this.gu, nB = gu.nAct != null ? gu.st.nAct0 : gu.nG; C.K = Math.max(2, Math.round(params.granCat * nB / 1000)); C.A = gu.src[0].keys.length;
+  guCatInit(C) { const gu = this.gu, nB = gu.l2 != null ? gu.nG - gu.l2 : gu.nAct != null ? gu.st.nAct0 : gu.nG; C.K = Math.max(2, Math.round(params.granCat * nB / 1000)); C.A = gu.src[0].keys.length;
     C.prof = new Map(); C.wc = new Map(); C.cent = []; C.cn = []; C.q1 = -1; C.q2 = -1; C.pw = null; gu.st.catK = C.K; return C.K; }
   guCatObs(C, w, c0) { let v = C.prof.get(w); if (!v) C.prof.set(w, v = new Float64Array(C.A + 1)); v[c0]++; v[C.A]++; if (v[C.A] < 2) return;
     let z = 0; for (let i = 0; i < C.A; i++) z += v[i] * v[i]; z = Math.sqrt(z); const x = new Float64Array(C.A); for (let i = 0; i < C.A; i++) x[i] = v[i] / z;
@@ -1038,20 +1039,23 @@ class SpikingNet {
     if (owned.has(key)) return;
     this.guRecruit(key, n, yTgt);
   }
-  guRecruit(key, n, yTgt, free) {   // R135: free = recruit only into a never-matched slot (granChunkGate 2); returns true when a granule was recruited   // (R134: the recruit tail of granUtilityEvent as a method, unchanged; n = 0 = a chunk detector with no claw lists)
+  guRecruit(key, n, yTgt, free, lv2) {   // R138: lv2 = a level-2 key (recruits only in [l2, nG) when granL2 is on; level-1 keys only below l2)   // R135: free = recruit only into a never-matched slot (granChunkGate 2); returns true when a granule was recruited   // (R134: the recruit tail of granUtilityEvent as a method, unchanged; n = 0 = a chunk detector with no claw lists)
     const gu = this.gu, { W, nG, gOff, src, win, lists, inS, inK, outS, outK, use, born, gen, keyBy, owned, pending, rng, co, hold, st } = gu, mt = gu.match;
+    if (lv2 && params.granL2 > 0 && gu.l2 == null) return false;   // R138 granL2 with no level-2 pool (sizeF <= b): no second level
     const cnt = (pending.get(key) || 0) + 1;
     if (cnt < co) { pending.set(key, cnt); return; }
     pending.delete(key);
     const ev = st.events, ws = this.ws, posts = this.posts;
     let best = -1, bu = Infinity;
     for (let t = 0; t < 48; t++) {
-      const r0 = gu.rsv0 > 0 ? gu.rsv0 : 0, j = r0 + ((rng() * ((gu.nAct != null ? gu.nAct : nG) - r0)) | 0); if (ev - born[j] < hold) continue;   // R119 granReserve: recruit / recycle only inside the reserve (r0 = 0 = whole layer, same draw)
+      const L2 = gu.l2 != null, r0 = L2 && lv2 ? gu.l2 : gu.rsv0 > 0 ? gu.rsv0 : 0, j = r0 + ((rng() * ((L2 && lv2 ? nG : gu.nAct != null ? gu.nAct : L2 ? gu.l2 : nG) - r0)) | 0); if (ev - born[j] < hold) continue;   // R119 granReserve: recruit / recycle only inside the reserve (r0 = 0 = whole layer, same draw)
       let wSum = 0; for (let q = outS[j]; q < outS[j + 1]; q++) wSum += ws[outK[q]];
       const u = mt ? mt[j] : use[j] * (0.01 + wSum);   // R119: mode 2 ranks by exact-tuple matches (homeostasis keeps every granule spiking, so the spike-count utility never falls below 0.05 in v47)
       if (u < bu) { bu = u; best = j; if (u === 0) break; }
     }
-    if (free && gu.nAct < nG && (best < 0 || bu > 0)) { best = gu.nAct++; bu = 0; st.grown = (st.grown || 0) + 1; }   // R136 granGrow: a first sighting the pressure gate would refuse adds a slot instead (pool grows on demand up to the allocated cap)
+    const cap1 = gu.l2 != null ? gu.l2 : nG, in2 = lv2 && gu.l2 != null;   // in2: a level-2 recruit inside the L2 pool (no growth there)
+    if (params.granEvGrow > 0 && !in2 && gu.nAct < cap1 && best >= 0 && bu > 0) { best = gu.nAct++; bu = 0; st.evGrown = (st.evGrown || 0) + 1; }   // R138 granEvGrow: evicting a used level-1 detector adds a slot instead (grow on eviction)
+    if (free && !in2 && gu.nAct < cap1 && (best < 0 || bu > 0)) { best = gu.nAct++; bu = 0; st.grown = (st.grown || 0) + 1; }   // R136 granGrow: a first sighting the pressure gate would refuse adds a slot instead (pool grows on demand up to the allocated cap)
     if (best < 0 || bu > 0.05) return false; if (free && bu > 0) { st.chunkFull = (st.chunkFull || 0) + 1; return false; }
     if (keyBy[best] != null && owned.get(keyBy[best]) === best) owned.delete(keyBy[best]);
     for (let q = inS[best]; q < inS[best + 1]; q++) ws[inK[q]] = 0;
