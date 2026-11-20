@@ -529,3 +529,5 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 12:43 book30k 4x b32g + lagPrune k2954 .497 (-.0075; b32g .4965).
 - 12:58 PROBE 4x b32 + lagGate 2 k2954 .604 (= gate 1 .604; off .225). Queue H done.
 - 13:01 book30k 4x b32g + lagSurp k2954 .5045 (= baseline .5045; b32g -.008): surprise gating removes the book loss on this seed.
+- 13:16 book30k 4x b32g + lagPrune k2955 .4795 (-.0045). lagPrune refuted (-.0075/-.0045). Dropped prune probes; queue J = probes b32g+lagSurp k2954/k2955. Added lagSurp 0<v<1 = softer threshold (precision > v x confidence).
+- 13:19 book30k 4x b32g + lagSurp k2955 .4815 (-.0025). lagSurp book: .5045/.4815 vs .5045/.484 = .000/-.0025 (no-loss within .003).

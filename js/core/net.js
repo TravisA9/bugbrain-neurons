@@ -1005,7 +1005,7 @@ class SpikingNet {
    * P(x | current letter) at those presences (sum r_j). lagPrune: once the upper bound p + sqrt(p (1 - p) / n) + 1 / n (p = h / n) falls below the mean
    * reference r_j / n_j, the detector is freed and its key banned (it predicts no better than the current letter alone). lagSurp: a copy detector fires
    * only in windows where its precision (h + 1) / (n + 2) beats the confidence of the short context (the top count rate after the last 3 letters),
-   * i.e. it can drive the readout only when the short-context prediction is uncertain. */
+   * i.e. it can drive the readout only when the short-context prediction is uncertain. 0 < lagSurp < 1: softer, precision > lagSurp x confidence. */
   guLagUse(L, kp, c0, tg) {
     const gu = this.gu, A = gu.src[0].keys.length, nG = gu.nG; if (!L.un) { L.un = new Float32Array(nG); L.uh = new Float32Array(nG); L.ur = new Float32Array(nG); L.ug = new Int32Array(nG).fill(-1); L.ubg = new Float64Array(A * A); L.ubn = new Float64Array(A); L.tri3 = new Map(); }
     const ok = tg != null && tg >= 0;
@@ -1017,7 +1017,7 @@ class SpikingNet {
   guLagFire(c, syn, mk, gB) { const gu = this.gu, L = gu.lg; if (L.won) return; L.won = 1; const pre = L.blur ? 'B' : 'F';
     if (params.lagSurp > 0 && L.un) { let cf = 0; const v = L.tri3.get(c + ',' + L.h[1] + ',' + L.h[2]); if (v) { let t = 0, m = 0; for (const q of v.values()) { t += q; if (q > m) m = q; } cf = m / t; }   // short-context confidence (h[1], h[2] = the 2 letters before c: the register is already shifted)
       for (const sfx of L.next) { const key = pre + c + L.cx + sfx, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key) continue; const n = L.ug[j] === gu.gen[j] ? L.un[j] : 0, h = n ? L.uh[j] : 0;
-        if ((h + 1) / (n + 2) > cf) this.guKeyFire(key, syn, mk, gB, 3); else gu.st.lagQuiet = (gu.st.lagQuiet || 0) + 1; } return; }
+        if ((h + 1) / (n + 2) > cf * (params.lagSurp < 1 ? params.lagSurp : 1)) this.guKeyFire(key, syn, mk, gB, 3); else gu.st.lagQuiet = (gu.st.lagQuiet || 0) + 1; } return; }
     for (const sfx of L.next) this.guKeyFire(pre + c + L.cx + sfx, syn, mk, gB, 3); }
   /* R137 granCat (P.granCat = f > 0; 0 / unset = off, bit-identical, no RNG; needs granChunk): a SECOND LEVEL OF LEARNED WORD CATEGORIES. Each completed word
    * keeps a continuation profile (counts of the first letter of the word that follows it). Categories are competitive-learning prototypes of the normalised
