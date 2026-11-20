@@ -518,3 +518,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 09:58 1x probe 6k k2954 (new probe): off .246, b32 .509, b32+gate .509 (123 recruits vs 251). Blur + gate keeps the probe gain and is ~neutral on book 1x: next 4x candidate.
 - 09:59 book30k 4x D8 blur: k2954 .5085 (+.004), k2955 .4835 (-.0005); 266/264 copy recruits. Small, not >= +.003 on both. Queue F (q2.sh jobs_f): b32+gate book, probes b32g/b8/b32, book b32.
 - 10:18 book30k 4x D32 blur + gate: k2954 .4965 (-.008), k2955 .484 (.000); 318/302 recruits. Gate removes most of the D32 loss but not all. Queue G: probes b32g (running), book b6, probes b8, book b12 (refine around D8 blur).
+- 10:56 PROBE 4x D32 blur + gate: k2954 .604, k2955 .574 (off .225/.208; = exact D32 .607/.571) with only 167/165 copy detectors (exact 1906/1911). Blur+gate keeps all the probe gain. (q2 race relaunched p_b32g k2954 after it finished; duplicate killed, q2.sh now rechecks.)
