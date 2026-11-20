@@ -972,6 +972,7 @@ class SpikingNet {
     const gu = this.gu; if (n < 1) return; const c0 = gu.win[0], mt = gu.match, kb = gu.keyBy, ow = gu.owned;
     const D = Math.max(5, Math.round(params.lagDepth)), L = gu.lg || (gu.lg = { D, h: new Int32Array(D).fill(-1), won: 0, next: null, blur: params.lagBlur > 0, m: Math.max(1, Math.round(params.lagCtx || 1)), cx: '' });
     const pre = L.blur ? 'B' : 'F', h = L.h;
+    if ((params.lagPrune > 0 || params.lagSurp > 0) && L.next) this.guLagUse(L, pre + c0 + L.cx, c0, this.gSym);   // R140 lagPrune / lagSurp: per-detector use statistics (see guLagUse)
     if (mt && L.next) for (const sfx of L.next) { const key = pre + c0 + L.cx + sfx, j = ow.get(key); if (j != null && kb[j] === key) mt[j] += 1; }   // utility: the copy keys present in this window
     const tg = this.gSym; if (params.lagGate > 0) { if (tg != null && tg >= 0 && L.next) this.guLagGate(L, pre + c0 + L.cx, c0, tg, yTgt); }   // R140 lagGate: recruit only copy keys that predict better than the short context (see guLagGate)
     else if (tg != null && tg >= 0 && params.plasticity && this.learning && yTgt < 0.85) { let l = -1; for (let q = 4; q < D; q++) if (h[q] === tg) { l = q; break; }
@@ -999,7 +1000,25 @@ class SpikingNet {
     const j0 = gu.owned.get(best); if ((j0 != null && gu.keyBy[j0] === best) || gu.ban.has(best)) return; gu.st.lagPass = (gu.st.lagPass || 0) + 1;
     const g = params.granChunkGate, seen = g > 0 ? this.guChunkSeen(best) : true;
     if ((g !== 1 || seen) && this.guRecruit(best, 0, yTgt, g === 2 && !seen)) gu.st.lagRec = (gu.st.lagRec || 0) + 1; }
-  guLagFire(c, syn, mk, gB) { const gu = this.gu, L = gu.lg; if (L.won) return; L.won = 1; const pre = L.blur ? 'B' : 'F'; for (const sfx of L.next) this.guKeyFire(pre + c + L.cx + sfx, syn, mk, gB, 3); }
+  /* R140 lagPrune (P.lagPrune = 1) / lagSurp (P.lagSurp = 1); 0 / unset = off, no RNG. Use-time gating of copy detectors (self-calibrating, no constant).
+   * Each live copy detector j counts its presences n_j (its key held in a window) and hits h_j (its far letter x arrived next), and the bigram rate
+   * P(x | current letter) at those presences (sum r_j). lagPrune: once the upper bound p + sqrt(p (1 - p) / n) + 1 / n (p = h / n) falls below the mean
+   * reference r_j / n_j, the detector is freed and its key banned (it predicts no better than the current letter alone). lagSurp: a copy detector fires
+   * only in windows where its precision (h + 1) / (n + 2) beats the confidence of the short context (the top count rate after the last 3 letters),
+   * i.e. it can drive the readout only when the short-context prediction is uncertain. */
+  guLagUse(L, kp, c0, tg) {
+    const gu = this.gu, A = gu.src[0].keys.length, nG = gu.nG; if (!L.un) { L.un = new Float32Array(nG); L.uh = new Float32Array(nG); L.ur = new Float32Array(nG); L.ug = new Int32Array(nG).fill(-1); L.ubg = new Float64Array(A * A); L.ubn = new Float64Array(A); L.tri3 = new Map(); }
+    const ok = tg != null && tg >= 0;
+    for (const sfx of L.next) { const key = kp + sfx, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key) continue; if (L.ug[j] !== gu.gen[j]) { L.ug[j] = gu.gen[j]; L.un[j] = 0; L.uh[j] = 0; L.ur[j] = 0; }
+      if (!ok) continue; const x = +sfx.slice(sfx.lastIndexOf('|') + 1); L.un[j]++; if (x === tg) L.uh[j]++; L.ur[j] += L.ubn[c0] > 0 ? L.ubg[c0 * A + x] / L.ubn[c0] : 0;
+      if (params.lagPrune > 0 && L.un[j] >= 3) { const n = L.un[j], p = L.uh[j] / n; if (p + Math.sqrt(p * (1 - p) / n) + 1 / n < L.ur[j] / n && gu.st.events - gu.born[j] >= gu.hold) {
+        gu.ban.add(key); gu.owned.delete(key); gu.keyBy[j] = null; gu.gen[j]++; gu.xn[j] = 0; if (gu.match) gu.match[j] = 0; gu.st.lagPruned = (gu.st.lagPruned || 0) + 1; } } }
+    if (ok) { L.ubg[c0 * A + tg]++; L.ubn[c0]++; const tk = c0 + ',' + L.h[1] + ',' + L.h[2]; let v = L.tri3.get(tk); if (!v) L.tri3.set(tk, v = new Map()); v.set(tg, (v.get(tg) || 0) + 1); } }
+  guLagFire(c, syn, mk, gB) { const gu = this.gu, L = gu.lg; if (L.won) return; L.won = 1; const pre = L.blur ? 'B' : 'F';
+    if (params.lagSurp > 0 && L.un) { let cf = 0; const v = L.tri3.get(c + ',' + L.h[1] + ',' + L.h[2]); if (v) { let t = 0, m = 0; for (const q of v.values()) { t += q; if (q > m) m = q; } cf = m / t; }   // short-context confidence (h[1], h[2] = the 2 letters before c: the register is already shifted)
+      for (const sfx of L.next) { const key = pre + c + L.cx + sfx, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key) continue; const n = L.ug[j] === gu.gen[j] ? L.un[j] : 0, h = n ? L.uh[j] : 0;
+        if ((h + 1) / (n + 2) > cf) this.guKeyFire(key, syn, mk, gB, 3); else gu.st.lagQuiet = (gu.st.lagQuiet || 0) + 1; } return; }
+    for (const sfx of L.next) this.guKeyFire(pre + c + L.cx + sfx, syn, mk, gB, 3); }
   /* R137 granCat (P.granCat = f > 0; 0 / unset = off, bit-identical, no RNG; needs granChunk): a SECOND LEVEL OF LEARNED WORD CATEGORIES. Each completed word
    * keeps a continuation profile (counts of the first letter of the word that follows it). Categories are competitive-learning prototypes of the normalised
    * profiles, grown online: a word with >= 2 samples and no category seeds a new prototype while fewer than Kmax exist, otherwise joins the most similar
