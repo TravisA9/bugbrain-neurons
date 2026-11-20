@@ -505,3 +505,6 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - Pre-registered in RESULTS.md. Queue A (run/r140/q.sh, 2x4x): probe off/x32/b32 + book30k x32/b32, k2954/k2955 (book baselines .5045/.484).
 - 08:12 probe off 4x (30k): k2954 .225, k2955 .208 (chance .25; bins 5-8/9-16/17-31 ~.17-.27). Queue B (D16 exact/blur, probe + book30k) chained after A.
 - 08:45 box was rebooted/restored ~08:28 (sw/out and run/r13x/out wiped; restored tracked files from git; lp_p_off jsons lost, numbers above). Queue A remainder + B relaunched as run/r140/jobs_ab.txt (P=2).
+- 09:01 book30k D32 exact k2954 .460 vs cand .5045 = -.0445 (BIG LOSS). lagRec 4487, copy fires 3.1M (~100/window), active granules 17.1 vs 6.9, granule drive share .56 vs .39: copy keys (current letter, lag, letter) are too broad in text (common letters sit at some far lag almost always) and swamp the readout.
+- 09:12 1x book10k screens k2954: off .458, D32 .4045, D32+lagCtx 3 (key = last 3 letters + far letter) .448 (fires 61k vs 669k). Running 1x D32blur/D16/D8.
+- 09:16 1x book10k k2954: D32 blur .4545 (-.0035, 695 recruits), D16 .4325, D8 .452 (loss tracks copy recruits/fires). Running 1x b32c2/b16/b32c3.
