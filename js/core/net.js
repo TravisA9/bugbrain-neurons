@@ -970,18 +970,18 @@ class SpikingNet {
    * (c, b, x) fires when the most recent far occurrence of x lies in bin b: one detector covers a range of delays (fewer, denser keys). */
   guLagEvent(yTgt, n) {
     const gu = this.gu; if (n < 1) return; const c0 = gu.win[0], mt = gu.match, kb = gu.keyBy, ow = gu.owned;
-    const D = Math.max(5, Math.round(params.lagDepth)), L = gu.lg || (gu.lg = { D, h: new Int32Array(D).fill(-1), won: 0, next: null, blur: params.lagBlur > 0 });
+    const D = Math.max(5, Math.round(params.lagDepth)), L = gu.lg || (gu.lg = { D, h: new Int32Array(D).fill(-1), won: 0, next: null, blur: params.lagBlur > 0, m: Math.max(1, Math.round(params.lagCtx || 1)), cx: '' });
     const pre = L.blur ? 'B' : 'F', h = L.h;
-    if (mt && L.next) for (const sfx of L.next) { const key = pre + c0 + sfx, j = ow.get(key); if (j != null && kb[j] === key) mt[j] += 1; }   // utility: the copy keys present in this window
+    if (mt && L.next) for (const sfx of L.next) { const key = pre + c0 + L.cx + sfx, j = ow.get(key); if (j != null && kb[j] === key) mt[j] += 1; }   // utility: the copy keys present in this window
     const tg = this.gSym; if (tg != null && tg >= 0 && params.plasticity && this.learning && yTgt < 0.85) { let l = -1; for (let q = 4; q < D; q++) if (h[q] === tg) { l = q; break; }
-      if (l >= 0) { const key = pre + c0 + '|' + (L.blur ? Math.floor(Math.log2(l)) : l) + '|' + tg, j0 = ow.get(key);
+      if (l >= 0) { const key = pre + c0 + L.cx + '|' + (L.blur ? Math.floor(Math.log2(l)) : l) + '|' + tg, j0 = ow.get(key);
         if (!(j0 != null && kb[j0] === key) && !gu.ban.has(key)) { const g = params.granChunkGate, seen = g > 0 ? this.guChunkSeen(key) : true;
           if ((g !== 1 || seen) && this.guRecruit(key, 0, yTgt, g === 2 && !seen)) gu.st.lagRec = (gu.st.lagRec || 0) + 1; } } }
     for (let q = D - 1; q > 1; q--) h[q] = h[q - 1]; h[1] = c0;   // shift the delay register: lags relative to the next window's current letter
     const nx = []; if (L.blur) { const sn = new Set(); for (let q = 4; q < D; q++) { const x = h[q]; if (x < 0 || sn.has(x)) continue; sn.add(x); nx.push('|' + Math.floor(Math.log2(q)) + '|' + x); } }
     else for (let q = 4; q < D; q++) if (h[q] >= 0) nx.push('|' + q + '|' + h[q]);
-    L.next = nx; }
-  guLagFire(c, syn, mk, gB) { const gu = this.gu, L = gu.lg; if (L.won) return; L.won = 1; const pre = L.blur ? 'B' : 'F'; for (const sfx of L.next) this.guKeyFire(pre + c + sfx, syn, mk, gB, 3); }
+    L.next = nx; if (L.m > 1) { let cx = ''; for (let q = 1; q < L.m; q++) cx += ',' + h[q]; L.cx = cx; } }   // R140 lagCtx m: the key carries the last m letters (current + m-1 before), not only the current one
+  guLagFire(c, syn, mk, gB) { const gu = this.gu, L = gu.lg; if (L.won) return; L.won = 1; const pre = L.blur ? 'B' : 'F'; for (const sfx of L.next) this.guKeyFire(pre + c + L.cx + sfx, syn, mk, gB, 3); }
   /* R137 granCat (P.granCat = f > 0; 0 / unset = off, bit-identical, no RNG; needs granChunk): a SECOND LEVEL OF LEARNED WORD CATEGORIES. Each completed word
    * keeps a continuation profile (counts of the first letter of the word that follows it). Categories are competitive-learning prototypes of the normalised
    * profiles, grown online: a word with >= 2 samples and no category seeds a new prototype while fewer than Kmax exist, otherwise joins the most similar
