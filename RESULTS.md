@@ -4991,3 +4991,9 @@ D32 blur + lagGate 1 -.008/.000, probe .604/.574; + lagGate 2 -.009/-.002; + lag
 **PRE-REGISTRATION (confirm):** new seeds k2956/k2957: book30k winner - candidate >= -.003 on both; probe >= .45 on both (off ~.21-.25).
 Cross-task (order3, K4, seqchoice order2/cycle 8 seeds, text1000, fables4000; 4x): no task mean worse by more than .05 fitness. Then book100k k2951/2953/2954
 vs .523/.519/.5265: >= -.003 each (prediction: ~.000; the copy detectors stay quiet where the short context is confident).
+**R140 confirm results.** New seeds, book30k 4x, winner vs candidate: k2956 .5405 vs .5345 (+.006), k2957 .4955 vs .488 (+.0075): passes (>= -.003).
+Probe winner k2956 .569 (lags 5-8 .50 / 9-16 .567 / 17-31 .586), k2957 .515 (.537/.518/.509): passes (>= .45); 4-seed probe .530/.508/.569/.515 vs ~.21-.25 off.
+Cross-task (4x, fitness mean S2 vs cand / accuracy): seqchoice order2 (8 seeds) +.000 / +.000, cycle (8) +.000 / +.000, order3 (3) +.000 / +.000 (.940),
+K4 (3) +.000 / +.000, text1000 (3) +.000 / -.0013 (.840/.840, .838/.835, .848/.847), fables4000 (3) -.043 / -.0033 (.438/.437, .440/.432, .441/.440).
+Passes the pre-registered bound (no task worse than -.05 fitness), but fables is close to it (-.043) and slightly worse on all 3 seeds. Seqchoice never engages
+the granule pool (identical by construction); on order3 the copy detectors recruit and fire (S2 3 rec / 77 fires; ungated D32 10 / 1497) without changing accuracy.
