@@ -993,7 +993,9 @@ class SpikingNet {
     for (const sfx of L.next) { const key = kp + sfx, x = +sfx.slice(sfx.lastIndexOf('|') + 1); let v = gs.get(key); if (!v) gs.set(key, v = [0, 0]); v[0]++; if (x === tg) v[1]++;
       if (x !== tg || v[0] < 3) continue; const p = v[1] / v[0], lb = p - Math.sqrt(p * (1 - p) / v[0]); if (lb > bv) { bv = lb; best = key; } }
     const pb = L.bn[c0] > 0 ? L.bg[c0 * A + tg] / L.bn[c0] : 0; L.bg[c0 * A + tg]++; L.bn[c0]++;
-    if (!best || bv <= Math.max(yTgt, pb) || !(params.plasticity && this.learning) || yTgt >= 0.85) return;
+    let pr = pb; if (params.lagGate === 2) { const tk = c0 + ',' + L.h[1] + ',' + L.h[2], tm = L.tri || (L.tri = new Map()); let v = tm.get(tk); if (!v) tm.set(tk, v = new Map()); let nn = 0; for (const c of v.values()) nn += c;   // lagGate 2: reference = the short-context count rate P(x | last 3 letters) (what the exact tuples see), not only the bigram
+      const pt = nn > 0 ? (v.get(tg) || 0) / nn : 0; v.set(tg, (v.get(tg) || 0) + 1); if (pt > pr) pr = pt; }
+    if (!best || bv <= Math.max(yTgt, pr) || !(params.plasticity && this.learning) || yTgt >= 0.85) return;
     const j0 = gu.owned.get(best); if ((j0 != null && gu.keyBy[j0] === best) || gu.ban.has(best)) return; gu.st.lagPass = (gu.st.lagPass || 0) + 1;
     const g = params.granChunkGate, seen = g > 0 ? this.guChunkSeen(best) : true;
     if ((g !== 1 || seen) && this.guRecruit(best, 0, yTgt, g === 2 && !seen)) gu.st.lagRec = (gu.st.lagRec || 0) + 1; }
