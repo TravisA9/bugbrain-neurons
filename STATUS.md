@@ -508,3 +508,7 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 09:01 book30k D32 exact k2954 .460 vs cand .5045 = -.0445 (BIG LOSS). lagRec 4487, copy fires 3.1M (~100/window), active granules 17.1 vs 6.9, granule drive share .56 vs .39: copy keys (current letter, lag, letter) are too broad in text (common letters sit at some far lag almost always) and swamp the readout.
 - 09:12 1x book10k screens k2954: off .458, D32 .4045, D32+lagCtx 3 (key = last 3 letters + far letter) .448 (fires 61k vs 669k). Running 1x D32blur/D16/D8.
 - 09:16 1x book10k k2954: D32 blur .4545 (-.0035, 695 recruits), D16 .4325, D8 .452 (loss tracks copy recruits/fires). Running 1x b32c2/b16/b32c3.
+- 09:20 PROBE 4x D32 exact k2954 .607 vs off .225 (bins 5-8 .565, 9-16 .584, 17-31 .629): real long context. 1x book10k k2954: b32c2 .4465, b16 .457 (-.001), b32c3 .446. Stopped queue AB after x32 (book x32 k2955 + probe x32 k2955 still running, not killed); queue C (q2.sh): probe b32/b16/x16 + book b16/b32, k2954/2955.
+- 09:24 1x book10k k2955: off .4475, b16 .4435, b8 .4525 (1x 10k noise ~+-.01).
+- 09:28 1x book10k b8 (D8 blur): k2954 .463 (+.005), k2955 .4525 (+.005): possible hot spot. Queue D: b8 4x book + probe first, then queue C. 1x refine b6/b12.
+- 09:32 1x book10k blur depth curve (k2954/k2955, off .458/.4475): D6 .4595/.451, D8 .463/.4525, D12 .4615/.447, D16 .457/.4435, D32 .4545/-. Hump at D8 (+.005/+.005, within 1x noise).
