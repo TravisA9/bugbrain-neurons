@@ -513,3 +513,6 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 09:28 1x book10k b8 (D8 blur): k2954 .463 (+.005), k2955 .4525 (+.005): possible hot spot. Queue D: b8 4x book + probe first, then queue C. 1x refine b6/b12.
 - 09:32 1x book10k blur depth curve (k2954/k2955, off .458/.4475): D6 .4595/.451, D8 .463/.4525, D12 .4615/.447, D16 .457/.4435, D32 .4545/-. Hump at D8 (+.005/+.005, within 1x noise).
 - 09:39 book30k 4x D32 exact k2955 .4455 vs .484 = -.0385 (k2954 -.0445). D32 exact is refuted on book. test_core ALL OK with lagCtx test.
+- 09:45 PROBE 4x D32 exact k2955 .571 vs off .208 (+.363; bins .45/.56/.61). Pre-reg >= .60 both seeds: missed on k2955 (.571), long context clearly real. Committed 501e983f, bundle refreshed.
+- 09:54 P.lagGate (utility gate: recruit a copy key only if its lower-bound hit rate beats the net's own prediction and the bigram). 1x book10k k2954/k2955 (off .458/.4475): x32g .4435/.443, b32g .4575/.453. 1x probe 6k x32g .2456 (= off: exact keys never reach n>=3 in 110 segments).
+- 09:58 1x probe 6k k2954 (new probe): off .246, b32 .509, b32+gate .509 (123 recruits vs 251). Blur + gate keeps the probe gain and is ~neutral on book 1x: next 4x candidate.
