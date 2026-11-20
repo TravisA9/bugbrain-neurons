@@ -512,3 +512,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 09:24 1x book10k k2955: off .4475, b16 .4435, b8 .4525 (1x 10k noise ~+-.01).
 - 09:28 1x book10k b8 (D8 blur): k2954 .463 (+.005), k2955 .4525 (+.005): possible hot spot. Queue D: b8 4x book + probe first, then queue C. 1x refine b6/b12.
 - 09:32 1x book10k blur depth curve (k2954/k2955, off .458/.4475): D6 .4595/.451, D8 .463/.4525, D12 .4615/.447, D16 .457/.4435, D32 .4545/-. Hump at D8 (+.005/+.005, within 1x noise).
+- 09:39 book30k 4x D32 exact k2955 .4455 vs .484 = -.0385 (k2954 -.0445). D32 exact is refuted on book. test_core ALL OK with lagCtx test.
