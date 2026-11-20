@@ -532,3 +532,5 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 13:16 book30k 4x b32g + lagPrune k2955 .4795 (-.0045). lagPrune refuted (-.0075/-.0045). Dropped prune probes; queue J = probes b32g+lagSurp k2954/k2955. Added lagSurp 0<v<1 = softer threshold (precision > v x confidence).
 - 13:19 book30k 4x b32g + lagSurp k2955 .4815 (-.0025). lagSurp book: .5045/.4815 vs .5045/.484 = .000/-.0025 (no-loss within .003).
 - 13:50 PROBE 4x b32g + lagSurp k2954 .497 (b32g .604, off .225): keeps ~70% of the gain. Added lagSurp 2 (Laplace-smoothed short-context confidence: rare contexts no longer look confident).
+- 13:52 PROBE 4x b32g + lagSurp k2955 .485 (b32g .574, off .208). lagSurp probe .497/.485 = keeps +.27/+.28 of +.38/+.37. Queue K: lagSurp 2 (smoothed) and 0.5 (soft) on probe + book.
+- 14:09 book30k 4x b32g + lagSurp 2 k2954 .505 (+.0005). test_core ALL OK with lagSurp 2 / 0.5 tests.
