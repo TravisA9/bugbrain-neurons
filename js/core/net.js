@@ -973,7 +973,8 @@ class SpikingNet {
     const D = Math.max(5, Math.round(params.lagDepth)), L = gu.lg || (gu.lg = { D, h: new Int32Array(D).fill(-1), won: 0, next: null, blur: params.lagBlur > 0, m: Math.max(1, Math.round(params.lagCtx || 1)), cx: '' });
     const pre = L.blur ? 'B' : 'F', h = L.h;
     if (mt && L.next) for (const sfx of L.next) { const key = pre + c0 + L.cx + sfx, j = ow.get(key); if (j != null && kb[j] === key) mt[j] += 1; }   // utility: the copy keys present in this window
-    const tg = this.gSym; if (tg != null && tg >= 0 && params.plasticity && this.learning && yTgt < 0.85) { let l = -1; for (let q = 4; q < D; q++) if (h[q] === tg) { l = q; break; }
+    const tg = this.gSym; if (params.lagGate > 0) { if (tg != null && tg >= 0 && L.next) this.guLagGate(L, pre + c0 + L.cx, c0, tg, yTgt); }   // R140 lagGate: recruit only copy keys that predict better than the short context (see guLagGate)
+    else if (tg != null && tg >= 0 && params.plasticity && this.learning && yTgt < 0.85) { let l = -1; for (let q = 4; q < D; q++) if (h[q] === tg) { l = q; break; }
       if (l >= 0) { const key = pre + c0 + L.cx + '|' + (L.blur ? Math.floor(Math.log2(l)) : l) + '|' + tg, j0 = ow.get(key);
         if (!(j0 != null && kb[j0] === key) && !gu.ban.has(key)) { const g = params.granChunkGate, seen = g > 0 ? this.guChunkSeen(key) : true;
           if ((g !== 1 || seen) && this.guRecruit(key, 0, yTgt, g === 2 && !seen)) gu.st.lagRec = (gu.st.lagRec || 0) + 1; } } }
@@ -981,6 +982,21 @@ class SpikingNet {
     const nx = []; if (L.blur) { const sn = new Set(); for (let q = 4; q < D; q++) { const x = h[q]; if (x < 0 || sn.has(x)) continue; sn.add(x); nx.push('|' + Math.floor(Math.log2(q)) + '|' + x); } }
     else for (let q = 4; q < D; q++) if (h[q] >= 0) nx.push('|' + q + '|' + h[q]);
     L.next = nx; if (L.m > 1) { let cx = ''; for (let q = 1; q < L.m; q++) cx += ',' + h[q]; L.cx = cx; } }   // R140 lagCtx m: the key carries the last m letters (current + m-1 before), not only the current one
+  /* R140 lagGate (P.lagGate = 1; 0 / unset = off): PREDICTIVE-UTILITY GATE for copy detectors (self-calibrating, no constant). Every copy key present in a
+   * window keeps a count of its presences n and of the times its far letter x was the arriving letter h. A copy detector is recruited (surprising event,
+   * as before) only for a present key with x = the arriving letter whose lower confidence bound p - sqrt(p (1 - p) / n) (p = h / n, n >= 3) beats BOTH the
+   * short context: the net's own prediction of the arriving letter (yTgt) and the bigram rate P(x | current letter). Keys whose far letter adds nothing
+   * over the current letter never get a detector, so frequent letters at far lags (the text failure of R140 D32) are filtered out by evidence. */
+  guLagGate(L, kp, c0, tg, yTgt) {
+    const gu = this.gu, A = gu.src[0].keys.length; if (!L.gs) { L.gs = new Map(); L.bg = new Float64Array(A * A); L.bn = new Float64Array(A); }
+    const gs = L.gs; let best = null, bv = -1;
+    for (const sfx of L.next) { const key = kp + sfx, x = +sfx.slice(sfx.lastIndexOf('|') + 1); let v = gs.get(key); if (!v) gs.set(key, v = [0, 0]); v[0]++; if (x === tg) v[1]++;
+      if (x !== tg || v[0] < 3) continue; const p = v[1] / v[0], lb = p - Math.sqrt(p * (1 - p) / v[0]); if (lb > bv) { bv = lb; best = key; } }
+    const pb = L.bn[c0] > 0 ? L.bg[c0 * A + tg] / L.bn[c0] : 0; L.bg[c0 * A + tg]++; L.bn[c0]++;
+    if (!best || bv <= Math.max(yTgt, pb) || !(params.plasticity && this.learning) || yTgt >= 0.85) return;
+    const j0 = gu.owned.get(best); if ((j0 != null && gu.keyBy[j0] === best) || gu.ban.has(best)) return; gu.st.lagPass = (gu.st.lagPass || 0) + 1;
+    const g = params.granChunkGate, seen = g > 0 ? this.guChunkSeen(best) : true;
+    if ((g !== 1 || seen) && this.guRecruit(best, 0, yTgt, g === 2 && !seen)) gu.st.lagRec = (gu.st.lagRec || 0) + 1; }
   guLagFire(c, syn, mk, gB) { const gu = this.gu, L = gu.lg; if (L.won) return; L.won = 1; const pre = L.blur ? 'B' : 'F'; for (const sfx of L.next) this.guKeyFire(pre + c + L.cx + sfx, syn, mk, gB, 3); }
   /* R137 granCat (P.granCat = f > 0; 0 / unset = off, bit-identical, no RNG; needs granChunk): a SECOND LEVEL OF LEARNED WORD CATEGORIES. Each completed word
    * keeps a continuation profile (counts of the first letter of the word that follows it). Categories are competitive-learning prototypes of the normalised

@@ -110,6 +110,7 @@ const params = {
   // R140 lagDepth D > 4: long-lag copy detectors keyed (current letter, far lag 4..D-1, letter) on a symbol-level delay register (net.js guLagEvent); lagBlur 1 = far lag blurred to octave bins. 0 = off, bit-identical
   lagDepth: 0,
   lagBlur: 0,
+  lagGate: 0,   // R140: 1 = recruit copy detectors only when the key's far letter predicts the arriving letter better than the short context (net.js guLagGate)
   lagCtx: 0,   // R140: copy keys carry the last lagCtx letters (0/1 = current letter only)
   // R126 fanInBudget (0 = off, bit-identical): sized regions keep each cell type's 1x mean in-region fan-in (strongest inputs), see develop.js
   fanInBudget: 0,
