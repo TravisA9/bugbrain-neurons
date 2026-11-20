@@ -4966,3 +4966,20 @@ comparison showed the bigger cortex alone adds nothing).
 | 4x 128k pool | .5295 | .5215 | .5255 | +.0027 |
 | 8x (64k x2 = 128k) | .530 | .5215 | .5255 | +.0028 |
 8x == 4x + 128k pool on every seed. Brain size beyond 4x contributes nothing; pool doubling gives a small, inconsistent gain. Not promoted.
+
+## R140 — longer look-back (Travis t131u: extremes first, halve toward the hot spot)
+**Built (off by default, bit-identical, no RNG when off):** P.lagDepth = D > 4 extends the delay line past t-4 as a symbol-level register of the
+current-letter winner (like the granChunk state) and adds far claw sources at lags 4..D-1, used by recruited COPY detectors keyed (current letter c,
+far lag l, letter x): fires when the current letter is c and x sits l back. Recruited by the usual surprise rule into the same pool (same gate 2,
+one-shot / Kalman / trace readout) for the most recent far lag at which the arriving letter occurred. The R135 birth claws and their RNG draws are
+unchanged. P.lagBlur = 1: the far lag is blurred to its octave (4-7, 8-15, 16-31): key (c, octave, x) fires when the most recent far occurrence of x
+lies in that octave (fewer, denser keys; one detector spans a range of delays). Probe: seq source 'delaycopy' (sw/lagprobe140.js): 12 symbols,
+segments X, d fillers (d uniform 4..30), cue, X, 30 fillers; probe accuracy = the letter after the cue in the 2nd half of life (payload 5..31 back).
+**Probe headroom (run/r140/headroom.js, 30k letters, k2951/2953/2954/2955):** order 1-8 count models (backoff) .25-.29 (chance .25); a perfect copy
+memory to depth 8 / 16 / 32: .33 / .53-.59 / 1.0. Book: R134 headroom, each letter past 4 is worth ~0..+.01 at 30k-100k.
+**PRE-REGISTRATION (written before any 4x run; 1x 6k smoke only: probe off .25, D32 .49, D32 blur .51).** Baseline = R135 candidate 4x (granScale 2),
+book30k tune seeds k2954/k2955 (.5045/.484, already run), probe k2954/k2955 at 30k letters. Extremes first: D=32 with and without blur.
+- Probe: D32 (either) >= .60 on both seeds (vs ~.25 off); blur >= exact at lags 17-31. This would show real longer context in the network.
+- book30k: small, -.003..+.004 (copy keys of real text are mostly common letters; risk: pool crowd-out by many weak copy detectors). Hot spot rule:
+  if the book number at D32 is < -.003, halve to D16 (then 8); if within +-.003 halve once to check for a hump; refine in small steps only around a
+  gain >= +.003. Winner confirmation: new seeds + order3/seqchoice/text/fables (no task worse), then book100k.

@@ -107,6 +107,9 @@ const params = {
   granL2: 0,
   granL2N: 0,
   granEvGrow: 0,
+  // R140 lagDepth D > 4: long-lag copy detectors keyed (current letter, far lag 4..D-1, letter) on a symbol-level delay register (net.js guLagEvent); lagBlur 1 = far lag blurred to octave bins. 0 = off, bit-identical
+  lagDepth: 0,
+  lagBlur: 0,
   // R126 fanInBudget (0 = off, bit-identical): sized regions keep each cell type's 1x mean in-region fan-in (strongest inputs), see develop.js
   fanInBudget: 0,
   // R127 pathBudget (0 = off, bit-identical): sized regions keep each (post type, presyn type, sign) pathway at its 1x mean in-degree, random (hash) selection, see develop.js

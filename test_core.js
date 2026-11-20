@@ -451,7 +451,11 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
   const pIdx = l1.kb.map((k, j) => k != null && k[0] === 'P' ? j : -1).filter(j => j >= 0), cIdx = l1.kb.map((k, j) => k != null && k[0] !== 'P' && k[0] !== 'Q' ? j : -1).filter(j => j >= 0);
   assert.ok(l1.nG === x.nG + 128 && l1.l2 === x.nG && pIdx.length > 0 && pIdx.every(j => j >= l1.l2) && cIdx.every(j => j < l1.l2) && l1.s > 1 / l1.K, `granL2N 128: pool ${l1.nG}, ${pIdx.length} phrase detectors all in [${l1.l2}, ${l1.nG}), level-1 detectors below, learns`);
   const eg = run(Object.assign({ granGrow: 3, granEvGrow: 1 }, G2)); assert.ok((eg.st.evGrown || 0) > 0 && eg.nAct > x.nG && eg.s > 1 / eg.K, `granEvGrow 1 + granGrow 3: ${eg.st.evGrown} eviction growths, pool ${eg.nAct}`);
-  console.log(`R138 granL2: off bit-identical, 1x no L2 pool -> no phrases; L2N 128: ${pIdx.length} phrase detectors in the L2 pool, score ${l1.s.toFixed(3)}; granEvGrow: ${eg.st.evGrown} growths, pool ${x.nG} -> ${eg.nAct}: ok`); }
+  console.log(`R138 granL2: off bit-identical, 1x no L2 pool -> no phrases; L2N 128: ${pIdx.length} phrase detectors in the L2 pool, score ${l1.s.toFixed(3)}; granEvGrow: ${eg.st.evGrown} growths, pool ${x.nG} -> ${eg.nAct}: ok`);
+  { const zd = run(Object.assign({ lagDepth: 0, lagBlur: 0 }, G2)), z4 = run(Object.assign({ lagDepth: 4, lagBlur: 1 }, G2)); assert.ok([zd, z4].every(z => x2.s === z.s && x2.spk === z.spk && x2.w.every((v, i) => v === z.w[i])), 'lagDepth 0 / 4 and lagBlur are bit-identical to unset (granChunk + gate 2 on)');
+    const ld = run(Object.assign({ lagDepth: 16 }, G2)), lb = run(Object.assign({ lagDepth: 16, lagBlur: 1 }, G2)), fk = r => r.kb.filter(k => k != null && (k[0] === 'F' || k[0] === 'B')).length;
+    assert.ok(ld.st.lagRec > 0 && fk(ld) > 0 && ld.st.lagFired > 0 && ld.s > 1 / ld.K && lb.st.lagRec > 0 && lb.kb.some(k => k != null && k[0] === 'B') && lb.s > 1 / lb.K, `lagDepth 16: ${ld.st.lagRec} copy recruits, ${ld.st.lagFired} fires; blur ${lb.st.lagRec} / ${lb.st.lagFired}`);
+    console.log(`R140 lagDepth: off bit-identical; D16 ${ld.st.lagRec} recruits ${ld.st.lagFired} fires score ${ld.s.toFixed(3)}; blur ${lb.st.lagRec} recruits ${lb.st.lagFired} fires score ${lb.s.toFixed(3)}: ok`); } }
 // 9. R131 anSize (exploration noise x sqrt(sizeF); off = bit-identical, 1x unchanged)
 { const run = (ex, f) => { const S = require('./js/node_load.js')(); Object.assign(S.params, ex || {});
     const envP = Object.assign({}, S.recommendedEnvParams('seqchoice', { source: 'order2' }, ['source']), { nSyms: 120 });

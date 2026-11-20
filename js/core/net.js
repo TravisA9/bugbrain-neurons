@@ -928,7 +928,7 @@ class SpikingNet {
     gu.st.lhMax = +mx.toFixed(3); gu.st.lhS = gu.lh.map(L => L ? +(col ? 0 : L.hs).toFixed(3) : 0); }
   guExact(i, gc, s, syn, mk, gB) {   // first hit of claw column gc (source s) in this read window: set the claw bit of every granule listening to it
     const gu = this.gu, ch = gu.cHit[s], c = gc - gu.hOff[s]; if (ch[c] >= 250) return;
-    const hM = params.granExactHits > 1 ? params.granExactHits : 1; if (ch[c] === 0) gu.cT.push(s, c); ch[c]++; if (ch[c] < hM) return; ch[c] = 250; if (s === 0 && gu.ch && gu.ch.next != null) this.guChunkFire(c, syn, mk, gB); if ((params.granExactColCap || (params.granExactGuard & 2)) && gu.cr[s][c] > this.guColCap(s)) return; if (gu.wta && s > 0) { if (gu.wta[s] >= gu.wtaK) return; gu.wta[s]++; }   // R125 lagWTA: only the first k columns of a lag source to fire in this window count (see initGranExact)   // R119 granExactColCap: a claw column active in > colCap of the windows (saturated lag cells) carries no context: it never completes a tuple   // R119 granExactHits: a claw column counts once it has fired hM spikes in this window (stale lag letters fire fewer)
+    const hM = params.granExactHits > 1 ? params.granExactHits : 1; if (ch[c] === 0) gu.cT.push(s, c); ch[c]++; if (ch[c] < hM) return; ch[c] = 250; if (s === 0 && gu.ch && gu.ch.next != null) this.guChunkFire(c, syn, mk, gB); if (s === 0 && gu.lg && gu.lg.next) this.guLagFire(c, syn, mk, gB); if ((params.granExactColCap || (params.granExactGuard & 2)) && gu.cr[s][c] > this.guColCap(s)) return; if (gu.wta && s > 0) { if (gu.wta[s] >= gu.wtaK) return; gu.wta[s]++; }   // R125 lagWTA: only the first k columns of a lag source to fire in this window count (see initGranExact)   // R119 granExactColCap: a claw column active in > colCap of the windows (saturated lag cells) carries no context: it never completes a tuple   // R119 granExactHits: a claw column counts once it has fired hM spikes in this window (stale lag letters fire fewer)
     const L = gu.lists[s][c], gen = gu.gen, xm = gu.xm, xn = gu.xn, xf = gu.xf, gOff = gu.gOff, T = this.thr || this.g.thresh;
     const xL = gu.xL, fz = params.granFatigue;   // R122 granFatigue = c (off by default): a detector that fired less than c x its OWN mean inter-fire interval (symbols / its fire count) ago is refractory (self-suppression after completing its tuple; self-calibrated per detector)
     for (let r = 0, m = L.length; r < m; r++) { const e = L[r]; if (e.gen !== gen[e.j]) continue; const j = e.j, bit = 1 << e.c;
@@ -960,6 +960,28 @@ class SpikingNet {
         else { const g2 = params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kQ) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kQ, 0, yTgt, g2 === 2 && !seen, true)) gu.st.catRec = (gu.st.catRec || 0) + 1; } } }
     if (c0 === C.delim) { if (C.p !== '') { if (P) C.w2 = C.w; C.w = C.p; if (Q) { C.q2 = C.q1; const q = C.wc.get(C.p); C.q1 = q != null ? q : -1; C.pw = C.p; } } C.p = ''; } else C.p = C.p ? C.p + ',' + c0 : String(c0);
     C.next = 'C' + C.w + '|' + C.p + '|'; if (P) C.nextP = C.w2 ? 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' : null; if (Q) C.nextQ = C.q1 >= 0 && C.q2 >= 0 ? 'Q' + C.q2 + '|' + C.q1 + '|' + C.p + '|' : null; }
+  /* R140 lagDepth (P.lagDepth = D > 4; 0 / unset = off, bit-identical, no RNG; needs granExact): LONG LAGS t-4 .. t-(D-1). The grown delay line holds
+   * t .. t-4 (R134 lag probes) and the claws read t .. t-3. The flag extends the delay line as a symbol-level register of the current-letter winner
+   * (source 0's latency winner each window, like the granChunk state), and adds claw sources at lags 4 .. D-1 used by recruited COPY detectors:
+   * key (current letter c, far lag l, letter x): fires in a read window when the current letter is c and the register holds x at lag l. Recruited by
+   * the usual rule (surprising teaching event, same pool, gate and one-shot / Kalman / trace readout) for the most recent far lag l >= 4 at which
+   * the arriving (target) letter occurred: "the letter seen l back comes again after c" (copy / repetition). No birth claws (the R135 random claws
+   * and their RNG draws are unchanged). P.lagBlur = 1: the far lag is blurred to its octave bin b = floor(log2 l) (4-7, 8-15, 16-31, ...), key
+   * (c, b, x) fires when the most recent far occurrence of x lies in bin b: one detector covers a range of delays (fewer, denser keys). */
+  guLagEvent(yTgt, n) {
+    const gu = this.gu; if (n < 1) return; const c0 = gu.win[0], mt = gu.match, kb = gu.keyBy, ow = gu.owned;
+    const D = Math.max(5, Math.round(params.lagDepth)), L = gu.lg || (gu.lg = { D, h: new Int32Array(D).fill(-1), won: 0, next: null, blur: params.lagBlur > 0 });
+    const pre = L.blur ? 'B' : 'F', h = L.h;
+    if (mt && L.next) for (const sfx of L.next) { const key = pre + c0 + sfx, j = ow.get(key); if (j != null && kb[j] === key) mt[j] += 1; }   // utility: the copy keys present in this window
+    const tg = this.gSym; if (tg != null && tg >= 0 && params.plasticity && this.learning && yTgt < 0.85) { let l = -1; for (let q = 4; q < D; q++) if (h[q] === tg) { l = q; break; }
+      if (l >= 0) { const key = pre + c0 + '|' + (L.blur ? Math.floor(Math.log2(l)) : l) + '|' + tg, j0 = ow.get(key);
+        if (!(j0 != null && kb[j0] === key) && !gu.ban.has(key)) { const g = params.granChunkGate, seen = g > 0 ? this.guChunkSeen(key) : true;
+          if ((g !== 1 || seen) && this.guRecruit(key, 0, yTgt, g === 2 && !seen)) gu.st.lagRec = (gu.st.lagRec || 0) + 1; } } }
+    for (let q = D - 1; q > 1; q--) h[q] = h[q - 1]; h[1] = c0;   // shift the delay register: lags relative to the next window's current letter
+    const nx = []; if (L.blur) { const sn = new Set(); for (let q = 4; q < D; q++) { const x = h[q]; if (x < 0 || sn.has(x)) continue; sn.add(x); nx.push('|' + Math.floor(Math.log2(q)) + '|' + x); } }
+    else for (let q = 4; q < D; q++) if (h[q] >= 0) nx.push('|' + q + '|' + h[q]);
+    L.next = nx; }
+  guLagFire(c, syn, mk, gB) { const gu = this.gu, L = gu.lg; if (L.won) return; L.won = 1; const pre = L.blur ? 'B' : 'F'; for (const sfx of L.next) this.guKeyFire(pre + c + sfx, syn, mk, gB, 3); }
   /* R137 granCat (P.granCat = f > 0; 0 / unset = off, bit-identical, no RNG; needs granChunk): a SECOND LEVEL OF LEARNED WORD CATEGORIES. Each completed word
    * keeps a continuation profile (counts of the first letter of the word that follows it). Categories are competitive-learning prototypes of the normalised
    * profiles, grown online: a word with >= 2 samples and no category seeds a new prototype while fewer than Kmax exist, otherwise joins the most similar
@@ -992,13 +1014,13 @@ class SpikingNet {
   guKeyFire(key, syn, mk, gB, ph) { const gu = this.gu, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key || gu.xf[j]) return;
     if (!gu.xm[j]) gu.xT[gu.xTn++] = j; gu.xm[j] |= 1; gu.xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++;
     const b = gu.gOff + j, T = this.thr || this.g.thresh; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31);
-    if (ph === 2) gu.st.catFired = (gu.st.catFired || 0) + 1; else if (ph) gu.st.phraseFired = (gu.st.phraseFired || 0) + 1; else gu.st.chunkFired = (gu.st.chunkFired || 0) + 1; }
+    if (ph === 3) gu.st.lagFired = (gu.st.lagFired || 0) + 1; else if (ph === 2) gu.st.catFired = (gu.st.catFired || 0) + 1; else if (ph) gu.st.phraseFired = (gu.st.phraseFired || 0) + 1; else gu.st.chunkFired = (gu.st.chunkFired || 0) + 1; }
   guColCap(s) { const v = params.granExactColCap;
     if (!v) { const gu = this.gu; if (s === 0 || gu.st.events < 3000) return 2; if (gu.crE0 !== gu.st.events) { gu.crE0 = gu.st.events; let m = 0; const a0 = gu.cr[0]; for (let c = 0; c < a0.length; c++) if (a0[c] > m) m = a0[c]; gu.crMax0 = Math.min(0.9, 3 * m); } return gu.crMax0; }
     // R120 granExactGuard (self-calibrating): a lag column is saturated when it is active in more windows than 3x the most frequent CURRENT letter's column (source 0) - no letter can explain that; capped at 0.9 (small alphabets)
     if (v > 0) return v; const gu = this.gu, a = gu.cr[s]; if (!gu.crM || gu.crE !== gu.st.events) { gu.crE = gu.st.events; gu.crM = gu.cr.map(x => { let t = 0; for (let c = 0; c < x.length; c++) t += x[c]; return t / x.length; }); }
     return gu.st.events < 3000 ? 2 : Math.max(-v * gu.crM[s], 0.05); }   // < 0 = self-calibrating: |v| x the source's mean column activity (a saturated column vs its alphabet)
-  guExactReset() { const gu = this.gu, xm = gu.xm, xf = gu.xf, xT = gu.xT; if (gu.ch) gu.ch.won = 0; for (let q = 0; q < gu.xTn; q++) { xm[xT[q]] = 0; xf[xT[q]] = 0; } gu.xTn = 0; gu.xFn = 0;
+  guExactReset() { const gu = this.gu, xm = gu.xm, xf = gu.xf, xT = gu.xT; if (gu.ch) gu.ch.won = 0; if (gu.lg) gu.lg.won = 0; for (let q = 0; q < gu.xTn; q++) { xm[xT[q]] = 0; xf[xT[q]] = 0; } gu.xTn = 0; gu.xFn = 0;
     const cT = gu.cT; if (params.granExactColCap || (params.granExactGuard & 2) || params.lagHomeo > 0) { const cr = gu.cr; for (let s2 = 0; s2 < cr.length; s2++) { const a = cr[s2]; for (let c = 0; c < a.length; c++) a[c] *= 0.999; } for (let q = 0; q < cT.length; q += 2) if (gu.cHit[cT[q]][cT[q + 1]] >= 250) cr[cT[q]][cT[q + 1]] += 0.001; }
     for (let q = 0; q < cT.length; q += 2) gu.cHit[cT[q]][cT[q + 1]] = 0; cT.length = 0; if (gu.lh) this.lagHomeoStep(); if (gu.wta) gu.wta.fill(0); }
   guDrive(spk, nSpk, syn, mk) {
@@ -1030,6 +1052,7 @@ class SpikingNet {
     const mt = gu.match;   // R119 granUtility 2 (match utility): credit the granules whose whole claw tuple (lags t .. t-m+1, m = Km .. n) is this window
     if (mt) { for (let j = 0; j < nG; j++) mt[j] *= 0.998; let kk = String(Km); for (let c = 0; c < Km && c < n; c++) kk += ',' + win[c];
       for (let m = Km; m <= n; m++) { if (m > Km) kk = String(m) + kk.slice(kk.indexOf(',')) + ',' + win[m - 1]; const j = owned.get(kk); if (j != null) { mt[j] += 1; st.matched++; } } }
+    if (params.lagDepth > 4 && gu.xm) this.guLagEvent(yTgt, n);   // R140 lagDepth (off by default): long-lag (copy) detectors, see guLagEvent
     if (params.granChunk > 0 && gu.xm) this.guChunkEvent(yTgt, n);   // R134 granChunk (off by default): word-context chunk detectors (before the recruit early-returns)
     if (!(params.plasticity && this.learning) || yTgt >= 0.85 || n < Km) return;
     let key = String(n); for (let c = 0; c < n; c++) key += ',' + win[c];
