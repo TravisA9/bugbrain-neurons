@@ -499,3 +499,9 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - cand_8x vs 4x(64k): .530/.5215/.5255 vs .523/.519/.5265 = +.007/+.0025/-.001 (mean +.0028; pre-reg +.003 not met).
 - pool128_4x: .5295/.5215/.5255 = identical to 8x within .0005 on all 3 seeds.
 - Conclusion: brain size adds nothing at book100k; the whole 8x effect is the doubled random tuple pool, and that effect is small/inconsistent (+.0027 mean). Pool size is the only scaling lever here, and it is near saturation for 100k letters. Not promoted.
+## R140 (longer look-back, extremes first)
+- 07:20 built P.lagDepth / P.lagBlur (net.js guLagEvent / guLagFire: symbol-level delay register to D, copy detectors (c, far lag, x)); probe source 'delaycopy' + sw/lagprobe140.js; run/r140/headroom.js.
+- Probe headroom 30k: count o1-o8 .22-.30 (chance .25); copy memory D8 .33, D16 .53-.59, D32 1.0. 1x 6k smoke: off .25, D32 .49, D32 blur .51.
+- Pre-registered in RESULTS.md. Queue A (run/r140/q.sh, 2x4x): probe off/x32/b32 + book30k x32/b32, k2954/k2955 (book baselines .5045/.484).
+- 08:12 probe off 4x (30k): k2954 .225, k2955 .208 (chance .25; bins 5-8/9-16/17-31 ~.17-.27). Queue B (D16 exact/blur, probe + book30k) chained after A.
+- 08:45 box was rebooted/restored ~08:28 (sw/out and run/r13x/out wiped; restored tracked files from git; lp_p_off jsons lost, numbers above). Queue A remainder + B relaunched as run/r140/jobs_ab.txt (P=2).
