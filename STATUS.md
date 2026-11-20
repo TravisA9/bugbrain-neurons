@@ -526,3 +526,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 12:06 PROBE 4x D8 blur: k2954 .272, k2955 .221 (off .225/.208): gains only in lags 5-8 (k2954 .50); no long context. Running book D12 blur, then probe b32g2 k2954.
 - 12:25 built P.lagPrune (free a copy detector when its running hit-rate UCB < bigram reference; key banned) and P.lagSurp (copy detector fires only when its precision beats the short-context (3-letter) count confidence). 1x book10k k2954 on b32g (.4575; off .458): +prune .461 (86 pruned), +surp .461 (fires 39k vs 302k). 1x probe 6k b32g+prune+surp .421 (b32g .509, off .246).
 - 12:24 book30k 4x D12 blur: k2954 .4995 (-.005), k2955 .481 (-.003). Blur depth curve on book (4x, vs .5045/.484): D6 +.0015/+.0045, D8 +.004/-.0005, D12 -.005/-.003, D32+gate -.008/.000.
+- 12:43 book30k 4x b32g + lagPrune k2954 .497 (-.0075; b32g .4965).
