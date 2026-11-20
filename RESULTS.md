@@ -4983,3 +4983,11 @@ book30k tune seeds k2954/k2955 (.5045/.484, already run), probe k2954/k2955 at 3
 - book30k: small, -.003..+.004 (copy keys of real text are mostly common letters; risk: pool crowd-out by many weak copy detectors). Hot spot rule:
   if the book number at D32 is < -.003, halve to D16 (then 8); if within +-.003 halve once to check for a hump; refine in small steps only around a
   gain >= +.003. Winner confirmation: new seeds + order3/seqchoice/text/fables (no task worse), then book100k.
+
+**R140 tune summary (written before the confirm runs).** 4x, book30k k2954/k2955 (candidate .5045/.484), probe off .225/.208:
+D32 exact book -.0445/-.0385, probe .607/.571; D8 blur book +.004/-.0005, probe .272/.221 (lags 5-8 only); D6 blur +.0015/+.0045; D12 blur -.005/-.003;
+D32 blur + lagGate 1 -.008/.000, probe .604/.574; + lagGate 2 -.009/-.002; + lagPrune -.0075/-.0045; + lagSurp 1 .000/-.0025, probe .497/.485;
++ lagSurp 0.5 -.003/-.0045, probe .587/-; **+ lagSurp 2 +.0005/-.001, probe .530/.508**. Winner = P.lagDepth 32, lagBlur 1, lagGate 1, lagSurp 2.
+**PRE-REGISTRATION (confirm):** new seeds k2956/k2957: book30k winner - candidate >= -.003 on both; probe >= .45 on both (off ~.21-.25).
+Cross-task (order3, K4, seqchoice order2/cycle 8 seeds, text1000, fables4000; 4x): no task mean worse by more than .05 fitness. Then book100k k2951/2953/2954
+vs .523/.519/.5265: >= -.003 each (prediction: ~.000; the copy detectors stay quiet where the short context is confident).
