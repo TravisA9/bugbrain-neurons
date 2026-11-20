@@ -542,3 +542,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 15:33 cand book30k 4x k2956 .5345 (new-seed baseline).
 - 15:37 cand book30k 4x k2957 .488.
 - 15:52 R140 confirm: winner S2 book30k k2956 .5405 vs cand .5345 (+.006). Probe k2956 started.
+- 15:55 R140 confirm: winner S2 book30k k2957 .4955 vs cand .488 (+.0075). Both new seeds no loss.
