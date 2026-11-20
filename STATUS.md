@@ -536,3 +536,5 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 14:09 book30k 4x b32g + lagSurp 2 k2954 .505 (+.0005). test_core ALL OK with lagSurp 2 / 0.5 tests.
 - 14:23 PROBE 4x lagSurp 2 k2954 .530 (lagSurp 1 .497, ungated .604, off .225); book k2954 .505.
 - 14:40 book30k 4x lagSurp 0.5 k2954 .5015 (-.003).
+- 14:43 PROBE 4x lagSurp 0.5 k2954 .587 (fires 795k vs 120k for lagSurp 2). Pareto so far k2954 (probe / book delta): ungated .604/-.008, S0.5 .587/-.003, S2 .530/+.0005, S1 .497/.000. Queue Sh book k2955 next.
+- 14:58 book30k 4x lagSurp 2 k2955 .483 (-.001). lagSurp 2 book .505/.483 vs .5045/.484 = +.0005/-.001: no-loss on both.
