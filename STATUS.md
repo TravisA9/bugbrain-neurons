@@ -523,3 +523,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 11:15 book30k 4x D6 blur: k2954 .506 (+.0015), k2955 .4885 (+.0045); mean +.003, both positive (D8 blur mean +.0018). Book hot spot = short blur (lags 4-5/4-7), i.e. one more blurred letter, not long context.
 - 11:33 book30k 4x D32 blur + lagGate 2: k2954 .4955 (-.009), k2955 .482 (-.002); 304/293 recruits (gate 1: -.008/.000, 318/302). Trigram reference does not remove the D32 book loss.
 - 11:40 diag: D32 blur+gate detectors are few (~300) but broad: ~1.1M fires (each ~12% of windows; D6 blur 0.35M, D8 0.75M), active granules 10.5 vs 6.9. Gate passes keys on early small-n luck; book loss tracks fires, not recruits.
+- 12:06 PROBE 4x D8 blur: k2954 .272, k2955 .221 (off .225/.208): gains only in lags 5-8 (k2954 .50); no long context. Running book D12 blur, then probe b32g2 k2954.
