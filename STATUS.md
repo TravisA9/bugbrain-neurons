@@ -545,3 +545,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 15:55 R140 confirm: winner S2 book30k k2957 .4955 vs cand .488 (+.0075). Both new seeds no loss.
 - 16:24 R140 confirm: winner S2 probe k2956 .569 (5-8 .50, 9-16 .567, 17-31 .586); off ~.21-.22, depth-8 copy ceiling .33.
 - 16:27 R140 confirm: winner S2 probe k2957 .515 (5-8 .537, 9-16 .518, 17-31 .509). Step 1 done: probe holds on 4 seeds (.530/.508/.569/.515). Chain: cross-task next.
+- 16:50 R140 cross-task running (reg.js, 56 jobs). seqchoice order2/cycle identical cand vs S2 on all seeds: diag shows seqchoice never engages the granule pool; order3 recruits/fires copy detectors (S2 3 rec/77 fires) but acc unchanged .94. text/fables are the real test.
