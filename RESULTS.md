@@ -5019,3 +5019,7 @@ lagMarg 2 (lead > 1 sigma) -.040 / -.0033; lagMarg 3 (copy silent when the word 
 lagEvid 1: probe k2954 .5302 (= S2, half the fires), book30k k2954 .502 (-.0025). Reading: the cost is the copy votes (lagEvid 3), not their evidence;
 a third of it is votes against a clear 3-letter first choice; the rest is in windows without a word chunk (word starts, rare words), where copy votes in
 chunk windows actually help (lagMarg 3 is worse). Next extreme: copy votes only in chunk windows (lagMarg 4).
+lagMarg 4 (copy votes only in word-chunk windows): fables tune k2951-2953 +.0007 / -.0010 (passes), but probe k2954/k2955 .242/.224 (memory gone) and fresh
+fables k2954-2956 -.018 / -.0017: FAILS. **R142 conclusion:** the fables accuracy cost (-.003, ~13/4000 letters; fitness within noise; log-loss better) is carried by the
+same copy votes that hold the long-delay memory; every rule that removes it also removes the memory. Recommendation: promote-track the R140 look-back with the
+cost documented (16 fresh growths, book100k + probe, fables tracked), not block it; check fables at longer length first.

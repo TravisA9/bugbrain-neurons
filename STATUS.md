@@ -637,3 +637,18 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   fix; if identical to the run above, the two definitions coincide in practice (an owned chunk detector always fires in its window) and the M4 results stand.
 - 12:39 equivalence check: M4 fables k2951 with the fix = identical stats to the original run (4.636, all stats equal). M4 results stand. test_core rerun with the fix started.
 - 12:57 test_core ALL OK with the fix (lagMarg 3 defers 620 again, 4 defers 1724). Started fresh-seed fables M4 k2954-2956 (P=1; probes k2954/k2955 still running since 12:28).
+- 13:06 R142d RESULTS: probe M4 k2954 .242, k2955 .224 (S2 .530/.508, off .225/.208): the long-delay memory is GONE (copy fires 1.7k/2.3k vs ~120k).
+  Fresh fables M4 k2954/2955/2956: -.014/-.001, -.019/-.002, -.022/-.002 = fit -.018, acc -.0017 (bits +.009, worse) -> also fails on fresh seeds.
+  M4 FAILS (probe < .45; fresh fables below the gate). Stopped its book30k k2954/k2955 runs (decision made). All lagEvid / lagMarg flags stay off.
+
+## R142 CONCLUSION (13:10 CT): should the fables cost block promotion of the R140 look-back?
+- The cost: fables4000 accuracy -.0032 (0+/6- seeds, ~13 of 4000 letters); fitness -.0255 over 6 seeds (2+/4-, fresh seeds -.008 = within noise);
+  log-loss BETTER on 5/6 seeds. Inside the pre-registered cross-task bound (-.05 fitness). text1000 acc -.0013, fitness .000; all other tasks identical.
+- The gain: delay-copy probe .51-.57 vs ~.21 (4 seeds); book30k no loss (4 seeds, mean +.003); book100k +.0075/+.010/-.0025 (mean +.005).
+- Seven fixes tried (R141-R142). Only two remove the fables cost: silencing every copy vote (E3) and allowing copies only inside word-chunk windows (M4);
+  both also erase the long-delay memory (probe back to ~.22). The votes that cost fables accuracy are the same votes that carry information across >4 letters
+  when no word context exists. The cost is the price of the memory at 4000 letters, not a separable bug.
+- Recommendation: do NOT block on fables. Treat it as a documented, bounded cost (accuracy -.003, fitness within noise, log-loss better) and take the
+  look-back (lagDepth 32 + lagBlur 1 + lagGate 1 + lagSurp 2) into the promotion gate: 16 fresh growths with paired book100k + probe, with fables4000
+  tracked (stop rule: fables accuracy cost > .005 or fitness < -.05). Cheap side test first: fables at longer length (e.g. 16k letters, 3 seeds): if the cost
+  shrinks with more text, it is a short-text startup effect. Promotion still needs Travis's call because "no task worse" read strictly flags fables accuracy.
