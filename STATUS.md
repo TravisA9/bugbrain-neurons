@@ -624,3 +624,7 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   chunk (word starts, new/rare words). No probe/book runs (pre-reg: only if fables passes). Candidate next extreme (not run): lagMarg 4 = copy votes ONLY
   in windows where the word chunk fired. test_core with lagMarg 1/2/3 running (sw/logs/tc142d.log).
 - 12:16 test_core ALL OK with lagMarg 0/1/2/3 (sw/logs/tc142d.log); 12:17 spikefoundry 10/10 PASS. Code committed (flags off by default).
+- PRE-REGISTRATION R142d (12:20, before any run): lagMarg 4 = the opposite extreme of lagMarg 3: far-back copy votes ONLY in windows where the word-chunk
+  detector of (current word, letter) fired. Fables4000 4x k2951-2953, same gate: fit mean d >= -.010 AND acc mean d >= -.001 vs cand.
+  Prediction (from lagMarg 3 = -.045 and all-silent = .000): fables acc >= -.001. Risk: probe (filler 'words' may lack chunks) -> if fables passes,
+  probe k2954/k2955 >= .45 and book30k k2954/k2955 >= cand - .003 (.5045/.484), then fresh seeds (fables k2954-2956, book30k + probe k2956/k2957).
