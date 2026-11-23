@@ -699,3 +699,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   no recall by construction (the memory IS the plasticity). The 1x result in standing/STANDING.md (0/20 learning on) differs: different size / settings, to check.
   -> granWord (word-start keys) is less needed than proposed; kept as an untested off flag. Recall is per-letter, not whole-name (exact 0).
 - 13:52 test_core ALL OK with granWord (off bit-identical; on: 49 word-start recruits) (sw/logs/tc143.log); spikefoundry 10/10 PASS. R144 gate driver started (phase A uses the free node slot while 2 name probes run).
+- 13:59 R143b cand k2953 (learning on): rest .05-.17 -> .63-.72 at every gap; exact 0; frozen none. Same as k2951. S2 runs: k2951 since 13:52, k2953 since 13:59 (ETA ~14:20-14:30). Gate phase A running in the free slot.
