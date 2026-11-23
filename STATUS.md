@@ -710,3 +710,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   Conclusion: one-shot name recall in prose comes from one-shot exact-tuple granules (granOneShot/granTrace), present in the R135 candidate already;
   the R140 copy register adds nothing for names seen once (it needs repeated sightings to recruit). Not a reason for or against R144.
 - 14:34 R144 phase A 29/96: fables4000 n=7 fit d -.056 acc d -.0051 (0+/7-) = at/over the stop-rule lines (acc < -.005 or fit < -.05; checked automatically after all of A); text1000 n=7 fit -.009 acc -.0023. ETA end of A ~15:30 CT.
+- 14:55 R144 phase A 58/96: fables n=14 fit -.038 acc -.0036 (inside stop rule); text1000 n=14 fit -.011 acc -.0022 (+4/-10).
