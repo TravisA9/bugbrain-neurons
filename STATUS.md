@@ -631,3 +631,7 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 12:24 R142d partial: M4 fables k2951 +.007/.000, k2952 +.017/.000 (k2952 was the worst seed for S2: -.078/-.008).
 - 12:27 R142d fables RESULT: M4 +.007/.000, +.017/.000, -.022/-.003 = fit +.0007, acc -.0010 (bits +.013, worse). PASSES the fables gate (acc exactly at
   the -.001 bound). Next per pre-reg: probe + book30k k2954/k2955 (run/r142/jobs_m4pb.txt, q2.sh P=2; test_core also running = 3 node jobs).
+- 12:36 test_core ALL OK, but it exposed a BUG in the lagMarg 3/4 refactor: gu.xf is a Uint8Array, so "fired" was 1 / 0 / false and fired === true never held:
+  lagMarg 3 never deferred (the R142c result above was run with the earlier, correct lagMarg 3 code, so it stands); lagMarg 4 as run silenced copies only when
+  no owned chunk detector matched (fired === false), not when one was owned but had not fired (0). Fixed (xf === 1). Check: rerun M4 fables k2951 with the
+  fix; if identical to the run above, the two definitions coincide in practice (an owned chunk detector always fires in its window) and the M4 results stand.
