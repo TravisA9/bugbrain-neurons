@@ -5029,3 +5029,8 @@ cost documented (16 fresh growths, book100k + probe, fables tracked), not block 
 **R143b prose name recall** (sw/nameprobe.js; invented one-time names mentioned twice, gaps 5-127 letters; 4x, book30k, k2951/2953):
 with learning on, letters 2..end rise from ~.12 at the 1st mention to ~.67 at the 2nd at every gap, for BOTH arms (recall S2 .550, cand .563; whole-name
 exact 0; first letter ~0). Frozen: no recall in either arm. The memory is one-shot exact-tuple granule learning (R135 candidate), not the R140 copy register.
+## R144 — promotion gate for the R140 look-back (S2 vs R135 candidate, 4x, 16 fresh seeds k2960-2971/2973-2976)
+**Phase A (tasks).** fables4000 acc -.0028 (6+/10-), fit -.024, log-loss better (-.019 bits): inside the stop rule (acc >= -.005, fit >= -.05).
+text1000 acc -.0021 (t -3.5, 1+/12-), fit -.009, all in the first quarter (q1 -.0043, last quarter +.0003), log-loss unchanged: a small but real early-text
+cost, same mechanism as fables: with copy votes silenced (lagEvid 3, recruitment unchanged) text1000 equals the candidate exactly on 5/5 seeds.
+order3, K4, seqchoice order2 / cycle (4 seeds): identical.

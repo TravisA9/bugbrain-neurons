@@ -721,3 +721,9 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 15:02 R144m RESULT: S2 + lagEvid 3 on text1000 k2960/61/62/70/71 = cand EXACTLY on every seed (acc, q1, bits, fitness d .0000), vs S2 d -.0044 on the
   same seeds. The text1000 dip is carried entirely by the copy votes (same mechanism as fables; silencing them restores cand bit-for-bit here).
   Gate paused 14:57-15:01 for this (node jobs stayed <= 3); resumed, 64/96 phase A results, now order3/K4/sc_* (4 seeds).
+- 15:14 R144 PHASE A COMPLETE (96/96, 16 fresh seeds; S2 - cand, 4x):
+  fables4000 n=16: acc -.0028 (t -2.6, 6+/10-), fit -.024, log-loss bits -.019 (better, t -3.9). STOP RULE NOT FIRED (acc >= -.005, fit >= -.05).
+  text1000 n=16: acc -.0021 (se .0006, t -3.5, 1+/12-/3=), fit -.009 (inside -.05 bar), q1 -.0043, last quarter +.0003, bits +.0008 ns.
+    FLAG: significant, NOT covered by Travis's fables acceptance; same mechanism (R144m: copy votes silenced -> = cand exactly). ~2 letters/1000, early only.
+  order3, K4, sc_order2, sc_cycle (4 seeds each): .0000 fitness and accuracy, identical.
+  Phase B (lagprobe S2 x16) started 15:14 (3 slots); ETA ~18:15 CT; phase C (book100k x32) then ~13-14 h awake -> ~08:00-09:00 CT Tue (later if the box freezes).
