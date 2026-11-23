@@ -727,3 +727,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
     FLAG: significant, NOT covered by Travis's fables acceptance; same mechanism (R144m: copy votes silenced -> = cand exactly). ~2 letters/1000, early only.
   order3, K4, sc_order2, sc_cycle (4 seeds each): .0000 fitness and accuracy, identical.
   Phase B (lagprobe S2 x16) started 15:14 (3 slots); ETA ~18:15 CT; phase C (book100k x32) then ~13-14 h awake -> ~08:00-09:00 CT Tue (later if the box freezes).
+- 15:21 DECISION (Travis): text1000 early-text dip is part of the same capped cost; same stop rule as fables (acc cost > .005 or fitness < -.05). Phase A text1000 = acc -.0021, fit -.009 -> within cap. Gate continues (phase B running since 15:14).
