@@ -560,3 +560,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   (S1 already has probe .497/.485, book .000/-.0025). If H holds and S1 passes -> confirm S1 on fresh seeds (fables k2954-2956, book30k k2956/2957,
   probe k2956/2957, cross-task). If G is NOT worse than S2, H is refuted (the loss is not firing volume) -> look at lagDepth / readout instead (bisect D16).
   Jobs: run/r141/jobs_fab.json -> run/r141/out/xf141.jsonl (sw/reg.js, P=2, alongside the 2 book100k runs).
+- 09:49 book100k S2 4x: k2951 .5305 vs cand .523 (+.0075), k2953 .529 vs .519 (+.010). Pre-reg (>= -.003) MET on 2/2 so far; k2954 started 09:49 (vs .5265).
