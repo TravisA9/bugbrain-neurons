@@ -611,3 +611,11 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   Pass: fit mean d >= -.010 AND acc mean d >= -.001; then probe >= .45 (k2954/k2955) and book30k >= cand - .003 (.5045/.484); confirm on fresh seeds
   (fables k2954-2956, book30k + probe k2956/k2957). Prediction: M1 fables acc >= -.001 (flips gone), probe .40-.53 (probe contexts are mostly unseen/tied,
   so copy votes survive); M2 between S2 and M1 on fables, probe ~ S2. If M1 passes fables but loses the probe, bisect the lead threshold between M1 and M2.
+- 11:58 R142b RESULTS (fables vs cand, k2951/2952/2953 fit/acc): M1 +.020/-.001, -.040/-.005, -.027/-.001 = -.016 / -.0023 (bits +.048, worse);
+  M2 -.020/+.001, -.063/-.007, -.037/-.004 = -.040 / -.0033. Both FAIL (pre-reg fit >= -.010 and acc >= -.001). M1 prediction (acc >= -.001) failed:
+  blocking votes against a leading 3-letter first choice removes ~30% of the cost; the rest comes from votes in contexts the 3-letter counts call unseen/tied.
+  New hypothesis: there the network already predicts from the WORD context (chunk detectors, which the 3-letter counts do not see), and a far copy outvotes it.
+- PRE-REGISTRATION R142c (before running): lagMarg 3 = copy votes silent in windows where the word-chunk detector of (current word, letter) fired
+  (word context known -> it outranks the far copy; self-calibrating, no constant). Fables k2951-2953: pass = fit >= -.010 and acc >= -.001.
+  Prediction: acc >= -.001 (close to E3). Risk: the probe (chunks may exist for filler words) -> then probe k2954/k2955 must stay >= .45 and book30k >= -.003.
+  Run with P=1 (another agent's sw/standing_gen.js is running; max 3 node jobs incl. test_core).
