@@ -636,3 +636,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   no owned chunk detector matched (fired === false), not when one was owned but had not fired (0). Fixed (xf === 1). Check: rerun M4 fables k2951 with the
   fix; if identical to the run above, the two definitions coincide in practice (an owned chunk detector always fires in its window) and the M4 results stand.
 - 12:39 equivalence check: M4 fables k2951 with the fix = identical stats to the original run (4.636, all stats equal). M4 results stand. test_core rerun with the fix started.
+- 12:57 test_core ALL OK with the fix (lagMarg 3 defers 620 again, 4 defers 1724). Started fresh-seed fables M4 k2954-2956 (P=1; probes k2954/k2955 still running since 12:28).
