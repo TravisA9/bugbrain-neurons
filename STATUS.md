@@ -730,3 +730,6 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 15:21 DECISION (Travis): text1000 early-text dip is part of the same capped cost; same stop rule as fables (acc cost > .005 or fitness < -.05). Phase A text1000 = acc -.0021, fit -.009 -> within cap. Gate continues (phase B running since 15:14).
 - 15:52 R144 phase B 3/16: probe k2960 .475, k2961 .477, k2962 .574 (bar .45 every seed; 2 seeds near it). ~34 min per round of 3 -> B ETA ~18:40 CT.
 - 16:23 R144 phase B 5/16: 2960 .475, 2961 .477, 2962 .574, 2963 .554, 2965 .534 (all >= .45). ETA ~18:40 CT.
+- 17:00 R144 phase B 9/16: 2960 .475, 2961 .477, 2962 .574, 2963 .554, 2964 .474, 2965 .534, 2966 .528, 2967 .448 (133/297 right), 2968 .518.
+  k2967 .448 < .45 -> the pre-registered probe criterion ("every seed >= .45") is FAILED (by 1 item: .45 x 297 = 133.65). Cand/off baseline ~.21-.25, so the
+  memory is clearly present on k2967 (about 2x off); 4 seeds sit at .45-.48. Gate continues (rest of B, then C) for the full picture; verdict needs Travis.
