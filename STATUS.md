@@ -700,3 +700,6 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   -> granWord (word-start keys) is less needed than proposed; kept as an untested off flag. Recall is per-letter, not whole-name (exact 0).
 - 13:52 test_core ALL OK with granWord (off bit-identical; on: 49 word-start recruits) (sw/logs/tc143.log); spikefoundry 10/10 PASS. R144 gate driver started (phase A uses the free node slot while 2 name probes run).
 - 13:59 R143b cand k2953 (learning on): rest .05-.17 -> .63-.72 at every gap; exact 0; frozen none. Same as k2951. S2 runs: k2951 since 13:52, k2953 since 13:59 (ETA ~14:20-14:30). Gate phase A running in the free slot.
+- 14:17 R143b S2 k2951 done: ON rest m1 .05-.17 -> m2 .63-.68 (mean m2 .662 vs cand .665, same seed); exact 0; OFF (frozen) S2 m2 .049-.088 vs cand .033-.070
+  (m2 - m1 <= 0 at every gap for S2 too): the look-back adds NO frozen one-shot recall, as pre-registered (recruitment needs repeats). k2953 pending (~14:23).
+  Gate phase A: 10/96 reg results by 14:16 (one slot while probes ran; goes to 3 slots after k2953 ends).
