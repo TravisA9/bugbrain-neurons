@@ -703,3 +703,9 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 14:17 R143b S2 k2951 done: ON rest m1 .05-.17 -> m2 .63-.68 (mean m2 .662 vs cand .665, same seed); exact 0; OFF (frozen) S2 m2 .049-.088 vs cand .033-.070
   (m2 - m1 <= 0 at every gap for S2 too): the look-back adds NO frozen one-shot recall, as pre-registered (recruitment needs repeats). k2953 pending (~14:23).
   Gate phase A: 10/96 reg results by 14:16 (one slot while probes ran; goes to 3 slots after k2953 ends).
+- 14:24 R143b COMPLETE (cand vs S2, 4x, book30k, k2951/2953; recall = rest m2 - m1, letters 2..end, 10 names x ~5.7 letters per gap):
+  ON (learning):  gap 5/15/31/61/127  S2 .517/.500/.567/.640/.527  cand .500/.553/.542/.648/.571  (mean S2 .550, cand .563; 2nd-mention acc S2 .672, cand .673)
+  OFF (frozen):   both arms <= +.02 at every gap (no recall); exact whole-name 0/10 everywhere, both arms; first letter ~0.
+  vs pre-reg: "~0 for both arms" REFUTED for ON (both arms ~.55), CONFIRMED for OFF. The S2-only signal (>= .05 at gaps 5/15) is ABSENT (+.017 / -.053).
+  Conclusion: one-shot name recall in prose comes from one-shot exact-tuple granules (granOneShot/granTrace), present in the R135 candidate already;
+  the R140 copy register adds nothing for names seen once (it needs repeated sightings to recruit). Not a reason for or against R144.

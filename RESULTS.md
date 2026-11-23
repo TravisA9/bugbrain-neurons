@@ -5023,3 +5023,9 @@ lagMarg 4 (copy votes only in word-chunk windows): fables tune k2951-2953 +.0007
 fables k2954-2956 -.018 / -.0017: FAILS. **R142 conclusion:** the fables accuracy cost (-.003, ~13/4000 letters; fitness within noise; log-loss better) is carried by the
 same copy votes that hold the long-delay memory; every rule that removes it also removes the memory. Recommendation: promote-track the R140 look-back with the
 cost documented (16 fresh growths, book100k + probe, fables tracked), not block it; check fables at longer length first.
+## R143 — fables at 16k and prose name recall
+**R143a fables16000** (S2 vs cand, k2951-2953): fitness -.010, accuracy -.0017 (last quarter -.0007) vs -.0033 at fables4000: the cost halves with more text
+(mostly startup; corpus 4270 letters, so 16k is repeated text).
+**R143b prose name recall** (sw/nameprobe.js; invented one-time names mentioned twice, gaps 5-127 letters; 4x, book30k, k2951/2953):
+with learning on, letters 2..end rise from ~.12 at the 1st mention to ~.67 at the 2nd at every gap, for BOTH arms (recall S2 .550, cand .563; whole-name
+exact 0; first letter ~0). Frozen: no recall in either arm. The memory is one-shot exact-tuple granule learning (R135 candidate), not the R140 copy register.
