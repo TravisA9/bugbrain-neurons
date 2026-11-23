@@ -734,3 +734,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   k2967 .448 < .45 -> the pre-registered probe criterion ("every seed >= .45") is FAILED (by 1 item: .45 x 297 = 133.65). Cand/off baseline ~.21-.25, so the
   memory is clearly present on k2967 (about 2x off); 4 seeds sit at .45-.48. Gate continues (rest of B, then C) for the full picture; verdict needs Travis.
 - 17:32 DECISION (Travis): keep going; probe-criterion verdict deferred until the book100k results. Run phase C to completion. Criterion unchanged.
+- 17:35 phase B 12/16: +2969 .564, 2970 .544, 2971 .508. Still 1 below .45 (k2967).
