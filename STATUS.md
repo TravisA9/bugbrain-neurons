@@ -698,3 +698,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   learning of exact letter-tuple granules (granOneShot/granTrace; no previous-word key needed), not through the copy register. With plasticity frozen there is
   no recall by construction (the memory IS the plasticity). The 1x result in standing/STANDING.md (0/20 learning on) differs: different size / settings, to check.
   -> granWord (word-start keys) is less needed than proposed; kept as an untested off flag. Recall is per-letter, not whole-name (exact 0).
+- 13:52 test_core ALL OK with granWord (off bit-identical; on: 49 word-start recruits) (sw/logs/tc143.log); spikefoundry 10/10 PASS. R144 gate driver started (phase A uses the free node slot while 2 name probes run).

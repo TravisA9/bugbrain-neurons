@@ -950,6 +950,9 @@ class SpikingNet {
     if (j0 != null && gu.keyBy[j0] === key) { if (mt) mt[j0] += 1; }
     else if (params.granChunkGate === 2) { if (C.w !== '') { const seen = this.guChunkSeen(key); if (params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(key, 0, yTgt, !seen)) gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; } }   // R135 gate 2: first sighting recruits only into a free (never-matched) slot
     else if (C.w !== '' && (!(params.granChunkGate > 0) || this.guChunkSeen(key)) && params.plasticity && this.learning && yTgt < 0.85) { gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; this.guRecruit(key, 0, yTgt); }
+    if (params.granWord > 0 && C.p !== '') { const kW = 'W' + C.p + '|' + c0, jW = gu.owned.get(kW);   // R143 granWord: word-start key (partial word, letter) WITHOUT the previous word, so a word seen once (an invented name) is recognised again after any other word
+      if (jW != null && gu.keyBy[jW] === kW) { if (mt) mt[jW] += 1; }
+      else { const g2 = params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kW) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kW, 0, yTgt, g2 === 2 && !seen)) gu.st.wordRec = (gu.st.wordRec || 0) + 1; } }
     const P = params.granPhrase > 0; if (P && C.w2 != null && C.w2 !== '') { const kP = 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' + c0, jP = gu.owned.get(kP);   // R136 granPhrase: second level (see below)
       if (jP != null && gu.keyBy[jP] === kP) { if (mt) mt[jP] += 1; }
       else { const g2 = params.granPhrase === 2 ? 1 : params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kP) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kP, 0, yTgt, g2 === 2 && !seen, true)) gu.st.phraseRec = (gu.st.phraseRec || 0) + 1; } }
@@ -959,7 +962,7 @@ class SpikingNet {
         if (jQ != null && gu.keyBy[jQ] === kQ) { if (mt) mt[jQ] += 1; }
         else { const g2 = params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kQ) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kQ, 0, yTgt, g2 === 2 && !seen, true)) gu.st.catRec = (gu.st.catRec || 0) + 1; } } }
     if (c0 === C.delim) { if (C.p !== '') { if (P) C.w2 = C.w; C.w = C.p; if (Q) { C.q2 = C.q1; const q = C.wc.get(C.p); C.q1 = q != null ? q : -1; C.pw = C.p; } } C.p = ''; } else C.p = C.p ? C.p + ',' + c0 : String(c0);
-    C.next = 'C' + C.w + '|' + C.p + '|'; if (P) C.nextP = C.w2 ? 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' : null; if (Q) C.nextQ = C.q1 >= 0 && C.q2 >= 0 ? 'Q' + C.q2 + '|' + C.q1 + '|' + C.p + '|' : null; }
+    C.next = 'C' + C.w + '|' + C.p + '|'; if (P) C.nextP = C.w2 ? 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' : null; if (Q) C.nextQ = C.q1 >= 0 && C.q2 >= 0 ? 'Q' + C.q2 + '|' + C.q1 + '|' + C.p + '|' : null; if (params.granWord > 0) C.nextW = C.p !== '' ? 'W' + C.p + '|' : null; }
   /* R140 lagDepth (P.lagDepth = D > 4; 0 / unset = off, bit-identical, no RNG; needs granExact): LONG LAGS t-4 .. t-(D-1). The grown delay line holds
    * t .. t-4 (R134 lag probes) and the claws read t .. t-3. The flag extends the delay line as a symbol-level register of the current-letter winner
    * (source 0's latency winner each window, like the granChunk state), and adds claw sources at lags 4 .. D-1 used by recruited COPY detectors:
@@ -1053,11 +1056,11 @@ class SpikingNet {
     const w = h >>> 5, m = 1 << (h & 31); if (gu.chS[w] & m) return true; gu.chS[w] |= m; gu.st.chunkGated = (gu.st.chunkGated || 0) + 1; return false; }
   guChunkFire(c, syn, mk, gB) {   // first hit of current-letter column c in this window: fire the chunk detector of (chunk state, c)
     const gu = this.gu; if (gu.ch.won) return; gu.ch.won = 1;   // only the first current-letter column to fire in the window (latency winner = the letter that arrived)
-    this.guKeyFire(gu.ch.next + c, syn, mk, gB, 0); if (gu.ch.nextP != null) this.guKeyFire(gu.ch.nextP + c, syn, mk, gB, 1); if (gu.ch.nextQ != null) this.guKeyFire(gu.ch.nextQ + c, syn, mk, gB, 2); }
+    this.guKeyFire(gu.ch.next + c, syn, mk, gB, 0); if (gu.ch.nextP != null) this.guKeyFire(gu.ch.nextP + c, syn, mk, gB, 1); if (gu.ch.nextQ != null) this.guKeyFire(gu.ch.nextQ + c, syn, mk, gB, 2); if (gu.ch.nextW != null) this.guKeyFire(gu.ch.nextW + c, syn, mk, gB, 4); }
   guKeyFire(key, syn, mk, gB, ph) { const gu = this.gu, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key || gu.xf[j]) return;
     if (!gu.xm[j]) gu.xT[gu.xTn++] = j; gu.xm[j] |= 1; gu.xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++;
     const b = gu.gOff + j, T = this.thr || this.g.thresh; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31);
-    if (ph === 3) gu.st.lagFired = (gu.st.lagFired || 0) + 1; else if (ph === 2) gu.st.catFired = (gu.st.catFired || 0) + 1; else if (ph) gu.st.phraseFired = (gu.st.phraseFired || 0) + 1; else gu.st.chunkFired = (gu.st.chunkFired || 0) + 1; }
+    if (ph === 4) gu.st.wordFired = (gu.st.wordFired || 0) + 1; else if (ph === 3) gu.st.lagFired = (gu.st.lagFired || 0) + 1; else if (ph === 2) gu.st.catFired = (gu.st.catFired || 0) + 1; else if (ph) gu.st.phraseFired = (gu.st.phraseFired || 0) + 1; else gu.st.chunkFired = (gu.st.chunkFired || 0) + 1; }
   guColCap(s) { const v = params.granExactColCap;
     if (!v) { const gu = this.gu; if (s === 0 || gu.st.events < 3000) return 2; if (gu.crE0 !== gu.st.events) { gu.crE0 = gu.st.events; let m = 0; const a0 = gu.cr[0]; for (let c = 0; c < a0.length; c++) if (a0[c] > m) m = a0[c]; gu.crMax0 = Math.min(0.9, 3 * m); } return gu.crMax0; }
     // R120 granExactGuard (self-calibrating): a lag column is saturated when it is active in more windows than 3x the most frequent CURRENT letter's column (source 0) - no letter can explain that; capped at 0.9 (small alphabets)
