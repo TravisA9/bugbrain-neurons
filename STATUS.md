@@ -674,3 +674,16 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   granTrace readout). An invented name seen once leaves detectors "so|r", "sor|i", ... bound one-shot to the next letter; they fire again at the 2nd mention
   after any word. Expected reach: letters 3+ of the name (prefixes of 2+ letters are specific); limited by the readout trace decay and pool pressure
   (risk as in R136: extra keys crowd the pool at book100k). Off = bit-identical (test_core block added; to run when a node slot frees).
+
+# R144 PROMOTION GATE for the R140 look-back (Travis decision 1:16 PM CT: accept the fables dip as a capped cost; run the full gate)
+- PRE-REGISTRATION (13:20 CT, before any run). Arms: R140 S2 (R135 candidate + lagDepth 32 + lagBlur 1 + lagGate 1 + lagSurp 2) vs R135 candidate, 4x.
+  16 fresh, never-tuned seeds: k2960-2971, 2973-2976 (2972 skipped: the number appears in RESULTS.md). Driver run/r144/gate.js (resumable, max 3 node
+  jobs incl. other agents' jobs, >= 3 GB free before each spawn, commits each small result as it lands; log run/r144/gate.log).
+  Phase A (first, cheap): fables4000 + text1000 both arms x 16 seeds; order3, K4, sc_order2, sc_cycle both arms x 4 seeds (2960-2963).
+  STOP RULE (checked after phase A, automatic): fables4000 mean accuracy d < -.005 OR mean fitness d < -.05 -> stop, no further phases.
+  Phase B: delay-copy probe (sw/lagprobe140.js, 30000) for S2 x 16 seeds. Phase C: book100k (sw/bookdiag.js, 100000) both arms x 16 seeds.
+  PASS (all): book100k paired mean d >= 0 AND every seed d >= -.003 (the R140 per-seed bar; a sign count is reported too); probe >= .45 on every seed
+  (mean also reported); text1000 / order3 / K4 / sc_order2 / sc_cycle mean fitness d >= -.05 (expected .000; R140: identical or +-.001); fables within the stop rule.
+  Prediction: book100k mean d +.003..+.006 with 1-4 seeds below -.003 (R140 confirm: +.0075/+.010/-.0025); probe .50-.57 on all; fables acc d ~-.003.
+  Cost estimate: A ~1 h, B ~3 h, C ~13-14 h of awake box time (32 book100k runs x ~75 CPU-min / 3); the box freezes when idle, so wall time can be longer.
+  Starts after R143 (fables16k, name probe) and a test_core run with the new (off) granWord code.
