@@ -588,3 +588,9 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   Prediction: E1 fables acc d ~ -.001..+.001 (most of the cost gone), probe .42-.50 (young detectors silenced costs some copy hits); E2 between S2 and E1.
   Confirm a passing arm on fresh seeds: fables k2954-2956 (cand known), book30k + probe k2956/k2957, then cross-task.
   Jobs: run/r142/jobs_fab.json -> run/r142/out/xf142.jsonl; run/r142/jobs_pb.txt (q2.sh, P=2 with the running book100k).
+- 10:42 R142 fables (fit/acc d vs cand, k2951/2952/2953): E1 +.000/+.002, -.071/-.007, -.036/.000 = fit -.036, acc -.0017, bits +.028 (worse). FAILS pass.
+  E2 identical to E1: BUG, the graded weight (lb - cf)/(pp - cf) is <= 0 for every weak detector by definition. Fixed: E2 w = (pp - cf)/(pp - lb) (share of the
+  1-sigma interval above cf). Added lagEvid 3 = DIAGNOSTIC, every copy vote silent (recruitment unchanged): if E3 still loses on fables, the loss is not the votes.
+  test_core with the first version ALL OK (10:55); re-running with the fix. Running: E3 + E2b fables (run/r142/jobs_fab2.json -> run/r142/out/xf142b.jsonl).
+- 10:59 book100k S2 4x k2954 .524 vs cand .5265 (-.0025): passes (>= .5235). R140 book100k confirm COMPLETE: +.0075/+.010/-.0025 (mean +.005), 3/3 within the pre-reg.
+- 11:07 R142 E3 (every copy vote silent, recruitment unchanged) fables k2951 +.015/.000, k2952 +.003/.000: no loss -> the fables cost IS the copy votes (not recruitment / register).
