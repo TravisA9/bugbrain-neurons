@@ -711,3 +711,10 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   the R140 copy register adds nothing for names seen once (it needs repeated sightings to recruit). Not a reason for or against R144.
 - 14:34 R144 phase A 29/96: fables4000 n=7 fit d -.056 acc d -.0051 (0+/7-) = at/over the stop-rule lines (acc < -.005 or fit < -.05; checked automatically after all of A); text1000 n=7 fit -.009 acc -.0023. ETA end of A ~15:30 CT.
 - 14:55 R144 phase A 58/96: fables n=14 fit -.038 acc -.0036 (inside stop rule); text1000 n=14 fit -.011 acc -.0022 (+4/-10).
+- 14:59 TEXT1000 FLAG (Travis accepted only the fables dip). Phase A n=15: text1000 acc d -.0021 (se .0006, paired t -3.2, 1+/11-/3=) = SIGNIFICANT,
+  ~2 letters per 1000; fitness -.010 (inside the -.05 bar). Location: first quarter -.0035, q1 -.0043 (t -3.8), q2 -.0005, last quarter .0000;
+  log-loss unchanged (bits +.0007 ns). Same shape as fables (early argmax flips, gone later). R140 3-seed check had already shown -.0013.
+- PRE-REGISTRATION R144m (mechanism check, before running): S2 + P.lagEvid=3 (copy votes silent, recruitment unchanged) on text1000, k2960/2961/2962/2970/2971
+  (S2 d there -.002/-.007/-.005/-.003/-.005, mean -.0044), vs the cand results already in xreg. If the copy votes carry the text1000 dip:
+  lagEvid3 mean acc d within +-.0010 of cand (R142 fables: -.0003). If d stays <= -.0025, something else in S2 (lagDepth recruitment/pool) causes it.
+  Run by pausing the gate scheduler (SIGSTOP; its running children finish) so node jobs stay <= 3; resume with SIGCONT.
