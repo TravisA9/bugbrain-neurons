@@ -5005,3 +5005,8 @@ pass the gate on many letters. Arms (extremes first): G = D32 blur + lagGate 1 (
 Prediction: G <= S2 (-.043 or worse); S1 >= -.015; D8S2 between. A fix passes with fables mean fitness d >= -.010 vs candidate and no seed worse by > .03,
 plus probe >= .45 and book30k >= -.003 on the tune seeds; it is then confirmed on fresh seeds and cross-task. If G is not worse than S2 the hypothesis is refuted.
 book100k S2 (k2951/2953/2954) keeps the R140 pre-registration: >= -.003 each vs .523/.519/.5265.
+**R141 results.** book100k S2 vs R135 candidate: k2951 .5305 (+.0075), k2953 .529 (+.010) (pre-reg >= -.003 met; k2954 pending).
+fables4000 4x, fitness d vs candidate (k2951/2952/2953): S2 -.043, G (no surprise gate) -.088, S1 -.034, D8S2 -.018. Loss grows with copy firing (G worst);
+unsmoothed confidence (S1) does not fix it (prediction failed); no arm reaches >= -.010. Fresh seeds k2954-2956 S2: fitness -.008 (+.051/+.001/-.076),
+acc -.0030, bits -.020. Over 6 seeds: fitness -.0255 (2+/4-, within noise), accuracy -.0032 on 6/6 seeds, log-loss better on 5/6. The R140 look-back
+adds correct probability mass but flips a few argmax choices on short text. Candidate fix: evidence-scaled readout vote for copy detectors.

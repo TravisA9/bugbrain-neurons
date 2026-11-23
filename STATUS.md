@@ -570,3 +570,8 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   (run/r141/jobs_fab2.json -> run/r141/out/xf141b.jsonl). If the fresh-seed mean d >= -.010 fitness, the R140 loss is seed noise (report the 6-seed mean);
   if <= -.03 on >= 2/3 seeds, it is real -> next a code fix that scales a copy detector's readout vote by its evidence (self-calibrating, no constant).
   Secondary: bits (expect S2 lower, as on k2951-2953).
+- 10:20 R141b RESULTS (fresh seeds, S2 vs cand fables4000 4x): fitness d k2954 +.051, k2955 +.001, k2956 -.076 = -.008 (pre-reg ">= -.010 = noise" MET);
+  acc d -.001/-.003/-.005 (mean -.0030); bits -.054/-.026/+.021 (mean -.020, better). 6-seed: fitness -.0255 (sign 2+/4-), acc -.0032 (0+/6-), bits better 5/6.
+  Reading: the fitness loss is within seed noise, but a small accuracy cost (~13 of 4000 letters) is consistent on 6/6 seeds while log-loss improves:
+  copy detectors add correct probability mass yet flip a few argmax choices. Next fix candidate (not yet coded): scale a copy detector's readout vote by
+  its own evidence (hits / sightings lower bound) so young detectors cannot flip the argmax. book100k k2954 still running.
