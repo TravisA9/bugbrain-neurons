@@ -561,3 +561,12 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   probe k2956/2957, cross-task). If G is NOT worse than S2, H is refuted (the loss is not firing volume) -> look at lagDepth / readout instead (bisect D16).
   Jobs: run/r141/jobs_fab.json -> run/r141/out/xf141.jsonl (sw/reg.js, P=2, alongside the 2 book100k runs).
 - 09:49 book100k S2 4x: k2951 .5305 vs cand .523 (+.0075), k2953 .529 vs .519 (+.010). Pre-reg (>= -.003) MET on 2/2 so far; k2954 started 09:49 (vs .5265).
+- 10:10 R141a RESULTS (fables4000 4x fitness d vs cand, k2951/2952/2953; acc d mean): S2 -.034/-.078/-.017 = -.043 (acc -.0033);
+  G (no surprise gate) -.107/-.120/-.036 = -.088 (acc -.0063); S1 -.059/-.018/-.026 = -.034 (acc -.0037); D8S2 -.029/+.033/-.058 = -.018 (acc -.0017).
+  Prediction G <= S2: MET (loss grows with copy firing). Prediction S1 >= -.015: FAILED (smoothing is not the lever). No arm passes the fix gate (>= -.010).
+  Per quarter (acc d, S2): .000/+.002/-.008/-.006 -> loss is late in the life (when copy detectors exist), not early luck. Log-loss is BETTER with S2
+  (bits -.017; G -.019; D8S2 -.009): the copy detectors add correct probability mass but flip some argmax choices. The loss is ~13 letters/seed of 4000.
+- PRE-REGISTRATION R141b (before running): is the fables loss real beyond the 3 cross-task seeds? cand vs S2 fables4000 4x on fresh k2954/k2955/k2956
+  (run/r141/jobs_fab2.json -> run/r141/out/xf141b.jsonl). If the fresh-seed mean d >= -.010 fitness, the R140 loss is seed noise (report the 6-seed mean);
+  if <= -.03 on >= 2/3 seeds, it is real -> next a code fix that scales a copy detector's readout vote by its evidence (self-calibrating, no constant).
+  Secondary: bits (expect S2 lower, as on k2951-2953).
