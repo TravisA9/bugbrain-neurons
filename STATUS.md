@@ -688,3 +688,7 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   Cost estimate: A ~1 h, B ~3 h, C ~13-14 h of awake box time (32 book100k runs x ~75 CPU-min / 3); the box freezes when idle, so wall time can be longer.
   Starts after R143 (fables16k, name probe) and a test_core run with the new (off) granWord code.
 - 13:25 R143a partial (fables16000 S2 vs cand): 2951 fit +0.003 acc +0.0000 last +0.0000 bits -0.0100 0.794;2952 fit -0.020 acc -0.0030 last -0.0010 bits +0.0100 0.796;mean fit -0.0085 acc -0.0015 last -0.0005;
+- 13:34 R143a RESULT (fables16000, S2 vs cand, k2951/2952/2953 fit/acc): +.003/.000, -.020/-.003, -.013/-.002 = fit -.010, acc -.0017
+  (last quarter -.0007). vs fables4000 on the same seeds: acc -.0033, fit -.043. The cost halves with 4x more text (and is ~0 in the last quarter), but
+  -.0017 is just outside the pre-registered "startup" bound (<= .0015) and well inside "not startup" (<= -.003 not met): MOSTLY A STARTUP EFFECT.
+  Caveat: the fables corpus is 4270 letters, so 16k = ~3.7 passes (acc ~.79 = partly memorised text), not new prose.
