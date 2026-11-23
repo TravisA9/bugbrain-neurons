@@ -628,3 +628,6 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   detector of (current word, letter) fired. Fables4000 4x k2951-2953, same gate: fit mean d >= -.010 AND acc mean d >= -.001 vs cand.
   Prediction (from lagMarg 3 = -.045 and all-silent = .000): fables acc >= -.001. Risk: probe (filler 'words' may lack chunks) -> if fables passes,
   probe k2954/k2955 >= .45 and book30k k2954/k2955 >= cand - .003 (.5045/.484), then fresh seeds (fables k2954-2956, book30k + probe k2956/k2957).
+- 12:24 R142d partial: M4 fables k2951 +.007/.000, k2952 +.017/.000 (k2952 was the worst seed for S2: -.078/-.008).
+- 12:27 R142d fables RESULT: M4 +.007/.000, +.017/.000, -.022/-.003 = fit +.0007, acc -.0010 (bits +.013, worse). PASSES the fables gate (acc exactly at
+  the -.001 bound). Next per pre-reg: probe + book30k k2954/k2955 (run/r142/jobs_m4pb.txt, q2.sh P=2; test_core also running = 3 node jobs).
