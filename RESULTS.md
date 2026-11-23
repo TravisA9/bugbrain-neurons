@@ -4997,3 +4997,11 @@ Cross-task (4x, fitness mean S2 vs cand / accuracy): seqchoice order2 (8 seeds) 
 K4 (3) +.000 / +.000, text1000 (3) +.000 / -.0013 (.840/.840, .838/.835, .848/.847), fables4000 (3) -.043 / -.0033 (.438/.437, .440/.432, .441/.440).
 Passes the pre-registered bound (no task worse than -.05 fitness), but fables is close to it (-.043) and slightly worse on all 3 seeds. Seqchoice never engages
 the granule pool (identical by construction); on order3 the copy detectors recruit and fire (S2 3 rec / 77 fires; ungated D32 10 / 1497) without changing accuracy.
+
+## R141 — why the R140 winner loses on fables (and book100k confirm)
+**PRE-REGISTRATION (Nov 23, before any run).** fables4000 4x k2951/2952/2953; R140 S2 vs candidate -.043 fitness / -.0033 acc, worse on 3/3 seeds.
+Hypothesis: in a 4000-letter text most 3-letter contexts are rare, so the add-one smoothed confidence of lagSurp 2 stays low and far-back copy detectors
+pass the gate on many letters. Arms (extremes first): G = D32 blur + lagGate 1 (no surprise gate), S1 = + lagSurp 1 (unsmoothed), D8S2 = lagDepth 8 + lagSurp 2.
+Prediction: G <= S2 (-.043 or worse); S1 >= -.015; D8S2 between. A fix passes with fables mean fitness d >= -.010 vs candidate and no seed worse by > .03,
+plus probe >= .45 and book30k >= -.003 on the tune seeds; it is then confirmed on fresh seeds and cross-task. If G is not worse than S2 the hypothesis is refuted.
+book100k S2 (k2951/2953/2954) keeps the R140 pre-registration: >= -.003 each vs .523/.519/.5265.

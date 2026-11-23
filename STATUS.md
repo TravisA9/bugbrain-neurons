@@ -547,3 +547,16 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 16:27 R140 confirm: winner S2 probe k2957 .515 (5-8 .537, 9-16 .518, 17-31 .509). Step 1 done: probe holds on 4 seeds (.530/.508/.569/.515). Chain: cross-task next.
 - 16:50 R140 cross-task running (reg.js, 56 jobs). seqchoice order2/cycle identical cand vs S2 on all seeds: diag shows seqchoice never engages the granule pool; order3 recruits/fires copy detectors (S2 3 rec/77 fires) but acc unchanged .94. text/fables are the real test.
 - 17:00 R140 cross-task done: all tasks within the -.05 bound. fitness d: order2/cycle/order3/K4/text +.000, fables -.043 (acc .4397->.4363, worse on all 3 seeds). book100k S2 started k2951/k2953 (17:00), k2954 queued.
+
+# R141 (Nov 23, 09:55 CT): fables loss of the R140 winner + book100k confirm
+- State found: box was frozen, not rebooted. chain.sh resumed; book100k S2 k2951/k2953 (bookdiag, 100000) still running (~80 CPU-min at 09:50), k2954 queued by q2.sh. Pre-reg for them is the R140 one (>= -.003 each vs .523/.519/.5265).
+- PRE-REGISTRATION R141a (written before any run): fables4000 4x, k2951/2952/2953 (cand fitness/acc known from xr140; S2 -.043 fitness / -.0033 acc, worse on 3/3).
+  H: the loss comes from copy detectors passing the surprise gate in a short text: at 4000 letters most 3-letter contexts are seen a few times, so the
+  add-one smoothed confidence (lagSurp 2) is low almost everywhere and far-back detectors drive the readout on many letters.
+  Extremes first (Travis t131u): G = D32 blur + lagGate 1, no surprise gate (max firing); S1 = D32 blur + gate 1 + lagSurp 1 (unsmoothed confidence, quieter);
+  D8S2 = lagDepth 8 + blur + gate 1 + lagSurp 2 (short look-back, same gate).
+  Predictions: G fables d <= -.043 (worse or equal to S2); S1 d >= -.015; D8S2 between S1 and S2.
+  Pass for a fix: fables fitness mean d >= -.010 vs cand and no seed worse by > .03, with known tune results probe >= .45 and book30k >= -.003
+  (S1 already has probe .497/.485, book .000/-.0025). If H holds and S1 passes -> confirm S1 on fresh seeds (fables k2954-2956, book30k k2956/2957,
+  probe k2956/2957, cross-task). If G is NOT worse than S2, H is refuted (the loss is not firing volume) -> look at lagDepth / readout instead (bisect D16).
+  Jobs: run/r141/jobs_fab.json -> run/r141/out/xf141.jsonl (sw/reg.js, P=2, alongside the 2 book100k runs).
