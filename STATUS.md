@@ -658,3 +658,12 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   the copy register (<= 32 letters) cannot exploit the 4270-letter repeat), R140 S2 vs cand, 4x, k2951/2952/2953 (same seeds as fables4000:
   acc -.0033, fit -.043). Startup effect if the accuracy cost shrinks to |acc d| <= .0015 (less than half) at 16k; not startup if acc d <= -.003 again.
   Also compare lastQuarter acc d. Jobs run/r143/jobs_fab16.json -> run/r143/out/xf16.jsonl (sw/reg.js P=2).
+- R143b: built sw/nameprobe.js (standing prose name-recall probe). Book life of nSyms letters, then invented names (6-8 letters, CV pattern, none in the book,
+  each name used in exactly ONE passage) mentioned twice in prose: "<intro> NAME <book filler> NAME <tail>", gaps 5/15/31/61/127 letters, 10 names per gap
+  per set. Set ON = passages appended to the life (learning on); set OFF = after the life, plasticity frozen; different names. Teacher-forced argmax guesses.
+  Per mention: first (first letter), rest (letters 2..end, first letter given), exact (all of 2..end right). Recall = 2nd mention minus 1st mention (same
+  letters, no memory possible at the 1st). Alignment self-check (guess stream accuracy at shift -1/0/+1; smoke: shift 0 best in both sets).
+- PRE-REGISTRATION R143b (before the real runs): cand vs S2 at 4x after book30k, k2951/k2953 (run/r143/jobs_np.txt, run/r143/qnp.sh, one at a time).
+  Expectation: recall (rest2 - rest1) ~ 0 (|d| <= .03) and exact2 = 0 for BOTH arms at every gap, ON and OFF. S2's copy register reaches <= 32 letters back,
+  but its copy detectors need repeated sightings of a (far letter, current letter) key to be recruited and a one-shot name never repeats before the probe.
+  A recall gain >= .05 at gaps 5/15 for S2 only would contradict this.
