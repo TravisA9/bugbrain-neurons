@@ -623,3 +623,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   (bits -.010). FAILS and is WORSE than S2 (-.043/-.0033): hypothesis REFUTED. Copy votes in chunk windows help; the cost sits in windows with NO word
   chunk (word starts, new/rare words). No probe/book runs (pre-reg: only if fables passes). Candidate next extreme (not run): lagMarg 4 = copy votes ONLY
   in windows where the word chunk fired. test_core with lagMarg 1/2/3 running (sw/logs/tc142d.log).
+- 12:16 test_core ALL OK with lagMarg 0/1/2/3 (sw/logs/tc142d.log); 12:17 spikefoundry 10/10 PASS. Code committed (flags off by default).

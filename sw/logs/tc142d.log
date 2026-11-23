@@ -1,0 +1,84 @@
+environments: bug, cue, recall, text, seq, seqchoice, chunk, bandit | plans: v1, v2, v3, v3h, memory, memoryK, predictK, predictKL, predictK2, predictK2L, predictK2XL, predictK2XT, predictK2XN, predictK2XM, predictK2XS, predictK2XG, predictK2XO, predictK3, tiledK3x2w10, tiledK3x2w22, tiledK3x4w10, tiledK3x4w22, tiledK3x8w10, tiledK3x8w22, tiledK3x2f10, tiledK3x2f45, tiledK3x4f10, tiledK3x4f45, tiledK3x8f10, tiledK3x8f45, tiledK3x2, tiledK3x4, tiledK3x8, slowK3x2, deepK3x2, voteK3x2, slowK3x4, deepK3x4, voteK3x4, wordK3, wordK3nr, wordK3r10, rewardK, rewardMemK, rewardKR, rewardMemKR, rewardE, rewardE2, rewardE3, rewardE3ng, unifiedRv32, unifiedR, unifiedG, unifiedC, rewardED, deepURx2, deepURx3, deepURx4, deepURSx2, deepURSx3v34, deepURSx4, deepURSx6, deepURSx8, deepURSx3v35, deepURSx3v36, deepURSx3v37, deepURSx3v39, deepURSx3v40, deepURSx3v42, deepURSx3v43, deepURSx3v44, deepURSx3v45, deepURSx3v46, deepURSx3, wordChainx3, wordChainx4, slowCtxA, slowCtxB, slowCtxC, slowCtxB15, slowCtxB0, slowCtxB1, slowCtxN0, slowCtxA0, slowCtxC0, slowCtxA1, slowCtxC1, slowS98w0.5, slowS98w1, slowS98w2, slowS98w4, slowS98w8, slowS995w0.5, slowS995w1, slowS995w2, slowS995w4, slowS995w8, slowS999w0.5, slowS999w1, slowS999w2, slowS999w4, slowS999w8, deepURSx3_chunk
+bug       plan v3h: 33 in / 169 hidden / 3 out, 803 synapses; episode 300 ticks score 4.00 {"food":4,"poison":0,"caught":0,"stuck":0,"score":4}; 2 generations pop=6, champion 0.00; session + brain round trips ok
+cue       plan memoryK: 4 in / 105 hidden / 2 out, 1653 synapses; episode 157 ticks score 4.00 {"trials":4,"correct":4,"wrong":0,"silent":0,"pass":1,"delay":10}; 2 generations pop=6, champion 11.79; session + brain round trips ok
+recall    plan memoryK: 6 in / 105 hidden / 4 out, 1651 synapses; episode 157 ticks score 4.00 {"trials":4,"correct":4,"wrong":0,"silent":0,"pass":1,"delay":10}; 2 generations pop=6, champion 11.79; session + brain round trips ok
+text      plan v1: 20 in / 78 hidden / 19 out, 130 synapses; episode 240 ticks score 0.03 {"chars":60,"accuracy":0.03333333333333333,"bpc":4.254640457673482,"baseAcc":0.24553571428571427,"baseBpc":3.6131267231411686,"bigramAcc":0.5982142857142857,"bigramBpc":1.6143996545937558}; 2 generations pop=6, champion -0.14; session + brain round trips ok
+seq       plan predictK: 6 in / 249 hidden / 4 out, 6506 synapses; episode 160 ticks score 0.80 {"bF1":0,"bP":0,"bR":0,"bF1bigram":0,"symbols":20,"accuracy":0.8,"firstQuarter":0.2,"q1":1,"q2":1,"lastQuarter":1,"bits":0.7572708386174302,"chance":0.25,"optimal":1,"idealOnline":0.8,"idealLast":1,"optBits":0,"firstOrder":1,"bitsSoft":0.7385883786599178,"bitsCount":0.9969107531221433,"idealBits":0.9215365154442479}; 2 generations pop=2, champion 8.57; session + brain round trips ok
+seqchoice plan deepURSx3: 34 in / 1649 hidden / 6 out, 43156 synapses; episode 220 ticks score 0.15 {"bF1":0,"bP":0,"bR":0,"bF1bigram":0,"symbols":20,"accuracy":0.15,"firstQuarter":0,"q1":0.2,"q2":0,"lastQuarter":0.4,"bits":4.377276416781908,"chance":0.16666666666666666,"optimal":1,"idealOnline":0.45,"idealLast":0.8,"optBits":0,"firstOrder":0.75,"bitsSoft":2.6037692640868038,"bitsCount":2.847750341988564,"idealBits":1.9903677461028806}; 2 generations pop=1, champion 4.75; session + brain round trips ok
+chunk     plan deepURSx3: 47 in / 1580 hidden / 2 out, 21907 synapses; episode 220 ticks score 0.43 {"bF1":0.42857142857142855,"bP":0.3,"bR":0.75,"bF1bigram":0,"symbols":20,"accuracy":0.35,"firstQuarter":0.2,"q1":0.6,"q2":0.2,"lastQuarter":0.4,"bits":3.8648281245810976,"chance":0.05263157894736842,"optimal":0.5982142857142857,"idealOnline":0.3,"idealLast":0.6,"optBits":1.6143996545937558,"firstOrder":0.5982142857142857,"unigram":0.24553571428571427,"bitsSoft":3.5714029536423753,"bitsCount":3.2320189710227063,"idealBits":3.624779967227677,"unigramBits":3.6131267231411686}; 2 generations pop=1, champion 2.00; session + brain round trips ok
+bandit    plan unifiedR: 12 in / 292 hidden / 3 out, 12474 synapses; episode 137 ticks score 6.00 {"trials":8,"optimal":0.75,"firstQuarter":0.5,"lastQuarter":0.5,"blockLate":0.75,"rewardRate":0.75,"silent":1,"chance":0.3333333333333333,"refOptimal":0.5,"refLate":0.5,"refLastQuarter":0.5}; 2 generations pop=2, champion 5.72; session + brain round trips ok
+legacy (non-cellular) session / brain rejected: ok
+(legacy/v6 not found: v6 compatibility check skipped)
+(legacy/v7 not found: v7 compatibility check skipped)
+memoryK cue K=2: pass 1.00
+memoryK recall K=4: pass 1.00
+memoryK recall K=8: pass 1.00
+hunger: orphan motors in 3 growths: v3 3, v3h 0: ok
+(legacy/v8 not found: v8 compatibility check skipped)
+seq cycle K=6: last-quarter accuracy 1.00 (plasticity off: 0.17): ok
+seq order2 K=6 (predictK2): last-quarter accuracy 1.00 (first-order limit 0.75): ok
+seq text (predictK2XN, 300 chars): last-quarter accuracy 0.55 (unigram 0.25), calibrated 2.81 bits: ok
+seq text (predictK2XM, 300 chars): 358 mixing cells, last-quarter accuracy 0.61: ok
+seq text (predictK2XG, 300 chars): last-quarter accuracy 0.64; predictK2XS grows 1497 cells, no mixing layer: ok
+seq teachAHP: 1 echo predictions in 120 symbols; display renders: ok
+growth recorder passive (identical W / thresh / leak with and without recording) for 4 default plans; DevModel builds: ok
+XO (clawOwn): previous-symbol memory right in 115/115 slots (24 symbols); fables + order3 sources: ok
+rewardE (v26): bandit 1.00, cue random 1.00: ok
+reward learning (v20): bandit last quarter 0.72 (frozen 0.28), cue random mapping 0.83 (frozen 0.23): ok
+v21: predictK3 order3 last quarter 1.00 (M3 tract cut 0.83), regions grow / save / mutate, rewardKR bandit 0.85: ok
+v22 unified rule: seq order3 last quarter 0.88 (instructive), bandit last quarter 1.00 (RPE): ok
+v27 demand: 6-arm output coverage 0.67 -> 0.88, off-switch bit-identical: ok
+v28 need-growth (reduced text brain): 420 layer cells removed, 64 recruited, 0 pruned, 64 alive (cap 64), error 0.84: ok
+v31 unifiedR reward area = rewardE2: ok
+v32 unifiedR mixed-task areal rule: ok
+v33 unifiedR striatum = rewardE3: ok
+v34 deepURSx3 default (deep context, outcome-repressed): ok
+v35 deepURSx3v35 + hybrid prediction-miss LTD (predErr 0.3, peMode 16, peFix 0.01): ok
+v36 deepURSx3v36 (predErr 0, metaCap 200) + seq graded decoder readIn 0.01: ok
+v37 deepURSx3 = v36 + cortex lr 0.1 + striatum predErr 0.3: ok
+v38 fast engine default: ok
+v41 deepURSx3 granule layer: ok
+v42 granRef 600: ok
+v43 granule layer 4000: ok
+v44 granule layer 8000 Kmix34: ok
+v45 granule layer 16000: ok
+v46 granule layer 32000: ok
+v47 granule step schedule: ok
+v39 deepURSx3v39 = v37 + cortex lr 0.2: ok
+v40 deepURSx3 = v39 + cortex preNorm 55: ok
+R71 size-scaling genes off by default, neutral values bit-identical: ok
+R72 postsynaptic cap / convergence limit off by default: ok
+R102 granDemand (off by default): born 12/12 (fired 546), recycle 56 at cap 3: ok
+I106 bit-identical event-driven granule forward & lazy threshold homeostasis: ok
+scaleInvariant=1 across 1x/2x/4x (N=3691/7179/16274, score=0.969/0.963/0.950): ok
+R123 relGrowth: bit-identical at 1x, 1.2x score 0.963 with 0 silent inputs: ok
+R126 fanInBudget: no-op at 1x, context in-region fan-in 1x 25.6, 2x 42.8 -> 25.9: ok
+R127 pathBudget: no-op at 1x, 35 pathways, max in-degree ratio 2x/1x off 3.12 -> on 1.17: ok
+R128 fateSnap/colInh: no-ops at 1x; columns without inhibition at 2x off 0/16 -> colInh=3 0/16: ok
+R129 rgDiv: no-op at 1x; columns without inhibition at 2x 0/16: ok
+granUtility=1 (grown claws=1011, rewired=7/32 over 240 events): ok
+deepURSx3_chunk two-timescale gating (186 shifts, score 0.480): ok
+R118 readoutRule: off bit-identical (score 0.979, 4089579 spikes), threeFactor learns (score 0.979): ok
+R119 granExact: off bit-identical (score 0.512), on: 1320 exact spikes, 144 recruits, score 0.508: ok
+R120 granExactGuard: off bit-identical, guard-only = granExact (no trigger), guard 3 score 0.508 (dedup 0); denseCeil on: 3071 cells, 308 raised, score 0.492: ok
+R121 granKal: off bit-identical (score 0.508), on: score 0.508: ok
+R121 granOneShot: off bit-identical, 0.05+kal score 0.508: ok
+R122 granFatigue: off bit-identical: ok
+R124 lagHomeo (negative, kept off): off bit-identical, on score 0.508: ok
+R125 lagWTA: off bit-identical, on score 0.508: ok
+R132 granNeg: off bit-identical, on: 5445 negative weights, score 0.508: ok
+R132 granKalLTD: off bit-identical, on (+oneShot 1) score 0.517: ok
+R133 granTrace: off bit-identical, on score 0.508: ok
+R134 granChunk: off bit-identical, on: 173 chunk recruits, score 0.508: ok
+R134 granDeep: off bit-identical, on K 5, score 0.508: ok
+R135 granChunkGate: off bit-identical, on 152 gated, 59 recruits, score 0.508; granScale pool 256 -> 512: ok
+R136 granPhrase/granGrow: off bit-identical, on 186 phrase recruits, pool 256 -> 433 (cap 768), score 0.508: ok
+R137 granCat: off bit-identical, on 5/5 categories, 9 detectors, score 0.508: ok
+R138 granL2: off bit-identical, 1x no L2 pool -> no phrases; L2N 128: 128 phrase detectors in the L2 pool, score 0.508; granEvGrow: 11 growths, pool 256 -> 302: ok
+R142 lagEvid: off bit-identical; 1 silences 397 (fires 521 vs 918), 0.5 weights 397, 2 weights 397, 3 fires 0: ok
+R142b lagMarg: off bit-identical; 1 blocks 514 (fires 523 vs 918), 2 blocks 199, 3 defers 620: ok
+R140 lagDepth: off bit-identical; D16 48 recruits 1150 fires score 0.508; blur 37 recruits 2347 fires score 0.508: ok
+R131 anSize: off bit-identical, 1x no-op, 2x noise x 1.414 (score 0.475 -> 0.583): ok
+R131 anSelf: off bit-identical, on score 0.458: ok
+ALL OK
+EXIT 0

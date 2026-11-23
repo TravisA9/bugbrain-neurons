@@ -5010,3 +5010,12 @@ fables4000 4x, fitness d vs candidate (k2951/2952/2953): S2 -.043, G (no surpris
 unsmoothed confidence (S1) does not fix it (prediction failed); no arm reaches >= -.010. Fresh seeds k2954-2956 S2: fitness -.008 (+.051/+.001/-.076),
 acc -.0030, bits -.020. Over 6 seeds: fitness -.0255 (2+/4-, within noise), accuracy -.0032 on 6/6 seeds, log-loss better on 5/6. The R140 look-back
 adds correct probability mass but flips a few argmax choices on short text. Candidate fix: evidence-scaled readout vote for copy detectors.
+**R140 book100k confirm (complete).** S2 vs R135 candidate: k2951 .5305 (+.0075), k2953 .529 (+.010), k2954 .524 (-.0025): 3/3 within >= -.003, mean +.005.
+## R142 — fixing the fables cost of the R140 copy votes (P.lagEvid, P.lagMarg; off by default, bit-identical)
+fables4000 4x vs R135 candidate (k2951/2952/2953, fitness / accuracy mean d; S2 = R140 winner -.043 / -.0033):
+lagEvid 1 (silence copy detectors whose 1-sigma lower bound does not beat the short-context confidence) -.036 / -.0017; lagEvid 2 (graded, rate-coded) -.041 / -.0030;
+lagEvid 3 (diagnostic: all copy votes silent, recruitment unchanged) .000 / -.0003; lagMarg 1 (no vote against a leading 3-letter first choice) -.016 / -.0023;
+lagMarg 2 (lead > 1 sigma) -.040 / -.0033; lagMarg 3 (copy silent when the word chunk fired) -.045 / -.0047. All fail the pre-registered gate (>= -.010 / >= -.001).
+lagEvid 1: probe k2954 .5302 (= S2, half the fires), book30k k2954 .502 (-.0025). Reading: the cost is the copy votes (lagEvid 3), not their evidence;
+a third of it is votes against a clear 3-letter first choice; the rest is in windows without a word chunk (word starts, rare words), where copy votes in
+chunk windows actually help (lagMarg 3 is worse). Next extreme: copy votes only in chunk windows (lagMarg 4).
