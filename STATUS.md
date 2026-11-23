@@ -619,3 +619,7 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   (word context known -> it outranks the far copy; self-calibrating, no constant). Fables k2951-2953: pass = fit >= -.010 and acc >= -.001.
   Prediction: acc >= -.001 (close to E3). Risk: the probe (chunks may exist for filler words) -> then probe k2954/k2955 must stay >= .45 and book30k >= -.003.
   Run with P=1 (another agent's sw/standing_gen.js is running; max 3 node jobs incl. test_core).
+- 12:08 R142c RESULTS (lagMarg 3, copy defers to word chunks; fables vs cand k2951/2952/2953 fit/acc): -.023/-.003, -.058/-.008, -.055/-.003 = -.045 / -.0047
+  (bits -.010). FAILS and is WORSE than S2 (-.043/-.0033): hypothesis REFUTED. Copy votes in chunk windows help; the cost sits in windows with NO word
+  chunk (word starts, new/rare words). No probe/book runs (pre-reg: only if fables passes). Candidate next extreme (not run): lagMarg 4 = copy votes ONLY
+  in windows where the word chunk fired. test_core with lagMarg 1/2/3 running (sw/logs/tc142d.log).
