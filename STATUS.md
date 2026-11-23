@@ -635,3 +635,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   lagMarg 3 never deferred (the R142c result above was run with the earlier, correct lagMarg 3 code, so it stands); lagMarg 4 as run silenced copies only when
   no owned chunk detector matched (fired === false), not when one was owned but had not fired (0). Fixed (xf === 1). Check: rerun M4 fables k2951 with the
   fix; if identical to the run above, the two definitions coincide in practice (an owned chunk detector always fires in its window) and the M4 results stand.
+- 12:39 equivalence check: M4 fables k2951 with the fix = identical stats to the original run (4.636, all stats equal). M4 results stand. test_core rerun with the fix started.
