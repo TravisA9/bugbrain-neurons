@@ -718,3 +718,6 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   (S2 d there -.002/-.007/-.005/-.003/-.005, mean -.0044), vs the cand results already in xreg. If the copy votes carry the text1000 dip:
   lagEvid3 mean acc d within +-.0010 of cand (R142 fables: -.0003). If d stays <= -.0025, something else in S2 (lagDepth recruitment/pool) causes it.
   Run by pausing the gate scheduler (SIGSTOP; its running children finish) so node jobs stay <= 3; resume with SIGCONT.
+- 15:02 R144m RESULT: S2 + lagEvid 3 on text1000 k2960/61/62/70/71 = cand EXACTLY on every seed (acc, q1, bits, fitness d .0000), vs S2 d -.0044 on the
+  same seeds. The text1000 dip is carried entirely by the copy votes (same mechanism as fables; silencing them restores cand bit-for-bit here).
+  Gate paused 14:57-15:01 for this (node jobs stayed <= 3); resumed, 64/96 phase A results, now order3/K4/sc_* (4 seeds).
