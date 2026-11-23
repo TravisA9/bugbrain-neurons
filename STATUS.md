@@ -601,3 +601,13 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   Stopped E1 probe k2955 / book k2955 (decision made). Kept E1 book30k k2954 (is the halved firing free on book?). test_core: run with the fix was OOM-killed
   (EXIT 137, 4 node jobs running); rerun alone 11:18. spikefoundry 10/10 PASS (11:15).
 - 11:18 E1 book30k k2954 .502 vs cand .5045 (-.0025; S2 .505). 11:34 test_core ALL OK with lagEvid 0/1/0.5/2/3 (sw/logs/tc142c.log, run alone); spikefoundry 10/10 PASS.
+
+# R142b (Nov 23, 11:40 CT): copy votes that never overrule the short context's first choice (P.lagMarg)
+- Choice (vs entropy-scaled votes): E1/E2 showed rate-scaling the votes barely matters; E3 shows the cost is votes that flip the argmax. So act on the flip directly.
+  P.lagMarg (default 0 = off, bit-identical, no RNG; needs lagSurp): from the short-context counts after the last 3 letters (first choice mT with count m1,
+  runner-up m2), a copy detector predicting x != mT is silent in this window when the first choice leads: lagMarg 1 = any strict lead (m1 > m2);
+  lagMarg 2 = lead beyond 1 sigma (m1 - m2 > sqrt(m1 + m2), self-calibrating). Votes FOR mT, and votes in unseen / tied contexts, are unchanged.
+- PRE-REGISTRATION (before any run): extremes M1 (strict) and M2 (1-sigma) on fables4000 4x k2951-2953 (S2 fit -.043 / acc -.0033 vs cand).
+  Pass: fit mean d >= -.010 AND acc mean d >= -.001; then probe >= .45 (k2954/k2955) and book30k >= cand - .003 (.5045/.484); confirm on fresh seeds
+  (fables k2954-2956, book30k + probe k2956/k2957). Prediction: M1 fables acc >= -.001 (flips gone), probe .40-.53 (probe contexts are mostly unseen/tied,
+  so copy votes survive); M2 between S2 and M1 on fables, probe ~ S2. If M1 passes fables but loses the probe, bisect the lead threshold between M1 and M2.
