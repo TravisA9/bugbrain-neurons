@@ -652,3 +652,9 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   look-back (lagDepth 32 + lagBlur 1 + lagGate 1 + lagSurp 2) into the promotion gate: 16 fresh growths with paired book100k + probe, with fables4000
   tracked (stop rule: fables accuracy cost > .005 or fitness < -.05). Cheap side test first: fables at longer length (e.g. 16k letters, 3 seeds): if the cost
   shrinks with more text, it is a short-text startup effect. Promotion still needs Travis's call because "no task worse" read strictly flags fables accuracy.
+
+# R143 (Nov 23, 13:15 CT): (1) is the fables cost a startup effect? (2) a standing prose name-recall probe
+- PRE-REGISTRATION R143a (before any run): fables at 16000 letters (the fables corpus is only 4270 characters, so 16k = ~3.7 passes from a random start;
+  the copy register (<= 32 letters) cannot exploit the 4270-letter repeat), R140 S2 vs cand, 4x, k2951/2952/2953 (same seeds as fables4000:
+  acc -.0033, fit -.043). Startup effect if the accuracy cost shrinks to |acc d| <= .0015 (less than half) at 16k; not startup if acc d <= -.003 again.
+  Also compare lastQuarter acc d. Jobs run/r143/jobs_fab16.json -> run/r143/out/xf16.jsonl (sw/reg.js P=2).
