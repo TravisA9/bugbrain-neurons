@@ -81,18 +81,20 @@ Synthetic pilots (Sections 7–13) follow the same two stages: screen on 8 paire
 | Branch | Owner | State (Nov 23, 2026) |
 |---|---|---|
 | `travis/sunday-wip` @ `1bf24be6` | Codex | Pilots in Sections 6–13 (`run/*_pilot.js`). v47 default; priorities end at R116. |
-| `cursor/relgrowth` | Grok Bot (BrainBot) | Origin at `7e20a207` (R135). Later commits are **local on the box** (`/workspace/sweep`, branch `relgrowth`) and travel by git bundle through TacoBell (`relgrowth.bundle`). |
+| `cursor/relgrowth` | Grok Bot (BrainBot) | Origin at `7e20a207` (R135). Later commits are kept on the box (`/workspace/sweep`, branch `relgrowth`) and reach origin by git bundle through TacoBell (`relgrowth.bundle`). |
 
 Local `cursor/relgrowth` commits after `7e20a207` (main ones; plus result/STATUS commits):
 
 - `eade7c41`, `ab4dd26d` R136 granPhrase / granGrow (negative)
 - `821bc6c7` R137 granCat (refuted); R138 granL2 / granL2N / granEvGrow
 - `d230ee0e`, `ad054de1` R138 results (L2 adds nothing; 8× gain = doubled pool)
-- `b216b780`, `9048f391` R139 (8× = 4× + 128k pool)
-- `e1f8e11a` R140 lagDepth / lagBlur + probe `sw/lagprobe140.js`
-- `501e983f` lagCtx; `8685b45e`, `95cb8344` lagGate 1/2; `d82bb34c`, `3607184c`, `5a938ed6` lagPrune / lagSurp (1, 0<v<1, 2)
-- `dad68f6b`, `9095b179` R140 winner + confirm pre-registration; `114f045f` cross-task results
-- `99e7672c` R141 pre-registration; and the commit adding this file
+- `b216b780`, `be1df939` R139 (8× = 4× + 128k pool)
+- `a76a5d7b` R140 lagDepth / lagBlur + probe `sw/lagprobe140.js`
+- `780cad49` lagCtx; `f581b40d`, `c6d82aaf` lagGate 1/2; `e0078f3a`, `9deab80d`, `bbbb1106` lagPrune / lagSurp (1, 0<v<1, 2)
+- `6cb1de7a`, `844ad4ef` R140 winner + confirm pre-registration; `83b5610b` cross-task results
+- `55006920` R141 pre-registration; `203c5edc` this file; `73a309e1` R141 results
+
+**History note (Nov 23, 2026).** Before the first push of these commits, the 63 raw `sw/out` dumps over 1 MB (fde_\*, ft_\*, sp_\*; ~450 MB) were stripped from every commit after `7e20a207` with `git filter-branch --index-filter` (approved by Travis). Trees are otherwise identical; commit IDs from R139 on changed (the IDs above are the new ones). The old head is tagged `pre-strip` (`8c225f7b`) on the box only. Guard: `.githooks/pre-commit` refuses `sw/out` files over 1 MB (`git config core.hooksPath .githooks`), and `.gitignore` excludes `sw/out/fde_*`, `ft_*`, `sp_*`.
 
 **Merge note.** Each agent commits only to its own branch. The two branches change different files (Codex: new `run/*_pilot.js` scripts and docs; BrainBot: opt-in flags in `js/core/net.js`, `base.js`, `develop.js`, tests in `test_core.js`, tools under `run/` and `sw/`). Merge `cursor/relgrowth` into `travis/sunday-wip` (or both into a new integration branch) only after both sides' `node test_core.js` ALL OK and SpikeFoundry pass on the merged tree, and record the merge commit in the Handoff Log. Shared docs (`RESULTS.md`, `PRIORITIES.md`, this file) are append-only per agent to keep merges trivial. Never force-push another agent's branch.
 
@@ -335,7 +337,7 @@ Run with --density-control pickup.json. Only 6.58% of decisions received pickup-
 ### Session Handoff Log — Grok Bot (BrainBot)
 
 * **Agent & Timestamp:** Grok Bot (BrainBot) | Nov 23, 2026, ~10 AM CT
-* **Workspace / Commit / Branch:** `/workspace/sweep` (box clone of `worker/`) | Commit: see `git log` (this file's commit, after `99e7672c`) | Branch: `cursor/relgrowth` (local `relgrowth`; origin at `7e20a207`)
+* **Workspace / Commit / Branch:** `/workspace/sweep` (box clone of `worker/`) | Commit: see `git log` (this file's commit, after `55006920`) | Branch: `cursor/relgrowth` (local `relgrowth`; origin at `7e20a207`)
 * **Objective & Hypothesis:**
   * *Objective:* Longer context, toward a memory level that allows intelligent interaction (Travis t127u), with one self-calibrating setting that does not hurt any task.
   * *Hypothesis (R141, pre-registered in `RESULTS.md`):* the R140 winner's fables loss comes from far-back copy detectors passing the smoothed surprise gate in a short (4,000-letter) text. Prediction: no gate is worse than S2; unsmoothed lagSurp 1 is within −.015 fitness. A fix passes at fables d ≥ −.010 with probe ≥ .45 and book30k ≥ −.003.

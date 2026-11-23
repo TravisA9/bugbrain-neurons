@@ -1,0 +1,5 @@
+#!/bin/sh
+# Size guard (Nov 23, 2026): refuse staged files over 1 MB under sw/out (raw event dumps). Enable with: git config core.hooksPath .githooks
+big=$(git diff --cached --name-only --diff-filter=AM -- sw/out | while read f; do s=$(git cat-file -s ":$f" 2>/dev/null || echo 0); [ "$s" -gt 1048576 ] && echo "$f ($s bytes)"; done)
+if [ -n "$big" ]; then echo "pre-commit: sw/out files over 1 MB are raw dumps; keep them out of git:"; echo "$big"; exit 1; fi
+exit 0

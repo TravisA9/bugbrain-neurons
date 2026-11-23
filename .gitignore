@@ -39,3 +39,9 @@ corpus/raw/
 
 # Compute Lab: per-install schema stamp
 hosting/computelab/private/schema.stamp*
+
+# Raw event / feature dumps from sw/ tools (fde_*, ft_*, sp_*) are large (1-65 MB): never commit them.
+# Only small score JSONs (< 1 MB) go in git; .githooks/pre-commit enforces this (git config core.hooksPath .githooks).
+sw/out/fde_*.json
+sw/out/ft_*.json
+sw/out/sp_*.json
