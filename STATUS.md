@@ -667,3 +667,10 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   Expectation: recall (rest2 - rest1) ~ 0 (|d| <= .03) and exact2 = 0 for BOTH arms at every gap, ON and OFF. S2's copy register reaches <= 32 letters back,
   but its copy detectors need repeated sightings of a (far letter, current letter) key to be recruited and a one-shot name never repeats before the probe.
   A recall gain >= .05 at gaps 5/15 for S2 only would contradict this.
+- 13:15 PROPOSAL (mechanism for prose name recall) + small flag written (not yet tested): P.granWord. Diagnosis: the chunk detector recruited at the 1st
+  mention is keyed (previous word, partial word, letter), e.g. "named|so|r"; at the 2nd mention the previous word differs ("cap|so|r"), so the one-shot
+  detector cannot fire again. The R140 copy register is positional (far letter at lag d + current letter) and needs repeated sightings. granWord adds a
+  word-start key (partial word, letter) WITHOUT the previous word ('W' + p + '|' + c), recruited/fired exactly like chunk keys (same gate, pool, one-shot /
+  granTrace readout). An invented name seen once leaves detectors "so|r", "sor|i", ... bound one-shot to the next letter; they fire again at the 2nd mention
+  after any word. Expected reach: letters 3+ of the name (prefixes of 2+ letters are specific); limited by the readout trace decay and pool pressure
+  (risk as in R136: extra keys crowd the pool at book100k). Off = bit-identical (test_core block added; to run when a node slot frees).
