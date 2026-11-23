@@ -692,3 +692,9 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   (last quarter -.0007). vs fables4000 on the same seeds: acc -.0033, fit -.043. The cost halves with 4x more text (and is ~0 in the last quarter), but
   -.0017 is just outside the pre-registered "startup" bound (<= .0015) and well inside "not startup" (<= -.003 not met): MOSTLY A STARTUP EFFECT.
   Caveat: the fables corpus is 4270 letters, so 16k = ~3.7 passes (acc ~.79 = partly memorised text), not new prose.
+- 13:36 R143b first result (cand 4x book30k k2951): LEARNING ON, letters 2..end (first letter given): 1st mention .05-.19 -> 2nd mention .64-.69 at EVERY gap
+  (5/15/31/61/127); exact whole-name 0/10 per gap; first letter ~0 (unknowable). LEARNING FROZEN: no recall (.03-.11 both mentions).
+  Pre-registration (~0 for both arms) REFUTED for the learning-on condition: the 4x candidate already recalls one-shot names in prose, through one-shot
+  learning of exact letter-tuple granules (granOneShot/granTrace; no previous-word key needed), not through the copy register. With plasticity frozen there is
+  no recall by construction (the memory IS the plasticity). The 1x result in standing/STANDING.md (0/20 learning on) differs: different size / settings, to check.
+  -> granWord (word-start keys) is less needed than proposed; kept as an untested off flag. Recall is per-letter, not whole-name (exact 0).
