@@ -687,3 +687,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   Prediction: book100k mean d +.003..+.006 with 1-4 seeds below -.003 (R140 confirm: +.0075/+.010/-.0025); probe .50-.57 on all; fables acc d ~-.003.
   Cost estimate: A ~1 h, B ~3 h, C ~13-14 h of awake box time (32 book100k runs x ~75 CPU-min / 3); the box freezes when idle, so wall time can be longer.
   Starts after R143 (fables16k, name probe) and a test_core run with the new (off) granWord code.
+- 13:25 R143a partial (fables16000 S2 vs cand): 2951 fit +0.003 acc +0.0000 last +0.0000 bits -0.0100 0.794;2952 fit -0.020 acc -0.0030 last -0.0010 bits +0.0100 0.796;mean fit -0.0085 acc -0.0015 last -0.0005;
