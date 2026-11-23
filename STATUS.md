@@ -594,3 +594,10 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   test_core with the first version ALL OK (10:55); re-running with the fix. Running: E3 + E2b fables (run/r142/jobs_fab2.json -> run/r142/out/xf142b.jsonl).
 - 10:59 book100k S2 4x k2954 .524 vs cand .5265 (-.0025): passes (>= .5235). R140 book100k confirm COMPLETE: +.0075/+.010/-.0025 (mean +.005), 3/3 within the pre-reg.
 - 11:07 R142 E3 (every copy vote silent, recruitment unchanged) fables k2951 +.015/.000, k2952 +.003/.000: no loss -> the fables cost IS the copy votes (not recruitment / register).
+- 11:17 R142 RESULTS (fables4000 4x vs cand, k2951/2952/2953, fit / acc): E1 (weak silent) -.036 / -.0017; E2b (graded, fixed) -.028/-.060/-.034 = -.041 / -.0030;
+  E3 (all copy votes silent) +.015/+.003/-.018 = .000 / -.0003. Probe E1 k2954 .5302 = S2 .5302 exactly with 52k fires vs 120k.
+  VERDICT: evidence weighting FAILS the fables gate (pre-reg: fit >= -.010 and acc >= -.001); prediction (E1 acc ~0) failed. E3 proves the loss is the votes,
+  but it comes from detectors with good evidence too (silencing the weak half changes little). No bisection (pre-reg: only if E1 fixed fables).
+  Stopped E1 probe k2955 / book k2955 (decision made). Kept E1 book30k k2954 (is the halved firing free on book?). test_core: run with the fix was OOM-killed
+  (EXIT 137, 4 node jobs running); rerun alone 11:18. spikefoundry 10/10 PASS (11:15).
+- 11:18 E1 book30k k2954 .502 vs cand .5045 (-.0025; S2 .505). 11:34 test_core ALL OK with lagEvid 0/1/0.5/2/3 (sw/logs/tc142c.log, run alone); spikefoundry 10/10 PASS.
