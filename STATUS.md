@@ -575,3 +575,16 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   Reading: the fitness loss is within seed noise, but a small accuracy cost (~13 of 4000 letters) is consistent on 6/6 seeds while log-loss improves:
   copy detectors add correct probability mass yet flip a few argmax choices. Next fix candidate (not yet coded): scale a copy detector's readout vote by
   its own evidence (hits / sightings lower bound) so young detectors cannot flip the argmax. book100k k2954 still running.
+
+# R142 (Nov 23, 10:35 CT): evidence-weighted vote for far-back copy detectors (P.lagEvid)
+- History: unpushed commits after 7e20a207 stripped of 63 raw sw/out dumps > 1 MB (Travis approved, t136u); old head tagged pre-strip (8c225f7b);
+  new head b0e789cc pushed to origin cursor/relgrowth (fast-forward from 7e20a207). Size guard: .githooks/pre-commit + .gitignore.
+- Flag P.lagEvid (default 0 = off, bit-identical, no RNG). Applies to copy detectors that pass the lagSurp gate (pp = (h+1)/(n+2) > cf).
+  Evidence = lower bound lb = pp - sqrt(pp (1-pp) / (n+2)). Strong (lb > cf): full vote (held all window). Weak: vote weight w, rate-coded = held on a
+  fraction w of the window's substeps (deterministic accumulator). lagEvid 1: w = 0 (weak detectors silent); 0 < v < 1: w = v; 2: w = (lb - cf) / (pp - cf) clipped to [0,1].
+- PRE-REGISTRATION R142 (before any run). Base = R140 winner S2. Extremes first: E1 (w = 0) and E2 (graded); bisect (v = 0.5, ...) only if E1 fixes fables
+  but loses the probe. Tune: fables4000 4x k2951-2953 (S2 fitness -.043, acc -.0033 vs cand); probe + book30k 4x k2954/k2955 (S2 .530/.508, book .505/.483; cand book .5045/.484).
+  Pass: fables fitness mean d >= -.010 AND acc mean d >= -.001 vs cand; probe >= .45 on both; book30k >= cand - .003 on both.
+  Prediction: E1 fables acc d ~ -.001..+.001 (most of the cost gone), probe .42-.50 (young detectors silenced costs some copy hits); E2 between S2 and E1.
+  Confirm a passing arm on fresh seeds: fables k2954-2956 (cand known), book30k + probe k2956/k2957, then cross-task.
+  Jobs: run/r142/jobs_fab.json -> run/r142/out/xf142.jsonl; run/r142/jobs_pb.txt (q2.sh, P=2 with the running book100k).
