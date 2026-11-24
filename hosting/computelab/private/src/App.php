@@ -1989,6 +1989,123 @@ final class App
         return array_map(static fn ($body) => json_decode($body, true)['research'], $rows);
     }
 
+    /* Explore demos whose replay files may be served. Ids are fixed here; file names come only from a
+     * validated manifest, never from the request. */
+    public const EXPLORE_REPLAYS = ['read', 'name', 'copy'];
+    public const EXPLORE_MANIFEST_BYTES = 65536;
+    public const EXPLORE_REPLAY_BYTES = 524288;
+
+    public function exploreDir(): string
+    {
+        return (string) ($this->config['explore_dir'] ?? dirname(__DIR__) . '/explore');
+    }
+
+    /* The promoted top design for the Explore tab (private/explore/design.json, schema 2), with the arena
+     * champion attached. Any read, size, parse or field problem falls back to the arena champion alone, so a
+     * bad manifest can never blank the page. */
+    public function topDesign(): array
+    {
+        $champion = $this->arenaChampion();
+        $fallback = ['schema' => 1, 'version' => 'fallback', 'arena' => ['plan' => 'v3h', 'physics' => 'standard'],
+            'replays' => new stdClass(), 'champion' => $champion];
+        $manifest = $this->exploreManifest();
+        if ($manifest === null) {
+            return $fallback;
+        }
+        $manifest['champion'] = $champion;
+        if (!$manifest['replays']) {
+            $manifest['replays'] = new stdClass();
+        }
+        return $manifest;
+    }
+
+    /* The validated manifest, or null. */
+    public function exploreManifest(): ?array
+    {
+        $file = $this->exploreDir() . '/design.json';
+        if (!is_file($file) || !is_readable($file)) {
+            return null;
+        }
+        $size = filesize($file);
+        if ($size === false || $size <= 0 || $size > self::EXPLORE_MANIFEST_BYTES) {
+            return null;
+        }
+        $data = json_decode((string) file_get_contents($file), true);
+        if (!is_array($data) || ($data['schema'] ?? null) !== 2) {
+            return null;
+        }
+        $version = $data['version'] ?? null;
+        if (!is_string($version) || !preg_match('/^[A-Za-z0-9._-]{1,40}$/', $version)) {
+            return null;
+        }
+        $updated = $data['updated'] ?? '';
+        $commit = $data['commit'] ?? '';
+        if (!is_string($updated) || !preg_match('/^(\d{4}-\d{2}-\d{2})?$/', $updated)
+            || !is_string($commit) || !preg_match('/^[0-9a-f]{0,40}$/', $commit)) {
+            return null;
+        }
+        $text = $data['text'] ?? [];
+        if (!is_array($text)) {
+            return null;
+        }
+        foreach (['plan', 'size'] as $key) {
+            if (isset($text[$key]) && (!is_string($text[$key]) || !preg_match('/^[A-Za-z0-9_-]{1,40}$/', $text[$key]))) {
+                return null;
+            }
+        }
+        foreach (['variant', 'liveVariant'] as $key) {
+            if (isset($text[$key]) && (!is_string($text[$key]) || !preg_match('/^[A-Za-z0-9.@=,|_-]{0,2000}$/', $text[$key]))) {
+                return null;
+            }
+        }
+        $arena = $data['arena'] ?? ['plan' => 'v3h', 'physics' => 'standard'];
+        if (!is_array($arena) || !is_string($arena['plan'] ?? null) || !preg_match('/^[A-Za-z0-9_-]{1,40}$/', $arena['plan'])
+            || !in_array($arena['physics'] ?? 'standard', ['standard', 'sota'], true)) {
+            return null;
+        }
+        $replays = [];
+        foreach ((array) ($data['replays'] ?? []) as $id => $entry) {
+            if (!in_array($id, self::EXPLORE_REPLAYS, true) || !is_array($entry)) {
+                return null;
+            }
+            $name = $entry['file'] ?? '';
+            $hash = $entry['sha256'] ?? '';
+            if (!is_string($name) || !preg_match('/^[a-z0-9-]{1,60}\.json$/', $name)
+                || !is_string($hash) || !preg_match('/^[0-9a-f]{64}$/', $hash)) {
+                return null;
+            }
+            $status = $entry['status'] ?? 'top';
+            $design = $entry['design'] ?? $version;
+            if (!in_array($status, ['top', 'testing'], true) || !is_string($design) || !preg_match('/^[A-Za-z0-9._-]{1,40}$/', $design)) {
+                return null;
+            }
+            $replays[$id] = ['file' => $name, 'sha256' => $hash, 'design' => $design, 'status' => $status];
+        }
+        return ['schema' => 2, 'version' => $version, 'updated' => $updated, 'commit' => $commit,
+            'text' => array_intersect_key($text, array_flip(['plan', 'variant', 'size', 'liveVariant'])),
+            'arena' => ['plan' => $arena['plan'], 'physics' => $arena['physics'] ?? 'standard'], 'replays' => $replays];
+    }
+
+    /* One replay for the Explore tab: ['path', 'etag'] for a whitelisted id named in a valid manifest, else null. */
+    public function exploreReplay(string $id): ?array
+    {
+        if (!in_array($id, self::EXPLORE_REPLAYS, true)) {
+            return null;
+        }
+        $manifest = $this->exploreManifest();
+        $entry = $manifest['replays'][$id] ?? null;
+        if (!is_array($entry)) {
+            return null;
+        }
+        $file = $this->exploreDir() . '/' . $entry['file'];
+        $size = is_file($file) ? filesize($file) : false;
+        if ($size === false || $size <= 0 || $size > self::EXPLORE_REPLAY_BYTES
+            || !hash_equals($entry['sha256'], (string) hash_file('sha256', $file))) {
+            return null;
+        }
+        return ['path' => $file, 'etag' => '"' . $manifest['version'] . '-' . $id . '-' . substr($entry['sha256'], 0, 16) . '"'];
+    }
+
     public function arenaChampion(): array
     {
         $best = ['id' => 'v3h', 'change' => null];

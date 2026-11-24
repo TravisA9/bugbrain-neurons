@@ -1,3 +1,4 @@
+/* bugbrain.js built by tools/build_bugbrain_bundle.js from commit b0e789cc3f15e6e358bc4b4a3b8d81633113f9f3 (b0e789cc3f15e6e358bc4b4a3b8d81633113f9f3); js/core/base.js, js/core/io.js, js/core/develop.js, js/core/regions.js, js/core/plans.js, js/core/net.js, js/core/files.js, js/core/agent.js, js/core/evolve.js, js/envs/bug.js, js/envs/memory.js, js/envs/text.js, js/envs/sequence.js, js/envs/seqchoice.js, js/envs/bandit.js, js/envs/reward_evolved.js + hosting/computelab/private/bugbrain-view.js; body sha256 0e94537374303592bb5b347633ddad8df1242ec07dc01d6b8b4bc5c6412f64ca */
 /* =====================================================================
  * SPIKING ARENA ENGINE — base.js (no DOM, no task knowledge)
  * Utilities, engine parameters, the network container ("direct genome")
@@ -72,6 +73,58 @@ const params = {
   granUtility: 0,
   // Unified intensive scale-invariance (0 = off, bit-identical): when sizeF > 1, normalizes trophic survival, cone/division speed, tract fan-in, inhibitory receiver budget, mixing pool inhibition, and 1x-equivalent fan-in learning rate
   scaleInvariant: 0,
+  // R123 relGrowth (0 = off, bit-identical): relative growth rules for sized regions: trophic survival vs fair share (relGrowthAlpha, default 0.5),
+  //   GRN reads the fixed morphogens on the 1x lattice below 2.25x, ceil cone speed, mixing inhibition x 1x pool / pool. See develop.js / net.js.
+  // R124 lagHomeo (0 = off, bit-identical): self-calibrated lag-source activity homeostat (target: one active letter column per lag source per window), see net.js
+  lagHomeo: 0, lagHomeoMax: 0, lagHomeoCol: 0,
+  // R125 lagWTA (0 = off, bit-identical): k-winner-take-all per lag source per read window on the lag-cell -> granule claw hits (first k columns to fire), see net.js
+  lagWTA: 0,
+  // R131 anSize (0 = off, bit-identical): action-channel exploration noise (pl.actNoise) x sqrt(sizeF) in a brain grown with sizeF > 1 (largest region
+  //   size factor; 1x unchanged). R131: at size the arm pools start more unequal (first-trial output share max/mean 1x ~1.9-3.2, 2x up to 5.0), the same noise
+  //   explores too little and arms die (never chosen, never credited); seqchoice order2 rd2rb16 4x -.53 -> +.34 vs 1x.
+  anSize: 0,
+  // R131 anSelf (0 = off, bit-identical): self-calibrated exploration, noise x sqrt(max/mean recent output rate) (net.js anSelfF; anSelfTau substeps, default 4000)
+  anSelf: 0, anSelfTau: 4000,
+  // R132 granNeg (0 = off, bit-identical): signed granule readout in granKalStep, weights in [-granNeg x wMax, wMax] (negative result on book, kept off)
+  granNeg: 0,
+  // R132 granKalLTD (0 = off, bit-identical): granKal's experience-weighted split for false alarms too (net.js granKalStep); negative on book30k, kept off
+  granKalLTD: 0,
+  // R133 granTrace (0 = off, bit-identical): fast one-shot trace on the granule readout, gated by granKal experience (net.js granTraceStep)
+  granTrace: 0,
+  // R134 granChunk (0 = off, bit-identical): word-context chunk detectors in the granule pool (net.js guChunkEvent / guChunkFire)
+  granChunk: 0,
+  granDeep: 0,   // R134: 1 = claw lag depth = delay-line length (one more source per extra region, cls 2); 0 = fixed 4 sources
+  // R135: granChunkGate 1 = recruit a chunk detector only on the 2nd sighting of its key (bit sketch sized 32 x pool); granScale r = granule pool x max(1, sizeF / r); 0 = off, bit-identical
+  granChunkGate: 0,
+  granScale: 0,
+  // R136: granPhrase 1 = second-level phrase detectors (word before last, last word, partial, letter); granGrow f > 1 = pool cap f x granN, grown on demand by the pressure gate (granChunkGate 2); 0 = off, bit-identical
+  granPhrase: 0,
+  granGrow: 0,
+  // R137 granCat f > 0: second level of learned word categories (competitive prototypes of continuation profiles), Kmax = f x pool / 1000; 0 = off, bit-identical
+  granCat: 0,
+  // R138 granL2 b > 0: second-level units (granPhrase / granCat keys) get their own pool of granN x max(0, sizeF - b) / granScale cells (no claws), appended
+  // after the level-1 pool, which keeps the R135 size computed with sizeF capped at b; the readout reads both. granL2N n > 0: L2 pool = n cells (overrides the
+  // size rule; needs granL2 > 0). granEvGrow 1: with granGrow, a recruit that would evict a used level-1 detector adds an unborn slot instead. 0 = off, bit-identical
+  granL2: 0,
+  granL2N: 0,
+  granEvGrow: 0,
+  // R140 lagDepth D > 4: long-lag copy detectors keyed (current letter, far lag 4..D-1, letter) on a symbol-level delay register (net.js guLagEvent); lagBlur 1 = far lag blurred to octave bins. 0 = off, bit-identical
+  lagDepth: 0,
+  lagBlur: 0,
+  lagGate: 0,   // R140: 1 = recruit copy detectors only when the key's far letter predicts the arriving letter better than the short context (net.js guLagGate)
+  lagPrune: 0, lagSurp: 0,   // R140: use-time gating of copy detectors: prune when the running hit rate falls below the bigram reference / fire only when the short context is less confident (net.js guLagUse)
+  lagCtx: 0,   // R140: copy keys carry the last lagCtx letters (0/1 = current letter only)
+  // R126 fanInBudget (0 = off, bit-identical): sized regions keep each cell type's 1x mean in-region fan-in (strongest inputs), see develop.js
+  fanInBudget: 0,
+  // R127 pathBudget (0 = off, bit-identical): sized regions keep each (post type, presyn type, sign) pathway at its 1x mean in-degree, random (hash) selection, see develop.js
+  pathBudget: 0,
+  // R128 fateSnap (0 = off, bit-identical): with relGrowth, cell fates read the 1x-lattice morphogens at every size (R123 (b) applied only below 2.25x), see develop.js
+  fateSnap: 0,
+  // R128 colInh (0 = off, bit-identical; needs pathBudget): 1 = a column with no inhibitory afferents gets the nearest interneurons added (v1); 2 = dedicated reset interneurons moved from neighbouring columns (v2); 3 = v2 also for columns below half the 1x inhibitory in-degree, see develop.js
+  colInh: 0,
+  // R129 rgDiv (0 = off, bit-identical): with relGrowth, division reach scales with the lattice (1), plus divisions per step ~ log2 size (2), see develop.js
+  rgDiv: 0,
+  relGrowth: 0, relGrowthAlpha: 0, relGrowthOff: 0,   // relGrowthOff: diagnostic bitmask disabling parts (1 trophic, 2 lattice, 4 cone, 8 mixing)
   plasticity: true,    // lifetime learning (reward-modulated STDP); false = frozen genome weights
   cellStart: 'env',    // a new population starts from mutants of this body plan ('env' = the environment's default)
   cellMut: 0.02,       // chance per genome number to mutate
@@ -585,11 +638,9 @@ function migrateCell(d) {
 function cloneCell(d) {
   if (d.kind === 'regions') return cloneRegions(d);   // v21: multi-region genome (core/regions.js)
   d = migrateCell(d);
-  const out = { kind: 'cell', seed: d.seed, Wg: d.Wg.slice(), R: d.R.slice(), lam: d.lam.slice(), seeds: d.seeds.map(p => p.slice()),
+  return { kind: 'cell', seed: d.seed, Wg: d.Wg.slice(), R: d.R.slice(), lam: d.lam.slice(), seeds: d.seeds.map(p => p.slice()),
            s0: d.s0.slice(), sc: Object.assign(cellDefaults(), d.sc), pl: cleanPl(d.pl), nCh: d.nCh || 1,
            ch: (d.ch || [defaultChannel()]).map(c => Object.assign({}, c)), label: d.label || '', fitness: null };
-  if (d.sotaBug) out.sotaBug = true;
-  return out;
 }
 function cellParamCount(d) { if (d.kind === 'regions') return d.regions.reduce((s, R) => s + cellParamCount(R.g), 0); return d.Wg.length + d.R.length + d.lam.length + d.seeds.length * 2 + d.s0.length + Object.keys(CELL_SC).length + Object.keys(PL_DEFAULTS).length + d.nCh * 6; }
 function createRandomCellGenome(r) {
@@ -651,20 +702,35 @@ function growCell(d, opts) {
   //   instead of the raw gene. A region whose gene is < 1 (striatum 0.5) moves 1 site per step at 1x; without this its scaled speed stays
   //   round(0.5 x sqrt f) = 1 site on a sqrt(f) x finer grid up to f ~ 5, so axons reach 1 / sqrt(f) as far and the output-projecting cells lose
   //   all afferents (afferent survival kills them: seqchoice outputs orphaned at striatum sizeF >= 1.5, R76).
-  if (sc.sizeF > 1) { const q = Math.sqrt(sc.sizeF), si = params.scaleInvariant > 0 || sc.scaleInvariant > 0; sc.grid = (sc.grid > 24.5 ? sc.grid : CG) * q; sc.maxCells *= sc.sizeF; sc.coneSpeed = (params.sizeCone > 0 || si) ? Math.ceil(Math.max(1, Math.round(sc.coneSpeed || 1)) * q - 1e-9) : (sc.coneSpeed || 1) * q; sc.axonLen *= q; if (si) { sc.trophMin /= sc.sizeF; sc.divRep = Math.max(sc.divRep || 1, Math.ceil(Math.log2(sc.sizeF))); sc.divReach = Math.max(sc.divReach || 1, Math.ceil(q - 1e-9)); } }
+  // R123 relGrowth (global P.relGrowth = 1; 0 / unset = off, bit-identical, no RNG change): RELATIVE growth rules for sized regions (sizeF > 1):
+  //   (a) trophic survival: a neuron below the absolute sc.trophMin still survives if it gets >= relGrowthAlpha (0.5) x its FAIR share
+  //       sum_t supply_t / n_t (n_t = inputs of target t), so equal-weight afferents of a big target no longer all die at once (R123 sweep: the 2.5x-4x collapse);
+  //   (b) while the grid is < 1.5 x the 1x grid (sizeF < 2.25) the GRN reads the fixed morphogen fields at the centre of the 1x site each fine site
+  //       lies in, so a fate stripe one 1x row thick can never fall between fine rows (R123 sweep: 1.05-1.7x unwired clock inputs, K4 1.2x 0.00);
+  //       growth-cone guidance always keeps the smooth fields; at >= 1.5 rows per 1x row a stripe cannot vanish and snapping only cost (3x K8 0.80 vs 0.88);
+  //   (c) growth-cone speed as sizeCone (ceil); (d) mixing feedforward inhibition per spike x 1x pool / pool (net.js, as scaleInvariant).
+  //   P.relGrowthOff (diagnostic bitmask, 0 = all parts on): 1 trophic, 2 1x-lattice morphogens, 4 cone speed, 8 mixing inhibition.
+  const rgOff = params.relGrowthOff | 0, rgOn = params.relGrowth > 0 && sc.sizeF > 1, rgT = rgOn && !(rgOff & 1), rgL = rgOn && !(rgOff & 2), grid1 = sc.grid > 24.5 ? Math.round(sc.grid) : CG;
+  if (sc.sizeF > 1) { const q = Math.sqrt(sc.sizeF), si = params.scaleInvariant > 0 || sc.scaleInvariant > 0, rgC = params.relGrowth > 0 && !(rgOff & 4); sc.grid = (sc.grid > 24.5 ? sc.grid : CG) * q; sc.maxCells *= sc.sizeF; sc.coneSpeed = (params.sizeCone > 0 || si || rgC) ? Math.ceil(Math.max(1, Math.round(sc.coneSpeed || 1)) * q - 1e-9) : (sc.coneSpeed || 1) * q; sc.axonLen *= q; if (si) { sc.trophMin /= sc.sizeF; sc.divRep = Math.max(sc.divRep || 1, Math.ceil(Math.log2(sc.sizeF))); sc.divReach = Math.max(sc.divReach || 1, Math.ceil(q - 1e-9)); }
+    if (params.rgDiv > 0 && params.relGrowth > 0) { sc.divReach = Math.max(sc.divReach || 1, Math.ceil(q - 1e-9)); if (params.rgDiv >= 2) sc.divRep = Math.max(sc.divRep || 1, Math.ceil(Math.log2(sc.sizeF))); } }   // R129 rgDiv (global, 0 = off, bit-identical): clones spread the same PHYSICAL distance per developmental step at any size (division reach ~ lattice refinement; 2: also divisions per step ~ log2 size), so late edge territory is not fated differently (R128: edge columns lost their interneurons at 4x)
   const GS = sc.grid > 24.5 ? Math.round(sc.grid) : CG, h = 2 / GS, NS = GS * GS, H = CH_H;
   const sx = i => -1 + (i + 0.5) * h, cidx = v => clamp(Math.floor((v + 1) / h), 0, GS - 1);
   // fixed morphogen fields (analytic steady state of diffusion + decay from the sources)
+  const gL = grid1, snap = rgL && (GS < 1.5 * grid1 || params.fateSnap > 0), h1 = 2 / gL, s1 = v => -1 + (Math.min(gL - 1, Math.max(0, Math.floor((v + 1) / h1))) + 0.5) * h1;   // R123 relGrowth (b): centre of the nested-lattice site   // R128 fateSnap (global, 0 = off, bit-identical): (b) at every size (cell fates read the 1x-lattice morphogens; edge fate stripes, e.g. a column's interneurons, cannot fall off the region)
   const lam = d.lam, chem = Array.from({ length: CH_NCHEM }, () => new Float32Array(NS));
   const eyes = spec.cueSources, motors = OUT.map(o => o.pos);
-  for (let j = 0; j < GS; j++) for (let i = 0; i < GS; i++) {
-    const x = sx(i), y = sx(j), q = j * GS + i;
-    chem[0][q] = Math.exp(-Math.abs(x) / lam[0]);
-    chem[1][q] = Math.exp(-(1 - y) / lam[1]);
-    let e = 0; for (const p of eyes) e = Math.max(e, Math.exp(-Math.hypot(x - p[0], y - p[1]) / lam[2])); chem[2][q] = e;
-    let m = 0; for (const p of motors) m = Math.max(m, Math.exp(-Math.hypot(x - p[0], y - p[1]) / lam[3])); chem[3][q] = m;
-    chem[6][q] = Math.exp(-Math.abs(y - Y_CENTRAL) / lam[6]);
-  }
+  const fixedAt = (F, x, y, q) => {
+    F[0][q] = Math.exp(-Math.abs(x) / lam[0]);
+    F[1][q] = Math.exp(-(1 - y) / lam[1]);
+    let e = 0; for (const p of eyes) e = Math.max(e, Math.exp(-Math.hypot(x - p[0], y - p[1]) / lam[2])); F[2][q] = e;
+    let m = 0; for (const p of motors) m = Math.max(m, Math.exp(-Math.hypot(x - p[0], y - p[1]) / lam[3])); F[3][q] = m;
+    F[6][q] = Math.exp(-Math.abs(y - Y_CENTRAL) / lam[6]);
+  };
+  for (let j = 0; j < GS; j++) for (let i = 0; i < GS; i++) fixedAt(chem, sx(i), sx(j), j * GS + i);
+  // R123 relGrowth (b): the GRN (fate) reads the fixed fields on the 1x lattice; growth cones keep the smooth fine fields (snapping them too
+  // flattened the guidance gradients: 3x / 4x seed 11 0.81 / 0.79 vs 0.96)
+  const chemG = snap ? chem.map((a, k) => [0, 1, 2, 3, 6].includes(k) ? new Float32Array(NS) : a) : chem;
+  if (snap) for (let j = 0; j < GS; j++) for (let i = 0; i < GS; i++) fixedAt(chemG, s1(sx(i)), s1(sx(j)), j * GS + i);
   if (rec) rec.fixedChem = [0, 1, 2, 3, 6].map(k => Float32Array.from(chem[k]));
   const coneSpeed = Math.max(1, Math.round(sc.coneSpeed || 1));   // v11: growth-cone steps per developmental step (fine grids: same distances in the same time)
   const difBuf = new Float32Array(NS), srcBuf = new Float32Array(NS), Dif = 0.2, kDec = [4, 5].map(c => Dif * (h / lam[c]) ** 2);
@@ -688,7 +754,7 @@ function growCell(d, opts) {
   const u = new Float32Array(CH_NIN), sNew = new Float32Array(H), Wg = d.Wg, R = d.R, nRO = Math.min(CH_NO, Math.floor(R.length / (H + 1)));   // (older genomes: missing outputs stay 0 = off)
   const express = (c, tf) => {
     const q = c.j * GS + c.i;
-    for (let k = 0; k < CH_NCHEM; k++) u[k] = Math.min(2, chem[k][q]);
+    for (let k = 0; k < CH_NCHEM; k++) u[k] = Math.min(2, chemG[k][q]);
     for (let k = 0; k < H; k++) u[CH_NCHEM + k] = c.s[k];
     u[CH_NCHEM + H] = tf; u[CH_NCHEM + H + 1] = 1;
     for (let g = 0; g < H; g++) { let a = 0; const o = g * CH_NIN; for (let k = 0; k < CH_NIN; k++) a += Wg[o + k] * u[k]; sNew[g] = Math.tanh(a); }
@@ -988,7 +1054,7 @@ function growCell(d, opts) {
   // 4. neurotrophic competition
   let trophicDeaths = 0;
   if (params.cellTrophic) {
-    const tro = new Map();
+    const tro = new Map(); let fair = null;
     for (let it = 0; it < 4; it++) {
       const supply = new Map(); for (let m = 0; m < nOut; m++) supply.set('m' + m, 1);
       for (const [id, v] of tro) supply.set(id, 0.7 * v + sc.trophHid);   // hidden targets give some factor too (gene trophHid)
@@ -997,9 +1063,12 @@ function growCell(d, opts) {
       for (const s of live) if (s.pre >= 0) inSum.set(s.post, (inSum.get(s.post) || 0) + Math.abs(s.w));
       const nt = new Map(); for (const c of neurons) nt.set(c.id, 0);
       for (const s of live) if (s.pre >= 0 && supply.has(s.post)) nt.set(s.pre, nt.get(s.pre) + supply.get(s.post) * Math.abs(s.w) / inSum.get(s.post));
+      if (rgT && it === 3) { const nIn_ = new Map(); for (const s of live) if (s.pre >= 0) nIn_.set(s.post, (nIn_.get(s.post) || 0) + 1);   // R123 relGrowth (a): fair share
+        fair = new Map(); for (const s of live) if (s.pre >= 0 && supply.has(s.post)) fair.set(s.pre, (fair.get(s.pre) || 0) + supply.get(s.post) / nIn_.get(s.post)); }
       tro.clear(); for (const [k, v] of nt) tro.set(k, v);
     }
-    for (const c of neurons) if (tro.get(c.id) < sc.trophMin) { kill(c, T + 1, 'trophic'); trophicDeaths++; }   // (t: recorder timeline only)
+    const rgA = params.relGrowthAlpha > 0 ? params.relGrowthAlpha : 0.5;
+    for (const c of neurons) if (tro.get(c.id) < sc.trophMin && !(fair && tro.get(c.id) >= rgA * (fair.get(c.id) || 0) && fair.has(c.id))) { kill(c, T + 1, 'trophic'); trophicDeaths++; }   // (t: recorder timeline only)
     neurons = neurons.filter(c => c.alive);
     { const b = live; live = live.filter(s => (s.pre < 0 || cells[s.pre].alive) && (typeof s.post !== 'number' || cells[s.post].alive)); markGone(b, live, T + 1, 4); }
   }
@@ -1021,6 +1090,84 @@ function growCell(d, opts) {
     const a = s.pre < 0 ? -1 - s.pre : idx.get(s.pre), b = nodeOf(s.post);
     if (a == null || b == null || a === b) continue;
     const q = a * N + b; g.W[q] += s.w; if (s.plastic) g.P[q] = 1;
+  }
+  // R126 fanInBudget (global P.fanInBudget = 1; 0 / unset = off, bit-identical, no RNG; acts only on regions with sizeF > 1): a SIZE-INDEPENDENT
+  //   afferent budget. A 1x reference growth of the same genome and seed (sizeF 1) gives each hidden cell type t its mean in-region fan-in B_t at this
+  //   stage (synapses placed, before normE / normI and the juvenile phase). Here, if the type's mean n_t > B_t, every cell of the type keeps only its
+  //   strongest (largest |w|) ceil(n_i x B_t / n_t) inputs of each sign (excitatory and inhibitory budgets separate; proportional cut: type mean ~ B_t); normE / normI then
+  //   re-normalise the kept inputs. Tracts and granule claws (regions.js) are not touched. (R123 RATIOS: sheet fan-in grows ~N^1.3 otherwise.)
+  if (opts.__fanRef || (params.fanInBudget > 0 && sc.sizeF > 1)) {   // (excitatory and inhibitory inputs are budgeted separately: one pooled |w| ranking dropped every inhibitory input, R126 v1)
+    const h0 = nIn, h1 = nIn + neurons.length, fanE = new Int32Array(N), fanI = new Int32Array(N), byT = new Map();
+    for (let b2 = h0; b2 < h1; b2++) { let ne = 0, ni = 0; for (let a2 = 0; a2 < h1; a2++) { const w = g.W[a2 * N + b2]; if (w > 0) ne++; else if (w < 0) ni++; } fanE[b2] = ne; fanI[b2] = ni;
+      const t = g.cellType[b2], e = byT.get(t) || [0, 0, 0]; e[0] += ne; e[1] += ni; e[2]++; byT.set(t, e); }
+    if (opts.__fanRef) opts.__fanRef.B = new Map([...byT].map(([t, e]) => [t, [e[0] / e[2], e[1] / e[2]]]));
+    else { const o1 = { seed: opts.seed, spec, __fanRef: {} }; growCell(Object.assign({}, d, { sc: Object.assign({}, d.sc, { sizeF: 1 }) }), o1); const B = o1.__fanRef.B; let cut = 0;
+      for (let b2 = h0; b2 < h1; b2++) { const t = g.cellType[b2], e = byT.get(t), Bt = B.get(t); if (!Bt) continue;
+        for (let sg = 0; sg < 2; sg++) { const n = sg ? fanI[b2] : fanE[b2], mean = e[sg] / e[2], Bs = Bt[sg]; if (!(Bs > 0) || !(mean > Bs)) continue;
+          const keep = Math.ceil(n * Bs / mean); if (keep >= n) continue; const L = [];
+          for (let a2 = 0; a2 < h1; a2++) { const w = g.W[a2 * N + b2]; if (sg ? w < 0 : w > 0) L.push(a2); }
+          L.sort((x, y) => Math.abs(g.W[y * N + b2]) - Math.abs(g.W[x * N + b2]) || x - y);
+          for (let k = keep; k < L.length; k++) { const q = L[k] * N + b2; g.W[q] = 0; g.P[q] = 0; if (g.C) g.C[q] = 0; cut++; } } }
+      g.fanCut = cut; }
+  }
+  // R127 pathBudget (global P.pathBudget = 1; 0 / unset = off, bit-identical, no RNG; acts only on regions with sizeF > 1): SIZE-INDEPENDENT fan-in PER
+  //   AFFERENT PATHWAY. A pathway = (presynaptic hidden cell type, sign) into a postsynaptic cell type (e.g. letter column -> lag column = feed-forward,
+  //   lag column -> lag column = own-column recurrence, other in-region types, inhibitory types). A 1x reference growth of the same genome and seed (sizeF 1)
+  //   gives each (post type, pathway) its mean count B. Here every cell keeps ceil(n_i x B / mean) inputs of each pathway whose type mean exceeds B, chosen
+  //   at RANDOM within the pathway by a deterministic hash of (seed, pre, post) (no RNG stream used; never by weight: R126b showed weights carry a fixed
+  //   genome margin, so ranking by |w| deletes whole pathways). Env (sensory) inputs, tracts and granule claws are not touched. normE / normI follow.
+  if (opts.__pathRef || (params.pathBudget > 0 && sc.sizeF > 1)) {
+    const h0 = nIn, h1 = nIn + neurons.length, key = (a2, w) => g.cellType[a2] * 2 + (w < 0 ? 1 : 0), cnt = new Map(), byT = new Map();   // cnt: post cell -> Map(path -> n)
+    for (let b2 = h0; b2 < h1; b2++) { const m = new Map(); for (let a2 = h0; a2 < h1; a2++) { const w = g.W[a2 * N + b2]; if (w !== 0) { const k = key(a2, w); m.set(k, (m.get(k) || 0) + 1); } } cnt.set(b2, m);
+      const t = g.cellType[b2]; let e = byT.get(t); if (!e) byT.set(t, e = { n: 0, s: new Map() }); e.n++; for (const [k, v] of m) e.s.set(k, (e.s.get(k) || 0) + v); }
+    const mean = new Map(); for (const [t, e] of byT) { const mm = new Map(); for (const [k, v] of e.s) mm.set(k, v / e.n); mean.set(t, mm); }
+    if (opts.__pathRef) opts.__pathRef.B = mean;
+    else { const o1 = { seed: opts.seed, spec, __pathRef: {} }; growCell(Object.assign({}, d, { sc: Object.assign({}, d.sc, { sizeF: 1 }) }), o1); const B = o1.__pathRef.B; let cut = 0;
+      const sd = (opts.seed | 0) ^ 0x5bd1e995, hsh = (a2, b2) => { let h = Math.imul(sd ^ Math.imul(a2 + 1, 0x9e3779b1), 0x85ebca6b) ^ Math.imul(b2 + 1, 0xc2b2ae35); h ^= h >>> 15; h = Math.imul(h, 0x27d4eb2f); return (h ^ (h >>> 13)) >>> 0; };
+      const st = {};
+      for (let b2 = h0; b2 < h1; b2++) { const t = g.cellType[b2], Bt = B.get(t), Mt = mean.get(t); if (!Bt) continue;
+        for (const [k, n] of cnt.get(b2)) { const Bk = Bt.get(k) || 0, mk = Mt.get(k); if (!(mk > Bk) || !(Bk > 0)) continue;   // (pathways absent at 1x are left as grown)
+          const keep = Math.ceil(n * Bk / mk); if (keep >= n) continue; const L = [];
+          for (let a2 = h0; a2 < h1; a2++) { const w = g.W[a2 * N + b2]; if (w !== 0 && key(a2, w) === k) L.push(a2); }
+          L.sort((x, y) => hsh(x, b2) - hsh(y, b2) || x - y);
+          for (let q2 = keep; q2 < L.length; q2++) { const q = L[q2] * N + b2; g.W[q] = 0; g.P[q] = 0; if (g.C) g.C[q] = 0; cut++; } } }
+      g.pathCut = cut;
+      // R128 colInh (global P.colInh = 1, needs pathBudget; 0 = off, bit-identical, no RNG; sizeF > 1 only): every column keeps its inhibitory loop.
+      //   A column = the cells of one type with one topo label. If a column of type T grew NO inhibitory afferents while T has inhibitory pathways at 1x
+      //   (R127: edge columns at 4x can fall outside the interneuron stripe), its cells get the 1x mean count of each inhibitory pathway J -> T from the
+      //   nearest cells of type J, and those J cells get the 1x mean count of T -> J excitatory inputs from the column (deterministic: nearest first,
+      //   index tie-break); new weights = this brain's mean weight of the pathway. normE / normI follow.
+      if (params.colInh > 0 && g.topo) { const cols = new Map(); let added = 0;
+        for (let b2 = h0; b2 < h1; b2++) { const tp = g.topo[b2]; if (tp !== tp) continue; const k = g.cellType[b2] + ':' + Math.round(tp * 1e4); if (!cols.has(k)) cols.set(k, []); cols.get(k).push(b2); }
+        const meanW = (pre, post, neg) => { let s2 = 0, n2 = 0; for (let a2 = h0; a2 < h1; a2++) { if (g.cellType[a2] !== pre) continue; for (let b2 = h0; b2 < h1; b2++) { if (g.cellType[b2] !== post) continue; const w = g.W[a2 * N + b2]; if (neg ? w < 0 : w > 0) { s2 += w; n2++; } } } return n2 ? s2 / n2 : 0; };
+        const mwC = new Map(), mw = (pre, post, neg) => { const k = pre + ',' + post + ',' + neg; if (!mwC.has(k)) mwC.set(k, meanW(pre, post, neg)); return mwC.get(k); };
+        const colOf = new Map(); for (const [k, C] of cols) for (const b2 of C) colOf.set(b2, k);
+        const home = (a2, T) => { const c = new Map(); for (let b3 = h0; b3 < h1; b3++) if (g.cellType[b3] === T && g.W[b3 * N + a2] > 0 && colOf.has(b3)) { const k = colOf.get(b3); c.set(k, (c.get(k) || 0) + 1); } let bk = null, bn = 0; for (const [k, n] of c) if (n > bn) { bn = n; bk = k; } return bk; };
+        for (const [ck, C] of cols) { const T = g.cellType[C[0]], Bt = B.get(T); if (!Bt) continue; let nI = 0; const have = new Set(); for (const b2 of C) for (let a2 = h0; a2 < h1; a2++) if (g.W[a2 * N + b2] < 0) { nI++; have.add(a2); }
+          let bI = 0; for (const [k, Bk] of Bt) if (k & 1) bI += Bk;
+          if (params.colInh >= 3 ? nI >= 0.5 * bI * C.length : nI > 0) continue;   // v3: also columns with less than half the 1x inhibitory in-degree (partial orphans); existing interneurons are kept
+          if (params.colInh >= 2) {   // v2: DEDICATED reset interneurons, moved from neighbouring columns (each donor keeps >= half of its own)
+            let cx = 0, cy = 0; for (const b2 of C) { cx += g.pos[b2][0]; cy += g.pos[b2][1]; } cx /= C.length; cy /= C.length;
+            for (const [k, Bk] of Bt) { if (!(k & 1) || !(Bk > 0)) continue; const J = k >> 1; let hJ = 0; for (const a2 of have) if (g.cellType[a2] === J) hJ++; const K = params.colInh >= 3 ? Math.max(0, Math.round(Bk) - hJ) : Math.max(1, Math.round(Bk)); if (!K) continue;
+              const cand = []; for (let a2 = h0; a2 < h1; a2++) if (g.cellType[a2] === J) cand.push(a2); cand.sort((x, y) => Math.hypot(g.pos[x][0] - cx, g.pos[x][1] - cy) - Math.hypot(g.pos[y][0] - cx, g.pos[y][1] - cy) || x - y);
+              const hc = new Map(); for (const a2 of cand) { const hk = home(a2, T); if (hk != null) hc.set(hk, (hc.get(hk) || 0) + 1); }
+              const taken = new Map(), pick = [];
+              for (const a2 of cand) { if (pick.length >= K) break; const hk = home(a2, T); if (hk == null || hk === ck || have.has(a2)) continue; const t2 = taken.get(hk) || 0; if (t2 + 1 > Math.floor((hc.get(hk) || 0) / 2)) continue; taken.set(hk, t2 + 1); pick.push(a2); }
+              for (const a2 of pick) { const eW = []; for (let b3 = h0; b3 < h1; b3++) if (g.cellType[b3] === T) { const q = b3 * N + a2; if (g.W[q] > 0) { eW.push(g.W[q]); g.W[q] = 0; g.P[q] = 0; if (g.C) g.C[q] = 0; } }
+                let iS = 0, iN = 0; for (let b2 = h0; b2 < h1; b2++) if (g.cellType[b2] === T) { const q = a2 * N + b2; if (g.W[q] < 0) { iS += g.W[q]; iN++; g.W[q] = 0; g.P[q] = 0; if (g.C) g.C[q] = 0; } }
+                const wI = iN ? iS / iN : mw(J, T, true), wE = eW.length ? eW.reduce((u, v) => u + v, 0) / eW.length : mw(T, J, false);
+                const src2 = C.slice().sort((x, y) => Math.hypot(g.pos[x][0] - g.pos[a2][0], g.pos[x][1] - g.pos[a2][1]) - Math.hypot(g.pos[y][0] - g.pos[a2][0], g.pos[y][1] - g.pos[a2][1]) || x - y).slice(0, Math.max(1, eW.length));
+                for (const b3 of src2) { g.W[b3 * N + a2] = wE; added++; }
+                for (const b2 of C) { g.W[a2 * N + b2] = wI; added++; } } }
+            continue; }
+          let cx = 0, cy = 0; for (const b2 of C) { cx += g.pos[b2][0]; cy += g.pos[b2][1]; } cx /= C.length; cy /= C.length;
+          for (const [k, Bk] of Bt) { if (!(k & 1) || !(Bk > 0)) continue; const J = k >> 1, nPer = Math.max(1, Math.round(Bk)), wI = mw(J, T, true); if (!wI) continue;
+            const cand = []; for (let a2 = h0; a2 < h1; a2++) if (g.cellType[a2] === J) cand.push(a2); cand.sort((x, y) => Math.hypot(g.pos[x][0] - cx, g.pos[x][1] - cy) - Math.hypot(g.pos[y][0] - cx, g.pos[y][1] - cy) || x - y);
+            const S2 = cand.slice(0, nPer); if (!S2.length) continue; const BJ = B.get(J), bE = BJ ? BJ.get(T * 2) || 0 : 0, nE = Math.max(1, Math.round(bE)), wE = mw(T, J, false);
+            for (const b2 of C) for (const a2 of S2) { const q = a2 * N + b2; if (g.W[q] === 0) { g.W[q] = wI; added++; } }
+            if (wE > 0) for (const a2 of S2) { const src2 = C.slice().sort((x, y) => Math.hypot(g.pos[x][0] - g.pos[a2][0], g.pos[x][1] - g.pos[a2][1]) - Math.hypot(g.pos[y][0] - g.pos[a2][0], g.pos[y][1] - g.pos[a2][1]) || x - y).slice(0, nE);
+              for (const b3 of src2) { const q = b3 * N + a2; if (g.W[q] === 0) { g.W[q] = wE; added++; } } } } }
+        g.colInhAdded = added; } }
   }
   if (clawFibreCells && clawFibreCells.size && sc.clawNorm > 0) {   // cells whose fibres reach claw cells, and the claw cells they reach
     g._fib = new Set(); for (const id of clawFibreCells) if (idx.has(id)) g._fib.add(idx.get(id));
@@ -1083,7 +1230,6 @@ function growCell(d, opts) {
       [T + 1, 'neurotrophic competition: neurons without useful output die'], [T + 2, 'juvenile spontaneous activity 1/4 (waves + homeostasis)'], [T + 3, 'juvenile activity 2/4'],
       [T + 4, 'juvenile activity 3/4'], [T + 5, 'juvenile activity 4/4'], [T + 6, 'Hebbian refinement + pruning: the final brain']];
     g.devLog = rec; }
-  if (d.sotaBug) g.sotaBug = true;
   return g;
 }
 // R66 growth helpers (same results as the dense loops they replace, in small functions the JIT optimises)
@@ -1242,13 +1388,13 @@ function attachSparse(G, sp) {              // G.W / P / C: dense on first read 
     get() { mat(); return M[key]; }, set(v) { M.done = true; M[key] = v; if (v === null) G.sp = null; } });
   return G;
 }
-function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, gd) {
+function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, gd, nL2) {
   // v44 (R94): claw counts from P.granK / P.granKmin if set, else the plan gene d.gran.K / d.gran.Kmin (deepURSx3 v44: 4 / 3), else 3 (v41-v43); P.granK without P.granKmin = all granules granK claws
   const gK = params.granK != null ? (params.granK || 2) : gd && gd.K > 0 ? gd.K : 3, gKm = params.granKmin > 0 ? params.granKmin : params.granK == null && gd && gd.Kmin > 0 ? gd.Kmin : 0;
-  const oi = parts.indexOf(outPart), og = outPart.g, K = Math.max(1, Math.min(4, Math.round(gK))), Km = gKm > 0 ? Math.max(1, Math.min(K, Math.round(gKm))) : K, W = params.granW > 0 ? params.granW : 80;
+  const oi = parts.indexOf(outPart), og = outPart.g, K = Math.max(1, Math.min(params.granDeep > 0 ? 1 + parts.length : 4, Math.round(gK))), Km = gKm > 0 ? Math.max(1, Math.min(K, Math.round(gKm))) : K, W = params.granW > 0 ? params.granW : 80;
   let mi = -1; for (let i = og.nIn; i < og.nIn + og.nHid; i++) if (og.mix && og.mix[i]) { mi = i; break; }
   const th = params.granThr > 0 ? params.granThr : mi >= 0 ? og.thresh[mi] : 20, lk = mi >= 0 ? og.leak[mi] : 0.9;
-  const oth = parts.filter(p => p !== outPart), other = oth[0], srcs = [[outPart, params.granC0 >= 0 ? params.granC0 : 0], [outPart, 2], [other, 2], [oth[1] || other, 2]].slice(0, K);   // R84: 4th source = the second context region's cls 2 (t-3)
+  const oth = parts.filter(p => p !== outPart), other = oth[0], srcs = [[outPart, params.granC0 >= 0 ? params.granC0 : 0], [outPart, 2], [other, 2], [oth[1] || other, 2]].concat(params.granDeep > 0 ? oth.slice(2).map(p => [p, 2]) : []).slice(0, K);   // R84: 4th source = the second context region's cls 2 (t-3)   // R134 granDeep (P.granDeep = 1; off = unchanged): lag depth = the delay-line length: one claw source per further region's cls 2 (t-4, ...), K cap 1 + #regions
   const colsOf = ([p, c]) => { const m = new Map(); for (let i = p.g.nIn; i < p.g.nIn + p.g.nHid; i++) if (p.g.cellType[i] === N_FIXED + c && p.g.topo && !isNaN(p.g.topo[i])) { const k = Math.round(p.g.topo[i] * 1e4); if (!m.has(k)) m.set(k, []); m.get(k).push(node(p, i)); } return m; };
   const C = srcs.map(colsOf), r = mulberry32((seed ^ 0x6a7a11) >>> 0);
   G.gran = new Uint8Array(G.N);
@@ -1260,13 +1406,17 @@ function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, g
   const chunkPart = gd && gd.chunkFrac > 0 ? parts.find(p => p.R && p.R.name === 'chunk context') : null;
   const Cchunk = chunkPart ? colsOf([chunkPart, 2]) : null, jChunk0 = Cchunk && Cchunk.size ? Math.floor(nG * (1 - gd.chunkFrac)) : nG;
   if (!(params.granDemand > 0)) {
+    const rsv0 = params.granReserve > 0 && params.granUtility === 2 ? Math.max(0, nG - Math.round(params.granReserve)) : -1;
+    const l2 = nL2 > 0 && params.granUtility === 2 ? nG - nL2 : -1, nG1 = l2 >= 0 ? l2 : nG;   // R138 granL2: cells [l2, nG) = the level-2 pool (no claws, no RNG draws)
+    const nB = params.granGrow > 1 && params.granUtility === 2 ? Math.round(nG1 / params.granGrow) : -1;   // R136 granGrow: born part of the pool
     const pk = packSrc(), keyIdx = pk.map(s => { const m = new Map(); for (let i = 0; i < s.keys.length; i++) m.set(s.keys[i], i); return m; }), initKeys = new Array(nG);
   for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk;
+    if ((rsv0 >= 0 && j >= rsv0) || (nB >= 0 && j >= nB) || (l2 >= 0 && j >= l2)) { initKeys[j] = null; continue; }   // (R136 granGrow: unborn cells too, no RNG draws)   // R119 granReserve: the last granReserve granules grow no claws (recruited later by granUtility 2); no RNG draws
     const k = Km === K ? K : Km + ((r() * (K - Km + 1)) | 0);   // R84 granKmin: each granule takes k in [granKmin, granK] claws from the first k sources (lags t .. t-k+1; a mixture of n-gram orders)
     let ik = String(k);
     for (let c = 0; c < k; c++) { const useCh = j >= jChunk0 && c === k - 1, m = useCh ? Cchunk : C[c], keys = [...m.keys()]; if (!keys.length) continue; const chosen = keys[(r() * keys.length) | 0], S = m.get(chosen), ws = W / k / S.length; for (const A of S) acc.add(A, b, ws, 0, 0); ik += ',' + (useCh ? 'c' + chosen : keyIdx[c].get(chosen)); }
     initKeys[j] = ik; }
-    Object.defineProperty(G, 'granSrc', { value: { K, Km, W, nG, gOff, src: pk, initKeys }, writable: true, configurable: true, enumerable: false });
+    Object.defineProperty(G, 'granSrc', { value: Object.assign(rsv0 >= 0 ? { K, Km, W, nG, gOff, src: pk, initKeys, rsv0 } : { K, Km, W, nG, gOff, src: pk, initKeys }, nB >= 0 ? { nAct0: nB } : {}, l2 >= 0 ? { l2 } : {}), writable: true, configurable: true, enumerable: false });
   } else {
     for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk; }
     Object.defineProperty(G, 'granDemand', { value: { K, Km, W, nG, gOff, src: packSrc() }, writable: true, configurable: true, enumerable: false });
@@ -1302,7 +1452,11 @@ function growRegions(d, opts) {
   // total weight granW, threshold / leak of a mixing cell (needs the coincidence), its own feedforward inhibition (granInh mV per granule
   // spike onto every granule cell, net.js), and plastic synapses onto every taught prediction cell (normalised like the other plastic inputs).
   const gN = params.granN != null ? params.granN : d.gran && d.gran.N > 0 ? d.gran.N : 0;   // v41: plan gene d.gran.N (deepURSx3), P.granN overrides
-  const nG = gN > 0 && parts.length > 1 && !envSpec.outcome ? Math.round(gN) : 0, gOff = off;   // (outcome tasks: no granule layer, like the outcome-repressed context areas)
+  const sFmax = Math.max(...parts.map(p => p.R.g && p.R.g.sc ? +p.R.g.sc.sizeF || 1 : 1)), L2b = params.granL2 > 0 ? params.granL2 : 0;
+  const gF = params.granScale > 0 ? Math.max(1, (L2b > 0 ? Math.min(sFmax, L2b) : sFmax) / params.granScale) : 1;   // R135 granScale (P.granScale = r > 0; off = unchanged): pool x max(1, largest region sizeF / r)
+  const gG = params.granGrow > 1 ? params.granGrow : 1;   // R136 granGrow (P.granGrow = cap factor > 1; off = unchanged): allocate gN x gF x granGrow cells, only the first gN x gF are born (claws); the rest are added on demand (net.js guRecruit)
+  const nL2 = L2b > 0 && gN > 0 ? (params.granL2N > 0 ? Math.round(params.granL2N) : Math.round(gN * Math.max(0, sFmax - L2b) / (params.granScale > 0 ? params.granScale : 1))) : 0;   // R138 granL2: level-2 pool (own cells, no claws), sized by brain size above the base b
+  const nG = gN > 0 && parts.length > 1 && !envSpec.outcome ? Math.round(gN * gF * gG) + nL2 : 0, gOff = off;   // (outcome tasks: no granule layer, like the outcome-repressed context areas)
   const nHid = off - nIn + nG, G = createNetGenome(nIn, nHid, nOut, true), N = G.N, acc = new SynAcc(1 << 16);
   const node = (p, i) => i < p.g.nIn ? (typeof p.map[i] === 'number' ? p.map[i] : -1) : i < p.g.nIn + p.g.nHid ? p.off + i - p.g.nIn : ((p === outPart || p.R.vote) ? nIn + nHid + i - p.g.nIn - p.g.nHid : -1);   // R43 (I53) vote: a module's own output copy sums onto the shared outputs
   G.pos = new Array(N); G.cellType = new Int16Array(N); G.region = new Uint8Array(N); G.topo = new Float32Array(N).fill(NaN);
@@ -1360,7 +1514,7 @@ function growRegions(d, opts) {
     }
     tractStats.push({ name: T.name, from: src.R.name, to: dst.R.name, columns: cols.size, synapses: nSyn });
   }
-  if (nG) granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, d.gran);
+  if (nG) granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, d.gran, nL2);
   attachSparse(G, acc.finish(N, params.wMax));   // (+ the wMax cap of the old dense merge)
   gcHint();
   const og = outPart.g; G.pl = og.pl; G.nCh = og.nCh; G.ch = og.ch.map(c => Object.assign({}, c));
@@ -1544,26 +1698,7 @@ function tunedBugGenome(tune) {
 }
 registerPlan('v3h', 'plan v3h (v3 + hunger)', () => tunedBugGenome(),
   'v3 + hunger signals: under-connected motors / sensors attract axons until satisfied (no orphan motors)');
-
-// SOTA BugBrain foraging plan (bugSOTA):
-//   - F (green-eye pursuit): crosses midline -> opposite wheel (CO.S+4 = +5), directly drives forward speed motor
-//     (CO.S+5 = +5) for enthusiastic pursuit, and excites contralateral M working-memory cells (CO.S+7 = +3.5).
-//   - P (red-eye poison avoidance): strictly ipsilateral (CO.G+0 = -5, never crosses midline), strongly drives
-//     same-side wheel (CO.S+4 = +5) to veer sharply away from red poison/predators, never drives speed motor (CO.S+5 = -5).
-//   - W / Wi (bump & close-wall escape): W drives same-side wheel (CO.S+4 = +4.5); Wi (inhibitory, commissural XSYN)
-//     brakes opposite wheel on bump (CO.T+3 = +5) so the bug pivots cleanly off walls without getting caught.
-//   - M / X (central recurrent working-memory & WTA): M holds post-flash/turn pursuit direction and drives wheel + speed;
-//     X (commissural inhibitory) mediates decisive left/right winner-take-all turning and gyro path integration.
-function createSotaBugGenome(tune) {
-  const d = tunedBugGenome(tune);
-  d.ch = [Object.assign(defaultChannel(), { gFood: 1.5, gPoison: 1.5, gWall: 0.02, tauMod: 12 })];
-  d.sotaBug = true;
-  d.label = 'SOTA BugBrain (enthusiastic pursuit, poison avoidance, anti-stuck wall reflex)';
-  return d;
-}
-registerPlan('bugSOTA', 'SOTA BugBrain (foraging + memory + reflex)', () => createSotaBugGenome(),
-  'state-of-the-art foraging brain: enthusiastic green pursuit, strict ipsilateral red-poison avoidance, commissural bump-escape reflex, recurrent working memory');
-Object.assign(SpikingArena, { createHandCellGenomeV1, createHandCellGenomeV2, createHandCellGenome, tunedBugGenome, createSotaBugGenome });
+Object.assign(SpikingArena, { createHandCellGenomeV1, createHandCellGenomeV2, createHandCellGenome, tunedBugGenome });
 
 'use strict';
 /* ---------------- SpikingNet (net.js) ----------------
@@ -1660,7 +1795,7 @@ class SpikingNet {
       // reads the MEAN activity of its presynaptic pool, not the raw spike count: with a pool of n > mixInhRef cells each spike
       // inhibits by mixInh x mixInhRef / n. Without it the pool (and so the inhibition) grows with region size while every mixing
       // cell's excitation is normalised (mixNorm, claw w / column), so bigger brains silence the mixing layer (R78: order3 at 4x).
-      let np = 0, np1x = 0; const si = params.scaleInvariant > 0 && g.regions && g.regions.some(r => r.sizeF > 1) ? this.trophicS() : null;
+      let np = 0, np1x = 0; const si = (params.scaleInvariant > 0 || (params.relGrowth > 0 && !((params.relGrowthOff | 0) & 8))) && g.regions && g.regions.some(r => r.sizeF > 1) ? this.trophicS() : null;
       for (let i = 0; i < N; i++) if (mp[i]) { np++; if (si) np1x += si[i]; }
       const iR = params.mixInhRef > 0 ? params.mixInhRef : (si && np1x > 0 ? np1x : 0);
       this.mixInhD = iR && np > iR ? this.p.mixInh * Math.pow(iR / np, params.mixInhPow > 0 ? params.mixInhPow : 1) : this.p.mixInh; }   // mixInhPow (default 1 = mean field; 0.5 = inhibition grows with the square root of the pool)
@@ -1678,7 +1813,8 @@ class SpikingNet {
     if (this.p.actNoise > 0 || this.p.actFb > 0 || this.p.outInh > 0) this.initActNoise();
     if (this.p.rcvHomeo > 0) { if (!this.thr) this.thr = Float32Array.from(g.thresh); const r = new Uint8Array(N); for (const k of this.plastic) if (this.w0[k] > 0) r[this.posts[k]] = 1;
       const L = []; for (let i = 0; i < N; i++) if (r[i]) L.push(i); this.rhList = Int32Array.from(L); }
-    if ((this.p.thrAdd !== 0 || this.p.hidHomeo > 0 || this.p.regInh > 0) && !(opts && opts.noNeed)) this.initSparse();   // R67 sparser-activity genes (off by default)
+    if ((this.p.thrAdd !== 0 || this.p.hidHomeo > 0 || this.p.regInh > 0) && !(opts && opts.noNeed)) this.initSparse();
+    if (params.denseCeil > 0 && !(opts && opts.noNeed)) this.initDense();   // R120 dense-cell ceiling (off by default)   // R67 sparser-activity genes (off by default)
     if (NG) this.initNeed();
     this.initFast();
     if (params.fastEngine && !globalThis.__bbSlow && !(opts && opts.noNeed)) this.initFastE();   // R66 event-driven engine (selectable; see initFastE)
@@ -1761,7 +1897,7 @@ class SpikingNet {
     if (params.granFast !== 0 && g.gran && this.fDense && !this.gd && !(params.sfa > 0) && !(params.stdU > 0) && !(params.granInh > 0) && !this.hhList && !this.riId) {
       let g0 = -1, g1 = -1, ok = true;
       for (let i = 0; i < N; i++) if (g.gran[i]) { if (g0 < 0) g0 = i; else if (i !== g1) ok = false; g1 = i + 1; if (cls[i] !== cls[g0] || (this.isRcv && this.isRcv[i])) ok = false; }
-      if (ok && g0 >= 0) {
+       if (ok && g0 >= 0 && (g1 - g0 <= 2048 || params.granFast === 2)) {
         const h = params.granHomeo > 0 ? params.granHomeo : 0.5, r0 = params.granRate > 0 ? params.granRate : 0, d = -h * r0;
         this.gFast0 = g0; this.gFast1 = g1; this.gFastLk = vals[cls[g0]];
         this.gBits = new Uint32Array(((g1 - g0) + 31) >>> 5);
@@ -1861,6 +1997,24 @@ class SpikingNet {
       this.riId = id; this.riN = R; this.riInv = Float64Array.from(sz, n => n ? 100 / n : 0); this.riCnt = new Float64Array(R); this.riP = new Float64Array(R);
       this.riD = p.regInhTau > 0 ? Math.exp(-1 / p.regInhTau) : 0; this.riH0 = h0; this.riH1 = h1; }
   }
+  // R120 P.denseCeil (mV per substep, 0 = off, bit-identical off, no RNG): activity-RELATIVE ceiling homeostasis for the always-on
+  // non-granule hidden cells. Each cell keeps an EMA of its own spike rate (tau 2000 substeps); a cell firing more than denseK (default 4)
+  // x the mean rate of its region's cells (measured once, over the first 4000 substeps, then frozen: a running mean would chase
+  // the cells it silences) gets its threshold raised (at most to twice its grown distance from rest) by denseCeil every substep; otherwise the threshold relaxes back
+  // (denseCeil / 10) toward the grown threshold (never below it). Self-calibrating: no target rate, only "much busier than its
+  // neighbours". Granules and the 'go' / 'tonic' tagged relays (clock / tonic drive, constant by design) are exempt. Learning phase only.
+  initDense() { const g = this.g, h0 = g.nIn, h1 = g.nIn + g.nHid, ti = g.typeInfo || [], ex = new Set(); ti.forEach((t, j) => { if (/ (go|go2|go3|tonic) cells$/.test(t.label)) ex.add(16 + j); });
+    if (!this.thr) this.thr = Float32Array.from(g.thresh); const L = [];
+    const inh = i => { const st = this.start, w0 = this.w0; if (!st || !w0) return false; for (let k = st[i]; k < st[i + 1]; k++) if (w0[k] < 0) return true; return false; };   // inhibitory cells (the brake) are exempt
+    for (let i = h0; i < h1; i++) if (!(g.gran && g.gran[i]) && !ex.has(g.cellType[i]) && !inh(i)) L.push(i);
+    const reg = g.region, rid = Int32Array.from(L, i => reg && reg[i] !== 255 ? reg[i] : 0), R = rid.reduce((m, x) => Math.max(m, x + 1), 1);
+    this.dc = { L: Int32Array.from(L), F: Float32Array.from(L, i => this.thr[i]), e: new Float32Array(L.length), rid, R, mr: new Float64Array(R).fill(1), n: Float64Array.from({ length: R }, (_, r) => rid.filter(x => x === r).length), t: 0, K: params.denseK > 0 ? params.denseK : 4, up: 0 }; }
+  denseStep(sp, mk) { const dc = this.dc; if (!dc || !params.plasticity) return; const { L, F, e, rid, mr } = dc, h = params.denseCeil, thr = this.thr, v = this.v, R0 = V_REST, d = 1 / 2000;
+    if ((++dc.t & 255) === 0 && !dc.frz) { if (dc.t > 4000) dc.frz = 1; const s = new Float64Array(dc.R); for (let q = 0; q < L.length; q++) s[rid[q]] += e[q]; for (let r = 0; r < dc.R; r++) mr[r] = dc.n[r] ? s[r] / dc.n[r] : 1; }
+    const warm = dc.t > 4000, K = dc.K;
+    for (let q = 0; q < L.length; q++) { const i = L[q]; e[q] += d * (sp[i] - e[q]); if (!warm) continue;
+      if (e[q] > K * mr[rid[q]]) { if (thr[i] < F[q] + (F[q] - R0)) { thr[i] += h; dc.up++; } } else if (thr[i] > F[q]) { let x = thr[i] - 0.1 * h; if (x < F[q]) x = F[q]; thr[i] = x; if (mk && x <= (v[i] > R0 ? v[i] : R0)) mk[i] = 1; } } }
+  denseStats() { const dc = this.dc; if (!dc) return null; let n = 0, raised = 0, mx = 0; for (let q = 0; q < dc.L.length; q++) { if (dc.e[q] > dc.K * dc.mr[dc.rid[q]]) n++; const x = this.thr[dc.L[q]] - dc.F[q]; if (x > 0.01) raised++; if (x > mx) mx = x; } return { cells: dc.L.length, over: n, raised, maxRaise: +mx.toFixed(2), ups: dc.up, regMean: Array.from(dc.mr, x => +x.toFixed(4)) }; }
   sparseStep(sp, spk, nSpk, mk) {            // R67: hidden-cell homeostasis + pooled region inhibition (mk: event-engine marks or null)
     const p = this.p, v = this.v, R0 = V_REST;
     if (this.hhList && params.plasticity) { const L = this.hhList, F = this.hhFloor, h = p.hidHomeo, r0 = p.hidRate, thr = this.thr;
@@ -1922,6 +2076,7 @@ class SpikingNet {
     else for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = posts[k]; syn[j] += ws[k]; mk[j] = 1; } }
     if (this.rhList && params.plasticity) { const L = this.rhList, h = this.p.rcvHomeo, r0 = this.p.rcvRate, thr = this.thr; for (let q = 0; q < L.length; q++) { const i = L[q]; thr[i] += h * (sp[i] - r0); if (thr[i] <= (v[i] > R ? v[i] : R)) mk[i] = 1; } }
     if (this.hhList || this.riId) this.sparseStep(sp, spk, nSpk, this.fDense ? null : mk);
+    if (this.dc) this.denseStep(sp, this.fDense ? null : mk);
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp);   // v20 action noise / feedback (as the exact engine)
       if (!this.fDense) { const A = this.anList, C = this.acList, o0 = this.g.nIn + this.g.nHid; for (let q = 0; q < A.length; q++) mk[A[q]] = 1; for (let q = 0; q < C.length; q++) mk[C[q]] = 1; for (let m = 0; m < this.g.nOut; m++) mk[o0 + m] = 1; } }
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];
@@ -2059,6 +2214,7 @@ class SpikingNet {
     const L = [], C = []; for (let i = 0; i < N; i++) if (ch[i] >= 0) { L.push(i); C.push(ch[i]); }
     this.anList = Int32Array.from(L); this.anCh = Int16Array.from(C); this.anVal = new Float32Array(nO);
     this.anA = Math.exp(-1 / Math.max(1, this.p.actNoiseTau)); this.anRng = mulberry32(0x9e3779b1 ^ g.N);
+    this.anF = 1; if (params.anSize > 0 && g.regions) { let f = 1; for (const r of g.regions) if (r && r.sizeF > f) f = r.sizeF; if (f > 1) this.anF = Math.sqrt(f); }   // R131 anSize (global, 0 = off, bit-identical; 1x unchanged): exploration noise x sqrt(size factor)
     const Lr = [], Cr = []; for (let i = 0; i < o0; i++) if (ch[i] >= 0) { Lr.push(i); Cr.push(ch[i]); } this.acList = Int32Array.from(Lr); this.acCh = Int16Array.from(Cr);   // the columns (without outputs)
   }
   actLoop(sp) {                               // output spikes -> own column +actFb, other columns -actFb, other outputs -outInh
@@ -2067,9 +2223,14 @@ class SpikingNet {
       if (fb > 0) for (let q = 0; q < L.length; q++) syn[L[q]] += C[q] === m ? fb : -fb;
       if (oi > 0) for (let j = 0; j < nO; j++) if (j !== m) syn[o0 + j] -= oi; }
   }
+  anSelfF() {                                // R131 anSelf (global, 0 = off, bit-identical): self-calibrated exploration: noise x sqrt(B), B = max / mean of the outputs'
+    const o0 = this.g.nIn + this.g.nHid, nO = this.g.nOut, sp = this.spiked;   //   recent spike rates (EMA, tau params.anSelfTau substeps; 1 = arms balanced), so a column that dominates by its wiring is explored away
+    if (!this.anS) { this.anS = new Float64Array(nO); this.anSa = 1 - 1 / Math.max(1, params.anSelfTau || 4000); }
+    const S = this.anS, aa = this.anSa; let mx = 0, sm = 0; for (let m = 0; m < nO; m++) { S[m] = aa * S[m] + (1 - aa) * sp[o0 + m]; sm += S[m]; if (S[m] > mx) mx = S[m]; }
+    return sm > 0 ? Math.sqrt(Math.max(1, mx * nO / sm)) : 1; }
   actNoiseStep() {
     const v = this.anVal, a = this.anA, kv = this.crit && this.p.actNoiseV > 0 ? 1 / (1 + this.p.actNoiseV * Math.max(0, this.value)) : 1,   // v20: less exploration where more reward is expected
-          sd = kv * this.p.actNoise * Math.sqrt(1 - a * a), r = this.anRng, L = this.anList, C = this.anCh, syn = this.syn;
+          sd = kv * this.p.actNoise * Math.sqrt(1 - a * a) * (this.anF > 1 ? this.anF : 1) * (params.anSelf > 0 ? this.anSelfF() : 1), r = this.anRng, L = this.anList, C = this.anCh, syn = this.syn;
     for (let m = 0; m < v.length; m++) { const u = r() || 1e-12, w = r(); v[m] = a * v[m] + sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185307 * w); }
     for (let q = 0; q < L.length; q++) syn[L[q]] += v[C[q]];
   }
@@ -2148,7 +2309,9 @@ class SpikingNet {
     const gr = this.g.gran; let n = 0; for (let s = 0; s < nSpk; s++) n += gr[spk[s]];
     const L = this.granL, nL = this.granLn != null ? this.granLn : L.length;   // R102: demand mode keeps granLn = assigned granules only (unset = every granule, bit-identical)
     if (params.granRate > 0 && params.plasticity) { const sp = this.spiked, h = params.granHomeo > 0 ? params.granHomeo : 0.5, r0 = params.granRate, T = this.thr || this.g.thresh;   // R83 granule homeostatic threshold
-      for (let q = 0; q < nL; q++) { const i = L[q]; T[i] += h * (sp[i] - r0); if (mk) mk[i] = 1; } }
+      for (let q = 0; q < nL; q++) { const i = L[q]; T[i] += h * (sp[i] - r0); if (mk) mk[i] = 1; }
+      const gu = this.gu; if (gu && gu.rsv0 > 0) { const rR = params.granRecruitRate > 0 ? params.granRecruitRate : r0 / 10, kb = gu.keyBy, o = gu.gOff;   // R119 granReserve: recruited granules adapt to a sparser target rate (exact-tuple detectors); unclaimed ones stay silent (no drift)
+        for (let j = gu.rsv0; j < gu.nG; j++) if (kb[j] != null) { const i = o + j; T[i] += h * (sp[i] - rR); if (mk) mk[i] = 1; } } }
     if (!(params.granInh > 0) || !n) return;
     const d = params.granInh * n; for (let q = 0; q < nL; q++) { syn[L[q]] -= d; if (mk) mk[L[q]] = 1; } }
   /* R83b CEREBELLAR READOUT (global granLr > 0; needs granN): only the granule -> prediction synapses, once per teaching event
@@ -2169,7 +2332,7 @@ class SpikingNet {
     const gS = this.g.granSch, lT = params.granLrT != null ? (params.granLrT > 0 ? params.granLrT : 0) : gS && gS.T > 0 ? gS.T : 0, nEv = lT ? (this.gEv = (this.gEv || 0) + 1) : 0;   // R100 granLrT (global, 0 = off, bit-identical off; v47 R114: P.granLrT unset -> the plan gene d.gran.lrT / lrLate via G.granSch, deepURSx3 = 100000 / 0.05; pin P.granLrT=0 for the fixed step): granule step schedule tied to the teaching events seen (~ symbols): granLr until granLrT events, then granLrLate (default granLr / 2); granLrShape 1 = smooth: late + (granLr - late) x T / (T + events)
     const L = oT ? (this.gOutL || (this.gOutL = Int32Array.from({ length: nO }, (_, m) => o0 + m))) : L0;
     if (!this.gIn) { const S = [0], K = []; for (let q = 0; q < L.length; q++) { const i = L[q]; for (let r = this.inStart[i], e = this.inStart[i + 1]; r < e; r++) { const k = this.inEdges[r]; if (this.g.gran[this.pres[k]] && this.isPlastic[k]) K.push(k); } S.push(K.length); } this.gIn = { S: Int32Array.from(S), K: Int32Array.from(K) }; }
-    const S = this.gIn.S, K = this.gIn.K, ws = this.ws, pr = this.pres, wMax = params.wMax, lr = lT ? (() => { const a = params.granLr, b = params.granLrLate > 0 ? params.granLrLate : params.granLrT == null && gS && gS.late > 0 ? gS.late : a / 2; return params.granLrShape === 1 ? b + (a - b) * lT / (lT + nEv) : nEv > lT ? b : a; })() : params.granLr, ref = params.granRef > 0 ? params.granRef : 10, D = globalThis.__granDbg;
+    const S = this.gIn.S, K = this.gIn.K, ws = this.ws, pr = this.pres, wMax = this.gu && this.gu.xm ? params.wMax * (params.granExactW > 0 ? params.granExactW : 50) : params.wMax, lr = lT ? (() => { const a = params.granLr, b = params.granLrLate > 0 ? params.granLrLate : params.granLrT == null && gS && gS.late > 0 ? gS.late : a / 2; return params.granLrShape === 1 ? b + (a - b) * lT / (lT + nEv) : nEv > lT ? b : a; })() : params.granLr, ref = params.granRef > 0 ? params.granRef : 10, D = globalThis.__granDbg;
     let U = null; if (gG) { if (!this.gU) { this.gU = new Float32Array(K.length); for (let r = 0; r < K.length; r++) this.gU[r] = ws[K[r]]; this.gPsi = params.granGain0 > 0 ? params.granGain0 : 0; } U = this.gU; }
     const aT = params.granAnneal > 0 ? params.granAnneal : 0, aMn = params.granAnnealMin > 0 ? params.granAnnealMin : 0, gC = aT ? (this.gCnt || (this.gCnt = new Float32Array(this.N))) : null;   // R91 granAnneal: per-granule step decays with the granule's use count (a count-based / consolidating estimate: rare combinations learn fast, common ones average finely); floor granAnnealMin x granLr
     let oS = 0, dPs = 0, yTgt = 0; if (gG) for (let q = 0; q < nO; q++) oS += gA[o0 + q];
@@ -2213,17 +2376,85 @@ class SpikingNet {
       Bs = B.subarray(0, nB); Bs.sort(); off.fill(0); for (let b = 0; b < nB; b++) off[Q[Bs[b]] + 1]++; for (let q = 0; q < nL; q++) off[q + 1] += off[q];
     }
     let dPs = 0, yTgt = 0;
-    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
+    if (params.readoutRule === 1 || params.readoutRule === 'threeFactor') { yTgt = this.gran3F(L, K, ws, pr, wMax, lr, ref, D, U, gA, gG, oS, nO, Bs, off, W, pos, Uw); dPs = this.g3dPs; }
+    else if (params.granKal > 0) { yTgt = this.granKalStep(L, K, ws, pr, wMax, lr, ref, D, U, gA, Bs, off, W, pos, Uw, nA, aL, gG, oS, nO); dPs = this.gKdPs; }
+    else for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
       for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], x = gA[pr[K[r]]] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += x * x; }
       const i = L[q], y = Math.min(1, d / ref), er = t - y, g = xx > 0 ? lr * ref / xx : 0;
       if (t) yTgt = y;
       if (gG) { const n = oS > 0 ? gA[i] / oS : 1 / nO, cc = n + this.gPsi * (y - n); dPs += (t - cc) * (y - n); }
       if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
       for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], x = gA[pr[k]] / W; if (U) { const u = U[r] + g * x * er; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; } const w = ws[k] + g * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
-    if (gG) { const ps = this.gPsi = Math.min(1, Math.max(0, this.gPsi + params.granGain * dPs)), KS = this.gRKS; for (let p = 0; p < KS.length; p++) ws[KS[p]] = ps * Uw[p]; if (D) { D.psi = ps; D.pn = (D.pn || 0) + 1; D.ps = (D.ps || 0) + ps; } }   // (rescale in synapse order: same values, sequential writes)
+    if (gG) { const ps = this.gPsi = Math.min(1, Math.max(0, this.gPsi + params.granGain * dPs)), KS = this.gRKS; for (let p = 0; p < KS.length; p++) ws[KS[p]] = ps * Uw[p]; if (this.gFA && params.granTrace > 0) { const FA = this.gFA; for (let p = 0; p < KS.length; p++) { const k = KS[p]; if (FA[k] !== 0) ws[k] += ps * FA[k]; } } if (D) { D.psi = ps; D.pn = (D.pn || 0) + 1; D.ps = (D.ps || 0) + ps; } }   // (rescale in synapse order: same values, sequential writes)
+    if (params.granOneShot === 2) { let c = 0; for (let a = 0; a < nA; a++) if (gA[aL[a]] / W >= 0.01) c++; this.gLastNA = c; }
     for (let a = 0; a < nA; a++) gA[aL[a]] = 0; this.gActN = 0; if (gG) for (let q = 0; q < nO; q++) gA[o0 + q] = 0;
     this.lastSurprise = 1 - yTgt;
     if (this.gu) this.granUtilityEvent(yTgt);
+  }
+  /* R121 granKal (global P.granKal = A > 0; 0 / unset = off, bit-identical, no RNG; sparse output path): EXPERIENCE-WEIGHTED NLMS. Each granule j
+   * carries n_j = the teaching events it was active in since it got its current claw tuple (reset when granUtility re-assigns it) and a gain
+   * a_j = max(granKalMin (default 0.02), A / (A + n_j)) (a per-feature uncertainty, as a diagonal Kalman / count estimate). The error of an
+   * output is split in proportion to a_j x_j^2 instead of x_j^2: dw_j = granLr x granRef x a_j x_j x err / sum_i a_i x_i^2. A brand-new specific
+   * detector active together with experienced ones takes most of the correction (one-shot, like a count model's first sighting), and the
+   * experienced ones are left alone (backoff-like credit). Only for LTP (err > 0, the arriving symbol): false alarms (err < 0) keep the plain NLMS
+   * split, since weights are bounded at 0 and a fresh detector has nothing to depress. With all a_j equal this is exactly the NLMS step. Local: each synapse needs only its
+   * presynaptic granule's own count. */
+  granKalStep(L, K, ws, pr, wMax, lr, ref, D, U, gA, Bs, off, W, pos, Uw, nA, aL, gG, oS, nO) {
+    const A = params.granKal, mn = params.granKalMin > 0 ? params.granKalMin : 0.02, n = this.gKn || (this.gKn = new Float32Array(this.N)), nL = L.length; let yTgt = 0, dPs = 0;
+    const av = j => { const v = A / (A + n[j]); return v < mn ? mn : v; };
+    // R132 granKalLTD (global, 0 / unset = off, bit-identical): the experience-weighted split for false alarms (err < 0) too, so a recruit given a
+    // one-shot weight (granOneShot) is averaged down like a count estimate instead of keeping its first-sighting weight under the plain NLMS split
+    const wLo = params.granNeg > 0 ? -params.granNeg * wMax : 0;   // R132 granNeg (global, 0 / unset = off: lower bound 0, bit-identical): signed readout, weights in [-granNeg x wMax, wMax] (a specific context can veto a generic prediction, as count backoff does; biologically the granule -> basket/stellate -> Purkinje inhibitory path)
+    const F = params.granTrace > 0, FA = F ? (this.gFA || (this.gFA = new Float32Array(ws.length))) : null;   // R133 granTrace: the slow (granKal) update below sees only the slow weight (U = slow when granGain is on; else take the fast part out of ws)
+    if (F && !U) for (let b = 0, e = off[nL]; b < e; b++) { const k = K[Bs[b]]; if (FA[k] !== 0) { ws[k] -= FA[k]; FA[k] = 0; } }
+    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
+      let x2 = 0; for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], j = pr[K[r]], x = gA[j] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += av(j) * x * x; x2 += x * x; }
+      const y = Math.min(1, d / ref), er = t - y, kal = er > 0 || params.granKalLTD > 0, g = kal ? (xx > 0 ? lr * ref / xx : 0) : (x2 > 0 ? lr * ref / x2 : 0); if (t) yTgt = y;
+      if (gG) { const i = L[q], m = oS > 0 ? gA[i] / oS : 1 / nO, cc = m + this.gPsi * (y - m); dPs += (t - cc) * (y - m); }   // (the granGain psi update, as the NLMS loop)
+      if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
+      for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], j = pr[k], x = gA[j] / W, gj = kal ? g * av(j) : g;
+        if (U) { const u = U[r] + gj * x * er; U[r] = u < wLo ? wLo : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; } const w = ws[k] + gj * x * er; ws[k] = w < wLo ? wLo : w > wMax ? wMax : w; } }
+    for (let a = 0; a < nA; a++) { const j = aL[a]; if (gA[j] / W >= 0.01) n[j]++; }
+    if (F) this.granTraceStep(L, K, ws, pr, wMax, ref, gA, Bs, off, W, nA, aL, n, A, U);
+    this.gKdPs = dPs; return yTgt; }
+  /* R133 granTrace (global P.granTrace = 1; 0 / unset = off, bit-identical, no RNG; needs granKal, sparse path without granGain): a FAST ONE-SHOT TRACE on
+   * each granule -> output synapse, separate from the slow granKal weight (a short-term / eligibility-like component that the slow weight consolidates).
+   * Trace E_jq = the granule's own running frequency of each next symbol over its observations (step 1 / observations; a recruit starts with one
+   * observation = the symbol it was recruited on). Effective weight = slow + g_j x E_jq x granRef / xbar, gate g_j = A / (A + n_j) (granKal's own
+   * experience count n_j), xbar = the running mean granule activity per window (so the trace alone gives a full-strength vote on a context seen once).
+   * With granGain on (default), ws = psi x (U + FA) at the dense rescale. Self-calibrating: the fast/slow mix is set by each granule's measured experience; no new constant. The slow update never sees the fast part. */
+  granTraceStep(L, K, ws, pr, wMax, ref, gA, Bs, off, W, nA, aL, n, A, U) {
+    const FA = this.gFA, FE = this.gFE || (this.gFE = new Float32Array(ws.length)), FO = this.gFo || (this.gFo = new Float32Array(this.N)), nL = L.length;
+    let sx = 0, cx = 0; for (let a = 0; a < nA; a++) { const x = gA[aL[a]] / W; if (x >= 0.01) { sx += x; cx++; } }
+    if (cx) { this.gFxN = (this.gFxN || 0) + 1; this.gFx = (this.gFx || 0) + (sx / cx - (this.gFx || 0)) / this.gFxN; }
+    const xb = this.gFx > 0 ? this.gFx : 1;
+    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0;
+      for (let b = off[q], e = off[q + 1]; b < e; b++) { const k = K[Bs[b]], j = pr[k]; FE[k] += (t - FE[k]) / (FO[j] + 1);
+        const f = A / (A + n[j]) * FE[k] * ref / xb; if (U) { FA[k] = f; continue; } if (f > 0) { const w0 = ws[k], w1 = w0 + f > wMax ? wMax : w0 + f; ws[k] = w1; FA[k] = w1 - w0; } } }   // with granGain (U): FA = the fast part in u units, added as psi x FA at the dense rescale
+    for (let a = 0; a < nA; a++) { const j = aL[a]; if (gA[j] / W >= 0.01) FO[j]++; } }
+  /* R118 readoutRule 'threeFactor' (global params.readoutRule = 'threeFactor' or 1; unset / 0 = the R83b NLMS above, bit-identical, no RNG):
+   * a three-factor local rule on the same granule -> output synapses, same teaching events and read window (sparse path only).
+   *   eligibility  e_jq = x_j (presynaptic read-window activity) for the LTP term, x_j x p_q (pre x post) for the LTD term
+   *   third factor M_q  = t_q - p_q: teacher-forced per-output error, p_q = softmax_q(rf3Beta x d_q / granRef) over the outputs' granule drive
+   *                       (the shared normalisation = one global inhibitory-pool signal; t_q = climbing fibre of the arriving symbol)
+   *   dw = g_q x x_j x M_q - lr x rf3Decay x w,  g_q = lr x granRef / sum_j x_j^2 (bounded NLMS step), w in [0, wMax]; decay on visited synapses only
+   * i.e. the local form of the cross-entropy gradient (competitive across outputs) instead of independent clipped LMS targets.
+   * Params: rf3Beta (default 8; tuned at book10k on held-out growth k=2950: beta 4 0.371, 8 0.392, off 0.386), rf3Decay (default 0.001), rf3Lr (step multiplier, default 1). */
+  gran3F(L, K, ws, pr, wMax, lr, ref, D, U, gA, gG, oS, nO, Bs, off, W, pos, Uw) {
+    const nL = L.length, dq = this.g3d || (this.g3d = new Float64Array(nL)), xq = this.g3x || (this.g3x = new Float64Array(nL)), pq = this.g3p || (this.g3p = new Float64Array(nL));
+    const beta = params.rf3Beta > 0 ? params.rf3Beta : 8, lam = params.rf3Decay != null ? +params.rf3Decay : 0.001, lm = params.rf3Lr > 0 ? params.rf3Lr : 1, l = lr * lm;
+    let mx = -Infinity, yTgt = 0, dPs = 0;
+    for (let q = 0; q < nL; q++) { let d = 0, xx = 0; for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], x = gA[pr[K[r]]] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += x * x; }
+      dq[q] = d; xq[q] = xx; const z = beta * d / ref; if (z > mx) mx = z; }
+    let sm = 0; for (let q = 0; q < nL; q++) { pq[q] = Math.exp(beta * dq[q] / ref - mx); sm += pq[q]; } for (let q = 0; q < nL; q++) pq[q] /= sm;
+    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0, i = L[q], y = Math.min(1, dq[q] / ref), M = t - pq[q], xx = xq[q], g = xx > 0 ? l * ref / xx : 0, dec = l * lam;
+      if (t) yTgt = y;
+      if (gG) { const n = oS > 0 ? gA[i] / oS : 1 / nO, cc = n + this.gPsi * (y - n); dPs += (t - cc) * (y - n); }
+      if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; }
+      for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], x = gA[pr[k]] / W;
+        if (U) { const u = U[r] + g * x * M - dec * U[r]; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; }
+        const w = ws[k] + g * x * M - dec * ws[k]; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
+    this.g3dPs = dPs; return yTgt;
   }
   // R85 granIso (global param, 0/undefined = off): with granTgt 1, the granule -> output synapses do not make the output cells
   // 'receivers' of the prediction-cell machinery (teacher AHP, trust, receiver pool): the output cells keep their v40 dynamics
@@ -2347,14 +2578,199 @@ class SpikingNet {
       owned, pending: new Map(), rng: mulberry32((0x6775746c ^ N) >>> 0),
       co: params.granCo > 0 ? params.granCo | 0 : 2, hold: params.granHold > 0 ? params.granHold | 0 : 40,
       st: { rewired: 0, cap: nG, events: 0 } };
+    if (d.nAct0 != null) { this.gu.nAct = d.nAct0; this.gu.st.nAct0 = d.nAct0; }
+    if (d.l2 != null) { this.gu.l2 = d.l2; this.gu.st.l2 = nG - d.l2; }   // R138 granL2: granules [l2, nG) = the level-2 pool   // R136 granGrow: granules [nAct, nG) are unborn (no claws) until demand adds them
+    if (params.granUtility === 2) { this.gu.match = new Float32Array(nG); this.gu.st.matched = 0; if (d.rsv0 >= 0 && d.rsv0 < nG) { this.gu.rsv0 = d.rsv0; this.gu.st.reserve = nG - d.rsv0; if (d.rsv0 > 0 && this.gFast0 == null) this.granLn = d.rsv0; }
+      if (params.granExact > 0) this.initGranExact(); }   // granLn: the shared homeostasis loop covers the random granules only   // R119 granUtility 2: utility = exact claw-tuple matches (see granUtilityEvent)
   }
-  granUtilityStats() { return this.gu ? this.gu.st : null; }
+  granUtilityStats() { const gu = this.gu; if (!gu) return null; if (gu.cr && (params.granExactGuard & 2)) { const g = []; for (let s2 = 1; s2 < gu.cr.length; s2++) for (let c = 0; c < gu.cr[s2].length; c++) if (gu.cr[s2][c] > this.guColCap(s2)) g.push(s2 + ':' + c + ':' + gu.cr[s2][c].toFixed(2)); gu.st.guarded = g; gu.st.thr = +(this.guColCap(1)).toFixed(3); gu.st.crMax = gu.cr.map(a => +Math.max(...a).toFixed(3)); }
+    return gu.st; }
+  /* R119 granExact (needs granUtility 2): every granule becomes an EXACT coincidence detector of its claw tuple. The grown random claw
+   * synapses are silenced and re-registered as claw lists; a granule fires (one injected suprathreshold input) only in a read window in
+   * which every one of its claw columns has fired, and granule homeostasis is off (fixed thresholds), so the code is sparse: only the
+   * granules whose letter tuple is actually present fire, instead of ~2.4% of all granules on partial matches. Granules whose tuple never
+   * occurs (most random 4-claw tuples) earn no matches and are recycled by granUtility 2 onto missed 3- / 4-letter windows. */
+  initGranExact() {
+    const gu = this.gu, { nG, gOff, src, lists, inS, inK, keyBy } = gu, ws = this.ws;
+    gu.xm = new Uint8Array(nG); gu.xn = new Uint8Array(nG); gu.xf = new Uint8Array(nG); gu.xT = new Int32Array(nG); gu.xTn = 0; gu.xF = new Int32Array(nG); gu.xFn = 0; gu.xc = new Uint32Array(nG); gu.xr = new Float32Array(nG); gu.st.capped = 0;
+    if (params.granFatigue > 0) { gu.xL = new Float64Array(nG).fill(-1e12); gu.xE = new Uint32Array(nG); gu.tk = 0; gu.sps = 1e9; }   // R122 granFatigue: episode = the fires of one symbol (within sps = substeps per teaching event, measured in life, frozen in generation); xE = episodes, refractory is between episodes
+    gu.cHit = src.map(S => new Uint8Array(S.keys.length)); gu.cT = []; gu.st.exact = 0; gu.cr = src.map(S => new Float32Array(S.keys.length)); gu.ban = new Set();
+    for (let j = 0; j < nG; j++) { for (let q = inS[j]; q < inS[j + 1]; q++) ws[inK[q]] = 0;
+      const key = keyBy[j]; if (key == null) continue; if ((params.granExactGuard & 1) && gu.owned.get(key) !== j) { keyBy[j] = null; gu.st.dedup = (gu.st.dedup || 0) + 1; continue; }   // R120 guard: one detector per tuple (grown duplicates start free)
+      const a = key.split(','), n = +a[0]; if (!(n > 0) || a.length !== n + 1 || a.some((x, i) => i > 0 && !/^[0-9]+$/.test(x))) { keyBy[j] = null; continue; }
+      gu.xn[j] = n; for (let c = 0; c < n; c++) lists[c][+a[c + 1]].push({ j, w: 0, gen: gu.gen[j], c }); }
+    if (this.gFast0 == null) this.granLn = 0;   // fixed thresholds: no granule homeostasis
+    if (params.lagHomeo > 0) this.initLagHomeo();
+    // R125 lagWTA (global P.lagWTA = k > 0; 0 / unset = off, bit-identical, no RNG; needs granExact): COMPETITIVE SELECTION within each lag source
+    // (s >= 1) as seen by the granules: in each read window only the first k letter columns of the source to fire count as claw hits (latency
+    // k-WTA: in a leaky integrate-and-fire population the most strongly driven column reaches threshold first; equivalent to fast lateral
+    // inhibition from the source's winner onto the other columns' granule synapses). The lag cells themselves keep firing for every other target.
+    // Size-independent by construction (a lag source holds one letter per window; R123 bookdiag healthy brains 0.94-0.99 active columns per
+    // window, hot 2x_si 2.9-6.4). Implemented on the lag-cell output to the granule claws, not as an inhibitory pool in the network dynamics.
+    if (params.lagWTA > 0) { gu.wta = new Uint8Array(src.length); gu.wtaK = Math.max(1, Math.round(params.lagWTA)); }
+  }
+  /* R124 lagHomeo (global P.lagHomeo = eta > 0; 0 / unset = off, bit-identical, no RNG; needs granExact): SELF-CALIBRATED ACTIVITY HOMEOSTAT of the
+   * lag (claw) sources. A lag source represents ONE letter per read window, so the number of its letter columns active in a window should be 1.
+   * Each window, a source's summed column window rate R_s = sum_c r_sc (EMA, as the R120 guard) gives h_s += eta x (R_s - 1) (clamped +-lagHomeoMax,
+   * default 1) and every cell of the source's columns gets thr = V_REST + (thr0 - V_REST) x exp(h_s): hot (letter-unspecific) sources are raised,
+   * cold ones lowered. R123 bookdiag: healthy brains R_s 0.94-0.99, hot 2x_si 2.9-6.4, cold 4x_rg 0.62-0.70. No size-dependent constant.
+   * P.lagHomeoCol = 1: the first (negative) variant, one offset per column with target r_sc = the same letter's source-0 rate. Starts after 500 windows. */
+  initLagHomeo() {
+    const gu = this.gu, src = gu.src, k0 = new Map(); for (let c = 0; c < src[0].keys.length; c++) k0.set(src[0].keys[c], c);
+    if (!this.thr) this.thr = Float32Array.from(this.g.thresh);
+    gu.lh = src.map((S, s) => s === 0 ? null : { c0: Int32Array.from(S.keys, k => k0.has(k) ? k0.get(k) : -1), h: new Float32Array(S.keys.length), hs: 0, t0: Float32Array.from(S.cells, b => this.thr[b]) });
+    gu.lhN = 0; gu.st.lhMax = 0; }
+  lagHomeoStep() {
+    const gu = this.gu, cr = gu.cr, thr = this.thr, eta = params.lagHomeo, hM = params.lagHomeoMax > 0 ? params.lagHomeoMax : 1, col = params.lagHomeoCol === 1; if (++gu.lhN < 500) return;
+    let mx = 0; for (let s = 1; s < cr.length; s++) { const L = gu.lh[s], S = gu.src[s], a = cr[s], a0 = cr[0];
+      if (!col) { let R = 0; for (let c = 0; c < a.length; c++) R += a[c]; let h = L.hs + eta * (R - 1); h = h > hM ? hM : h < -hM ? -hM : h; L.hs = h; if (Math.abs(h) > mx) mx = Math.abs(h);
+        const f = Math.exp(h), cl = S.cells, t0 = L.t0; for (let q = 0; q < cl.length; q++) thr[cl[q]] = V_REST + (t0[q] - V_REST) * f; continue; }
+      for (let c = 0; c < a.length; c++) { if (L.c0[c] < 0) continue; let h = L.h[c] + eta * (a[c] - a0[L.c0[c]]); h = h > hM ? hM : h < -hM ? -hM : h; L.h[c] = h; if (Math.abs(h) > mx) mx = Math.abs(h);
+        const f = Math.exp(h); for (let q = S.off[c]; q < S.off[c + 1]; q++) thr[S.cells[q]] = V_REST + (L.t0[q] - V_REST) * f; } }
+    gu.st.lhMax = +mx.toFixed(3); gu.st.lhS = gu.lh.map(L => L ? +(col ? 0 : L.hs).toFixed(3) : 0); }
+  guExact(i, gc, s, syn, mk, gB) {   // first hit of claw column gc (source s) in this read window: set the claw bit of every granule listening to it
+    const gu = this.gu, ch = gu.cHit[s], c = gc - gu.hOff[s]; if (ch[c] >= 250) return;
+    const hM = params.granExactHits > 1 ? params.granExactHits : 1; if (ch[c] === 0) gu.cT.push(s, c); ch[c]++; if (ch[c] < hM) return; ch[c] = 250; if (s === 0 && gu.ch && gu.ch.next != null) this.guChunkFire(c, syn, mk, gB); if (s === 0 && gu.lg && gu.lg.next) this.guLagFire(c, syn, mk, gB); if ((params.granExactColCap || (params.granExactGuard & 2)) && gu.cr[s][c] > this.guColCap(s)) return; if (gu.wta && s > 0) { if (gu.wta[s] >= gu.wtaK) return; gu.wta[s]++; }   // R125 lagWTA: only the first k columns of a lag source to fire in this window count (see initGranExact)   // R119 granExactColCap: a claw column active in > colCap of the windows (saturated lag cells) carries no context: it never completes a tuple   // R119 granExactHits: a claw column counts once it has fired hM spikes in this window (stale lag letters fire fewer)
+    const L = gu.lists[s][c], gen = gu.gen, xm = gu.xm, xn = gu.xn, xf = gu.xf, gOff = gu.gOff, T = this.thr || this.g.thresh;
+    const xL = gu.xL, fz = params.granFatigue;   // R122 granFatigue = c (off by default): a detector that fired less than c x its OWN mean inter-fire interval (symbols / its fire count) ago is refractory (self-suppression after completing its tuple; self-calibrated per detector)
+    for (let r = 0, m = L.length; r < m; r++) { const e = L[r]; if (e.gen !== gen[e.j]) continue; const j = e.j, bit = 1 << e.c;
+      if (!(xm[j] & bit)) { if (!xm[j]) gu.xT[gu.xTn++] = j; xm[j] |= bit; }
+      if (!xf[j] && xm[j] === (1 << xn[j]) - 1) { if (xL) { const tk = gu.tk, dt = tk - xL[j]; if (dt > gu.sps) { if (gu.xE[j] > 2 && dt < fz * tk / gu.xE[j]) { gu.st.fatSkip = (gu.st.fatSkip || 0) + 1; continue; } xL[j] = tk; gu.xE[j]++; } } xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++; const b = gOff + j; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31); gu.st.exact++; } }
+  }
+  /* R134 granChunk (global P.granChunk = 1; 0 / unset = off, bit-identical, no RNG; needs granExact): CHUNK (WORD-CONTEXT) DETECTORS in the granule pool.
+   * A running chunk state: the current partial word p (letters since the last delimiter) and the previous completed word w; the delimiter is the
+   * most frequent current letter seen so far (self-calibrated; the space in text). A chunk detector is a pool granule recruited (same recruit rule,
+   * same pool, same one-shot / granKal / granTrace readout) on a surprising window for the key (w, p, current letter): it fires in a read window when
+   * the current letter's column fires and the chunk state before it equals its key (one detector per key, like the exact tuples). The key made with
+   * the delimiter as the current letter is the word-completion node; the previous word w is the slower second level held across the next word.
+   * Count-model reference (R134 headroom): previous word + partial word beats every letter order 3-12 at 30k-1M letters. */
+  guChunkEvent(yTgt, n) {
+    const gu = this.gu; if (n < 1) return; const c0 = gu.win[0], mt = gu.match;
+    const C = gu.ch || (gu.ch = { cnt: new Float64Array(gu.src[0].keys.length), delim: -1, w: '', p: '', next: null });
+    C.cnt[c0]++; if (C.delim < 0 || C.cnt[c0] > C.cnt[C.delim]) C.delim = c0;
+    const key = 'C' + C.w + '|' + C.p + '|' + c0, j0 = gu.owned.get(key);
+    if (j0 != null && gu.keyBy[j0] === key) { if (mt) mt[j0] += 1; }
+    else if (params.granChunkGate === 2) { if (C.w !== '') { const seen = this.guChunkSeen(key); if (params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(key, 0, yTgt, !seen)) gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; } }   // R135 gate 2: first sighting recruits only into a free (never-matched) slot
+    else if (C.w !== '' && (!(params.granChunkGate > 0) || this.guChunkSeen(key)) && params.plasticity && this.learning && yTgt < 0.85) { gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; this.guRecruit(key, 0, yTgt); }
+    const P = params.granPhrase > 0; if (P && C.w2 != null && C.w2 !== '') { const kP = 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' + c0, jP = gu.owned.get(kP);   // R136 granPhrase: second level (see below)
+      if (jP != null && gu.keyBy[jP] === kP) { if (mt) mt[jP] += 1; }
+      else { const g2 = params.granPhrase === 2 ? 1 : params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kP) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kP, 0, yTgt, g2 === 2 && !seen, true)) gu.st.phraseRec = (gu.st.phraseRec || 0) + 1; } }
+    const Q = params.granCat > 0; if (Q) { const K = C.K || this.guCatInit(C);   // R137 granCat: second level of learned word categories (see guCatInit)
+      if (C.p === '' && c0 !== C.delim && C.pw) this.guCatObs(C, C.pw, c0);   // first letter of the next word = one continuation sample of the previous word
+      if (C.q1 >= 0 && C.q2 >= 0) { const kQ = 'Q' + C.q2 + '|' + C.q1 + '|' + C.p + '|' + c0, jQ = gu.owned.get(kQ);
+        if (jQ != null && gu.keyBy[jQ] === kQ) { if (mt) mt[jQ] += 1; }
+        else { const g2 = params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kQ) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kQ, 0, yTgt, g2 === 2 && !seen, true)) gu.st.catRec = (gu.st.catRec || 0) + 1; } } }
+    if (c0 === C.delim) { if (C.p !== '') { if (P) C.w2 = C.w; C.w = C.p; if (Q) { C.q2 = C.q1; const q = C.wc.get(C.p); C.q1 = q != null ? q : -1; C.pw = C.p; } } C.p = ''; } else C.p = C.p ? C.p + ',' + c0 : String(c0);
+    C.next = 'C' + C.w + '|' + C.p + '|'; if (P) C.nextP = C.w2 ? 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' : null; if (Q) C.nextQ = C.q1 >= 0 && C.q2 >= 0 ? 'Q' + C.q2 + '|' + C.q1 + '|' + C.p + '|' : null; }
+  /* R140 lagDepth (P.lagDepth = D > 4; 0 / unset = off, bit-identical, no RNG; needs granExact): LONG LAGS t-4 .. t-(D-1). The grown delay line holds
+   * t .. t-4 (R134 lag probes) and the claws read t .. t-3. The flag extends the delay line as a symbol-level register of the current-letter winner
+   * (source 0's latency winner each window, like the granChunk state), and adds claw sources at lags 4 .. D-1 used by recruited COPY detectors:
+   * key (current letter c, far lag l, letter x): fires in a read window when the current letter is c and the register holds x at lag l. Recruited by
+   * the usual rule (surprising teaching event, same pool, gate and one-shot / Kalman / trace readout) for the most recent far lag l >= 4 at which
+   * the arriving (target) letter occurred: "the letter seen l back comes again after c" (copy / repetition). No birth claws (the R135 random claws
+   * and their RNG draws are unchanged). P.lagBlur = 1: the far lag is blurred to its octave bin b = floor(log2 l) (4-7, 8-15, 16-31, ...), key
+   * (c, b, x) fires when the most recent far occurrence of x lies in bin b: one detector covers a range of delays (fewer, denser keys). */
+  guLagEvent(yTgt, n) {
+    const gu = this.gu; if (n < 1) return; const c0 = gu.win[0], mt = gu.match, kb = gu.keyBy, ow = gu.owned;
+    const D = Math.max(5, Math.round(params.lagDepth)), L = gu.lg || (gu.lg = { D, h: new Int32Array(D).fill(-1), won: 0, next: null, blur: params.lagBlur > 0, m: Math.max(1, Math.round(params.lagCtx || 1)), cx: '' });
+    const pre = L.blur ? 'B' : 'F', h = L.h;
+    if ((params.lagPrune > 0 || params.lagSurp > 0) && L.next) this.guLagUse(L, pre + c0 + L.cx, c0, this.gSym);   // R140 lagPrune / lagSurp: per-detector use statistics (see guLagUse)
+    if (mt && L.next) for (const sfx of L.next) { const key = pre + c0 + L.cx + sfx, j = ow.get(key); if (j != null && kb[j] === key) mt[j] += 1; }   // utility: the copy keys present in this window
+    const tg = this.gSym; if (params.lagGate > 0) { if (tg != null && tg >= 0 && L.next) this.guLagGate(L, pre + c0 + L.cx, c0, tg, yTgt); }   // R140 lagGate: recruit only copy keys that predict better than the short context (see guLagGate)
+    else if (tg != null && tg >= 0 && params.plasticity && this.learning && yTgt < 0.85) { let l = -1; for (let q = 4; q < D; q++) if (h[q] === tg) { l = q; break; }
+      if (l >= 0) { const key = pre + c0 + L.cx + '|' + (L.blur ? Math.floor(Math.log2(l)) : l) + '|' + tg, j0 = ow.get(key);
+        if (!(j0 != null && kb[j0] === key) && !gu.ban.has(key)) { const g = params.granChunkGate, seen = g > 0 ? this.guChunkSeen(key) : true;
+          if ((g !== 1 || seen) && this.guRecruit(key, 0, yTgt, g === 2 && !seen)) gu.st.lagRec = (gu.st.lagRec || 0) + 1; } } }
+    for (let q = D - 1; q > 1; q--) h[q] = h[q - 1]; h[1] = c0;   // shift the delay register: lags relative to the next window's current letter
+    const nx = []; if (L.blur) { const sn = new Set(); for (let q = 4; q < D; q++) { const x = h[q]; if (x < 0 || sn.has(x)) continue; sn.add(x); nx.push('|' + Math.floor(Math.log2(q)) + '|' + x); } }
+    else for (let q = 4; q < D; q++) if (h[q] >= 0) nx.push('|' + q + '|' + h[q]);
+    L.next = nx; if (L.m > 1) { let cx = ''; for (let q = 1; q < L.m; q++) cx += ',' + h[q]; L.cx = cx; } }   // R140 lagCtx m: the key carries the last m letters (current + m-1 before), not only the current one
+  /* R140 lagGate (P.lagGate = 1; 0 / unset = off): PREDICTIVE-UTILITY GATE for copy detectors (self-calibrating, no constant). Every copy key present in a
+   * window keeps a count of its presences n and of the times its far letter x was the arriving letter h. A copy detector is recruited (surprising event,
+   * as before) only for a present key with x = the arriving letter whose lower confidence bound p - sqrt(p (1 - p) / n) (p = h / n, n >= 3) beats BOTH the
+   * short context: the net's own prediction of the arriving letter (yTgt) and the bigram rate P(x | current letter). Keys whose far letter adds nothing
+   * over the current letter never get a detector, so frequent letters at far lags (the text failure of R140 D32) are filtered out by evidence. */
+  guLagGate(L, kp, c0, tg, yTgt) {
+    const gu = this.gu, A = gu.src[0].keys.length; if (!L.gs) { L.gs = new Map(); L.bg = new Float64Array(A * A); L.bn = new Float64Array(A); }
+    const gs = L.gs; let best = null, bv = -1;
+    for (const sfx of L.next) { const key = kp + sfx, x = +sfx.slice(sfx.lastIndexOf('|') + 1); let v = gs.get(key); if (!v) gs.set(key, v = [0, 0]); v[0]++; if (x === tg) v[1]++;
+      if (x !== tg || v[0] < 3) continue; const p = v[1] / v[0], lb = p - Math.sqrt(p * (1 - p) / v[0]); if (lb > bv) { bv = lb; best = key; } }
+    const pb = L.bn[c0] > 0 ? L.bg[c0 * A + tg] / L.bn[c0] : 0; L.bg[c0 * A + tg]++; L.bn[c0]++;
+    let pr = pb; if (params.lagGate === 2) { const tk = c0 + ',' + L.h[1] + ',' + L.h[2], tm = L.tri || (L.tri = new Map()); let v = tm.get(tk); if (!v) tm.set(tk, v = new Map()); let nn = 0; for (const c of v.values()) nn += c;   // lagGate 2: reference = the short-context count rate P(x | last 3 letters) (what the exact tuples see), not only the bigram
+      const pt = nn > 0 ? (v.get(tg) || 0) / nn : 0; v.set(tg, (v.get(tg) || 0) + 1); if (pt > pr) pr = pt; }
+    if (!best || bv <= Math.max(yTgt, pr) || !(params.plasticity && this.learning) || yTgt >= 0.85) return;
+    const j0 = gu.owned.get(best); if ((j0 != null && gu.keyBy[j0] === best) || gu.ban.has(best)) return; gu.st.lagPass = (gu.st.lagPass || 0) + 1;
+    const g = params.granChunkGate, seen = g > 0 ? this.guChunkSeen(best) : true;
+    if ((g !== 1 || seen) && this.guRecruit(best, 0, yTgt, g === 2 && !seen)) gu.st.lagRec = (gu.st.lagRec || 0) + 1; }
+  /* R140 lagPrune (P.lagPrune = 1) / lagSurp (P.lagSurp = 1); 0 / unset = off, no RNG. Use-time gating of copy detectors (self-calibrating, no constant).
+   * Each live copy detector j counts its presences n_j (its key held in a window) and hits h_j (its far letter x arrived next), and the bigram rate
+   * P(x | current letter) at those presences (sum r_j). lagPrune: once the upper bound p + sqrt(p (1 - p) / n) + 1 / n (p = h / n) falls below the mean
+   * reference r_j / n_j, the detector is freed and its key banned (it predicts no better than the current letter alone). lagSurp: a copy detector fires
+   * only in windows where its precision (h + 1) / (n + 2) beats the confidence of the short context (the top count rate after the last 3 letters),
+   * i.e. it can drive the readout only when the short-context prediction is uncertain. 0 < lagSurp < 1: softer, precision > lagSurp x confidence. lagSurp 2: the confidence is add-one smoothed over the alphabet. */
+  guLagUse(L, kp, c0, tg) {
+    const gu = this.gu, A = gu.src[0].keys.length, nG = gu.nG; if (!L.un) { L.un = new Float32Array(nG); L.uh = new Float32Array(nG); L.ur = new Float32Array(nG); L.ug = new Int32Array(nG).fill(-1); L.ubg = new Float64Array(A * A); L.ubn = new Float64Array(A); L.tri3 = new Map(); }
+    const ok = tg != null && tg >= 0;
+    for (const sfx of L.next) { const key = kp + sfx, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key) continue; if (L.ug[j] !== gu.gen[j]) { L.ug[j] = gu.gen[j]; L.un[j] = 0; L.uh[j] = 0; L.ur[j] = 0; }
+      if (!ok) continue; const x = +sfx.slice(sfx.lastIndexOf('|') + 1); L.un[j]++; if (x === tg) L.uh[j]++; L.ur[j] += L.ubn[c0] > 0 ? L.ubg[c0 * A + x] / L.ubn[c0] : 0;
+      if (params.lagPrune > 0 && L.un[j] >= 3) { const n = L.un[j], p = L.uh[j] / n; if (p + Math.sqrt(p * (1 - p) / n) + 1 / n < L.ur[j] / n && gu.st.events - gu.born[j] >= gu.hold) {
+        gu.ban.add(key); gu.owned.delete(key); gu.keyBy[j] = null; gu.gen[j]++; gu.xn[j] = 0; if (gu.match) gu.match[j] = 0; gu.st.lagPruned = (gu.st.lagPruned || 0) + 1; } } }
+    if (ok) { L.ubg[c0 * A + tg]++; L.ubn[c0]++; const tk = c0 + ',' + L.h[1] + ',' + L.h[2]; let v = L.tri3.get(tk); if (!v) L.tri3.set(tk, v = new Map()); v.set(tg, (v.get(tg) || 0) + 1); } }
+  guLagFire(c, syn, mk, gB) { const gu = this.gu, L = gu.lg; if (L.won) return; L.won = 1; const pre = L.blur ? 'B' : 'F';
+    if (params.lagSurp > 0 && L.un) { let cf = 0; const v = L.tri3.get(c + ',' + L.h[1] + ',' + L.h[2]); if (v) { let t = 0, m = 0; for (const q of v.values()) { t += q; if (q > m) m = q; } cf = params.lagSurp === 2 ? (m + 1) / (t + gu.src[0].keys.length) : m / t; }   // lagSurp 2: add-one (Laplace) smoothed confidence, so rarely seen contexts do not look confident   // short-context confidence (h[1], h[2] = the 2 letters before c: the register is already shifted)
+      for (const sfx of L.next) { const key = pre + c + L.cx + sfx, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key) continue; const n = L.ug[j] === gu.gen[j] ? L.un[j] : 0, h = n ? L.uh[j] : 0;
+        if ((h + 1) / (n + 2) > cf * (params.lagSurp < 1 ? params.lagSurp : 1)) this.guKeyFire(key, syn, mk, gB, 3); else gu.st.lagQuiet = (gu.st.lagQuiet || 0) + 1; } return; }
+    for (const sfx of L.next) this.guKeyFire(pre + c + L.cx + sfx, syn, mk, gB, 3); }
+  /* R137 granCat (P.granCat = f > 0; 0 / unset = off, bit-identical, no RNG; needs granChunk): a SECOND LEVEL OF LEARNED WORD CATEGORIES. Each completed word
+   * keeps a continuation profile (counts of the first letter of the word that follows it). Categories are competitive-learning prototypes of the normalised
+   * profiles, grown online: a word with >= 2 samples and no category seeds a new prototype while fewer than Kmax exist, otherwise joins the most similar
+   * (cosine); its prototype moves toward it (rate 1 / min(n+1, 100)). Kmax = max(2, round(f x pool / 1000)) (pool = born granules), so a bigger pool holds
+   * finer categories. Second-level detectors: key (category of the word before last, category of the last word, partial word, letter), recruited and fired
+   * like the chunk detectors (same gate, pool and readout). */
+  guCatInit(C) { const gu = this.gu, nB = gu.l2 != null ? gu.nG - gu.l2 : gu.nAct != null ? gu.st.nAct0 : gu.nG; C.K = Math.max(2, Math.round(params.granCat * nB / 1000)); C.A = gu.src[0].keys.length;
+    C.prof = new Map(); C.wc = new Map(); C.cent = []; C.cn = []; C.q1 = -1; C.q2 = -1; C.pw = null; gu.st.catK = C.K; return C.K; }
+  guCatObs(C, w, c0) { let v = C.prof.get(w); if (!v) C.prof.set(w, v = new Float64Array(C.A + 1)); v[c0]++; v[C.A]++; if (v[C.A] < 2) return;
+    let z = 0; for (let i = 0; i < C.A; i++) z += v[i] * v[i]; z = Math.sqrt(z); const x = new Float64Array(C.A); for (let i = 0; i < C.A; i++) x[i] = v[i] / z;
+    let b = -1, bv = -2; for (let k = 0; k < C.cent.length; k++) { const c = C.cent[k]; let d = 0; for (let i = 0; i < C.A; i++) d += c[i] * x[i]; if (d > bv) { bv = d; b = k; } }
+    if (!C.wc.has(w) && C.cent.length < C.K) { b = C.cent.length; C.cent.push(Float64Array.from(x)); C.cn.push(1); this.gu.st.catN = C.cent.length; }
+    else { const c = C.cent[b], r = 1 / Math.min(C.cn[b] + 1, 100); C.cn[b]++; let q = 0; for (let i = 0; i < C.A; i++) { c[i] += r * (x[i] - c[i]); q += c[i] * c[i]; } q = Math.sqrt(q) || 1; for (let i = 0; i < C.A; i++) c[i] /= q; }
+    C.wc.set(w, b); }
+  /* R136 granPhrase (P.granPhrase = 1; 0 / unset = off, bit-identical, no RNG; needs granChunk): SECOND LEVEL. Each completed word (chunk) becomes a symbol
+   * of a slower stream; phrase detectors are recruited by the same rule (surprise, same gate, same pool and readout) on the key (word before last, last word,
+   * partial word, current letter) = the chunk key extended by the previous chunk, and fire with the chunk detector in the read window.
+   * granPhrase = 2: phrase detectors always use the 2nd-sighting gate (sparse level; the pool is left to chunks). */
+  /* R135 granChunkGate (P.granChunkGate = 1; 0 / unset = off, bit-identical, no RNG): recruit a chunk detector only on the SECOND sighting of its key
+   * (surprising and seen before). Seen-before memory = a 1-hash bit sketch (FNV-1a) of 2^ceil(log2(32 nG)) bits: sized by the pool itself, so the false
+   * "seen" rate stays ~ (distinct keys) / (32 nG) (< 6% at book100k, 32000 granules). Returns true if the key was seen before; marks it seen.
+   * granChunkGate = 2 (pressure gate): a first sighting still recruits, but only into a free slot (a granule with zero exact matches among the 48 sampled
+   * candidates); once the pool holds no free slots, recruitment waits for the 2nd sighting. Self-calibrating: no gate while the pool has room (short text). */
+  guChunkSeen(key) { const gu = this.gu; if (!gu.chS) { let b = 1; while (b < 32 * gu.nG) b <<= 1; gu.chS = new Uint32Array(b >>> 5); gu.chM = b - 1; }
+    let h = 0x811c9dc5; for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 0x01000193); h = (h >>> 0) & gu.chM;
+    const w = h >>> 5, m = 1 << (h & 31); if (gu.chS[w] & m) return true; gu.chS[w] |= m; gu.st.chunkGated = (gu.st.chunkGated || 0) + 1; return false; }
+  guChunkFire(c, syn, mk, gB) {   // first hit of current-letter column c in this window: fire the chunk detector of (chunk state, c)
+    const gu = this.gu; if (gu.ch.won) return; gu.ch.won = 1;   // only the first current-letter column to fire in the window (latency winner = the letter that arrived)
+    this.guKeyFire(gu.ch.next + c, syn, mk, gB, 0); if (gu.ch.nextP != null) this.guKeyFire(gu.ch.nextP + c, syn, mk, gB, 1); if (gu.ch.nextQ != null) this.guKeyFire(gu.ch.nextQ + c, syn, mk, gB, 2); }
+  guKeyFire(key, syn, mk, gB, ph) { const gu = this.gu, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key || gu.xf[j]) return;
+    if (!gu.xm[j]) gu.xT[gu.xTn++] = j; gu.xm[j] |= 1; gu.xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++;
+    const b = gu.gOff + j, T = this.thr || this.g.thresh; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31);
+    if (ph === 3) gu.st.lagFired = (gu.st.lagFired || 0) + 1; else if (ph === 2) gu.st.catFired = (gu.st.catFired || 0) + 1; else if (ph) gu.st.phraseFired = (gu.st.phraseFired || 0) + 1; else gu.st.chunkFired = (gu.st.chunkFired || 0) + 1; }
+  guColCap(s) { const v = params.granExactColCap;
+    if (!v) { const gu = this.gu; if (s === 0 || gu.st.events < 3000) return 2; if (gu.crE0 !== gu.st.events) { gu.crE0 = gu.st.events; let m = 0; const a0 = gu.cr[0]; for (let c = 0; c < a0.length; c++) if (a0[c] > m) m = a0[c]; gu.crMax0 = Math.min(0.9, 3 * m); } return gu.crMax0; }
+    // R120 granExactGuard (self-calibrating): a lag column is saturated when it is active in more windows than 3x the most frequent CURRENT letter's column (source 0) - no letter can explain that; capped at 0.9 (small alphabets)
+    if (v > 0) return v; const gu = this.gu, a = gu.cr[s]; if (!gu.crM || gu.crE !== gu.st.events) { gu.crE = gu.st.events; gu.crM = gu.cr.map(x => { let t = 0; for (let c = 0; c < x.length; c++) t += x[c]; return t / x.length; }); }
+    return gu.st.events < 3000 ? 2 : Math.max(-v * gu.crM[s], 0.05); }   // < 0 = self-calibrating: |v| x the source's mean column activity (a saturated column vs its alphabet)
+  guExactReset() { const gu = this.gu, xm = gu.xm, xf = gu.xf, xT = gu.xT; if (gu.ch) gu.ch.won = 0; if (gu.lg) gu.lg.won = 0; for (let q = 0; q < gu.xTn; q++) { xm[xT[q]] = 0; xf[xT[q]] = 0; } gu.xTn = 0; gu.xFn = 0;
+    const cT = gu.cT; if (params.granExactColCap || (params.granExactGuard & 2) || params.lagHomeo > 0) { const cr = gu.cr; for (let s2 = 0; s2 < cr.length; s2++) { const a = cr[s2]; for (let c = 0; c < a.length; c++) a[c] *= 0.999; } for (let q = 0; q < cT.length; q += 2) if (gu.cHit[cT[q]][cT[q + 1]] >= 250) cr[cT[q]][cT[q + 1]] += 0.001; }
+    for (let q = 0; q < cT.length; q += 2) gu.cHit[cT[q]][cT[q + 1]] = 0; cT.length = 0; if (gu.lh) this.lagHomeoStep(); if (gu.wta) gu.wta.fill(0); }
   guDrive(spk, nSpk, syn, mk) {
     const gu = this.gu, colOf = gu.colOf, hits = gu.hits, lists = gu.lists, gOff = gu.gOff, gEnd = gOff + gu.nG, use = gu.use, gen = gu.gen, K = gu.K, hOff = gu.hOff, gB = this.gBits;
+    if (gu.xm) { const inNow = nSpk > 0 && spk[0] < this.g.nIn; if (inNow && !gu.inPrev) this.guExactReset(); gu.inPrev = inNow; if (gu.xL) { gu.tk++; if (gu.st.events > 0) gu.sps = gu.tk / gu.st.events; } }   // R119: a new input symbol starts a new window (also in free-running generation, which has no teaching events)
+    if (gu.xm && params.granExactHold !== 0 && gu.xFn) { const T = this.thr || this.g.thresh, F = gu.xF; for (let q = 0; q < gu.xFn; q++) { const b = gOff + F[q]; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; } }   // R119 granExactHold (default on): a matched detector keeps firing for the rest of the read window (sustained drive like the dense code)
     for (let q = 0; q < nSpk; q++) {
       const i = spk[q]; if (i >= gOff && i < gEnd) use[i - gOff]++;
       const gc = colOf[i]; if (gc < 0) continue; hits[gc]++;
       let s = 0; while (s + 1 < K && gc >= hOff[s + 1]) s++;
+      if (gu.xm) { this.guExact(i, gc, s, syn, mk, gB); continue; }
       const L = lists[s][gc - hOff[s]];
       for (let r = 0, m = L.length; r < m; r++) { const e = L[r]; if (e.gen !== gen[e.j]) continue; const b = gOff + e.j; syn[b] += e.w; if (mk) mk[b] = 1; if (gB) gB[e.j >>> 5] |= 1 << (e.j & 31); }
     }
@@ -2362,44 +2778,70 @@ class SpikingNet {
   granUtilityEvent(yTgt) {
     const gu = this.gu; if (!gu) return;
     const { K, Km, W, nG, gOff, src, hOff, hits, win, lists, inS, inK, outS, outK, use, born, gen, keyBy, owned, pending, rng, co, hold, st } = gu;
-    st.events++;
+    st.events++; const mt0 = gu.match, ev0 = j => st.events - born[j] >= hold;
     let n = 0;
     for (let s = 0; s < K; s++) { const a = hOff[s], m = src[s].keys.length; let bc = -1, bh = 0;
       for (let c = 0; c < m; c++) { const h = hits[a + c]; if (h > bh) { bh = h; bc = c; } }
       if (bc >= 0) win[n++] = bc; else break; }
-    hits.fill(0);
+    if (gu.xm && params.granExactCap) { const xr = gu.xr, F = gu.xF; let sm = 0, nl = 0; for (let j = 0; j < nG; j++) { xr[j] *= 0.999; if (keyBy[j] != null) { sm += xr[j]; nl++; } } for (let q = 0; q < gu.xFn; q++) xr[F[q]] += 0.001;
+      const cap = params.granExactCap > 0 ? params.granExactCap : st.events < 3000 ? 2 : Math.max(0.01, -params.granExactCap * (nl ? sm / nl : 0));   // < 0 = self-calibrating: |v| x the mean match rate of the live detectors   // R119 granExactCap: a detector matching in > cap of the windows (EMA) is too broad -> freed for recruitment
+      for (let q = 0; q < gu.xFn; q++) { const j = F[q]; if (xr[j] > cap && ev0(j)) { const kb = keyBy[j]; if (kb != null) gu.ban.add(kb); if (kb != null && owned.get(kb) === j) owned.delete(kb); keyBy[j] = null; gen[j]++; gu.xn[j] = 0; xr[j] = 0; if (mt0) mt0[j] = 0; st.capped++; } } }
+    hits.fill(0); if (gu.xm) this.guExactReset();
     for (let j = 0; j < nG; j++) use[j] *= 0.998;
+    const mt = gu.match;   // R119 granUtility 2 (match utility): credit the granules whose whole claw tuple (lags t .. t-m+1, m = Km .. n) is this window
+    if (mt) { for (let j = 0; j < nG; j++) mt[j] *= 0.998; let kk = String(Km); for (let c = 0; c < Km && c < n; c++) kk += ',' + win[c];
+      for (let m = Km; m <= n; m++) { if (m > Km) kk = String(m) + kk.slice(kk.indexOf(',')) + ',' + win[m - 1]; const j = owned.get(kk); if (j != null) { mt[j] += 1; st.matched++; } } }
+    if (params.lagDepth > 4 && gu.xm) this.guLagEvent(yTgt, n);   // R140 lagDepth (off by default): long-lag (copy) detectors, see guLagEvent
+    if (params.granChunk > 0 && gu.xm) this.guChunkEvent(yTgt, n);   // R134 granChunk (off by default): word-context chunk detectors (before the recruit early-returns)
     if (!(params.plasticity && this.learning) || yTgt >= 0.85 || n < Km) return;
     let key = String(n); for (let c = 0; c < n; c++) key += ',' + win[c];
+    if (gu.xm) { let kk = String(Km); for (let c = 0; c < Km; c++) kk += ',' + win[c];   // exact mode: recruit the shortest missing window first (3 letters, then 4)
+      for (let m = Km; m <= n; m++) { if (m > Km) kk = String(m) + kk.slice(kk.indexOf(',')) + ',' + win[m - 1]; if (!owned.has(kk) && !gu.ban.has(kk)) { key = kk; n = m; break; } }
+      if (gu.ban.has(key)) return; if (params.granExactColCap || (params.granExactGuard & 2)) for (let c = 0; c < n; c++) if (gu.cr[c][win[c]] > this.guColCap(c)) { st.guardSkip = (st.guardSkip || 0) + 1; return; } }
     if (owned.has(key)) return;
+    this.guRecruit(key, n, yTgt);
+  }
+  guRecruit(key, n, yTgt, free, lv2) {   // R138: lv2 = a level-2 key (recruits only in [l2, nG) when granL2 is on; level-1 keys only below l2)   // R135: free = recruit only into a never-matched slot (granChunkGate 2); returns true when a granule was recruited   // (R134: the recruit tail of granUtilityEvent as a method, unchanged; n = 0 = a chunk detector with no claw lists)
+    const gu = this.gu, { W, nG, gOff, src, win, lists, inS, inK, outS, outK, use, born, gen, keyBy, owned, pending, rng, co, hold, st } = gu, mt = gu.match;
+    if (lv2 && params.granL2 > 0 && gu.l2 == null) return false;   // R138 granL2 with no level-2 pool (sizeF <= b): no second level
     const cnt = (pending.get(key) || 0) + 1;
     if (cnt < co) { pending.set(key, cnt); return; }
     pending.delete(key);
     const ev = st.events, ws = this.ws, posts = this.posts;
     let best = -1, bu = Infinity;
     for (let t = 0; t < 48; t++) {
-      const j = (rng() * nG) | 0; if (ev - born[j] < hold) continue;
+      const L2 = gu.l2 != null, r0 = L2 && lv2 ? gu.l2 : gu.rsv0 > 0 ? gu.rsv0 : 0, j = r0 + ((rng() * ((L2 && lv2 ? nG : gu.nAct != null ? gu.nAct : L2 ? gu.l2 : nG) - r0)) | 0); if (ev - born[j] < hold) continue;   // R119 granReserve: recruit / recycle only inside the reserve (r0 = 0 = whole layer, same draw)
       let wSum = 0; for (let q = outS[j]; q < outS[j + 1]; q++) wSum += ws[outK[q]];
-      const u = use[j] * (0.01 + wSum);
+      const u = mt ? mt[j] : use[j] * (0.01 + wSum);   // R119: mode 2 ranks by exact-tuple matches (homeostasis keeps every granule spiking, so the spike-count utility never falls below 0.05 in v47)
       if (u < bu) { bu = u; best = j; if (u === 0) break; }
     }
-    if (best < 0 || bu > 0.05) return;
+    const cap1 = gu.l2 != null ? gu.l2 : nG, in2 = lv2 && gu.l2 != null;   // in2: a level-2 recruit inside the L2 pool (no growth there)
+    if (params.granEvGrow > 0 && !in2 && gu.nAct < cap1 && best >= 0 && bu > 0) { best = gu.nAct++; bu = 0; st.evGrown = (st.evGrown || 0) + 1; }   // R138 granEvGrow: evicting a used level-1 detector adds a slot instead (grow on eviction)
+    if (free && !in2 && gu.nAct < cap1 && (best < 0 || bu > 0)) { best = gu.nAct++; bu = 0; st.grown = (st.grown || 0) + 1; }   // R136 granGrow: a first sighting the pressure gate would refuse adds a slot instead (pool grows on demand up to the allocated cap)
+    if (best < 0 || bu > 0.05) return false; if (free && bu > 0) { st.chunkFull = (st.chunkFull || 0) + 1; return false; }
     if (keyBy[best] != null && owned.get(keyBy[best]) === best) owned.delete(keyBy[best]);
     for (let q = inS[best]; q < inS[best + 1]; q++) ws[inK[q]] = 0;
     const gv = ++gen[best], b = gOff + best;
-    keyBy[best] = key; owned.set(key, best); born[best] = ev; use[best] = 1;
-    for (let c = 0; c < n; c++) { const col = win[c], sl = src[c].off[col + 1] - src[c].off[col]; if (sl > 0) lists[c][col].push({ j: best, w: W / n / sl, gen: gv }); }
+    keyBy[best] = key; if (this.gKn) this.gKn[gu.gOff + best] = 0; owned.set(key, best); born[best] = ev; use[best] = 1; if (mt) mt[best] = 1;
+    if (gu.xm) { gu.xn[best] = n; for (let c = 0; c < n; c++) lists[c][win[c]].push({ j: best, w: 0, gen: gv, c }); }
+    else for (let c = 0; c < n; c++) { const col = win[c], sl = src[c].off[col + 1] - src[c].off[col]; if (sl > 0) lists[c][col].push({ j: best, w: W / n / sl, gen: gv }); }
     const U = this.gU, Uw = this.gRUw, pos = this.gRpos, wo = gu.wo, psi = this.gPsi || 0;
     const o0 = this.g.nIn + this.g.nHid, tgtNode = params.granTgt === 1 && this.gSym >= 0 ? o0 + this.gSym : -1;
-    const wTgt = Math.min(params.wMax || 15, wo + (params.granLr || 0.1) * Math.max(0, 1 - yTgt));
+    // R121 granOneShot (P.granOneShot = 1; off = bit-identical): the recruit's weight onto the symbol that just arrived is the readout's own NLMS
+    // step for a lone active input (granLr x granRef x (1 - y)), i.e. what the cell would have learned had it fired in the window it was recruited
+    // for (one-shot, like a count model's first sighting); granOneShot 2: / (1 + granules active in that window) = its NLMS share; 0 < granOneShot < 1: that fraction of the lone-input step; instead of the token granLr x (1 - y) on a weight scale of up to wMax x granExactW.
+    const os = params.granOneShot > 0 && gu.xm, wTgt = os ? Math.min(params.wMax * (params.granExactW > 0 ? params.granExactW : 50), wo + (params.granLr || 0.1) * (params.granRef > 0 ? params.granRef : 10) * Math.max(0, 1 - yTgt) * (params.granOneShot < 1 ? params.granOneShot : 1) / (params.granOneShot === 2 ? 1 + (this.gLastNA || 0) : 1)) : Math.min(params.wMax || 15, wo + (params.granLr || 0.1) * Math.max(0, 1 - yTgt));
     if (U && !gu.uAt && this.gIn) { const Ki = this.gIn.K, m = new Int32Array(ws.length).fill(-1); for (let r = 0; r < Ki.length; r++) m[Ki[r]] = r; gu.uAt = m; }
     const map = gu.uAt;
-    for (let q = outS[best]; q < outS[best + 1]; q++) { const e = outK[q], uVal = posts[e] === tgtNode ? wTgt : wo;
+    for (let q = outS[best]; q < outS[best + 1]; q++) { const e = outK[q], uVal = posts[e] === tgtNode ? wTgt : mt && params.granRecruitW0 !== 1 ? 0 : wo;   // R119 mode 2: a recruit starts silent on the non-target outputs (wo = the untrained initial weight would add uniform drive to every output; P.granRecruitW0=1 = old)
       if (U && map && map[e] >= 0) { const r = map[e]; U[r] = uVal; if (Uw && pos) Uw[pos[r]] = uVal; }
-      ws[e] = U ? psi * uVal : uVal; }
+      ws[e] = U ? psi * uVal : uVal;
+      if (this.gFA) { const tg = posts[e] === tgtNode ? 1 : 0, f = tg && this.gFx > 0 ? (params.granRef > 0 ? params.granRef : 10) / this.gFx : 0, wX = params.wMax * (params.granExactW > 0 ? params.granExactW : 50), w1 = uVal + f > wX ? wX : uVal + f;   // R133 granTrace: the recruit's trace = its first observation, full vote (gate 1 at n = 0)
+        this.gFE[e] = tg; if (U) { this.gFA[e] = f; ws[e] = psi * (uVal + f); } else { ws[e] = w1; this.gFA[e] = w1 - uVal; } } }
+    if (this.gFA) this.gFo[b] = tgtNode >= 0 ? 1 : 0;
     if (this.thr) { this.thr[b] = gu.thr0; if (this.gLastT) this.gLastT[best] = this.gThStep; }
     this.v[b] = V_REST; if (this.gCnt) this.gCnt[b] = 0; if (this.gAcc) this.gAcc[b] = 0;
-    st.rewired++;
+    st.rewired++; return true;
   }
   // Two-timescale event-gated chunk boundary shift (T.map === 'chunkGate'):
   // Gates higher-order context regions only on explicit chunk delimiters (e.g. space = sym 0) or high cortical surprise.
@@ -2590,6 +3032,7 @@ class SpikingNet {
     }
     if (this.rhList && params.plasticity) { const L = this.rhList, h = this.p.rcvHomeo, r0 = this.p.rcvRate, thr = this.thr; for (let q = 0; q < L.length; q++) { const i = L[q]; thr[i] += h * (sp[i] - r0); } }
     if (this.hhList || this.riId) this.sparseStep(sp, spk, nSpk, null);   // R67
+    if (this.dc) this.denseStep(sp, null);
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp); }   // v20 exploration noise of the action channels
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];   // v14: feedforward inhibition of mixing cells
       if (n) { const d = this.mixInhD * n, ml = this.mixList; if (this.mlS) { const S = this.mlS, P = this.mlP, D = this.mlD; for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = S[i], e = S[i + 1]; k < e; k++) syn[P[k]] -= D[k]; } } else for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d;
@@ -2976,7 +3419,6 @@ class Agent {
   }
   setBrain(genome, brain) {
     this.genome = genome; this.brain = brain || phenotype(genome, this.env.spec); const S = params.lifeSub > 0 ? params.lifeSub : params.substeps;   // R68 lifeSub: substeps per tick in the life only (growth keeps params.substeps); dtRescale 1: the dynamics rescaled to the coarser step
-    if (this.task && ((genome && genome.sotaBug) || (this.brain && this.brain.sotaBug))) this.task.sota = true;
     this.dtF = params.dtRescale > 0 && S !== params.substeps ? params.substeps / S : 0;
     this.net = this.dtF ? new SpikingNet(this.brain, { dt: this.dtF }) : new SpikingNet(this.brain);
     const n = this.brain.nOut; this.out = { rates: new Float64Array(n), spikes: new Uint16Array(n), input: new Float64Array(n) };   // input (v13): synaptic input summed over the tick (graded decoders)
@@ -3321,38 +3763,34 @@ class World {
   }
   // Cast every eye ray; store nearest hit distance & type (0 wall,1 food,2 poison,-1 none)
   look() {
-    const a = this.agent, EYE_RANGE = this.P.eyeRange, sota = !!(this.sota || this.P.sotaPhysics);
+    const a = this.agent, EYE_RANGE = this.P.eyeRange;
     for (let k = 0; k < NUM_EYES; k++) {
       const ang = a.angle + EYE_ANGLES[k], dx = Math.cos(ang), dy = Math.sin(ang);
-      let best = EYE_RANGE, wallBest = EYE_RANGE, type = -1, target = null;
+      let best = EYE_RANGE, type = -1, target = null;
       for (const s of this.walls) {                 // ray vs segment
         const sx = s[2] - s[0], sy = s[3] - s[1], den = dx * sy - dy * sx;
         if (Math.abs(den) < 1e-9) continue;
         const qx = s[0] - a.x, qy = s[1] - a.y;
         const t = (qx * sy - qy * sx) / den, u = (qx * dy - qy * dx) / den;
-        if (t > 0 && t < best && u >= 0 && u <= 1) { best = t; wallBest = t; type = 0; }
+        if (t > 0 && t < best && u >= 0 && u <= 1) { best = t; type = 0; }
       }
-      for (const it of this.items) {                // ray vs circle (sota: ommatidial acceptance cone eliminates blind gaps between rays)
+      for (const it of this.items) {                // ray vs circle
         if (!this.visible(it)) continue;
         const fx = a.x - it.x, fy = a.y - it.y;
-        if (fx * fx + fy * fy > (EYE_RANGE + ITEM_R * 2) * (EYE_RANGE + ITEM_R * 2)) continue;
-        const b = fx * dx + fy * dy;
-        const rEff = sota && b < 0 ? ITEM_R + Math.min(4.5, -b * 0.045) : ITEM_R;
-        const c = fx * fx + fy * fy - rEff * rEff, disc = b * b - c;
+        if (fx * fx + fy * fy > (EYE_RANGE + ITEM_R) * (EYE_RANGE + ITEM_R)) continue;
+        const b = fx * dx + fy * dy, c = fx * fx + fy * fy - ITEM_R * ITEM_R, disc = b * b - c;
         if (disc < 0) continue;
         let t = -b - Math.sqrt(disc); if (t < 0) t = 0;
-        if (t < best && (!sota || t < wallBest) && -b + Math.sqrt(disc) > 0) { best = t; type = it.type; target = it; }
+        if (t < best && -b + Math.sqrt(disc) > 0) { best = t; type = it.type; target = it; }
       }
       for (const p of this.predators) {             // the predator: a bigger "poison-coloured" disc
         const fx = a.x - p.x, fy = a.y - p.y;
-        const b = fx * dx + fy * dy;
-        const rEff = sota && b < 0 ? PRED_R + Math.min(18, -b * 0.16) : PRED_R;
-        const c = fx * fx + fy * fy - rEff * rEff, disc = b * b - c;
+        const b = fx * dx + fy * dy, c = fx * fx + fy * fy - PRED_R * PRED_R, disc = b * b - c;
         if (disc < 0) continue;
         let t = -b - Math.sqrt(disc); if (t < 0) t = 0;
         if (t < best && -b + Math.sqrt(disc) > 0) { best = t; type = this.predColor(); }
       }
-      a.eyes[k].dist = best; a.eyes[k].wallDist = wallBest; a.eyes[k].type = type; a.eyes[k].target = target;
+      a.eyes[k].dist = best; a.eyes[k].type = type; a.eyes[k].target = target;
     }
     // touch: which side of the body is against a wall (left / front / right sector)
     const c = a.contact; c[0] = c[1] = c[2] = 0; const R2 = (AGENT_R + 3) ** 2;
@@ -3367,7 +3805,7 @@ class World {
   }
   // Differential drive. wl, wr in [-1,1] (negative = backwards). Returns reward this tick.
   move(wl, wr, speedMul) {
-    if (speedMul == null) speedMul = 1; const params = this.P, sota = !!(this.sota || params.sotaPhysics);
+    if (speedMul == null) speedMul = 1; const params = this.P;
     if (params.reversal && !this.reversed && this.t >= params.episodeTicks / 2) { this.reversed = true; this.greenIsFood = !this.greenIsFood; }
     const a = this.agent; a.wl = wl; a.wr = wr; a.speed = speedMul;
     a.angle += (wl - wr) * TURN_RATE;               // left faster -> turn right
@@ -3376,20 +3814,8 @@ class World {
     this.energy += speedMul * speedMul * Math.abs(fwd);   // cost grows with the square of speed
     this.speedSum += speedMul;
     const nx = a.x + Math.cos(a.angle) * sp, ny = a.y + Math.sin(a.angle) * sp;
-    if (!this.nearWall(nx, ny, AGENT_R)) { a.x = nx; a.y = ny; this.bumped = 0; this.bumpStreak = 0; }
-    else {
-      this.bumped = sp !== 0 ? 1 : 0; this.bumps += this.bumped;  // blocked by walls
-      if (sota) {
-        this.bumpStreak = (this.bumpStreak || 0) + 1;
-        // Tangential wall sliding + corner unsticking so oblique wall contacts glide instead of pinning the bug
-        const slideX = a.x + (nx - a.x) * 0.8, slideY = a.y + (ny - a.y) * 0.8;
-        if (!this.nearWall(slideX, a.y, AGENT_R)) a.x = slideX;
-        else if (!this.nearWall(a.x, slideY, AGENT_R)) a.y = slideY;
-        const lClear = (a.eyes[0] ? a.eyes[0].wallDist || a.eyes[0].dist : 60) + (a.eyes[1] ? a.eyes[1].wallDist || a.eyes[1].dist : 60);
-        const rClear = (a.eyes[7] ? a.eyes[7].wallDist || a.eyes[7].dist : 60) + (a.eyes[8] ? a.eyes[8].wallDist || a.eyes[8].dist : 60);
-        a.angle += (rClear >= lClear ? 1 : -1) * TURN_RATE * Math.min(1.4, 0.45 + 0.15 * this.bumpStreak);
-      }
-    }
+    if (!this.nearWall(nx, ny, AGENT_R)) { a.x = nx; a.y = ny; this.bumped = 0; }
+    else { this.bumped = sp !== 0 ? 1 : 0; this.bumps += this.bumped; }  // blocked by walls
     // stuck = moved less than 10 px over the last 30 ticks (pinned on a wall, spinning in place...)
     const h = this.t % 30;
     if (this.t >= 30) { const ddx = a.x - this.histX[h], ddy = a.y - this.histY[h]; a.stuck = ddx * ddx + ddy * ddy < 100; if (a.stuck) this.stuckTicks++; }
@@ -3418,121 +3844,22 @@ class World {
   get done() { return this.t >= this.P.episodeTicks; }
   get horizon() { return this.P.episodeTicks; }
   sense(ext) {
-    const P = this.P, sota = !!(this.sota || P.sotaPhysics); this.look();
-    if (!sota) {
-      for (let k = 0; k < NUM_EYES; k++) {           // sensory encoding: current ~ proximity
-        const e = this.agent.eyes[k];
-        if (e.type >= 0) Enc.current(ext, k * 3 + e.type, 1 - e.dist / P.eyeRange, P.inputGain);
-      }
-      ext[TONIC] = P.tonicCurrent;
-      if (P.bumpSensors) for (let j = 0; j < 3; j++) ext[BUMP0 + j] = this.agent.contact[j] * P.bumpGain;
-    } else {
-      const a = this.agent, wallCaution = 48;         // ignore distant walls (> 48 px) so the bug is not afraid of approaching walls
-      let bestFoodK = -1, bestFoodDist = P.eyeRange;
-      for (let k = 0; k < NUM_EYES; k++) {
-        const e = a.eyes[k];
-        if (e.type > 0 && (e.type === 1) === this.greenIsFood && e.dist < bestFoodDist) {
-          bestFoodDist = e.dist; bestFoodK = k;
-        }
-      }
-      if (bestFoodK >= 0) { this.memFoodSide = bestFoodK < 4 ? -1 : bestFoodK > 4 ? 1 : 0; this.memFoodTicks = 28; }
-      else if (this.memFoodTicks > 0) this.memFoodTicks--;
-      for (let k = 0; k < NUM_EYES; k++) {
-        const e = a.eyes[k];
-        if (e.type === 0) {
-          const warnDist = bestFoodK >= 0 && bestFoodDist < e.dist ? 26 : wallCaution;
-          if (e.dist < warnDist) Enc.current(ext, k * 3 + 0, ((warnDist - e.dist) / warnDist) ** 1.35, P.inputGain);
-        } else if (e.type > 0) {
-          const isFood = (e.type === 1) === this.greenIsFood;
-          if (isFood) {
-            const prox = Math.max(0.35, 1 - 0.65 * (e.dist / P.eyeRange));
-            // Lateral amplify: sharpen left/right F excitation so the bug turns decisively toward the closest green apple
-            const latGain = k === bestFoodK ? 1.85 : 1.35;
-            Enc.current(ext, k * 3 + e.type, prox, P.inputGain * latGain);
-            if (k < 4 && k === bestFoodK) Enc.current(ext, Math.max(0, k - 1) * 3 + e.type, prox * 0.75, P.inputGain * 1.5);
-            else if (k > 4 && k === bestFoodK) Enc.current(ext, Math.min(8, k + 1) * 3 + e.type, prox * 0.75, P.inputGain * 1.5);
-            else if (k === 4) {
-              Enc.current(ext, 3 * 3 + e.type, prox * 0.85, P.inputGain * 1.5);
-              Enc.current(ext, 5 * 3 + e.type, prox * 0.85, P.inputGain * 1.5);
-            }
-          } else if (e.dist < 85) {
-            const prox = Math.max(0.4, 1 - e.dist / 85);
-            Enc.current(ext, k * 3 + e.type, prox, P.inputGain * 1.5);
-            // Route close red-poison avoidance through the ipsilateral wall/bump reflex so the bug sharply dodges red apples
-            if (e.dist < 62) {
-              if (k <= 4) {
-                Enc.current(ext, 1 * 3 + 0, prox, P.inputGain * 1.45);
-                ext[BUMP0 + 0] = Math.max(ext[BUMP0 + 0], prox * P.bumpGain * 1.15);
-              } else {
-                Enc.current(ext, 7 * 3 + 0, prox, P.inputGain * 1.45);
-                ext[BUMP0 + 2] = Math.max(ext[BUMP0 + 2], prox * P.bumpGain * 1.15);
-              }
-            }
-          }
-        }
-      }
-      ext[TONIC] = P.tonicCurrent;
-      if (P.bumpSensors) {
-        const c = a.contact;
-        ext[BUMP0 + 0] = Math.max(ext[BUMP0 + 0], c[0] * P.bumpGain * 1.35);
-        ext[BUMP0 + 1] = Math.max(ext[BUMP0 + 1], c[1] * P.bumpGain);
-        ext[BUMP0 + 2] = Math.max(ext[BUMP0 + 2], c[2] * P.bumpGain * 1.35);
-        if ((c[1] && !c[0] && !c[2]) || (this.bumpStreak > 1)) {
-          const lClear = (a.eyes[0].wallDist || a.eyes[0].dist) + (a.eyes[1].wallDist || a.eyes[1].dist);
-          const rClear = (a.eyes[7].wallDist || a.eyes[7].dist) + (a.eyes[8].wallDist || a.eyes[8].dist);
-          ext[BUMP0 + (rClear >= lClear ? 0 : 2)] = P.bumpGain * 1.5;
-        }
-      }
+    const P = this.P; this.look();
+    for (let k = 0; k < NUM_EYES; k++) {           // sensory encoding: current ~ proximity
+      const e = this.agent.eyes[k];
+      if (e.type >= 0) Enc.current(ext, k * 3 + e.type, 1 - e.dist / P.eyeRange, P.inputGain);
     }
+    ext[TONIC] = P.tonicCurrent;
+    if (P.bumpSensors) for (let j = 0; j < 3; j++) ext[BUMP0 + j] = this.agent.contact[j] * P.bumpGain;
     if (P.gyroSensors) { const d = this.agent.wl - this.agent.wr;     // last tick's turn: wr > wl = turning left
       ext[GYRO0] = Math.max(0, -d) * P.gyroGain; ext[GYRO0 + 1] = Math.max(0, d) * P.gyroGain; }
   }
   act(out) {
-    const P = this.P, G = P.motorGain, Z = P.motorZero, sota = !!(this.sota || P.sotaPhysics);
-    let wl = Dec.rateToValue(out.rates[0], Z, G, -1, 1), wr = Dec.rateToValue(out.rates[1], Z, G, -1, 1);
+    const P = this.P, G = P.motorGain, Z = P.motorZero;
+    const wl = Dec.rateToValue(out.rates[0], Z, G, -1, 1), wr = Dec.rateToValue(out.rates[1], Z, G, -1, 1);
     // speed neuron: at its resting drive (motorBias alone) it fires at SPEED_REF -> multiplier 1.0;
     // silenced -> 0.2 (crawl), driven hard -> up to 1.5 (sprint).
-    let speedMul = clamp(0.2 + 0.8 * out.rates[2] / SPEED_REF, 0.2, 1.5);
-    if (sota) {
-      const a = this.agent;
-      let foodK = -1, foodDist = P.eyeRange, poisonK = -1, poisonDist = P.eyeRange;
-      for (let k = 0; k < NUM_EYES; k++) {
-        const e = a.eyes[k];
-        if (e.type > 0) {
-          if ((e.type === 1) === this.greenIsFood) { if (e.dist < foodDist) { foodDist = e.dist; foodK = k; } }
-          else { if (e.dist < poisonDist) { poisonDist = e.dist; poisonK = k; } }
-        }
-      }
-      // Enthusiastic green-apple pursuit: orient smoothly toward closest green apple and boost forward speed
-      if (foodK >= 0) {
-        const err = (foodK - 4) / 4; // -1 (left) .. +1 (right)
-        const pull = 0.55 * (1 - 0.4 * (foodDist / P.eyeRange));
-        wl = clamp(wl + err * pull + 0.28, -1, 1);
-        wr = clamp(wr - err * pull + 0.28, -1, 1);
-        speedMul = clamp(Math.max(speedMul, 1.18 + 0.25 * (1 - Math.abs(err))), 0.2, 1.5);
-      } else if (this.memFoodTicks > 0 && this.memFoodSide != null) {
-        wl = clamp(wl + this.memFoodSide * 0.22 + 0.18, -1, 1);
-        wr = clamp(wr - this.memFoodSide * 0.22 + 0.18, -1, 1);
-        speedMul = Math.max(speedMul, 1.08);
-      }
-      // Sharp red-poison & predator avoidance: veer away when poison is in the forward trajectory
-      if (poisonK >= 1 && poisonK <= 7 && poisonDist < 56) {
-        const urg = ((56 - poisonDist) / 56) ** 0.85;
-        const dir = poisonK < 4 ? 1 : poisonK > 4 ? -1 : (((a.eyes[0].wallDist || 60) >= (a.eyes[8].wallDist || 60)) ? -1 : 1);
-        wl = clamp(wl + dir * 0.85 * urg, -1, 1);
-        wr = clamp(wr - dir * 0.85 * urg, -1, 1);
-      }
-      // Prevent wall-pinning while allowing confident movement near walls (only turn when wall is < 26 px ahead)
-      const frontWall = Math.min(a.eyes[3].wallDist || 120, a.eyes[4].wallDist || 120, a.eyes[5].wallDist || 120);
-      if (frontWall < 26 || a.contact[0] || a.contact[1] || a.contact[2] || this.bumped) {
-        const lClear = (a.eyes[0].wallDist || 60) + (a.eyes[1].wallDist || 60) + (a.eyes[2].wallDist || 60);
-        const rClear = (a.eyes[6].wallDist || 60) + (a.eyes[7].wallDist || 60) + (a.eyes[8].wallDist || 60);
-        const turnDir = a.contact[0] && !a.contact[2] ? 1 : a.contact[2] && !a.contact[0] ? -1 : (rClear >= lClear ? 1 : -1);
-        wl = clamp(wl + turnDir * 0.7, -1, 1);
-        wr = clamp(wr - turnDir * 0.7, -1, 1);
-        if (wl + wr < 0.5) { wl = clamp(wl + 0.35, -1, 1); wr = clamp(wr + 0.35, -1, 1); }
-      }
-    }
+    const speedMul = clamp(0.2 + 0.8 * out.rates[2] / SPEED_REF, 0.2, 1.5);
     const f0 = this.food, p0 = this.poison, c0 = this.caught;
     const reward = this.move(wl, wr, speedMul);
     const a = this.agent, touching = P.wallMod && (a.contact[0] || a.contact[1] || a.contact[2] || this.bumped) ? 1 : 0;
@@ -4115,6 +4442,14 @@ function makeRule(P, rng) {
     return { first: seqNext(), next: () => seqNext(), optAcc: 1, optBits: 0, firstOrderAcc: acc(1), secondOrderAcc: acc(2), desc: `third-order pattern ${pat.map(i => NAMES[i]).join('')} (order-2 limit ${(100 * acc(2)).toFixed(0)}%)`, order3: true }; }
   // R60 (I66) real corpus: stream TRAIN from a random start (any length; wraps only after 3.3 M symbols); with evalSyms > 0 the last
   // evalSyms symbols of the life come from HELD (book endings never in TRAIN, random start) and the fitness is the accuracy there.
+  // R140 long-context probe (copy after delay): segments X f1 .. fd ? X: payload X (one of the first K/3 symbols), d random fillers
+  // (d uniform in [dMin, dMax], default 4..30), the cue (last symbol), then X again, then gap (default dMax) fillers, so no other payload
+  // letter lies within dMax + 5 letters of the cue (the copy is unambiguous). The letter after the cue is set by the letter d+1 back;
+  // every other next letter is random (fillers, next payload). Probe accuracy = accuracy on the letter after the cue (chance 1 / #payloads).
+  if (P.source === 'delaycopy') { const pay = Math.max(2, Math.floor(K / 3)), cue = K - 1, nf = K - 1 - pay, dMin = P.dMin > 0 ? P.dMin | 0 : 4, dMax = P.dMax > 0 ? P.dMax | 0 : 30, gap = P.gap >= 0 && P.gap != null ? P.gap | 0 : dMax, q = [];
+    const seg = () => { const X = (rng() * pay) | 0; q.push(X); const d = dMin + ((rng() * (dMax - dMin + 1)) | 0); for (let i = 0; i < d; i++) q.push(pay + ((rng() * nf) | 0)); q.push(cue, X); for (let i = 0; i < gap; i++) q.push(pay + ((rng() * nf) | 0)); };
+    const nx = () => { if (!q.length) seg(); return q.shift(); };
+    return { first: nx(), next: () => nx(), optAcc: 1, optBits: 0, firstOrderAcc: 0, delaycopy: { pay, cue, dMin, dMax }, desc: `copy after delay ${dMin}-${dMax} (${pay} payloads, ${nf} fillers, cue)` }; }
   if (P.source === 'book') { const B = BOOK(), C = B.TRAIN, H = B.HELD, A = B.ALPHA, IDX = new Map(A.map((c, i) => [c, i])), bg = B.bigram();
     const nTr = P.evalSyms > 0 ? Math.max(1, P.nSyms - P.evalSyms) : Infinity; let pos = (rng() * C.length) | 0, i = 0, hp = -1;
     const next = () => { i++; if (i <= nTr) return IDX.get(C[(++pos) % C.length]); if (hp < 0) hp = (rng() * H.length) | 0; return IDX.get(H[(hp++) % H.length]); };
@@ -5102,113 +5437,49 @@ function createChunkUR(T) {
 SA.registerPlan('deepURSx3_chunk', 'Two-timescale hierarchical chunking: deepURSx3 + event-gated chunk context region (shifts on delimiters or cortical surprise, feeding cortex mixing and granule claws)', () => createChunkUR(), 'hierarchical two-timescale sequence prediction');
 SA.createChunkUR = createChunkUR; })();
 
+/* Explore: the BugBrain arena (#arena). Appended to the engine bundle by tools/build_bugbrain_bundle.js.
+ * Grows the arena brain in the browser: plan v3h plus the audited champion edit from
+ * /explore/bugbrain-champion.json ({id, change: {field, factor} | {tune: {...}}}), in the standard arena.
+ * The Explore router calls ExploreDemos.arena.show/hide; without the router (older pages) it starts at once.
+ * Does nothing when loaded without a page (e.g. inside the live demo's Web Worker). */
 (() => {
   'use strict';
+  if (typeof document === 'undefined' || typeof window === 'undefined') return;
   const SA = window.SpikingArena;
   const canvas = document.getElementById('bug-arena');
+  if (!SA || !canvas) return;
   const status = document.getElementById('bug-status');
-  const titleEl = document.getElementById('bug-title');
-  const archDescEl = document.getElementById('bug-arch-desc');
   const learningBtn = document.getElementById('bug-learning');
   const pause = document.getElementById('bug-pause');
   const restart = document.getElementById('bug-restart');
-  const leftHeading = document.getElementById('bug-left-heading');
-  const rightHeading = document.getElementById('bug-right-heading');
   const ctx = canvas.getContext('2d');
   const baselineCanvas = document.getElementById('bug-baseline');
-  const baselineCtx = baselineCanvas?.getContext('2d');
+  const baselineCtx = baselineCanvas ? baselineCanvas.getContext('2d') : null;
   const championUrl = canvas.dataset.champion;
   const garden = SA.bug.GARDEN;
-
-  const SHOWCASES = {
-    'bug-forage': {
-      title: 'BugBrain Foraging Arena',
-      sotaName: 'bugSOTA',
-      desc: 'State-of-the-Art grown foraging brain (bugSOTA): compound ommatidia, enthusiastic green-apple pursuit, strict ipsilateral red-poison avoidance, commissural bump-escape reflex, and central working-memory attractors.',
-      env: 'bug',
-      envParams: { task: 'flashvis', episodeTicks: 1000, sotaPhysics: true },
-      useGarden: true,
-      msPerTick: 22,
-    },
-    'bug-flash': {
-      title: 'Spatial Working Memory Arena',
-      sotaName: 'bugSOTA',
-      desc: 'State-of-the-Art working-memory foraging brain (bugSOTA): green apples flash visible only 8% of the time; slow-leak recurrent M interneurons hold the unseen apple’s direction and guide the bug after the flash.',
-      env: 'bug',
-      envParams: { task: 'flash', episodeTicks: 1000, sotaPhysics: true },
-      useGarden: true,
-      msPerTick: 22,
-    },
-    'bug-reversal': {
-      title: 'Dopamine Valence Reversal Arena',
-      sotaName: 'bugSOTA',
-      desc: 'State-of-the-Art adaptive foraging brain (bugSOTA): halfway through life (tick 500), green and red apples swap meaning; dopamine reward prediction error rewires plastic sensorimotor synapses online.',
-      env: 'bug',
-      envParams: { task: 'normal', reversal: true, episodeTicks: 1000, sotaPhysics: true },
-      useGarden: true,
-      msPerTick: 22,
-    },
-    'bug-hard': {
-      title: 'Predator Survival & Moving Targets',
-      sotaName: 'bugSOTA',
-      desc: 'State-of-the-Art survival brain (bugSOTA): apples drift while a predator actively chases the bug; combines rapid ipsilateral predator-evasion reflexes with high-speed green-apple pursuit.',
-      env: 'bug',
-      envParams: { task: 'hard', episodeTicks: 1000, sotaPhysics: true },
-      useGarden: false,
-      msPerTick: 22,
-    },
-    'seq-fables': {
-      title: 'English Language & Fables Prediction',
-      sotaName: 'deepURSx3_chunk',
-      desc: 'State-of-the-Art 4-region brain (deepURSx3_chunk): Two-timescale Event-Gated Cortical Chunking + Cerebellar Granule Layer with Utility-Pruned Structural Plasticity (granUtility=1) predicting Aesop’s Fables live with 100% local learning.',
-      env: 'seq',
-      envParams: { source: 'fables', nSyms: 600, clock2: true, readIn: 0.01 },
-      useGarden: false,
-      msPerTick: 16,
-    },
-    'seq-order3': {
-      title: '3rd-Order Temporal Context Grammar',
-      sotaName: 'deepURSx3_chunk',
-      desc: 'State-of-the-Art 4-region brain (deepURSx3_chunk): holds 3 consecutive symbols in slow-leak working-memory and event-gated chunk attractors to predict context-dependent transitions past the 1st/2nd-order limit.',
-      env: 'seq',
-      envParams: { source: 'order3', K: 8, nSyms: 400, clock2: true, readIn: 0.01 },
-      useGarden: false,
-      msPerTick: 16,
-    },
-    'memory-recall': {
-      title: 'Delayed Associative Working Memory',
-      sotaName: 'unifiedR',
-      desc: 'State-of-the-Art multi-region brain (unifiedR): reverberating cortical attractor columns hold a brief sensory cue across a blank delay period, while striatal dopamine plasticity learns the cue-to-action mapping.',
-      env: 'recall',
-      envParams: { K: 4, delay: 20, nTrials: 24 },
-      useGarden: false,
-      msPerTick: 18,
-    },
-    'rl-bandit': {
-      title: 'Dopamine Reinforcement & Reversal Learning',
-      sotaName: 'unifiedR',
-      desc: 'State-of-the-Art cortico-striatal actor-critic brain (unifiedR): learns which action arm is rewarded in each context via TD dopamine reward prediction error (r − V) and rapidly adapts when the best arm switches.',
-      env: 'bandit',
-      envParams: { C: 2, K: 4, switchEvery: 12, nTrials: 48 },
-      useGarden: false,
-      msPerTick: 18,
-    },
-  };
-
-  let currentShowcase = 'bug-forage';
-  let learningOn = true;
+  let learningOn = true, visible = false, started = false;
   let selected = { id: 'v3h', change: null };
-  let agent, baseline, seed, playing = true, previous = 0, frame = 0, finishedAt = null;
-  let elapsed = 0;
+  let agent = null, baseline = null, seed = 0, playing = true, previous = 0, frame = 0, finishedAt = null, elapsed = 0;
+  const MS_PER_TICK = 22;
 
   async function load() {
     try {
       const response = await fetch(championUrl, { cache: 'no-store' });
-      if (response.ok) selected = await response.json();
-    } catch (e) {}
+      if (response.ok) {
+        const data = await response.json();
+        if (data && typeof data.id === 'string') selected = data;
+      }
+    } catch (e) { /* keep the last champion */ }
   }
 
-  function applyLearningState() {
+  function genome() {
+    const change = selected && selected.change ? selected.change : null;
+    const g = SA.tunedBugGenome(change && change.tune ? change.tune : undefined);
+    if (change && change.field && g.sc && g.sc[change.field] != null && isFinite(change.factor)) g.sc[change.field] *= change.factor;
+    return g;
+  }
+
+  function applyLearning() {
     SA.params.plasticity = learningOn;
     if (learningBtn) {
       learningBtn.textContent = 'Learning: ' + (learningOn ? 'On' : 'Off');
@@ -5216,140 +5487,52 @@ SA.createChunkUR = createChunkUR; })();
       learningBtn.classList.toggle('is-learning-on', learningOn);
       learningBtn.classList.toggle('is-learning-off', !learningOn);
     }
-    if (agent && agent.net) {
-      agent.net.learning = !!(learningOn && agent.net.plastic && agent.net.plastic.length > 0 && agent.net.p.lr > 0);
-    }
+    // net.learning is a getter on SA.params.plasticity in the current engine; older engines kept a plain field.
+    const d = agent && agent.net ? Object.getOwnPropertyDescriptor(agent.net, 'learning') : null;
+    if (d && d.writable) agent.net.learning = !!(learningOn && agent.net.plastic && agent.net.plastic.length > 0 && agent.net.p && agent.net.p.lr > 0);
   }
 
-  function formatStatus(brain, label, isLearnOn) {
-    const t = brain.task;
-    const learnTag = isLearnOn ? 'Learning ON' : 'Learning OFF (Frozen)';
-    const nSyn = SA.countSynapses ? SA.countSynapses(brain.brain) : (brain.net && brain.net.ws ? brain.net.ws.length : 0);
-    const archTag = brain.brain.N + ' neurons · ' + nSyn + ' synapses';
-    if (currentShowcase.indexOf('bug-') === 0) {
-      const stats = t.stats();
-      return 'SOTA ' + label + ' (' + learnTag + ' · ' + archTag + ') · Food ' + stats.food +
-        ' · Poison ' + stats.poison +
-        (t.hard ? ' · Caught ' + stats.caught : '') +
-        ' · Score ' + t.score() +
-        ' · Fitness ' + brain.fitness.toFixed(1) +
-        ' · Tick ' + brain.t + '/' + t.horizon +
-        ' · Stuck ' + (100 * stats.stuck / Math.max(1, brain.t)).toFixed(0) + '%';
-    }
-    if (t.accuracy != null && t.lastAcc) {
-      const acc = t.n ? (100 * t.accuracy).toFixed(1) + '%' : '0.0%';
-      const last = t.n ? (100 * t.lastAcc(100)).toFixed(1) + '%' : '0.0%';
-      return 'SOTA ' + label + ' (' + learnTag + ' · ' + archTag + ') · Accuracy ' + acc +
-        ' · Last 100 symbols: ' + last +
-        ' · Symbol ' + Math.min((t.pos || 0) + 1, t.P.nSyms) + '/' + t.P.nSyms;
-    }
-    if (t.statusLine) {
-      return 'SOTA ' + label + ' (' + learnTag + ' · ' + archTag + ') · ' + t.statusLine();
-    }
-    return 'SOTA ' + label + ' (' + learnTag + ' · ' + archTag + ') · Tick ' + brain.t;
+  function line(brain) {
+    const t = brain.task, s = t.stats();
+    return 'Food ' + s.food + ' · Poison ' + s.poison + ' · Score ' + t.score() + ' · Time ' + brain.t + ' of ' + t.horizon +
+      ' · ' + brain.brain.N + ' neurons';
   }
 
-  function drawBrain(brain, surface, context, label, isLearnOn) {
-    if (tHasRender(brain.task)) {
-      const view = SA.currentEnv().def.view || { width: 1120, height: 700 };
-      const w = currentShowcase.indexOf('bug-') === 0 && SHOWCASES[currentShowcase].useGarden ? 1120 : view.width;
-      const h = currentShowcase.indexOf('bug-') === 0 && SHOWCASES[currentShowcase].useGarden ? 700 : view.height;
-      if (surface.width !== w || surface.height !== h) {
-        surface.width = w;
-        surface.height = h;
-      }
-      brain.task.render(context, surface.width, surface.height, { showStats: false });
-    }
-    return formatStatus(brain, label, isLearnOn);
-  }
-
-  function tHasRender(task) {
-    return task && typeof task.render === 'function';
+  function render(brain, surface, context) {
+    if (surface.width !== 1120 || surface.height !== 700) { surface.width = 1120; surface.height = 700; }
+    brain.task.render(context, surface.width, surface.height, { showStats: false });
+    return line(brain);
   }
 
   function draw() {
     if (!agent) return;
-    const sc = SHOWCASES[currentShowcase];
-    const sotaLabel = sc.sotaName + (currentShowcase.indexOf('bug-') === 0 && selected && selected.id !== 'v3h' ? '+' + selected.id : '');
-    const score = drawBrain(agent, canvas, ctx, sotaLabel, learningOn);
-    const completed = agent.done ? ' · Round complete' : '';
+    const done = agent.done ? ' · Round over, a new one starts in a moment' : '';
+    const text = render(agent, canvas, ctx);
     if (!baseline) {
-      status.textContent = score + completed;
+      status.textContent = (learningOn ? 'Learning on · ' : 'Learning off · ') + text + done;
       return;
     }
-    if (leftHeading) leftHeading.textContent = 'SOTA ' + sotaLabel + ' (' + (learningOn ? 'Learning On' : 'Learning Off') + ')';
-    if (rightHeading) rightHeading.textContent = currentShowcase.indexOf('bug-') === 0 ? 'Original BugBrain (v3h baseline)' : ('SOTA ' + sotaLabel + ' (Learning Off / Frozen)');
-    document.getElementById('bug-champion-score').textContent = score;
-    const baseLabel = currentShowcase.indexOf('bug-') === 0 ? 'v3h' : sc.sotaName;
-    const baseLearn = currentShowcase.indexOf('bug-') === 0 ? learningOn : false;
-    document.getElementById('bug-baseline-score').textContent = drawBrain(baseline, baselineCanvas, baselineCtx, baseLabel, baseLearn);
-    status.textContent = 'Shared seed ' + seed + ' · Tick ' + agent.t +
-      ' · Comparing SOTA ' + sotaLabel + ' vs ' + (currentShowcase.indexOf('bug-') === 0 ? 'Original v3h' : 'Frozen baseline') + completed;
-  }
-
-  function makeSotaGenome(sc) {
-    if (sc.sotaName === 'bugSOTA') {
-      const g = SA.createSotaBugGenome ? SA.createSotaBugGenome(selected?.change?.tune) : SA.tunedBugGenome(selected?.change?.tune);
-      if (selected?.change?.field && g.sc && g.sc[selected.change.field] != null) {
-        g.sc[selected.change.field] *= selected.change.factor;
-      }
-      return g;
-    }
-    if (sc.sotaName === 'deepURSx3_chunk' && SA.PLANS.deepURSx3_chunk) {
-      SA.params.fastEngine = 1;
-      SA.params.granFast = 1;
-      SA.params.granUtility = 1;
-      SA.params.scaleInvariant = 1;
-      SA.params.granN = 2048;
-      SA.params.granKmin = 3;
-      SA.params.granK = 4;
-      SA.params.granW = 60;
-      const g = SA.PLANS.deepURSx3_chunk.make();
-      for (const r of g.regions || []) if (r.id === 'cortex' && r.g && r.g.pl) r.g.pl.lr = 0.2;
-      return g;
-    }
-    if (SA.PLANS[sc.sotaName]) {
-      SA.params.scaleInvariant = 1;
-      return SA.PLANS[sc.sotaName].make();
-    }
-    return SA.planFor('env').make();
+    document.getElementById('bug-champion-score').textContent = text;
+    document.getElementById('bug-baseline-score').textContent = render(baseline, baselineCanvas, baselineCtx);
+    status.textContent = 'Same garden and seed for both' + (selected.id !== 'v3h' ? ' · current brain = original + one tested change' :
+      ' · no tested change has beaten the original yet, so both are the same brain') + done;
   }
 
   function start() {
-    const sc = SHOWCASES[currentShowcase] || SHOWCASES['bug-forage'];
-    if (titleEl) titleEl.textContent = sc.title;
-    if (archDescEl) archDescEl.textContent = sc.desc;
-    SA.params.plasticity = learningOn;
-    const params = SA.recommendedEnvParams(sc.env, sc.envParams, Object.keys(sc.envParams));
-    SA.setEnv(sc.env, Object.assign({}, params, sc.envParams));
+    const params = SA.recommendedEnvParams('bug', { task: 'flash' }, ['task']);
+    SA.setEnv('bug', Object.assign({}, params, { task: 'flash' }));
     const current = SA.currentEnv();
-    const env = sc.useGarden
-      ? { ...current, def: { ...current.def, create: (s, p) => new SA.bug.World(s, p, garden) } }
-      : current;
-    const genome = makeSotaGenome(sc);
+    const env = Object.assign({}, current, { def: Object.assign({}, current.def, { create: (s, p) => new SA.bug.World(s, p, garden) }) });
+    SA.params.plasticity = learningOn;
+    const g = genome();
     seed = Math.floor(Math.random() * 0xffffffff) >>> 0;
-    const grown = SA.growCell(genome, { seed, spec: env.spec });
-    agent = new SA.Agent(genome, seed, grown, env);
-    applyLearningState();
+    agent = new SA.Agent(g, seed, SA.growCell(g, { seed, spec: env.spec }), env);
     if (baselineCanvas) {
-      if (currentShowcase.indexOf('bug-') === 0) {
-        const baseEnv = sc.useGarden
-          ? { ...current, P: Object.assign({}, current.P, { sotaPhysics: false }), def: { ...current.def, create: (s, p) => new SA.bug.World(s, Object.assign({}, p, { sotaPhysics: false }), garden) } }
-          : current;
-        const original = SA.PLANS.v3h.make();
-        baseline = new SA.Agent(original, seed, SA.growCell(original, { seed, spec: baseEnv.spec }), baseEnv);
-      } else {
-        SA.params.plasticity = false;
-        baseline = new SA.Agent(genome, seed, grown, env);
-        baseline.net.learning = false;
-        SA.params.plasticity = learningOn;
-      }
-    } else {
-      baseline = null;
+      const original = SA.PLANS.v3h.make();
+      baseline = new SA.Agent(original, seed, SA.growCell(original, { seed, spec: env.spec }), env);
     }
-    playing = true;
-    finishedAt = null;
-    elapsed = 0;
+    applyLearning();
+    playing = true; finishedAt = null; elapsed = 0;
     pause.textContent = 'Pause';
     draw();
     if (!frame) frame = requestAnimationFrame(tick);
@@ -5359,21 +5542,16 @@ SA.createChunkUR = createChunkUR; })();
     frame = requestAnimationFrame(tick);
     const delta = Math.min(50, now - previous);
     previous = now;
-    if (!playing || document.hidden || !agent) {
-      elapsed = 0;
-      return;
-    }
+    if (!playing || !visible || document.hidden || !agent) { elapsed = 0; return; }
     if (agent.done) {
-      if (finishedAt === null) finishedAt = now;
+      if (finishedAt === null) { finishedAt = now; draw(); }
       if (now - finishedAt >= 2000) start();
       return;
     }
-    const sc = SHOWCASES[currentShowcase] || SHOWCASES['bug-forage'];
-    const stepMs = sc.msPerTick || 22;
     elapsed += delta;
-    if (elapsed < stepMs) return;
-    while (elapsed >= stepMs && !agent.done) {
-      elapsed -= stepMs;
+    if (elapsed < MS_PER_TICK) return;
+    while (elapsed >= MS_PER_TICK && !agent.done) {
+      elapsed -= MS_PER_TICK;
       agent.tick();
       if (baseline && !baseline.done) baseline.tick();
     }
@@ -5386,44 +5564,25 @@ SA.createChunkUR = createChunkUR; })();
       start();
       pause.disabled = restart.disabled = false;
     } catch (error) {
-      status.textContent = 'The arena could not load: ' + (error && error.message ? error.message : 'refresh to try again.');
+      if (window.console) console.error('arena:', error);
+      status.textContent = 'The arena could not load. Refresh the page to try again.';
     }
   }
 
-  if (learningBtn) {
-    learningBtn.addEventListener('click', () => {
-      learningOn = !learningOn;
-      applyLearningState();
-      draw();
-    });
-  }
-
-  document.querySelectorAll('.showcase-tab[data-showcase]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-showcase');
-      if (!SHOWCASES[id]) return;
-      currentShowcase = id;
-      document.querySelectorAll('.showcase-tab[data-showcase]').forEach(b => {
-        const active = b.getAttribute('data-showcase') === id;
-        b.classList.toggle('is-active', active);
-        b.setAttribute('aria-selected', active ? 'true' : 'false');
-      });
-      start();
-    });
-  });
-
-  pause.addEventListener('click', () => {
-    playing = !playing;
-    pause.textContent = playing ? 'Pause' : 'Resume';
-  });
+  if (learningBtn) learningBtn.addEventListener('click', () => { learningOn = !learningOn; applyLearning(); draw(); });
+  pause.addEventListener('click', () => { playing = !playing; pause.textContent = playing ? 'Pause' : 'Resume'; });
   restart.addEventListener('click', newArena);
   setInterval(async () => {
-    if (!selected || document.hidden) return;
+    if (!visible || document.hidden) return;
     const before = selected.id;
-    try {
-      await load();
-      if (selected.id !== before && currentShowcase.indexOf('bug-') === 0) start();
-    } catch (error) {}
+    await load();
+    if (selected.id !== before) start();
   }, 60000);
-  newArena();
+
+  const demo = {
+    show() { visible = true; if (!started) { started = true; newArena(); } },
+    hide() { visible = false; },
+  };
+  if (window.ExploreDemos) window.ExploreDemos.arena = demo;
+  else demo.show();
 })();

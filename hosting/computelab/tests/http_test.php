@@ -66,6 +66,7 @@ check($explore['status'] === 200 && str_contains($explore['body'], 'id="bug-aren
 check(str_contains($explore['body'], 'aria-current="page"') && str_contains($explore['body'], '>Explore<'), 'explore keeps a way back to the rest of the site');
 check(str_contains($explore['body'], '/computelab/assets/bugbrain.js'), 'the arena loads the BugBrain engine from this site path');
 check(json_decode(http($base . '/explore/bugbrain-champion.json')['body'], true)['id'] === 'v3h', 'the arena starts with the default BugBrain before a verified edit');
+
 $engine = http($base . '/assets/engine.js');
 check($engine['status'] === 200 && str_contains($engine['body'], 'SpikeFoundry'), 'the engine script is served');
 
@@ -582,6 +583,56 @@ check(str_contains($sequencePoll ?? '', 'sf-inverse-experiment-2320') && ($seque
     && $sequenceGraphs && min(array_column($sequenceGraphs, 'level')) >= 4
     && isset($app->compositionResults()['Two-stream sequence']),
     'a donor publishes two-output timing graphs and the owner sees family results');
+
+/* Explore demos (kept late: these extra requests must not use up the earlier pages' rate-limit window). */
+$explore = http($base . '/explore');
+$demoIds = ['arena', 'read', 'name', 'copy', 'patterns'];
+$tabsOk = true;
+foreach ($demoIds as $demoId) {
+    if (!str_contains($explore['body'], 'data-tab="' . $demoId . '"') || !str_contains($explore['body'], 'id="demo-' . $demoId . '"')
+        || !str_contains($explore['body'], 'href="/computelab/explore#' . $demoId . '"')) {
+        $tabsOk = false;
+        echo "explore demo missing: $demoId\n";
+    }
+}
+check($tabsOk, 'explore has a tab and a panel for every demo, and the header Explore menu links to each one');
+check(str_contains($explore['body'], '<details class="cl-drop"><summary class="is-current" aria-current="page">Explore</summary>')
+    && str_contains(http($base . '/discoveries')['body'], '<details class="cl-drop"><summary>Explore</summary>'),
+    'Explore is one dropdown menu item on every page');
+check(str_contains($explore['body'], '/computelab/assets/bugbrain.js?v=8') && !str_contains($explore['body'], 'SOTA') && !str_contains($explore['body'], 'State-of-the-Art'),
+    'explore loads engine bundle v8 and makes no state-of-the-art claims');
+$exploreCompare = http($base . '/explore?compare=1');
+check($exploreCompare['status'] === 200 && str_contains($exploreCompare['body'], 'id="bug-baseline"') && str_contains($exploreCompare['body'], 'data-compare="1"')
+    && !str_contains($explore['body'], 'id="bug-baseline"'), 'explore?compare=1 still shows the two arenas side by side');
+$designResp = http($base . '/explore/design.json');
+$designJson = json_decode($designResp['body'], true);
+preg_match('/ETag: ("[^"]+")/i', $designResp['header'], $designTag);
+check($designResp['status'] === 200 && ($designJson['schema'] ?? 0) === 2 && ($designJson['champion']['id'] ?? '') === 'v3h'
+    && isset($designJson['text']['liveVariant']) && isset($designTag[1])
+    && http($base . '/explore/design.json', 'GET', null, ['If-None-Match: ' . $designTag[1]])['status'] === 304,
+    'design.json serves the schema 2 manifest with the arena champion and answers a matching ETag with 304');
+$replayResp = http($base . '/explore/replay/read.json');
+preg_match('/ETag: ("[^"]+")/i', $replayResp['header'], $replayTag);
+check($replayResp['status'] === 200 && str_contains($replayResp['header'], 'Cache-Control: public') && isset($replayTag[1])
+    && str_contains($replayTag[1], 'R135-read-') && strlen((string) (json_decode($replayResp['body'], true)['hits'] ?? '')) > 1000
+    && http($base . '/explore/replay/read.json', 'GET', null, ['If-None-Match: ' . $replayTag[1]])['status'] === 304,
+    'a replay is served with a cache header and a manifest-version ETag');
+$badReplay = true;
+foreach (['/explore/replay/evil.json', '/explore/replay/design.json', '/explore/replay/..%2Fdesign.json', '/explore/replay/READ.json', '/explore/replay/read.php'] as $u) {
+    $r = http($base . $u);
+    if ($r['status'] !== 404 || str_contains($r['body'], '"schema"')) {
+        $badReplay = false;
+        echo "replay path not refused: $u ({$r['status']})\n";
+    }
+}
+check($badReplay, 'unknown or crafted replay paths get 404');
+$replayJs = http($base . '/assets/explore-replay.js');
+$liveJs = http($base . '/assets/explore-live.js');
+$engineJs = http($base . '/assets/bugbrain.js?v=8');
+check($replayJs['status'] === 200 && str_contains($replayJs['header'], 'application/javascript') && str_contains($replayJs['body'], 'ExploreDemos')
+    && $liveJs['status'] === 200 && str_contains($liveJs['body'], 'importScripts')
+    && $engineJs['status'] === 200 && str_contains($engineJs['body'], 'built by tools/build_bugbrain_bundle.js from commit') && strlen($engineJs['body']) <= 600 * 1024,
+    'the demo scripts and the engine bundle (with its source commit, at most 600 KB) are served');
 
 $arenaWorker = $app->enroll('arena-test', ['bugbrain'], 1, true);
 file_put_contents($researchToken, $arenaWorker['token']);

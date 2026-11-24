@@ -426,13 +426,57 @@ try {
         }
         return;
     }
+    if (($path === '/assets/explore-replay.js' || $path === '/assets/explore-live.js') && $method === 'GET') {
+        $asset = $private . ($path === '/assets/explore-replay.js' ? '/explore-replay.js' : '/explore-live.js');
+        if (!is_file($asset)) {
+            http_response_code(404);
+            return;
+        }
+        header('Content-Type: application/javascript; charset=utf-8');
+        header('Cache-Control: public, max-age=3600');
+        header('X-Content-Type-Options: nosniff');
+        readfile($asset);
+        return;
+    }
     if ($path === '/explore/bugbrain-champion.json' && $method === 'GET') {
         header('Cache-Control: no-store');
         coord_json(200, $app->arenaChampion());
         return;
     }
+    if ($path === '/explore/design.json' && $method === 'GET') {
+        $design = $app->topDesign();
+        $etag = '"design-' . substr(sha1((string) json_encode($design)), 0, 16) . '"';
+        header('ETag: ' . $etag);
+        if (trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? '')) === $etag) {
+            http_response_code(304);
+            header('Cache-Control: no-cache');
+            return;
+        }
+        http_response_code(200);
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-cache');
+        echo json_encode($design);
+        return;
+    }
+    if ($method === 'GET' && preg_match('#^/explore/replay/([a-z]{1,20})\.json$#', $path, $m)) {
+        $replay = $app->exploreReplay($m[1]);
+        if ($replay === null) {
+            coord_json(404, ['error' => 'No such replay']);
+            return;
+        }
+        header('ETag: ' . $replay['etag']);
+        header('Cache-Control: public, max-age=300');
+        if (trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? '')) === $replay['etag']) {
+            http_response_code(304);
+            return;
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        header('X-Content-Type-Options: nosniff');
+        readfile($replay['path']);
+        return;
+    }
     if ($path === '/explore' && $method === 'GET') {
-        coord_html(pageBugArena($base, coord_who($app, 'explore'), ($_GET['compare'] ?? '') === '1'));
+        coord_html(pageBugArena($base, coord_who($app, 'explore'), ($_GET['compare'] ?? '') === '1', $app->topDesign()));
         return;
     }
     if ($path === '/lab' && $method === 'GET') {

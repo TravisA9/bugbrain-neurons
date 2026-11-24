@@ -449,9 +449,36 @@ function navLinks(string $base, array $nav): string
             continue;
         }
         $on = $current === $item[0];
+        if ($item[0] === 'explore') {
+            /* Explore is one menu item that opens a list of the demos; each entry opens its tab on /explore. */
+            $html .= '<details class="cl-drop"><summary' . ($on ? ' class="is-current" aria-current="page"' : '') . '>Explore</summary><div class="cl-drop-menu">';
+            foreach (exploreDemos() as $demo) {
+                $html .= '<a href="' . h($item[2] . '#' . $demo['id']) . '"><b>' . h($demo['title']) . '</b><span>' . h($demo['menu']) . '</span></a>';
+            }
+            $html .= '</div></details>';
+            continue;
+        }
         $html .= '<a href="' . h($item[2]) . '"' . ($on ? ' class="is-current" aria-current="page"' : '') . '>' . h($item[1]) . '</a>';
     }
     return $html;
+}
+
+/* The Explore demos, in menu order. One list feeds the header dropdown and the tabs on /explore.
+ * kind: live = runs in the browser; replay = plays back results the research runs recorded. */
+function exploreDemos(): array
+{
+    return [
+        ['id' => 'arena', 'title' => 'BugBrain arena', 'menu' => 'A grown bug brain looks for food', 'kind' => 'live', 'needs' => 'engine',
+            'blurb' => 'A small spiking brain, grown from its genes, steers a bug around a garden. Green apples are food and red ones are poison. They only flash into view now and then, so the bug has to remember where they were.'],
+        ['id' => 'read', 'title' => 'Watch it read', 'menu' => 'Next-letter guesses on a story', 'kind' => 'replay', 'needs' => 'replay',
+            'blurb' => 'After reading about 98,000 letters of old books once, the brain reads a story it has never seen and guesses each next letter before it appears.'],
+        ['id' => 'name', 'title' => 'Remember a name', 'menu' => 'Recall after seeing a word once', 'kind' => 'replay', 'needs' => 'replay',
+            'blurb' => 'A made-up name appears once in a sentence and then again a little later. Does the brain do better the second time?'],
+        ['id' => 'copy', 'title' => 'Look far back', 'menu' => 'Memory across 30 steps', 'kind' => 'replay', 'needs' => 'replay',
+            'blurb' => 'A symbol goes by, then a stretch of filler, then a signal to repeat it. To answer, the brain has to look up to 30 steps back.'],
+        ['id' => 'patterns', 'title' => 'Learn a pattern', 'menu' => 'Grows a brain in your browser', 'kind' => 'live', 'needs' => 'engine,live',
+            'blurb' => 'Your browser grows a small copy of the current design and watches a repeating pattern of colours. It starts by guessing and catches on within a few hundred steps.'],
+    ];
 }
 
 /* The one account item at the end of the menu: Log out when signed in, Log in otherwise. */
@@ -486,7 +513,20 @@ function siteHeaderCss(): string
         .cl-top .cl-account{display:inline-flex;margin-left:8px}
         .cl-top .cl-nav a.cl-account,.cl-top .cl-account button{display:inline-block;width:84px;text-align:center;cursor:pointer;color:#e6edf3;background:#121d27;border:1px solid #202d39;border-radius:8px;padding:9px 0;font:600 12px/1 "DM Sans",system-ui,sans-serif}
         .cl-top .cl-nav a.cl-account:hover,.cl-top .cl-account button:hover{border-color:#466072;background:#172531}
+        .cl-top .cl-drop{position:relative;display:block}
+        .cl-top .cl-drop summary{list-style:none;cursor:pointer;color:#8b9baa;padding:9px 12px;border-radius:8px;border:1px solid transparent}
+        .cl-top .cl-drop summary::-webkit-details-marker{display:none}
+        .cl-top .cl-drop summary::after{content:"";display:inline-block;width:5px;height:5px;margin:0 0 3px 8px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
+        .cl-top .cl-drop[open] summary::after{transform:rotate(-135deg);margin-bottom:0}
+        .cl-top .cl-drop summary:hover{color:#e6edf3;background:#121d27}
+        .cl-top .cl-drop summary.is-current{color:#69e2b1;background:#10231e;border-color:#2d5948}
+        .cl-top .cl-drop-menu{position:absolute;top:calc(100% + 8px);left:0;min-width:270px;display:flex;flex-direction:column;gap:2px;padding:6px;background:#101821;border:1px solid #202d39;border-radius:10px;box-shadow:0 14px 34px rgba(0,0,0,.45)}
+        .cl-top .cl-nav .cl-drop-menu a{display:flex;flex-direction:column;gap:4px;padding:9px 11px;white-space:normal}
+        .cl-top .cl-drop-menu a b{color:#e6edf3;font-weight:600}
+        .cl-top .cl-drop-menu a span{color:#8b9baa;font:400 12px/1.2 "DM Sans",system-ui,sans-serif}
+        .cl-top .cl-nav .cl-drop-menu a:hover{background:#15232e;border-color:#2d5948}
         @media (max-width:860px){
+          .cl-top .cl-drop-menu{position:static;min-width:0;margin-top:4px;box-shadow:none}
           .cl-top .cl-burger{display:inline-block}
           .cl-top .cl-nav{display:none;position:absolute;top:56px;left:0;right:0;flex-direction:column;align-items:stretch;gap:4px;padding:10px 14px;background:#0b1219;border-bottom:1px solid #202d39}
           .cl-top .cl-toggle:checked ~ .cl-nav{display:flex}
@@ -500,7 +540,9 @@ function siteHeader(string $base, array $nav): string
     $mark = '<span class="cl-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h4l2.4-6 3.2 12 2.4-6H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="4" cy="12" r="1.4" fill="currentColor"/><circle cx="20" cy="12" r="1.4" fill="currentColor"/></svg></span>';
     return '<div class="cl-top" role="banner"><div class="cl-top-inner"><a class="cl-brand" href="' . h($base === '' ? '/' : $base . '/') . '">' . $mark . '<span>compute<b>lab</b></span></a>'
         . '<input class="cl-toggle" id="cl-toggle" type="checkbox" aria-label="Show menu"><label class="cl-burger" for="cl-toggle">Menu</label>'
-        . '<nav class="cl-nav" aria-label="Compute Lab">' . navLinks($base, $nav) . logoutForm($base, $nav) . '</nav></div></div>';
+        . '<nav class="cl-nav" aria-label="Compute Lab">' . navLinks($base, $nav) . logoutForm($base, $nav) . '</nav></div></div>'
+        . '<script>(function(){function shut(e){document.querySelectorAll(".cl-drop[open]").forEach(function(d){if(!e||e.type!=="click"||!d.contains(e.target)||e.target.closest("a"))d.removeAttribute("open")})}'
+        . 'document.addEventListener("click",shut);document.addEventListener("keydown",function(e){if(e.key==="Escape")shut()});window.addEventListener("hashchange",function(){shut()})})();</script>';
 }
 
 /* The shared Compute Lab stylesheet, served at /assets/computelab.css. Palette, type,
@@ -854,68 +896,125 @@ function layout(string $title, string $body, string $base, array $nav = [], arra
         . siteHeader($base, $nav) . '<main class="' . h($shell) . '">' . $body . '</main>' . (string) ($opts['foot'] ?? '') . '</body></html>';
 }
 
-/* The Explore lab keeps its own page and script. It gets the shared header, the shared
- * stylesheet, and a few overrides that map its colors and type onto the design palette. */
-function pageBugArena(string $base, array $nav, bool $compare = false): string
+/* Explore: one page with a tab per demo (exploreDemos()). The header's Explore menu links to /explore#<id>.
+ * Each demo loads its script only when its tab opens: the engine bundle (arena, live demos), explore-replay.js
+ * (recorded results) or explore-live.js (a small brain grown in the browser, in a Web Worker).
+ * $design is App::topDesign(): the promoted design's manifest, or a fallback with only the arena champion. */
+function pageBugArena(string $base, array $nav, bool $compare = false, array $design = []): string
 {
-    $showcases = [
-        ['bug-forage', 'BugBrain Foraging', 'SOTA bugSOTA · Garden maze'],
-        ['bug-flash', 'Spatial Memory Flash', 'SOTA bugSOTA · Unseen food memory'],
-        ['bug-reversal', 'Valence Reversal', 'SOTA bugSOTA · Dopamine flip'],
-        ['bug-hard', 'Predator Survival', 'SOTA bugSOTA · Moving targets'],
-        ['seq-fables', 'English Fables Prediction', 'SOTA deepURSx3_chunk · 2-timescale chunking'],
-        ['seq-order3', '3rd-Order Grammar', 'SOTA deepURSx3_chunk · Temporal context'],
-        ['memory-recall', 'Associative Recall', 'SOTA unifiedR · Working memory'],
-        ['rl-bandit', 'Dopamine Bandit RL', 'SOTA unifiedR · TD reward prediction error'],
-    ];
-    $tabs = '<div class="showcase-tabs" role="tablist" aria-label="Spiking brain showcases">';
-    foreach ($showcases as $idx => $sc) {
-        $on = $idx === 0 ? ' is-active' : '';
-        $tabs .= '<button type="button" class="showcase-tab' . $on . '" data-showcase="' . h($sc[0]) . '" role="tab" aria-selected="' . ($idx === 0 ? 'true' : 'false') . '">'
-            . '<span class="sc-title">' . h($sc[1]) . '</span><span class="sc-sub">' . h($sc[2]) . '</span></button>';
+    $version = (string) ($design['version'] ?? 'fallback');
+    $haveDesign = ($design['schema'] ?? 0) === 2;
+    $replays = (array) ($design['replays'] ?? []);
+    $asset = static function (string $file): string {
+        $path = dirname(__DIR__) . '/' . $file;
+        return is_file($path) ? substr((string) sha1_file($path), 0, 10) : '0';
+    };
+    $tabs = '<nav class="ex-tabs" aria-label="Explore demos">';
+    $panels = '';
+    foreach (exploreDemos() as $i => $demo) {
+        $id = $demo['id'];
+        $status = (string) ($replays[$id]['status'] ?? 'top');
+        $kind = $demo['kind'] === 'live' ? 'Runs in your browser' : 'Recorded run';
+        $badge = $status === 'testing' ? '<span class="ex-badge is-testing">Being tested</span>' : '';
+        $tabs .= '<a class="ex-tab' . ($i === 0 ? ' is-active' : '') . '" href="#' . h($id) . '" data-tab="' . h($id) . '"' . ($i === 0 ? ' aria-current="true"' : '') . '>'
+            . '<span class="ex-tab-title">' . h($demo['title']) . '</span><span class="ex-tab-sub">' . h($kind) . '</span></a>';
+        $panels .= '<section class="ex-panel" id="demo-' . h($id) . '" data-demo="' . h($id) . '" data-needs="' . h($demo['needs']) . '"'
+            . ($i === 0 ? '' : ' hidden') . ' aria-labelledby="demo-' . h($id) . '-title">'
+            . '<div class="ex-panel-head"><div><h2 id="demo-' . h($id) . '-title">' . h($demo['title']) . ' ' . $badge . '</h2><p class="ex-blurb">' . h($demo['blurb']) . '</p></div>';
+        if ($id === 'arena') {
+            $panels .= '<div class="head-actions">'
+                . '<button class="button small is-learning-on" id="bug-learning" type="button" aria-pressed="true" title="Turn the brain\'s learning on or off">Learning: On</button> '
+                . '<button class="button small" id="bug-pause" type="button" disabled>Pause</button> '
+                . '<button class="button small" id="bug-restart" type="button" disabled>New arena</button> '
+                . '<a class="button small" id="bug-compare-link" href="' . h($base . '/explore' . ($compare ? '' : '?compare=1')) . '#arena">'
+                . ($compare ? 'Single arena' : 'Compare brains') . '</a></div></div>'
+                . '<p id="bug-status" class="bug-status-bar" role="status">Loading the arena…</p>'
+                . ($compare ? '<div class="bug-pair"><div><h3 id="bug-left-heading">Current brain</h3><p id="bug-champion-score" class="ex-score"></p>' : '')
+                . '<canvas id="bug-arena" width="1120" height="700" aria-label="BugBrain foraging arena" data-champion="'
+                . h($base . '/explore/bugbrain-champion.json') . '"></canvas>'
+                . ($compare ? '</div><div><h3 id="bug-right-heading">Original BugBrain</h3><p id="bug-baseline-score" class="ex-score"></p>'
+                    . '<canvas id="bug-baseline" width="1120" height="700" aria-label="Original BugBrain foraging arena"></canvas></div></div>' : '');
+        } else {
+            $panels .= '<div class="head-actions"><button class="button small primary" type="button" data-play="' . h($id) . '" disabled>Play</button></div></div>'
+                . '<div class="ex-stage" data-stage="' . h($id) . '"><p class="quiet">Loading…</p></div>';
+        }
+        $panels .= '</section>';
     }
-    $tabs .= '</div>';
-    $body = '<section aria-labelledby="bug-title">'
-        . $tabs
-        . '<div class="bug-toolbar"><div class="bug-title-group"><h1 id="bug-title">BugBrain arena</h1>'
-        . '<p id="bug-arch-desc" class="quiet">State-of-the-Art grown spiking brain (`bugSOTA`): compound ommatidia, enthusiastic green-apple pursuit, strict ipsilateral red-poison avoidance, commissural bump-escape reflex, and central working-memory attractors.</p></div>'
-        . '<div class="head-actions">'
-        . '<button class="button small is-learning-on" id="bug-learning" type="button" aria-pressed="true" title="Toggle lifetime dopamine/eligibility synaptic plasticity on or off">Learning: On</button> '
-        . '<button class="button small" id="bug-pause" type="button" disabled>Pause</button> '
-        . '<button class="button small" id="bug-restart" type="button" disabled>New arena</button> '
-        . '<a class="button small" id="bug-compare-link" href="' . h($base . '/explore' . ($compare ? '' : '?compare=1')) . '">'
-        . ($compare ? 'Single arena' : 'Compare brains') . '</a></div></div>'
-        . '<p id="bug-status" class="bug-status-bar" role="status">Loading the arena…</p>'
-        . ($compare ? '<div class="bug-pair"><div><h2 id="bug-left-heading">Champion (SOTA · Learning On)</h2><p id="bug-champion-score"></p>' : '')
-        . '<canvas id="bug-arena" width="1120" height="700" aria-label="BugBrain foraging arena" data-champion="'
-        . h($base . '/explore/bugbrain-champion.json') . '"></canvas>'
-        . ($compare ? '</div><div><h2 id="bug-right-heading">Original BugBrain / Learning Off</h2><p id="bug-baseline-score"></p>'
-            . '<canvas id="bug-baseline" width="1120" height="700" aria-label="Original BugBrain foraging arena"></canvas></div></div>' : '')
-        . '<div class="showcase-donate-bar"><div><strong>Every brain above grows from a compact developmental genome (~1,800 numbers) and learns online with 100% local biological rules—no backpropagation.</strong> '
-        . '<span class="quiet">Your donated compute evolves stronger developmental programs, utility-pruned cerebellar granule layers, and composed SpikeFoundry micro-motifs.</span></div>'
-        . '<a class="button primary small" href="' . h($base) . '/join">Donate compute</a></div>'
-        . '</section><script defer src="' . h($base . '/assets/bugbrain.js?v=7') . '"></script>';
-    $style = '<style>.bug-shell{max-width:none;margin:auto;padding:12px 16px 16px}'
-        . '.showcase-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:6px;margin:0 auto 10px}'
-        . '.showcase-tab{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:7px 10px;border-radius:8px;border:1px solid var(--line,#202d39);background:#101821;color:var(--text,#e6edf3);cursor:pointer;text-align:left;transition:border-color .15s,background .15s}'
-        . '.showcase-tab:hover{border-color:#3b5368;background:#15202b}'
-        . '.showcase-tab.is-active{border-color:var(--mint,#69e2b1);background:#132629;box-shadow:0 0 0 1px var(--mint,#69e2b1) inset}'
-        . '.showcase-tab .sc-title{font-weight:600;font-size:12.5px;color:#fff}'
-        . '.showcase-tab .sc-sub{font-size:10.5px;color:var(--muted,#8b9baa);font-family:var(--mono,monospace)}'
-        . '.bug-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin:0 auto 6px}'
-        . '.bug-title-group{flex:1 1 380px;min-width:0}.bug-title-group p{margin:2px 0 0;font-size:12.5px}'
-        . '.bug-toolbar h1{margin:0;font-size:clamp(18px,2vw,24px)}'
-        . '.bug-status-bar{margin:0 0 8px;font-family:var(--mono,monospace);font-size:12px;color:var(--mint,#69e2b1)}'
-        . '#bug-learning.is-learning-on{background:var(--mint,#69e2b1);color:#061510;border-color:var(--mint,#69e2b1);font-weight:700}'
+    $tabs .= '</nav>';
+    $tag = $haveDesign
+        ? 'Best design so far (reading and memory): <b>' . h($version) . '</b>' . (!empty($design['updated']) ? ' · updated ' . h((string) $design['updated']) : '')
+        : 'Current best design';
+    $body = '<div class="ex" data-engine="' . h($base . '/assets/bugbrain.js?v=8') . '" data-replay-js="' . h($base . '/assets/explore-replay.js?v=' . $asset('explore-replay.js')) . '"'
+        . ' data-live-js="' . h($base . '/assets/explore-live.js?v=' . $asset('explore-live.js')) . '" data-design="' . h($base . '/explore/design.json') . '"'
+        . ' data-replay-base="' . h($base . '/explore/replay/') . '" data-version="' . h($version) . '"' . ($compare ? ' data-compare="1"' : '') . '>'
+        . '<header class="ex-head"><div><h1 id="bug-title">Explore</h1><p class="quiet">Try the brain the lab is growing. Each demo shows one thing it can do today.</p></div>'
+        . '<p class="ex-version">' . $tag . '</p></header>'
+        . $tabs . $panels
+        . '<div class="showcase-donate-bar"><div><strong>Every brain here grows from a compact set of genes and keeps learning as it goes, using only local rules. There is no backpropagation.</strong> '
+        . '<span class="quiet">Computers that join the lab test new designs. The best one shows up here.</span></div>'
+        . '<a class="button primary small" href="' . h($base) . '/join">Lend your computer</a></div></div>'
+        . '<script>' . exploreRouterJs() . '</script>';
+    $style = '<style>.bug-shell{max-width:1240px;margin:auto;padding:14px 16px 20px}'
+        . '.ex-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:6px 20px;margin:4px 0 12px}'
+        . '.ex-head h1{margin:0;font:600 clamp(22px,2.6vw,30px)/1.1 var(--display);letter-spacing:-.02em}.ex-head p{margin:4px 0 0}'
+        . '.ex-version{font:12px var(--mono);color:var(--muted);padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0d151d}.ex-version b{color:var(--mint);font-weight:500}'
+        . '.ex-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px;margin:0 0 12px}'
+        . '.ex-tab{display:flex;flex-direction:column;gap:3px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);text-decoration:none;transition:border-color .15s,background .15s}'
+        . '.ex-tab:hover{border-color:#3b5368;background:#15202b}.ex-tab.is-active{border-color:var(--mint);background:#122622;box-shadow:0 0 0 1px var(--mint) inset}'
+        . '.ex-tab-title{font-weight:600;font-size:13.5px}.ex-tab-sub{font:11px var(--mono);color:var(--muted)}'
+        . '.ex-panel{background:linear-gradient(160deg,#121c26,#0e161e);border:1px solid var(--line);border-radius:14px;padding:16px 18px 18px;box-shadow:0 10px 32px #0003}'
+        . '.ex-panel[hidden]{display:none}.ex-panel-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px 20px;margin-bottom:10px}'
+        . '.ex-panel-head>div:first-child{flex:1 1 420px;min-width:0}.ex-panel h2{margin:0 0 4px;font:600 19px/1.2 var(--display)}.ex-blurb{margin:0;color:#c3ced8;font-size:14px;line-height:1.5;max-width:780px}'
+        . '.ex-badge{display:inline-block;vertical-align:middle;margin-left:6px;padding:3px 8px;border-radius:999px;font:500 11px var(--mono)}.ex-badge.is-testing{color:var(--amber);border:1px solid #6b5531;background:#1f1a12}'
+        . '.ex-stage{min-height:320px}.ex-score{font:12px var(--mono);color:var(--muted)}'
+        . '.bug-status-bar{margin:0 0 8px;font-family:var(--mono);font-size:12px;color:var(--mint)}'
+        . '#bug-learning.is-learning-on{background:var(--mint);color:#061510;border-color:var(--mint);font-weight:700}'
         . '#bug-learning.is-learning-off{background:#2a1b1e;color:#ff9b9b;border-color:#6e343b}'
-        . '#bug-arena{display:block;margin:auto;width:min(100%,1120px,max(310px,calc((100vh - 230px)*1.6)));height:auto;background:#f4f1ea;border-radius:8px}'
-        . '@supports(height:100dvh){#bug-arena{width:min(100%,1120px,max(310px,calc((100dvh - 230px)*1.6)))}}'
-        . '.bug-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.bug-pair h2,.bug-pair p{margin:0 0 6px}'
-        . '.bug-pair canvas,.bug-pair #bug-arena{display:block;width:100%;height:auto;background:#f4f1ea;border-radius:8px}'
-        . '.showcase-donate-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-top:10px;padding:10px 14px;border-radius:8px;border:1px solid var(--line,#202d39);background:#0f1720;font-size:12.5px}'
-        . '@media(max-width:620px){.bug-pair{grid-template-columns:1fr}}'
-        . '@media(max-width:620px){.bug-shell{padding:10px}}</style>';
-    return layout('BugBrain arena', $body, $base, $nav, ['shell' => 'bug-shell', 'head' => $style]);
+        . '#bug-arena{display:block;margin:auto;width:min(100%,1120px,max(310px,calc((100vh - 300px)*1.6)));height:auto;background:#f4f1ea;border-radius:10px}'
+        . '@supports(height:100dvh){#bug-arena{width:min(100%,1120px,max(310px,calc((100dvh - 300px)*1.6)))}}'
+        . '.bug-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.bug-pair h3,.bug-pair p{margin:0 0 6px}'
+        . '.bug-pair canvas,.bug-pair #bug-arena{display:block;width:100%;height:auto;background:#f4f1ea;border-radius:10px}'
+        . '.showcase-donate-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-top:12px;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:#0f1720;font-size:13px}'
+        . '@media(max-width:620px){.bug-pair{grid-template-columns:1fr}.bug-shell{padding:10px}.ex-panel{padding:12px}}</style>';
+    return layout('Explore · Compute Lab', $body, $base, $nav, ['shell' => 'bug-shell', 'head' => $style]);
+}
+
+/* The tab router for /explore: shows the panel named by the URL hash, loads that demo's scripts once, and
+ * tells the demo it is visible. Demos register themselves on window.ExploreDemos[id] = {show(panel), hide()}. */
+function exploreRouterJs(): string
+{
+    return <<<'JS'
+(function () {
+  var root = document.querySelector('.ex'); if (!root) return;
+  var panels = [].slice.call(document.querySelectorAll('.ex-panel[data-demo]')), tabs = [].slice.call(document.querySelectorAll('.ex-tab[data-tab]'));
+  var ids = panels.map(function (p) { return p.getAttribute('data-demo'); }), loaded = {}, current = null;
+  window.ExploreDemos = window.ExploreDemos || {};
+  window.ExploreSite = { design: root.getAttribute('data-design'), replayBase: root.getAttribute('data-replay-base'), version: root.getAttribute('data-version'),
+    engine: root.getAttribute('data-engine'), compare: root.getAttribute('data-compare') === '1' };
+  function load(src) {
+    if (!loaded[src]) loaded[src] = new Promise(function (ok, fail) { var s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = function () { fail(new Error('could not load ' + src)); }; document.head.appendChild(s); });
+    return loaded[src];
+  }
+  function scriptsFor(id) {
+    var needs = (document.getElementById('demo-' + id).getAttribute('data-needs') || '').split(','), out = [];
+    needs.forEach(function (n) { if (n === 'engine') out.push(root.getAttribute('data-engine')); if (n === 'replay') out.push(root.getAttribute('data-replay-js')); if (n === 'live') out.push(root.getAttribute('data-live-js')); });
+    return out;
+  }
+  function show(id) {
+    if (ids.indexOf(id) < 0) id = ids[0];
+    if (current && current !== id && window.ExploreDemos[current] && window.ExploreDemos[current].hide) window.ExploreDemos[current].hide();
+    current = id;
+    panels.forEach(function (p) { p.hidden = p.getAttribute('data-demo') !== id; });
+    tabs.forEach(function (t) { var on = t.getAttribute('data-tab') === id; t.classList.toggle('is-active', on); if (on) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current'); });
+    var panel = document.getElementById('demo-' + id);
+    scriptsFor(id).reduce(function (p, src) { return p.then(function () { return load(src); }); }, Promise.resolve()).then(function () {
+      if (current === id && window.ExploreDemos[id] && window.ExploreDemos[id].show) window.ExploreDemos[id].show(panel);
+    }).catch(function (e) { var st = panel.querySelector('.ex-stage,.bug-status-bar'); if (st) st.textContent = 'This demo could not load. Refresh the page to try again.'; });
+  }
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  show(location.hash ? location.hash.slice(1) : (root.getAttribute('data-compare') === '1' ? 'arena' : ids[0]));
+})();
+JS;
 }
 
 function exploreBar(string $base, array $nav): string

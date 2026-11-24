@@ -1308,5 +1308,58 @@ $left = (int) $fullLab['db']->query("SELECT COUNT(*) FROM jobs WHERE status = 'q
 check(!$fullThrew && $fullClaimed === null && $left === 0,
     'when every seed is taken, claim returns nothing instead of failing');
 
+/* Explore: the top-design manifest (schema 2) and its replays, with the arena champion as the fallback. */
+$exDir = sys_get_temp_dir() . '/explore-' . bin2hex(random_bytes(3));
+mkdir($exDir);
+$exApp = new App(new PDO('sqlite::memory:'), $config + ['explore_dir' => $exDir]);
+$exApp->migrate();
+$exFallback = $exApp->topDesign();
+check(($exFallback['schema'] ?? 0) === 1 && ($exFallback['champion']['id'] ?? '') === 'v3h' && $exApp->exploreReplay('read') === null,
+    'with no manifest the Explore design falls back to the arena champion and serves no replays');
+$shipped = dirname(__DIR__) . '/private/explore';
+foreach (glob($shipped . '/*.json') as $f) {
+    copy($f, $exDir . '/' . basename($f));
+}
+$exGood = $exApp->topDesign();
+$exReplay = $exApp->exploreReplay('read');
+check(($exGood['schema'] ?? 0) === 2 && $exGood['version'] === 'R135' && ($exGood['champion']['id'] ?? '') === 'v3h'
+    && isset($exGood['replays']['read'], $exGood['replays']['name'], $exGood['replays']['copy'])
+    && $exReplay !== null && is_file($exReplay['path']) && strpos($exReplay['etag'], 'R135-read-') === 1,
+    'the shipped manifest validates, keeps the arena champion and names each replay with a version etag');
+$readData = json_decode((string) file_get_contents($exReplay['path']), true);
+check(is_array($readData) && strlen($readData['text']) === strlen($readData['hits']) && strlen($readData['hits']) > 1000
+    && preg_match('/^[01]+$/', $readData['hits']) === 1,
+    'the read replay holds one right/wrong mark per letter of held-out text');
+check($exApp->exploreReplay('design') === null && $exApp->exploreReplay('../design') === null && $exApp->exploreReplay('READ') === null,
+    'only whitelisted replay ids are served');
+$goodManifest = (string) file_get_contents($exDir . '/design.json');
+$badCases = [
+    'not json' => '{"schema":2,',
+    'schema 3' => str_replace('"schema": 2', '"schema": 3', $goodManifest),
+    'schema as string' => str_replace('"schema": 2', '"schema": "2"', $goodManifest),
+    'bad version' => str_replace('"version": "R135"', '"version": "R135<script>"', $goodManifest),
+    'unknown replay id' => str_replace('"read": {', '"evil": {', $goodManifest),
+    'path in file name' => str_replace('"file": "read-r135.json"', '"file": "../config.php"', $goodManifest),
+    'bad hash' => preg_replace('/"sha256": "[0-9a-f]{64}"/', '"sha256": "zz"', $goodManifest, 1),
+    'bad variant' => str_replace('"plan": "deepURSx3"', '"plan": "deep URS"', $goodManifest),
+    'too large' => $goodManifest . str_repeat(' ', App::EXPLORE_MANIFEST_BYTES),
+];
+$allFallBack = true;
+foreach ($badCases as $what => $text) {
+    file_put_contents($exDir . '/design.json', $text);
+    $d = $exApp->topDesign();
+    if (($d['schema'] ?? 0) !== 1 || ($d['champion']['id'] ?? '') !== 'v3h' || $exApp->exploreReplay('read') !== null) {
+        $allFallBack = false;
+        echo "manifest case not rejected: $what\n";
+    }
+}
+check($allFallBack, 'a broken, oversized or tampered manifest falls back to the arena champion instead of failing');
+file_put_contents($exDir . '/design.json', $goodManifest);
+file_put_contents($exDir . '/read-r135.json', '{"changed":true}');
+check($exApp->exploreReplay('read') === null && $exApp->exploreReplay('name') !== null,
+    'a replay whose bytes no longer match the manifest hash is not served');
+array_map('unlink', glob($exDir . '/*'));
+rmdir($exDir);
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);
