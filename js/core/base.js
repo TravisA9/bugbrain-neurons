@@ -114,6 +114,11 @@ const params = {
   lagGate: 0,   // R140: 1 = recruit copy detectors only when the key's far letter predicts the arriving letter better than the short context (net.js guLagGate)
   lagPrune: 0, lagSurp: 0, lagEvid: 0, lagMarg: 0,   // R140: use-time gating of copy detectors: prune when the running hit rate falls below the bigram reference / fire only when the short context is less confident (net.js guLagUse); R142 lagEvid: evidence-weighted vote of copy detectors (net.js guLagFire)
   lagCtx: 0,   // R140: copy keys carry the last lagCtx letters (0/1 = current letter only)
+  // R145 wSlow a > 0 (B2, slow consolidation weight; 0 = off, bit-identical, no allocation, no RNG): every granule -> output readout synapse gets a second,
+  // slow weight C that tracks the learned (granKal) weight U at rate a per visit (C += a (U - C), only when its granule was active in the read window).
+  // wSlowPull b > 0: U is pulled toward C at rate b per visit (two-variable Benna-Fusi coupling). wSlowRead l in (0, 1]: the outputs read (1 - l) U + l C
+  // (l = 1: the slow weight alone, a running average). Needs granKal and granGain (the U path); recruits reset C to their new weight (net.js granSlowStep)
+  wSlow: 0, wSlowPull: 0, wSlowRead: 0,
   // R126 fanInBudget (0 = off, bit-identical): sized regions keep each cell type's 1x mean in-region fan-in (strongest inputs), see develop.js
   fanInBudget: 0,
   // R127 pathBudget (0 = off, bit-identical): sized regions keep each (post type, presyn type, sign) pathway at its 1x mean in-degree, random (hash) selection, see develop.js

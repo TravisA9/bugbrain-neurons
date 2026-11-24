@@ -713,8 +713,19 @@ class SpikingNet {
       for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], j = pr[k], x = gA[j] / W, gj = kal ? g * av(j) : g;
         if (U) { const u = U[r] + gj * x * er; U[r] = u < wLo ? wLo : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; } const w = ws[k] + gj * x * er; ws[k] = w < wLo ? wLo : w > wMax ? wMax : w; } }
     for (let a = 0; a < nA; a++) { const j = aL[a]; if (gA[j] / W >= 0.01) n[j]++; }
+    if (params.wSlow > 0 && U) this.granSlowStep(U, Uw, pos, Bs, off[nL]);   // R145 wSlow (B2): slow consolidation weight (off = bit-identical)
     if (F) this.granTraceStep(L, K, ws, pr, wMax, ref, gA, Bs, off, W, nA, aL, n, A, U);
     this.gKdPs = dPs; return yTgt; }
+  /* R145 wSlow (B2; global P.wSlow = a > 0; 0 / unset = off, bit-identical, no allocation, no RNG; needs granKal + granGain (U path, sparse)): a SLOW
+   * CONSOLIDATION WEIGHT C_r on each granule -> output synapse, beside the learned weight U_r. Once per teaching event, for every synapse visited in this
+   * event (its granule active in the read window): C += a (U - C) (the slow weight tracks the learned one); wSlowPull b > 0: U += b (C - U) (the learned
+   * weight is pulled back toward its consolidated value: Benna-Fusi two-variable coupling, which protects old values against a run of interfering updates);
+   * the outputs read (1 - l) U + l C with l = wSlowRead in [0, 1] (l = 1: the slow weight alone). The NLMS error is always computed from U. C starts at U
+   * (first event) and is reset with U when a granule is re-assigned (recruit). Convex combinations: C and U stay inside the readout bounds. */
+  granSlowStep(U, Uw, pos, Bs, nB) {
+    const a = Math.min(1, params.wSlow), b = params.wSlowPull > 0 ? Math.min(1, params.wSlowPull) : 0, l = params.wSlowRead > 0 ? Math.min(1, params.wSlowRead) : 0;
+    const C = this.gSlow || (this.gSlow = Float32Array.from(U));
+    for (let i = 0; i < nB; i++) { const r = Bs[i]; let u = U[r]; const c = C[r] = C[r] + a * (u - C[r]); if (b) { u = U[r] = u + b * (c - u); } Uw[pos[r]] = l ? u + l * (c - u) : u; } }
   /* R133 granTrace (global P.granTrace = 1; 0 / unset = off, bit-identical, no RNG; needs granKal, sparse path without granGain): a FAST ONE-SHOT TRACE on
    * each granule -> output synapse, separate from the slow granKal weight (a short-term / eligibility-like component that the slow weight consolidates).
    * Trace E_jq = the granule's own running frequency of each next symbol over its observations (step 1 / observations; a recruit starts with one
@@ -823,7 +834,7 @@ class SpikingNet {
     const ws = this.ws, U = this.gU, wo = gd.wo, psi = this.gPsi || 0;
     if (U && !gd.uAt && this.gIn) { const K = this.gIn.K, m = new Int32Array(ws.length).fill(-1); for (let r = 0; r < K.length; r++) m[K[r]] = r; gd.uAt = m; }
     const map = gd.uAt, Uw = this.gRUw, pos = this.gRpos;
-    for (let q = gd.outS[j]; q < gd.outS[j + 1]; q++) { const e = gd.outK[q]; if (U && map && map[e] >= 0) { const r = map[e]; U[r] = wo; if (Uw && pos) Uw[pos[r]] = wo; } ws[e] = U ? psi * wo : wo; }
+    for (let q = gd.outS[j]; q < gd.outS[j + 1]; q++) { const e = gd.outK[q]; if (U && map && map[e] >= 0) { const r = map[e]; U[r] = wo; if (Uw && pos) Uw[pos[r]] = wo; if (this.gSlow) this.gSlow[r] = wo; } ws[e] = U ? psi * wo : wo; }
     if (this.thr) { this.thr[b] = gd.thr0; if (this.gLastT) this.gLastT[j] = this.gThStep; }
     this.v[b] = V_REST; if (this.gCnt) this.gCnt[b] = 0; if (this.gAcc) this.gAcc[b] = 0;
   }
@@ -1141,7 +1152,7 @@ class SpikingNet {
     if (U && !gu.uAt && this.gIn) { const Ki = this.gIn.K, m = new Int32Array(ws.length).fill(-1); for (let r = 0; r < Ki.length; r++) m[Ki[r]] = r; gu.uAt = m; }
     const map = gu.uAt;
     for (let q = outS[best]; q < outS[best + 1]; q++) { const e = outK[q], uVal = posts[e] === tgtNode ? wTgt : mt && params.granRecruitW0 !== 1 ? 0 : wo;   // R119 mode 2: a recruit starts silent on the non-target outputs (wo = the untrained initial weight would add uniform drive to every output; P.granRecruitW0=1 = old)
-      if (U && map && map[e] >= 0) { const r = map[e]; U[r] = uVal; if (Uw && pos) Uw[pos[r]] = uVal; }
+      if (U && map && map[e] >= 0) { const r = map[e]; U[r] = uVal; if (Uw && pos) Uw[pos[r]] = uVal; if (this.gSlow) this.gSlow[r] = uVal; }   // (R145 wSlow: the slow weight restarts with the recruit)
       ws[e] = U ? psi * uVal : uVal;
       if (this.gFA) { const tg = posts[e] === tgtNode ? 1 : 0, f = tg && this.gFx > 0 ? (params.granRef > 0 ? params.granRef : 10) / this.gFx : 0, wX = params.wMax * (params.granExactW > 0 ? params.granExactW : 50), w1 = uVal + f > wX ? wX : uVal + f;   // R133 granTrace: the recruit's trace = its first observation, full vote (gate 1 at n = 0)
         this.gFE[e] = tg; if (U) { this.gFA[e] = f; ws[e] = psi * (uVal + f); } else { ws[e] = w1; this.gFA[e] = w1 - uVal; } } }
