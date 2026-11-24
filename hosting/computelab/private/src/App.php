@@ -25,6 +25,53 @@ final class App
         }
     }
 
+    /** MySQL refused a new connection because of a connection limit: 1040 (too many connections), 1203
+     * (max_user_connections), 1226 (a per-user resource limit), or the host's own "connection limit" wording. */
+    public static function isConnectionLimit(Throwable $e): bool
+    {
+        $msg = $e->getMessage();
+        $codes = [(string) $e->getCode()];
+        if ($e instanceof PDOException && is_array($e->errorInfo) && isset($e->errorInfo[1])) {
+            $codes[] = (string) $e->errorInfo[1];
+        }
+        foreach (['1040', '1203', '1226'] as $n) {
+            if (in_array($n, $codes, true) || strpos($msg, '[' . $n . ']') !== false) {
+                return true;
+            }
+        }
+        return (bool) preg_match('/too many connections|max_user_connections|max_connections|connection limit/i', $msg);
+    }
+
+    /** Microseconds to wait before connection attempt $attempt + 1: jittered, about 150-500 ms in total per wait. */
+    public static function connectBackoffUs(int $attempt): int
+    {
+        $lo = 50000 + 100000 * max(1, min(3, $attempt));
+        return random_int($lo, min(500000, $lo + 150000));
+    }
+
+    /**
+     * Opens a connection, retrying only connection-limit refusals (see isConnectionLimit) up to $attempts times.
+     * Any other error, or the last refusal, is rethrown for the caller to turn into a 503.
+     * @param callable():PDO $connect
+     * @param callable(int):void|null $sleep receives microseconds (tests pass a recorder)
+     */
+    public static function connectWithRetry(callable $connect, int $attempts = 4, ?callable $sleep = null): PDO
+    {
+        $sleep = $sleep ?? static function (int $us): void {
+            usleep($us);
+        };
+        for ($i = 1; ; $i++) {
+            try {
+                return $connect();
+            } catch (PDOException $e) {
+                if ($i >= $attempts || !self::isConnectionLimit($e)) {
+                    throw $e;
+                }
+                $sleep(self::connectBackoffUs($i));
+            }
+        }
+    }
+
     public function now(): string
     {
         return ($this->clock)();

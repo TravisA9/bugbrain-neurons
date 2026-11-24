@@ -1513,5 +1513,56 @@ check(str_contains($ownerCc, 'id="code-channels"') && str_contains($ownerCc, '/o
     'owner console: Worker code panel with set/promote, a Make canary/stable button and health chips on each computer card');
 check(!str_contains(pageJoin($cc), 'name="project'), 'Join has no project or experiment field: volunteers only choose how much compute to lend');
 
+/* Connection-limit refusals (Hostinger: 20 new MySQL connections per second per account). */
+$refusal = new PDOException('SQLSTATE[HY000] [1040] Too many connections', 1040);
+check(App::isConnectionLimit($refusal) && App::isConnectionLimit(new PDOException('SQLSTATE[42000] [1203] User already has more than \'max_user_connections\' active connections'))
+    && App::isConnectionLimit(new PDOException('SQLSTATE[HY000] [1226] User has exceeded the max_connections_per_hour resource'))
+    && App::isConnectionLimit(new RuntimeException('Connection limit reached for this account'))
+    && !App::isConnectionLimit(new PDOException('SQLSTATE[HY000] [1045] Access denied for user')) && !App::isConnectionLimit(new PDOException('SQLSTATE[42S02]: Base table or view not found')),
+    'connection-limit refusals (1040, 1203, 1226, host wording) are recognised; access denied and SQL errors are not');
+$waits = [];
+$tries = 0;
+$okDb = App::connectWithRetry(static function () use (&$tries): PDO {
+    $tries++;
+    if ($tries <= 2) {
+        throw new PDOException('SQLSTATE[HY000] [1040] Too many connections', 1040);
+    }
+    return new PDO('sqlite::memory:');
+}, 4, static function (int $us) use (&$waits): void {
+    $waits[] = $us;
+});
+check($okDb instanceof PDO && $tries === 3 && count($waits) === 2 && min($waits) >= 150000 && max($waits) <= 500000,
+    'two refused connections are retried after 150-500 ms waits and the third attempt connects');
+$tries = 0;
+$waits = [];
+$gaveUp = null;
+try {
+    App::connectWithRetry(static function () use (&$tries): PDO {
+        $tries++;
+        throw new PDOException('SQLSTATE[HY000] [1040] Too many connections', 1040);
+    }, 4, static function (int $us) use (&$waits): void {
+        $waits[] = $us;
+    });
+} catch (PDOException $e) {
+    $gaveUp = $e;
+}
+check($gaveUp !== null && App::isConnectionLimit($gaveUp) && $tries === 4 && count($waits) === 3 && array_sum($waits) <= 1500000,
+    'a refusal that lasts gives up after 4 attempts (at most 1.5 s of waiting) and rethrows for the 503 page');
+$tries = 0;
+try {
+    App::connectWithRetry(static function () use (&$tries): PDO {
+        $tries++;
+        throw new PDOException('SQLSTATE[HY000] [1045] Access denied for user', 1045);
+    }, 4, static function (int $us): void {
+    });
+} catch (PDOException $e) {
+}
+check($tries === 1, 'other connection errors are not retried');
+$backoffs = [];
+for ($i = 0; $i < 200; $i++) {
+    $backoffs[] = App::connectBackoffUs(1 + $i % 3);
+}
+check(min($backoffs) >= 150000 && max($backoffs) <= 500000 && count(array_unique($backoffs)) > 20, 'connection backoff is jittered within 150-500 ms');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

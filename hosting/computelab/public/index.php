@@ -75,11 +75,52 @@ function coord_db(array $config): PDO
         if (!is_dir($dir)) {
             mkdir($dir, 0700, true);
         }
-        return new PDO('sqlite:' . $path);
+        return App::connectWithRetry(coord_connector(static function () use ($path): PDO {
+            return new PDO('sqlite:' . $path);
+        }));
     }
     $m = $config['mysql'];
     $dsn = 'mysql:host=' . $m['host'] . ';dbname=' . $m['database'] . ';charset=' . ($m['charset'] ?? 'utf8mb4');
-    return new PDO($dsn, (string) $m['user'], (string) $m['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    /* The host allows a limited number of new MySQL connections per second for the whole account. A refused
+     * connection used to escape as an uncaught PDOException (HTTP 500). Bursts last well under a second, so a
+     * few short jittered retries get nearly every request through; App::connectWithRetry rethrows otherwise. */
+    return App::connectWithRetry(coord_connector(static function () use ($dsn, $m): PDO {
+        return new PDO($dsn, (string) $m['user'], (string) $m['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    }));
+}
+
+/** Test hook (environment only, never request input): COORD_TEST_DB_REFUSE=N refuses the first N connection
+ * attempts of each request the way MySQL does when the per-second connection limit is hit. */
+function coord_connector(callable $connect): callable
+{
+    $refuse = (int) getenv('COORD_TEST_DB_REFUSE');
+    if ($refuse <= 0) {
+        return $connect;
+    }
+    $tries = 0;
+    return static function () use ($connect, $refuse, &$tries): PDO {
+        $tries++;
+        if ($tries <= $refuse) {
+            throw new PDOException('SQLSTATE[HY000] [1040] Too many connections', 1040);
+        }
+        return $connect();
+    };
+}
+
+/** The database stayed busy through every retry: a clean, retryable 503 instead of a PHP error page. */
+function coord_busy(string $path): void
+{
+    http_response_code(503);
+    header('Retry-After: 5');
+    header('Cache-Control: no-store');
+    if (str_starts_with($path, '/api/') || coord_wants_json()) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['error' => 'The coordinator is busy. Try again in a few seconds.', 'retryAfter' => 5]);
+        return;
+    }
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!doctype html><meta charset="utf-8"><title>Compute Lab is busy</title>'
+        . '<meta http-equiv="refresh" content="5"><p style="font-family:sans-serif">Compute Lab is busy for a moment. This page will try again in a few seconds.</p>';
 }
 
 function coord_json(int $code, array $body): void
@@ -279,8 +320,12 @@ function coord_bearer(): string
 
 function coord_path(App $app): string
 {
+    return coord_request_path($app->base());
+}
+
+function coord_request_path(string $base): string
+{
     $uri = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/');
-    $base = $app->base();
     if ($base !== '' && str_starts_with($uri, $base)) {
         $uri = substr($uri, strlen($base));
     }
@@ -304,28 +349,22 @@ function coord_body(int $maxBytes = 65536): array
     return $data;
 }
 
-$app = new App(coord_db(coord_config($private)), coord_config($private));
-if (getenv('COORD_TEST_NOW')) {
-    $app->clock = static fn (): string => (string) getenv('COORD_TEST_NOW');
-}
-$app->migrate();
-$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$path = coord_path($app);
-$base = $app->base();
-
-try {
+/** Files that need no database: answered before any MySQL connection is opened, so page assets do not
+ * count against the host's per-second connection limit. Returns true when the request was answered. */
+function coord_static(string $path, string $method, array $config, string $private, string $base): bool
+{
     if ($path === '/assets/engine.js' && $method === 'GET') {
-        $file = (string) $app->config['engine_js'];
+        $file = (string) $config['engine_js'];
         header('Content-Type: text/javascript; charset=utf-8');
         readfile($file);
-        return;
+        return true;
     }
     if ($path === '/assets/computelab.css' && $method === 'GET') {
         header('Content-Type: text/css; charset=utf-8');
         header('Cache-Control: public, max-age=86400');
         header('X-Content-Type-Options: nosniff');
         echo labCss();
-        return;
+        return true;
     }
     $icons = [
         '/favicon.svg' => ['favicon.svg', 'image/svg+xml'],
@@ -338,7 +377,7 @@ try {
         $file = $private . '/assets/icons/' . $icons[$path][0];
         if (!is_file($file)) {
             coord_json(404, ['ok' => false, 'error' => 'Not found.']);
-            return;
+            return true;
         }
         header('Content-Type: ' . $icons[$path][1]);
         header('Cache-Control: public, max-age=604800');
@@ -347,13 +386,13 @@ try {
         if ($method === 'GET') {
             readfile($file);
         }
-        return;
+        return true;
     }
     if (preg_match('#^/assets/power/(off|half-power|full-blast)\.(webp|png)$#', $path, $pm) && ($method === 'GET' || $method === 'HEAD')) {
         $file = $private . '/assets/power/' . $pm[1] . '.' . $pm[2];
         if (!is_file($file)) {
             coord_json(404, ['ok' => false, 'error' => 'Not found.']);
-            return;
+            return true;
         }
         header('Content-Type: ' . ($pm[2] === 'webp' ? 'image/webp' : 'image/png'));
         header('Cache-Control: public, max-age=604800');
@@ -362,36 +401,20 @@ try {
         if ($method === 'GET') {
             readfile($file);
         }
-        return;
+        return true;
     }
     if ($path === '/manifest.webmanifest' && $method === 'GET') {
         header('Content-Type: application/manifest+json; charset=utf-8');
         header('Cache-Control: public, max-age=86400');
         echo json_encode(webManifest($base), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-        return;
-    }
-    if ($path === '/' && $method === 'GET') {
-        coord_html(pageHome($app, coord_who($app, 'home'), coord_home_computers($app)));
-        return;
-    }
-    if ($path === '/status.json' && $method === 'GET') {
-        $live = $app->liveStatus();
-        $mine = [];
-        foreach (coord_home_computers($app) ?? [] as $w) {
-            $state = describeWorker($app, $w, $app->leasesOf((string) $w['id']));
-            $health = $app->healthOf($w);
-            $mine[] = ['id' => (string) $w['id'], 'line' => $state['line'], 'effective' => $state['effective'], 'mode' => $state['mode'], 'pct' => $state['pct'], 'health' => (string) $health['line']] + runFields($state);
-        }
-        $live['mine'] = $mine;
-        coord_json(200, $live);
-        return;
+        return true;
     }
     if ($path === '/assets/bugbrain.js' && $method === 'GET') {
-        $asset = (string) ($app->config['bugbrain_js'] ?? $private . '/bugbrain.js');
+        $asset = (string) ($config['bugbrain_js'] ?? $private . '/bugbrain.js');
         if (is_file($asset)) {
             header('Content-Type: application/javascript; charset=utf-8');
             readfile($asset);
-            return;
+            return true;
         }
         $repoRoot = dirname($private, 2);
         $parts = [
@@ -415,7 +438,7 @@ try {
         ];
         if (!is_file($parts[0])) {
             http_response_code(404);
-            return;
+            return true;
         }
         header('Content-Type: application/javascript; charset=utf-8');
         foreach ($parts as $part) {
@@ -424,19 +447,61 @@ try {
                 echo "\n";
             }
         }
-        return;
+        return true;
     }
     $exploreAssets = ['/assets/explore-replay.js' => '/explore-replay.js', '/assets/explore-live.js' => '/explore-live.js', '/assets/explore-arena.js' => '/explore-arena.js', '/assets/explore-brain.js' => '/explore-brain.js'];
     if (isset($exploreAssets[$path]) && $method === 'GET') {
         $asset = $private . $exploreAssets[$path];
         if (!is_file($asset)) {
             http_response_code(404);
-            return;
+            return true;
         }
         header('Content-Type: application/javascript; charset=utf-8');
         header('Cache-Control: public, max-age=3600');
         header('X-Content-Type-Options: nosniff');
         readfile($asset);
+        return true;
+    }
+    return false;
+}
+
+$config = coord_config($private);
+$base = rtrim((string) ($config['base_path'] ?? ''), '/');
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$path = coord_request_path($base);
+if (coord_static($path, $method, $config, $private, $base)) {
+    return;
+}
+try {
+    $db = coord_db($config);
+} catch (PDOException $e) {
+    if (!App::isConnectionLimit($e)) {
+        throw $e;
+    }
+    coord_busy($path);
+    return;
+}
+$app = new App($db, $config);
+if (getenv('COORD_TEST_NOW')) {
+    $app->clock = static fn (): string => (string) getenv('COORD_TEST_NOW');
+}
+$app->migrate();
+
+try {
+    if ($path === '/' && $method === 'GET') {
+        coord_html(pageHome($app, coord_who($app, 'home'), coord_home_computers($app)));
+        return;
+    }
+    if ($path === '/status.json' && $method === 'GET') {
+        $live = $app->liveStatus();
+        $mine = [];
+        foreach (coord_home_computers($app) ?? [] as $w) {
+            $state = describeWorker($app, $w, $app->leasesOf((string) $w['id']));
+            $health = $app->healthOf($w);
+            $mine[] = ['id' => (string) $w['id'], 'line' => $state['line'], 'effective' => $state['effective'], 'mode' => $state['mode'], 'pct' => $state['pct'], 'health' => (string) $health['line']] + runFields($state);
+        }
+        $live['mine'] = $mine;
+        coord_json(200, $live);
         return;
     }
     if ($path === '/explore/bugbrain-champion.json' && $method === 'GET') {

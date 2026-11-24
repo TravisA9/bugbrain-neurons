@@ -705,5 +705,39 @@ check(str_contains($arenaPoll ?? '', $arenaJob) && ($arena['version'] ?? '') ===
     'a BugBrain donor submits paired arena mutation results');
 
 proc_terminate($proc);
+
+/* A second server whose database refuses connections the way MySQL does at the host's per-second limit. */
+function coord_refusing_server(string $config, string $public, int $port, int $refuse)
+{
+    $cmd = 'exec env COORD_CONFIG=' . escapeshellarg($config) . ' COORD_TEST_DB_REFUSE=' . $refuse . ' php -S 127.0.0.1:' . $port . ' -t ' . escapeshellarg($public) . ' ' . escapeshellarg($public . '/index.php');
+    $p = proc_open($cmd . ' > /tmp/coord-php-refuse.log 2>&1', [['pipe', 'r'], ['file', '/tmp/coord-php-refuse-out.txt', 'w'], ['file', '/tmp/coord-php-refuse-err.txt', 'w']], $pp, $public);
+    usleep(300000);
+    return $p;
+}
+$p2 = coord_refusing_server($config, $public, $port + 1, 2);
+$b2 = 'http://127.0.0.1:' . ($port + 1) . '/computelab';
+$t0 = microtime(true);
+$st2 = http($b2 . '/status.json');
+$home2 = http($b2 . '/');
+check($st2['status'] === 200 && is_array(json_decode($st2['body'], true)) && $home2['status'] === 200 && microtime(true) - $t0 < 3,
+    'two refused connections per request are retried and the pages still answer 200');
+proc_terminate($p2);
+$p3 = coord_refusing_server($config, $public, $port + 2, 99);
+$b3 = 'http://127.0.0.1:' . ($port + 2) . '/computelab';
+$busyApi = http($b3 . '/api/v1/claim', 'POST', '{}', ['Content-Type: application/json', 'Authorization: Bearer ' . str_repeat('a', 64)]);
+$busyPage = http($b3 . '/discoveries');
+$cssBusy = http($b3 . '/assets/computelab.css');
+$iconBusy = http($b3 . '/favicon.svg');
+$jsBusy = http($b3 . '/assets/explore-arena.js');
+check($busyApi['status'] === 503 && preg_match('/^Retry-After: 5$/mi', $busyApi['header']) === 1 && (json_decode($busyApi['body'], true)['retryAfter'] ?? 0) === 5
+    && str_contains($busyApi['header'], 'application/json') && !str_contains($busyApi['body'], 'PDOException') && !str_contains($busyApi['body'], 'Fatal'),
+    'a database that keeps refusing gives the API a clean JSON 503 with Retry-After: 5, not a PHP error');
+check($busyPage['status'] === 503 && preg_match('/^Retry-After: 5$/mi', $busyPage['header']) === 1 && str_contains($busyPage['body'], 'Compute Lab is busy') && !str_contains($busyPage['body'], 'PDOException'),
+    'pages answer a short "busy, retrying" 503 page instead of a 500');
+check($cssBusy['status'] === 200 && str_contains($cssBusy['header'], 'text/css') && $iconBusy['status'] === 200 && $jsBusy['status'] === 200,
+    'stylesheet, icons and Explore scripts are served without opening a database connection');
+proc_terminate($p3);
+$retry503 = trim((string) shell_exec('node -e ' . escapeshellarg("const c=require(" . json_encode($root . '/run/coord.js') . "); const d=c.decideRetry({status:503,message:'busy'},1000); process.stdout.write(d.action+' '+d.delay)") . ' 2>&1'));
+check($retry503 === 'retry 2000', 'the worker treats a 503 as retryable and backs off (no worker change needed)');
 echo "http checks done\n";
 exit($fail === 0 ? 0 : 1);
