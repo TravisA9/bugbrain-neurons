@@ -734,6 +734,8 @@ check($busyApi['status'] === 503 && preg_match('/^Retry-After: 5$/mi', $busyApi[
     'a database that keeps refusing gives the API a clean JSON 503 with Retry-After: 5, not a PHP error');
 check($busyPage['status'] === 503 && preg_match('/^Retry-After: 5$/mi', $busyPage['header']) === 1 && str_contains($busyPage['body'], 'Compute Lab is busy') && !str_contains($busyPage['body'], 'PDOException'),
     'pages answer a short "busy, retrying" 503 page instead of a 500');
+$dbLog = dirname(__DIR__) . '/private/db-errors.log';
+check(!is_file($dbLog) || !str_contains((string) file_get_contents($dbLog), 'password'), 'the database error log never holds credentials');
 check($cssBusy['status'] === 200 && str_contains($cssBusy['header'], 'text/css') && $iconBusy['status'] === 200 && $jsBusy['status'] === 200,
     'stylesheet, icons and Explore scripts are served without opening a database connection');
 proc_terminate($p3);

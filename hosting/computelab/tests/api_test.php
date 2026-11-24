@@ -1558,6 +1558,36 @@ try {
 } catch (PDOException $e) {
 }
 check($tries === 1, 'other connection errors are not retried');
+$tries = 0;
+try {
+    App::connectWithRetry(static function () use (&$tries): PDO {
+        $tries++;
+        throw new PDOException('SQLSTATE[HY000] [2002] Connection refused', 2002);
+    }, 4, static function (int $us): void {
+    }, true);
+} catch (PDOException $e) {
+}
+check($tries === 4, 'with anyError the web front retries every connect failure (the host refusal need not say "too many connections")');
+$seen = [];
+$tries = 0;
+App::connectWithRetry(static function () use (&$tries): PDO {
+    $tries++;
+    if ($tries === 1) {
+        throw new PDOException('SQLSTATE[HY000] [2002] Connection refused', 2002);
+    }
+    return new PDO('sqlite::memory:');
+}, 4, static function (int $us): void {
+}, true, static function (Throwable $e, int $attempt) use (&$seen): void {
+    $seen[] = $attempt . ':' . $e->getCode();
+});
+check($seen === ['1:2002'], 'connect failures are reported to the error hook with their attempt number');
+check(App::isTransientDbError(new PDOException('SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock; try restarting transaction'))
+    && App::isTransientDbError(new PDOException('SQLSTATE[HY000]: General error: 1205 Lock wait timeout exceeded; try restarting transaction'))
+    && App::isTransientDbError(new PDOException('SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'))
+    && App::isTransientDbError($refusal)
+    && !App::isTransientDbError(new PDOException("SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'sf-inverse-experiment-1213' for key 'PRIMARY'"))
+    && !App::isTransientDbError(new PDOException('SQLSTATE[42S22]: Column not found: 1054 Unknown column')),
+    'deadlocks, lock wait timeouts and dropped connections are transient (503); duplicates and schema errors are not');
 $backoffs = [];
 for ($i = 0; $i < 200; $i++) {
     $backoffs[] = App::connectBackoffUs(1 + $i % 3);
