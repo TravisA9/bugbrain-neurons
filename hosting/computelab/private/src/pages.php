@@ -1502,7 +1502,8 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archiv
 {
     $base = $app->base();
     $inverse = $app->inverseGalleryEnabled() && !$archive;
-    $payload = $inverse ? ['items' => $app->inverseDiscoveries(), 'series' => [], 'board' => []] : $app->discoveriesPayload();
+    $dedupe = $inverse && !empty($app->config['discoveries_dedupe']);
+    $payload = $inverse ? ['items' => $dedupe ? $app->inverseDiscoveriesDeduped() : $app->inverseDiscoveries(), 'series' => [], 'board' => []] : $app->discoveriesPayload();
     $items = $payload['items'];
     if ($inverse && $larger) {
         $items = array_values(array_filter($items, static fn ($item) => isset($item['inverse']['graph'])));
@@ -1536,6 +1537,9 @@ function pageDiscoveries(App $app, array $nav, array $mineIds = [], bool $archiv
             . '<div class="row2"><span>' . h($item['finder']) . (($item['confirmations'] ?? 0) > 0 ? ' · ✓' . h((string) $item['confirmations']) : '') . (($item['variants'] ?? 0) > 0 ? ' · +' . h((string) $item['variants']) . ' alike' : '') . '</span><span>' . h((string) $item['neurons']) . 'n · ' . h((string) $item['synapses']) . 's</span></div>'
             . (isset($item['inverse']['graph']) ? '<div class="row2">' . h($item['task']) . ' · ' . h((string) $item['level']) . ' hidden neurons</div>' : '')
             . discWhenHtml((string) ($item['when'] ?? '')) . '</button>';
+    }
+    if ($dedupe && ($champLine = $app->inverseChampionLine()) !== '') {
+        $list .= '<p class="muted champ-line" style="padding:8px">' . h($champLine) . '</p>';
     }
     if ($items === []) {
         $list .= '<p class="muted" style="padding:8px">' . ($inverse ? 'Waiting for the first inverse-design job to finish.' : 'No discoveries yet. Finished SpikeFoundry runs upload them.') . '</p>';

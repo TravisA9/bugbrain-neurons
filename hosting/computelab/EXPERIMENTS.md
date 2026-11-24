@@ -76,9 +76,9 @@ them without looking at the audit set (likely overfitting). Config knobs, each t
 | `inverse_stall_jobs` | After N finished plain inverse jobs with no promotion, plain inverse supply stops (composition and other work go on); a promotion restarts the count. `/experiments.json` shows `inverse.stalled` and a note. |
 | `inverse_share_max` | Once plain inverse jobs hold this share of online slots, a claim skips them whenever other work is queued (no idling when nothing else exists). |
 | `inverse_composition_queue`, `inverse_composition_first` | More composition pilots in flight, handed out first. |
+| `discoveries_dedupe` | Public Discoveries shows each circuit once (first finder, best scores, "✓N" confirmations), keeps a smaller circuit even below the top N, and shows the designer's level, promotion and audit scores. Storage/trim unchanged. |
 
-Not done here (needs worker or page work): auto-growing composition size/parts, enlarging the gene grid / behaviour split,
-and de-duplicating the Discoveries page.
+Not done here (needs worker code): auto-growing composition size/parts, and enlarging the gene grid / behaviour split.
 
 ## Turning it on (after Travis approves each step)
 

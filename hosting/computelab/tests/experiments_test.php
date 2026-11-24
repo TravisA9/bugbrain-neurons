@@ -2,6 +2,7 @@
 declare(strict_types=1);
 /* php tests/experiments_test.php : server-defined experiments (planner, seed ledger, claim gating, results, retire list). */
 require dirname(__DIR__) . '/private/src/App.php';
+require_once dirname(__DIR__) . '/private/src/pages.php';
 
 $fail = 0;
 $n = 0;
@@ -343,6 +344,33 @@ check((int) $co1Db->query("SELECT COUNT(*) FROM jobs WHERE spec_json LIKE '%inve
 $rep = $st->experimentsReport();
 check(($rep['inverse']['stalled'] ?? null) === true && str_contains((string) ($rep['inverse']['note'] ?? ''), 'compute moved') && isset($rep['inverse']['champion']['auditPassed']),
     'the report shows the designer champion (promotion and audit scores) and the stall note');
+
+/* ---- Discoveries dedupe (public gallery only) ---- */
+foreach ([false, true] as $dd) {
+    [$dg, $dgDb] = lab(['inverse_gallery' => true, 'discoveries_dedupe' => $dd, 'discoveries_top_n' => 8]);
+    $dw = $dg->workerByToken($dg->enroll('dedupe-pc', ['spikefoundry'], 2, true)['token']);
+    foreach ([601, 602, 603] as $i => $sd) {
+        $dg->createJob('sf-inverse-experiment', 'Gallery', 1, $sd, ['inverseGallery' => true]);
+        $jj = $dg->claim($dw, 0, false, 1, true, true);
+        $genes = $i < 2 ? [1, 2, 0, 0, 0, 0, 0] : [0, 1, 0, 0, 0, 0, 1];
+        $dg->submitResult($dw, $jj['id'], ['status' => 'done', 'synthetic' => true, 'research' => ['version' => 'inverse-designer-1', 'seed' => $jj['spec']['seed'],
+            'checkpoint' => $ckpt, 'discoveries' => [['genes' => $genes, 'freshCount' => 192, 'replay' => [[0, 0], [2, 1]],
+                'accuracy' => 0.6 + $i / 100, 'recall' => 0.8, 'specificity' => 0.4, 'demoAccuracy' => 0.6]]]]);
+        $dg->db->exec("UPDATE inverse_discoveries SET created_at = '2026-11-24T1" . (5 + $i) . ":00:00+00:00' WHERE seed = $sd");
+    }
+    $raw = $dg->inverseDiscoveries();
+    if (!$dd) {
+        check(count($raw) === 3 && substr_count(pageDiscoveries($dg, []), 'data-index="') - substr_count(pageDiscoveries($dg, []), 'data-index="-') === 3 && !str_contains(pageDiscoveries($dg, []), 'Shared designer:'), 'dedupe off: the gallery lists every find, as before');
+        continue;
+    }
+    $ded = $dg->inverseDiscoveriesDeduped();
+    $twice = array_values(array_filter($ded, static fn ($x) => $x['confirmations'] === 1));
+    check(count($raw) === 3 && count($ded) === 2 && count($twice) === 1 && $twice[0]['seed'] === 601 && abs($twice[0]['held'] - 0.61) < 1e-9,
+        'dedupe on: a circuit found twice shows once, credited to the first find, with the best score and "confirmed 1 more time"');
+    $html = pageDiscoveries($dg, []);
+    check(str_contains($html, '✓1') && str_contains($html, 'Shared designer: level 0') && (int) $dgDb->query('SELECT COUNT(*) FROM inverse_discoveries')->fetchColumn() === 3,
+        'the page shows the confirmation count and the designer level; storage keeps every row');
+}
 
 foreach (glob($dir . '/*') ?: [] as $f) {
     unlink($f);

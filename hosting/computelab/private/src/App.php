@@ -2084,6 +2084,67 @@ final class App
         return array_values($items);
     }
 
+    /* discoveries_dedupe (default off): the public gallery shows each distinct circuit once. Jobs keep re-finding the same
+     * circuits for the same fixed behaviours, so copies fold into the first find as "confirmed N times" (best scores and every
+     * badge kept). Storage and trimming are unchanged (trimInverseDiscoveries still reads inverseDiscoveries()). */
+    public function inverseDiscoveriesDeduped(): array
+    {
+        $groups = [];
+        foreach ($this->inverseDiscoveries(20) as $item) {
+            $c = $item['inverse'];
+            unset($c['replay'], $c['candidate']);
+            $key = $item['task'] . '|' . json_encode($c);
+            if (!isset($groups[$key])) {
+                $groups[$key] = $item + ['confirmations' => 0];
+                continue;
+            }
+            $g = &$groups[$key];
+            $g['confirmations']++;
+            foreach (['held', 'accuracy', 'train', 'recall', 'specificity'] as $k) {
+                if ($item[$k] !== null && ($g[$k] === null || $item[$k] > $g[$k])) {
+                    $g[$k] = $item[$k];
+                }
+            }
+            if (strcmp((string) $item['when'], (string) $g['when']) < 0) {
+                foreach (['hash', 'label', 'worker', 'finder', 'when', 'seed', 'cases', 'inverse'] as $k) {
+                    $g[$k] = $item[$k];
+                }
+            }
+            $g['badges'] = array_values(array_unique(array_merge($g['badges'], $item['badges'])));
+            unset($g);
+        }
+        $out = array_values($groups);
+        $n = $this->discoveriesTopN();
+        usort($out, static fn ($a, $b) => ($b['held'] <=> $a['held']) ?: ($a['synapses'] <=> $b['synapses']) ?: strcmp($a['when'], $b['when']));
+        /* Per task family keep the best N, plus any circuit smaller than every circuit above it (a new, smaller solution). */
+        $kept = [];
+        $byTask = [];
+        foreach ($out as $item) {
+            $t = $item['task'];
+            $byTask[$t] = $byTask[$t] ?? ['n' => 0, 'minSyn' => PHP_INT_MAX];
+            if ($byTask[$t]['n'] < $n || $item['synapses'] < $byTask[$t]['minSyn']) {
+                $kept[] = $item;
+                $byTask[$t]['n']++;
+                $byTask[$t]['minSyn'] = min($byTask[$t]['minSyn'], (int) $item['synapses']);
+            }
+        }
+        return $kept;
+    }
+
+    /** Public line for the shared designer: level (generation) and scores on the promotion and held-back audit sets. */
+    public function inverseChampionLine(): string
+    {
+        try {
+            $c = $this->inverseChampion();
+        } catch (RuntimeException $e) {
+            return '';
+        }
+        $passed = is_array($c['passes']) ? array_sum($c['passes']) : null;
+        return 'Shared designer: level ' . $c['generation'] . ($passed === null ? '' : ' · promotion set ' . $passed . '/36')
+            . ($c['auditPassed'] === null ? '' : ' · held-back audit ' . $c['auditPassed'] . '/36')
+            . ($this->inverseStalled() ? ' · no promotion in ' . $this->inverseJobsSincePromotion() . ' jobs, so its compute moved to other experiments' : '');
+    }
+
     /** If a later submit overwrote created_at, put back the earliest done result for that seed. */
     public function repairInverseDiscoveryTimes(): int
     {

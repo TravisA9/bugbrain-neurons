@@ -46,6 +46,7 @@ return [
     'inverse_share_max' => 0,                  // 0..1: share of online slots plain inverse may hold while other work waits
     'inverse_composition_queue' => 1,          // composition pilots kept in flight
     'inverse_composition_first' => false,      // hand out composition pilots before plain inverse jobs
+    'discoveries_dedupe' => false,             // public gallery: each circuit once ("confirmed N times"), smaller circuits kept, champion level + audit shown
     'login_per_minute' => 8,
     'api_per_minute' => 120,
     'design_per_minute' => 60,
