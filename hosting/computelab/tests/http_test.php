@@ -664,6 +664,9 @@ check(str_contains($explore['body'], 'id="demo-brain"') && str_contains($explore
     && str_contains($explore['body'], 'data-role="speed"') && str_contains($explore['body'], 'data-role="restart"') && str_contains($explore['body'], 'data-role="play"')
     && str_contains($explore['body'], 'data-champion="/computelab/explore/bugbrain-champion.json"') && str_contains($explore['body'], '<aside class="bug-stats br-stats" data-role="stats"'),
     'explore has the brain-growth view with play, slow-motion speed and restart controls, and its legend beside the canvas');
+check(str_contains($explore['body'], "function hashId() { return location.hash.slice(1).split('?')[0]; }") && str_contains($brainJsHttp['body'], 'const DEFAULT_SEED = ')
+    && str_contains($brainJsHttp['body'], 'Grow a new one') && str_contains($brainJsHttp['body'], 'seed=(\\d{1,10})'),
+    'explore#brain?seed=N opens the brain view with that seed; without one it grows the fixed default seed');
 
 $arenaWorker = $app->enroll('arena-test', ['bugbrain'], 1, true);
 file_put_contents($researchToken, $arenaWorker['token']);

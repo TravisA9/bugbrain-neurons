@@ -50,6 +50,21 @@
     return g;
   }
 
+  /* Seed: the same brain on every load. The champion file may name one (champion.seed); otherwise DEFAULT_SEED. A #brain?seed=N
+     hash picks another (the "Grow a new one" button writes one there), so a given brain can be reloaded or shared. */
+  const DEFAULT_SEED = 12345;
+  function hashSeed() { const m = /[?&]seed=(\d{1,10})(?:&|$)/.exec(location.hash || ''); return m && +m[1] <= 0xffffffff ? +m[1] >>> 0 : null; }
+  function championSeed(sel) { return sel && Number.isInteger(sel.seed) && sel.seed >= 0 && sel.seed <= 0xffffffff ? sel.seed >>> 0 : DEFAULT_SEED; }
+  // FNV-1a over the whole growth recording (cell births, moves, fates, deaths; every synapse and its removal), so two loads can be compared
+  function traceHash(rec) {
+    let h = 0x811c9dc5 >>> 0;
+    const mix = v => { let x = Math.round(+v * 1e4) | 0; for (let k = 0; k < 4; k++) { h ^= x & 255; h = Math.imul(h, 16777619) >>> 0; x >>= 8; } };
+    const all = a => { if (a) for (let i = 0; i < a.length; i++) mix(a[i]); };
+    for (const c of rec.cells) { mix(c.id); mix(c.parent); mix(c.born); mix(c.died); mix(c.neuronAt); all(c.moves); all(c.ev); }
+    mix(rec.syn.n); all(rec.syn.a); all(rec.syn.end); all(rec.syn.why);
+    return ('0000000' + h.toString(16)).slice(-8);
+  }
+
   function Brain(panel) {
     const q = r => panel.querySelector('[data-role="' + r + '"]');
     this.panel = panel; this.canvas = q('canvas'); this.g = this.canvas.getContext('2d'); this.aside = q('stats'); this.tip = q('tip');
@@ -64,9 +79,14 @@
     let selected = { id: 'v3h', change: null };
     try { const r = await fetch(this.canvas.dataset.champion, { cache: 'no-store' }); if (r.ok) { const d = await r.json(); if (d && typeof d.id === 'string') selected = d; } } catch (e) { /* v3h */ }
     this.selected = selected; this.env = makeEnv('flash');
-    this.seed = Math.floor(Math.random() * 0xffffffff) >>> 0;
     this.genome = genomeFor(selected);
+    this.grow(hashSeed());
+  };
+  // grow (or regrow) the brain from a seed; null = the champion's / default seed
+  B.grow = function (seed) {
+    this.seed = seed == null ? championSeed(this.selected) : seed >>> 0;
     this.brain = SA.growCell(this.genome, { seed: this.seed, spec: this.env.spec, record: true });
+    this.trace = traceHash(this.brain.devLog);
     this.prepare();
   };
 
@@ -316,7 +336,10 @@
     }
     const key = el('p', 'br-key'); key.innerHTML = 'Squares: young cells · dots: neurons (colour = type, purple ring = inhibitory) · lines with a bright tip: growing axons · '
       + 'rings: new synapses · red crosses: removed synapses. Living: dots travelling along lines are spikes; a green / red glow is the reward / punishment signal.';
-    const seed = el('p', 'br-seed', 'Brain ' + this.selected.id + ' · seed ' + this.seed + ' (the arena grows this same brain from this seed)');
+    const seed = el('p', 'br-seed', 'Brain ' + this.selected.id + ' · seed ' + this.seed + (hashSeed() == null ? ' (default)' : '') + ' ');
+    const again = el('button', 'br-new', 'Grow a new one'); again.type = 'button'; again.setAttribute('data-role', 'new-brain');
+    again.addEventListener('click', () => { const s = (Math.random() * 0xffffffff) >>> 0; location.hash = 'brain?seed=' + s; });   // hashchange regrows
+    seed.appendChild(again);
     a.appendChild(top); a.appendChild(lg); a.appendChild(key); a.appendChild(seed);
     this.updateStats(true);
   };
@@ -377,6 +400,11 @@
     this.speedIn.addEventListener('input', () => this.setSpeed()); this.setSpeed();
     this.restartBtn.addEventListener('click', () => { this.restart(); this.playing = true; this.playBtn.textContent = 'Pause'; this.tip.hidden = true; });
     this.canvas.addEventListener('click', ev => this.pick(ev));
+    window.addEventListener('hashchange', () => {   // #brain?seed=N (or back to plain #brain): grow that brain from step 0
+      if (!this.rec || !/^#brain(\?|$)/.test(location.hash)) return;
+      const s = hashSeed(), want = s == null ? championSeed(this.selected) : s;
+      if (want !== this.seed) { this.grow(s); this.playing = true; this.playBtn.textContent = 'Pause'; this.tip.hidden = true; }
+    });
     try { await this.load(); this.playBtn.disabled = this.restartBtn.disabled = false; }
     catch (e) { if (window.console) console.error('brain:', e); this.aside.textContent = 'The brain could not grow in this browser. Refresh the page to try again.'; return; }
     this.frame = requestAnimationFrame(t => this.loop(t));
@@ -391,7 +419,7 @@
       hide() { b.visible = false; },
       // for the screenshot / smoke tests: jump to a growth step, or live a number of ticks at once
       seek(tau) { if (!b.rec) return; b.restart(); if (tau > b.TT) { b.tau = b.TT; b.startLife(); for (let i = 0; i < tau - b.TT; i++) b.lifeTick(); } else b.tau = tau; b.draw(); b.updateStats(true); },
-      state() { return b.rec ? { phase: b.phase, tau: b.tau, ticks: b.ticks, seed: b.seed, N: b.N, T: b.T, TT: b.TT, food: b.food, poison: b.poison, speed: b.speed } : null; },
+      state() { return b.rec ? { phase: b.phase, tau: b.tau, ticks: b.ticks, seed: b.seed, cells: b.brain.devLog.cells.length, synapses: b.brain.devLog.syn.n, trace: b.trace, N: b.N, T: b.T, TT: b.TT, food: b.food, poison: b.poison, speed: b.speed } : null; },
       pause() { b.playing = false; b.playBtn.textContent = 'Play'; },
     };
   }

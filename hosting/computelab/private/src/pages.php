@@ -1004,7 +1004,7 @@ function pageBugArena(string $base, array $nav, bool $compare = false, array $de
         . '.br-legend{margin:10px 0 0}.br-lh{margin:0 0 4px;font-size:11.5px;color:var(--muted)}'
         . '.br-field{display:grid;grid-template-columns:10px 1fr;gap:1px 7px;width:100%;text-align:left;padding:4px 6px;margin:1px 0;border:1px solid transparent;border-radius:6px;background:none;color:var(--muted);font-size:12px;cursor:pointer;opacity:.55}'
         . '.br-field.is-on{opacity:1;color:var(--text);border-color:#1d2a35}.br-field i{width:10px;height:10px;border-radius:3px;margin-top:3px}.br-field em{grid-column:2;font:normal 10.5px var(--mono);color:var(--muted)}'
-        . '.br-key{margin:10px 0 0;font-size:11.5px;line-height:1.45;color:var(--muted)}.br-seed{margin:8px 0 0;font:10.5px var(--mono);color:var(--muted)}'
+        . '.br-key{margin:10px 0 0;font-size:11.5px;line-height:1.45;color:var(--muted)}.br-seed{margin:8px 0 0;font:10.5px var(--mono);color:var(--muted)}.br-new{margin-left:4px;padding:1px 7px;border:1px solid var(--line);border-radius:6px;background:none;color:var(--muted);font:11px var(--sans,inherit);cursor:pointer}.br-new:hover{color:var(--text);border-color:#2d5948}'
         . '.bug-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.bug-pair h3,.bug-pair p{margin:0 0 6px}'
         . '.bug-pair .bug-stage{grid-template-columns:1fr}.bug-pair .bug-canvas{width:100%}'
         . '.ex-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:10px;font-size:12.5px}'
@@ -1049,8 +1049,9 @@ function exploreRouterJs(): string
       if (current === id && window.ExploreDemos[id] && window.ExploreDemos[id].show) window.ExploreDemos[id].show(panel);
     }).catch(function (e) { var st = panel.querySelector('.ex-stage,.bug-status-bar'); if (st) st.textContent = 'This demo could not load. Refresh the page to try again.'; });
   }
-  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); window.scrollTo(0, 0); });
-  show(location.hash ? location.hash.slice(1) : (root.getAttribute('data-compare') === '1' ? 'arena' : ids[0]));
+  function hashId() { return location.hash.slice(1).split('?')[0]; }   // #brain?seed=12 opens the brain view
+  window.addEventListener('hashchange', function () { var id = hashId(); if (id !== current) window.scrollTo(0, 0); show(id); });
+  show(location.hash ? hashId() : (root.getAttribute('data-compare') === '1' ? 'arena' : ids[0]));
   window.scrollTo(0, 0);
 })();
 JS;

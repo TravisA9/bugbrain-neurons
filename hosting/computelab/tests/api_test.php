@@ -1389,9 +1389,12 @@ $brainIds = array_column(exploreDemos(), 'id');
 check(in_array('brain', $brainIds, true) && exploreDemos()[array_search('brain', $brainIds, true)]['needs'] === 'engine,brain',
     'Explore lists the "Watch a brain grow" view, which needs the engine bundle and its own lazy script');
 exec('cd ' . escapeshellarg($repoRoot) . ' && node tools/brain_record_check.js --seeds 3 2>&1', $recOut, $recCode);
-check($recCode === 0 && count(preg_grep('/: identical \(/', $recOut)) === 3,
-    'growing the arena brain with the growth recorder on gives the identical brain and behaviour (recorder is a passive observer)');
+check($recCode === 0 && count(preg_grep('/^seed \d+: identical \(/', $recOut)) === 3 && count(preg_grep('/^cross-load seed \d+: identical /', $recOut)) === 1,
+    'growing the arena brain with the growth recorder on gives the identical brain and behaviour, and two fresh loads grow the same brain (cells, synapses, growth-trace hash) from the default seed');
 $brainJs = (string) file_get_contents(dirname(__DIR__) . '/private/explore-brain.js');
+check(preg_match('/const DEFAULT_SEED = \d+;/', $brainJs) === 1 && str_contains($brainJs, 'this.grow(hashSeed())') && substr_count($brainJs, 'Math.random() * 0xffffffff') === 1
+    && str_contains($brainJs, "location.hash = 'brain?seed=' + s") && str_contains($brainJs, "'Grow a new one'"),
+    'the brain view grows a fixed default seed (or #brain?seed=N); only "Grow a new one" picks a random seed, and it writes it to the URL');
 $arenaSrc = (string) file_get_contents(dirname(__DIR__) . '/private/explore-arena.js');
 $fnBody = static function (string $src, string $head): string {   // a top-level helper, up to the next line that closes it
     $i = strpos($src, $head);

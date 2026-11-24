@@ -29,4 +29,29 @@ for (let n = 0; n < nSeeds; n++) {
   console.log('seed ' + seed + ': ' + (diff.length ? 'DIFFERENT ' + diff.join(',') : 'identical') + ' (' + a.N + ' nodes, ' + b.devLog.syn.n + ' recorded synapses)');
   if (diff.length) bad++;
 }
+
+// Cross-load: two fresh loads of the bundle (new contexts, as two page loads) grow the page's default seed with the page's own
+// traceHash and DEFAULT_SEED (read from explore-brain.js): same cell count, synapse count and growth-trace hash. A different seed
+// is allowed to differ (reported only).
+const pageSrc = fs.readFileSync(path.resolve(__dirname, '../hosting/computelab/private/explore-brain.js'), 'utf8');
+const defSeed = +(/const DEFAULT_SEED = (\d+);/.exec(pageSrc) || [])[1];
+const thSrc = (/(function traceHash\(rec\) \{[\s\S]*?\n  \})/.exec(pageSrc) || [])[1];
+if (!Number.isFinite(defSeed) || !thSrc) { console.log('explore-brain.js: DEFAULT_SEED or traceHash not found'); process.exit(1); }
+const freshGrow = seed => {
+  const c = vm.createContext({ console, performance, Math, Date, JSON, setTimeout });
+  vm.runInContext(fs.readFileSync(bundle, 'utf8'), c, { filename: 'bugbrain.js' });
+  vm.runInContext(thSrc + '; this.traceHash = traceHash;', c);
+  c.SEED = seed;
+  return vm.runInContext(`(function () {
+    const SA = SpikingArena, p = SA.recommendedEnvParams('bug', { task: 'flash' }, ['task']);
+    SA.setEnv('bug', Object.assign({}, p, { task: 'flash' }));
+    const g = SA.growCell(SA.tunedBugGenome(), { seed: SEED, spec: SA.currentEnv().spec, record: true });
+    return { cells: g.devLog.cells.length, synapses: g.devLog.syn.n, trace: traceHash(g.devLog) };
+  })()`, c);
+};
+const l1 = freshGrow(defSeed), l2 = freshGrow(defSeed), other = freshGrow((defSeed + 1) >>> 0);
+const same = l1.cells === l2.cells && l1.synapses === l2.synapses && l1.trace === l2.trace;
+console.log('cross-load seed ' + defSeed + ': ' + (same ? 'identical' : 'DIFFERENT') + ' (load 1: ' + JSON.stringify(l1) + ', load 2: ' + JSON.stringify(l2) + ')');
+console.log('seed ' + ((defSeed + 1) >>> 0) + ' (may differ): ' + JSON.stringify(other) + (other.trace !== l1.trace ? ' - a different brain' : ' - same trace'));
+if (!same) bad++;
 process.exit(bad ? 1 : 0);
