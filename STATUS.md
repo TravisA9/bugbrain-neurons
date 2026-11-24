@@ -749,3 +749,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 20:38 phase C pair 2: k2961 -.0035 (< -.003 per-seed bar -> the pre-registered book rule 'every seed >= -.003' is already not met). Running mean +.0012 (n=2). Gate continues to completion per Travis.
 - 21:12 phase C: 2/16 pairs done (+ cand k2962 alone); running S2 2962, cand+S2 2963; gate PID 358292 alive, MemAvail 7 GB.
 - 21:23 phase C 3/16 pairs: 2960 +.0060, 2961 -.0035, 2962 -.0030 (= bar, .568 vs .571; meets >= -.003). Mean -.0002.
+- 21:38 phase C 4/16 pairs: +2963 +.0080. Mean +.0019, 1 below -.003. ~3 jobs / 57 min -> ETA ~04:30-05:00 CT Tue (awake time).
