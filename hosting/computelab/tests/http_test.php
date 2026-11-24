@@ -586,7 +586,7 @@ check(str_contains($sequencePoll ?? '', 'sf-inverse-experiment-2320') && ($seque
 
 /* Explore demos (kept late: these extra requests must not use up the earlier pages' rate-limit window). */
 $explore = http($base . '/explore');
-$demoIds = ['arena', 'predator', 'brain', 'read', 'name', 'copy', 'patterns'];
+$demoIds = ['arena', 'predator', 'shoot', 'shoot-predator', 'brain', 'read', 'name', 'copy', 'patterns'];
 $tabsOk = true;
 foreach ($demoIds as $demoId) {
     if (!str_contains($explore['body'], 'id="demo-' . $demoId . '"') || !str_contains($explore['body'], 'id="demo-' . $demoId . '-title"')
@@ -599,14 +599,15 @@ check($tabsOk, 'explore has a titled view for every demo, and the header Explore
 check(!str_contains($explore['body'], 'class="ex-tabs"') && !str_contains($explore['body'], 'data-tab=') && substr_count($explore['body'], 'class="ex-cap"') === count($demoIds)
     && str_contains($explore['body'], "querySelectorAll('.cl-drop-menu a')") && str_contains($explore['body'], 'getElementById("cl-toggle");if(t)t.checked=false'),
     'the header dropdown is the only view switcher: no in-page tabs, one caption per view, the current entry is marked and the mobile menu closes on a hash change');
-check(substr_count($explore['body'], 'class="bug-stats" data-role="stats"') === 2 && str_contains($explore['body'], '<div class="bug-stage"><canvas id="bug-arena"')
+check(substr_count($explore['body'], 'class="bug-stats" data-role="stats"') === 4 && str_contains($explore['body'], '<div class="bug-stage"><canvas id="bug-arena"')
     && str_contains($explore['body'], '<div class="bug-stage"><canvas id="bug-predator"') && str_contains($explore['body'], '@media(max-width:900px){.bug-stage{grid-template-columns:1fr}'),
-    'both arenas have their stats panel beside the canvas, moving below it on narrow screens');
+    'all four arenas have their stats panel beside the canvas, moving below it on narrow screens');
 check(str_contains($explore['body'], '<details class="cl-drop"><summary class="is-current" aria-current="page">Explore</summary>')
     && str_contains(http($base . '/discoveries')['body'], '<details class="cl-drop"><summary>Explore</summary>'),
     'Explore is one dropdown menu item on every page');
-check(str_contains($explore['body'], '/computelab/assets/bugbrain.js?v=9') && !str_contains($explore['body'], 'SOTA') && !str_contains($explore['body'], 'State-of-the-Art'),
-    'explore loads engine bundle v9 and makes no state-of-the-art claims');
+$bundleTag = substr((string) sha1_file(dirname(__DIR__) . '/private/bugbrain.js'), 0, 10);
+check(str_contains($explore['body'], '/computelab/assets/bugbrain.js?v=' . $bundleTag . '"') && !str_contains($explore['body'], 'SOTA') && !str_contains($explore['body'], 'State-of-the-Art'),
+    'explore loads the engine bundle with a cache-buster from its content hash (a new bundle gets a new URL past the CDN) and makes no state-of-the-art claims');
 $exploreCompare = http($base . '/explore?compare=1');
 check($exploreCompare['status'] === 200 && str_contains($exploreCompare['body'], 'id="bug-baseline"') && str_contains($exploreCompare['body'], 'data-compare="1"') && str_contains($exploreCompare['body'], 'data-role="base-stats"')
     && !str_contains($explore['body'], 'id="bug-baseline"'), 'explore?compare=1 still shows the two arenas side by side');
@@ -641,7 +642,7 @@ foreach (['/explore/replay/evil.json', '/explore/replay/design.json', '/explore/
 check($badReplay, 'unknown or crafted replay paths get 404');
 $replayJs = http($base . '/assets/explore-replay.js');
 $liveJs = http($base . '/assets/explore-live.js');
-$engineJs = http($base . '/assets/bugbrain.js?v=9');
+$engineJs = http($base . '/assets/bugbrain.js?v=' . $bundleTag);
 $arenaJs = http($base . '/assets/explore-arena.js');
 check($replayJs['status'] === 200 && str_contains($replayJs['header'], 'application/javascript') && str_contains($replayJs['body'], 'ExploreDemos')
     && $liveJs['status'] === 200 && str_contains($liveJs['body'], 'importScripts')
@@ -652,9 +653,14 @@ check($arenaJs['status'] === 200 && str_contains($arenaJs['header'], 'applicatio
     'the arena demos (long-running bug, predator) are a lazy script outside the engine bundle');
 check(str_contains($explore['body'], 'id="demo-predator"') && str_contains($explore['body'], 'data-task="hard"') && str_contains($explore['body'], 'data-task="flash"')
     && str_contains($explore['body'], 'href="/computelab/explore#predator"') && str_contains($explore['body'], 'data-arena-js="/computelab/assets/explore-arena.js?v=')
-    && substr_count($explore['body'], 'data-needs="engine,arena"') === 2 && substr_count($explore['body'], '>Start fresh</button>') === 2
+    && substr_count($explore['body'], 'data-needs="engine,arena"') === 4 && substr_count($explore['body'], '>Start fresh</button>') === 4
     && !str_contains($explore['body'], '>New arena</button>'),
     'explore has the predator arena tab and both arenas keep one bug with a Start fresh button');
+check(str_contains($explore['body'], '<canvas id="bug-shoot" class="bug-canvas" data-role="canvas"') && str_contains($explore['body'], 'data-task="shoot"')
+    && str_contains($explore['body'], '<canvas id="bug-shoot-predator"') && str_contains($explore['body'], 'data-task="shoot-predator"')
+    && str_contains($explore['body'], 'href="/computelab/explore#shoot"') && str_contains($explore['body'], 'href="/computelab/explore#shoot-predator"')
+    && str_contains($arenaJs['body'], 'class ShootWorld extends B.World') && str_contains($arenaJs['body'], "'shoot', 'shoot-predator'") && !str_contains($engineJs['body'], 'ShootWorld'),
+    'explore has the poison shooter (with and without the hunter); its fire output and projectiles live in the lazy arena script, not the engine bundle');
 $brainJsHttp = http($base . '/assets/explore-brain.js');
 check($brainJsHttp['status'] === 200 && str_contains($brainJsHttp['header'], 'application/javascript') && str_contains($brainJsHttp['body'], 'ExploreDemos.brain')
     && str_contains($brainJsHttp['body'], 'record: true') && !str_contains($engineJs['body'], 'ExploreDemos.brain'),

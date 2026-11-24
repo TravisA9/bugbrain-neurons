@@ -25,6 +25,124 @@
     return Object.assign({}, cur, { P: Object.assign({}, cur.P), def: Object.assign({}, cur.def, { create: (s, p) => new SA.bug.World(s, p, garden) }) });
   }
 
+  /* ---- #shoot / #shoot-predator: the same flash garden and v3h brain plus one more motor output, 'fire' ----
+   * All of it lives here (not in the engine bundle): a World subclass and a spec with a fourth output. #arena and
+   * #predator never touch it, so they run exactly as before. Fire: the fire neuron's rate over a tick above FIRE_RATE
+   * shoots one projectile straight ahead, then a cooldown; each shot costs a little (a small punishment signal).
+   * A shot that hits red (the poison colour) removes it: reward. A shot that hits green (food) removes it: penalty.
+   * With the predator: the #predator hunter chases the bug; a hit stuns it (frozen, drawn dimmed) and knocks it back,
+   * a modest reward; being caught costs what it costs in #predator. Score = green eaten + red shot - green shot
+   * (- 2 x caught with the predator). */
+  const SHOOT = { cooldown: 12, cost: 0.05, speed: 9, life: 42, hitPad: 3, redReward: 1, greenPenalty: 1, fireRate: 0.12,
+    stunTicks: 160, stunReward: 0.5, knock: 30 };
+  function shootKit() {
+    const B = SA.bug, HARD = B.HARD, ITEM_R = B.ITEM_R, PRED_R = B.PRED_R, AGENT_R = B.AGENT_R;
+    class ShootWorld extends B.World {
+      constructor(seed, P, layout, opts) {
+        super(seed, P, layout);
+        this.withPredator = !!(opts && opts.predator);
+        this.shots = 0; this.redShot = 0; this.greenShot = 0; this.stuns = 0; this.cool = 0; this.bullets = []; this.muzzle = 0; this.blocked = 0; this.shotLog = [];
+        if (this.withPredator) { const p = this.spawnPredator(); p.stun = 0; this.predators.push(p); }
+      }
+      act(out) {
+        const r = super.act(out);   // drive, eat, count (the base world: flash task, no predator in its own step)
+        let pos = r.pos, neg = r.neg;
+        if (this.cool > 0) this.cool--;
+        if (this.muzzle > 0) this.muzzle--;
+        if (out.rates[3] > SHOOT.fireRate) {
+          if (this.cool === 0) {
+            const a = this.agent, dx = Math.cos(a.angle), dy = Math.sin(a.angle);
+            this.bullets.push({ x: a.x + dx * (AGENT_R + 2), y: a.y + dy * (AGENT_R + 2), dx, dy, n: 0 });
+            this.cool = SHOOT.cooldown; this.shots++; if (this.shotLog.length < 400) this.shotLog.push(this.t); this.muzzle = 4; neg += SHOOT.cost;
+          } else this.blocked++;   // wanted to fire during the cooldown (counted for the tests)
+        }
+        const ev = this.stepBullets(); pos += ev[0]; neg += ev[1];
+        if (this.withPredator) neg += this.stepPredator();
+        return { pos, neg, pain: r.pain, reward: r.reward + ev[0] - ev[1] };
+      }
+      stepBullets() {
+        let pos = 0, neg = 0;
+        const keep = [];
+        for (const b of this.bullets) {
+          let gone = false;
+          for (let h = 0; h < 2 && !gone; h++) {   // two half steps: a projectile cannot skip over an item
+            b.x += b.dx * SHOOT.speed / 2; b.y += b.dy * SHOOT.speed / 2;
+            if (this.nearWall(b.x, b.y, 2)) { gone = true; break; }
+            for (let i = 0; i < this.items.length; i++) {
+              const it = this.items[i], R = ITEM_R + SHOOT.hitPad;
+              if ((it.x - b.x) ** 2 + (it.y - b.y) ** 2 >= R * R) continue;
+              if ((it.type === 1) === this.greenIsFood) { this.greenShot++; neg += SHOOT.greenPenalty; } else { this.redShot++; pos += SHOOT.redReward; }
+              this.items[i] = this.spawnItem(); gone = true; break;
+            }
+            if (gone) break;
+            for (const p of this.predators) {
+              if (p.stun > 0) continue;   // passes over a stunned hunter
+              const R = PRED_R + SHOOT.hitPad;
+              if ((p.x - b.x) ** 2 + (p.y - b.y) ** 2 >= R * R) continue;
+              p.stun = SHOOT.stunTicks; this.stuns++; pos += SHOOT.stunReward;
+              const kx = p.x + b.dx * SHOOT.knock, ky = p.y + b.dy * SHOOT.knock;
+              if (!this.nearWall(kx, ky, PRED_R)) { p.x = kx; p.y = ky; }
+              gone = true; break;
+            }
+          }
+          if (!gone && ++b.n < SHOOT.life) keep.push(b);
+        }
+        this.bullets = keep;
+        return [pos, neg];
+      }
+      // the #predator hunter (same chase rule and speeds as the core's 'hard' task), frozen while stunned
+      stepPredator() {
+        const a = this.agent; let neg = 0;
+        for (let i = 0; i < this.predators.length; i++) {
+          const p = this.predators[i];
+          if (p.stun > 0) { p.stun--; continue; }
+          const dx = a.x - p.x, dy = a.y - p.y, d2 = dx * dx + dy * dy, near = d2 < HARD.predRange * HARD.predRange;
+          if (near) { let rel = Math.atan2(dy, dx) - p.angle; rel = Math.atan2(Math.sin(rel), Math.cos(rel)); p.angle += Math.max(-0.08, Math.min(0.08, rel)); }
+          else p.angle += (this.rng() - 0.5) * 0.3;
+          const sp = near ? HARD.predSpeed : HARD.predSpeed * 0.5, nx = p.x + Math.cos(p.angle) * sp, ny = p.y + Math.sin(p.angle) * sp;
+          if (this.nearWall(nx, ny, PRED_R)) p.angle += Math.PI * (0.5 + this.rng()); else { p.x = nx; p.y = ny; }
+          if ((p.x - a.x) ** 2 + (p.y - a.y) ** 2 < (AGENT_R + PRED_R) ** 2) {
+            this.caught++; neg += HARD.caughtCost; this.poisonLog.push(this.t); this.rewardLog.push([this.t, -HARD.caughtCost]);
+            const q = this.spawnPredator(); q.stun = 0; this.predators[i] = q;
+          }
+        }
+        return neg;
+      }
+      score() { return this.food + this.redShot - SHOOT.greenPenalty * this.greenShot - HARD.caughtCost * this.caught; }
+      stats() { return { food: this.food, poison: this.poison, caught: this.caught, stuck: this.stuckTicks, shots: this.shots, redShot: this.redShot, greenShot: this.greenShot, stuns: this.stuns, score: this.score() }; }
+      render(c, W, H, opts) {
+        const all = this.predators, stunned = all.filter(p => p.stun > 0);
+        this.predators = all.filter(p => !(p.stun > 0));
+        super.render(c, W, H, opts);
+        this.predators = all;
+        for (const p of stunned) {   // frozen hunter: dimmed, with a ring that empties as it wakes up
+          c.globalAlpha = 0.35; c.fillStyle = '#e04848'; c.strokeStyle = '#000'; c.lineWidth = 3;
+          c.beginPath(); c.arc(p.x, p.y, PRED_R, 0, 7); c.fill(); c.stroke(); c.globalAlpha = 1;
+          c.strokeStyle = '#6b7c8c'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, PRED_R + 6, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * p.stun / SHOOT.stunTicks); c.stroke();
+        }
+        c.lineCap = 'round';
+        for (const b of this.bullets) {
+          c.strokeStyle = 'rgba(214,138,0,0.45)'; c.lineWidth = 3; c.beginPath(); c.moveTo(b.x - b.dx * 14, b.y - b.dy * 14); c.lineTo(b.x, b.y); c.stroke();
+          c.fillStyle = '#d68a00'; c.beginPath(); c.arc(b.x, b.y, 3.5, 0, 7); c.fill();
+        }
+        c.lineCap = 'butt';
+        if (this.muzzle > 0) { const a = this.agent; c.fillStyle = 'rgba(255,190,60,' + (0.25 * this.muzzle) + ')';
+          c.beginPath(); c.arc(a.x + Math.cos(a.angle) * (AGENT_R + 4), a.y + Math.sin(a.angle) * (AGENT_R + 4), 6, 0, 7); c.fill(); }
+      }
+    }
+    // the bug's spec plus the fire output (bias 0: it fires only when the network drives it)
+    function makeShootEnv(predator) {
+      const params = SA.recommendedEnvParams('bug', { task: 'flash' }, ['task']);
+      SA.setEnv('bug', Object.assign({}, params, { task: 'flash' }));
+      const cur = SA.currentEnv(), garden = B.GARDEN, P = Object.assign({}, cur.P), io = B.bugIO(P);
+      io.outputs = io.outputs.concat([{ name: 'fire', group: 'fire', tag: 4, cls: 9, pos: [0, -0.8], bias: 0 }]);
+      io.classes = io.classes.concat(['motor-fire']);
+      const spec = SA.makeSpec(io);
+      return Object.assign({}, cur, { P, spec, def: Object.assign({}, cur.def, { create: (s, p) => new ShootWorld(s, p, garden, { predator }) }) });
+    }
+    return { ShootWorld, makeShootEnv };
+  }
+
   function genomeFor(selected) {
     const change = selected && selected.change ? selected.change : null;
     const g = SA.tunedBugGenome(change && change.tune ? change.tune : undefined);
@@ -33,12 +151,13 @@
   }
 
   /* ---- life history: fixed number of bins; when full, neighbours merge and each bin covers twice as many steps ---- */
-  function newLife() { return { age: 0, rounds: 0, bin: BIN0, cur: [0, 0, 0, 0, 0], hist: [] }; }   // [steps, food, poison, caught, stuck]
+  // bins: [steps, food, poison, caught, stuck] (+ [shots, red shot, green shot, hunter stuns] in the shooting views)
+  function newLife(nf) { return { age: 0, rounds: 0, bin: BIN0, cur: new Array(nf || 5).fill(0), hist: [] }; }
   function lifeAdd(life, d) {
-    const c = life.cur; for (let i = 0; i < 5; i++) c[i] += d[i];
+    const c = life.cur, nf = c.length; for (let i = 0; i < nf; i++) c[i] += d[i];
     life.age++;
     if (c[0] >= life.bin) {
-      life.hist.push(c.slice()); life.cur = [0, 0, 0, 0, 0];
+      life.hist.push(c.slice()); life.cur = new Array(nf).fill(0);
       if (life.hist.length > BINS) {
         const h = life.hist, m = [];
         for (let i = 0; i + 1 < h.length; i += 2) m.push(h[i].map((v, k) => v + h[i + 1][k]));
@@ -47,14 +166,15 @@
       }
     }
   }
-  function validLife(l) {
-    return l && typeof l === 'object' && isFinite(l.age) && isFinite(l.rounds) && isFinite(l.bin) && Array.isArray(l.cur) && l.cur.length === 5 &&
-      Array.isArray(l.hist) && l.hist.length <= BINS + 1 && l.hist.every(b => Array.isArray(b) && b.length === 5 && b.every(isFinite));
+  function validLife(l, nf) {
+    nf = nf || 5;
+    return l && typeof l === 'object' && isFinite(l.age) && isFinite(l.rounds) && isFinite(l.bin) && Array.isArray(l.cur) && l.cur.length === nf &&
+      Array.isArray(l.hist) && l.hist.length <= BINS + 1 && l.hist.every(b => Array.isArray(b) && b.length === nf && b.every(isFinite));
   }
 
   /* ---- per-step observation of one world ---- */
   function Watcher() { this.reset(); }
-  Watcher.prototype.reset = function () { this.f = 0; this.p = 0; this.c = 0; this.hx = new Float32Array(STUCK_N); this.hy = new Float32Array(STUCK_N); this.n = 0; };
+  Watcher.prototype.reset = function () { this.f = 0; this.p = 0; this.c = 0; this.s = [0, 0, 0, 0]; this.hx = new Float32Array(STUCK_N); this.hy = new Float32Array(STUCK_N); this.n = 0; };
   Watcher.prototype.step = function (w) {
     const a = w.agent, touching = !!(a.contact[0] || a.contact[1] || a.contact[2] || w.bumped), h = this.n % STUCK_N;
     let stuck = 0;
@@ -62,6 +182,7 @@
     this.hx[h] = a.x; this.hy[h] = a.y; this.n++;
     const d = [1, w.food - this.f, w.poison - this.p, (w.caught || 0) - this.c, stuck];
     this.f = w.food; this.p = w.poison; this.c = w.caught || 0;
+    if (w.shots !== undefined) { const now = [w.shots, w.redShot, w.greenShot, w.stuns]; for (let k = 0; k < 4; k++) { d.push(now[k] - this.s[k]); this.s[k] = now[k]; } }
     return d;
   };
 
@@ -103,9 +224,10 @@
   /* ---- the stats panel beside (wide screens) or below (narrow) the canvas ---- */
   function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
   function rate(x, steps) { return steps > 0 ? (x * 1000 / steps) : 0; }
-  function sumBins(bins) { const s = [0, 0, 0, 0, 0]; for (const b of bins) for (let i = 0; i < 5; i++) s[i] += b[i]; return s; }
+  function sumBins(bins, nf) { const s = new Array(nf || 5).fill(0); for (const b of bins) for (let i = 0; i < s.length; i++) s[i] += b[i]; return s; }
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
-  function Stats(aside, predator) {
+  function Stats(aside, predator, shoot) {
+    if (shoot) return new ShootStats(aside, predator);
     aside.innerHTML = '';
     this.predator = predator;
     this.age = el('div', 'st-age'); this.sub = el('div', 'st-sub');
@@ -154,13 +276,70 @@
     }
   };
 
+  /* ---- the shooting views' panel: score, shots and the red share of hits over the bug's life ---- */
+  const shootScore = (b, predator) => b[1] + b[6] - SHOOT.greenPenalty * b[7] - (predator ? 2 * b[3] : 0);
+  const redShare = b => (b[6] + b[7] > 0 ? b[6] / (b[6] + b[7]) : null);
+  function ShootStats(aside, predator) {
+    aside.innerHTML = '';
+    this.predator = predator;
+    this.age = el('div', 'st-age'); this.sub = el('div', 'st-sub');
+    this.cv = el('canvas'); this.cv.width = 440; this.cv.height = 150;
+    this.cv.setAttribute('aria-label', 'Score and shots per 1,000 steps, and the red share of hits (full height = 100%), over the bug\'s life');
+    const rows = el('div');
+    const row = (label, col) => { const r = el('div', 'st-row'), l = el('span'), k = el('i', 'st-key'), v = el('b', null, '–'); k.style.background = col; l.appendChild(k); l.appendChild(document.createTextNode(label)); r.appendChild(l); r.appendChild(v); rows.appendChild(r); return v; };
+    this.score = row('Score per 1,000 steps', C.mint); this.shots = row('Shots per 1,000 steps', C.amber); this.share = row('Red share of hits', C.red);
+    this.food = row('Green eaten per 1,000', C.muted); this.poison = row('Red eaten per 1,000', C.muted);
+    if (predator) { this.stuns = row('Hunter hits per 1,000', C.cyan); this.caught = row('Caught per 1,000', C.muted); }
+    this.trend = el('p', 'st-trend');
+    const left = el('div'); left.appendChild(this.age); left.appendChild(this.sub); left.appendChild(this.cv);
+    const right = el('div'); right.appendChild(rows); right.appendChild(this.trend);
+    aside.appendChild(left); aside.appendChild(right);
+    this.last = 0;
+  }
+  ShootStats.prototype.update = function (life, force) {
+    const now = Date.now();
+    if (!force && now - this.last < 250) return;
+    this.last = now;
+    const P = this.predator, bins = life.hist.concat(life.cur[0] >= life.bin / 4 ? [life.cur] : []);
+    this.age.textContent = fmt(life.age) + ' steps old';
+    this.sub.textContent = life.rounds + ' round' + (life.rounds === 1 ? '' : 's') + ' finished · rates lately';
+    const q = Math.max(1, Math.ceil(bins.length / 4)), recent = sumBins(bins.slice(-q), 9), early = sumBins(bins.slice(0, q), 9);
+    this.score.textContent = rate(shootScore(recent, P), recent[0]).toFixed(1);
+    this.shots.textContent = rate(recent[5], recent[0]).toFixed(1);
+    const sh = redShare(recent); this.share.textContent = sh === null ? '–' : Math.round(sh * 100) + '% of ' + (recent[6] + recent[7]);
+    this.food.textContent = rate(recent[1], recent[0]).toFixed(1); this.poison.textContent = rate(recent[2], recent[0]).toFixed(1);
+    if (P) { this.stuns.textContent = rate(recent[8], recent[0]).toFixed(2); this.caught.textContent = rate(recent[3], recent[0]).toFixed(2); }
+    if (bins.length < 4) this.trend.textContent = 'Too early to tell whether it is learning to aim.';
+    else {
+      const a = redShare(early), b = redShare(recent), pc = v => (v === null ? 'no hits' : Math.round(v * 100) + '%');
+      this.trend.textContent = 'Red share of hits: ' + pc(a) + ' early on, ' + pc(b) + ' lately. Shots: ' + rate(early[5], early[0]).toFixed(1) + ' then ' + rate(recent[5], recent[0]).toFixed(1) + ' per 1,000 steps.';
+    }
+    const g = this.cv.getContext('2d'), W = this.cv.width, H = this.cv.height, pad = 6;
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(0, H - 0.5); g.lineTo(W, H - 0.5); g.stroke();
+    if (bins.length < 2) { g.fillStyle = C.muted; g.font = '22px ui-sans-serif, system-ui, sans-serif'; g.fillText('The chart starts after a few hundred steps.', 4, H / 2); return; }
+    const vals = [bins.map(b => rate(shootScore(b, P), b[0])), bins.map(b => rate(b[5], b[0]))];
+    let top = 1, bot = 0; for (const v of vals) for (const x of v) { top = Math.max(top, x); bot = Math.min(bot, x); }
+    const X = i => pad + (W - 2 * pad) * i / (bins.length - 1), Y = v => H - pad - (H - 2 * pad) * (v - bot) / (top - bot);
+    if (bot < 0) { g.strokeStyle = C.line; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(0, Y(0)); g.lineTo(W, Y(0)); g.stroke(); g.setLineDash([]); }
+    [[vals[0], C.mint], [vals[1], C.amber]].forEach(([v, col]) => {
+      g.strokeStyle = col; g.lineWidth = 3; g.lineJoin = 'round'; g.beginPath();
+      v.forEach((x, i) => { if (i) g.lineTo(X(i), Y(x)); else g.moveTo(X(i), Y(x)); }); g.stroke();
+    });
+    g.strokeStyle = C.red; g.lineWidth = 3; g.beginPath(); let on = false;   // red share: 0..100% of the full height; gaps where there were no hits
+    bins.forEach((b, i) => { const v = redShare(b); if (v === null) { on = false; return; } const y = H - pad - (H - 2 * pad) * v; if (on) g.lineTo(X(i), y); else g.moveTo(X(i), y); on = true; });
+    g.stroke();
+  };
+
   /* ---- one arena demo (a panel with its own bug, or two in compare mode) ---- */
   function makeArena(panel, demoId) {
     const q = r => panel.querySelector('[data-role="' + r + '"]');
     const canvas = q('canvas'), status = q('status'), learningBtn = q('learning'), pauseBtn = q('pause'), freshBtn = q('fresh');
     const statsEls = [q('stats'), q('base-stats')];
-    const baseCanvas = q('baseline'), task = canvas.dataset.task === 'hard' ? 'hard' : 'flash', predator = task === 'hard';
-    const compare = !!baseCanvas, key = 'computelab.bug.' + demoId + '.v' + STORE_V;
+    const kind = canvas.dataset.task, shoot = kind === 'shoot' || kind === 'shoot-predator';
+    const baseCanvas = q('baseline'), task = shoot ? kind : kind === 'hard' ? 'hard' : 'flash', predator = task === 'hard' || task === 'shoot-predator';
+    const NF = shoot ? 9 : 5, kit = shoot ? shootKit() : null;
+    const compare = !!baseCanvas && !shoot, key = 'computelab.bug.' + demoId + '.v' + STORE_V;
     let env = null, selected = { id: 'v3h', change: null }, bugs = [], learningOn = true, playing = true, visible = false, started = false;
     let frame = 0, previous = 0, elapsed = 0, roundOverAt = null, lastSave = 0, dirty = false, hiddenTimer = 0, freshArmed = 0, note = '';
 
@@ -174,7 +353,7 @@
 
     function grow(genome, seed, label) {
       const agent = new SA.Agent(genome, seed, SA.growCell(genome, { seed, spec: env.spec }), env);
-      return { agent, seed, label, life: newLife(), watch: new Watcher(), stats: null };
+      return { agent, seed, label, life: newLife(NF), watch: new Watcher(), stats: null };
     }
     function newRound() {
       const seed = Math.floor(Math.random() * 0xffffffff) >>> 0;
@@ -193,7 +372,7 @@
       try { saved = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { saved = null; }
       if (!saved || saved.v !== STORE_V) return false;
       if (saved.champ !== champKey()) { note = 'The arena brain was updated, so a new bug was grown.'; return false; }
-      if (!isFinite(saved.seed) || !validLife(saved.life)) return false;
+      if (!isFinite(saved.seed) || !validLife(saved.life, NF)) return false;
       const b = grow(genomeFor(selected), saved.seed >>> 0, '');
       if (!unpackNet(b.agent.net, saved.net)) return false;
       b.life = saved.life; learningOn = saved.learning !== false;
@@ -232,13 +411,15 @@
 
     function statusText(b) {
       const t = b.agent.task, s = t.stats();
+      if (shoot) return 'Round ' + (b.life.rounds + 1) + ' · Score ' + s.score + ' · Shots ' + s.shots + ' (red ' + s.redShot + ', green ' + s.greenShot + ')' +
+        (predator ? ' · Hunter hit ' + s.stuns + ' · Caught ' + s.caught : '') + ' · Time ' + t.t + ' of ' + t.horizon;
       return 'Round ' + (b.life.rounds + 1) + ' · Food ' + s.food + ' · Poison ' + s.poison + (predator ? ' · Caught ' + (s.caught || 0) : '') +
         ' · Time ' + t.t + ' of ' + t.horizon + ' · ' + b.agent.brain.N + ' neurons';
     }
     function drawOne(b, cv, aside, force) {
       if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
       b.agent.task.render(cv.getContext('2d'), W, H, { showStats: false });
-      if (aside) { if (!b.stats || b.stats.aside !== aside) { b.stats = new Stats(aside, predator); b.stats.aside = aside; } b.stats.update(b.life, force); }
+      if (aside) { if (!b.stats || b.stats.aside !== aside) { b.stats = new Stats(aside, predator, shoot); b.stats.aside = aside; } b.stats.update(b.life, force); }
     }
     function draw(force) {
       if (!bugs.length) return;
@@ -280,7 +461,7 @@
     async function begin() {
       try {
         await loadChampion();
-        env = makeEnv(task);
+        env = shoot ? kit.makeShootEnv(predator) : makeEnv(task);
         if (!restore()) fresh(note);
         applyLearning();
         pauseBtn.disabled = freshBtn.disabled = false;
@@ -319,10 +500,10 @@
   }
 
   window.ExploreDemos = window.ExploreDemos || {};
-  for (const id of ['arena', 'predator']) {
+  for (const id of ['arena', 'predator', 'shoot', 'shoot-predator']) {
     const panel = document.getElementById('demo-' + id);
     if (panel && panel.querySelector('[data-role="canvas"]')) window.ExploreDemos[id] = makeArena(panel, id);
   }
   // for tests: the history and save helpers
-  window.ExploreArena = { newLife, lifeAdd, packNet, unpackNet, BINS };
+  window.ExploreArena = { newLife, lifeAdd, packNet, unpackNet, BINS, shootKit, SHOOT };
 })();

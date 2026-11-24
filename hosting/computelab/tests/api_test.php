@@ -1383,8 +1383,14 @@ foreach (exploreDemos() as $demo) {
         $captionsOk = false;
     }
 }
-check($captionsOk && count(exploreDemos()) === 7, 'every Explore view has a one-line caption (at most 140 characters)');
+check($captionsOk && count(exploreDemos()) === 9, 'every Explore view has a one-line caption (at most 140 characters)');
 
+exec('cd ' . escapeshellarg($repoRoot) . ' && node tools/shoot_check.js --ticks 3000 2>&1', $shootOut, $shootCode);
+check($shootCode === 0 && in_array('shoot checks passed', $shootOut, true) && count(preg_grep('/^ok   /', $shootOut)) === 12,
+    'the poison shooter: red hits pay, green hits cost, the cooldown holds, the hunter is stunned and wakes, and the grown brain fires in both views');
+$shootDemos = array_values(array_filter(exploreDemos(), static function (array $d): bool { return in_array($d['id'], ['shoot', 'shoot-predator'], true); }));
+check(count($shootDemos) === 2 && $shootDemos[0]['needs'] === 'engine,arena' && $shootDemos[1]['needs'] === 'engine,arena',
+    'Explore lists the poison shooter with and without the hunter, run by the arena script');
 $brainIds = array_column(exploreDemos(), 'id');
 check(in_array('brain', $brainIds, true) && exploreDemos()[array_search('brain', $brainIds, true)]['needs'] === 'engine,brain',
     'Explore lists the "Watch a brain grow" view, which needs the engine bundle and its own lazy script');

@@ -8,6 +8,8 @@ The list lives in one place: `exploreDemos()` in `private/src/pages.php`.
 |---|---|---|
 | `#arena` | BugBrain foraging arena, flash task (`?compare=1`: next to the original). One bug keeps learning from round to round; a stats panel beside the canvas (below it under 900 px) shows its age and food / poison rates over its life (sparkline), poison share early vs lately, and time stuck on walls | live (`explore-arena.js` after the engine bundle): plan v3h + the audited champion edit from `/explore/bugbrain-champion.json` |
 | `#predator` | the same, in the core's `hard` task: drifting items and a predator that chases the bug (being caught costs 2). The panel adds "caught" per 1,000 steps, early vs lately | live (`explore-arena.js`) |
+| `#shoot` | Poison shooter: the #arena garden and brain plus a fourth motor output, `fire`, that shoots straight ahead (12-step cooldown, each shot a small punishment signal). Hitting red removes it (reward); hitting green removes it (penalty). Score = green eaten + red shot - green shot. The panel shows score and shots per 1,000 steps and the red share of hits, early vs lately | live (`explore-arena.js`) |
+| `#shoot-predator` | The shooter with the #predator hunter after it: a hit stuns it for 160 steps (frozen, drawn dimmed with a ring that empties) and knocks it back 30 px, a small reward; being caught costs 2 as in #predator. Adds hunter hits and caught per 1,000 steps | live (`explore-arena.js`) |
 | `#brain` | Watch a brain grow: the arena brain grows from its genes (cells divide, move and become neurons; axons follow the chemical signals; synapses form, then trophic deaths and Hebbian pruning remove some), then lives: the bug runs off-screen in the flash arena and spikes travel along the connections, with sensor and motor activity bars and a reward / punishment glow. Play / Pause, Restart, speed 0.05x to 8x; click a cell for details | live (`explore-brain.js` after the engine bundle) |
 | `#read` | next-letter guesses on held-out text, with a 5-letter pattern counter for comparison | replay of a recorded run |
 | `#name` | one-shot recall of an invented name | replay |
@@ -24,7 +26,7 @@ The list lives in one place: `exploreDemos()` in `private/src/pages.php`.
   matches; ETag `"<version>-<id>-<sha16>"`, `Cache-Control: public, max-age=300`.
 - `private/bugbrain.js`: the engine bundle (js/core + js/envs from one commit, no book corpus) + `bugbrain-view.js`.
   Build: `node tools/build_bugbrain_bundle.js --ref <commit>`; the header names the commit and body sha256; cap 600 KB.
-  `--check` verifies the committed file is reproducible. Bump `bugbrain.js?v=` in `pageBugArena()` when it changes.
+  `--check` verifies the committed file is reproducible. The page loads it as `bugbrain.js?v=<first 10 hex of its sha1>`, like the explore-*.js files, so a new bundle gets a new URL past the CDN's 7-day cache.
 - `private/explore-replay.js`, `private/explore-live.js`, `private/explore-arena.js`, `private/explore-brain.js`: loaded only when their view opens.
   `bugbrain-view.js` is now an empty stub, so the bundle is engine only (590 KB).
 
@@ -41,6 +43,14 @@ The list lives in one place: `exploreDemos()` in `private/src/pages.php`.
   Another Explore view open: the arena pauses.
 - Wall-stuck = touching a wall and moved less than 10 px over the last 30 steps (the same rule as `tools/bug_audit.js`).
 - Head-to-head audit of bugSOTA vs v3h: see `BUG_AUDIT.md` (pre-registered; run after R144).
+
+## Poison shooter (`#shoot`, `#shoot-predator`)
+
+- Everything is in `explore-arena.js` (`shootKit()`): a `ShootWorld` subclass of the bug world and a spec with a fourth output (`fire`, bias 0, at the motor end of the tissue). The engine bundle is untouched, so #arena, #predator and `tools/bug_audit.js` run exactly as before.
+- The brain is the same plan (v3h + champion edit) grown with the four-output spec, so it is a sibling of the #arena bug, not the same network. It learns continuously and is saved like the other arenas (`computelab.bug.shoot.v1`, `computelab.bug.shoot-predator.v1`).
+- Fire: the fire neuron's rate over a tick above 0.12 shoots one projectile (9 px a step, 42 steps or the first wall). Constants are in `SHOOT`.
+- Rewards (dopamine): red hit +1, green hit -1, each shot -0.05, hunter stun +0.5, caught -2. Shots hit hidden (not flashing) green apples too.
+- Checks: `node tools/shoot_check.js` (run by `tests/api_test.php`: hit rules, exact cooldown, stun / freeze / wake-up, caught cost, and the grown brain firing in both views) and `python3 tools/explore_shoot_browser_check.py` (Playwright on a running site: no errors, shots fire, never faster than the cooldown; saves screenshots).
 
 ## Brain growth view (`explore-brain.js`)
 

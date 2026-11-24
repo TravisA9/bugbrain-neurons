@@ -472,6 +472,10 @@ function exploreDemos(): array
             'blurb' => 'Green apples are food, red are poison; they only flash into view. One bug keeps learning, and this browser remembers it.'],
         ['id' => 'predator', 'title' => 'Predator arena', 'menu' => 'Dodge a hunter while foraging', 'kind' => 'live', 'needs' => 'engine,arena',
             'blurb' => 'Drifting apples and a red hunter that gives chase. Is it getting caught less often?'],
+        ['id' => 'shoot', 'title' => 'Poison shooter', 'menu' => 'Shoot red, eat green', 'kind' => 'live', 'needs' => 'engine,arena',
+            'blurb' => 'The same bug can also fire straight ahead: hitting red pays, hitting green costs. Does it learn to aim only at red?'],
+        ['id' => 'shoot-predator', 'title' => 'Shooter and hunter', 'menu' => 'Shoot to stun the hunter', 'kind' => 'live', 'needs' => 'engine,arena',
+            'blurb' => 'The shooter with the red hunter after it. A hit stuns the hunter for a few seconds; being caught still costs.'],
         ['id' => 'brain', 'title' => 'Watch a brain grow', 'menu' => 'Growth, chemical signals and spikes, slowed down', 'kind' => 'live', 'needs' => 'engine,brain',
             'blurb' => 'The arena brain grows from its genes, following chemical signals, then drives the bug with live spikes.'],
         ['id' => 'read', 'title' => 'Watch it read', 'menu' => 'Next-letter guesses on a story', 'kind' => 'replay', 'needs' => 'replay',
@@ -930,14 +934,17 @@ function pageBugArena(string $base, array $nav, bool $compare = false, array $de
             /* The arena demos (#arena, #predator): one bug brain that keeps learning from round to round (explore-arena.js).
              * The #arena ids are kept for older links and tests; the script finds everything through data-role.
              * The stats panel sits beside the canvas on wide screens and below it on narrow ones. */
-            $p = $id === 'arena' ? 'bug' : 'pred';
+            $p = ['arena' => 'bug', 'predator' => 'pred', 'shoot' => 'shoot', 'shoot-predator' => 'shootp'][$id];
+            $taskOf = ['arena' => 'flash', 'predator' => 'hard', 'shoot' => 'shoot', 'shoot-predator' => 'shoot-predator'];
+            $labelOf = ['arena' => 'BugBrain foraging arena', 'predator' => 'BugBrain arena with a predator', 'shoot' => 'BugBrain arena where the bug can shoot',
+                'shoot-predator' => 'BugBrain arena where the bug can shoot, with a predator'];
             $pair = $compare && $id === 'arena';
             $stage = static function (string $canvasId, string $role, string $statsRole, string $label, string $extra): string {
                 return '<div class="bug-stage"><canvas id="' . $canvasId . '" class="bug-canvas" data-role="' . $role . '" width="1120" height="700" aria-label="' . h($label) . '"' . $extra . '></canvas>'
                     . '<aside class="bug-stats" data-role="' . $statsRole . '" aria-label="How this bug is doing"><p class="quiet">Loading…</p></aside></div>';
             };
-            $main = $stage($id === 'arena' ? 'bug-arena' : 'bug-predator', 'canvas', 'stats', $id === 'arena' ? 'BugBrain foraging arena' : 'BugBrain arena with a predator',
-                ' data-champion="' . h($base . '/explore/bugbrain-champion.json') . '" data-task="' . ($id === 'arena' ? 'flash' : 'hard') . '"');
+            $main = $stage('bug-' . $id, 'canvas', 'stats', $labelOf[$id],
+                ' data-champion="' . h($base . '/explore/bugbrain-champion.json') . '" data-task="' . $taskOf[$id] . '"');
             $panels .= '<div class="head-actions">'
                 . '<button class="button small is-learning-on" id="' . $p . '-learning" data-role="learning" type="button" aria-pressed="true" title="Turn the brain\'s learning on or off">Learning: On</button> '
                 . '<button class="button small" id="' . $p . '-pause" data-role="pause" type="button" disabled>Pause</button> '
@@ -968,7 +975,7 @@ function pageBugArena(string $base, array $nav, bool $compare = false, array $de
     $tag = $haveDesign
         ? 'Best design so far (reading and memory): <b>' . h($version) . '</b>' . (!empty($design['updated']) ? ' · updated ' . h((string) $design['updated']) : '')
         : 'Current best design';
-    $body = '<div class="ex" data-engine="' . h($base . '/assets/bugbrain.js?v=9') . '" data-replay-js="' . h($base . '/assets/explore-replay.js?v=' . $asset('explore-replay.js')) . '"'
+    $body = '<div class="ex" data-engine="' . h($base . '/assets/bugbrain.js?v=' . $asset('bugbrain.js')) . '" data-replay-js="' . h($base . '/assets/explore-replay.js?v=' . $asset('explore-replay.js')) . '"'
         . ' data-live-js="' . h($base . '/assets/explore-live.js?v=' . $asset('explore-live.js')) . '"'
         . ' data-arena-js="' . h($base . '/assets/explore-arena.js?v=' . $asset('explore-arena.js')) . '"'
         . ' data-brain-js="' . h($base . '/assets/explore-brain.js?v=' . $asset('explore-brain.js')) . '" data-design="' . h($base . '/explore/design.json') . '"'
