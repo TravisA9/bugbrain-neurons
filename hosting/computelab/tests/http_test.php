@@ -589,28 +589,34 @@ $explore = http($base . '/explore');
 $demoIds = ['arena', 'predator', 'read', 'name', 'copy', 'patterns'];
 $tabsOk = true;
 foreach ($demoIds as $demoId) {
-    if (!str_contains($explore['body'], 'data-tab="' . $demoId . '"') || !str_contains($explore['body'], 'id="demo-' . $demoId . '"')
+    if (!str_contains($explore['body'], 'id="demo-' . $demoId . '"') || !str_contains($explore['body'], 'id="demo-' . $demoId . '-title"')
         || !str_contains($explore['body'], 'href="/computelab/explore#' . $demoId . '"')) {
         $tabsOk = false;
         echo "explore demo missing: $demoId\n";
     }
 }
-check($tabsOk, 'explore has a tab and a panel for every demo, and the header Explore menu links to each one');
+check($tabsOk, 'explore has a titled view for every demo, and the header Explore menu links to each one');
+check(!str_contains($explore['body'], 'class="ex-tabs"') && !str_contains($explore['body'], 'data-tab=') && substr_count($explore['body'], 'class="ex-cap"') === count($demoIds)
+    && str_contains($explore['body'], "querySelectorAll('.cl-drop-menu a')") && str_contains($explore['body'], 'getElementById("cl-toggle");if(t)t.checked=false'),
+    'the header dropdown is the only view switcher: no in-page tabs, one caption per view, the current entry is marked and the mobile menu closes on a hash change');
+check(substr_count($explore['body'], 'class="bug-stats" data-role="stats"') === 2 && str_contains($explore['body'], '<div class="bug-stage"><canvas id="bug-arena"')
+    && str_contains($explore['body'], '<div class="bug-stage"><canvas id="bug-predator"') && str_contains($explore['body'], '@media(max-width:900px){.bug-stage{grid-template-columns:1fr}'),
+    'both arenas have their stats panel beside the canvas, moving below it on narrow screens');
 check(str_contains($explore['body'], '<details class="cl-drop"><summary class="is-current" aria-current="page">Explore</summary>')
     && str_contains(http($base . '/discoveries')['body'], '<details class="cl-drop"><summary>Explore</summary>'),
     'Explore is one dropdown menu item on every page');
 check(str_contains($explore['body'], '/computelab/assets/bugbrain.js?v=9') && !str_contains($explore['body'], 'SOTA') && !str_contains($explore['body'], 'State-of-the-Art'),
     'explore loads engine bundle v9 and makes no state-of-the-art claims');
 $exploreCompare = http($base . '/explore?compare=1');
-check($exploreCompare['status'] === 200 && str_contains($exploreCompare['body'], 'id="bug-baseline"') && str_contains($exploreCompare['body'], 'data-compare="1"')
+check($exploreCompare['status'] === 200 && str_contains($exploreCompare['body'], 'id="bug-baseline"') && str_contains($exploreCompare['body'], 'data-compare="1"') && str_contains($exploreCompare['body'], 'data-role="base-stats"')
     && !str_contains($explore['body'], 'id="bug-baseline"'), 'explore?compare=1 still shows the two arenas side by side');
 $designResp = http($base . '/explore/design.json');
 $designJson = json_decode($designResp['body'], true);
 preg_match('/ETag: ("[^"]+")/i', $designResp['header'], $designTag);
 check($designResp['status'] === 200 && ($designJson['schema'] ?? 0) === 2 && ($designJson['champion']['id'] ?? '') === 'v3h'
-    && isset($designJson['text']['liveVariant']) && isset($designTag[1])
+    && isset($designJson['text']['liveVariant']) && isset($designTag[1]) && str_contains($designResp['header'], 'Cache-Control: public, max-age=60')
     && http($base . '/explore/design.json', 'GET', null, ['If-None-Match: ' . $designTag[1]])['status'] === 304,
-    'design.json serves the schema 2 manifest with the arena champion and answers a matching ETag with 304');
+    'design.json serves the schema 2 manifest with the arena champion, a short max-age, and answers a matching ETag with 304');
 $replayResp = http($base . '/explore/replay/read.json');
 preg_match('/ETag: ("[^"]+")/i', $replayResp['header'], $replayTag);
 check($replayResp['status'] === 200 && str_contains($replayResp['header'], 'Cache-Control: public') && isset($replayTag[1])

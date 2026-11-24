@@ -12,13 +12,13 @@
   function replay(id) { return getJson(site.replayBase + id + '.json?v=' + encodeURIComponent(site.version || '')); }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function pct(x) { return Math.round(100 * x) + '%'; }
-  var css = '.rp-wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}.rp-text{font:17px/1.75 var(--mono);background:#0b1218;border:1px solid var(--line);border-radius:10px;padding:14px 16px;height:340px;overflow:auto;word-break:break-word;white-space:pre-wrap}'
+  var css = '.rp-wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}.rp-text{font:17px/1.75 var(--mono);background:#0b1218;border:1px solid var(--line);border-radius:10px;padding:14px 16px;height:clamp(280px,calc(100vh - 330px),620px);overflow:auto;word-break:break-word;white-space:pre-wrap}'
     + '.rp-text .ok{color:var(--mint)}.rp-text .no{color:#ff818a;opacity:.75}.rp-text .cur{background:#65c7f233;border-radius:3px}'
     + '.rp-side{display:flex;flex-direction:column;gap:12px}.rp-card{background:#0b1218;border:1px solid var(--line);border-radius:10px;padding:12px 14px}.rp-card h4{margin:0 0 6px;font:600 13px var(--sans);color:var(--text)}'
     + '.rp-big{font:600 30px/1 var(--display);color:var(--mint)}.rp-big.alt{color:var(--cyan)}.rp-meter{height:8px;border-radius:5px;background:#18242f;margin:8px 0 4px;overflow:hidden}.rp-meter i{display:block;height:100%;width:0;border-radius:5px;background:var(--mint);transition:width .2s}'
     + '.rp-meter.alt i{background:var(--cyan)}.rp-note{font-size:12.5px;color:var(--muted);line-height:1.45;margin:0}.rp-legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin:0 0 8px}.rp-legend b{font-weight:600}'
-    + '.rp-take{margin:12px 0 0;font-size:14px;line-height:1.5;color:#c3ced8;max-width:820px}.rp-ex{font:16px/1.7 var(--mono);background:#0b1218;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:0 0 12px}'
-    + '.rp-ex mark{background:#b5a4ff2e;color:var(--purple);border-radius:4px;padding:1px 3px}.rp-ex .gap{color:var(--muted)}.rp-canvas{display:block;width:100%;height:auto;background:#0b1218;border:1px solid var(--line);border-radius:10px}'
+    + '.rp-take{margin:8px 0 0;font:12.5px var(--mono);color:var(--muted)}.rp-ex{font:16px/1.7 var(--mono);background:#0b1218;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:0 0 12px}'
+    + '.rp-ex mark{background:#b5a4ff2e;color:var(--purple);border-radius:4px;padding:1px 3px}.rp-ex .gap{color:var(--muted)}.rp-canvas{display:block;width:100%;height:auto;max-height:calc(100vh - 250px);object-fit:contain;background:#0b1218;border:1px solid var(--line);border-radius:10px}'
     + '@media(max-width:820px){.rp-wrap{grid-template-columns:1fr}.rp-text{height:260px;font-size:15px}}';
   var style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
   function button(id) { return document.querySelector('[data-play="' + id + '"]'); }
@@ -35,8 +35,8 @@
     text.setAttribute('aria-live', 'off');
     function card(title, cls, note) { var c = el('div', 'rp-card'); c.appendChild(el('h4', null, title)); var big = el('div', 'rp-big' + (cls ? ' ' + cls : ''), '–'); c.appendChild(big);
       var m = el('div', 'rp-meter' + (cls ? ' ' + cls : '')); var bar = el('i'); m.appendChild(bar); c.appendChild(m); c.appendChild(el('p', 'rp-note', note)); side.appendChild(c); return { big: big, bar: bar }; }
-    read.me = card('This brain: letters right so far', '', 'The spiking brain, after one read of about 98,000 letters, learning as it goes.');
-    if (d.compare) read.other = card('Classic 5-letter pattern counter', 'alt', 'A standard statistics method trained on the same text, for comparison.');
+    read.me = card('Spiking brain: letters right', '', 'After one read of ~98,000 letters.');
+    if (d.compare) read.other = card('5-letter pattern counter', 'alt', 'Classic statistics, same text.');
     wrap.appendChild(text); wrap.appendChild(side); s.appendChild(wrap);
     read.take = el('p', 'rp-take'); s.appendChild(read.take);
     read.text = text;
@@ -57,9 +57,7 @@
       read.text.scrollTop = read.text.scrollHeight;
       if (i >= n) {
         clearInterval(read.timer); read.timer = null; if (cur) cur.classList.remove('cur');
-        read.take.textContent = 'Across all ' + n.toLocaleString() + ' letters it got ' + pct(d.acc) + ' right' + (d.compare ? ', about level with the pattern counter (' + pct(d.compare.acc) + ')' : '') +
-          '. Once a word has started it gets ' + pct(d.words.restOfWord) + ' of the remaining letters, but only ' + pct(d.words.firstLetter) +
-          ' of first letters: it knows spelling well, but has little idea which word comes next. Large AI language models get roughly three quarters or more of letters right.';
+        read.take.textContent = n.toLocaleString() + ' letters · ' + pct(d.acc) + ' right · inside a word ' + pct(d.words.restOfWord) + ' · first letter of a word ' + pct(d.words.firstLetter);
         button('read').textContent = 'Play again';
       }
     }, 40);
@@ -71,17 +69,15 @@
   function nameBuild(d) {
     var s = stage('name'); s.innerHTML = '';
     var nm = d.names[0] || 'kefefev';
-    var ex = el('div', 'rp-ex'); ex.innerHTML = '<span class="quiet" style="font:12px var(--sans);display:block;margin-bottom:4px">How the test works (example)</span>'
-      + 'there once was a girl named <mark>' + nm + '</mark><span class="gap"> … 5 to 127 letters of story … </span><mark>' + nm + '</mark> went home.';
+    var ex = el('div', 'rp-ex'); ex.innerHTML = 'there once was a girl named <mark>' + nm + '</mark><span class="gap"> … 5 to 127 letters of story … </span><mark>' + nm + '</mark> went home.';
     s.appendChild(ex);
-    var cv = el('canvas', 'rp-canvas'); cv.width = 1100; cv.height = 340; cv.setAttribute('aria-label', 'Share of name letters guessed right the first and second time, by gap'); s.appendChild(cv);
+    var cv = el('canvas', 'rp-canvas'); cv.width = 1100; cv.height = 420; cv.setAttribute('aria-label', 'Share of name letters guessed right the first and second time, by gap'); s.appendChild(cv);
     var tk = el('p', 'rp-take'); s.appendChild(tk);
     var meanSecond = d.learning.second.reduce(function (a, b) { return a + b; }, 0) / d.learning.second.length;
     var meanFirst = d.learning.first.reduce(function (a, b) { return a + b; }, 0) / d.learning.first.length;
     var meanFrozen = d.frozen.second.reduce(function (a, b) { return a + b; }, 0) / d.frozen.second.length;
-    tk.textContent = 'The first time a name appears, the brain gets about ' + pct(meanFirst) + ' of its letters (after the first) right, since it has never seen it. The second time it gets about ' +
-      pct(meanSecond) + ', even 127 letters later: it learned the name from one sighting. With learning switched off it stays near ' + pct(meanFrozen) +
-      '. It does not yet get whole names exactly right. Measured on ' + d.namesPerGap + ' names per gap across ' + d.seeds.length + ' grown brains.';
+    tk.textContent = 'Name letters right: first time ' + pct(meanFirst) + ' · second time ' + pct(meanSecond) + ' · second time with learning off ' + pct(meanFrozen) +
+      ' · ' + d.namesPerGap + ' names per gap, ' + d.seeds.length + ' brains';
     return cv;
   }
   function nameDraw(cv, d, t) {
@@ -112,13 +108,11 @@
   function copyBuild(d) {
     var s = stage('copy'); s.innerHTML = '';
     var strip = el('canvas', 'rp-canvas'); strip.width = 1100; strip.height = 120; strip.setAttribute('aria-label', 'Example of the test: a coloured symbol, filler, then a cue to repeat it'); s.appendChild(strip);
-    s.appendChild(el('p', 'rp-note', 'How the test works: a coloured symbol, grey filler, then the ? cue. The right answer is the colour from before the filler.'));
-    var cv = el('canvas', 'rp-canvas'); cv.width = 1100; cv.height = 300; cv.style.marginTop = '12px'; cv.setAttribute('aria-label', 'Share of cues answered right, by how far back the symbol was'); s.appendChild(cv);
+    var cv = el('canvas', 'rp-canvas'); cv.width = 1100; cv.height = 380; cv.style.marginTop = '10px'; cv.setAttribute('aria-label', 'Share of cues answered right, by how far back the symbol was'); s.appendChild(cv);
     var tk = el('p', 'rp-take'); s.appendChild(tk);
     var lo = Math.min.apply(null, d.perSeed), hi = Math.max.apply(null, d.perSeed);
-    tk.textContent = 'With the new long look-back, ' + d.seeds + ' freshly grown brains answered ' + pct(d.withLookBack) + ' of cues right (each brain between ' + pct(lo) + ' and ' + pct(hi) +
-      '), and it holds up even 17 to 31 steps back. Without it the brain is at ' + pct(d.without) + ', no better than guessing one of the 4 colours (' + pct(d.chance) +
-      '). This part of the design (' + d.design + ') is still going through the lab\'s tests and is not yet the current best design.';
+    tk.textContent = d.seeds + ' brains · ' + pct(d.withLookBack) + ' right (each ' + pct(lo) + '–' + pct(hi) + ') · without the look-back ' + pct(d.without) + ' · guessing ' + pct(d.chance) +
+      ' · design ' + d.design + ' (still being tested)';
     return { strip: strip, cv: cv };
   }
   var COPYSEQ = (function () {   // an example stream for the illustration: symbol, 4-23 fillers, cue (not recorded answers)

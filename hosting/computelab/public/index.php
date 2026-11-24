@@ -450,12 +450,13 @@ try {
         header('ETag: ' . $etag);
         if (App::etagMatches((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''), $etag)) {
             http_response_code(304);
-            header('Cache-Control: no-cache');
+            header('Cache-Control: public, max-age=60');
             return;
         }
         http_response_code(200);
         header('Content-Type: application/json; charset=utf-8');
-        header('Cache-Control: no-cache');
+        /* A short max-age like the replays: the CDN drops If-None-Match on a good share of requests, so revalidation alone does not save much. */
+        header('Cache-Control: public, max-age=60');
         echo json_encode($design);
         return;
     }

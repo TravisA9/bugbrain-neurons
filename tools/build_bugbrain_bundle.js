@@ -25,7 +25,7 @@ const parts = FILES.map(f => git(['show', sha + ':js/' + f]).replace(/\s+$/, '')
 const view = fs.readFileSync(path.join(repo, 'hosting/computelab/private/bugbrain-view.js'), 'utf8').replace(/\s+$/, '') + '\n';
 const body = parts.join('\n') + '\n' + view;
 const bodySha = crypto.createHash('sha256').update(body).digest('hex');
-const header = '/* bugbrain.js built by tools/build_bugbrain_bundle.js from commit ' + sha + ' (' + ref + '); js/' + FILES.join(', js/') +
+const header = '/* bugbrain.js built by tools/build_bugbrain_bundle.js from commit ' + sha + ' (' + sha + '); js/' + FILES.join(', js/') +
   ' + hosting/computelab/private/bugbrain-view.js; body sha256 ' + bodySha + ' */\n';
 const text = header + body, kb = Buffer.byteLength(text) / 1024;
 if (kb > maxKb) { console.error('bundle is ' + kb.toFixed(1) + ' KB, over the ' + maxKb + ' KB cap'); process.exit(2); }

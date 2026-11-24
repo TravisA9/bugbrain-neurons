@@ -59,8 +59,8 @@
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   var style = document.createElement('style');
   style.textContent = '.lv-top{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline;margin:0 0 10px}.lv-top h3{margin:0;font:600 16px var(--display)}.lv-top span{color:var(--muted);font-size:13px}'
-    + '.lv-canvas{display:block;width:100%;height:auto;background:#0b1218;border:1px solid var(--line);border-radius:10px}.lv-status{font:12px var(--mono);color:var(--mint);margin:8px 0 0}'
-    + '.lv-note{font-size:13.5px;color:#c3ced8;line-height:1.5;margin:10px 0 0;max-width:820px}';
+    + '.lv-canvas{display:block;width:100%;height:auto;max-height:calc(100vh - 240px);object-fit:contain;background:#0b1218;border:1px solid var(--line);border-radius:10px}.lv-status{font:12px var(--mono);color:var(--mint);margin:8px 0 0}'
+    + '.lv-note{font-size:12.5px;color:var(--muted);margin:6px 0 0}';
   document.head.appendChild(style);
 
   function stop() { if (st.worker) { st.worker.terminate(); st.worker = null; } cancelAnimationFrame(st.raf); st.raf = 0; }
@@ -76,8 +76,7 @@
     var top = el('div', 'lv-top'); top.appendChild(el('h3', null, p.name)); top.appendChild(el('span', null, p.tip)); s.appendChild(top);
     var cv = el('canvas', 'lv-canvas'); cv.width = 1100; cv.height = 330; cv.setAttribute('aria-label', 'The pattern and the brain\'s guesses'); s.appendChild(cv);
     var status = el('p', 'lv-status', 'Growing a small brain in your browser. This takes about 10 seconds…'); status.setAttribute('role', 'status'); s.appendChild(status);
-    s.appendChild(el('p', 'lv-note', 'Top row: the pattern as it arrives. Bottom row: what the brain guessed would come next, before it saw it (a ring means right, a cross means wrong). '
-      + 'Nobody tells it the rule; it learns from the stream alone.'));
+    s.appendChild(el('p', 'lv-note', 'Top: the pattern. Bottom: its guess before each colour arrives (ring = right, cross = wrong).'));
     st.cv = cv; st.status = status;
     btn().textContent = 'Next pattern';
     design().then(function (d) {

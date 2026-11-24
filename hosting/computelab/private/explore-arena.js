@@ -1,6 +1,6 @@
 /* Explore: the BugBrain arenas (#arena and #predator). Loaded lazily after the engine bundle (/assets/bugbrain.js).
  * One bug brain lives on from round to round: when a round ends only the garden is renewed, the grown network
- * (and everything it has learned) is kept. A small panel on the canvas shows the bug's age and its food, poison
+ * (and everything it has learned) is kept. A stats panel beside the canvas (below it on narrow screens) shows the bug's age and its food, poison
  * (and, with the predator, "caught") rates over its whole life as sparklines.
  * The learned state is saved in localStorage (about 80 KB) so a reload continues the same bug; "Start fresh" grows a new one.
  * Long sessions: the history is a fixed number of bins (pairs merge when full, so memory never grows), and while the
@@ -100,55 +100,65 @@
     return true;
   }
 
-  /* ---- the on-canvas panel ---- */
+  /* ---- the stats panel beside (wide screens) or below (narrow) the canvas ---- */
   function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
   function rate(x, steps) { return steps > 0 ? (x * 1000 / steps) : 0; }
   function sumBins(bins) { const s = [0, 0, 0, 0, 0]; for (const b of bins) for (let i = 0; i < 5; i++) s[i] += b[i]; return s; }
-  function drawPanel(g, life, predator, label) {
-    const bins = life.hist.concat(life.cur[0] >= life.bin / 4 ? [life.cur] : []);
-    const pw = 330, ph = 150, x0 = 14, y0 = 14;
-    g.save();
-    g.fillStyle = C.panel; g.strokeStyle = C.line; g.lineWidth = 1;
-    g.beginPath(); if (g.roundRect) g.roundRect(x0, y0, pw, ph, 10); else g.rect(x0, y0, pw, ph); g.fill(); g.stroke();
-    g.font = '600 13px ui-monospace, SFMono-Regular, Menlo, monospace'; g.fillStyle = C.text; g.textBaseline = 'top';
-    g.fillText((label ? label + ' · ' : '') + 'Age ' + fmt(life.age) + ' steps · ' + life.rounds + ' round' + (life.rounds === 1 ? '' : 's'), x0 + 12, y0 + 10);
-    // sparkline: food (green), poison (red), caught (amber) per 1,000 steps, oldest at the left
-    const sx = x0 + 12, sy = y0 + 32, sw = pw - 24, sh = 58;
-    g.strokeStyle = C.line; g.beginPath(); g.moveTo(sx, sy + sh + 0.5); g.lineTo(sx + sw, sy + sh + 0.5); g.stroke();
-    if (bins.length >= 2) {
-      const series = [[1, C.mint], [2, C.red]].concat(predator ? [[3, C.amber]] : []);
-      let top = 1; for (const b of bins) for (const [k] of series) top = Math.max(top, rate(b[k], b[0]));
-      for (const [k, col] of series) {
-        g.strokeStyle = col; g.lineWidth = 2; g.beginPath();
-        bins.forEach((b, i) => { const x = sx + sw * i / (bins.length - 1), y = sy + sh - sh * rate(b[k], b[0]) / top; if (i) g.lineTo(x, y); else g.moveTo(x, y); });
-        g.stroke();
-      }
-      g.lineWidth = 1;
-    } else { g.fillStyle = C.muted; g.font = '12px ui-sans-serif, system-ui, sans-serif'; g.fillText('The chart starts after a few hundred steps.', sx, sy + 22); }
-    g.font = '12px ui-sans-serif, system-ui, sans-serif';
-    const all = sumBins(bins), recent = sumBins(bins.slice(-Math.max(1, Math.ceil(bins.length / 4)))), early = sumBins(bins.slice(0, Math.max(1, Math.ceil(bins.length / 4))));
-    let lx = sx;
-    const legend = [['Food ' + rate(recent[1], recent[0]).toFixed(1), C.mint], ['Poison ' + rate(recent[2], recent[0]).toFixed(1), C.red]].concat(predator ? [['Caught ' + rate(recent[3], recent[0]).toFixed(1), C.amber]] : []);
-    for (const [t, col] of legend) { g.fillStyle = col; g.fillRect(lx, sy + sh + 9, 9, 9); g.fillStyle = C.text; g.fillText(t, lx + 13, sy + sh + 7); lx += g.measureText(t).width + 26; }
-    g.fillStyle = C.muted; g.fillText('per 1,000 steps, lately', lx - 8, sy + sh + 7);
-    let trend;
-    if (bins.length < 4) trend = 'Too early to tell whether it is improving.';
+  function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function Stats(aside, predator) {
+    aside.innerHTML = '';
+    this.predator = predator;
+    this.age = el('div', 'st-age'); this.sub = el('div', 'st-sub');
+    this.cv = el('canvas'); this.cv.width = 440; this.cv.height = 150; this.cv.setAttribute('aria-label', 'Food and poison per 1,000 steps over the bug\'s life');
+    const rows = el('div');
+    const row = (label, col) => { const r = el('div', 'st-row'), l = el('span'), k = el('i', 'st-key'), v = el('b', null, '–'); k.style.background = col; l.appendChild(k); l.appendChild(document.createTextNode(label)); r.appendChild(l); r.appendChild(v); rows.appendChild(r); return v; };
+    this.food = row('Food per 1,000 steps', C.mint); this.poison = row('Poison per 1,000 steps', C.red);
+    if (predator) this.caught = row('Caught per 1,000 steps', C.amber);
+    this.stuck = row('Stuck on a wall', C.muted);
+    this.trend = el('p', 'st-trend');
+    const left = el('div'); left.appendChild(this.age); left.appendChild(this.sub); left.appendChild(this.cv);
+    const right = el('div'); right.appendChild(rows); right.appendChild(this.trend);
+    aside.appendChild(left); aside.appendChild(right);
+    this.last = 0;
+  }
+  Stats.prototype.update = function (life, force) {
+    const now = Date.now();
+    if (!force && now - this.last < 250) return;
+    this.last = now;
+    const predator = this.predator, bins = life.hist.concat(life.cur[0] >= life.bin / 4 ? [life.cur] : []);
+    this.age.textContent = fmt(life.age) + ' steps old';
+    this.sub.textContent = life.rounds + ' round' + (life.rounds === 1 ? '' : 's') + ' finished · rates lately';
+    const q = Math.max(1, Math.ceil(bins.length / 4)), recent = sumBins(bins.slice(-q)), early = sumBins(bins.slice(0, q));
+    this.food.textContent = rate(recent[1], recent[0]).toFixed(1);
+    this.poison.textContent = rate(recent[2], recent[0]).toFixed(1);
+    if (this.caught) this.caught.textContent = rate(recent[3], recent[0]).toFixed(2);
+    this.stuck.textContent = (100 * recent[4] / Math.max(1, recent[0])).toFixed(1) + '%';
+    if (bins.length < 4) this.trend.textContent = 'Too early to tell whether it is improving.';
     else if (predator) {
       const a = rate(early[3], early[0]), b = rate(recent[3], recent[0]);
-      trend = 'Caught: ' + a.toFixed(1) + ' early on, ' + b.toFixed(1) + ' lately' + (b < a * 0.8 ? ' · dodging better' : b > a * 1.25 ? ' · getting caught more' : ' · no clear change yet');
+      this.trend.textContent = 'Caught ' + a.toFixed(2) + ' early on, ' + b.toFixed(2) + ' lately' + (b < a * 0.8 ? ': dodging better.' : b > a * 1.25 ? ': caught more often.' : ': no clear change yet.');
     } else {
       const a = early[2] / Math.max(1, early[1] + early[2]), b = recent[2] / Math.max(1, recent[1] + recent[2]);
-      trend = 'Poison share of bites: ' + Math.round(a * 100) + '% early on, ' + Math.round(b * 100) + '% lately';
+      this.trend.textContent = 'Poison share of bites: ' + Math.round(a * 100) + '% early on, ' + Math.round(b * 100) + '% lately.';
     }
-    g.fillStyle = C.text; g.fillText(trend, sx, sy + sh + 26);
-    g.fillStyle = C.muted; g.fillText('Stuck on a wall ' + (all[0] ? (100 * recent[4] / Math.max(1, recent[0])).toFixed(1) : '0.0') + '% of the time lately', sx, sy + sh + 43);
-    g.restore();
-  }
+    const g = this.cv.getContext('2d'), W = this.cv.width, H = this.cv.height, pad = 6;
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(0, H - 0.5); g.lineTo(W, H - 0.5); g.stroke();
+    if (bins.length < 2) { g.fillStyle = C.muted; g.font = '22px ui-sans-serif, system-ui, sans-serif'; g.fillText('The chart starts after a few hundred steps.', 4, H / 2); return; }
+    const series = [[1, C.mint], [2, C.red]].concat(predator ? [[3, C.amber]] : []);
+    let top = 1; for (const b of bins) for (const [k] of series) top = Math.max(top, rate(b[k], b[0]));
+    for (const [k, col] of series) {
+      g.strokeStyle = col; g.lineWidth = 3; g.lineJoin = 'round'; g.beginPath();
+      bins.forEach((b, i) => { const x = pad + (W - 2 * pad) * i / (bins.length - 1), y = H - pad - (H - 2 * pad) * rate(b[k], b[0]) / top; if (i) g.lineTo(x, y); else g.moveTo(x, y); });
+      g.stroke();
+    }
+  };
 
   /* ---- one arena demo (a panel with its own bug, or two in compare mode) ---- */
   function makeArena(panel, demoId) {
     const q = r => panel.querySelector('[data-role="' + r + '"]');
     const canvas = q('canvas'), status = q('status'), learningBtn = q('learning'), pauseBtn = q('pause'), freshBtn = q('fresh');
+    const statsEls = [q('stats'), q('base-stats')];
     const baseCanvas = q('baseline'), task = canvas.dataset.task === 'hard' ? 'hard' : 'flash', predator = task === 'hard';
     const compare = !!baseCanvas, key = 'computelab.bug.' + demoId + '.v' + STORE_V;
     let env = null, selected = { id: 'v3h', change: null }, bugs = [], learningOn = true, playing = true, visible = false, started = false;
@@ -164,7 +174,7 @@
 
     function grow(genome, seed, label) {
       const agent = new SA.Agent(genome, seed, SA.growCell(genome, { seed, spec: env.spec }), env);
-      return { agent, seed, label, life: newLife(), watch: new Watcher() };
+      return { agent, seed, label, life: newLife(), watch: new Watcher(), stats: null };
     }
     function newRound() {
       const seed = Math.floor(Math.random() * 0xffffffff) >>> 0;
@@ -225,18 +235,17 @@
       return 'Round ' + (b.life.rounds + 1) + ' · Food ' + s.food + ' · Poison ' + s.poison + (predator ? ' · Caught ' + (s.caught || 0) : '') +
         ' · Time ' + t.t + ' of ' + t.horizon + ' · ' + b.agent.brain.N + ' neurons';
     }
-    function drawOne(b, cv) {
+    function drawOne(b, cv, aside, force) {
       if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
-      const g = cv.getContext('2d');
-      b.agent.task.render(g, W, H, { showStats: false });
-      drawPanel(g, b.life, predator, b.label);
+      b.agent.task.render(cv.getContext('2d'), W, H, { showStats: false });
+      if (aside) { if (!b.stats || b.stats.aside !== aside) { b.stats = new Stats(aside, predator); b.stats.aside = aside; } b.stats.update(b.life, force); }
     }
-    function draw() {
+    function draw(force) {
       if (!bugs.length) return;
       const over = roundOverAt !== null ? ' · Round over, the next one starts in a moment' : '';
-      drawOne(bugs[0], canvas);
+      drawOne(bugs[0], canvas, statsEls[0], force);
       if (compare) {
-        drawOne(bugs[1], baseCanvas);
+        drawOne(bugs[1], baseCanvas, statsEls[1], force);
         const cs = q('champ-score'), bs = q('base-score');
         if (cs) cs.textContent = statusText(bugs[0]);
         if (bs) bs.textContent = statusText(bugs[1]);
@@ -251,7 +260,7 @@
       if (!playing || !visible || document.hidden || !bugs.length) { elapsed = 0; return; }
       if (roundDone()) {
         if (roundOverAt === null) { roundOverAt = now; draw(); }
-        if (now - roundOverAt >= ROUND_PAUSE) { endRound(); draw(); }
+        if (now - roundOverAt >= ROUND_PAUSE) { endRound(); draw(true); }
         return;
       }
       elapsed += delta;
@@ -275,7 +284,7 @@
         if (!restore()) fresh(note);
         applyLearning();
         pauseBtn.disabled = freshBtn.disabled = false;
-        draw();
+        draw(true);
         if (!frame) frame = requestAnimationFrame(loop);
         if (!hiddenTimer) hiddenTimer = setInterval(hiddenStep, HIDDEN_MS);
       } catch (error) {
@@ -295,17 +304,17 @@
       }
       freshArmed = 0; freshBtn.textContent = 'Start fresh';
       try { localStorage.removeItem(key); } catch (e) { /* ignore */ }
-      fresh('A new bug was grown.'); save(true); draw();
+      fresh('A new bug was grown.'); save(true); draw(true);
     });
     document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
     window.addEventListener('pagehide', () => save());
 
     return {
-      show() { visible = true; if (!started) { started = true; begin(); } else draw(); },
+      show() { visible = true; if (!started) { started = true; begin(); } else draw(true); },
       hide() { visible = false; save(); },
       // live a number of steps at once without drawing (used by the screenshot and smoke tests)
       world() { return bugs.length ? bugs[0].agent.task : null; },
-      fastForward(steps) { if (!bugs.length) return 0; for (let i = 0; i < steps; i++) { if (roundDone()) endRound(); step(); } roundOverAt = null; draw(); save(true); return bugs[0].life.age; },
+      fastForward(steps) { if (!bugs.length) return 0; for (let i = 0; i < steps; i++) { if (roundDone()) endRound(); step(); } roundOverAt = null; draw(true); save(true); return bugs[0].life.age; },
     };
   }
 

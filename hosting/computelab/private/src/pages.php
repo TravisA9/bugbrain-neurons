@@ -463,23 +463,23 @@ function navLinks(string $base, array $nav): string
     return $html;
 }
 
-/* The Explore demos, in menu order. One list feeds the header dropdown and the tabs on /explore.
+/* The Explore demos, in menu order. One list feeds the header dropdown and the views on /explore (blurb = the one-line caption).
  * kind: live = runs in the browser; replay = plays back results the research runs recorded. */
 function exploreDemos(): array
 {
     return [
         ['id' => 'arena', 'title' => 'BugBrain arena', 'menu' => 'A grown bug brain looks for food', 'kind' => 'live', 'needs' => 'engine,arena',
-            'blurb' => 'A small spiking brain, grown from its genes, steers a bug around a garden. Green apples are food and red ones are poison. They only flash into view now and then, so the bug has to remember where they were. The same bug keeps learning from round to round, and this browser remembers it, so you can come back and see how it has grown.'],
+            'blurb' => 'Green apples are food, red are poison; they only flash into view. One bug keeps learning, and this browser remembers it.'],
         ['id' => 'predator', 'title' => 'Predator arena', 'menu' => 'Dodge a hunter while foraging', 'kind' => 'live', 'needs' => 'engine,arena',
-            'blurb' => 'The same kind of bug, but the apples drift and a red hunter chases it when it gets close. Being caught costs more than a poison apple. Leave it running and watch whether it gets caught less often.'],
+            'blurb' => 'Drifting apples and a red hunter that gives chase. Is it getting caught less often?'],
         ['id' => 'read', 'title' => 'Watch it read', 'menu' => 'Next-letter guesses on a story', 'kind' => 'replay', 'needs' => 'replay',
-            'blurb' => 'After reading about 98,000 letters of old books once, the brain reads a story it has never seen and guesses each next letter before it appears.'],
+            'blurb' => 'Guessing each next letter of a story it has never seen.'],
         ['id' => 'name', 'title' => 'Remember a name', 'menu' => 'Recall after seeing a word once', 'kind' => 'replay', 'needs' => 'replay',
-            'blurb' => 'A made-up name appears once in a sentence and then again a little later. Does the brain do better the second time?'],
+            'blurb' => 'A made-up name, seen once: is it easier the second time?'],
         ['id' => 'copy', 'title' => 'Look far back', 'menu' => 'Memory across 30 steps', 'kind' => 'replay', 'needs' => 'replay',
-            'blurb' => 'A symbol goes by, then a stretch of filler, then a signal to repeat it. To answer, the brain has to look up to 30 steps back.'],
+            'blurb' => 'Repeat a colour from up to 30 steps back.'],
         ['id' => 'patterns', 'title' => 'Learn a pattern', 'menu' => 'Grows a brain in your browser', 'kind' => 'live', 'needs' => 'engine,live',
-            'blurb' => 'Your browser grows a small copy of the current design and watches a repeating pattern of colours. It starts by guessing and catches on within a few hundred steps.'],
+            'blurb' => 'A small copy of the design grows in your browser and learns a colour pattern.'],
     ];
 }
 
@@ -527,6 +527,8 @@ function siteHeaderCss(): string
         .cl-top .cl-drop-menu a b{color:#e6edf3;font-weight:600}
         .cl-top .cl-drop-menu a span{color:#8b9baa;font:400 12px/1.2 "DM Sans",system-ui,sans-serif}
         .cl-top .cl-nav .cl-drop-menu a:hover{background:#15232e;border-color:#2d5948}
+        .cl-top .cl-nav .cl-drop-menu a.is-on{background:#10231e;border-color:#2d5948}
+        .cl-top .cl-nav .cl-drop-menu a.is-on b{color:#69e2b1}
         @media (max-width:860px){
           .cl-top .cl-drop-menu{position:static;min-width:0;margin-top:4px;box-shadow:none}
           .cl-top .cl-burger{display:inline-block}
@@ -544,7 +546,7 @@ function siteHeader(string $base, array $nav): string
         . '<input class="cl-toggle" id="cl-toggle" type="checkbox" aria-label="Show menu"><label class="cl-burger" for="cl-toggle">Menu</label>'
         . '<nav class="cl-nav" aria-label="Compute Lab">' . navLinks($base, $nav) . logoutForm($base, $nav) . '</nav></div></div>'
         . '<script>(function(){function shut(e){document.querySelectorAll(".cl-drop[open]").forEach(function(d){if(!e||e.type!=="click"||!d.contains(e.target)||e.target.closest("a"))d.removeAttribute("open")})}'
-        . 'document.addEventListener("click",shut);document.addEventListener("keydown",function(e){if(e.key==="Escape")shut()});window.addEventListener("hashchange",function(){shut()})})();</script>';
+        . 'document.addEventListener("click",shut);document.addEventListener("keydown",function(e){if(e.key==="Escape")shut()});window.addEventListener("hashchange",function(){shut();var t=document.getElementById("cl-toggle");if(t)t.checked=false})})();</script>';
 }
 
 /* The shared Compute Lab stylesheet, served at /assets/computelab.css. Palette, type,
@@ -898,8 +900,8 @@ function layout(string $title, string $body, string $base, array $nav = [], arra
         . siteHeader($base, $nav) . '<main class="' . h($shell) . '">' . $body . '</main>' . (string) ($opts['foot'] ?? '') . '</body></html>';
 }
 
-/* Explore: one page with a tab per demo (exploreDemos()). The header's Explore menu links to /explore#<id>.
- * Each demo loads its script only when its tab opens: the engine bundle (arena, live demos), explore-replay.js
+/* Explore: one page with a view per demo (exploreDemos()). The header's Explore dropdown links to /explore#<id>.
+ * Each demo loads its script only when its view opens: the engine bundle (arena, live demos), explore-replay.js
  * (recorded results) or explore-live.js (a small brain grown in the browser, in a Web Worker).
  * $design is App::topDesign(): the promoted design's manifest, or a fallback with only the arena champion. */
 function pageBugArena(string $base, array $nav, bool $compare = false, array $design = []): string
@@ -911,23 +913,29 @@ function pageBugArena(string $base, array $nav, bool $compare = false, array $de
         $path = dirname(__DIR__) . '/' . $file;
         return is_file($path) ? substr((string) sha1_file($path), 0, 10) : '0';
     };
-    $tabs = '<nav class="ex-tabs" aria-label="Explore demos">';
+    /* The header's Explore dropdown is the only switcher: each panel is shown for its #hash, with a small title and a one-line caption. */
     $panels = '';
     foreach (exploreDemos() as $i => $demo) {
         $id = $demo['id'];
         $status = (string) ($replays[$id]['status'] ?? 'top');
         $kind = $demo['kind'] === 'live' ? 'Runs in your browser' : 'Recorded run';
-        $badge = $status === 'testing' ? '<span class="ex-badge is-testing">Being tested</span>' : '';
-        $tabs .= '<a class="ex-tab' . ($i === 0 ? ' is-active' : '') . '" href="#' . h($id) . '" data-tab="' . h($id) . '"' . ($i === 0 ? ' aria-current="true"' : '') . '>'
-            . '<span class="ex-tab-title">' . h($demo['title']) . '</span><span class="ex-tab-sub">' . h($kind) . '</span></a>';
-        $panels .= '<section class="ex-panel" id="demo-' . h($id) . '" data-demo="' . h($id) . '" data-needs="' . h($demo['needs']) . '"'
+        $badge = $status === 'testing' ? ' <span class="ex-badge is-testing">Being tested</span>' : '';
+        $panels .= '<section class="ex-panel" id="demo-' . h($id) . '" data-demo="' . h($id) . '" data-title="' . h($demo['title']) . '" data-needs="' . h($demo['needs']) . '"'
             . ($i === 0 ? '' : ' hidden') . ' aria-labelledby="demo-' . h($id) . '-title">'
-            . '<div class="ex-panel-head"><div><h2 id="demo-' . h($id) . '-title">' . h($demo['title']) . ' ' . $badge . '</h2><p class="ex-blurb">' . h($demo['blurb']) . '</p></div>';
+            . '<div class="ex-panel-head"><div class="ex-titles"><h2 id="demo-' . h($id) . '-title">' . h($demo['title']) . $badge . '</h2>'
+            . '<p class="ex-cap">' . h($demo['blurb']) . ' <span class="ex-kind">· ' . h($kind) . '</span></p></div>';
         if ($demo['needs'] === 'engine,arena') {
             /* The arena demos (#arena, #predator): one bug brain that keeps learning from round to round (explore-arena.js).
-             * The #arena ids are kept for older links and tests; the script finds everything through data-role. */
+             * The #arena ids are kept for older links and tests; the script finds everything through data-role.
+             * The stats panel sits beside the canvas on wide screens and below it on narrow ones. */
             $p = $id === 'arena' ? 'bug' : 'pred';
             $pair = $compare && $id === 'arena';
+            $stage = static function (string $canvasId, string $role, string $statsRole, string $label, string $extra): string {
+                return '<div class="bug-stage"><canvas id="' . $canvasId . '" class="bug-canvas" data-role="' . $role . '" width="1120" height="700" aria-label="' . h($label) . '"' . $extra . '></canvas>'
+                    . '<aside class="bug-stats" data-role="' . $statsRole . '" aria-label="How this bug is doing"><p class="quiet">Loading…</p></aside></div>';
+            };
+            $main = $stage($id === 'arena' ? 'bug-arena' : 'bug-predator', 'canvas', 'stats', $id === 'arena' ? 'BugBrain foraging arena' : 'BugBrain arena with a predator',
+                ' data-champion="' . h($base . '/explore/bugbrain-champion.json') . '" data-task="' . ($id === 'arena' ? 'flash' : 'hard') . '"');
             $panels .= '<div class="head-actions">'
                 . '<button class="button small is-learning-on" id="' . $p . '-learning" data-role="learning" type="button" aria-pressed="true" title="Turn the brain\'s learning on or off">Learning: On</button> '
                 . '<button class="button small" id="' . $p . '-pause" data-role="pause" type="button" disabled>Pause</button> '
@@ -935,19 +943,17 @@ function pageBugArena(string $base, array $nav, bool $compare = false, array $de
                 . ($id === 'arena' ? ' <a class="button small" id="bug-compare-link" href="' . h($base . '/explore' . ($compare ? '' : '?compare=1')) . '#arena">'
                     . ($compare ? 'Single arena' : 'Compare brains') . '</a>' : '') . '</div></div>'
                 . '<p id="' . $p . '-status" data-role="status" class="bug-status-bar" role="status">Loading the arena…</p>'
-                . ($pair ? '<div class="bug-pair"><div><h3 id="bug-left-heading">Current brain</h3><p id="bug-champion-score" data-role="champ-score" class="ex-score"></p>' : '')
-                . '<canvas id="' . ($id === 'arena' ? 'bug-arena' : 'bug-predator') . '" class="bug-canvas" data-role="canvas" width="1120" height="700" aria-label="'
-                . ($id === 'arena' ? 'BugBrain foraging arena' : 'BugBrain arena with a predator') . '" data-champion="'
-                . h($base . '/explore/bugbrain-champion.json') . '" data-task="' . ($id === 'arena' ? 'flash' : 'hard') . '"></canvas>'
-                . ($pair ? '</div><div><h3 id="bug-right-heading">Original BugBrain</h3><p id="bug-baseline-score" data-role="base-score" class="ex-score"></p>'
-                    . '<canvas id="bug-baseline" data-role="baseline" width="1120" height="700" aria-label="Original BugBrain foraging arena"></canvas></div></div>' : '');
+                . ($pair
+                    ? '<div class="bug-pair"><div><h3 id="bug-left-heading">Current brain</h3><p id="bug-champion-score" data-role="champ-score" class="ex-score"></p>' . $main . '</div>'
+                        . '<div><h3 id="bug-right-heading">Original BugBrain</h3><p id="bug-baseline-score" data-role="base-score" class="ex-score"></p>'
+                        . $stage('bug-baseline', 'baseline', 'base-stats', 'Original BugBrain foraging arena', '') . '</div></div>'
+                    : $main);
         } else {
             $panels .= '<div class="head-actions"><button class="button small primary" type="button" data-play="' . h($id) . '" disabled>Play</button></div></div>'
                 . '<div class="ex-stage" data-stage="' . h($id) . '"><p class="quiet">Loading…</p></div>';
         }
         $panels .= '</section>';
     }
-    $tabs .= '</nav>';
     $tag = $haveDesign
         ? 'Best design so far (reading and memory): <b>' . h($version) . '</b>' . (!empty($design['updated']) ? ' · updated ' . h((string) $design['updated']) : '')
         : 'Current best design';
@@ -955,48 +961,50 @@ function pageBugArena(string $base, array $nav, bool $compare = false, array $de
         . ' data-live-js="' . h($base . '/assets/explore-live.js?v=' . $asset('explore-live.js')) . '"'
         . ' data-arena-js="' . h($base . '/assets/explore-arena.js?v=' . $asset('explore-arena.js')) . '" data-design="' . h($base . '/explore/design.json') . '"'
         . ' data-replay-base="' . h($base . '/explore/replay/') . '" data-version="' . h($version) . '"' . ($compare ? ' data-compare="1"' : '') . '>'
-        . '<header class="ex-head"><div><h1 id="bug-title">Explore</h1><p class="quiet">Try the brain the lab is growing. Each demo shows one thing it can do today.</p></div>'
-        . '<p class="ex-version">' . $tag . '</p></header>'
-        . $tabs . $panels
-        . '<div class="showcase-donate-bar"><div><strong>Every brain here grows from a compact set of genes and keeps learning as it goes, using only local rules. There is no backpropagation.</strong> '
-        . '<span class="quiet">Computers that join the lab test new designs. The best one shows up here.</span></div>'
-        . '<a class="button primary small" href="' . h($base) . '/join">Lend your computer</a></div></div>'
+        . '<h1 class="ex-sr" id="bug-title">Explore</h1>'
+        . $panels
+        . '<footer class="ex-foot"><span class="ex-version">' . $tag . '</span>'
+        . '<span class="quiet">Grown from genes, learning with local rules, no backpropagation.</span>'
+        . '<a class="button primary small" href="' . h($base) . '/join">Lend your computer</a></footer></div>'
         . '<script>' . exploreRouterJs() . '</script>';
-    $style = '<style>.bug-shell{max-width:1240px;margin:auto;padding:14px 16px 20px}'
-        . '.ex-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:6px 20px;margin:4px 0 12px}'
-        . '.ex-head h1{margin:0;font:600 clamp(22px,2.6vw,30px)/1.1 var(--display);letter-spacing:-.02em}.ex-head p{margin:4px 0 0}'
-        . '.ex-version{font:12px var(--mono);color:var(--muted);padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0d151d}.ex-version b{color:var(--mint);font-weight:500}'
-        . '.ex-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px;margin:0 0 12px}'
-        . '.ex-tab{display:flex;flex-direction:column;gap:3px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);text-decoration:none;transition:border-color .15s,background .15s}'
-        . '.ex-tab:hover{border-color:#3b5368;background:#15202b}.ex-tab.is-active{border-color:var(--mint);background:#122622;box-shadow:0 0 0 1px var(--mint) inset}'
-        . '.ex-tab-title{font-weight:600;font-size:13.5px}.ex-tab-sub{font:11px var(--mono);color:var(--muted)}'
-        . '.ex-panel{background:linear-gradient(160deg,#121c26,#0e161e);border:1px solid var(--line);border-radius:14px;padding:16px 18px 18px;box-shadow:0 10px 32px #0003}'
-        . '.ex-panel[hidden]{display:none}.ex-panel-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px 20px;margin-bottom:10px}'
-        . '.ex-panel-head>div:first-child{flex:1 1 420px;min-width:0}.ex-panel h2{margin:0 0 4px;font:600 19px/1.2 var(--display)}.ex-blurb{margin:0;color:#c3ced8;font-size:14px;line-height:1.5;max-width:780px}'
-        . '.ex-badge{display:inline-block;vertical-align:middle;margin-left:6px;padding:3px 8px;border-radius:999px;font:500 11px var(--mono)}.ex-badge.is-testing{color:var(--amber);border:1px solid #6b5531;background:#1f1a12}'
+    $style = '<style>.bug-shell{max-width:1490px;margin:auto;padding:10px 14px 16px}'
+        . '.ex-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}'
+        . '.ex-panel{background:linear-gradient(160deg,#121c26,#0e161e);border:1px solid var(--line);border-radius:14px;padding:12px 14px 14px;box-shadow:0 10px 32px #0003}'
+        . '.ex-panel[hidden]{display:none}.ex-panel-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 16px;margin-bottom:8px}'
+        . '.ex-titles{flex:1 1 360px;min-width:0}.ex-panel h2{margin:0;font:600 15px/1.25 var(--display);color:var(--text)}'
+        . '.ex-cap{margin:2px 0 0;color:#a9b6c2;font-size:13px;line-height:1.4}.ex-kind{color:var(--muted);font:11px var(--mono)}'
+        . '.ex-badge{display:inline-block;vertical-align:middle;margin-left:6px;padding:2px 7px;border-radius:999px;font:500 11px var(--mono)}.ex-badge.is-testing{color:var(--amber);border:1px solid #6b5531;background:#1f1a12}'
         . '.ex-stage{min-height:320px}.ex-score{font:12px var(--mono);color:var(--muted)}'
         . '.bug-status-bar{margin:0 0 8px;font-family:var(--mono);font-size:12px;color:var(--mint)}'
-        . '#bug-learning.is-learning-on{background:var(--mint);color:#061510;border-color:var(--mint);font-weight:700}'
-        . '#bug-learning.is-learning-off{background:#2a1b1e;color:#ff9b9b;border-color:#6e343b}'
-        . '.bug-canvas{display:block;margin:auto;width:min(100%,1120px,max(310px,calc((100vh - 300px)*1.6)));height:auto;background:#f4f1ea;border-radius:10px}'
-        . '@supports(height:100dvh){.bug-canvas{width:min(100%,1120px,max(310px,calc((100dvh - 300px)*1.6)))}}'
         . '[data-role=learning].is-learning-on{background:var(--mint);color:#061510;border-color:var(--mint);font-weight:700}'
         . '[data-role=learning].is-learning-off{background:#2a1b1e;color:#ff9b9b;border-color:#6e343b}'
+        . '.bug-stage{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:12px;align-items:start}'
+        . '.bug-canvas{display:block;justify-self:center;width:min(100%,max(310px,calc((100vh - 190px)*1.6)));height:auto;background:#f4f1ea;border-radius:10px}'
+        . '@supports(height:100dvh){.bug-canvas{width:min(100%,max(310px,calc((100dvh - 190px)*1.6)))}}'
+        . '.bug-stats{background:#0b1218;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--muted)}'
+        . '.bug-stats .st-age{font:600 22px/1.1 var(--display);color:var(--text)}.bug-stats .st-sub{font:11px var(--mono);color:var(--muted);margin:2px 0 10px}'
+        . '.bug-stats canvas{display:block;width:100%;height:auto;margin:0 0 8px}.bug-stats .st-row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-top:1px solid #16212b}'
+        . '.bug-stats .st-row b{font:600 13px var(--mono);color:var(--text)}.bug-stats .st-key{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:baseline}'
+        . '.bug-stats .st-trend{margin:8px 0 0;color:var(--text);line-height:1.4}'
         . '.bug-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.bug-pair h3,.bug-pair p{margin:0 0 6px}'
-        . '.bug-pair canvas,.bug-pair .bug-canvas{display:block;width:100%;height:auto;background:#f4f1ea;border-radius:10px}'
-        . '.showcase-donate-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-top:12px;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:#0f1720;font-size:13px}'
-        . '@media(max-width:620px){.bug-pair{grid-template-columns:1fr}.bug-shell{padding:10px}.ex-panel{padding:12px}}</style>';
+        . '.bug-pair .bug-stage{grid-template-columns:1fr}.bug-pair .bug-canvas{width:100%}'
+        . '.ex-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:10px;font-size:12.5px}'
+        . '.ex-version{font:11.5px var(--mono);color:var(--muted);padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:#0d151d}.ex-version b{color:var(--mint);font-weight:500}'
+        . '.ex-foot .button{margin-left:auto}'
+        . '@media(max-width:900px){.bug-stage{grid-template-columns:1fr}.bug-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 16px}.bug-stats canvas{height:70px}}'
+        . '@media(max-width:620px){.bug-pair{grid-template-columns:1fr}.bug-shell{padding:8px}.ex-panel{padding:10px}.ex-foot .button{margin-left:0}}</style>';
     return layout('Explore · Compute Lab', $body, $base, $nav, ['shell' => 'bug-shell', 'head' => $style]);
 }
 
-/* The tab router for /explore: shows the panel named by the URL hash, loads that demo's scripts once, and
- * tells the demo it is visible. Demos register themselves on window.ExploreDemos[id] = {show(panel), hide()}. */
+/* The view switcher for /explore (the header's Explore dropdown links to /explore#<id>): shows the panel named by the
+ * URL hash (no reload when already on /explore), loads that demo's scripts once, marks the dropdown entry, and tells
+ * the demo it is visible. Demos register themselves on window.ExploreDemos[id] = {show(panel), hide()}. */
 function exploreRouterJs(): string
 {
     return <<<'JS'
 (function () {
   var root = document.querySelector('.ex'); if (!root) return;
-  var panels = [].slice.call(document.querySelectorAll('.ex-panel[data-demo]')), tabs = [].slice.call(document.querySelectorAll('.ex-tab[data-tab]'));
+  var panels = [].slice.call(document.querySelectorAll('.ex-panel[data-demo]')), menu = [].slice.call(document.querySelectorAll('.cl-drop-menu a'));
   var ids = panels.map(function (p) { return p.getAttribute('data-demo'); }), loaded = {}, current = null;
   window.ExploreDemos = window.ExploreDemos || {};
   window.ExploreSite = { design: root.getAttribute('data-design'), replayBase: root.getAttribute('data-replay-base'), version: root.getAttribute('data-version'),
@@ -1015,14 +1023,16 @@ function exploreRouterJs(): string
     if (current && current !== id && window.ExploreDemos[current] && window.ExploreDemos[current].hide) window.ExploreDemos[current].hide();
     current = id;
     panels.forEach(function (p) { p.hidden = p.getAttribute('data-demo') !== id; });
-    tabs.forEach(function (t) { var on = t.getAttribute('data-tab') === id; t.classList.toggle('is-active', on); if (on) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current'); });
+    menu.forEach(function (a) { var on = (a.getAttribute('href') || '').split('#')[1] === id; a.classList.toggle('is-on', on); if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
     var panel = document.getElementById('demo-' + id);
+    document.title = panel.getAttribute('data-title') + ' · Explore · Compute Lab';
     scriptsFor(id).reduce(function (p, src) { return p.then(function () { return load(src); }); }, Promise.resolve()).then(function () {
       if (current === id && window.ExploreDemos[id] && window.ExploreDemos[id].show) window.ExploreDemos[id].show(panel);
     }).catch(function (e) { var st = panel.querySelector('.ex-stage,.bug-status-bar'); if (st) st.textContent = 'This demo could not load. Refresh the page to try again.'; });
   }
-  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); window.scrollTo(0, 0); });
   show(location.hash ? location.hash.slice(1) : (root.getAttribute('data-compare') === '1' ? 'arena' : ids[0]));
+  window.scrollTo(0, 0);
 })();
 JS;
 }

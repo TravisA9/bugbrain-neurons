@@ -1368,5 +1368,22 @@ check(!App::etagMatches('', $tag) && !App::etagMatches('"R135-read-0000000000000
 array_map('unlink', glob($exDir . '/*'));
 rmdir($exDir);
 
+$repoRoot = dirname(__DIR__, 3);
+$bundleCheck = static function (string $ref) use ($repoRoot): int {
+    exec('cd ' . escapeshellarg($repoRoot) . ' && node tools/build_bugbrain_bundle.js --ref ' . escapeshellarg($ref) . ' --check 2>&1', $out, $code);
+    return $code;
+};
+$bundleHead = (string) fgets(fopen(dirname(__DIR__) . '/private/bugbrain.js', 'r'));
+preg_match('/from commit ([0-9a-f]{40}) \(([0-9a-f]+)\)/', $bundleHead, $bundleRef);
+check(isset($bundleRef[1]) && $bundleRef[2] === $bundleRef[1] && $bundleCheck(substr($bundleRef[1], 0, 8)) === 0 && $bundleCheck($bundleRef[1]) === 0,
+    'the engine bundle header names the full commit sha, and --check passes with the short or the full ref');
+$captionsOk = true;
+foreach (exploreDemos() as $demo) {
+    if (strlen($demo['blurb']) > 140 || strpos($demo['blurb'], "\n") !== false) {
+        $captionsOk = false;
+    }
+}
+check($captionsOk && count(exploreDemos()) === 6, 'every Explore view has a one-line caption (at most 140 characters)');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);
