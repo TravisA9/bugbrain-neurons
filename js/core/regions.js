@@ -72,28 +72,38 @@ function attachSparse(G, sp) {              // G.W / P / C: dense on first read 
     get() { mat(); return M[key]; }, set(v) { M.done = true; M[key] = v; if (v === null) G.sp = null; } });
   return G;
 }
-function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, gd) {
+function granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, gd, nL2) {
   // v44 (R94): claw counts from P.granK / P.granKmin if set, else the plan gene d.gran.K / d.gran.Kmin (deepURSx3 v44: 4 / 3), else 3 (v41-v43); P.granK without P.granKmin = all granules granK claws
   const gK = params.granK != null ? (params.granK || 2) : gd && gd.K > 0 ? gd.K : 3, gKm = params.granKmin > 0 ? params.granKmin : params.granK == null && gd && gd.Kmin > 0 ? gd.Kmin : 0;
-  const oi = parts.indexOf(outPart), og = outPart.g, K = Math.max(1, Math.min(4, Math.round(gK))), Km = gKm > 0 ? Math.max(1, Math.min(K, Math.round(gKm))) : K, W = params.granW > 0 ? params.granW : 80;
+  const oi = parts.indexOf(outPart), og = outPart.g, K = Math.max(1, Math.min(params.granDeep > 0 ? 1 + parts.length : 4, Math.round(gK))), Km = gKm > 0 ? Math.max(1, Math.min(K, Math.round(gKm))) : K, W = params.granW > 0 ? params.granW : 80;
   let mi = -1; for (let i = og.nIn; i < og.nIn + og.nHid; i++) if (og.mix && og.mix[i]) { mi = i; break; }
   const th = params.granThr > 0 ? params.granThr : mi >= 0 ? og.thresh[mi] : 20, lk = mi >= 0 ? og.leak[mi] : 0.9;
-  const oth = parts.filter(p => p !== outPart), other = oth[0], srcs = [[outPart, params.granC0 >= 0 ? params.granC0 : 0], [outPart, 2], [other, 2], [oth[1] || other, 2]].slice(0, K);   // R84: 4th source = the second context region's cls 2 (t-3)
+  const oth = parts.filter(p => p !== outPart), other = oth[0], srcs = [[outPart, params.granC0 >= 0 ? params.granC0 : 0], [outPart, 2], [other, 2], [oth[1] || other, 2]].concat(params.granDeep > 0 ? oth.slice(2).map(p => [p, 2]) : []).slice(0, K);   // R84: 4th source = the second context region's cls 2 (t-3)   // R134 granDeep (P.granDeep = 1; off = unchanged): lag depth = the delay-line length: one claw source per further region's cls 2 (t-4, ...), K cap 1 + #regions
   const colsOf = ([p, c]) => { const m = new Map(); for (let i = p.g.nIn; i < p.g.nIn + p.g.nHid; i++) if (p.g.cellType[i] === N_FIXED + c && p.g.topo && !isNaN(p.g.topo[i])) { const k = Math.round(p.g.topo[i] * 1e4); if (!m.has(k)) m.set(k, []); m.get(k).push(node(p, i)); } return m; };
   const C = srcs.map(colsOf), r = mulberry32((seed ^ 0x6a7a11) >>> 0);
   G.gran = new Uint8Array(G.N);
   if (gd && gd.lrT > 0) G.granSch = { T: gd.lrT, late: gd.lrLate > 0 ? gd.lrLate : 0 };   // v47 (R114): plan gene d.gran.lrT / lrLate = the granule step schedule (net.js granStep; P.granLrT overrides, P.granLrT=0 = fixed granLr)
   // R102 granDemand (P.granDemand > 0): do not draw random claws. The same granN cells stay reserved (the cap) and net.js
   // wires a claw when that lag window has co-occurred granCo times. Off: the loop below is the v41–v44 random claw, unchanged.
+  const packSrc = () => C.map(m => { const keys = [...m.keys()].sort((a, b) => a - b), off = new Int32Array(keys.length + 1); let n = 0; for (const k of keys) n += m.get(k).length; const cells = new Int32Array(n); let p = 0;
+    for (let i = 0; i < keys.length; i++) { off[i] = p; const S = m.get(keys[i]); for (let t = 0; t < S.length; t++) cells[p++] = S[t]; } off[keys.length] = p; return { keys: Int32Array.from(keys), off, cells }; });
+  const chunkPart = gd && gd.chunkFrac > 0 ? parts.find(p => p.R && p.R.name === 'chunk context') : null;
+  const Cchunk = chunkPart ? colsOf([chunkPart, 2]) : null, jChunk0 = Cchunk && Cchunk.size ? Math.floor(nG * (1 - gd.chunkFrac)) : nG;
   if (!(params.granDemand > 0)) {
+    const rsv0 = params.granReserve > 0 && params.granUtility === 2 ? Math.max(0, nG - Math.round(params.granReserve)) : -1;
+    const l2 = nL2 > 0 && params.granUtility === 2 ? nG - nL2 : -1, nG1 = l2 >= 0 ? l2 : nG;   // R138 granL2: cells [l2, nG) = the level-2 pool (no claws, no RNG draws)
+    const nB = params.granGrow > 1 && params.granUtility === 2 ? Math.round(nG1 / params.granGrow) : -1;   // R136 granGrow: born part of the pool
+    const pk = packSrc(), keyIdx = pk.map(s => { const m = new Map(); for (let i = 0; i < s.keys.length; i++) m.set(s.keys[i], i); return m; }), initKeys = new Array(nG);
   for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk;
+    if ((rsv0 >= 0 && j >= rsv0) || (nB >= 0 && j >= nB) || (l2 >= 0 && j >= l2)) { initKeys[j] = null; continue; }   // (R136 granGrow: unborn cells too, no RNG draws)   // R119 granReserve: the last granReserve granules grow no claws (recruited later by granUtility 2); no RNG draws
     const k = Km === K ? K : Km + ((r() * (K - Km + 1)) | 0);   // R84 granKmin: each granule takes k in [granKmin, granK] claws from the first k sources (lags t .. t-k+1; a mixture of n-gram orders)
-    for (let c = 0; c < k; c++) { const m = C[c], keys = [...m.keys()]; if (!keys.length) continue; const S = m.get(keys[(r() * keys.length) | 0]), ws = W / k / S.length; for (const A of S) acc.add(A, b, ws, 0, 0); } }
+    let ik = String(k);
+    for (let c = 0; c < k; c++) { const useCh = j >= jChunk0 && c === k - 1, m = useCh ? Cchunk : C[c], keys = [...m.keys()]; if (!keys.length) continue; const chosen = keys[(r() * keys.length) | 0], S = m.get(chosen), ws = W / k / S.length; for (const A of S) acc.add(A, b, ws, 0, 0); ik += ',' + (useCh ? 'c' + chosen : keyIdx[c].get(chosen)); }
+    initKeys[j] = ik; }
+    Object.defineProperty(G, 'granSrc', { value: Object.assign(rsv0 >= 0 ? { K, Km, W, nG, gOff, src: pk, initKeys, rsv0 } : { K, Km, W, nG, gOff, src: pk, initKeys }, nB >= 0 ? { nAct0: nB } : {}, l2 >= 0 ? { l2 } : {}), writable: true, configurable: true, enumerable: false });
   } else {
     for (let j = 0; j < nG; j++) { const b = gOff + j; G.gran[b] = 1; G.pos[b] = [3 + 0.5 * Math.cos(j), 0.5 + 0.5 * Math.sin(j * 1.7)]; G.cellType[b] = N_FIXED + 15; G.region[b] = oi; G.thresh[b] = th; G.leak[b] = lk; }
-    const src = C.map(m => { const keys = [...m.keys()].sort((a, b) => a - b), off = new Int32Array(keys.length + 1); let n = 0; for (const k of keys) n += m.get(k).length; const cells = new Int32Array(n); let p = 0;
-      for (let i = 0; i < keys.length; i++) { off[i] = p; const S = m.get(keys[i]); for (let t = 0; t < S.length; t++) cells[p++] = S[t]; } off[keys.length] = p; return { keys: Int32Array.from(keys), off, cells }; });
-    Object.defineProperty(G, 'granDemand', { value: { K, Km, W, nG, gOff, src }, writable: true, configurable: true, enumerable: false });
+    Object.defineProperty(G, 'granDemand', { value: { K, Km, W, nG, gOff, src: packSrc() }, writable: true, configurable: true, enumerable: false });
   }
   // taught prediction cells: cells of the output region with plastic inputs that an env input contacts
   const pl = new Uint8Array(G.N), ins = new Uint8Array(G.N);
@@ -119,14 +129,18 @@ function growRegions(d, opts) {
   // (instead of f x more synapses each f x weaker). bit 1: 'all' tracts (cortex mixing / M2 / M3 -> striatum): pair probability p / f_src;
   // bit 2: claw / topo tracts (context columns -> mixing, M2 -> context): each target keeps ~S / f of the column's cells at f x weight;
   // bit 4: plastic synapses inside a sized region (C / mixing -> prediction) kept with probability 1 / f at f x strength.
-  const thF = params.thinF | 0, hash01 = (a, b, s) => { let h = (Math.imul(a, 0x9e3779b1) ^ Math.imul(b + 0x632be5ab, 0x85ebca6b) ^ (s | 0)) >>> 0; h = Math.imul(h ^ (h >>> 16), 0x7feb352d) >>> 0; h = Math.imul(h ^ (h >>> 15), 0x846ca68b) >>> 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+  const thF = (params.thinF | 0) || (params.scaleInvariant > 0 ? 7 : 0), hash01 = (a, b, s) => { let h = (Math.imul(a, 0x9e3779b1) ^ Math.imul(b + 0x632be5ab, 0x85ebca6b) ^ (s | 0)) >>> 0; h = Math.imul(h ^ (h >>> 16), 0x7feb352d) >>> 0; h = Math.imul(h ^ (h >>> 15), 0x846ca68b) >>> 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
   // R83 GRANULE LAYER (global param granN, 0/undefined = off, bit-identical off): a dedicated combination population of granN cells
   // (cerebellar-granule-like), appended after the grown hidden cells. Each granule cell takes a sparse claw: ONE letter column from each of
   // granK sources (the output region's current-symbol memory cells cls 0 = t at read time (granC0), its M2 cells cls 2 = t-1, the first other region's cls 2 = t-2),
   // total weight granW, threshold / leak of a mixing cell (needs the coincidence), its own feedforward inhibition (granInh mV per granule
   // spike onto every granule cell, net.js), and plastic synapses onto every taught prediction cell (normalised like the other plastic inputs).
   const gN = params.granN != null ? params.granN : d.gran && d.gran.N > 0 ? d.gran.N : 0;   // v41: plan gene d.gran.N (deepURSx3), P.granN overrides
-  const nG = gN > 0 && parts.length > 1 && !envSpec.outcome ? Math.round(gN) : 0, gOff = off;   // (outcome tasks: no granule layer, like the outcome-repressed context areas)
+  const sFmax = Math.max(...parts.map(p => p.R.g && p.R.g.sc ? +p.R.g.sc.sizeF || 1 : 1)), L2b = params.granL2 > 0 ? params.granL2 : 0;
+  const gF = params.granScale > 0 ? Math.max(1, (L2b > 0 ? Math.min(sFmax, L2b) : sFmax) / params.granScale) : 1;   // R135 granScale (P.granScale = r > 0; off = unchanged): pool x max(1, largest region sizeF / r)
+  const gG = params.granGrow > 1 ? params.granGrow : 1;   // R136 granGrow (P.granGrow = cap factor > 1; off = unchanged): allocate gN x gF x granGrow cells, only the first gN x gF are born (claws); the rest are added on demand (net.js guRecruit)
+  const nL2 = L2b > 0 && gN > 0 ? (params.granL2N > 0 ? Math.round(params.granL2N) : Math.round(gN * Math.max(0, sFmax - L2b) / (params.granScale > 0 ? params.granScale : 1))) : 0;   // R138 granL2: level-2 pool (own cells, no claws), sized by brain size above the base b
+  const nG = gN > 0 && parts.length > 1 && !envSpec.outcome ? Math.round(gN * gF * gG) + nL2 : 0, gOff = off;   // (outcome tasks: no granule layer, like the outcome-repressed context areas)
   const nHid = off - nIn + nG, G = createNetGenome(nIn, nHid, nOut, true), N = G.N, acc = new SynAcc(1 << 16);
   const node = (p, i) => i < p.g.nIn ? (typeof p.map[i] === 'number' ? p.map[i] : -1) : i < p.g.nIn + p.g.nHid ? p.off + i - p.g.nIn : ((p === outPart || p.R.vote) ? nIn + nHid + i - p.g.nIn - p.g.nHid : -1);   // R43 (I53) vote: a module's own output copy sums onto the shared outputs
   G.pos = new Array(N); G.cellType = new Int16Array(N); G.region = new Uint8Array(N); G.topo = new Float32Array(N).fill(NaN);
@@ -175,10 +189,16 @@ function growRegions(d, opts) {
     else if (T.map === 'outReset') {   // R43 (I55): the output (prediction) cell named T.from.out inhibits every cell of class T.to.cls of the target region (a predicted word boundary resets it)
       const m = envSpec.outputs.findIndex(o => o.name === T.from.out); if (m >= 0) { const A = nIn + nHid + m;
         for (let i = dst.g.nIn; i < dst.g.nIn + dst.g.nHid; i++) if (dst.g.cellType[i] === N_FIXED + T.to.cls) { acc.add(A, node(dst, i), -T.to.w, 0, 0); nSyn++; } }
+    } else if (T.map === 'chunkGate') {   // Two-timescale hierarchical chunking gate: pulses target region's gate cells (tract 'cgate') on chunk boundaries / high cortical prediction surprise
+      const gNodes = [], gW = [], tName = (T.to && T.to.tract) || 'cgate';
+      for (const [name, , B, w] of dst.arrivals || []) if (name === tName) { gNodes.push(B); gW.push(w * (T.gain || 1)); nSyn++; }
+      const go2Ids = []; for (let i = 0; i < nIn; i++) if (envSpec.inputs[i] && envSpec.inputs[i].group === 'go2') go2Ids.push(i);
+      if (!G.chunkGates) Object.defineProperty(G, 'chunkGates', { value: [], writable: true, configurable: true, enumerable: false });
+      G.chunkGates.push({ region: T.to.region, nodes: Int32Array.from(gNodes), weights: Float32Array.from(gW), go2: Int32Array.from(go2Ids), thr: T.thr != null ? T.thr : 0.4, delimSym: T.delimSym != null ? T.delimSym : 0, maxLag: T.maxLag || 6 });
     }
     tractStats.push({ name: T.name, from: src.R.name, to: dst.R.name, columns: cols.size, synapses: nSyn });
   }
-  if (nG) granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, d.gran);
+  if (nG) granuleLayer(G, parts, outPart, node, acc, nG, gOff, nIn, nHid, seed, d.gran, nL2);
   attachSparse(G, acc.finish(N, params.wMax));   // (+ the wMax cap of the old dense merge)
   gcHint();
   const og = outPart.g; G.pl = og.pl; G.nCh = og.nCh; G.ch = og.ch.map(c => Object.assign({}, c));

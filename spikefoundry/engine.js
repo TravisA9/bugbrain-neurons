@@ -246,7 +246,11 @@
     }
     const precision = tp / (tp + fp || 1), recall = tp / (tp + fn || 1), f1 = 2 * precision * recall / (precision + recall || 1);
     const accuracy = exact / n, complexity = net.nodes.length + net.edges.length, meanSpikes = spikes / n;
-    const quality = clamp(accuracy - .0015 * complexity - .00025 * meanSpikes, 0, 1);
+    // Exact-match accuracy rewards true negatives, so a silent net can score well on
+    // imbalanced tasks (sequence is often ~75% label 0). If the eval has positives and
+    // the design never produces a true positive, it has not solved the task.
+    let quality = clamp(accuracy - .0015 * complexity - .00025 * meanSpikes, 0, 1);
+    if ((tp + fn) > 0 && tp === 0) quality = 0;
     return { accuracy, precision, recall, f1, falseSpikes: fp, missedSpikes: fn, spikes, meanSpikes, meanLatency: latencyN ? latencies / latencyN : 0, n, complexity, neurons: net.nodes.length, synapses: net.edges.length, quality, trueNegatives: tn, synthetic: true };
   }
   function robustScore(g, taskId, budget, rng) {
@@ -269,7 +273,7 @@
     for (const id of Object.keys(BASE_TASKS)) preview[id] = randomGenome(id, rng);
     return {
       seed: seed == null ? 1 : seed >>> 0, rng, model: makeMLP(rng), batch: 0, tested: 0, examples: 0,
-      activePhase: 1, selectedTask: 'coincidence', history: [], logs: [], explore: .35, preview,
+      activePhase: 1, selectedTask: 'coincidence', history: [], logs: [], explore: .35, preview, evaluations: [],
       best: maps.best, candidates: maps.candidates, bestByTopology: maps.bestByTopology,
       budget: Object.assign({}, LAB_BUDGET, budget || {}),
       note: 'Synthetic spike-pattern match. Not a BugBrain accuracy.',
@@ -282,6 +286,11 @@
       if (allow && allow.indexOf(id) < 0) return false;
       return t.phase <= (state.budget.maxPhase || 6) && t.phase <= state.activePhase;
     });
+  }
+  function heldOutPromotion(best) {
+    if (!best || best.synthetic !== true || best.heldOut == null) return false;
+    const spikes = best.meanSpikes == null ? 999 : best.meanSpikes;
+    return best.heldOut >= 0.62 && spikes <= 80;
   }
   function designSignature(g) { return [g.topology, g.nodes || 0, g.depth || 1, g.wa.toFixed(2), g.wb.toFixed(2), g.thr.toFixed(2), g.decay.toFixed(2)].join('|'); }
   function makeCandidate(state, taskId) {
@@ -300,16 +309,19 @@
     const nItems = budget.items || 4;
     for (let i = 0; i < nItems; i++) {
       const task = pool[i % pool.length];
-      const g = makeCandidate(state, task);
+      const randomArm = (((state.evaluations && state.evaluations.length) || 0) + items.length) % 10 === 9;
+      const g = randomArm ? randomGenome(task, state.rng) : makeCandidate(state, task);
       const x = features(g, task);
+      const started = Date.now();
       const train = scoreDesign(g, task, false, 0, budget, state.rng);
       const validation = robustScore(g, task, budget, state.rng);
-      items.push({ task, g, x, train, validation });
+      const evalMs = Date.now() - started;
+      items.push({ task, g, x, train, validation, evalMs, randomArm });
     }
     for (const item of items) {
       train(state.model, item.x, item.train.quality);
       state.tested++; state.examples += item.train.n;
-      const candidate = { id: state.batch + '-' + item.task, task: item.task, g: item.g, score: item.validation.quality, accuracy: item.validation.accuracy, f1: item.validation.f1, neurons: item.validation.neurons, synapses: item.validation.synapses, n: item.validation.n, synthetic: true, batch: state.batch };
+      const candidate = { id: state.batch + '-' + item.task, task: item.task, g: item.g, score: item.validation.quality, heldOut: item.validation.quality, meanSpikes: item.validation.meanSpikes, accuracy: item.validation.accuracy, f1: item.validation.f1, neurons: item.validation.neurons, synapses: item.validation.synapses, n: item.validation.n, synthetic: true, batch: state.batch };
       const list = state.candidates[item.task];
       const signature = designSignature(item.g);
       if (!list.some(old => designSignature(old.g) === signature)) { list.unshift(candidate); if (list.length > 8) list.length = 8; }
@@ -317,9 +329,17 @@
       if (!prevTop || candidate.score > prevTop.score) state.bestByTopology[item.task][item.g.topology] = candidate;
       const old = state.best[item.task];
       if (!old || item.validation.quality > old.score) state.best[item.task] = candidate;
+      if (!state.evaluations) state.evaluations = [];
+      state.evaluations.push({
+        taskId: item.task, taskVersion: 'base-1', genome: item.g,
+        metrics: { quality: item.validation.quality, accuracy: item.validation.accuracy, f1: item.validation.f1, precision: item.validation.precision, recall: item.validation.recall, train: item.train.quality, heldOut: item.validation.quality, arm: item.randomArm ? 'random' : 'designer' },
+        neurons: item.validation.neurons, synapses: item.validation.synapses,
+        spikes: Math.round(item.validation.spikes || 0), evalMs: item.evalMs || 0, seed: state.seed,
+      });
+      if (state.evaluations.length > 64) state.evaluations.shift();
     }
     const phaseTasks = pool.filter(id => BASE_TASKS[id].phase === state.activePhase);
-    if (phaseTasks.length && phaseTasks.every(id => state.best[id] && state.best[id].score >= .91) && state.activePhase < (budget.maxPhase || 6)) state.activePhase++;
+    if (phaseTasks.length && phaseTasks.every(id => heldOutPromotion(state.best[id])) && state.activePhase < (budget.maxPhase || 6)) state.activePhase++;
     const evaluated = Object.keys(state.best).filter(id => state.best[id]).map(id => state.best[id].score);
     const batchMean = items.reduce((s, item) => s + item.validation.quality, 0) / items.length;
     const bestMean = evaluated.reduce((s, v) => s + v, 0) / Math.max(1, evaluated.length);
@@ -360,11 +380,74 @@
     }));
     return { synthetic: true, batches: state.batch, tested: state.tested, phase: state.activePhase, tasks: rows, note: 'Synthetic spike-pattern match on generated examples. Not BugBrain accuracy.' };
   }
+  function simulateFrozen(net, seq, traceTiming = false) {
+    const count = net.neurons.length;
+    const mem = Array(count).fill(0);
+    const spike = Array(count).fill(0);
+    const fired = Array(net.outputs.length).fill(false);
+    const firstSpike = traceTiming ? Array(net.outputs.length).fill(null) : null;
+    let total = 0;
+    const horizon = seq.length + 4;
+    const inbox = Array.from({ length: horizon + 6 }, () => Array(count).fill(0));
+    for (let t = 0; t < horizon; t++) {
+      for (let i = 0; i < net.inputs.length; i++) spike[net.inputs[i]] = t < seq.length ? (seq[t][i] || 0) : 0;
+      for (let i = 0; i < count; i++) {
+        const neuron = net.neurons[i];
+        if (neuron.kind === 'input') continue;
+        mem[i] = neuron.leak * mem[i] + inbox[t][i];
+        spike[i] = 0;
+        if (mem[i] >= neuron.thr) {
+          spike[i] = 1;
+          mem[i] = 0;
+          total++;
+          const outIndex = net.outputs.indexOf(i);
+          if (outIndex >= 0) {
+            if (firstSpike && !fired[outIndex]) firstSpike[outIndex] = t;
+            fired[outIndex] = true;
+          }
+        }
+      }
+      for (let e = 0; e < net.edges.length; e++) {
+        const edge = net.edges[e];
+        if (!spike[edge.from]) continue;
+        const when = t + edge.delay + 1;
+        if (when < inbox.length) inbox[when][edge.to] += edge.weight;
+      }
+    }
+    const result = { outputs: fired.map(Boolean), spikeCount: total };
+    if (firstSpike) result.firstSpike = firstSpike;
+    return result;
+  }
   function network(g, taskId) { return compileSNN(g, taskId); }
+  const INVERSE_GENES = [[-0.8, 0, 0.8, 1.2], [-0.8, 0, 0.8, 1.2], [0, 1, 2], [0, 1, 2], [0.65, 1.25], [0, 0.65], [0, 0.4]];
+  function inverseCircuit(genes) {
+    if (!Array.isArray(genes) || genes.length !== INVERSE_GENES.length ||
+        !genes.every((value, i) => Number.isInteger(value) && value >= 0 && value < INVERSE_GENES[i].length)) {
+      throw new Error('Invalid temporal circuit genes');
+    }
+    const [a, b, delayA, delayB, threshold, leak, feedback] = genes.map((index, i) => INVERSE_GENES[i][index]);
+    const neurons = [
+      { kind: 'input', thr: 1, leak: 0 }, { kind: 'input', thr: 1, leak: 0 },
+      { kind: 'lif', thr: threshold, leak }, { kind: 'output', thr: 1, leak: 0 },
+    ];
+    const edges = [{ from: 2, to: 3, weight: 1, delay: 0 }];
+    if (a) edges.push({ from: 0, to: 2, weight: a, delay: delayA });
+    if (b) edges.push({ from: 1, to: 2, weight: b, delay: delayB });
+    if (feedback) edges.push({ from: 2, to: 2, weight: feedback, delay: 0 });
+    return { neurons, edges, inputs: [0, 1], outputs: [3] };
+  }
   function sampleCase(taskId, index) {
     const sample = makeSample(taskId, index || 0, true, 0, mulberry32(1));
     return { task: publicTask(BASE_TASKS[taskId]), seq: sample.seq, label: sample.label, synthetic: true };
   }
+  function taskSamples(taskId, count, validation, seed) {
+    if (!BASE_TASKS[taskId]) return [];
+    const rng = mulberry32(seed == null ? 1 : seed);
+    const n = Math.max(0, Math.min(64, count || 0));
+    const out = [];
+    for (let i = 0; i < n; i++) out.push(makeSample(taskId, i, !!validation, 0, rng));
+    return out;
+  }
 
-  return { TOPOLOGIES, LAB_BUDGET, FULL_BUDGET, PILOT_BUDGET, taskList, createState, runBatch, checkpoint, restore, summary, scoreDesign, robustScore, network, sampleCase, compileSNN, simulateSNN, BASE_TASKS };
+  return { TOPOLOGIES, LAB_BUDGET, FULL_BUDGET, PILOT_BUDGET, taskList, createState, runBatch, checkpoint, restore, summary, scoreDesign, robustScore, network, sampleCase, taskSamples, compileSNN, simulateSNN, simulateFrozen, heldOutPromotion, BASE_TASKS, INVERSE_GENES, inverseCircuit };
 });

@@ -14,6 +14,10 @@ const WC = require('./wconfig.js');
 const ROOT = path.resolve(__dirname, '..'), ST = WC.STATE, CODE = process.env.BB_CODE_BRANCH || 'neuro/distributed-queue', QB = process.env.BB_QUEUE_BRANCH || 'queue';
 fs.mkdirSync(ST, { recursive: true });
 const NAME = WC.workerName(), TYPE = WC.deviceType(), TOKEN = WC.token(), STOP = path.join(ST, 'dq.stop');
+/* Compute Lab mode (BB_COORDINATOR_URL set): the coordinator controls this worker (Off/Allowance/Full, revoke), so the
+ * legacy queue-branch worker-config.json is not read; only the code branch is fetched for updates. */
+const COORD = !!process.env.BB_COORDINATOR_URL;
+const RELINK_EXIT = 12;   // coord.js: token changed after "needs re-link"; restart now, not a crash
 const say = s => console.log(`[${new Date().toLocaleString()}] [supervisor ${NAME}] ${s}`);
 // R61d: local status file (~/.bugbrain/status.json) so a worker that cannot push (e.g. token refused) still says why: cat ~/.bugbrain/status.json
 const status = (state, why) => { try { fs.writeFileSync(path.join(ST, 'status.json'), JSON.stringify({ worker: NAME, state, why: why || '', at: new Date().toISOString(), pid: process.pid }, null, 2) + '\n'); } catch (e) {} };
@@ -23,41 +27,105 @@ const redact = s => String(s || '').split(TOKEN || '\u0000').join('***').replace
 const git = a => cp.execFileSync('git', AUTH.concat(a), { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: ENV, timeout: 120e3 }).trim();
 const RUNTIME = process.env.BB_BUN || process.execPath;
 function fetchAll() {
-  try { git(['fetch', '-q', '--no-tags', 'origin', `+refs/heads/${CODE}:refs/bb/code`, `+refs/heads/${QB}:refs/bb/queue`]); return true; }
+  try { git(['fetch', '-q', '--no-tags', 'origin', `+refs/heads/${CODE}:refs/bb/code`].concat(COORD ? [] : [`+refs/heads/${QB}:refs/bb/queue`])); return true; }
   catch (e) { say('fetch failed (will retry): ' + redact(e.stderr || e.message).trim().split('\n').slice(-1)[0].slice(0, 160)); return false; }
 }
 function readCfg() {
+  if (COORD) return {};
   const cache = path.join(ST, 'worker-config.cache.json');
   try { const t = git(['show', 'refs/bb/queue:worker-config.json']); const c = JSON.parse(t); fs.writeFileSync(cache, t); return c; }
   catch (e) { try { return JSON.parse(fs.readFileSync(cache, 'utf8')); } catch (e2) { return {}; } }
 }
+/* Phase 1: the commit the coordinator wants (code-target.json, written by coord.js), or '' for the branch tip.
+ * Only in Compute Lab mode, and only when the commit is on the worker branch and knows about channels. */
+const CV = require('./codever.js');
+let targetNote = '', pinFailed = '';
+function wantedCommit() {
+  if (!COORD) return '';
+  const sha = CV.wanted(ST);
+  if (!sha) { targetNote = ''; return ''; }
+  if (sha === pinFailed) return '';   // switching failed at start: run the tip rather than restart every poll
+  const shallow = fs.existsSync(path.join(ROOT, '.git', 'shallow'));
+  const u = CV.usable(git, sha, 'refs/bb/code', shallow);
+  if (!u.ok) { const note = 'ignoring the coordinator\'s code version: ' + u.why + '; following the branch tip'; if (note !== targetNote) say(note); targetNote = note; return ''; }
+  targetNote = '';
+  return sha;
+}
+function checkoutCommit(sha) {
+  try { git(['checkout', '-q', '-f', '--detach', sha]); say('running code version ' + sha.slice(0, 7) + ' (' + ((CV.read(ST) || {}).channel || 'channel') + ', chosen by the coordinator)'); return true; }
+  catch (e) { say('could not switch to ' + sha.slice(0, 7) + ': ' + redact(e.stderr || e.message).trim().split('\n').slice(-1)[0].slice(0, 160)); return false; }
+}
 function newerCode() {
+  const want = wantedCommit();
+  if (want) { try { const h = git(['rev-parse', 'HEAD']); return h === want ? null : h.slice(0, 7) + ' -> ' + want.slice(0, 7) + ' (coordinator)'; } catch (e) { return null; } }
   try { const h = git(['rev-parse', 'HEAD']), c = git(['rev-parse', 'refs/bb/code']); if (h === c) return null;
     try { git(['merge-base', '--is-ancestor', c, h]); return null; } catch (e) { return h.slice(0, 7) + ' -> ' + c.slice(0, 7); } } catch (e) { return null; }
 }
 const keyOf = s => JSON.stringify([s.version, WC.dqArgs(s, NAME), s.mode]);
 let child = null, childStart = 0, fails = 0, restartWhy = '', backoffTimer = null, S, KEY, FORCE;
+const HEARTBEAT_STALE_MS = 5 * 60e3;
+/* A coord.js that stopped writing coord-alive.json for five minutes is stuck (it writes the file every control
+ * check-in, ~20 s, with ack false while the coordinator is unreachable or while it waits for a re-link), so kill it
+ * and let the normal exit handler restart it. All platforms and install types since Phase 0. A worker that never
+ * wrote the file since it started (still connecting) is left alone. */
+function staleCoordinator(alive, pid, startedAt, now) {
+  if (!alive || alive.pid !== pid) return false;
+  const at = Date.parse(alive.at);
+  return at >= startedAt && now - at > HEARTBEAT_STALE_MS;
+}
+function recoverStaleCoordinator() {
+  if (!child?.pid || !COORD || restartWhy) return;
+  let alive;
+  try { alive = JSON.parse(fs.readFileSync(path.join(ST, 'coord-alive.json'), 'utf8').replace(/^\uFEFF/, '')); }
+  catch (e) { return; }
+  if (!staleCoordinator(alive, child.pid, childStart, Date.now())) return;
+  // Exit via the normal child handler, which cleans up jobs and backs off before retrying.
+  say('coord.js has not written a check-in for five minutes (stuck); restarting worker');
+  if (process.platform === 'win32') { try { cp.execFileSync('taskkill', ['/T', '/F', '/PID', String(child.pid)], { stdio: 'ignore', windowsHide: true, timeout: 30000 }); } catch (e) {} return; }
+  try { process.kill(-child.pid, 'SIGKILL'); } catch (e) { if (e.code !== 'ESRCH') say(e.message); }
+}
+let errTail = [];
+/* Compute Lab: tell the coordinator when the worker crashes (exit code + last stderr lines), so the owner sees why a
+ * computer went quiet. run/diag.js scrubs the token, rate-limits, and caps the size. Never blocks the restart. */
+function reportCrash(code, sig, ran) {
+  try {
+    const D = require('./diag.js');
+    const tok = D.tokenFrom(process.env.BB_COORDINATOR_TOKEN_FILE || path.join(ST, 'coordinator-token'));
+    const last = errTail.length ? errTail[errTail.length - 1] : 'no error output';
+    const tooOld = D.nodeMajor() < 18;
+    const rep = D.collect({ kind: 'crash', ok: false, exitCode: code == null ? String(sig) : code, ranSeconds: Math.round(ran / 1000), restarts: fails,
+      summary: (tooOld ? 'Node ' + process.version + ' is too old; ' : '') + 'coord.js exited (' + (code == null ? sig : code) + ') after ' + Math.round(ran / 1000) + ' s: ' + last.slice(0, 160),
+      hint: tooOld ? 'Install Node.js 20 LTS and run the setup command again.' : '',
+      stderrTail: errTail.slice(-20), log: D.readFileTail(path.join(ST, 'worker.log'), 30) });
+    D.post(process.env.BB_COORDINATOR_URL, tok, rep, err => { if (err) say('could not send the crash report: ' + err.message); });
+  } catch (e) { say('crash report failed: ' + e.message); }
+}
 function startDq() {
   backoffTimer = null; if (child) return;
   try { fs.unlinkSync(STOP); } catch (e) {}
   const coord = process.env.BB_COORDINATOR_URL;
   const args = coord
-    ? ['run/coord.js', '--url', coord, '--token-file', process.env.BB_COORDINATOR_TOKEN_FILE || require('path').join(ST, 'coordinator-token')]
+    ? ['run/coord.js', '--url', coord, '--token-file', process.env.BB_COORDINATOR_TOKEN_FILE || require('path').join(ST, 'coordinator-token'), '--stop-file', STOP]
     : ['run/dq.js'].concat(WC.dqArgs(S, NAME), ['--stop-file', STOP]);
   say(`starting ${coord ? 'coord.js' : 'dq.js'} ${args.slice(1).join(' ')} (code ${git(['rev-parse', '--short', 'HEAD'])}, config ${S.version}, ${TYPE}${S.mode === 'pause' ? ', paused' : ''})`);
   childStart = Date.now(); status(S.mode === 'pause' ? 'paused' : 'running-dq', 'code ' + git(['rev-parse', '--short', 'HEAD']) + ', config ' + S.version);
-  child = cp.spawn(RUNTIME, args, { cwd: ROOT, stdio: 'inherit', env: ENV, detached: process.platform !== 'win32' });
-  child.on('error', e => say('cannot start dq.js: ' + e.message));
+  ENV.BB_SUP_RESTARTS = String(fails);
+  child = cp.spawn(RUNTIME, args, { cwd: ROOT, stdio: coord ? ['ignore', 'inherit', 'pipe'] : 'inherit', env: ENV, detached: process.platform !== 'win32' });
+  errTail = [];
+  if (coord && child.stderr) child.stderr.on('data', d => { process.stderr.write(d); for (const l of String(d).split(/\r?\n/)) if (l.trim()) { errTail.push(l.slice(0, 300)); if (errTail.length > 40) errTail.shift(); } });
+  child.on('error', e => { say('cannot start dq.js: ' + e.message); errTail.push('spawn error: ' + e.message); });
   const pg = child.pid;
   child.on('exit', (code, sig) => {
     child = null; const ran = Date.now() - childStart;
     if (process.platform !== 'win32') try { process.kill(-pg, 'SIGTERM'); } catch (e) {}   // no orphaned queue.js / job processes after a crash
     else killOrphans(pg);
+    if (code === RELINK_EXIT && COORD) { fails = 0; status('restarting', 'token or settings changed after needs re-link'); say('coord.js: token or settings changed after needs re-link; starting a fresh worker'); backoffTimer = setTimeout(startDq, 2000); return; }
     status(code === 3 ? 'token-refused' : 'dq-exited', code === 3 ? 'GitHub refused the token in ' + path.join(ST, 'token') + ' (replace it; the worker retries within a minute)' : 'dq.js exit ' + (code ?? sig));
     if (restartWhy) { say(`dq.js stopped (${code ?? sig}); restarting for: ${restartWhy}`); process.exit(10); }
     if (code === 10) { say('dq.js saw newer code; restarting via launcher'); process.exit(10); }
     if (code === 3) { say('GitHub refused the token (exit 3). Put a valid fine-grained token (Contents read/write on TravisA9/bugbrain-neurons) in ' + path.join(ST, 'token')); process.exit(3); }
     if (ran > 600e3) fails = 0; fails++;
+    if (process.env.BB_COORDINATOR_URL) reportCrash(code, sig, ran);
     const w = Math.min(600e3, 15e3 * 2 ** Math.min(fails - 1, 6));
     say(`dq.js exited (${code ?? sig}) after ${Math.round(ran / 1000)} s; restarting in ${Math.round(w / 1000)} s`);
     backoffTimer = setTimeout(startDq, w);
@@ -91,13 +159,25 @@ function poll() {
 function main() {
   process.on('SIGTERM', () => { killTree(); process.exit(0); }); process.on('SIGINT', () => { killTree(); process.exit(0); });
   const w = WC.tokenWarn(); if (w) say(w);
-  if (!TOKEN) say('no token file (' + path.join(ST, 'token') + '): pushes use this computer\'s own git login; if GitHub refuses it, dq.js stops with exit 3 and says so');
+  if (!TOKEN && !COORD) say('no token file (' + path.join(ST, 'token') + '): pushes use this computer\'s own git login; if GitHub refuses it, dq.js stops with exit 3 and says so');
   fetchAll(); S = WC.resolve(readCfg(), NAME, TYPE); KEY = keyOf(S); FORCE = S.forceVersion;
-  const nc = newerCode(); if (nc) { say('code is behind (' + nc + '); restarting via launcher'); process.exit(10); }
+  /* The launcher always resets the checkout to the branch tip; when the coordinator chose another commit, switch to
+   * it here (before coord.js starts) instead of restarting, or launcher and supervisor would loop. */
+  const want = wantedCommit();
+  if (want) { let h = ''; try { h = git(['rev-parse', 'HEAD']); } catch (e) {} if (h !== want && !checkoutCommit(want)) pinFailed = want; }
+  else { const nc = newerCode(); if (nc) { say('code is behind (' + nc + '); restarting via launcher'); process.exit(10); } }
   say(`worker ${NAME} (${TYPE}), mode ${S.mode}, config version ${S.version}, polling every ${process.env.BB_POLL_MS ? process.env.BB_POLL_MS + ' ms' : S.pollMinutes + ' min'}`);
   if (S.mode === 'pause') { say('paused by worker-config.json; polling'); status('paused', 'worker-config.json'); }
   startDq();
+  /* Install the watchdog (repeating task trigger / systemd timer / cron line) if this computer lacks it. Runs after
+   * the worker started, so a slow or failing PowerShell never delays work; the result goes to ~/.bugbrain/watchdog.json. */
+  if (process.env.BB_COORDINATOR_URL && process.env.BB_WATCHDOG !== 'off') setTimeout(() => {
+    try { const r = require('./watchdog.js').ensure(); say('watchdog: ' + (r.ok ? r.kind + (r.kept ? ' (kept previous; last check: ' + (r.why || 'failed') + ')' : (r.changed ? ' (set up: ' + r.changed + ')' : ' (already set up)')) : 'none (' + (r.why || 'unknown') + ')')); }
+    catch (e) { say('watchdog check failed: ' + ((e && e.message) || e)); }
+  }, 3000).unref();
   const every = +(process.env.BB_POLL_MS || Math.max(1, +S.pollMinutes || 10) * 60e3);
   setInterval(poll, every);
+  setInterval(recoverStaleCoordinator, 30e3).unref();
 }
-main();
+if (require.main === module) main();
+module.exports = { staleCoordinator, HEARTBEAT_STALE_MS, RELINK_EXIT };

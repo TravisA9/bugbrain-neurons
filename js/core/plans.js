@@ -90,7 +90,7 @@ function createHandCellGenomeV2() {
 //   TURNING SENSORS feed X: turning left excites left X, which inhibits the right M that caused
 //   the turn, so the memory is used up as the bug turns (a first step toward path integration).
 function createHandCellGenome(tune) {
-  const T = Object.assign({ t7: 0, s7: 0.3, leak: 1, clen: -1.5 }, tune);
+  const T = Object.assign({ t7: 0, s7: 0.3, leak: 1, clen: -1.5, motor: 0 }, tune);
   const d = createHandCellGenomeV2(), H = CH_H, R = d.R;
   const r = (out, gene, v) => { R[out * (H + 1) + gene] = v; }, rb = (out, v) => { R[out * (H + 1) + H] = v; };
   const fate = (out, L) => { let b = 0; [2, 3, 4, 5, 8, 9].forEach((gene, j) => { r(out, gene, L[j] / 2); b += L[j] / 2; }); rb(out, b); };
@@ -100,6 +100,7 @@ function createHandCellGenome(tune) {
   fate(CO.T8, [-5, -5, -5, -5, -5, 5]);                      // X receive the turning sensors
   fate(CO.PROJ, [-5, -5, -5, -5, 5, -5]);                    // M: main axon = projection to the motors only
   fate(CO.CLEN, [-5, -5, -5, -5, T.clen, -5]);               // M collateral length
+  if (T.motor !== 0) fate(CO.S + 4, [5, 5, -0.85, -0.85, T.motor, -5]);
   d.label = 'hand-designed body plan v3 (slow recurrent memory + turning sensors)';
   return d;
 }
@@ -109,6 +110,12 @@ registerPlan('v2', 'plan v2 (interneurons)', createHandCellGenomeV2, 'v1 + centr
 registerPlan('v3', 'plan v3 (slow recurrent memory)', () => createHandCellGenome(), 'v2 + slow self-exciting memory populations, mutual inhibition, turning sensors');
 // v8: plan v3 + HUNGER (need-based attraction): outputs / sensors that are under-connected attract axons and relax
 // tag matching until satisfied. In v3 the speed motor is otherwise an orphan (no input) in every growth.
-registerPlan('v3h', 'plan v3h (v3 + hunger)', () => { const d = createHandCellGenome(); d.sc.hunger = 2; d.label = 'plan v3 + hunger signals'; return d; },
+function tunedBugGenome(tune) {
+  const d = createHandCellGenome(tune);
+  d.sc.hunger = 2;
+  d.label = 'plan v3 + hunger signals';
+  return d;
+}
+registerPlan('v3h', 'plan v3h (v3 + hunger)', () => tunedBugGenome(),
   'v3 + hunger signals: under-connected motors / sensors attract axons until satisfied (no orphan motors)');
-Object.assign(SpikingArena, { createHandCellGenomeV1, createHandCellGenomeV2, createHandCellGenome });
+Object.assign(SpikingArena, { createHandCellGenomeV1, createHandCellGenomeV2, createHandCellGenome, tunedBugGenome });

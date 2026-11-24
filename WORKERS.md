@@ -123,3 +123,31 @@ invisible on the queue branch. Check locally: `cat ~/.bugbrain/status.json` (sta
 (`sh ~/bugbrain-neurons/run/install-linux.sh` or `install-termux.sh`); it now tests the saved token with a dry-run push
 (`run/token-check.sh`, nothing is created), asks for a new one if GitHub refuses it, never saves a refused token, and restarts
 the service. Replacing `~/.bugbrain/token` by hand also works: the launcher notices the change within a minute.
+
+## Self-healing Compute Lab worker (Phase 0, Nov 2026)
+- An HTTP 4xx the worker does not know (not 401/409/429) only makes that slot back off (1–10 min) and is reported in
+  diagnostics; the other slots keep running. A 409 protocol mismatch still restarts so the supervisor can update.
+- Revoked or missing token: the worker stays up as **needs re-link** (`~/.bugbrain/relink.json`, `status.json`), does
+  not crash-loop, re-tests the token every 30 min, and exits 12 as soon as `coordinator-token` or `computelab.env`
+  changes (re-running setup); the supervisor restarts it at once without counting a crash.
+- `coord-alive.json` carries `ack` (false while the coordinator is unreachable or during a re-link). The supervisor
+  restarts a coord.js that stopped writing it for 5 minutes, on every platform; setup only reports success on ack.
+- In Compute Lab mode the supervisor no longer reads the queue branch's `worker-config.json` (the site controls the
+  worker); only the code branch is fetched.
+- `run/worker.sh`: flock single instance (pid file kept for old launchers), Node 18+ looked up on every start (PATH,
+  computelab.env, nvm, fnm, Volta, /usr/local/bin, /usr/bin, /snap/bin), and a missing Node is reported to the site.
+  A running launcher picks this file up at its next restart (reboot, service restart, or setup).
+- `run/watchdog.js` health, sent with heartbeats and startup diagnostics: `linger` (Linux, report only), `maySleep`
+  (GNOME AC suspend or the Windows AC sleep timer), and the old GitHub-token `bugbrain-worker.service`: disabled and
+  moved to `~/.bugbrain/legacy-bugbrain-worker.service.bak` only when it is not running; a running one is only reported.
+- Tests: `node run/selfheal_test.js` (mock coordinator, launcher, watchdog health).
+
+## Code channels: stable and canary (Phase 1, Nov 2026)
+The coordinator's heartbeat reply can carry `code: { channel, ref }`. coord.js saves it to `~/.bugbrain/code-target.json`
+after each control check-in; the supervisor keeps the checkout on that commit (`git checkout --detach`) before it starts
+coord.js, and restarts gracefully after the current jobs when the target changes. `ref: ''` (canary by default) means
+"follow the branch tip"; a reply without `code` (older coordinator) removes the file, so the worker follows the tip as
+before. A target is only followed when it is on the worker branch and contains `run/codever.js` (channel support), so a
+pinned computer can always follow the next promotion; otherwise it is ignored with a log line. The heartbeat runtime
+reports `code` (the commit running). Owner console: set a computer to canary, promote canary to stable.
+Tests: `node run/channel_test.js` (save/clear, which commits may be followed, supervisor end to end on a clone).

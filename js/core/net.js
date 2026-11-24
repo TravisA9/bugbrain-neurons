@@ -54,7 +54,7 @@ class SpikingNet {
     //   bit 1: per-receiver INHIBITORY budget. preNorm budgets the plastic excitation per sender, inhibition is not budgeted, so a cell of an
     //   f x region gets ~f x the inhibitory inputs (R76: cortex E/I ~ f^-0.55). Each cell's fixed inhibitory inputs x n1x / n, n1x = their
     //   1x-equivalent count (an input from an f x region counts 1/f): the receiver's inhibitory total stays at its 1x value.
-    if ((params.recvBudget & 1) && g.regions && g.regions.some(r => r.sizeF > 1)) { this.N = N; const t = this.trophicS(), n = new Float32Array(N), e1 = new Float32Array(N);
+    if (((params.recvBudget & 1) || params.scaleInvariant > 0) && g.regions && g.regions.some(r => r.sizeF > 1)) { this.N = N; const t = this.trophicS(), n = new Float32Array(N), e1 = new Float32Array(N);
       for (let k = 0; k < E; k++) if (ws[k] < 0 && !plast[k]) { n[posts[k]]++; e1[posts[k]] += t[pres[k]]; }
       for (let k = 0; k < E; k++) if (ws[k] < 0 && !plast[k]) { const j = posts[k]; if (e1[j] < n[j]) { ws[k] *= e1[j] / n[j]; this.w0[k] = ws[k]; } } }
     this.pruning = g.prune && g.prune.tick > 0 ? g.prune : null; this.pruned = 0; this.tickNo = 0;
@@ -93,7 +93,9 @@ class SpikingNet {
       // reads the MEAN activity of its presynaptic pool, not the raw spike count: with a pool of n > mixInhRef cells each spike
       // inhibits by mixInh x mixInhRef / n. Without it the pool (and so the inhibition) grows with region size while every mixing
       // cell's excitation is normalised (mixNorm, claw w / column), so bigger brains silence the mixing layer (R78: order3 at 4x).
-      let np = 0; for (let i = 0; i < N; i++) np += mp[i]; const iR = params.mixInhRef > 0 ? params.mixInhRef : 0;
+      let np = 0, np1x = 0; const si = (params.scaleInvariant > 0 || (params.relGrowth > 0 && !((params.relGrowthOff | 0) & 8))) && g.regions && g.regions.some(r => r.sizeF > 1) ? this.trophicS() : null;
+      for (let i = 0; i < N; i++) if (mp[i]) { np++; if (si) np1x += si[i]; }
+      const iR = params.mixInhRef > 0 ? params.mixInhRef : (si && np1x > 0 ? np1x : 0);
       this.mixInhD = iR && np > iR ? this.p.mixInh * Math.pow(iR / np, params.mixInhPow > 0 ? params.mixInhPow : 1) : this.p.mixInh; }   // mixInhPow (default 1 = mean field; 0.5 = inhibition grows with the square root of the pool)
       // R78b mixInhLocal = R (global param, 0/undefined = off, bit-identical off): PER-CELL feedforward inhibition. Each spike of an
       // afferent inhibits only the mixing cells it contacts, each by mixInh x R / (that cell's excitatory fan-in), so a cell's
@@ -109,12 +111,15 @@ class SpikingNet {
     if (this.p.actNoise > 0 || this.p.actFb > 0 || this.p.outInh > 0) this.initActNoise();
     if (this.p.rcvHomeo > 0) { if (!this.thr) this.thr = Float32Array.from(g.thresh); const r = new Uint8Array(N); for (const k of this.plastic) if (this.w0[k] > 0) r[this.posts[k]] = 1;
       const L = []; for (let i = 0; i < N; i++) if (r[i]) L.push(i); this.rhList = Int32Array.from(L); }
-    if ((this.p.thrAdd !== 0 || this.p.hidHomeo > 0 || this.p.regInh > 0) && !(opts && opts.noNeed)) this.initSparse();   // R67 sparser-activity genes (off by default)
+    if ((this.p.thrAdd !== 0 || this.p.hidHomeo > 0 || this.p.regInh > 0) && !(opts && opts.noNeed)) this.initSparse();
+    if (params.denseCeil > 0 && !(opts && opts.noNeed)) this.initDense();   // R120 dense-cell ceiling (off by default)   // R67 sparser-activity genes (off by default)
     if (NG) this.initNeed();
     this.initFast();
     if (params.fastEngine && !globalThis.__bbSlow && !(opts && opts.noNeed)) this.initFastE();   // R66 event-driven engine (selectable; see initFastE)
     if (this.p.stageF0 > 0 && this.p.stageF0 < 1 && g.nHid > 0 && !(opts && opts.noNeed)) this.initStage();   // (not in the juvenile phase of development)
     if (params.granDemand > 0 && g.granDemand) this.initGranDemand();   // R102: off unless the brain was grown with P.granDemand (no random claws)
+    if ((params.granUtility > 0 || (g.grownFrom && g.grownFrom.gran && g.grownFrom.gran.utility > 0)) && g.granSrc && !this.gd) this.initGranUtility();
+    if (g.chunkGates && g.chunkGates.length) this.initChunkGates();
   }
   // R65 (I82) staged maturation (see PL_DEFAULTS stageF0): immature hidden cells are silenced (threshold 1e9, synapses at weight 0, grown
   // weights kept in w0) and mature in birth order, one wave every stageTicks ticks
@@ -187,18 +192,75 @@ class SpikingNet {
     this.extL = new Int32Array(N); this.nExt = 0; this.extAt = -1;
     if (this.teachTr) { this.hotL = new Int32Array(N); this.inHot = new Uint8Array(N); this.nHot = 0; this.tTs = new Int32Array(N);
       const P7 = this.p7 = new Float64Array(2048); let x = 1; const q7 = this.dtF ? this.t7 : 0.7; for (let n = 0; n < 2048; n++) { P7[n] = x; x *= q7; } }
+    if (params.granFast !== 0 && g.gran && this.fDense && !this.gd && !(params.sfa > 0) && !(params.stdU > 0) && !(params.granInh > 0) && !this.hhList && !this.riId) {
+      let g0 = -1, g1 = -1, ok = true;
+      for (let i = 0; i < N; i++) if (g.gran[i]) { if (g0 < 0) g0 = i; else if (i !== g1) ok = false; g1 = i + 1; if (cls[i] !== cls[g0] || (this.isRcv && this.isRcv[i])) ok = false; }
+       if (ok && g0 >= 0 && (g1 - g0 <= 2048 || params.granFast === 2)) {
+        const h = params.granHomeo > 0 ? params.granHomeo : 0.5, r0 = params.granRate > 0 ? params.granRate : 0, d = -h * r0;
+        this.gFast0 = g0; this.gFast1 = g1; this.gFastLk = vals[cls[g0]];
+        this.gBits = new Uint32Array(((g1 - g0) + 31) >>> 5);
+        this.gTv = new Int32Array(N); this.gThTs = new Int32Array(N); this.gThStep = 0;
+        this.gD = d; this.gD0 = Math.fround(-50 + d) + 50; this.gD1 = Math.fround(-65 + d) + 65;
+        this.gNextCross = r0 > 0 ? Math.max(1, Math.floor((g.thresh[g0] - V_REST) / (-this.gD0)) - 2) : 0x7fffffff;
+        if (r0 > 0 && !this.thr) this.thr = Float32Array.from(g.thresh);
+      }
+    }
   }
   buildExt() {                               // the cells with external current this tick (ext is set once per tick by the Agent)
     const ext = this.ext, E = this.extL; let n = 0; for (let i = 0; i < this.N; i++) if (ext[i] !== 0) E[n++] = i;
     this.nExt = n; this.extAt = this.tickNo;
   }
+  catchUpGranTh(T, i, target) {
+    const gThTs = this.gThTs; let n = target - gThTs[i]; if (n <= 0) return;
+    let x = T[i]; const d = this.gD, d0 = this.gD0, d1 = this.gD1;
+    while (n > 0 && x > -32) { x = Math.fround(x + d); n--; }
+    if (n > 0 && x > -64) {
+      const k = Math.min(n, Math.floor((x + 64) / (-d0)));
+      if (k > 0) { x = Math.fround(x + k * d0); n -= k; }
+      while (n > 0 && x > -64) { x = Math.fround(x + d); n--; }
+    }
+    if (n > 0) x = Math.fround(x + n * d1);
+    T[i] = x; gThTs[i] = target;
+  }
   syncState() {                              // bring every lazily kept value up to date (display / inspection; the engine does not need it)
     if (!this.fastE) return; const N = this.N, v = this.v, t = this.subNo, cls = this.lkCls, lv = this.lkVal;
     for (let i = 0; i < N; i++) { const n = this.fDense ? 0 : t - this.tv[i]; if (n > 0) { v[i] = V_REST + (v[i] - V_REST) * Math.pow(lv[cls[i]], n); this.tv[i] = t; } this.trace[i] = this.trS[i] * this.trG; }
+    if (this.gFast0 != null) {
+      const g0 = this.gFast0, g1 = this.gFast1, gTv = this.gTv, glk = this.gFastLk, R = V_REST, T = this.thr || this.g.thresh, thStep = this.gThStep;
+      for (let i = g0; i < g1; i++) {
+        const n = t - gTv[i]; if (n > 0 && v[i] !== R) { if (n >= 96) v[i] = R; else { let vx = v[i]; for (let s = 0; s < n; s++) vx = Math.fround(R + (vx - R) * glk); v[i] = vx; } }
+        gTv[i] = t; if (thStep > 0) this.catchUpGranTh(T, i, thStep);
+      }
+    }
   }
-  neuDense() {                               // R66 (fastEngine 1): every cell, as the exact loop, without the per-cell trace / flag writes
+  neuDense(t) {                              // R66 (fastEngine 1): every cell, as the exact loop, without the per-cell trace / flag writes; I106: bit-identical sparse granule block
     const N = this.N, v = this.v, syn = this.syn, sp = this.spiked, th = this.thr || this.g.thresh, spk = this.spk, R = V_REST, FL = V_FLOOR, lk = this.lkC, trS = this.trS, trI = 1 / this.trG;
     let nSpk = 0;
+    if (this.gFast0 != null) {
+      const g0 = this.gFast0, g1 = this.gFast1, gB = this.gBits, gTv = this.gTv, gThTs = this.gThTs, thStep = this.gThStep, glk = this.gFastLk, d0 = this.gD0;
+      if (thStep >= this.gNextCross) {
+        let minTh = 1e9;
+        for (let i = g0; i < g1; i++) { this.catchUpGranTh(th, i, thStep); if (th[i] < minTh) minTh = th[i]; if (th[i] <= R + 0.001) gB[(i - g0) >>> 5] |= 1 << ((i - g0) & 31); }
+        this.gNextCross = thStep + Math.max(1, Math.floor((minTh - R) / (-this.gD1)) - 2);
+      }
+      for (let i = 0; i < g0; i++) { const x = R + (v[i] + syn[i] - R) * lk[i]; syn[i] = 0;
+        if (x >= th[i]) { v[i] = R; sp[i] = 1; spk[nSpk++] = i; trS[i] += trI; } else v[i] = x < FL ? FL : x; }
+      for (let w = 0, nW = gB.length; w < nW; w++) {
+        let m = gB[w]; if (m === 0) continue; gB[w] = 0; const base = g0 + (w << 5);
+        while (m !== 0) {
+          const b = 31 - Math.clz32(m & -m); m &= m - 1; const i = base + b;
+          const n = t - 1 - gTv[i]; let vx = v[i];
+          if (n > 0 && vx !== R) { if (n >= 96 && glk <= 0.86) vx = R; else for (let s = 0; s < n; s++) vx = Math.fround(R + (vx - R) * glk); }
+          const mTh = thStep - gThTs[i];
+          if (mTh > 0) { const tx = th[i]; if (tx <= -32 && tx + mTh * d0 > -64) { th[i] = Math.fround(tx + mTh * d0); gThTs[i] = thStep; } else this.catchUpGranTh(th, i, thStep); }
+          const x = R + (vx + syn[i] - R) * glk; syn[i] = 0; gTv[i] = t;
+          if (x >= th[i]) { v[i] = R; sp[i] = 1; spk[nSpk++] = i; trS[i] += trI; } else v[i] = x < FL ? FL : x;
+        }
+      }
+      for (let i = g1; i < N; i++) { const x = R + (v[i] + syn[i] - R) * lk[i]; syn[i] = 0;
+        if (x >= th[i]) { v[i] = R; sp[i] = 1; spk[nSpk++] = i; trS[i] += trI; } else v[i] = x < FL ? FL : x; }
+      return nSpk;
+    }
     for (let i = 0; i < N; i++) { const x = R + (v[i] + syn[i] - R) * lk[i]; syn[i] = 0;
       if (x >= th[i]) { v[i] = R; sp[i] = 1; spk[nSpk++] = i; trS[i] += trI; } else v[i] = x < FL ? FL : x; }
     return nSpk;
@@ -233,6 +295,24 @@ class SpikingNet {
       this.riId = id; this.riN = R; this.riInv = Float64Array.from(sz, n => n ? 100 / n : 0); this.riCnt = new Float64Array(R); this.riP = new Float64Array(R);
       this.riD = p.regInhTau > 0 ? Math.exp(-1 / p.regInhTau) : 0; this.riH0 = h0; this.riH1 = h1; }
   }
+  // R120 P.denseCeil (mV per substep, 0 = off, bit-identical off, no RNG): activity-RELATIVE ceiling homeostasis for the always-on
+  // non-granule hidden cells. Each cell keeps an EMA of its own spike rate (tau 2000 substeps); a cell firing more than denseK (default 4)
+  // x the mean rate of its region's cells (measured once, over the first 4000 substeps, then frozen: a running mean would chase
+  // the cells it silences) gets its threshold raised (at most to twice its grown distance from rest) by denseCeil every substep; otherwise the threshold relaxes back
+  // (denseCeil / 10) toward the grown threshold (never below it). Self-calibrating: no target rate, only "much busier than its
+  // neighbours". Granules and the 'go' / 'tonic' tagged relays (clock / tonic drive, constant by design) are exempt. Learning phase only.
+  initDense() { const g = this.g, h0 = g.nIn, h1 = g.nIn + g.nHid, ti = g.typeInfo || [], ex = new Set(); ti.forEach((t, j) => { if (/ (go|go2|go3|tonic) cells$/.test(t.label)) ex.add(16 + j); });
+    if (!this.thr) this.thr = Float32Array.from(g.thresh); const L = [];
+    const inh = i => { const st = this.start, w0 = this.w0; if (!st || !w0) return false; for (let k = st[i]; k < st[i + 1]; k++) if (w0[k] < 0) return true; return false; };   // inhibitory cells (the brake) are exempt
+    for (let i = h0; i < h1; i++) if (!(g.gran && g.gran[i]) && !ex.has(g.cellType[i]) && !inh(i)) L.push(i);
+    const reg = g.region, rid = Int32Array.from(L, i => reg && reg[i] !== 255 ? reg[i] : 0), R = rid.reduce((m, x) => Math.max(m, x + 1), 1);
+    this.dc = { L: Int32Array.from(L), F: Float32Array.from(L, i => this.thr[i]), e: new Float32Array(L.length), rid, R, mr: new Float64Array(R).fill(1), n: Float64Array.from({ length: R }, (_, r) => rid.filter(x => x === r).length), t: 0, K: params.denseK > 0 ? params.denseK : 4, up: 0 }; }
+  denseStep(sp, mk) { const dc = this.dc; if (!dc || !params.plasticity) return; const { L, F, e, rid, mr } = dc, h = params.denseCeil, thr = this.thr, v = this.v, R0 = V_REST, d = 1 / 2000;
+    if ((++dc.t & 255) === 0 && !dc.frz) { if (dc.t > 4000) dc.frz = 1; const s = new Float64Array(dc.R); for (let q = 0; q < L.length; q++) s[rid[q]] += e[q]; for (let r = 0; r < dc.R; r++) mr[r] = dc.n[r] ? s[r] / dc.n[r] : 1; }
+    const warm = dc.t > 4000, K = dc.K;
+    for (let q = 0; q < L.length; q++) { const i = L[q]; e[q] += d * (sp[i] - e[q]); if (!warm) continue;
+      if (e[q] > K * mr[rid[q]]) { if (thr[i] < F[q] + (F[q] - R0)) { thr[i] += h; dc.up++; } } else if (thr[i] > F[q]) { let x = thr[i] - 0.1 * h; if (x < F[q]) x = F[q]; thr[i] = x; if (mk && x <= (v[i] > R0 ? v[i] : R0)) mk[i] = 1; } } }
+  denseStats() { const dc = this.dc; if (!dc) return null; let n = 0, raised = 0, mx = 0; for (let q = 0; q < dc.L.length; q++) { if (dc.e[q] > dc.K * dc.mr[dc.rid[q]]) n++; const x = this.thr[dc.L[q]] - dc.F[q]; if (x > 0.01) raised++; if (x > mx) mx = x; } return { cells: dc.L.length, over: n, raised, maxRaise: +mx.toFixed(2), ups: dc.up, regMean: Array.from(dc.mr, x => +x.toFixed(4)) }; }
   sparseStep(sp, spk, nSpk, mk) {            // R67: hidden-cell homeostasis + pooled region inhibition (mk: event-engine marks or null)
     const p = this.p, v = this.v, R0 = V_REST;
     if (this.hhList && params.plasticity) { const L = this.hhList, F = this.hhFloor, h = p.hidHomeo, r0 = p.hidRate, thr = this.thr;
@@ -265,15 +345,20 @@ class SpikingNet {
     for (let s = 0; s < this.nSpk; s++) sp[spk[s]] = 0;       // spike flags of the previous substep
     this.trG *= this.dtF ? this.td : params.traceDecay; if (this.trG < 1e-100) { this.renormF(this.trS, this.trG); this.trG = 1; }
     if (this.extAt !== this.tickNo) this.buildExt();
+    if (this.cg) this.chunkGateStep(syn, this.fDense ? null : mk);
     { const E = this.extL; if (this.fDense) for (let q = 0; q < this.nExt; q++) { const i = E[q]; syn[i] += ext[i]; } else for (let q = 0; q < this.nExt; q++) { const i = E[q]; syn[i] += ext[i]; mk[i] = 1; } }
-    const nSpk = this.fDense ? this.neuDense() : this.neuFast(t);
+    const nSpk = this.fDense ? this.neuDense(t) : this.neuFast(t);
 
     this.spikeCount += nSpk; this.nSpk = nSpk;
     if ((params.sfa > 0 || params.stdU > 0) && !(params.fatGen > 0 && params.plasticity)) this.fatigue(spk, nSpk, syn, this.fDense ? null : this.mk);   // R81 firing fatigue (off by default)
     const start = this.start, posts = this.posts, ws = this.ws;
     if (this.rcv) {                          // receiver pool (as propagateRcv), touched cells marked
       const buf = this.synBuf, tg = this.synTgt, isR = this.isRcv, sP = this.synP, RL = this.rcv, p = this.p; let nR = 0;
-      if (this.fDense) for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (isR[i]) nR++; for (let k = start[i], e = start[i + 1]; k < e; k++) buf[tg[k]] += ws[k]; }
+      if (this.fDense) {
+        if (this.gFast0 != null) { const g0 = this.gFast0, g1 = this.gFast1, gB = this.gBits;
+          for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (isR[i]) nR++; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = tg[k], wv = ws[k]; if (wv !== 0) { buf[j] += wv; if (j >= g0 && j < g1) gB[(j - g0) >>> 5] |= 1 << ((j - g0) & 31); } } }
+        } else for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (isR[i]) nR++; for (let k = start[i], e = start[i + 1]; k < e; k++) buf[tg[k]] += ws[k]; }
+      }
       else for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (isR[i]) nR++; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = tg[k]; buf[j] += ws[k]; mk[j] = 1; } }
       let f = 1; if (p.rcvDiv > 0) { let S = 0; for (let q = 0; q < RL.length; q++) S += sP[RL[q]]; f = p.rcvDiv * RL.length / (p.rcvSig + S); }
       this.poolTr = this.poolTr * this.dPool + nR; const inh = p.rcvInh * this.poolTr, sd = p.rcvNoise, rng = this.rcvRng, all = inh !== 0 || sd > 0 || this.fDense;
@@ -281,16 +366,22 @@ class SpikingNet {
       else for (let q = 0; q < RL.length; q++) { const j = RL[q]; if (!mk[N + j] && !all) continue; mk[N + j] = 0;
         let x = sP[j] * f - inh; if (sd > 0) { const u = rng() || 1e-12, z = rng(); x += sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185307 * z); }
         syn[j] += x; sP[j] = 0; mk[j] = 1; }
-    } else if (this.fDense) for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) syn[posts[k]] += ws[k]; }
+    } else if (this.fDense) {
+      if (this.gFast0 != null) { const g0 = this.gFast0, g1 = this.gFast1, gB = this.gBits;
+        for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = posts[k], wv = ws[k]; if (wv !== 0) { syn[j] += wv; if (j >= g0 && j < g1) gB[(j - g0) >>> 5] |= 1 << ((j - g0) & 31); } } }
+      } else for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) syn[posts[k]] += ws[k]; }
+    }
     else for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = start[i], e = start[i + 1]; k < e; k++) { const j = posts[k]; syn[j] += ws[k]; mk[j] = 1; } }
     if (this.rhList && params.plasticity) { const L = this.rhList, h = this.p.rcvHomeo, r0 = this.p.rcvRate, thr = this.thr; for (let q = 0; q < L.length; q++) { const i = L[q]; thr[i] += h * (sp[i] - r0); if (thr[i] <= (v[i] > R ? v[i] : R)) mk[i] = 1; } }
     if (this.hhList || this.riId) this.sparseStep(sp, spk, nSpk, this.fDense ? null : mk);
+    if (this.dc) this.denseStep(sp, this.fDense ? null : mk);
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp);   // v20 action noise / feedback (as the exact engine)
       if (!this.fDense) { const A = this.anList, C = this.acList, o0 = this.g.nIn + this.g.nHid; for (let q = 0; q < A.length; q++) mk[A[q]] = 1; for (let q = 0; q < C.length; q++) mk[C[q]] = 1; for (let m = 0; m < this.g.nOut; m++) mk[o0 + m] = 1; } }
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];
       if (n && this.mlS) { const S = this.mlS, P = this.mlP, D = this.mlD; for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = S[i], e = S[i + 1]; k < e; k++) { syn[P[k]] -= D[k]; if (!this.fDense) mk[P[k]] = 1; } } }
       else if (n) { const d = this.mixInhD * n, ml = this.mixList; if (this.fDense) for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d; else for (let q = 0; q < ml.length; q++) { syn[ml[q]] -= d; mk[ml[q]] = 1; } } }
     if (this.gd) this.granDemandDrive(spk, nSpk, syn, this.fDense ? null : mk);   // R102: demand-grown claws
+    if (this.gu) this.guDrive(spk, nSpk, syn, this.fDense ? null : mk);
     if (this.g.gran) this.granInh(spk, nSpk, syn, this.fDense ? null : mk);   // R83 granule feedforward inhibition
     if (this.mxStart && params.plasticity && this.thr && !this.mixFrozen()) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr;
       if (ml) { if (this.fDense) for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); }
@@ -421,6 +512,7 @@ class SpikingNet {
     const L = [], C = []; for (let i = 0; i < N; i++) if (ch[i] >= 0) { L.push(i); C.push(ch[i]); }
     this.anList = Int32Array.from(L); this.anCh = Int16Array.from(C); this.anVal = new Float32Array(nO);
     this.anA = Math.exp(-1 / Math.max(1, this.p.actNoiseTau)); this.anRng = mulberry32(0x9e3779b1 ^ g.N);
+    this.anF = 1; if (params.anSize > 0 && g.regions) { let f = 1; for (const r of g.regions) if (r && r.sizeF > f) f = r.sizeF; if (f > 1) this.anF = Math.sqrt(f); }   // R131 anSize (global, 0 = off, bit-identical; 1x unchanged): exploration noise x sqrt(size factor)
     const Lr = [], Cr = []; for (let i = 0; i < o0; i++) if (ch[i] >= 0) { Lr.push(i); Cr.push(ch[i]); } this.acList = Int32Array.from(Lr); this.acCh = Int16Array.from(Cr);   // the columns (without outputs)
   }
   actLoop(sp) {                               // output spikes -> own column +actFb, other columns -actFb, other outputs -outInh
@@ -429,9 +521,14 @@ class SpikingNet {
       if (fb > 0) for (let q = 0; q < L.length; q++) syn[L[q]] += C[q] === m ? fb : -fb;
       if (oi > 0) for (let j = 0; j < nO; j++) if (j !== m) syn[o0 + j] -= oi; }
   }
+  anSelfF() {                                // R131 anSelf (global, 0 = off, bit-identical): self-calibrated exploration: noise x sqrt(B), B = max / mean of the outputs'
+    const o0 = this.g.nIn + this.g.nHid, nO = this.g.nOut, sp = this.spiked;   //   recent spike rates (EMA, tau params.anSelfTau substeps; 1 = arms balanced), so a column that dominates by its wiring is explored away
+    if (!this.anS) { this.anS = new Float64Array(nO); this.anSa = 1 - 1 / Math.max(1, params.anSelfTau || 4000); }
+    const S = this.anS, aa = this.anSa; let mx = 0, sm = 0; for (let m = 0; m < nO; m++) { S[m] = aa * S[m] + (1 - aa) * sp[o0 + m]; sm += S[m]; if (S[m] > mx) mx = S[m]; }
+    return sm > 0 ? Math.sqrt(Math.max(1, mx * nO / sm)) : 1; }
   actNoiseStep() {
     const v = this.anVal, a = this.anA, kv = this.crit && this.p.actNoiseV > 0 ? 1 / (1 + this.p.actNoiseV * Math.max(0, this.value)) : 1,   // v20: less exploration where more reward is expected
-          sd = kv * this.p.actNoise * Math.sqrt(1 - a * a), r = this.anRng, L = this.anList, C = this.anCh, syn = this.syn;
+          sd = kv * this.p.actNoise * Math.sqrt(1 - a * a) * (this.anF > 1 ? this.anF : 1) * (params.anSelf > 0 ? this.anSelfF() : 1), r = this.anRng, L = this.anList, C = this.anCh, syn = this.syn;
     for (let m = 0; m < v.length; m++) { const u = r() || 1e-12, w = r(); v[m] = a * v[m] + sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185307 * w); }
     for (let q = 0; q < L.length; q++) syn[L[q]] += v[C[q]];
   }
@@ -499,11 +596,20 @@ class SpikingNet {
   // adapting after mixFreeze learning substeps (warm-up); every other rule, including the prediction synapses, keeps learning.
   mixFrozen() { const F = this.p.mixFreeze; if (!(F > 0)) return false; this.mfT = (this.mfT || 0) + 1; return this.mfT > F; }
   granInh(spk, nSpk, syn, mk) {              // R83: every granule spike inhibits every granule cell by granInh (shared Golgi-like pool)
+    if (this.gFast0 != null) {
+      if (params.granRate > 0 && params.plasticity) {
+        const step = ++this.gThStep, gr = this.g.gran, h = params.granHomeo > 0 ? params.granHomeo : 0.5, r0 = params.granRate, T = this.thr || this.g.thresh, gThTs = this.gThTs;
+        for (let s = 0; s < nSpk; s++) { const i = spk[s]; if (gr[i]) { T[i] += h * (1 - r0); gThTs[i] = step; } }
+      }
+      return;
+    }
     if (!this.granL) { const L = []; for (let i = 0; i < this.N; i++) if (this.g.gran[i]) L.push(i); this.granL = Int32Array.from(L); }
     const gr = this.g.gran; let n = 0; for (let s = 0; s < nSpk; s++) n += gr[spk[s]];
     const L = this.granL, nL = this.granLn != null ? this.granLn : L.length;   // R102: demand mode keeps granLn = assigned granules only (unset = every granule, bit-identical)
     if (params.granRate > 0 && params.plasticity) { const sp = this.spiked, h = params.granHomeo > 0 ? params.granHomeo : 0.5, r0 = params.granRate, T = this.thr || this.g.thresh;   // R83 granule homeostatic threshold
-      for (let q = 0; q < nL; q++) { const i = L[q]; T[i] += h * (sp[i] - r0); if (mk) mk[i] = 1; } }
+      for (let q = 0; q < nL; q++) { const i = L[q]; T[i] += h * (sp[i] - r0); if (mk) mk[i] = 1; }
+      const gu = this.gu; if (gu && gu.rsv0 > 0) { const rR = params.granRecruitRate > 0 ? params.granRecruitRate : r0 / 10, kb = gu.keyBy, o = gu.gOff;   // R119 granReserve: recruited granules adapt to a sparser target rate (exact-tuple detectors); unclaimed ones stay silent (no drift)
+        for (let j = gu.rsv0; j < gu.nG; j++) if (kb[j] != null) { const i = o + j; T[i] += h * (sp[i] - rR); if (mk) mk[i] = 1; } } }
     if (!(params.granInh > 0) || !n) return;
     const d = params.granInh * n; for (let q = 0; q < nL; q++) { syn[L[q]] -= d; if (mk) mk[L[q]] = 1; } }
   /* R83b CEREBELLAR READOUT (global granLr > 0; needs granN): only the granule -> prediction synapses, once per teaching event
@@ -524,14 +630,15 @@ class SpikingNet {
     const gS = this.g.granSch, lT = params.granLrT != null ? (params.granLrT > 0 ? params.granLrT : 0) : gS && gS.T > 0 ? gS.T : 0, nEv = lT ? (this.gEv = (this.gEv || 0) + 1) : 0;   // R100 granLrT (global, 0 = off, bit-identical off; v47 R114: P.granLrT unset -> the plan gene d.gran.lrT / lrLate via G.granSch, deepURSx3 = 100000 / 0.05; pin P.granLrT=0 for the fixed step): granule step schedule tied to the teaching events seen (~ symbols): granLr until granLrT events, then granLrLate (default granLr / 2); granLrShape 1 = smooth: late + (granLr - late) x T / (T + events)
     const L = oT ? (this.gOutL || (this.gOutL = Int32Array.from({ length: nO }, (_, m) => o0 + m))) : L0;
     if (!this.gIn) { const S = [0], K = []; for (let q = 0; q < L.length; q++) { const i = L[q]; for (let r = this.inStart[i], e = this.inStart[i + 1]; r < e; r++) { const k = this.inEdges[r]; if (this.g.gran[this.pres[k]] && this.isPlastic[k]) K.push(k); } S.push(K.length); } this.gIn = { S: Int32Array.from(S), K: Int32Array.from(K) }; }
-    const S = this.gIn.S, K = this.gIn.K, ws = this.ws, pr = this.pres, wMax = params.wMax, lr = lT ? (() => { const a = params.granLr, b = params.granLrLate > 0 ? params.granLrLate : params.granLrT == null && gS && gS.late > 0 ? gS.late : a / 2; return params.granLrShape === 1 ? b + (a - b) * lT / (lT + nEv) : nEv > lT ? b : a; })() : params.granLr, ref = params.granRef > 0 ? params.granRef : 10, D = globalThis.__granDbg;
+    const S = this.gIn.S, K = this.gIn.K, ws = this.ws, pr = this.pres, wMax = this.gu && this.gu.xm ? params.wMax * (params.granExactW > 0 ? params.granExactW : 50) : params.wMax, lr = lT ? (() => { const a = params.granLr, b = params.granLrLate > 0 ? params.granLrLate : params.granLrT == null && gS && gS.late > 0 ? gS.late : a / 2; return params.granLrShape === 1 ? b + (a - b) * lT / (lT + nEv) : nEv > lT ? b : a; })() : params.granLr, ref = params.granRef > 0 ? params.granRef : 10, D = globalThis.__granDbg;
     let U = null; if (gG) { if (!this.gU) { this.gU = new Float32Array(K.length); for (let r = 0; r < K.length; r++) this.gU[r] = ws[K[r]]; this.gPsi = params.granGain0 > 0 ? params.granGain0 : 0; } U = this.gU; }
     const aT = params.granAnneal > 0 ? params.granAnneal : 0, aMn = params.granAnnealMin > 0 ? params.granAnnealMin : 0, gC = aT ? (this.gCnt || (this.gCnt = new Float32Array(this.N))) : null;   // R91 granAnneal: per-granule step decays with the granule's use count (a count-based / consolidating estimate: rare combinations learn fast, common ones average finely); floor granAnnealMin x granLr
-    let oS = 0, dPs = 0; if (gG) for (let q = 0; q < nO; q++) oS += gA[o0 + q];
+    let oS = 0, dPs = 0, yTgt = 0; if (gG) for (let q = 0; q < nO; q++) oS += gA[o0 + q];
     if (sp && oT) { this.granSparseStep(L, S, K, ws, pr, wMax, lr, ref, D, U, gA, gG, oS, o0, nO); return; }
     for (let q = 0; q < L.length; q++) { const i = L[q], t = oT ? (q === this.gSym ? 1 : 0) : plat[i] === plN ? 1 : 0; let d = 0;
       let xx = 0; for (let r = S[q]; r < S[q + 1]; r++) { const k = K[r], x = gA ? gA[pr[k]] / params.granWin : xT[pr[k]] * xg; if (x >= 0.01) { d += (U ? U[r] : ws[k]) * x; xx += x * x; } }
       const y = Math.min(1, d / ref), er = t - y, g = oT ? (xx > 0 ? lr * ref / xx : 0) : lr;   // R83c output mode: normalised LMS (step / input power: stable for granLr < 1 at any granule count)
+      if (t) yTgt = y;
       if (gG) { const n = oS > 0 ? gA[i] / oS : 1 / nO, c = n + this.gPsi * (y - n); dPs += (t - c) * (y - n); }   // mixture gain: d/dpsi of the squared error of (1-psi) x the outputs' own prediction (window spike share) + psi x the granule prediction
       if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
       for (let r = S[q]; r < S[q + 1]; r++) { const k = K[r], x = gA ? gA[pr[k]] / params.granWin : xT[pr[k]] * xg; if (x < 0.01) continue; const ga = gC ? g * Math.max(aMn, aT / (aT + gC[pr[k]])) : g; if (U) { const u = U[r] + ga * x * er; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; continue; } const w = ws[k] + ga * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
@@ -540,7 +647,9 @@ class SpikingNet {
     //  false alarms, so the pathway self-silences when it does not reduce the outputs' error; local: one gain per granule->output projection)
     if (gC) { if (!this.granL) { const L = []; for (let i = 0; i < this.N; i++) if (this.g.gran[i]) L.push(i); this.granL = Int32Array.from(L); } const Lg = this.granL, nLg = this.granLn != null ? this.granLn : Lg.length; for (let q = 0; q < nLg; q++) { const j = Lg[q], x = gA ? gA[j] / params.granWin : xT[j] * xg; if (x >= 0.01) gC[j]++; } }   // R91: count this teaching event for every granule active in the read window
     if (gA) { gA.fill(0); this.gActN = 0; }
+    this.lastSurprise = 1 - yTgt;
     if (this.gd) this.granDemandEvent();   // R102: once per teaching event, after this window's spikes have been counted
+    if (this.gu) this.granUtilityEvent(yTgt);
   }
   /* R107 granSparse: the same NLMS event as granStep (output mode, read window), visiting only the granules that spiked since the last
    * teaching event instead of every granule -> output synapse. The active synapse indices are sorted, so every sum runs in the original
@@ -564,15 +673,86 @@ class SpikingNet {
       let nB = 0; for (let a = 0; a < nA; a++) { const j = aL[a]; if (gA[j] / W < 0.01) continue; for (let p = c[j], e = c[j + 1]; p < e; p++) B[nB++] = RR[p]; }
       Bs = B.subarray(0, nB); Bs.sort(); off.fill(0); for (let b = 0; b < nB; b++) off[Q[Bs[b]] + 1]++; for (let q = 0; q < nL; q++) off[q + 1] += off[q];
     }
-    let dPs = 0;
-    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
+    let dPs = 0, yTgt = 0;
+    if (params.readoutRule === 1 || params.readoutRule === 'threeFactor') { yTgt = this.gran3F(L, K, ws, pr, wMax, lr, ref, D, U, gA, gG, oS, nO, Bs, off, W, pos, Uw); dPs = this.g3dPs; }
+    else if (params.granKal > 0) { yTgt = this.granKalStep(L, K, ws, pr, wMax, lr, ref, D, U, gA, Bs, off, W, pos, Uw, nA, aL, gG, oS, nO); dPs = this.gKdPs; }
+    else for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
       for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], x = gA[pr[K[r]]] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += x * x; }
       const i = L[q], y = Math.min(1, d / ref), er = t - y, g = xx > 0 ? lr * ref / xx : 0;
+      if (t) yTgt = y;
       if (gG) { const n = oS > 0 ? gA[i] / oS : 1 / nO, cc = n + this.gPsi * (y - n); dPs += (t - cc) * (y - n); }
       if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
       for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], x = gA[pr[k]] / W; if (U) { const u = U[r] + g * x * er; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; } const w = ws[k] + g * x * er; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
-    if (gG) { const ps = this.gPsi = Math.min(1, Math.max(0, this.gPsi + params.granGain * dPs)), KS = this.gRKS; for (let p = 0; p < KS.length; p++) ws[KS[p]] = ps * Uw[p]; if (D) { D.psi = ps; D.pn = (D.pn || 0) + 1; D.ps = (D.ps || 0) + ps; } }   // (rescale in synapse order: same values, sequential writes)
+    if (gG) { const ps = this.gPsi = Math.min(1, Math.max(0, this.gPsi + params.granGain * dPs)), KS = this.gRKS; for (let p = 0; p < KS.length; p++) ws[KS[p]] = ps * Uw[p]; if (this.gFA && params.granTrace > 0) { const FA = this.gFA; for (let p = 0; p < KS.length; p++) { const k = KS[p]; if (FA[k] !== 0) ws[k] += ps * FA[k]; } } if (D) { D.psi = ps; D.pn = (D.pn || 0) + 1; D.ps = (D.ps || 0) + ps; } }   // (rescale in synapse order: same values, sequential writes)
+    if (params.granOneShot === 2) { let c = 0; for (let a = 0; a < nA; a++) if (gA[aL[a]] / W >= 0.01) c++; this.gLastNA = c; }
     for (let a = 0; a < nA; a++) gA[aL[a]] = 0; this.gActN = 0; if (gG) for (let q = 0; q < nO; q++) gA[o0 + q] = 0;
+    this.lastSurprise = 1 - yTgt;
+    if (this.gu) this.granUtilityEvent(yTgt);
+  }
+  /* R121 granKal (global P.granKal = A > 0; 0 / unset = off, bit-identical, no RNG; sparse output path): EXPERIENCE-WEIGHTED NLMS. Each granule j
+   * carries n_j = the teaching events it was active in since it got its current claw tuple (reset when granUtility re-assigns it) and a gain
+   * a_j = max(granKalMin (default 0.02), A / (A + n_j)) (a per-feature uncertainty, as a diagonal Kalman / count estimate). The error of an
+   * output is split in proportion to a_j x_j^2 instead of x_j^2: dw_j = granLr x granRef x a_j x_j x err / sum_i a_i x_i^2. A brand-new specific
+   * detector active together with experienced ones takes most of the correction (one-shot, like a count model's first sighting), and the
+   * experienced ones are left alone (backoff-like credit). Only for LTP (err > 0, the arriving symbol): false alarms (err < 0) keep the plain NLMS
+   * split, since weights are bounded at 0 and a fresh detector has nothing to depress. With all a_j equal this is exactly the NLMS step. Local: each synapse needs only its
+   * presynaptic granule's own count. */
+  granKalStep(L, K, ws, pr, wMax, lr, ref, D, U, gA, Bs, off, W, pos, Uw, nA, aL, gG, oS, nO) {
+    const A = params.granKal, mn = params.granKalMin > 0 ? params.granKalMin : 0.02, n = this.gKn || (this.gKn = new Float32Array(this.N)), nL = L.length; let yTgt = 0, dPs = 0;
+    const av = j => { const v = A / (A + n[j]); return v < mn ? mn : v; };
+    // R132 granKalLTD (global, 0 / unset = off, bit-identical): the experience-weighted split for false alarms (err < 0) too, so a recruit given a
+    // one-shot weight (granOneShot) is averaged down like a count estimate instead of keeping its first-sighting weight under the plain NLMS split
+    const wLo = params.granNeg > 0 ? -params.granNeg * wMax : 0;   // R132 granNeg (global, 0 / unset = off: lower bound 0, bit-identical): signed readout, weights in [-granNeg x wMax, wMax] (a specific context can veto a generic prediction, as count backoff does; biologically the granule -> basket/stellate -> Purkinje inhibitory path)
+    const F = params.granTrace > 0, FA = F ? (this.gFA || (this.gFA = new Float32Array(ws.length))) : null;   // R133 granTrace: the slow (granKal) update below sees only the slow weight (U = slow when granGain is on; else take the fast part out of ws)
+    if (F && !U) for (let b = 0, e = off[nL]; b < e; b++) { const k = K[Bs[b]]; if (FA[k] !== 0) { ws[k] -= FA[k]; FA[k] = 0; } }
+    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0; let d = 0, xx = 0;
+      let x2 = 0; for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], j = pr[K[r]], x = gA[j] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += av(j) * x * x; x2 += x * x; }
+      const y = Math.min(1, d / ref), er = t - y, kal = er > 0 || params.granKalLTD > 0, g = kal ? (xx > 0 ? lr * ref / xx : 0) : (x2 > 0 ? lr * ref / x2 : 0); if (t) yTgt = y;
+      if (gG) { const i = L[q], m = oS > 0 ? gA[i] / oS : 1 / nO, cc = m + this.gPsi * (y - m); dPs += (t - cc) * (y - m); }   // (the granGain psi update, as the NLMS loop)
+      if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; } if (er === 0) continue;
+      for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], j = pr[k], x = gA[j] / W, gj = kal ? g * av(j) : g;
+        if (U) { const u = U[r] + gj * x * er; U[r] = u < wLo ? wLo : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; } const w = ws[k] + gj * x * er; ws[k] = w < wLo ? wLo : w > wMax ? wMax : w; } }
+    for (let a = 0; a < nA; a++) { const j = aL[a]; if (gA[j] / W >= 0.01) n[j]++; }
+    if (F) this.granTraceStep(L, K, ws, pr, wMax, ref, gA, Bs, off, W, nA, aL, n, A, U);
+    this.gKdPs = dPs; return yTgt; }
+  /* R133 granTrace (global P.granTrace = 1; 0 / unset = off, bit-identical, no RNG; needs granKal, sparse path without granGain): a FAST ONE-SHOT TRACE on
+   * each granule -> output synapse, separate from the slow granKal weight (a short-term / eligibility-like component that the slow weight consolidates).
+   * Trace E_jq = the granule's own running frequency of each next symbol over its observations (step 1 / observations; a recruit starts with one
+   * observation = the symbol it was recruited on). Effective weight = slow + g_j x E_jq x granRef / xbar, gate g_j = A / (A + n_j) (granKal's own
+   * experience count n_j), xbar = the running mean granule activity per window (so the trace alone gives a full-strength vote on a context seen once).
+   * With granGain on (default), ws = psi x (U + FA) at the dense rescale. Self-calibrating: the fast/slow mix is set by each granule's measured experience; no new constant. The slow update never sees the fast part. */
+  granTraceStep(L, K, ws, pr, wMax, ref, gA, Bs, off, W, nA, aL, n, A, U) {
+    const FA = this.gFA, FE = this.gFE || (this.gFE = new Float32Array(ws.length)), FO = this.gFo || (this.gFo = new Float32Array(this.N)), nL = L.length;
+    let sx = 0, cx = 0; for (let a = 0; a < nA; a++) { const x = gA[aL[a]] / W; if (x >= 0.01) { sx += x; cx++; } }
+    if (cx) { this.gFxN = (this.gFxN || 0) + 1; this.gFx = (this.gFx || 0) + (sx / cx - (this.gFx || 0)) / this.gFxN; }
+    const xb = this.gFx > 0 ? this.gFx : 1;
+    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0;
+      for (let b = off[q], e = off[q + 1]; b < e; b++) { const k = K[Bs[b]], j = pr[k]; FE[k] += (t - FE[k]) / (FO[j] + 1);
+        const f = A / (A + n[j]) * FE[k] * ref / xb; if (U) { FA[k] = f; continue; } if (f > 0) { const w0 = ws[k], w1 = w0 + f > wMax ? wMax : w0 + f; ws[k] = w1; FA[k] = w1 - w0; } } }   // with granGain (U): FA = the fast part in u units, added as psi x FA at the dense rescale
+    for (let a = 0; a < nA; a++) { const j = aL[a]; if (gA[j] / W >= 0.01) FO[j]++; } }
+  /* R118 readoutRule 'threeFactor' (global params.readoutRule = 'threeFactor' or 1; unset / 0 = the R83b NLMS above, bit-identical, no RNG):
+   * a three-factor local rule on the same granule -> output synapses, same teaching events and read window (sparse path only).
+   *   eligibility  e_jq = x_j (presynaptic read-window activity) for the LTP term, x_j x p_q (pre x post) for the LTD term
+   *   third factor M_q  = t_q - p_q: teacher-forced per-output error, p_q = softmax_q(rf3Beta x d_q / granRef) over the outputs' granule drive
+   *                       (the shared normalisation = one global inhibitory-pool signal; t_q = climbing fibre of the arriving symbol)
+   *   dw = g_q x x_j x M_q - lr x rf3Decay x w,  g_q = lr x granRef / sum_j x_j^2 (bounded NLMS step), w in [0, wMax]; decay on visited synapses only
+   * i.e. the local form of the cross-entropy gradient (competitive across outputs) instead of independent clipped LMS targets.
+   * Params: rf3Beta (default 8; tuned at book10k on held-out growth k=2950: beta 4 0.371, 8 0.392, off 0.386), rf3Decay (default 0.001), rf3Lr (step multiplier, default 1). */
+  gran3F(L, K, ws, pr, wMax, lr, ref, D, U, gA, gG, oS, nO, Bs, off, W, pos, Uw) {
+    const nL = L.length, dq = this.g3d || (this.g3d = new Float64Array(nL)), xq = this.g3x || (this.g3x = new Float64Array(nL)), pq = this.g3p || (this.g3p = new Float64Array(nL));
+    const beta = params.rf3Beta > 0 ? params.rf3Beta : 8, lam = params.rf3Decay != null ? +params.rf3Decay : 0.001, lm = params.rf3Lr > 0 ? params.rf3Lr : 1, l = lr * lm;
+    let mx = -Infinity, yTgt = 0, dPs = 0;
+    for (let q = 0; q < nL; q++) { let d = 0, xx = 0; for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], x = gA[pr[K[r]]] / W; d += (U ? U[r] : ws[K[r]]) * x; xx += x * x; }
+      dq[q] = d; xq[q] = xx; const z = beta * d / ref; if (z > mx) mx = z; }
+    let sm = 0; for (let q = 0; q < nL; q++) { pq[q] = Math.exp(beta * dq[q] / ref - mx); sm += pq[q]; } for (let q = 0; q < nL; q++) pq[q] /= sm;
+    for (let q = 0; q < nL; q++) { const t = q === this.gSym ? 1 : 0, i = L[q], y = Math.min(1, dq[q] / ref), M = t - pq[q], xx = xq[q], g = xx > 0 ? l * ref / xx : 0, dec = l * lam;
+      if (t) yTgt = y;
+      if (gG) { const n = oS > 0 ? gA[i] / oS : 1 / nO, cc = n + this.gPsi * (y - n); dPs += (t - cc) * (y - n); }
+      if (D) { if (t) { D.n++; D.y += y; } else D.fa += y; }
+      for (let b = off[q], e = off[q + 1]; b < e; b++) { const r = Bs[b], k = K[r], x = gA[pr[k]] / W;
+        if (U) { const u = U[r] + g * x * M - dec * U[r]; U[r] = u < 0 ? 0 : u > wMax ? wMax : u; Uw[pos[r]] = U[r]; continue; }
+        const w = ws[k] + g * x * M - dec * ws[k]; ws[k] = w < 0 ? 0 : w > wMax ? wMax : w; } }
+    this.g3dPs = dPs; return yTgt;
   }
   // R85 granIso (global param, 0/undefined = off): with granTgt 1, the granule -> output synapses do not make the output cells
   // 'receivers' of the prediction-cell machinery (teacher AHP, trust, receiver pool): the output cells keep their v40 dynamics
@@ -612,10 +792,10 @@ class SpikingNet {
   }
   granDemandStats() { const gd = this.gd; if (!gd) return null; const s = gd.st; return { assigned: s.assigned, recycled: s.recycled, cap: s.cap, pending: gd.pending.size, events: s.events }; }
   granDemandDrive(spk, nSpk, syn, mk) {
-    const gd = this.gd, colOf = gd.colOf, hits = gd.hits, hOff = gd.hOff, lists = gd.lists, gen = gd.gen, loc = gd.loc, alive = gd.alive, use = gd.use, gOff = gd.gOff;
+    const gd = this.gd, colOf = gd.colOf, hits = gd.hits, hOff = gd.hOff, lists = gd.lists, gen = gd.gen, loc = gd.loc, alive = gd.alive, use = gd.use, gOff = gd.gOff, gB = this.gBits;
     for (let s = 0; s < nSpk; s++) { const i = spk[s], p = colOf[i];
       if (p >= 0) { const src = p >>> 16, col = p & 65535, Ls = lists[src][col]; hits[hOff[src] + col]++;
-        for (let q = 0; q < Ls.length; q++) { const e = Ls[q]; if (e.gen !== gen[e.j]) continue; const b = gOff + e.j; syn[b] += e.w; if (mk) mk[b] = 1; } }
+        for (let q = 0; q < Ls.length; q++) { const e = Ls[q]; if (e.gen !== gen[e.j]) continue; const b = gOff + e.j; syn[b] += e.w; if (mk) mk[b] = 1; if (gB) gB[e.j >>> 5] |= 1 << (e.j & 31); } }
       const j = loc[i]; if (j >= 0 && alive[j]) use[j]++; }
   }
   granDemandEvent() {
@@ -642,9 +822,10 @@ class SpikingNet {
     gd.keyBy[j] = null; gd.alive[j] = 0; gd.gen[j]++; gd.st.assigned--; gd.waste += gd.clawK[j] || 0;
     const ws = this.ws, U = this.gU, wo = gd.wo, psi = this.gPsi || 0;
     if (U && !gd.uAt && this.gIn) { const K = this.gIn.K, m = new Int32Array(ws.length).fill(-1); for (let r = 0; r < K.length; r++) m[K[r]] = r; gd.uAt = m; }
-    const map = gd.uAt;
-    for (let q = gd.outS[j]; q < gd.outS[j + 1]; q++) { const e = gd.outK[q]; if (U && map && map[e] >= 0) U[map[e]] = wo; ws[e] = U ? psi * wo : wo; }
-    if (this.thr) this.thr[b] = gd.thr0; this.v[b] = V_REST; if (this.gCnt) this.gCnt[b] = 0; if (this.gAcc) this.gAcc[b] = 0;
+    const map = gd.uAt, Uw = this.gRUw, pos = this.gRpos;
+    for (let q = gd.outS[j]; q < gd.outS[j + 1]; q++) { const e = gd.outK[q]; if (U && map && map[e] >= 0) { const r = map[e]; U[r] = wo; if (Uw && pos) Uw[pos[r]] = wo; } ws[e] = U ? psi * wo : wo; }
+    if (this.thr) { this.thr[b] = gd.thr0; if (this.gLastT) this.gLastT[j] = this.gThStep; }
+    this.v[b] = V_REST; if (this.gCnt) this.gCnt[b] = 0; if (this.gAcc) this.gAcc[b] = 0;
   }
   gdAssign(key, k) {
     const gd = this.gd, st = gd.st; let j;
@@ -664,6 +845,330 @@ class SpikingNet {
     const gd = this.gd, gen = gd.gen, lists = gd.lists;
     for (let s = 0; s < lists.length; s++) for (let c = 0; c < lists[s].length; c++) { const L = lists[s][c]; let w = 0; for (let q = 0; q < L.length; q++) if (L[q].gen === gen[L[q].j]) L[w++] = L[q]; L.length = w; }
     gd.waste = 0;
+  }
+  // Utility-pruned structural plasticity for granule claws (params.granUtility > 0):
+  // Granule cells begin with random grown claws (avoiding empty-pool starvation) and rewire low-utility
+  // claws onto unowned active presynaptic lag tuples when prediction errors occur.
+  initGranUtility() {
+    const d = this.g && this.g.granSrc; if (!d || !(params.granUtility > 0) || this.gd) return;
+    const { K, Km, W, nG, gOff, src } = d, N = this.N;
+    const colOf = new Int32Array(N).fill(-1); let nCols = 0;
+    const hOff = new Int32Array(K + 1);
+    for (let s = 0; s < K; s++) { const { keys, off, cells } = src[s], m = keys.length; hOff[s] = nCols;
+      for (let c = 0; c < m; c++) for (let q = off[c]; q < off[c + 1]; q++) colOf[cells[q]] = nCols + c;
+      nCols += m; }
+    hOff[K] = nCols;
+    const inS = new Int32Array(nG + 1), inK = [], outS = new Int32Array(nG + 1), outK = [];
+    const byGIn = Array.from({ length: nG }, () => []), byGOut = Array.from({ length: nG }, () => []);
+    for (let k = 0; k < this.posts.length; k++) {
+      const p = this.posts[k] - gOff; if (p >= 0 && p < nG && !this.isPlastic[k] && this.w0[k] > 0) byGIn[p].push(k);
+      const j = this.pres[k] - gOff; if (j >= 0 && j < nG && this.isPlastic[k]) byGOut[j].push(k);
+    }
+    for (let j = 0; j < nG; j++) { inS[j] = inK.length; for (const k of byGIn[j]) inK.push(k); outS[j] = outK.length; for (const k of byGOut[j]) outK.push(k); }
+    inS[nG] = inK.length; outS[nG] = outK.length;
+    const wo = byGOut[0] && byGOut[0].length ? this.w0[byGOut[0][0]] : 0;
+    const owned = new Map(), keyBy = new Array(nG).fill(null);
+    if (d.initKeys) for (let j = 0; j < nG; j++) { const ik = d.initKeys[j]; if (ik) { keyBy[j] = ik; if (!owned.has(ik)) owned.set(ik, j); } }
+    this.gu = { K, Km, W, nG, gOff, src, colOf, hOff, hits: new Int32Array(nCols), win: new Int32Array(K),
+      lists: src.map(s => Array.from({ length: s.keys.length }, () => [])),
+      inS, inK: Int32Array.from(inK), outS, outK: Int32Array.from(outK), wo, thr0: this.g.thresh[gOff],
+      use: new Float32Array(nG), born: new Int32Array(nG), gen: new Int32Array(nG), keyBy,
+      owned, pending: new Map(), rng: mulberry32((0x6775746c ^ N) >>> 0),
+      co: params.granCo > 0 ? params.granCo | 0 : 2, hold: params.granHold > 0 ? params.granHold | 0 : 40,
+      st: { rewired: 0, cap: nG, events: 0 } };
+    if (d.nAct0 != null) { this.gu.nAct = d.nAct0; this.gu.st.nAct0 = d.nAct0; }
+    if (d.l2 != null) { this.gu.l2 = d.l2; this.gu.st.l2 = nG - d.l2; }   // R138 granL2: granules [l2, nG) = the level-2 pool   // R136 granGrow: granules [nAct, nG) are unborn (no claws) until demand adds them
+    if (params.granUtility === 2) { this.gu.match = new Float32Array(nG); this.gu.st.matched = 0; if (d.rsv0 >= 0 && d.rsv0 < nG) { this.gu.rsv0 = d.rsv0; this.gu.st.reserve = nG - d.rsv0; if (d.rsv0 > 0 && this.gFast0 == null) this.granLn = d.rsv0; }
+      if (params.granExact > 0) this.initGranExact(); }   // granLn: the shared homeostasis loop covers the random granules only   // R119 granUtility 2: utility = exact claw-tuple matches (see granUtilityEvent)
+  }
+  granUtilityStats() { const gu = this.gu; if (!gu) return null; if (gu.cr && (params.granExactGuard & 2)) { const g = []; for (let s2 = 1; s2 < gu.cr.length; s2++) for (let c = 0; c < gu.cr[s2].length; c++) if (gu.cr[s2][c] > this.guColCap(s2)) g.push(s2 + ':' + c + ':' + gu.cr[s2][c].toFixed(2)); gu.st.guarded = g; gu.st.thr = +(this.guColCap(1)).toFixed(3); gu.st.crMax = gu.cr.map(a => +Math.max(...a).toFixed(3)); }
+    return gu.st; }
+  /* R119 granExact (needs granUtility 2): every granule becomes an EXACT coincidence detector of its claw tuple. The grown random claw
+   * synapses are silenced and re-registered as claw lists; a granule fires (one injected suprathreshold input) only in a read window in
+   * which every one of its claw columns has fired, and granule homeostasis is off (fixed thresholds), so the code is sparse: only the
+   * granules whose letter tuple is actually present fire, instead of ~2.4% of all granules on partial matches. Granules whose tuple never
+   * occurs (most random 4-claw tuples) earn no matches and are recycled by granUtility 2 onto missed 3- / 4-letter windows. */
+  initGranExact() {
+    const gu = this.gu, { nG, gOff, src, lists, inS, inK, keyBy } = gu, ws = this.ws;
+    gu.xm = new Uint8Array(nG); gu.xn = new Uint8Array(nG); gu.xf = new Uint8Array(nG); gu.xT = new Int32Array(nG); gu.xTn = 0; gu.xF = new Int32Array(nG); gu.xFn = 0; gu.xc = new Uint32Array(nG); gu.xr = new Float32Array(nG); gu.st.capped = 0;
+    if (params.granFatigue > 0) { gu.xL = new Float64Array(nG).fill(-1e12); gu.xE = new Uint32Array(nG); gu.tk = 0; gu.sps = 1e9; }   // R122 granFatigue: episode = the fires of one symbol (within sps = substeps per teaching event, measured in life, frozen in generation); xE = episodes, refractory is between episodes
+    gu.cHit = src.map(S => new Uint8Array(S.keys.length)); gu.cT = []; gu.st.exact = 0; gu.cr = src.map(S => new Float32Array(S.keys.length)); gu.ban = new Set();
+    for (let j = 0; j < nG; j++) { for (let q = inS[j]; q < inS[j + 1]; q++) ws[inK[q]] = 0;
+      const key = keyBy[j]; if (key == null) continue; if ((params.granExactGuard & 1) && gu.owned.get(key) !== j) { keyBy[j] = null; gu.st.dedup = (gu.st.dedup || 0) + 1; continue; }   // R120 guard: one detector per tuple (grown duplicates start free)
+      const a = key.split(','), n = +a[0]; if (!(n > 0) || a.length !== n + 1 || a.some((x, i) => i > 0 && !/^[0-9]+$/.test(x))) { keyBy[j] = null; continue; }
+      gu.xn[j] = n; for (let c = 0; c < n; c++) lists[c][+a[c + 1]].push({ j, w: 0, gen: gu.gen[j], c }); }
+    if (this.gFast0 == null) this.granLn = 0;   // fixed thresholds: no granule homeostasis
+    if (params.lagHomeo > 0) this.initLagHomeo();
+    // R125 lagWTA (global P.lagWTA = k > 0; 0 / unset = off, bit-identical, no RNG; needs granExact): COMPETITIVE SELECTION within each lag source
+    // (s >= 1) as seen by the granules: in each read window only the first k letter columns of the source to fire count as claw hits (latency
+    // k-WTA: in a leaky integrate-and-fire population the most strongly driven column reaches threshold first; equivalent to fast lateral
+    // inhibition from the source's winner onto the other columns' granule synapses). The lag cells themselves keep firing for every other target.
+    // Size-independent by construction (a lag source holds one letter per window; R123 bookdiag healthy brains 0.94-0.99 active columns per
+    // window, hot 2x_si 2.9-6.4). Implemented on the lag-cell output to the granule claws, not as an inhibitory pool in the network dynamics.
+    if (params.lagWTA > 0) { gu.wta = new Uint8Array(src.length); gu.wtaK = Math.max(1, Math.round(params.lagWTA)); }
+  }
+  /* R124 lagHomeo (global P.lagHomeo = eta > 0; 0 / unset = off, bit-identical, no RNG; needs granExact): SELF-CALIBRATED ACTIVITY HOMEOSTAT of the
+   * lag (claw) sources. A lag source represents ONE letter per read window, so the number of its letter columns active in a window should be 1.
+   * Each window, a source's summed column window rate R_s = sum_c r_sc (EMA, as the R120 guard) gives h_s += eta x (R_s - 1) (clamped +-lagHomeoMax,
+   * default 1) and every cell of the source's columns gets thr = V_REST + (thr0 - V_REST) x exp(h_s): hot (letter-unspecific) sources are raised,
+   * cold ones lowered. R123 bookdiag: healthy brains R_s 0.94-0.99, hot 2x_si 2.9-6.4, cold 4x_rg 0.62-0.70. No size-dependent constant.
+   * P.lagHomeoCol = 1: the first (negative) variant, one offset per column with target r_sc = the same letter's source-0 rate. Starts after 500 windows. */
+  initLagHomeo() {
+    const gu = this.gu, src = gu.src, k0 = new Map(); for (let c = 0; c < src[0].keys.length; c++) k0.set(src[0].keys[c], c);
+    if (!this.thr) this.thr = Float32Array.from(this.g.thresh);
+    gu.lh = src.map((S, s) => s === 0 ? null : { c0: Int32Array.from(S.keys, k => k0.has(k) ? k0.get(k) : -1), h: new Float32Array(S.keys.length), hs: 0, t0: Float32Array.from(S.cells, b => this.thr[b]) });
+    gu.lhN = 0; gu.st.lhMax = 0; }
+  lagHomeoStep() {
+    const gu = this.gu, cr = gu.cr, thr = this.thr, eta = params.lagHomeo, hM = params.lagHomeoMax > 0 ? params.lagHomeoMax : 1, col = params.lagHomeoCol === 1; if (++gu.lhN < 500) return;
+    let mx = 0; for (let s = 1; s < cr.length; s++) { const L = gu.lh[s], S = gu.src[s], a = cr[s], a0 = cr[0];
+      if (!col) { let R = 0; for (let c = 0; c < a.length; c++) R += a[c]; let h = L.hs + eta * (R - 1); h = h > hM ? hM : h < -hM ? -hM : h; L.hs = h; if (Math.abs(h) > mx) mx = Math.abs(h);
+        const f = Math.exp(h), cl = S.cells, t0 = L.t0; for (let q = 0; q < cl.length; q++) thr[cl[q]] = V_REST + (t0[q] - V_REST) * f; continue; }
+      for (let c = 0; c < a.length; c++) { if (L.c0[c] < 0) continue; let h = L.h[c] + eta * (a[c] - a0[L.c0[c]]); h = h > hM ? hM : h < -hM ? -hM : h; L.h[c] = h; if (Math.abs(h) > mx) mx = Math.abs(h);
+        const f = Math.exp(h); for (let q = S.off[c]; q < S.off[c + 1]; q++) thr[S.cells[q]] = V_REST + (L.t0[q] - V_REST) * f; } }
+    gu.st.lhMax = +mx.toFixed(3); gu.st.lhS = gu.lh.map(L => L ? +(col ? 0 : L.hs).toFixed(3) : 0); }
+  guExact(i, gc, s, syn, mk, gB) {   // first hit of claw column gc (source s) in this read window: set the claw bit of every granule listening to it
+    const gu = this.gu, ch = gu.cHit[s], c = gc - gu.hOff[s]; if (ch[c] >= 250) return;
+    const hM = params.granExactHits > 1 ? params.granExactHits : 1; if (ch[c] === 0) gu.cT.push(s, c); ch[c]++; if (ch[c] < hM) return; ch[c] = 250; if (s === 0 && gu.ch && gu.ch.next != null) this.guChunkFire(c, syn, mk, gB); if (s === 0 && gu.lg && gu.lg.next) this.guLagFire(c, syn, mk, gB); if ((params.granExactColCap || (params.granExactGuard & 2)) && gu.cr[s][c] > this.guColCap(s)) return; if (gu.wta && s > 0) { if (gu.wta[s] >= gu.wtaK) return; gu.wta[s]++; }   // R125 lagWTA: only the first k columns of a lag source to fire in this window count (see initGranExact)   // R119 granExactColCap: a claw column active in > colCap of the windows (saturated lag cells) carries no context: it never completes a tuple   // R119 granExactHits: a claw column counts once it has fired hM spikes in this window (stale lag letters fire fewer)
+    const L = gu.lists[s][c], gen = gu.gen, xm = gu.xm, xn = gu.xn, xf = gu.xf, gOff = gu.gOff, T = this.thr || this.g.thresh;
+    const xL = gu.xL, fz = params.granFatigue;   // R122 granFatigue = c (off by default): a detector that fired less than c x its OWN mean inter-fire interval (symbols / its fire count) ago is refractory (self-suppression after completing its tuple; self-calibrated per detector)
+    for (let r = 0, m = L.length; r < m; r++) { const e = L[r]; if (e.gen !== gen[e.j]) continue; const j = e.j, bit = 1 << e.c;
+      if (!(xm[j] & bit)) { if (!xm[j]) gu.xT[gu.xTn++] = j; xm[j] |= bit; }
+      if (!xf[j] && xm[j] === (1 << xn[j]) - 1) { if (xL) { const tk = gu.tk, dt = tk - xL[j]; if (dt > gu.sps) { if (gu.xE[j] > 2 && dt < fz * tk / gu.xE[j]) { gu.st.fatSkip = (gu.st.fatSkip || 0) + 1; continue; } xL[j] = tk; gu.xE[j]++; } } xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++; const b = gOff + j; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31); gu.st.exact++; } }
+  }
+  /* R134 granChunk (global P.granChunk = 1; 0 / unset = off, bit-identical, no RNG; needs granExact): CHUNK (WORD-CONTEXT) DETECTORS in the granule pool.
+   * A running chunk state: the current partial word p (letters since the last delimiter) and the previous completed word w; the delimiter is the
+   * most frequent current letter seen so far (self-calibrated; the space in text). A chunk detector is a pool granule recruited (same recruit rule,
+   * same pool, same one-shot / granKal / granTrace readout) on a surprising window for the key (w, p, current letter): it fires in a read window when
+   * the current letter's column fires and the chunk state before it equals its key (one detector per key, like the exact tuples). The key made with
+   * the delimiter as the current letter is the word-completion node; the previous word w is the slower second level held across the next word.
+   * Count-model reference (R134 headroom): previous word + partial word beats every letter order 3-12 at 30k-1M letters. */
+  guChunkEvent(yTgt, n) {
+    const gu = this.gu; if (n < 1) return; const c0 = gu.win[0], mt = gu.match;
+    const C = gu.ch || (gu.ch = { cnt: new Float64Array(gu.src[0].keys.length), delim: -1, w: '', p: '', next: null });
+    C.cnt[c0]++; if (C.delim < 0 || C.cnt[c0] > C.cnt[C.delim]) C.delim = c0;
+    const key = 'C' + C.w + '|' + C.p + '|' + c0, j0 = gu.owned.get(key);
+    if (j0 != null && gu.keyBy[j0] === key) { if (mt) mt[j0] += 1; }
+    else if (params.granChunkGate === 2) { if (C.w !== '') { const seen = this.guChunkSeen(key); if (params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(key, 0, yTgt, !seen)) gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; } }   // R135 gate 2: first sighting recruits only into a free (never-matched) slot
+    else if (C.w !== '' && (!(params.granChunkGate > 0) || this.guChunkSeen(key)) && params.plasticity && this.learning && yTgt < 0.85) { gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; this.guRecruit(key, 0, yTgt); }
+    if (params.granWord > 0 && C.p !== '') { const kW = 'W' + C.p + '|' + c0, jW = gu.owned.get(kW);   // R143 granWord: word-start key (partial word, letter) WITHOUT the previous word, so a word seen once (an invented name) is recognised again after any other word
+      if (jW != null && gu.keyBy[jW] === kW) { if (mt) mt[jW] += 1; }
+      else { const g2 = params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kW) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kW, 0, yTgt, g2 === 2 && !seen)) gu.st.wordRec = (gu.st.wordRec || 0) + 1; } }
+    const P = params.granPhrase > 0; if (P && C.w2 != null && C.w2 !== '') { const kP = 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' + c0, jP = gu.owned.get(kP);   // R136 granPhrase: second level (see below)
+      if (jP != null && gu.keyBy[jP] === kP) { if (mt) mt[jP] += 1; }
+      else { const g2 = params.granPhrase === 2 ? 1 : params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kP) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kP, 0, yTgt, g2 === 2 && !seen, true)) gu.st.phraseRec = (gu.st.phraseRec || 0) + 1; } }
+    const Q = params.granCat > 0; if (Q) { const K = C.K || this.guCatInit(C);   // R137 granCat: second level of learned word categories (see guCatInit)
+      if (C.p === '' && c0 !== C.delim && C.pw) this.guCatObs(C, C.pw, c0);   // first letter of the next word = one continuation sample of the previous word
+      if (C.q1 >= 0 && C.q2 >= 0) { const kQ = 'Q' + C.q2 + '|' + C.q1 + '|' + C.p + '|' + c0, jQ = gu.owned.get(kQ);
+        if (jQ != null && gu.keyBy[jQ] === kQ) { if (mt) mt[jQ] += 1; }
+        else { const g2 = params.granChunkGate, seen = g2 > 0 ? this.guChunkSeen(kQ) : true; if ((g2 !== 1 || seen) && params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(kQ, 0, yTgt, g2 === 2 && !seen, true)) gu.st.catRec = (gu.st.catRec || 0) + 1; } } }
+    if (c0 === C.delim) { if (C.p !== '') { if (P) C.w2 = C.w; C.w = C.p; if (Q) { C.q2 = C.q1; const q = C.wc.get(C.p); C.q1 = q != null ? q : -1; C.pw = C.p; } } C.p = ''; } else C.p = C.p ? C.p + ',' + c0 : String(c0);
+    C.next = 'C' + C.w + '|' + C.p + '|'; if (P) C.nextP = C.w2 ? 'P' + C.w2 + '|' + C.w + '|' + C.p + '|' : null; if (Q) C.nextQ = C.q1 >= 0 && C.q2 >= 0 ? 'Q' + C.q2 + '|' + C.q1 + '|' + C.p + '|' : null; if (params.granWord > 0) C.nextW = C.p !== '' ? 'W' + C.p + '|' : null; }
+  /* R140 lagDepth (P.lagDepth = D > 4; 0 / unset = off, bit-identical, no RNG; needs granExact): LONG LAGS t-4 .. t-(D-1). The grown delay line holds
+   * t .. t-4 (R134 lag probes) and the claws read t .. t-3. The flag extends the delay line as a symbol-level register of the current-letter winner
+   * (source 0's latency winner each window, like the granChunk state), and adds claw sources at lags 4 .. D-1 used by recruited COPY detectors:
+   * key (current letter c, far lag l, letter x): fires in a read window when the current letter is c and the register holds x at lag l. Recruited by
+   * the usual rule (surprising teaching event, same pool, gate and one-shot / Kalman / trace readout) for the most recent far lag l >= 4 at which
+   * the arriving (target) letter occurred: "the letter seen l back comes again after c" (copy / repetition). No birth claws (the R135 random claws
+   * and their RNG draws are unchanged). P.lagBlur = 1: the far lag is blurred to its octave bin b = floor(log2 l) (4-7, 8-15, 16-31, ...), key
+   * (c, b, x) fires when the most recent far occurrence of x lies in bin b: one detector covers a range of delays (fewer, denser keys). */
+  guLagEvent(yTgt, n) {
+    const gu = this.gu; if (n < 1) return; const c0 = gu.win[0], mt = gu.match, kb = gu.keyBy, ow = gu.owned;
+    const D = Math.max(5, Math.round(params.lagDepth)), L = gu.lg || (gu.lg = { D, h: new Int32Array(D).fill(-1), won: 0, next: null, blur: params.lagBlur > 0, m: Math.max(1, Math.round(params.lagCtx || 1)), cx: '' });
+    const pre = L.blur ? 'B' : 'F', h = L.h;
+    if ((params.lagPrune > 0 || params.lagSurp > 0) && L.next) this.guLagUse(L, pre + c0 + L.cx, c0, this.gSym);   // R140 lagPrune / lagSurp: per-detector use statistics (see guLagUse)
+    if (mt && L.next) for (const sfx of L.next) { const key = pre + c0 + L.cx + sfx, j = ow.get(key); if (j != null && kb[j] === key) mt[j] += 1; }   // utility: the copy keys present in this window
+    const tg = this.gSym; if (params.lagGate > 0) { if (tg != null && tg >= 0 && L.next) this.guLagGate(L, pre + c0 + L.cx, c0, tg, yTgt); }   // R140 lagGate: recruit only copy keys that predict better than the short context (see guLagGate)
+    else if (tg != null && tg >= 0 && params.plasticity && this.learning && yTgt < 0.85) { let l = -1; for (let q = 4; q < D; q++) if (h[q] === tg) { l = q; break; }
+      if (l >= 0) { const key = pre + c0 + L.cx + '|' + (L.blur ? Math.floor(Math.log2(l)) : l) + '|' + tg, j0 = ow.get(key);
+        if (!(j0 != null && kb[j0] === key) && !gu.ban.has(key)) { const g = params.granChunkGate, seen = g > 0 ? this.guChunkSeen(key) : true;
+          if ((g !== 1 || seen) && this.guRecruit(key, 0, yTgt, g === 2 && !seen)) gu.st.lagRec = (gu.st.lagRec || 0) + 1; } } }
+    for (let q = D - 1; q > 1; q--) h[q] = h[q - 1]; h[1] = c0;   // shift the delay register: lags relative to the next window's current letter
+    const nx = []; if (L.blur) { const sn = new Set(); for (let q = 4; q < D; q++) { const x = h[q]; if (x < 0 || sn.has(x)) continue; sn.add(x); nx.push('|' + Math.floor(Math.log2(q)) + '|' + x); } }
+    else for (let q = 4; q < D; q++) if (h[q] >= 0) nx.push('|' + q + '|' + h[q]);
+    L.next = nx; if (L.m > 1) { let cx = ''; for (let q = 1; q < L.m; q++) cx += ',' + h[q]; L.cx = cx; } }   // R140 lagCtx m: the key carries the last m letters (current + m-1 before), not only the current one
+  /* R140 lagGate (P.lagGate = 1; 0 / unset = off): PREDICTIVE-UTILITY GATE for copy detectors (self-calibrating, no constant). Every copy key present in a
+   * window keeps a count of its presences n and of the times its far letter x was the arriving letter h. A copy detector is recruited (surprising event,
+   * as before) only for a present key with x = the arriving letter whose lower confidence bound p - sqrt(p (1 - p) / n) (p = h / n, n >= 3) beats BOTH the
+   * short context: the net's own prediction of the arriving letter (yTgt) and the bigram rate P(x | current letter). Keys whose far letter adds nothing
+   * over the current letter never get a detector, so frequent letters at far lags (the text failure of R140 D32) are filtered out by evidence. */
+  guLagGate(L, kp, c0, tg, yTgt) {
+    const gu = this.gu, A = gu.src[0].keys.length; if (!L.gs) { L.gs = new Map(); L.bg = new Float64Array(A * A); L.bn = new Float64Array(A); }
+    const gs = L.gs; let best = null, bv = -1;
+    for (const sfx of L.next) { const key = kp + sfx, x = +sfx.slice(sfx.lastIndexOf('|') + 1); let v = gs.get(key); if (!v) gs.set(key, v = [0, 0]); v[0]++; if (x === tg) v[1]++;
+      if (x !== tg || v[0] < 3) continue; const p = v[1] / v[0], lb = p - Math.sqrt(p * (1 - p) / v[0]); if (lb > bv) { bv = lb; best = key; } }
+    const pb = L.bn[c0] > 0 ? L.bg[c0 * A + tg] / L.bn[c0] : 0; L.bg[c0 * A + tg]++; L.bn[c0]++;
+    let pr = pb; if (params.lagGate === 2) { const tk = c0 + ',' + L.h[1] + ',' + L.h[2], tm = L.tri || (L.tri = new Map()); let v = tm.get(tk); if (!v) tm.set(tk, v = new Map()); let nn = 0; for (const c of v.values()) nn += c;   // lagGate 2: reference = the short-context count rate P(x | last 3 letters) (what the exact tuples see), not only the bigram
+      const pt = nn > 0 ? (v.get(tg) || 0) / nn : 0; v.set(tg, (v.get(tg) || 0) + 1); if (pt > pr) pr = pt; }
+    if (!best || bv <= Math.max(yTgt, pr) || !(params.plasticity && this.learning) || yTgt >= 0.85) return;
+    const j0 = gu.owned.get(best); if ((j0 != null && gu.keyBy[j0] === best) || gu.ban.has(best)) return; gu.st.lagPass = (gu.st.lagPass || 0) + 1;
+    const g = params.granChunkGate, seen = g > 0 ? this.guChunkSeen(best) : true;
+    if ((g !== 1 || seen) && this.guRecruit(best, 0, yTgt, g === 2 && !seen)) gu.st.lagRec = (gu.st.lagRec || 0) + 1; }
+  /* R140 lagPrune (P.lagPrune = 1) / lagSurp (P.lagSurp = 1); 0 / unset = off, no RNG. Use-time gating of copy detectors (self-calibrating, no constant).
+   * Each live copy detector j counts its presences n_j (its key held in a window) and hits h_j (its far letter x arrived next), and the bigram rate
+   * P(x | current letter) at those presences (sum r_j). lagPrune: once the upper bound p + sqrt(p (1 - p) / n) + 1 / n (p = h / n) falls below the mean
+   * reference r_j / n_j, the detector is freed and its key banned (it predicts no better than the current letter alone). lagSurp: a copy detector fires
+   * only in windows where its precision (h + 1) / (n + 2) beats the confidence of the short context (the top count rate after the last 3 letters),
+   * i.e. it can drive the readout only when the short-context prediction is uncertain. 0 < lagSurp < 1: softer, precision > lagSurp x confidence. lagSurp 2: the confidence is add-one smoothed over the alphabet. */
+  guLagUse(L, kp, c0, tg) {
+    const gu = this.gu, A = gu.src[0].keys.length, nG = gu.nG; if (!L.un) { L.un = new Float32Array(nG); L.uh = new Float32Array(nG); L.ur = new Float32Array(nG); L.ug = new Int32Array(nG).fill(-1); L.ubg = new Float64Array(A * A); L.ubn = new Float64Array(A); L.tri3 = new Map(); }
+    const ok = tg != null && tg >= 0;
+    for (const sfx of L.next) { const key = kp + sfx, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key) continue; if (L.ug[j] !== gu.gen[j]) { L.ug[j] = gu.gen[j]; L.un[j] = 0; L.uh[j] = 0; L.ur[j] = 0; }
+      if (!ok) continue; const x = +sfx.slice(sfx.lastIndexOf('|') + 1); L.un[j]++; if (x === tg) L.uh[j]++; L.ur[j] += L.ubn[c0] > 0 ? L.ubg[c0 * A + x] / L.ubn[c0] : 0;
+      if (params.lagPrune > 0 && L.un[j] >= 3) { const n = L.un[j], p = L.uh[j] / n; if (p + Math.sqrt(p * (1 - p) / n) + 1 / n < L.ur[j] / n && gu.st.events - gu.born[j] >= gu.hold) {
+        gu.ban.add(key); gu.owned.delete(key); gu.keyBy[j] = null; gu.gen[j]++; gu.xn[j] = 0; if (gu.match) gu.match[j] = 0; gu.st.lagPruned = (gu.st.lagPruned || 0) + 1; } } }
+    if (ok) { L.ubg[c0 * A + tg]++; L.ubn[c0]++; const tk = c0 + ',' + L.h[1] + ',' + L.h[2]; let v = L.tri3.get(tk); if (!v) L.tri3.set(tk, v = new Map()); v.set(tg, (v.get(tg) || 0) + 1); } }
+  guLagFire(c, syn, mk, gB) { const gu = this.gu, L = gu.lg; if (L.won) return; L.won = 1; const pre = L.blur ? 'B' : 'F';
+    if (params.lagSurp > 0 && L.un) { let cf = 0; const v = L.tri3.get(c + ',' + L.h[1] + ',' + L.h[2]); if (v) { let t = 0, m = 0; for (const q of v.values()) { t += q; if (q > m) m = q; } cf = params.lagSurp === 2 ? (m + 1) / (t + gu.src[0].keys.length) : m / t; }
+      let mT = -1, mF = false; if ((params.lagMarg === 1 || params.lagMarg === 2) && v) { let m1 = 0, m2 = 0; for (const [x, q] of v) { if (q > m1) { m2 = m1; m1 = q; mT = x; } else if (q > m2) m2 = q; } mF = params.lagMarg === 1 ? m1 > m2 : m1 - m2 > Math.sqrt(m1 + m2); }
+      if ((params.lagMarg === 3 || params.lagMarg === 4) && gu.ch) { const ck = gu.ch.next != null ? gu.ch.next + c : null, jc = ck != null ? gu.owned.get(ck) : null, fired = jc != null && gu.keyBy[jc] === ck && gu.xf[jc] === 1; if (fired === (params.lagMarg === 3)) { gu.st.lagDefer = (gu.st.lagDefer || 0) + 1; return; } }   // R142d lagMarg 4: the opposite extreme, copy votes only in windows where the word chunk fired   // R142c lagMarg 3: the word-chunk detector of (current word, letter) fired in this window -> the word context outranks the far copy: copy votes silent   // R142b lagMarg: the short context has a first choice mT (1: any strict lead; 2: lead > 1 sigma, sqrt(m1 + m2))   // lagSurp 2: add-one (Laplace) smoothed confidence, so rarely seen contexts do not look confident   // short-context confidence (h[1], h[2] = the 2 letters before c: the register is already shifted)
+      for (const sfx of L.next) { const key = pre + c + L.cx + sfx, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key) continue; const n = L.ug[j] === gu.gen[j] ? L.un[j] : 0, h = n ? L.uh[j] : 0;
+        if (mF && +sfx.slice(sfx.lastIndexOf('|') + 1) !== mT) { gu.st.lagNoFlip = (gu.st.lagNoFlip || 0) + 1; continue; }   // R142b lagMarg: a copy vote may add mass to the short context's first choice or vote where there is none, never against a leading first choice
+        const cfe = cf * (params.lagSurp < 1 ? params.lagSurp : 1), pp = (h + 1) / (n + 2);
+        if (pp > cfe) { const ev = params.lagEvid; if (ev > 0) { const lb = pp - Math.sqrt(pp * (1 - pp) / (n + 2)), w = ev === 3 ? 0 : lb > cfe ? 1 : ev === 1 ? 0 : ev === 2 ? Math.min(1, (pp - cfe) / (pp - lb)) : ev < 1 ? ev : 1;   // R142 lagEvid: vote weight from the detector's own evidence (2: share of its 1-sigma interval above the short-context confidence; 3: diagnostic, every copy vote silent)
+            if (w <= 0) { gu.st.lagWeak0 = (gu.st.lagWeak0 || 0) + 1; continue; } if (w < 1 && !gu.xf[j]) { if (!gu.lw) { gu.lw = new Float32Array(gu.nG).fill(1); gu.la = new Float32Array(gu.nG); gu.lwT = []; } gu.lw[j] = w; gu.la[j] = 0; gu.lwT.push(j); gu.st.lagWeak = (gu.st.lagWeak || 0) + 1; } }
+          this.guKeyFire(key, syn, mk, gB, 3); } else gu.st.lagQuiet = (gu.st.lagQuiet || 0) + 1; } return; }
+    for (const sfx of L.next) this.guKeyFire(pre + c + L.cx + sfx, syn, mk, gB, 3); }
+  /* R137 granCat (P.granCat = f > 0; 0 / unset = off, bit-identical, no RNG; needs granChunk): a SECOND LEVEL OF LEARNED WORD CATEGORIES. Each completed word
+   * keeps a continuation profile (counts of the first letter of the word that follows it). Categories are competitive-learning prototypes of the normalised
+   * profiles, grown online: a word with >= 2 samples and no category seeds a new prototype while fewer than Kmax exist, otherwise joins the most similar
+   * (cosine); its prototype moves toward it (rate 1 / min(n+1, 100)). Kmax = max(2, round(f x pool / 1000)) (pool = born granules), so a bigger pool holds
+   * finer categories. Second-level detectors: key (category of the word before last, category of the last word, partial word, letter), recruited and fired
+   * like the chunk detectors (same gate, pool and readout). */
+  guCatInit(C) { const gu = this.gu, nB = gu.l2 != null ? gu.nG - gu.l2 : gu.nAct != null ? gu.st.nAct0 : gu.nG; C.K = Math.max(2, Math.round(params.granCat * nB / 1000)); C.A = gu.src[0].keys.length;
+    C.prof = new Map(); C.wc = new Map(); C.cent = []; C.cn = []; C.q1 = -1; C.q2 = -1; C.pw = null; gu.st.catK = C.K; return C.K; }
+  guCatObs(C, w, c0) { let v = C.prof.get(w); if (!v) C.prof.set(w, v = new Float64Array(C.A + 1)); v[c0]++; v[C.A]++; if (v[C.A] < 2) return;
+    let z = 0; for (let i = 0; i < C.A; i++) z += v[i] * v[i]; z = Math.sqrt(z); const x = new Float64Array(C.A); for (let i = 0; i < C.A; i++) x[i] = v[i] / z;
+    let b = -1, bv = -2; for (let k = 0; k < C.cent.length; k++) { const c = C.cent[k]; let d = 0; for (let i = 0; i < C.A; i++) d += c[i] * x[i]; if (d > bv) { bv = d; b = k; } }
+    if (!C.wc.has(w) && C.cent.length < C.K) { b = C.cent.length; C.cent.push(Float64Array.from(x)); C.cn.push(1); this.gu.st.catN = C.cent.length; }
+    else { const c = C.cent[b], r = 1 / Math.min(C.cn[b] + 1, 100); C.cn[b]++; let q = 0; for (let i = 0; i < C.A; i++) { c[i] += r * (x[i] - c[i]); q += c[i] * c[i]; } q = Math.sqrt(q) || 1; for (let i = 0; i < C.A; i++) c[i] /= q; }
+    C.wc.set(w, b); }
+  /* R136 granPhrase (P.granPhrase = 1; 0 / unset = off, bit-identical, no RNG; needs granChunk): SECOND LEVEL. Each completed word (chunk) becomes a symbol
+   * of a slower stream; phrase detectors are recruited by the same rule (surprise, same gate, same pool and readout) on the key (word before last, last word,
+   * partial word, current letter) = the chunk key extended by the previous chunk, and fire with the chunk detector in the read window.
+   * granPhrase = 2: phrase detectors always use the 2nd-sighting gate (sparse level; the pool is left to chunks). */
+  /* R135 granChunkGate (P.granChunkGate = 1; 0 / unset = off, bit-identical, no RNG): recruit a chunk detector only on the SECOND sighting of its key
+   * (surprising and seen before). Seen-before memory = a 1-hash bit sketch (FNV-1a) of 2^ceil(log2(32 nG)) bits: sized by the pool itself, so the false
+   * "seen" rate stays ~ (distinct keys) / (32 nG) (< 6% at book100k, 32000 granules). Returns true if the key was seen before; marks it seen.
+   * granChunkGate = 2 (pressure gate): a first sighting still recruits, but only into a free slot (a granule with zero exact matches among the 48 sampled
+   * candidates); once the pool holds no free slots, recruitment waits for the 2nd sighting. Self-calibrating: no gate while the pool has room (short text). */
+  guChunkSeen(key) { const gu = this.gu; if (!gu.chS) { let b = 1; while (b < 32 * gu.nG) b <<= 1; gu.chS = new Uint32Array(b >>> 5); gu.chM = b - 1; }
+    let h = 0x811c9dc5; for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 0x01000193); h = (h >>> 0) & gu.chM;
+    const w = h >>> 5, m = 1 << (h & 31); if (gu.chS[w] & m) return true; gu.chS[w] |= m; gu.st.chunkGated = (gu.st.chunkGated || 0) + 1; return false; }
+  guChunkFire(c, syn, mk, gB) {   // first hit of current-letter column c in this window: fire the chunk detector of (chunk state, c)
+    const gu = this.gu; if (gu.ch.won) return; gu.ch.won = 1;   // only the first current-letter column to fire in the window (latency winner = the letter that arrived)
+    this.guKeyFire(gu.ch.next + c, syn, mk, gB, 0); if (gu.ch.nextP != null) this.guKeyFire(gu.ch.nextP + c, syn, mk, gB, 1); if (gu.ch.nextQ != null) this.guKeyFire(gu.ch.nextQ + c, syn, mk, gB, 2); if (gu.ch.nextW != null) this.guKeyFire(gu.ch.nextW + c, syn, mk, gB, 4); }
+  guKeyFire(key, syn, mk, gB, ph) { const gu = this.gu, j = gu.owned.get(key); if (j == null || gu.keyBy[j] !== key || gu.xf[j]) return;
+    if (!gu.xm[j]) gu.xT[gu.xTn++] = j; gu.xm[j] |= 1; gu.xf[j] = 1; gu.xF[gu.xFn++] = j; gu.xc[j]++;
+    const b = gu.gOff + j, T = this.thr || this.g.thresh; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; if (gB) gB[j >>> 5] |= 1 << (j & 31);
+    if (ph === 4) gu.st.wordFired = (gu.st.wordFired || 0) + 1; else if (ph === 3) gu.st.lagFired = (gu.st.lagFired || 0) + 1; else if (ph === 2) gu.st.catFired = (gu.st.catFired || 0) + 1; else if (ph) gu.st.phraseFired = (gu.st.phraseFired || 0) + 1; else gu.st.chunkFired = (gu.st.chunkFired || 0) + 1; }
+  guColCap(s) { const v = params.granExactColCap;
+    if (!v) { const gu = this.gu; if (s === 0 || gu.st.events < 3000) return 2; if (gu.crE0 !== gu.st.events) { gu.crE0 = gu.st.events; let m = 0; const a0 = gu.cr[0]; for (let c = 0; c < a0.length; c++) if (a0[c] > m) m = a0[c]; gu.crMax0 = Math.min(0.9, 3 * m); } return gu.crMax0; }
+    // R120 granExactGuard (self-calibrating): a lag column is saturated when it is active in more windows than 3x the most frequent CURRENT letter's column (source 0) - no letter can explain that; capped at 0.9 (small alphabets)
+    if (v > 0) return v; const gu = this.gu, a = gu.cr[s]; if (!gu.crM || gu.crE !== gu.st.events) { gu.crE = gu.st.events; gu.crM = gu.cr.map(x => { let t = 0; for (let c = 0; c < x.length; c++) t += x[c]; return t / x.length; }); }
+    return gu.st.events < 3000 ? 2 : Math.max(-v * gu.crM[s], 0.05); }   // < 0 = self-calibrating: |v| x the source's mean column activity (a saturated column vs its alphabet)
+  guExactReset() { const gu = this.gu, xm = gu.xm, xf = gu.xf, xT = gu.xT; if (gu.ch) gu.ch.won = 0; if (gu.lg) gu.lg.won = 0; for (let q = 0; q < gu.xTn; q++) { xm[xT[q]] = 0; xf[xT[q]] = 0; } gu.xTn = 0; gu.xFn = 0; if (gu.lwT && gu.lwT.length) { for (const j of gu.lwT) { gu.lw[j] = 1; gu.la[j] = 0; } gu.lwT.length = 0; }   // R142 lagEvid: weights last one window
+    const cT = gu.cT; if (params.granExactColCap || (params.granExactGuard & 2) || params.lagHomeo > 0) { const cr = gu.cr; for (let s2 = 0; s2 < cr.length; s2++) { const a = cr[s2]; for (let c = 0; c < a.length; c++) a[c] *= 0.999; } for (let q = 0; q < cT.length; q += 2) if (gu.cHit[cT[q]][cT[q + 1]] >= 250) cr[cT[q]][cT[q + 1]] += 0.001; }
+    for (let q = 0; q < cT.length; q += 2) gu.cHit[cT[q]][cT[q + 1]] = 0; cT.length = 0; if (gu.lh) this.lagHomeoStep(); if (gu.wta) gu.wta.fill(0); }
+  guDrive(spk, nSpk, syn, mk) {
+    const gu = this.gu, colOf = gu.colOf, hits = gu.hits, lists = gu.lists, gOff = gu.gOff, gEnd = gOff + gu.nG, use = gu.use, gen = gu.gen, K = gu.K, hOff = gu.hOff, gB = this.gBits;
+    if (gu.xm) { const inNow = nSpk > 0 && spk[0] < this.g.nIn; if (inNow && !gu.inPrev) this.guExactReset(); gu.inPrev = inNow; if (gu.xL) { gu.tk++; if (gu.st.events > 0) gu.sps = gu.tk / gu.st.events; } }   // R119: a new input symbol starts a new window (also in free-running generation, which has no teaching events)
+    if (gu.xm && params.granExactHold !== 0 && gu.xFn) { const T = this.thr || this.g.thresh, F = gu.xF; const lw = gu.lw, la = gu.la; for (let q = 0; q < gu.xFn; q++) { if (lw && lw[F[q]] < 1) { const j = F[q]; la[j] += lw[j]; if (la[j] < 1) continue; la[j] -= 1; } const b = gOff + F[q]; syn[b] += 2 * (T[b] - V_REST) + 1; if (mk) mk[b] = 1; } }   // R142 lagEvid: a weak copy detector is held on a fraction w of the window's substeps (rate-coded vote; deterministic, no RNG)   // R119 granExactHold (default on): a matched detector keeps firing for the rest of the read window (sustained drive like the dense code)
+    for (let q = 0; q < nSpk; q++) {
+      const i = spk[q]; if (i >= gOff && i < gEnd) use[i - gOff]++;
+      const gc = colOf[i]; if (gc < 0) continue; hits[gc]++;
+      let s = 0; while (s + 1 < K && gc >= hOff[s + 1]) s++;
+      if (gu.xm) { this.guExact(i, gc, s, syn, mk, gB); continue; }
+      const L = lists[s][gc - hOff[s]];
+      for (let r = 0, m = L.length; r < m; r++) { const e = L[r]; if (e.gen !== gen[e.j]) continue; const b = gOff + e.j; syn[b] += e.w; if (mk) mk[b] = 1; if (gB) gB[e.j >>> 5] |= 1 << (e.j & 31); }
+    }
+  }
+  granUtilityEvent(yTgt) {
+    const gu = this.gu; if (!gu) return;
+    const { K, Km, W, nG, gOff, src, hOff, hits, win, lists, inS, inK, outS, outK, use, born, gen, keyBy, owned, pending, rng, co, hold, st } = gu;
+    st.events++; const mt0 = gu.match, ev0 = j => st.events - born[j] >= hold;
+    let n = 0;
+    for (let s = 0; s < K; s++) { const a = hOff[s], m = src[s].keys.length; let bc = -1, bh = 0;
+      for (let c = 0; c < m; c++) { const h = hits[a + c]; if (h > bh) { bh = h; bc = c; } }
+      if (bc >= 0) win[n++] = bc; else break; }
+    if (gu.xm && params.granExactCap) { const xr = gu.xr, F = gu.xF; let sm = 0, nl = 0; for (let j = 0; j < nG; j++) { xr[j] *= 0.999; if (keyBy[j] != null) { sm += xr[j]; nl++; } } for (let q = 0; q < gu.xFn; q++) xr[F[q]] += 0.001;
+      const cap = params.granExactCap > 0 ? params.granExactCap : st.events < 3000 ? 2 : Math.max(0.01, -params.granExactCap * (nl ? sm / nl : 0));   // < 0 = self-calibrating: |v| x the mean match rate of the live detectors   // R119 granExactCap: a detector matching in > cap of the windows (EMA) is too broad -> freed for recruitment
+      for (let q = 0; q < gu.xFn; q++) { const j = F[q]; if (xr[j] > cap && ev0(j)) { const kb = keyBy[j]; if (kb != null) gu.ban.add(kb); if (kb != null && owned.get(kb) === j) owned.delete(kb); keyBy[j] = null; gen[j]++; gu.xn[j] = 0; xr[j] = 0; if (mt0) mt0[j] = 0; st.capped++; } } }
+    hits.fill(0); if (gu.xm) this.guExactReset();
+    for (let j = 0; j < nG; j++) use[j] *= 0.998;
+    const mt = gu.match;   // R119 granUtility 2 (match utility): credit the granules whose whole claw tuple (lags t .. t-m+1, m = Km .. n) is this window
+    if (mt) { for (let j = 0; j < nG; j++) mt[j] *= 0.998; let kk = String(Km); for (let c = 0; c < Km && c < n; c++) kk += ',' + win[c];
+      for (let m = Km; m <= n; m++) { if (m > Km) kk = String(m) + kk.slice(kk.indexOf(',')) + ',' + win[m - 1]; const j = owned.get(kk); if (j != null) { mt[j] += 1; st.matched++; } } }
+    if (params.lagDepth > 4 && gu.xm) this.guLagEvent(yTgt, n);   // R140 lagDepth (off by default): long-lag (copy) detectors, see guLagEvent
+    if (params.granChunk > 0 && gu.xm) this.guChunkEvent(yTgt, n);   // R134 granChunk (off by default): word-context chunk detectors (before the recruit early-returns)
+    if (!(params.plasticity && this.learning) || yTgt >= 0.85 || n < Km) return;
+    let key = String(n); for (let c = 0; c < n; c++) key += ',' + win[c];
+    if (gu.xm) { let kk = String(Km); for (let c = 0; c < Km; c++) kk += ',' + win[c];   // exact mode: recruit the shortest missing window first (3 letters, then 4)
+      for (let m = Km; m <= n; m++) { if (m > Km) kk = String(m) + kk.slice(kk.indexOf(',')) + ',' + win[m - 1]; if (!owned.has(kk) && !gu.ban.has(kk)) { key = kk; n = m; break; } }
+      if (gu.ban.has(key)) return; if (params.granExactColCap || (params.granExactGuard & 2)) for (let c = 0; c < n; c++) if (gu.cr[c][win[c]] > this.guColCap(c)) { st.guardSkip = (st.guardSkip || 0) + 1; return; } }
+    if (owned.has(key)) return;
+    this.guRecruit(key, n, yTgt);
+  }
+  guRecruit(key, n, yTgt, free, lv2) {   // R138: lv2 = a level-2 key (recruits only in [l2, nG) when granL2 is on; level-1 keys only below l2)   // R135: free = recruit only into a never-matched slot (granChunkGate 2); returns true when a granule was recruited   // (R134: the recruit tail of granUtilityEvent as a method, unchanged; n = 0 = a chunk detector with no claw lists)
+    const gu = this.gu, { W, nG, gOff, src, win, lists, inS, inK, outS, outK, use, born, gen, keyBy, owned, pending, rng, co, hold, st } = gu, mt = gu.match;
+    if (lv2 && params.granL2 > 0 && gu.l2 == null) return false;   // R138 granL2 with no level-2 pool (sizeF <= b): no second level
+    const cnt = (pending.get(key) || 0) + 1;
+    if (cnt < co) { pending.set(key, cnt); return; }
+    pending.delete(key);
+    const ev = st.events, ws = this.ws, posts = this.posts;
+    let best = -1, bu = Infinity;
+    for (let t = 0; t < 48; t++) {
+      const L2 = gu.l2 != null, r0 = L2 && lv2 ? gu.l2 : gu.rsv0 > 0 ? gu.rsv0 : 0, j = r0 + ((rng() * ((L2 && lv2 ? nG : gu.nAct != null ? gu.nAct : L2 ? gu.l2 : nG) - r0)) | 0); if (ev - born[j] < hold) continue;   // R119 granReserve: recruit / recycle only inside the reserve (r0 = 0 = whole layer, same draw)
+      let wSum = 0; for (let q = outS[j]; q < outS[j + 1]; q++) wSum += ws[outK[q]];
+      const u = mt ? mt[j] : use[j] * (0.01 + wSum);   // R119: mode 2 ranks by exact-tuple matches (homeostasis keeps every granule spiking, so the spike-count utility never falls below 0.05 in v47)
+      if (u < bu) { bu = u; best = j; if (u === 0) break; }
+    }
+    const cap1 = gu.l2 != null ? gu.l2 : nG, in2 = lv2 && gu.l2 != null;   // in2: a level-2 recruit inside the L2 pool (no growth there)
+    if (params.granEvGrow > 0 && !in2 && gu.nAct < cap1 && best >= 0 && bu > 0) { best = gu.nAct++; bu = 0; st.evGrown = (st.evGrown || 0) + 1; }   // R138 granEvGrow: evicting a used level-1 detector adds a slot instead (grow on eviction)
+    if (free && !in2 && gu.nAct < cap1 && (best < 0 || bu > 0)) { best = gu.nAct++; bu = 0; st.grown = (st.grown || 0) + 1; }   // R136 granGrow: a first sighting the pressure gate would refuse adds a slot instead (pool grows on demand up to the allocated cap)
+    if (best < 0 || bu > 0.05) return false; if (free && bu > 0) { st.chunkFull = (st.chunkFull || 0) + 1; return false; }
+    if (keyBy[best] != null && owned.get(keyBy[best]) === best) owned.delete(keyBy[best]);
+    for (let q = inS[best]; q < inS[best + 1]; q++) ws[inK[q]] = 0;
+    const gv = ++gen[best], b = gOff + best;
+    keyBy[best] = key; if (this.gKn) this.gKn[gu.gOff + best] = 0; owned.set(key, best); born[best] = ev; use[best] = 1; if (mt) mt[best] = 1;
+    if (gu.xm) { gu.xn[best] = n; for (let c = 0; c < n; c++) lists[c][win[c]].push({ j: best, w: 0, gen: gv, c }); }
+    else for (let c = 0; c < n; c++) { const col = win[c], sl = src[c].off[col + 1] - src[c].off[col]; if (sl > 0) lists[c][col].push({ j: best, w: W / n / sl, gen: gv }); }
+    const U = this.gU, Uw = this.gRUw, pos = this.gRpos, wo = gu.wo, psi = this.gPsi || 0;
+    const o0 = this.g.nIn + this.g.nHid, tgtNode = params.granTgt === 1 && this.gSym >= 0 ? o0 + this.gSym : -1;
+    // R121 granOneShot (P.granOneShot = 1; off = bit-identical): the recruit's weight onto the symbol that just arrived is the readout's own NLMS
+    // step for a lone active input (granLr x granRef x (1 - y)), i.e. what the cell would have learned had it fired in the window it was recruited
+    // for (one-shot, like a count model's first sighting); granOneShot 2: / (1 + granules active in that window) = its NLMS share; 0 < granOneShot < 1: that fraction of the lone-input step; instead of the token granLr x (1 - y) on a weight scale of up to wMax x granExactW.
+    const os = params.granOneShot > 0 && gu.xm, wTgt = os ? Math.min(params.wMax * (params.granExactW > 0 ? params.granExactW : 50), wo + (params.granLr || 0.1) * (params.granRef > 0 ? params.granRef : 10) * Math.max(0, 1 - yTgt) * (params.granOneShot < 1 ? params.granOneShot : 1) / (params.granOneShot === 2 ? 1 + (this.gLastNA || 0) : 1)) : Math.min(params.wMax || 15, wo + (params.granLr || 0.1) * Math.max(0, 1 - yTgt));
+    if (U && !gu.uAt && this.gIn) { const Ki = this.gIn.K, m = new Int32Array(ws.length).fill(-1); for (let r = 0; r < Ki.length; r++) m[Ki[r]] = r; gu.uAt = m; }
+    const map = gu.uAt;
+    for (let q = outS[best]; q < outS[best + 1]; q++) { const e = outK[q], uVal = posts[e] === tgtNode ? wTgt : mt && params.granRecruitW0 !== 1 ? 0 : wo;   // R119 mode 2: a recruit starts silent on the non-target outputs (wo = the untrained initial weight would add uniform drive to every output; P.granRecruitW0=1 = old)
+      if (U && map && map[e] >= 0) { const r = map[e]; U[r] = uVal; if (Uw && pos) Uw[pos[r]] = uVal; }
+      ws[e] = U ? psi * uVal : uVal;
+      if (this.gFA) { const tg = posts[e] === tgtNode ? 1 : 0, f = tg && this.gFx > 0 ? (params.granRef > 0 ? params.granRef : 10) / this.gFx : 0, wX = params.wMax * (params.granExactW > 0 ? params.granExactW : 50), w1 = uVal + f > wX ? wX : uVal + f;   // R133 granTrace: the recruit's trace = its first observation, full vote (gate 1 at n = 0)
+        this.gFE[e] = tg; if (U) { this.gFA[e] = f; ws[e] = psi * (uVal + f); } else { ws[e] = w1; this.gFA[e] = w1 - uVal; } } }
+    if (this.gFA) this.gFo[b] = tgtNode >= 0 ? 1 : 0;
+    if (this.thr) { this.thr[b] = gu.thr0; if (this.gLastT) this.gLastT[best] = this.gThStep; }
+    this.v[b] = V_REST; if (this.gCnt) this.gCnt[b] = 0; if (this.gAcc) this.gAcc[b] = 0;
+    st.rewired++; return true;
+  }
+  // Two-timescale event-gated chunk boundary shift (T.map === 'chunkGate'):
+  // Gates higher-order context regions only on explicit chunk delimiters (e.g. space = sym 0) or high cortical surprise.
+  initChunkGates() {
+    const gates = this.g && this.g.chunkGates; if (!gates || !gates.length) return;
+    const spec = currentEnv().spec; let go2Id = -1;
+    if (spec && spec.inputs) for (let i = 0; i < spec.inputs.length; i++) if (spec.inputs[i].group === 'go2') { go2Id = i; break; }
+    this.cg = { gates, go2Id, lastTick: -1, age: 0, shifts: 0 };
+  }
+  chunkGateStep(syn, mk) {
+    const cg = this.cg; if (!cg || cg.lastTick === this.tickNo) return;
+    if (cg.go2Id >= 0 && !(this.ext[cg.go2Id] > 0)) return;
+    cg.lastTick = this.tickNo;
+    const surprise = this.lastSurprise != null ? this.lastSurprise : 1, sym = this.gSym;
+    for (let i = 0; i < cg.gates.length; i++) {
+      const g = cg.gates[i], maxLag = g.maxLag || 6;
+      const fire = (g.delimSym >= 0 && sym === g.delimSym) || surprise >= g.thr || cg.age >= maxLag;
+      if (fire) { cg.age = 0; cg.shifts++; const nd = g.nodes, wt = g.weights; for (let q = 0; q < nd.length; q++) { const u = nd[q]; syn[u] += wt[q]; if (mk) mk[u] = 1; } }
+      else cg.age++;
+    }
   }
   deltaInit() {
     const N = this.N, nIn = this.g.nIn, rc = new Uint8Array(N), inS = this.inStart, inE = this.inEdges, isP = this.isPlastic, w0 = this.w0, iI = this.instrIn;
@@ -814,6 +1319,7 @@ class SpikingNet {
     if (this.fastE) return this.stepFast();
     const N = this.N, v = this.v, syn = this.syn, ext = this.ext, sp = this.spiked,
           th = this.thr || this.g.thresh, tr = this.trace, td = this.dtF ? this.td : params.traceDecay;   // (v15: own thresholds if adaptive)
+    if (this.cg) this.chunkGateStep(syn, null);
     const L = this.dtF ? this.L : params.leak, slow = this.g.slow, gl = this.dtF ? this.gl : this.g.leak;
     const spk = this.spk; let nSpk = 0;   // v11: list of this substep's spikes (ascending), for event-driven propagation
     for (let i = 0; i < N; i++) {
@@ -833,6 +1339,7 @@ class SpikingNet {
     }
     if (this.rhList && params.plasticity) { const L = this.rhList, h = this.p.rcvHomeo, r0 = this.p.rcvRate, thr = this.thr; for (let q = 0; q < L.length; q++) { const i = L[q]; thr[i] += h * (sp[i] - r0); } }
     if (this.hhList || this.riId) this.sparseStep(sp, spk, nSpk, null);   // R67
+    if (this.dc) this.denseStep(sp, null);
     if (this.anList) { if (this.p.actNoise > 0) this.actNoiseStep(); if (this.p.actFb > 0 || this.p.outInh > 0) this.actLoop(sp); }   // v20 exploration noise of the action channels
     if (this.mixPre) { let n = 0; for (let s = 0; s < nSpk; s++) n += this.mixPre[spk[s]];   // v14: feedforward inhibition of mixing cells
       if (n) { const d = this.mixInhD * n, ml = this.mixList; if (this.mlS) { const S = this.mlS, P = this.mlP, D = this.mlD; for (let s = 0; s < nSpk; s++) { const i = spk[s]; for (let k = S[i], e = S[i + 1]; k < e; k++) syn[P[k]] -= D[k]; } } else for (let q = 0; q < ml.length; q++) syn[ml[q]] -= d;
@@ -843,6 +1350,7 @@ class SpikingNet {
       const mx = this.g.mix; if (this.p.mixLr > 0) for (let s = 0; s < nSpk; s++) if (mx[spk[s]]) this.mixLearn(spk[s]);
       if (this.thr && !this.mixFrozen()) { const ml = this.mxList, hr = this.p.mixHomeo, r0 = this.p.mixRate, thr = this.thr; for (let q = 0; q < ml.length; q++) { const i = ml[q]; thr[i] += hr * (sp[i] - r0); } } }
     if (this.gd) this.granDemandDrive(spk, nSpk, syn, null);   // R102: demand-grown claws (no-op unless P.granDemand grew this brain)
+    if (this.gu) this.guDrive(spk, nSpk, syn, null);
     if (this.g.gran) this.granInh(spk, nSpk, syn, null);   // R83 granule feedforward inhibition
     if (this.ng) this.needTrace(spk, nSpk);   // v28 need-growth source traces
     if (this.teachTr) {                     // teacher events: smoothed drive from sensory (input) neurons
@@ -894,7 +1402,7 @@ class SpikingNet {
       // inputs learns at lr x fanRef / n, so the drive one teacher plateau adds stays the same when a bigger source region gives it more inputs
       // (homeostatic synaptic scaling of the plastic total; local: each cell only needs its own input count).
       const tF = (params.trophic & 2) ? (this.trF || this.trophicS()) : null;   // R73 trophic bit 2: the learning step of a synapse x 1 / (size factor of its presynaptic region)
-      const fR = params.fanRef > 0 ? params.fanRef : 0; if (fR && (!this.lrF || this.lrFR !== fR)) this.lrF = this.fanLrF(fR); const lF = fR ? this.lrF : (params.trophic & 8) ? (this.lrF8 || this.fanEqF()) : null;   // (R74 bit 8 when fanRef is off)
+      const fR = params.fanRef > 0 ? params.fanRef : 0; if (fR && (!this.lrF || this.lrFR !== fR)) this.lrF = this.fanLrF(fR); const lF = fR ? this.lrF : ((params.trophic & 8) || params.scaleInvariant > 0) ? (this.lrF8 || this.fanEqF()) : null;   // (R74 bit 8 when fanRef is off; enabled by scaleInvariant)
       if (pe > 0 && (pm & 4) && !this.peDone) this.peDone = new Uint8Array(N);
       if (pe > 0 && (pm & 8) && !this.peConf) this.peConf = new Float32Array(N).fill(0.5);
       const ipS = this.ipStart, ipK = this.ipK, ipP = this.ipPre, w0 = this.w0, plat = this.plat;
@@ -999,8 +1507,8 @@ class SpikingNet {
     // R71 fanRefR (global param, 0/undefined = off): fan-in-normalised rate for the reward / unified rule (the teacher rule uses fanRef):
     // a receiver with n > fanRefR plastic inputs learns at lr x fanRefR / n (per receiver; n counted once over this rule's plastic list).
     const fRR = params.fanRefR > 0 ? params.fanRefR : 0; if (fRR && (!this.lrFr || this.lrFRR !== fRR)) { const f = new Float32Array(this.N), ps = this.posts; for (let q = 0; q < pl.length; q++) f[ps[pl[q]]]++; for (let i = 0; i < this.N; i++) f[i] = f[i] > fRR ? fRR / f[i] : 1; this.lrFr = f; this.lrFRR = fRR; }
-    if (!fRR && (params.trophic & 16) && !this.lrF16) { const t = this.trF || this.trophicS(), n = new Float32Array(this.N), e1 = new Float32Array(this.N), ps = this.posts, pr = this.pres; for (let q = 0; q < pl.length; q++) { n[ps[pl[q]]]++; e1[ps[pl[q]]] += t[pr[pl[q]]]; } for (let i = 0; i < this.N; i++) n[i] = n[i] > 0 && e1[i] < n[i] ? e1[i] / n[i] : 1; this.lrF16 = n; }   // R74 trophic bit 16: reward-rule step x min(1, 1x-equivalent fan-in / fan-in) per receiver
-    const lFr = fRR ? this.lrFr : (params.trophic & 16) ? this.lrF16 : null, pst = this.posts, tFr = (params.trophic & 2) ? (this.trF || this.trophicS()) : null;
+    if (!fRR && ((params.trophic & 16) || params.scaleInvariant > 0) && !this.lrF16) { const t = this.trF || this.trophicS(), n = new Float32Array(this.N), e1 = new Float32Array(this.N), ps = this.posts, pr = this.pres; for (let q = 0; q < pl.length; q++) { n[ps[pl[q]]]++; e1[ps[pl[q]]] += t[pr[pl[q]]]; } for (let i = 0; i < this.N; i++) n[i] = n[i] > 0 && e1[i] < n[i] ? e1[i] / n[i] : 1; this.lrF16 = n; }   // R74 trophic bit 16: reward-rule step x min(1, 1x-equivalent fan-in / fan-in) per receiver
+    const lFr = fRR ? this.lrFr : ((params.trophic & 16) || params.scaleInvariant > 0) ? this.lrF16 : null, pst = this.posts, tFr = (params.trophic & 2) ? (this.trF || this.trophicS()) : null;
     let s = 0;
     for (let q = 0; q < pl.length; q++) {
       const k = pl[q], m = mods[sc[k]]; if (m === 0) continue;
@@ -1026,8 +1534,8 @@ class SpikingNet {
     // receiver's plastic total grows with the number of cells projecting to it (a 4x cortex: ~5x the corticostriatal weight, R72). With postCap > 0
     // a receiver whose excitatory plastic inputs of this rule sum to more than postCap is scaled down to postCap (homeostatic synaptic scaling).
     // postCapRel > 0 instead: the cap is postCapRel x the receiver's own genome (birth) total of those inputs (scale-free).
-    if ((params.postCap > 0 || params.postCapRel > 0) && s > 0) { if (!this.pcStart) this.buildPc(pl); const st = this.pcStart, ix = this.pcIdx, c0 = this.pcW0, rel = params.postCapRel > 0 ? params.postCapRel : 0, pN = params.postN > 0 ? params.postN : 0;   // postN: only receivers with more than postN such inputs are capped (1x-sized receivers stay untouched)
-      const rb = (params.recvBudget & 2) ? (this.rbScaled || (this.rbScaled = this.scaledRecv(st, ix))) : null;   // R76 recvBudget bit 2: only receivers with inputs from a sized region are capped (replaces the postN cutoff; exactly neutral at 1x)
+    if ((params.postCap > 0 || params.postCapRel > 0 || params.scaleInvariant > 0) && s > 0) { if (!this.pcStart) this.buildPc(pl); const st = this.pcStart, ix = this.pcIdx, c0 = this.pcW0, rel = params.postCapRel > 0 ? params.postCapRel : params.scaleInvariant > 0 ? 1.5 : 0, pN = params.postN > 0 ? params.postN : 0;   // postN: only receivers with more than postN such inputs are capped (1x-sized receivers stay untouched)
+      const rb = ((params.recvBudget & 2) || params.scaleInvariant > 0) ? (this.rbScaled || (this.rbScaled = this.scaledRecv(st, ix))) : null;   // R76 recvBudget bit 2: only receivers with inputs from a sized region are capped (replaces the postN cutoff; exactly neutral at 1x)
       for (let r = 0, R = st.length - 1; r < R; r++) { if (rb ? !rb[r] : (pN && st[r + 1] - st[r] <= pN)) continue; const cap = rel ? rel * c0[r] : params.postCap; let t = 0; for (let q = st[r]; q < st[r + 1]; q++) t += ws[ix[q]]; if (t > cap) { const f = cap / t; for (let q = st[r]; q < st[r + 1]; q++) ws[ix[q]] *= f; } } }
     this.dwSum = s;
   }

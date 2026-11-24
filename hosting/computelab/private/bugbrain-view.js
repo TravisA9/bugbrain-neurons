@@ -1,0 +1,108 @@
+(() => {
+  'use strict';
+  const SA = window.SpikingArena;
+  const canvas = document.getElementById('bug-arena');
+  const status = document.getElementById('bug-status');
+  const pause = document.getElementById('bug-pause');
+  const restart = document.getElementById('bug-restart');
+  const ctx = canvas.getContext('2d');
+  const baselineCanvas = document.getElementById('bug-baseline');
+  const baselineCtx = baselineCanvas?.getContext('2d');
+  const championUrl = canvas.dataset.champion;
+  const garden = SA.bug.GARDEN;
+  let selected, agent, baseline, seed, playing = true, previous = 0, frame = 0, finishedAt = null;
+  let elapsed = 0;
+  const msPerTick = 25;
+
+  async function load() {
+    const response = await fetch(championUrl, { cache: 'no-store' });
+    if (!response.ok) throw Error('Champion request failed');
+    selected = await response.json();
+  }
+
+  function drawBrain(brain, surface, context, id) {
+    brain.task.render(context, surface.width, surface.height, { showStats: false });
+    const stats = brain.task.stats();
+    return 'Brain ' + id + ' · Food ' + stats.food + ' · Poison ' + stats.poison +
+      ' · Fitness ' + brain.fitness.toFixed(1) + ' · Tick ' + brain.t + '/' + brain.task.horizon +
+      ' · Wall contact ' + (100 * brain.task.contactTicks / Math.max(1, brain.t)).toFixed(0) + '%' +
+      ' · Stuck ' + (100 * stats.stuck / Math.max(1, brain.t)).toFixed(0) + '%';
+  }
+
+  function draw() {
+    const score = drawBrain(agent, canvas, ctx, selected.id);
+    const completed = agent.done ? ' · Round complete' : '';
+    if (!baseline) {
+      status.textContent = score + completed;
+      return;
+    }
+    document.getElementById('bug-champion-score').textContent = score;
+    document.getElementById('bug-baseline-score').textContent = drawBrain(baseline, baselineCanvas, baselineCtx, 'v3h');
+    status.textContent = 'Shared seed ' + seed + ' · Tick ' + agent.t +
+      (selected.change ? '' : ' · The original is still the champion') + completed;
+  }
+
+  function start() {
+    const params = SA.recommendedEnvParams('bug', { task: 'flash' }, ['task']);
+    SA.setEnv('bug', { ...params, task: 'flash' });
+    const current = SA.currentEnv();
+    const env = { ...current, def: { ...current.def, create: (seed, params) => new SA.bug.World(seed, params, garden) } };
+    const genome = SA.tunedBugGenome(selected.change?.tune);
+    if (selected.change?.field) genome.sc[selected.change.field] *= selected.change.factor;
+    seed = Math.floor(Math.random() * 0xffffffff);
+    agent = new SA.Agent(genome, seed, SA.growCell(genome, { seed, spec: env.spec }), env);
+    if (baselineCanvas) {
+      const original = SA.PLANS.v3h.make();
+      baseline = new SA.Agent(original, seed, SA.growCell(original, { seed, spec: env.spec }), env);
+    }
+    playing = true;
+    finishedAt = null;
+    elapsed = 0;
+    pause.textContent = 'Pause';
+    draw();
+    if (!frame) frame = requestAnimationFrame(tick);
+  }
+
+  function tick(now) {
+    frame = requestAnimationFrame(tick);
+    const delta = Math.min(50, now - previous);
+    previous = now;
+    if (!playing || document.hidden) {
+      elapsed = 0;
+      return;
+    }
+    if (agent.done) {
+      if (finishedAt === null) finishedAt = now;
+      if (now - finishedAt >= 2000) start();
+      return;
+    }
+    elapsed += delta;
+    if (elapsed < msPerTick) return;
+    while (elapsed >= msPerTick && !agent.done) {
+      elapsed -= msPerTick;
+      agent.tick();
+      if (baseline && !baseline.done) baseline.tick();
+    }
+    draw();
+  }
+
+  async function newArena() {
+    try { await load(); start(); pause.disabled = restart.disabled = false; }
+    catch (error) { status.textContent = 'The arena could not load. Refresh the page to try again.'; }
+  }
+
+  pause.addEventListener('click', () => {
+    playing = !playing;
+    pause.textContent = playing ? 'Pause' : 'Resume';
+  });
+  restart.addEventListener('click', newArena);
+  setInterval(async () => {
+    if (!selected || document.hidden) return;
+    const before = selected;
+    try {
+      await load();
+      if (before.id !== selected.id) start();
+    } catch (error) { selected = before; }
+  }, 60000);
+  newArena();
+})();

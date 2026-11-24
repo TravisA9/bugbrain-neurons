@@ -66,6 +66,65 @@ const params = {
   granDemand: 0, granCo: 2, granRecycle: 1, granMap: 0, granHold: 0,
   // R107 granSparse (1 = on; P.granSparse=0 = the old dense loop): the granule NLMS event visits only granules that spiked in the read window (bit-identical, faster)
   granSparse: 1,
+  // I106 granFast (1 = on; P.granFast=0 = the old dense granule membrane/homeostasis loops): bit-identical active-granule bitset + lazy float32 threshold homeostasis in fastEngine mode
+  granFast: 1,
+  // Utility-pruned structural plasticity for granule claws (0 = off, bit-identical): starts with grown random claws and rewires lowest-utility mature claws onto unowned active lag tuples on prediction errors
+  granUtility: 0,
+  // Unified intensive scale-invariance (0 = off, bit-identical): when sizeF > 1, normalizes trophic survival, cone/division speed, tract fan-in, inhibitory receiver budget, mixing pool inhibition, and 1x-equivalent fan-in learning rate
+  scaleInvariant: 0,
+  // R123 relGrowth (0 = off, bit-identical): relative growth rules for sized regions: trophic survival vs fair share (relGrowthAlpha, default 0.5),
+  //   GRN reads the fixed morphogens on the 1x lattice below 2.25x, ceil cone speed, mixing inhibition x 1x pool / pool. See develop.js / net.js.
+  // R124 lagHomeo (0 = off, bit-identical): self-calibrated lag-source activity homeostat (target: one active letter column per lag source per window), see net.js
+  lagHomeo: 0, lagHomeoMax: 0, lagHomeoCol: 0,
+  // R125 lagWTA (0 = off, bit-identical): k-winner-take-all per lag source per read window on the lag-cell -> granule claw hits (first k columns to fire), see net.js
+  lagWTA: 0,
+  // R131 anSize (0 = off, bit-identical): action-channel exploration noise (pl.actNoise) x sqrt(sizeF) in a brain grown with sizeF > 1 (largest region
+  //   size factor; 1x unchanged). R131: at size the arm pools start more unequal (first-trial output share max/mean 1x ~1.9-3.2, 2x up to 5.0), the same noise
+  //   explores too little and arms die (never chosen, never credited); seqchoice order2 rd2rb16 4x -.53 -> +.34 vs 1x.
+  anSize: 0,
+  // R131 anSelf (0 = off, bit-identical): self-calibrated exploration, noise x sqrt(max/mean recent output rate) (net.js anSelfF; anSelfTau substeps, default 4000)
+  anSelf: 0, anSelfTau: 4000,
+  // R132 granNeg (0 = off, bit-identical): signed granule readout in granKalStep, weights in [-granNeg x wMax, wMax] (negative result on book, kept off)
+  granNeg: 0,
+  // R132 granKalLTD (0 = off, bit-identical): granKal's experience-weighted split for false alarms too (net.js granKalStep); negative on book30k, kept off
+  granKalLTD: 0,
+  // R133 granTrace (0 = off, bit-identical): fast one-shot trace on the granule readout, gated by granKal experience (net.js granTraceStep)
+  granTrace: 0,
+  // R134 granChunk (0 = off, bit-identical): word-context chunk detectors in the granule pool (net.js guChunkEvent / guChunkFire)
+  granChunk: 0,
+  granDeep: 0,   // R134: 1 = claw lag depth = delay-line length (one more source per extra region, cls 2); 0 = fixed 4 sources
+  // R135: granChunkGate 1 = recruit a chunk detector only on the 2nd sighting of its key (bit sketch sized 32 x pool); granScale r = granule pool x max(1, sizeF / r); 0 = off, bit-identical
+  granChunkGate: 0,
+  granScale: 0,
+  // R136: granPhrase 1 = second-level phrase detectors (word before last, last word, partial, letter); granGrow f > 1 = pool cap f x granN, grown on demand by the pressure gate (granChunkGate 2); 0 = off, bit-identical
+  granPhrase: 0, granWord: 0,   // R143 granWord: word-start chunk keys without the previous word (net.js guChunkEvent)
+
+  granGrow: 0,
+  // R137 granCat f > 0: second level of learned word categories (competitive prototypes of continuation profiles), Kmax = f x pool / 1000; 0 = off, bit-identical
+  granCat: 0,
+  // R138 granL2 b > 0: second-level units (granPhrase / granCat keys) get their own pool of granN x max(0, sizeF - b) / granScale cells (no claws), appended
+  // after the level-1 pool, which keeps the R135 size computed with sizeF capped at b; the readout reads both. granL2N n > 0: L2 pool = n cells (overrides the
+  // size rule; needs granL2 > 0). granEvGrow 1: with granGrow, a recruit that would evict a used level-1 detector adds an unborn slot instead. 0 = off, bit-identical
+  granL2: 0,
+  granL2N: 0,
+  granEvGrow: 0,
+  // R140 lagDepth D > 4: long-lag copy detectors keyed (current letter, far lag 4..D-1, letter) on a symbol-level delay register (net.js guLagEvent); lagBlur 1 = far lag blurred to octave bins. 0 = off, bit-identical
+  lagDepth: 0,
+  lagBlur: 0,
+  lagGate: 0,   // R140: 1 = recruit copy detectors only when the key's far letter predicts the arriving letter better than the short context (net.js guLagGate)
+  lagPrune: 0, lagSurp: 0, lagEvid: 0, lagMarg: 0,   // R140: use-time gating of copy detectors: prune when the running hit rate falls below the bigram reference / fire only when the short context is less confident (net.js guLagUse); R142 lagEvid: evidence-weighted vote of copy detectors (net.js guLagFire)
+  lagCtx: 0,   // R140: copy keys carry the last lagCtx letters (0/1 = current letter only)
+  // R126 fanInBudget (0 = off, bit-identical): sized regions keep each cell type's 1x mean in-region fan-in (strongest inputs), see develop.js
+  fanInBudget: 0,
+  // R127 pathBudget (0 = off, bit-identical): sized regions keep each (post type, presyn type, sign) pathway at its 1x mean in-degree, random (hash) selection, see develop.js
+  pathBudget: 0,
+  // R128 fateSnap (0 = off, bit-identical): with relGrowth, cell fates read the 1x-lattice morphogens at every size (R123 (b) applied only below 2.25x), see develop.js
+  fateSnap: 0,
+  // R128 colInh (0 = off, bit-identical; needs pathBudget): 1 = a column with no inhibitory afferents gets the nearest interneurons added (v1); 2 = dedicated reset interneurons moved from neighbouring columns (v2); 3 = v2 also for columns below half the 1x inhibitory in-degree, see develop.js
+  colInh: 0,
+  // R129 rgDiv (0 = off, bit-identical): with relGrowth, division reach scales with the lattice (1), plus divisions per step ~ log2 size (2), see develop.js
+  rgDiv: 0,
+  relGrowth: 0, relGrowthAlpha: 0, relGrowthOff: 0,   // relGrowthOff: diagnostic bitmask disabling parts (1 trophic, 2 lattice, 4 cone, 8 mixing)
   plasticity: true,    // lifetime learning (reward-modulated STDP); false = frozen genome weights
   cellStart: 'env',    // a new population starts from mutants of this body plan ('env' = the environment's default)
   cellMut: 0.02,       // chance per genome number to mutate
