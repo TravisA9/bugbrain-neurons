@@ -2303,23 +2303,29 @@ final class App
         return (bool) preg_match('/already uses that seed\.?$/', $message);
     }
 
+    /* Highest seed any runner accepts. SpikeFoundry's inverse designer refuses seeds above 1e9
+     * (study() and sharedStudy() in spikefoundry/inverse_designer.js), so a seed from the old
+     * 1e9..2e9 extended range failed with "Invalid shared inverse training assignment" on every
+     * attempt. Once the primary range was packed, about half of all new inverse jobs did that. */
+    public const SEED_LIMIT = 1000000000;
+
     private function seedPrimaryMax(): int
     {
         $max = (int) ($this->config['seed_max'] ?? 1000000);
         if ($max < 1) {
             $max = 1000000;
         }
-        return min(2000000000, $max);
+        return min(self::SEED_LIMIT, $max);
     }
 
     private function seedExtendedMax(): int
     {
-        $max = (int) ($this->config['seed_max_extended'] ?? 2000000000);
+        $max = (int) ($this->config['seed_max_extended'] ?? self::SEED_LIMIT);
         $primary = $this->seedPrimaryMax();
         if ($max < $primary) {
             $max = $primary;
         }
-        return min(2000000000, $max);
+        return min(self::SEED_LIMIT, $max);
     }
 
     /** Try random unused seeds in [$lo, $hi]. Returns null if none were free in $tries attempts. */
