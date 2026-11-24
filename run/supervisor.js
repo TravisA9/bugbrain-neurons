@@ -14,6 +14,10 @@ const WC = require('./wconfig.js');
 const ROOT = path.resolve(__dirname, '..'), ST = WC.STATE, CODE = process.env.BB_CODE_BRANCH || 'neuro/distributed-queue', QB = process.env.BB_QUEUE_BRANCH || 'queue';
 fs.mkdirSync(ST, { recursive: true });
 const NAME = WC.workerName(), TYPE = WC.deviceType(), TOKEN = WC.token(), STOP = path.join(ST, 'dq.stop');
+/* Compute Lab mode (BB_COORDINATOR_URL set): the coordinator controls this worker (Off/Allowance/Full, revoke), so the
+ * legacy queue-branch worker-config.json is not read; only the code branch is fetched for updates. */
+const COORD = !!process.env.BB_COORDINATOR_URL;
+const RELINK_EXIT = 12;   // coord.js: token changed after "needs re-link"; restart now, not a crash
 const say = s => console.log(`[${new Date().toLocaleString()}] [supervisor ${NAME}] ${s}`);
 // R61d: local status file (~/.bugbrain/status.json) so a worker that cannot push (e.g. token refused) still says why: cat ~/.bugbrain/status.json
 const status = (state, why) => { try { fs.writeFileSync(path.join(ST, 'status.json'), JSON.stringify({ worker: NAME, state, why: why || '', at: new Date().toISOString(), pid: process.pid }, null, 2) + '\n'); } catch (e) {} };
@@ -23,10 +27,11 @@ const redact = s => String(s || '').split(TOKEN || '\u0000').join('***').replace
 const git = a => cp.execFileSync('git', AUTH.concat(a), { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: ENV, timeout: 120e3 }).trim();
 const RUNTIME = process.env.BB_BUN || process.execPath;
 function fetchAll() {
-  try { git(['fetch', '-q', '--no-tags', 'origin', `+refs/heads/${CODE}:refs/bb/code`, `+refs/heads/${QB}:refs/bb/queue`]); return true; }
+  try { git(['fetch', '-q', '--no-tags', 'origin', `+refs/heads/${CODE}:refs/bb/code`].concat(COORD ? [] : [`+refs/heads/${QB}:refs/bb/queue`])); return true; }
   catch (e) { say('fetch failed (will retry): ' + redact(e.stderr || e.message).trim().split('\n').slice(-1)[0].slice(0, 160)); return false; }
 }
 function readCfg() {
+  if (COORD) return {};
   const cache = path.join(ST, 'worker-config.cache.json');
   try { const t = git(['show', 'refs/bb/queue:worker-config.json']); const c = JSON.parse(t); fs.writeFileSync(cache, t); return c; }
   catch (e) { try { return JSON.parse(fs.readFileSync(cache, 'utf8')); } catch (e2) { return {}; } }
@@ -38,16 +43,24 @@ function newerCode() {
 const keyOf = s => JSON.stringify([s.version, WC.dqArgs(s, NAME), s.mode]);
 let child = null, childStart = 0, fails = 0, restartWhy = '', backoffTimer = null, S, KEY, FORCE;
 const HEARTBEAT_STALE_MS = 5 * 60e3;
-function recoverStaleCoordinator() {
-  if (!child?.pid || !process.env.BB_COORDINATOR_URL || restartWhy ||
-      process.platform !== 'linux' || process.env.BB_INSTALL !== 'systemd') return;
-  let alive;
-  try { alive = JSON.parse(fs.readFileSync(path.join(ST, 'coord-alive.json'), 'utf8')); }
-  catch (e) { return; }
+/* A coord.js that stopped writing coord-alive.json for five minutes is stuck (it writes the file every control
+ * check-in, ~20 s, with ack false while the coordinator is unreachable or while it waits for a re-link), so kill it
+ * and let the normal exit handler restart it. All platforms and install types since Phase 0. A worker that never
+ * wrote the file since it started (still connecting) is left alone. */
+function staleCoordinator(alive, pid, startedAt, now) {
+  if (!alive || alive.pid !== pid) return false;
   const at = Date.parse(alive.at);
-  if (alive.pid !== child.pid || at < childStart || !(Date.now() - at > HEARTBEAT_STALE_MS)) return;
+  return at >= startedAt && now - at > HEARTBEAT_STALE_MS;
+}
+function recoverStaleCoordinator() {
+  if (!child?.pid || !COORD || restartWhy) return;
+  let alive;
+  try { alive = JSON.parse(fs.readFileSync(path.join(ST, 'coord-alive.json'), 'utf8').replace(/^\uFEFF/, '')); }
+  catch (e) { return; }
+  if (!staleCoordinator(alive, child.pid, childStart, Date.now())) return;
   // Exit via the normal child handler, which cleans up jobs and backs off before retrying.
-  say('no acknowledged coordinator heartbeat for five minutes; restarting worker');
+  say('coord.js has not written a check-in for five minutes (stuck); restarting worker');
+  if (process.platform === 'win32') { try { cp.execFileSync('taskkill', ['/T', '/F', '/PID', String(child.pid)], { stdio: 'ignore', windowsHide: true, timeout: 30000 }); } catch (e) {} return; }
   try { process.kill(-child.pid, 'SIGKILL'); } catch (e) { if (e.code !== 'ESRCH') say(e.message); }
 }
 let errTail = [];
@@ -85,6 +98,7 @@ function startDq() {
     child = null; const ran = Date.now() - childStart;
     if (process.platform !== 'win32') try { process.kill(-pg, 'SIGTERM'); } catch (e) {}   // no orphaned queue.js / job processes after a crash
     else killOrphans(pg);
+    if (code === RELINK_EXIT && COORD) { fails = 0; status('restarting', 'token or settings changed after needs re-link'); say('coord.js: token or settings changed after needs re-link; starting a fresh worker'); backoffTimer = setTimeout(startDq, 2000); return; }
     status(code === 3 ? 'token-refused' : 'dq-exited', code === 3 ? 'GitHub refused the token in ' + path.join(ST, 'token') + ' (replace it; the worker retries within a minute)' : 'dq.js exit ' + (code ?? sig));
     if (restartWhy) { say(`dq.js stopped (${code ?? sig}); restarting for: ${restartWhy}`); process.exit(10); }
     if (code === 10) { say('dq.js saw newer code; restarting via launcher'); process.exit(10); }
@@ -124,7 +138,7 @@ function poll() {
 function main() {
   process.on('SIGTERM', () => { killTree(); process.exit(0); }); process.on('SIGINT', () => { killTree(); process.exit(0); });
   const w = WC.tokenWarn(); if (w) say(w);
-  if (!TOKEN) say('no token file (' + path.join(ST, 'token') + '): pushes use this computer\'s own git login; if GitHub refuses it, dq.js stops with exit 3 and says so');
+  if (!TOKEN && !COORD) say('no token file (' + path.join(ST, 'token') + '): pushes use this computer\'s own git login; if GitHub refuses it, dq.js stops with exit 3 and says so');
   fetchAll(); S = WC.resolve(readCfg(), NAME, TYPE); KEY = keyOf(S); FORCE = S.forceVersion;
   const nc = newerCode(); if (nc) { say('code is behind (' + nc + '); restarting via launcher'); process.exit(10); }
   say(`worker ${NAME} (${TYPE}), mode ${S.mode}, config version ${S.version}, polling every ${process.env.BB_POLL_MS ? process.env.BB_POLL_MS + ' ms' : S.pollMinutes + ' min'}`);
@@ -140,4 +154,5 @@ function main() {
   setInterval(poll, every);
   setInterval(recoverStaleCoordinator, 30e3).unref();
 }
-main();
+if (require.main === module) main();
+module.exports = { staleCoordinator, HEARTBEAT_STALE_MS, RELINK_EXIT };

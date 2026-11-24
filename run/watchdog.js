@@ -98,13 +98,16 @@ function ensureCron(st, run) {
   return { ok: true, kind: 'cron', changed: 'crontab' };
 }
 
-/* The stop script must stop the watchdog too, or a deliberate stop comes back in 3 minutes. */
+/* The stop script must stop the watchdog too, or a deliberate stop comes back in 3 minutes. It only kills a pid
+ * whose command line is the Compute Lab launcher (run/worker.sh), never the old GitHub-token worker that shares
+ * worker.pid. STOP_MARK lets ensure() replace stop scripts written before this version. */
+const STOP_MARK = '# computelab-stop v2';
 function unixStopScript() {
-  return '#!/bin/sh\n'
+  return '#!/bin/sh\n' + STOP_MARK + '\n'
     + 'if command -v systemctl >/dev/null 2>&1; then systemctl --user stop computelab-watchdog.timer computelab.service >/dev/null 2>&1; fi\n'
     + 'launchctl bootout "gui/$(id -u)/info.computelab.worker" >/dev/null 2>&1\n'
     + '(crontab -l 2>/dev/null | grep -v "# computelab-watchdog") | crontab - 2>/dev/null\n'
-    + '[ -f "$HOME/.bugbrain/worker.pid" ] && kill "$(cat "$HOME/.bugbrain/worker.pid")" 2>/dev/null\n'
+    + 'for f in "$HOME/.bugbrain/computelab.pid" "$HOME/.bugbrain/worker.pid"; do p=$(cat "$f" 2>/dev/null); [ -n "$p" ] || continue; if [ ! -r "/proc/$p/cmdline" ] || tr \'\\0\' \' \' < "/proc/$p/cmdline" | grep -q run/worker.sh; then kill "$p" 2>/dev/null; fi; done\n'
     + 'pkill -u "$(id -u)" -f \'run/supervisor.js\' >/dev/null 2>&1\n'
     + 'rm -f "$HOME/.bugbrain/computelab.pid"\n'
     + 'echo "Compute Lab worker stopped. It starts again at the next login or after setup; run uninstall-computelab.sh to remove it."\n';
@@ -125,15 +128,91 @@ function ensure(opts) {
     else rep = { ok: false, kind: 'none', why: 'install method ' + install };
     if (platform !== 'win32') {
       const stop = path.join(st, 'stop-computelab.sh');
-      try { if (fs.existsSync(stop) && fs.readFileSync(stop, 'utf8').indexOf('computelab-watchdog') < 0) fs.writeFileSync(stop, unixStopScript(), { mode: 0o700 }); } catch (e) {}
+      try { if (fs.existsSync(stop) && fs.readFileSync(stop, 'utf8').indexOf(STOP_MARK) < 0) fs.writeFileSync(stop, unixStopScript(), { mode: 0o700 }); } catch (e) {}
     }
   } catch (e) {
     rep = keepPrevious(st, String((e && (e.stderr || e.message)) || e).trim().split('\n').pop().slice(0, 160));
   }
+  const hrun = opts.healthRun || ((cmd, args) => cp.execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, timeout: 15000 }));
+  try { rep.health = health({ st, home, platform, run: hrun, install }); } catch (e) { rep.health = { error: String((e && e.message) || e).slice(0, 160) }; }
   return write(st, rep);
+}
+
+/* ---- Phase 0 health facts, sent with the heartbeat runtime and the startup diagnostics (owner console) ----------
+ * linger   Linux: true when systemd keeps this user's services running without a login (needed to start at boot and
+ *          survive logout). Only checked and reported: enabling it may need an admin password, so the worker never
+ *          tries (it could pop up a password dialog on the user's screen).
+ * maySleep true when the computer is set to suspend itself when idle (GNOME on AC power, or the Windows AC sleep
+ *          timer), so a quiet computer can be told apart from a broken one. null when unknown.
+ * legacy   Linux: the old GitHub-token worker unit (bugbrain-worker.service). One that is not running (failed, or
+ *          stuck restarting because it shares worker.pid) is disabled and its unit file moved to ~/.bugbrain; one that
+ *          is running is left alone and only reported. */
+function lingerState(run, user) {
+  const u = user || (() => { try { return os.userInfo().username; } catch (e) { return ''; } })();
+  if (u) { try { if (fs.existsSync('/var/lib/systemd/linger/' + u)) return true; } catch (e) {} }
+  try { const out = String(run('loginctl', ['show-user', u || String(process.getuid()), '--property=Linger']) || ''); const m = /Linger=(yes|no)/.exec(out); if (m) return m[1] === 'yes'; } catch (e) {}
+  return u && fs.existsSync('/var/lib/systemd/linger') ? false : null;
+}
+function maySleepLinux(run) {
+  try {
+    const type = String(run('gsettings', ['get', 'org.gnome.settings-daemon.plugins.power', 'sleep-inactive-ac-type']) || '').trim().replace(/'/g, '');
+    if (!type) return null;
+    if (type === 'nothing' || type === 'blank' || type === 'logout') return false;
+    const t = +String(run('gsettings', ['get', 'org.gnome.settings-daemon.plugins.power', 'sleep-inactive-ac-timeout']) || '').trim().replace(/^uint32\s+/, '');
+    return !(t === 0);
+  } catch (e) { return null; }
+}
+/* powercfg prints the AC index, then the DC index, as the last two hex values (the labels are localised). */
+function maySleepWindows(run) {
+  try {
+    const out = String(run('powercfg.exe', ['/q', 'SCHEME_CURRENT', 'SUB_SLEEP', 'STANDBYIDLE']) || '');
+    const hex = out.match(/0x[0-9a-fA-F]{8}/g) || [];
+    if (hex.length < 2) return null;
+    return parseInt(hex[hex.length - 2], 16) > 0;
+  } catch (e) { return null; }
+}
+const LEGACY_UNIT = 'bugbrain-worker.service';
+function isLegacyUnit(text) {
+  const t = String(text || '');
+  return /Description=BugBrain always-on worker/.test(t) && /ExecStart=\/bin\/sh %h\/\.bugbrain\/worker\.sh/.test(t) && !/BB_COORDINATOR_URL|computelab/i.test(t);
+}
+function legacyCleanup(st, run, home) {
+  const unit = path.join(home, '.config', 'systemd', 'user', LEGACY_UNIT);
+  let text;
+  try { text = fs.readFileSync(unit, 'utf8'); } catch (e) { return { present: false }; }
+  if (!isLegacyUnit(text)) return { present: true, legacy: false, action: 'kept (not the old GitHub-token worker)' };
+  let active = '';
+  try { active = String(run('systemctl', ['--user', 'is-active', LEGACY_UNIT]) || '').trim(); } catch (e) { active = String((e && e.stdout) || '').trim() || 'unknown'; }
+  if (active === 'active') return { present: true, legacy: true, active: active, action: 'kept (it is running; remove it by hand if it is not wanted)' };
+  if (active === 'unknown' || active === '') return { present: true, legacy: true, active: active, action: 'kept (could not read its state)' };
+  try { run('systemctl', ['--user', 'disable', '--now', LEGACY_UNIT]); } catch (e) {}
+  const bak = path.join(st, 'legacy-' + LEGACY_UNIT + '.bak');
+  try { fs.renameSync(unit, bak); } catch (e) { try { fs.copyFileSync(unit, bak); fs.unlinkSync(unit); } catch (e2) { return { present: true, legacy: true, active: active, action: 'disabled; could not move the unit file: ' + e2.message }; } }
+  try { run('systemctl', ['--user', 'daemon-reload']); } catch (e) {}
+  return { present: false, legacy: true, active: active, action: 'disabled and moved to ' + bak };
+}
+function health(o) {
+  const h = { at: new Date().toISOString() };
+  if (o.platform === 'win32') { h.maySleep = maySleepWindows(o.run); return h; }
+  if (o.platform === 'linux') {
+    h.linger = lingerState(o.run);
+    h.maySleep = maySleepLinux(o.run);
+    if (o.install === 'systemd' || fs.existsSync(path.join(o.home, '.config', 'systemd', 'user', LEGACY_UNIT))) h.legacy = legacyCleanup(o.st, o.run, o.home);
+  }
+  return h;
+}
+/* Compact health for the heartbeat runtime (the coordinator ignores fields it does not know). */
+function healthSummary(st) {
+  const r = read(st), h = r && r.health;
+  if (!h) return null;
+  const out = {};
+  if (h.linger != null) out.linger = !!h.linger;
+  if (h.maySleep != null) out.maySleep = !!h.maySleep;
+  if (h.legacy && h.legacy.legacy) out.legacyWorker = String(h.legacy.action || '').slice(0, 80);
+  return out;
 }
 
 /* The value coord.js sends with its heartbeat: the watchdog kind, or 'none'. */
 function kind(st) { const r = read(st); return r && r.ok ? String(r.kind || 'none') : 'none'; }
 
-module.exports = { ensure, read, kind, windowsScript, systemdUnits, cronLine, unixStopScript, INTERVAL_MIN };
+module.exports = { ensure, read, kind, health, healthSummary, isLegacyUnit, legacyCleanup, lingerState, maySleepLinux, maySleepWindows, windowsScript, systemdUnits, cronLine, unixStopScript, STOP_MARK, INTERVAL_MIN };

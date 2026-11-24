@@ -20,7 +20,8 @@ function launcherPid() { try { return +String(fs.readFileSync(path.join(D.STATE,
 
 /* Pure decision, exported for tests. */
 function judge(state) {
-  if (state.alive && state.aliveAt >= state.since && state.coordRunning) return { ok: true };
+  // ack false: the worker process is alive but the coordinator has not answered it (or it waits for a re-link).
+  if (state.alive && state.aliveAt >= state.since && state.coordRunning && state.ack !== false) return { ok: true };
   if (!state.launcherRunning && !state.coordRunning) {
     return { ok: false, what: 'the worker program is not running',
       fix: 'Run ' + (process.platform === 'win32' ? '%USERPROFILE%\\.bugbrain\\computelab-worker.ps1 in PowerShell' : 'sh ~/.bugbrain/computelab-worker.sh') + ' to see the error, or send the owner the lines above.' };
@@ -33,7 +34,7 @@ function judge(state) {
 function snapshot() {
   var a = readJson(aliveFile), st = readJson(path.join(D.STATE, 'status.json'));
   var at = a && a.at ? Date.parse(a.at) || 0 : 0;
-  return { since: since, alive: !!a, aliveAt: at, coordRunning: !!(a && pidAlive(a.pid)), launcherRunning: pidAlive(launcherPid()), status: st };
+  return { since: since, alive: !!a, aliveAt: at, ack: a ? a.ack !== false : undefined, coordRunning: !!(a && pidAlive(a.pid)), launcherRunning: pidAlive(launcherPid()), status: st };
 }
 
 function main() {

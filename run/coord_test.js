@@ -59,7 +59,13 @@ const job = {
     && coord.decideRetry(usedSeed, 0).action === 'retry' && coord.decideRetry(usedSeed, 0).delay === 1000,
     'a duplicate inverse seed on claim is retried, not a crash');
   check(coord.decideRetry(usedSeq, 1000).action === 'retry', 'a duplicate sequence seed is retried the same way');
-  check(coord.decideRetry(badRequest, 1000).action === 'crash', 'other HTTP 400 errors are still not retried as transient');
+  check(coord.decideRetry(badRequest, 1000).action === 'skip' && coord.decideRetry(badRequest, 1000).delay >= 60000, 'other HTTP 400 errors skip that request for a while instead of stopping the worker (Phase 0)');
+  const forbidden = new Error('nope'); forbidden.status = 403;
+  const gone = new Error('gone'); gone.status = 410;
+  const mismatch = new Error('protocol'); mismatch.status = 409;
+  check(coord.decideRetry(forbidden, 0).action === 'skip' && coord.decideRetry(gone, 0).action === 'skip', 'unknown 4xx answers (403, 410) are skipped, not fatal');
+  check(coord.decideRetry(mismatch, 0).action === 'crash', 'a 409 protocol mismatch still restarts so the supervisor can update the code');
+  check(coord.decideRetry(badRequest, 400000).delay === 600000, 'the skip wait is capped at 10 minutes');
   let delay = 0;
   for (let i = 0; i < 20; i++) delay = coord.nextBackoff(delay);
   check(delay === 5 * 60 * 1000, 'backoff caps at about 5 minutes');

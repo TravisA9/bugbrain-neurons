@@ -57,10 +57,74 @@ function isRetryable(err) {
   if (isSeedConflict(err)) return true;
   return err.status === 429 || (typeof err.status === 'number' && err.status >= 500 && err.status <= 599);
 }
+/* Phase 0 self-healing: an HTTP 4xx the worker does not know (a new validation rule on the coordinator, a job
+ * the server refuses) is a problem with that request or job, not with this computer. The slot that got it backs
+ * off and tries again later; the other slots keep running. 401 is a revoked token (needs re-link), 409 is a
+ * protocol mismatch (the supervisor updates the code), 429 is a rate limit (retry). */
+const SKIP_MIN_MS = 60 * 1000;
+const SKIP_CAP_MS = 10 * 60 * 1000;
+function isSkippable(err) {
+  return !!(err && typeof err.status === 'number' && err.status >= 400 && err.status <= 499
+    && err.status !== 401 && err.status !== 409 && err.status !== 429 && !isSeedConflict(err));
+}
 function decideRetry(err, delay) {
   if (err && err.status === 401) return { action: 'stop', delay: 0 };
+  if (isSkippable(err)) return { action: 'skip', delay: Math.min(SKIP_CAP_MS, Math.max(SKIP_MIN_MS, (+delay || 0) * 2)) };
   if (!isRetryable(err)) return { action: 'crash', delay: 0 };
   return { action: 'retry', delay: Math.max(nextBackoff(delay), err.retryAfterMs || 0) };
+}
+/* Needs re-link: the coordinator refused this computer's token (revoked, or the computer entry was removed), or
+ * the token file is missing or damaged. Exiting would only make the supervisor restart and fail again forever, so
+ * the worker stays up, says why (status.json, relink.json, coord-alive.json with ack false), and watches the token
+ * and settings files. When either changes (setup run again), or the old token is accepted again, it exits with
+ * RELINK_EXIT so the supervisor starts a fresh worker at once, without counting a crash. */
+const RELINK_EXIT = 12;
+function stateDirPath() { return process.env.BB_STATE_DIR || path.join(os.homedir(), '.bugbrain'); }
+function fileStamp(file) {
+  try { const st = fs.statSync(file); return st.size + ':' + st.mtimeMs + ':' + require('crypto').createHash('sha256').update(fs.readFileSync(file)).digest('hex').slice(0, 16); }
+  catch (e) { return 'missing'; }
+}
+function relinkWatchFiles(tokenFile) {
+  const st = stateDirPath();
+  return [tokenFile, path.join(st, 'computelab.env'), path.join(st, 'computelab-worker.ps1')].filter(Boolean);
+}
+function writeRelinkState(why) {
+  const st = stateDirPath(), at = new Date().toISOString();
+  const rec = { state: 'needs-relink', why: why, at: at, pid: process.pid,
+    fix: 'Get a new setup command from My computer on the Compute Lab page and run it on this computer. The worker restarts by itself when the token changes.' };
+  try { fs.writeFileSync(path.join(st, 'relink.json'), JSON.stringify(rec, null, 2) + '\n'); } catch (e) {}
+  try { fs.writeFileSync(path.join(st, 'status.json'), JSON.stringify({ worker: process.env.BB_WORKER || '', state: 'needs-relink', why: why, at: at, pid: process.pid }, null, 2) + '\n'); } catch (e) {}
+}
+function clearRelinkState() { try { fs.unlinkSync(path.join(stateDirPath(), 'relink.json')); } catch (e) {} }
+async function relinkWait(opts) {
+  const o = opts || {};
+  const pollMs = Math.max(200, +(o.pollMs || process.env.BB_RELINK_POLL_MS || 60000));
+  const recheckMs = Math.max(pollMs, +(o.recheckMs || process.env.BB_RELINK_RECHECK_MS || 30 * 60000));
+  const files = relinkWatchFiles(o.tokenFile);
+  const before = files.map(fileStamp);
+  const why = o.why || 'The coordinator did not accept this computer\'s token.';
+  console.error('Needs re-link: ' + why + ' Waiting for a new token (run the setup command again); not restarting.');
+  writeRelinkState(why);
+  if (o.base && o.token) await sendDiag(o.base, o.token, 'error', false, 'Needs re-link: ' + why, { state: 'needs-relink', hint: 'Get a new setup command from My computer and run it on this computer.' });
+  let lastCheck = Date.now();
+  for (;;) {
+    markAlive({ ack: false, relink: true });
+    await sleep(pollMs);
+    const now = files.map(fileStamp);
+    if (now.some((v, i) => v !== before[i])) { console.error('Needs re-link: the token or settings changed; restarting the worker.'); break; }
+    if (o.base && Date.now() - lastCheck >= recheckMs) {
+      lastCheck = Date.now();
+      let t = null;
+      try { t = tokenFrom(o.tokenFile); } catch (e) {}
+      if (t) {
+        try { const beat = await api(o.base, t, '/api/v1/heartbeat', { codeHash: o.hash || '', control: true, setupCheck: true }); if (beat && !beat.revoked) { console.error('Needs re-link: the coordinator accepts the token again; restarting the worker.'); break; } }
+        catch (e) { if (e && e.status === 409) { console.error('Needs re-link: the token works again (protocol update pending); restarting the worker.'); break; } }
+      }
+    }
+  }
+  clearRelinkState();
+  process.exitCode = RELINK_EXIT;
+  return RELINK_EXIT;
 }
 /* Setup waits for this file before it says the worker is running: it is written only after the
  * coordinator answered a check-in from this process. */
@@ -71,7 +135,7 @@ function clearStaleStop(file, startedAt) {
 function markAlive(extra) {
   try {
     const dir = process.env.BB_STATE_DIR || path.join(require('os').homedir(), '.bugbrain');
-    fs.writeFileSync(path.join(dir, 'coord-alive.json'), JSON.stringify(Object.assign({ at: new Date().toISOString(), pid: process.pid }, extra || {})) + '\n');
+    fs.writeFileSync(path.join(dir, 'coord-alive.json'), JSON.stringify(Object.assign({ at: new Date().toISOString(), pid: process.pid, ack: true }, extra || {})) + '\n');
   } catch (e) {}
 }
 /* A request that never answers must not hold a job slot forever. */
@@ -544,7 +608,8 @@ async function multi(a, base, token, hash) {
    * written after this process started is a real request from the supervisor and is kept. */
   clearStaleStop(stopFile, Date.now() - Math.round(process.uptime() * 1000));
   const watchdog = () => { try { return require('./watchdog.js').kind(); } catch (e) { return 'none'; } };
-  const runtime = () => ({ cores: cores, slots: plan.slots, running: running.size, duty: plan.duty, mode: plan.mode, pct: plan.pct, maxJobs: plan.want || 0, priority: plan.priority, platform: process.platform, watchdog: watchdog() });
+  const healthNow = () => { try { return require('./watchdog.js').healthSummary(); } catch (e) { return null; } };
+  const runtime = () => ({ cores: cores, slots: plan.slots, running: running.size, duty: plan.duty, mode: plan.mode, pct: plan.pct, maxJobs: plan.want || 0, priority: plan.priority, platform: process.platform, watchdog: watchdog(), health: healthNow() });
   const adopt = next => {
     if (samePlan(plan, next)) return;
     plan = next;
@@ -557,15 +622,19 @@ async function multi(a, base, token, hash) {
     if (beat.revoked) { fatal = new Error('Worker token was revoked.'); fatal.status = 401; return; }
     const s = settingsFrom(beat);
     adopt(resourcePlan(s.mode, s.pct, cores, maxSlots, s.maxJobs));
-    markAlive({ mode: s.mode });
+    markAlive({ mode: s.mode, ack: true });
   };
+  /* The process is alive even when the coordinator is not answering: say so (ack false), so the supervisor's
+   * stale-heartbeat recovery only restarts a worker that is really stuck, never one waiting out a site outage. */
+  const aliveNoAck = () => markAlive({ mode: plan.mode, ack: false });
   let delay = 0;
   for (;;) {
     try { await control(); break; }
     catch (e) {
       const d = decideRetry(e, delay);
-      if (d.action !== 'retry') {
-        if (d.action === 'crash') await sendDiag(base, token, 'error', false, 'Worker stopped: ' + String((e && e.message) || e), diagFor(e));
+      if (d.action === 'stop') return 'relink';
+      if (d.action === 'crash') {
+        await sendDiag(base, token, 'error', false, 'Worker stopped: ' + String((e && e.message) || e), diagFor(e));
         throw e;
       }
       delay = d.delay; console.error((e && e.message) || e);
@@ -573,11 +642,11 @@ async function multi(a, base, token, hash) {
       await sleep(delay);
     }
   }
-  if (fatal) throw fatal;
+  if (fatal) { if (fatal.status === 401 || fatal.revoked) return 'relink'; throw fatal; }
   await sendDiag(base, token, 'startup', true, 'Worker started · ' + plan.mode + (plan.mode === 'allowance' ? ' ' + plan.pct + '%' : '') + ' · ' + plan.slots + ' of ' + cores + ' cores', { protocolMatch: true, runtime: runtime() });
   const timer = setInterval(() => {
     if (stopFile && !stopping && fs.existsSync(stopFile)) { stopping = true; say({ ok: true, stopping: 'stop file' }); }
-    control().catch(e => { if (e && e.status === 401) fatal = e; });
+    control().catch(e => { if (e && e.status === 401) fatal = e; else aliveNoAck(); });
   }, controlMs);
   const done = () => stopping || fatal || (jobLimit && finished >= jobLimit);
   async function slotLoop(slot) {
@@ -592,6 +661,12 @@ async function multi(a, base, token, hash) {
         const d = decideRetry(e, wait);
         if (d.action === 'stop') { fatal = e; return; }
         if (d.action === 'crash') { fatal = e; await sendDiag(base, token, 'error', false, 'Worker stopped: ' + String((e && e.message) || e), diagFor(e)); return; }
+        if (d.action === 'skip') {
+          wait = d.delay;
+          say({ ok: false, slot: slot, skip: true, status: e.status, waitS: Math.round(wait / 1000), error: String((e && e.message) || e).slice(0, 200) });
+          await sendDiag(base, token, 'error', false, 'Slot ' + slot + ' skipped a request the coordinator refused (HTTP ' + e.status + '): ' + String((e && e.message) || e), Object.assign(diagFor(e), { hint: 'Other slots keep running; this slot tries again in ' + Math.round(wait / 1000) + ' s.' }));
+          await sleep(wait); continue;
+        }
         wait = d.delay; console.error((e && e.message) || e);
         await sendDiag(base, token, 'error', false, (e && e.status === 409 ? 'Protocol mismatch, needs update: ' : '') + String((e && e.message) || e), diagFor(e));
         await sleep(wait); continue;
@@ -599,7 +674,8 @@ async function multi(a, base, token, hash) {
       if (!claimed.job) { await sleep(poll + Math.floor(Math.random() * 3000)); continue; }
       if (done()) return;
       const job = claimed.job;
-      assertProtocol(job, hash);
+      try { assertProtocol(job, hash); }
+      catch (e) { fatal = e; e.status = 409; await sendDiag(base, token, 'error', false, 'Protocol mismatch, needs update: ' + e.message, diagFor(e)); return; }
       const entry = { pid: 0, throttle: '' };
       running.set(slot, entry);
       let result;
@@ -647,7 +723,7 @@ async function multi(a, base, token, hash) {
   await Promise.all(Array.from({ length: maxSlots }, (_, i) => slotLoop(i)));
   clearInterval(timer);
   if (fatal) {
-    if (fatal.status === 401 || fatal.revoked) { console.error('Worker token was revoked.'); process.exitCode = 1; return; }
+    if (fatal.status === 401 || fatal.revoked) { console.error('Worker token was revoked.'); return 'relink'; }
     throw fatal;
   }
 }
@@ -658,10 +734,21 @@ async function main() {
   const base = a.url || process.env.BB_COORDINATOR_URL;
   const tokenFile = a['token-file'] || process.env.BB_COORDINATOR_TOKEN_FILE;
   if (!base || !tokenFile) throw new Error('Need --url and --token-file (or BB_COORDINATOR_URL and BB_COORDINATOR_TOKEN_FILE).');
-  const token = tokenFrom(tokenFile);
   const hash = protocolHash();
+  let token;
+  try { token = tokenFrom(tokenFile); }
+  catch (e) {
+    if (a.once) throw e;
+    return relinkWait({ tokenFile: tokenFile, hash: hash, why: e.code === 'ENOENT' ? 'The token file ' + tokenFile + ' is missing.' : String(e.message || e) });
+  }
   cleanupStaleCoordDirs();
-  if (!a.once && !a.single) return multi(a, base, token, hash);
+  clearRelinkState();
+  if (!a.once && !a.single) {
+    const r = await multi(a, base, token, hash);
+    if (r === 'relink') return relinkWait({ base: base, token: token, tokenFile: tokenFile, hash: hash, why: 'The coordinator refused this computer\'s token (revoked, or the computer was removed on the Compute Lab page).' });
+    return r;
+  }
+  const relink = () => a.once ? (process.exitCode = 1) : relinkWait({ base: base, token: token, tokenFile: tokenFile, hash: hash, why: 'The coordinator refused this computer\'s token.' });
   const poll = +(process.env.BB_COORD_POLL_MS || 15000);
   const heartbeatMs = +(process.env.BB_COORD_HEARTBEAT_MS || 60000);
   let delay = 0, started = false;
@@ -675,8 +762,7 @@ async function main() {
       }
       if (beat.revoked) {
         console.error('Worker token was revoked.');
-        process.exitCode = 1;
-        return;
+        return relink();
       }
       if (beat.paused) {
         console.log(JSON.stringify({ ok: true, paused: true }));
@@ -702,10 +788,7 @@ async function main() {
       } catch (e) {
         if (e && e.leaseLost) {
           console.log(JSON.stringify({ ok: false, job: claimed.job.id, submit: false, reason: e.revoked ? 'revoked' : 'lease-lost' }));
-          if (e.revoked) {
-            process.exitCode = 1;
-            return;
-          }
+          if (e.revoked) return relink();
           if (a.once) return;
           continue;
         }
@@ -735,8 +818,15 @@ async function main() {
       const decision = decideRetry(e, delay);
       if (decision.action === 'stop') {
         console.error((e && e.message) || 'Worker token was revoked.');
-        process.exitCode = 1;
-        return;
+        return relink();
+      }
+      if (decision.action === 'skip') {
+        delay = decision.delay;
+        console.error('Skipped a request the coordinator refused (HTTP ' + e.status + '): ' + ((e && e.message) || e));
+        await sendDiag(base, token, 'error', false, 'Skipped a request the coordinator refused (HTTP ' + e.status + '): ' + String((e && e.message) || e), diagFor(e));
+        if (a.once) throw e;
+        await sleep(delay);
+        continue;
       }
       if (decision.action === 'crash') {
         await sendDiag(base, token, 'error', false, 'Worker stopped: ' + String((e && e.message) || e), diagFor(e));
@@ -750,5 +840,5 @@ async function main() {
     }
   }
 }
-if (require.main === module) main().catch(e => { console.error(e.message || e); process.exit(1); });
-module.exports = { clearStaleStop, withDigest, timeoutSignal, resourcePlan, samePlan, settingsFrom, applyPriority, osPriority, logicalCores, writeThrottle, ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isSeedConflict, isRetryable, decideRetry, stopChild, readProgress, shouldWait, packUploadBatches, uploadDesigns, cleanupJobDir, cleanupStaleCoordDirs, retryAfterMs };
+if (require.main === module) main().then(() => { if (process.exitCode === RELINK_EXIT) process.exit(RELINK_EXIT); }, e => { console.error(e.message || e); process.exit(1); });
+module.exports = { RELINK_EXIT, isSkippable, relinkWait, clearStaleStop, withDigest, timeoutSignal, resourcePlan, samePlan, settingsFrom, applyPriority, osPriority, logicalCores, writeThrottle, ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isSeedConflict, isRetryable, decideRetry, stopChild, readProgress, shouldWait, packUploadBatches, uploadDesigns, cleanupJobDir, cleanupStaleCoordDirs, retryAfterMs };

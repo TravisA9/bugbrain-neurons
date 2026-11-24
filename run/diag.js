@@ -72,6 +72,7 @@ function collect(extra) {
     codeSha: gitHead(), protocolHash: protocolHash(), install: installMethod(),
     restarts: +(process.env.BB_SUP_RESTARTS || 0), branch: process.env.BB_CODE_BRANCH || '', pid: process.pid
   };
+  try { var wd = JSON.parse(fs.readFileSync(path.join(STATE, 'watchdog.json'), 'utf8').replace(/^\uFEFF/, '')); if (wd && wd.health) r.health = wd.health; if (wd && wd.kind) r.watchdog = wd.kind; } catch (e) {}
   for (var k in (extra || {})) r[k] = extra[k];
   return r;
 }
