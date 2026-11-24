@@ -756,3 +756,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 22:36 phase C 5/16 pairs: +2964 +.0120. Mean +.0039, 1 below -.003 (2961). ETA ~05:00-06:00 CT Tue (awake time).
 - 22:53 resumed: gate alive, phase C 5/16 pairs (cand 6, S2 5 + running).
 - 23:21 phase C 6/16 pairs: +2965 +.0050. Mean +.0041, 1 below -.003. No failures.
+- 23:35 phase C 7/16 pairs: +2966 +.0010. Mean +.0036, 1 below -.003. 14/32 jobs done, 3 running; ETA ~05:00-05:30 CT Tue (awake time).
