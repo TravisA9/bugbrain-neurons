@@ -4,6 +4,10 @@ cd /workspace/sweep; sleep ${1:-240}
 if ! pgrep -f "[r]un/r144/gate.js" >/dev/null; then
   if pgrep -f "[s]w/(lagprobe140|bookdiag).js" >/dev/null; then echo "gate dead, orphans running - wait";
   elif grep -q "GATE DONE\|STOP rule fired" run/r144/gate.log; then echo "gate finished";
-  else echo "$(date +%T) restarting gate" | tee -a run/r144/gate.log; setsid nohup node run/r144/gate.js >>run/r144/gate.out 2>&1 < /dev/null & fi
+  else echo "$(date +%T) restarting gate" | tee -a run/r144/gate.log; GATE_MAX=2 setsid nohup node run/r144/gate.js >>run/r144/gate.out 2>&1 < /dev/null & fi
 fi
 date +%T; ls sw/out/lp_g144p_S2_4x_*.json 2>/dev/null | wc -l; tail -n 2 run/r144/gate.log
+python3 -c "
+import json,glob
+r=[(json.load(open(f))['k'],json.load(open(f))['probeAcc']) for f in sorted(glob.glob('sw/out/lp_g144p_S2_4x_*.json'))]
+print(' '.join(f'{k}:{a:.3f}' for k,a in r), 'LOW!' if any(a<.45 for k,a in r) else '')"

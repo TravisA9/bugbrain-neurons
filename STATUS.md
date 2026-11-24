@@ -736,3 +736,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 17:32 DECISION (Travis): keep going; probe-criterion verdict deferred until the book100k results. Run phase C to completion. Criterion unchanged.
 - 17:35 phase B 12/16: +2969 .564, 2970 .544, 2971 .508. Still 1 below .45 (k2967).
 - 18:09 phase B 15/16: +2973 .532, 2974 .507, 2975 .515. k2976 running (ETA ~18:40); phase C book100k started in the free slots.
+- 18:25 another executor (ComputeLab Explore) may run 1 node job -> gate limited to 2 node jobs: old driver paused (SIGSTOP) until lp k2976 finishes (~18:40), then restarted with GATE_MAX=2 (resumes from completed files).
