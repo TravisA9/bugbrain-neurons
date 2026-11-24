@@ -609,7 +609,8 @@ async function multi(a, base, token, hash) {
   clearStaleStop(stopFile, Date.now() - Math.round(process.uptime() * 1000));
   const watchdog = () => { try { return require('./watchdog.js').kind(); } catch (e) { return 'none'; } };
   const healthNow = () => { try { return require('./watchdog.js').healthSummary(); } catch (e) { return null; } };
-  const runtime = () => ({ cores: cores, slots: plan.slots, running: running.size, duty: plan.duty, mode: plan.mode, pct: plan.pct, maxJobs: plan.want || 0, priority: plan.priority, platform: process.platform, watchdog: watchdog(), health: healthNow() });
+  const codeSha = (() => { try { return require('./diag.js').gitHead() || ''; } catch (e) { return ''; } })();
+  const runtime = () => ({ code: codeSha, cores: cores, slots: plan.slots, running: running.size, duty: plan.duty, mode: plan.mode, pct: plan.pct, maxJobs: plan.want || 0, priority: plan.priority, platform: process.platform, watchdog: watchdog(), health: healthNow() });
   const adopt = next => {
     if (samePlan(plan, next)) return;
     plan = next;
@@ -620,6 +621,8 @@ async function multi(a, base, token, hash) {
     const beat = await api(base, token, '/api/v1/heartbeat', { codeHash: hash, control: true, reset: firstControl, runtime: runtime() });
     firstControl = false;
     if (beat.revoked) { fatal = new Error('Worker token was revoked.'); fatal.status = 401; return; }
+    // Phase 1: the code version this computer should run (stable/canary), saved for the supervisor.
+    try { if (require('./codever.js').save(beat)) say({ ok: true, codeTarget: require('./codever.js').read() || 'branch tip' }); } catch (e) {}
     const s = settingsFrom(beat);
     adopt(resourcePlan(s.mode, s.pct, cores, maxSlots, s.maxJobs));
     markAlive({ mode: s.mode, ack: true });

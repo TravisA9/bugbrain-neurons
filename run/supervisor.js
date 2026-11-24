@@ -36,7 +36,28 @@ function readCfg() {
   try { const t = git(['show', 'refs/bb/queue:worker-config.json']); const c = JSON.parse(t); fs.writeFileSync(cache, t); return c; }
   catch (e) { try { return JSON.parse(fs.readFileSync(cache, 'utf8')); } catch (e2) { return {}; } }
 }
+/* Phase 1: the commit the coordinator wants (code-target.json, written by coord.js), or '' for the branch tip.
+ * Only in Compute Lab mode, and only when the commit is on the worker branch and knows about channels. */
+const CV = require('./codever.js');
+let targetNote = '', pinFailed = '';
+function wantedCommit() {
+  if (!COORD) return '';
+  const sha = CV.wanted(ST);
+  if (!sha) { targetNote = ''; return ''; }
+  if (sha === pinFailed) return '';   // switching failed at start: run the tip rather than restart every poll
+  const shallow = fs.existsSync(path.join(ROOT, '.git', 'shallow'));
+  const u = CV.usable(git, sha, 'refs/bb/code', shallow);
+  if (!u.ok) { const note = 'ignoring the coordinator\'s code version: ' + u.why + '; following the branch tip'; if (note !== targetNote) say(note); targetNote = note; return ''; }
+  targetNote = '';
+  return sha;
+}
+function checkoutCommit(sha) {
+  try { git(['checkout', '-q', '-f', '--detach', sha]); say('running code version ' + sha.slice(0, 7) + ' (' + ((CV.read(ST) || {}).channel || 'channel') + ', chosen by the coordinator)'); return true; }
+  catch (e) { say('could not switch to ' + sha.slice(0, 7) + ': ' + redact(e.stderr || e.message).trim().split('\n').slice(-1)[0].slice(0, 160)); return false; }
+}
 function newerCode() {
+  const want = wantedCommit();
+  if (want) { try { const h = git(['rev-parse', 'HEAD']); return h === want ? null : h.slice(0, 7) + ' -> ' + want.slice(0, 7) + ' (coordinator)'; } catch (e) { return null; } }
   try { const h = git(['rev-parse', 'HEAD']), c = git(['rev-parse', 'refs/bb/code']); if (h === c) return null;
     try { git(['merge-base', '--is-ancestor', c, h]); return null; } catch (e) { return h.slice(0, 7) + ' -> ' + c.slice(0, 7); } } catch (e) { return null; }
 }
@@ -140,7 +161,11 @@ function main() {
   const w = WC.tokenWarn(); if (w) say(w);
   if (!TOKEN && !COORD) say('no token file (' + path.join(ST, 'token') + '): pushes use this computer\'s own git login; if GitHub refuses it, dq.js stops with exit 3 and says so');
   fetchAll(); S = WC.resolve(readCfg(), NAME, TYPE); KEY = keyOf(S); FORCE = S.forceVersion;
-  const nc = newerCode(); if (nc) { say('code is behind (' + nc + '); restarting via launcher'); process.exit(10); }
+  /* The launcher always resets the checkout to the branch tip; when the coordinator chose another commit, switch to
+   * it here (before coord.js starts) instead of restarting, or launcher and supervisor would loop. */
+  const want = wantedCommit();
+  if (want) { let h = ''; try { h = git(['rev-parse', 'HEAD']); } catch (e) {} if (h !== want && !checkoutCommit(want)) pinFailed = want; }
+  else { const nc = newerCode(); if (nc) { say('code is behind (' + nc + '); restarting via launcher'); process.exit(10); } }
   say(`worker ${NAME} (${TYPE}), mode ${S.mode}, config version ${S.version}, polling every ${process.env.BB_POLL_MS ? process.env.BB_POLL_MS + ' ms' : S.pollMinutes + ' min'}`);
   if (S.mode === 'pause') { say('paused by worker-config.json; polling'); status('paused', 'worker-config.json'); }
   startDq();

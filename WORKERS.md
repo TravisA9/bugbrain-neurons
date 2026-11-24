@@ -141,3 +141,13 @@ the service. Replacing `~/.bugbrain/token` by hand also works: the launcher noti
   (GNOME AC suspend or the Windows AC sleep timer), and the old GitHub-token `bugbrain-worker.service`: disabled and
   moved to `~/.bugbrain/legacy-bugbrain-worker.service.bak` only when it is not running; a running one is only reported.
 - Tests: `node run/selfheal_test.js` (mock coordinator, launcher, watchdog health).
+
+## Code channels: stable and canary (Phase 1, Nov 2026)
+The coordinator's heartbeat reply can carry `code: { channel, ref }`. coord.js saves it to `~/.bugbrain/code-target.json`
+after each control check-in; the supervisor keeps the checkout on that commit (`git checkout --detach`) before it starts
+coord.js, and restarts gracefully after the current jobs when the target changes. `ref: ''` (canary by default) means
+"follow the branch tip"; a reply without `code` (older coordinator) removes the file, so the worker follows the tip as
+before. A target is only followed when it is on the worker branch and contains `run/codever.js` (channel support), so a
+pinned computer can always follow the next promotion; otherwise it is ignored with a log line. The heartbeat runtime
+reports `code` (the commit running). Owner console: set a computer to canary, promote canary to stable.
+Tests: `node run/channel_test.js` (save/clear, which commits may be followed, supervisor end to end on a clone).
