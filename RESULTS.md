@@ -5034,3 +5034,5 @@ exact 0; first letter ~0). Frozen: no recall in either arm. The memory is one-sh
 text1000 acc -.0021 (t -3.5, 1+/12-), fit -.009, all in the first quarter (q1 -.0043, last quarter +.0003), log-loss unchanged: a small but real early-text
 cost, same mechanism as fables: with copy votes silenced (lagEvid 3, recruitment unchanged) text1000 equals the candidate exactly on 5/5 seeds.
 order3, K4, seqchoice order2 / cycle (4 seeds): identical.
+**Phase B (delay-copy probe, S2, 16 seeds).** mean .517 (median .522, range .448-.574; candidate/off ~.21-.25); 15/16 >= .45, k2967 .448 (133/297, one item
+short): the pre-registered "every seed >= .45" is not met; the memory is present on every seed (~2x off).
