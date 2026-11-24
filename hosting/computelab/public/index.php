@@ -426,7 +426,7 @@ try {
         }
         return;
     }
-    $exploreAssets = ['/assets/explore-replay.js' => '/explore-replay.js', '/assets/explore-live.js' => '/explore-live.js', '/assets/explore-arena.js' => '/explore-arena.js'];
+    $exploreAssets = ['/assets/explore-replay.js' => '/explore-replay.js', '/assets/explore-live.js' => '/explore-live.js', '/assets/explore-arena.js' => '/explore-arena.js', '/assets/explore-brain.js' => '/explore-brain.js'];
     if (isset($exploreAssets[$path]) && $method === 'GET') {
         $asset = $private . $exploreAssets[$path];
         if (!is_file($asset)) {

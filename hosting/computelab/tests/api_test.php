@@ -1383,7 +1383,24 @@ foreach (exploreDemos() as $demo) {
         $captionsOk = false;
     }
 }
-check($captionsOk && count(exploreDemos()) === 6, 'every Explore view has a one-line caption (at most 140 characters)');
+check($captionsOk && count(exploreDemos()) === 7, 'every Explore view has a one-line caption (at most 140 characters)');
+
+$brainIds = array_column(exploreDemos(), 'id');
+check(in_array('brain', $brainIds, true) && exploreDemos()[array_search('brain', $brainIds, true)]['needs'] === 'engine,brain',
+    'Explore lists the "Watch a brain grow" view, which needs the engine bundle and its own lazy script');
+exec('cd ' . escapeshellarg($repoRoot) . ' && node tools/brain_record_check.js --seeds 3 2>&1', $recOut, $recCode);
+check($recCode === 0 && count(preg_grep('/: identical \(/', $recOut)) === 3,
+    'growing the arena brain with the growth recorder on gives the identical brain and behaviour (recorder is a passive observer)');
+$brainJs = (string) file_get_contents(dirname(__DIR__) . '/private/explore-brain.js');
+$arenaSrc = (string) file_get_contents(dirname(__DIR__) . '/private/explore-arena.js');
+$fnBody = static function (string $src, string $head): string {   // a top-level helper, up to the next line that closes it
+    $i = strpos($src, $head);
+    return $i === false ? '' : substr($src, $i, strpos($src, "\n  }\n", $i) - $i);
+};
+check($fnBody($brainJs, 'function genomeFor(') !== '' && $fnBody($brainJs, 'function genomeFor(') === $fnBody($arenaSrc, 'function genomeFor(')
+    && $fnBody($brainJs, 'function makeEnv(') !== '' && $fnBody($brainJs, 'function makeEnv(') === $fnBody($arenaSrc, 'function makeEnv(')
+    && str_contains($brainJs, 'SA.growCell(this.genome, { seed: this.seed, spec: this.env.spec, record: true })') && strlen($brainJs) < 120 * 1024,
+    'the brain view grows the champion the same way the arena does (same genome, same arena spec), with recording on');
 
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

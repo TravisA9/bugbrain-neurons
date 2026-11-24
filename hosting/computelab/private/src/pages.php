@@ -472,6 +472,8 @@ function exploreDemos(): array
             'blurb' => 'Green apples are food, red are poison; they only flash into view. One bug keeps learning, and this browser remembers it.'],
         ['id' => 'predator', 'title' => 'Predator arena', 'menu' => 'Dodge a hunter while foraging', 'kind' => 'live', 'needs' => 'engine,arena',
             'blurb' => 'Drifting apples and a red hunter that gives chase. Is it getting caught less often?'],
+        ['id' => 'brain', 'title' => 'Watch a brain grow', 'menu' => 'Growth, chemical signals and spikes, slowed down', 'kind' => 'live', 'needs' => 'engine,brain',
+            'blurb' => 'The arena brain grows from its genes, following chemical signals, then drives the bug with live spikes.'],
         ['id' => 'read', 'title' => 'Watch it read', 'menu' => 'Next-letter guesses on a story', 'kind' => 'replay', 'needs' => 'replay',
             'blurb' => 'Guessing each next letter of a story it has never seen.'],
         ['id' => 'name', 'title' => 'Remember a name', 'menu' => 'Recall after seeing a word once', 'kind' => 'replay', 'needs' => 'replay',
@@ -948,6 +950,15 @@ function pageBugArena(string $base, array $nav, bool $compare = false, array $de
                         . '<div><h3 id="bug-right-heading">Original BugBrain</h3><p id="bug-baseline-score" data-role="base-score" class="ex-score"></p>'
                         . $stage('bug-baseline', 'baseline', 'base-stats', 'Original BugBrain foraging arena', '') . '</div></div>'
                     : $main);
+        } elseif ($demo['needs'] === 'engine,brain') {
+            /* Watch a brain grow (explore-brain.js): the recorded growth of the arena brain, then the brain live. Legend and counts beside the canvas. */
+            $panels .= '<div class="head-actions">'
+                . '<button class="button small" data-role="play" type="button" disabled>Pause</button> '
+                . '<label class="br-speed">Speed <input type="range" min="0" max="100" value="59" data-role="speed" aria-label="Playback speed"> <output data-role="speed-label">1.0×</output></label> '
+                . '<button class="button small" data-role="restart" type="button" disabled>Restart</button></div></div>'
+                . '<div class="bug-stage"><div class="br-wrap"><canvas id="brain-canvas" class="bug-canvas br-canvas" data-role="canvas" width="1120" height="700" aria-label="A bug brain growing, then living"'
+                . ' data-champion="' . h($base . '/explore/bugbrain-champion.json') . '"></canvas><div class="br-tip" data-role="tip" hidden></div></div>'
+                . '<aside class="bug-stats br-stats" data-role="stats" aria-label="Growth stage, counts and the chemical signals"><p class="quiet">Growing the brain…</p></aside></div>';
         } else {
             $panels .= '<div class="head-actions"><button class="button small primary" type="button" data-play="' . h($id) . '" disabled>Play</button></div></div>'
                 . '<div class="ex-stage" data-stage="' . h($id) . '"><p class="quiet">Loading…</p></div>';
@@ -959,7 +970,8 @@ function pageBugArena(string $base, array $nav, bool $compare = false, array $de
         : 'Current best design';
     $body = '<div class="ex" data-engine="' . h($base . '/assets/bugbrain.js?v=9') . '" data-replay-js="' . h($base . '/assets/explore-replay.js?v=' . $asset('explore-replay.js')) . '"'
         . ' data-live-js="' . h($base . '/assets/explore-live.js?v=' . $asset('explore-live.js')) . '"'
-        . ' data-arena-js="' . h($base . '/assets/explore-arena.js?v=' . $asset('explore-arena.js')) . '" data-design="' . h($base . '/explore/design.json') . '"'
+        . ' data-arena-js="' . h($base . '/assets/explore-arena.js?v=' . $asset('explore-arena.js')) . '"'
+        . ' data-brain-js="' . h($base . '/assets/explore-brain.js?v=' . $asset('explore-brain.js')) . '" data-design="' . h($base . '/explore/design.json') . '"'
         . ' data-replay-base="' . h($base . '/explore/replay/') . '" data-version="' . h($version) . '"' . ($compare ? ' data-compare="1"' : '') . '>'
         . '<h1 class="ex-sr" id="bug-title">Explore</h1>'
         . $panels
@@ -986,6 +998,13 @@ function pageBugArena(string $base, array $nav, bool $compare = false, array $de
         . '.bug-stats canvas{display:block;width:100%;height:auto;margin:0 0 8px}.bug-stats .st-row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-top:1px solid #16212b}'
         . '.bug-stats .st-row b{font:600 13px var(--mono);color:var(--text)}.bug-stats .st-key{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:baseline}'
         . '.bug-stats .st-trend{margin:8px 0 0;color:var(--text);line-height:1.4}'
+        . '.br-wrap{position:relative;min-width:0}.br-canvas{background:#0b1218;border:1px solid var(--line);cursor:crosshair}'
+        . '.br-tip{position:absolute;z-index:3;max-width:230px;display:flex;flex-direction:column;gap:3px;padding:8px 10px;background:#101821;border:1px solid #2d5948;border-radius:8px;font-size:12px;color:var(--muted);box-shadow:0 8px 24px #0006;pointer-events:none}.br-tip b{color:var(--text);font-weight:600}.br-tip[hidden]{display:none}'
+        . '.br-speed{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}.br-speed input{width:130px;accent-color:#69e2b1}.br-speed output{font:12px var(--mono);color:var(--text);min-width:40px}'
+        . '.br-legend{margin:10px 0 0}.br-lh{margin:0 0 4px;font-size:11.5px;color:var(--muted)}'
+        . '.br-field{display:grid;grid-template-columns:10px 1fr;gap:1px 7px;width:100%;text-align:left;padding:4px 6px;margin:1px 0;border:1px solid transparent;border-radius:6px;background:none;color:var(--muted);font-size:12px;cursor:pointer;opacity:.55}'
+        . '.br-field.is-on{opacity:1;color:var(--text);border-color:#1d2a35}.br-field i{width:10px;height:10px;border-radius:3px;margin-top:3px}.br-field em{grid-column:2;font:normal 10.5px var(--mono);color:var(--muted)}'
+        . '.br-key{margin:10px 0 0;font-size:11.5px;line-height:1.45;color:var(--muted)}.br-seed{margin:8px 0 0;font:10.5px var(--mono);color:var(--muted)}'
         . '.bug-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.bug-pair h3,.bug-pair p{margin:0 0 6px}'
         . '.bug-pair .bug-stage{grid-template-columns:1fr}.bug-pair .bug-canvas{width:100%}'
         . '.ex-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:10px;font-size:12.5px}'
@@ -1015,7 +1034,7 @@ function exploreRouterJs(): string
   }
   function scriptsFor(id) {
     var needs = (document.getElementById('demo-' + id).getAttribute('data-needs') || '').split(','), out = [];
-    needs.forEach(function (n) { if (n === 'engine') out.push(root.getAttribute('data-engine')); if (n === 'replay') out.push(root.getAttribute('data-replay-js')); if (n === 'live') out.push(root.getAttribute('data-live-js')); if (n === 'arena') out.push(root.getAttribute('data-arena-js')); });
+    needs.forEach(function (n) { if (n === 'engine') out.push(root.getAttribute('data-engine')); if (n === 'replay') out.push(root.getAttribute('data-replay-js')); if (n === 'live') out.push(root.getAttribute('data-live-js')); if (n === 'arena') out.push(root.getAttribute('data-arena-js')); if (n === 'brain') out.push(root.getAttribute('data-brain-js')); });
     return out;
   }
   function show(id) {

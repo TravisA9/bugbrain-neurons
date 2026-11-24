@@ -586,7 +586,7 @@ check(str_contains($sequencePoll ?? '', 'sf-inverse-experiment-2320') && ($seque
 
 /* Explore demos (kept late: these extra requests must not use up the earlier pages' rate-limit window). */
 $explore = http($base . '/explore');
-$demoIds = ['arena', 'predator', 'read', 'name', 'copy', 'patterns'];
+$demoIds = ['arena', 'predator', 'brain', 'read', 'name', 'copy', 'patterns'];
 $tabsOk = true;
 foreach ($demoIds as $demoId) {
     if (!str_contains($explore['body'], 'id="demo-' . $demoId . '"') || !str_contains($explore['body'], 'id="demo-' . $demoId . '-title"')
@@ -655,6 +655,15 @@ check(str_contains($explore['body'], 'id="demo-predator"') && str_contains($expl
     && substr_count($explore['body'], 'data-needs="engine,arena"') === 2 && substr_count($explore['body'], '>Start fresh</button>') === 2
     && !str_contains($explore['body'], '>New arena</button>'),
     'explore has the predator arena tab and both arenas keep one bug with a Start fresh button');
+$brainJsHttp = http($base . '/assets/explore-brain.js');
+check($brainJsHttp['status'] === 200 && str_contains($brainJsHttp['header'], 'application/javascript') && str_contains($brainJsHttp['body'], 'ExploreDemos.brain')
+    && str_contains($brainJsHttp['body'], 'record: true') && !str_contains($engineJs['body'], 'ExploreDemos.brain'),
+    'the brain-growth view is a lazy script outside the engine bundle');
+check(str_contains($explore['body'], 'id="demo-brain"') && str_contains($explore['body'], '>Watch a brain grow<') && str_contains($explore['body'], 'data-needs="engine,brain"')
+    && str_contains($explore['body'], 'data-brain-js="/computelab/assets/explore-brain.js?v=') && str_contains($explore['body'], "if (n === 'brain') out.push(root.getAttribute('data-brain-js'))")
+    && str_contains($explore['body'], 'data-role="speed"') && str_contains($explore['body'], 'data-role="restart"') && str_contains($explore['body'], 'data-role="play"')
+    && str_contains($explore['body'], 'data-champion="/computelab/explore/bugbrain-champion.json"') && str_contains($explore['body'], '<aside class="bug-stats br-stats" data-role="stats"'),
+    'explore has the brain-growth view with play, slow-motion speed and restart controls, and its legend beside the canvas');
 
 $arenaWorker = $app->enroll('arena-test', ['bugbrain'], 1, true);
 file_put_contents($researchToken, $arenaWorker['token']);
