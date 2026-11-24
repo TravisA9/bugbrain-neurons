@@ -753,3 +753,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 22:03 gate restarted (PID 424834; counts any foreign node job, e.g. another executor's t2b.js, toward the 3-job cap). Phase C 4/16 pairs (cand 4, S2 4 done; running cand 2964, S2 2964, cand 2965). No failures.
 - 22:15 WARNING: a Chrome renderer (another agent's tab, started ~22:10, likely the ComputeLab explore page) holds 7.2 GB; MemAvail ~0.4 GB. Not mine -> not killed. Gate spawns nothing new below 5 GB; if the OOM killer hits a book job, a gate restart reruns it.
 - 22:23 cand 2964 done (orphan); a foreign test_core.js run is using the 3rd slot -> gate waits (by design).
+- 22:36 phase C 5/16 pairs: +2964 +.0120. Mean +.0039, 1 below -.003 (2961). ETA ~05:00-06:00 CT Tue (awake time).
