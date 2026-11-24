@@ -771,3 +771,10 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 04:10 phase C 14/16 pairs: +2974 +.0090. Mean +.0042, 1 below -.003. 0 failures; last jobs running (cand 2975, S2 2975, cand 2976), S2 2976 queued; ETA ~05:10 CT.
 - 04:44 resumed: gate alive, 14/16 pairs, last 3 jobs running (S2 2975, cand+S2 2976), 0 failures; ETA ~05:10 CT.
 - 04:58 phase C 15/16 pairs: +2975 +.0005. Mean +.0040, 1 below -.003. Last pair (2976) running, ETA ~05:06.
+- 05:07 R144 PHASE C COMPLETE / GATE DONE (book100k heldAcc, S2 - cand, 4x, 16 fresh seeds, 32/32 runs, 0 failures):
+  2960 +.0060, 2961 -.0035, 2962 -.0030, 2963 +.0080, 2964 +.0120, 2965 +.0050, 2966 +.0010, 2967 +.0030, 2968 +.0010, 2969 +.0040,
+  2970 +.0045, 2971 -.0005, 2973 +.0125, 2974 +.0090, 2975 +.0005, 2976 +.0055.
+  Mean +.0041 (se .0012, paired t 3.4; median +.0043; cand .5408 -> S2 .5449), 13+/3-, worst k2961 -.0035.
+  Pre-registered book rule: mean >= 0 MET; every seed >= -.003 NOT MET (1/16: k2961 -.0035; k2962 = -.0030 exactly, meets). Prediction (+.003..+.006, 1-4 seeds
+  below -.003) held. Overall R144 vs pre-reg: tasks / fables / text1000 within caps (Travis decisions); probe 15/16 >= .45 (k2967 .448); book 15/16 >= -.003.
+  Strict verdict: FAIL on two per-seed bars (one seed each, both marginal); mean effects clearly positive. Decision is Travis's.

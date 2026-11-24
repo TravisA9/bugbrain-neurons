@@ -5036,3 +5036,7 @@ cost, same mechanism as fables: with copy votes silenced (lagEvid 3, recruitment
 order3, K4, seqchoice order2 / cycle (4 seeds): identical.
 **Phase B (delay-copy probe, S2, 16 seeds).** mean .517 (median .522, range .448-.574; candidate/off ~.21-.25); 15/16 >= .45, k2967 .448 (133/297, one item
 short): the pre-registered "every seed >= .45" is not met; the memory is present on every seed (~2x off).
+**Phase C (book100k, 16 seeds).** S2 - candidate heldAcc mean +.0041 (se .0012, t 3.4; .5408 -> .5449), 13+/3-, worst k2961 -.0035 (k2962 -.0030).
+Mean >= 0 met; every seed >= -.003 missed by one seed (-.0035). **R144 summary:** clear mean gain on long text and on the delay-copy memory (probe .517 vs ~.22
+off), early-text accuracy cost capped (fables -.0028, text1000 -.0021), other tasks identical; the strict per-seed bars each fail on one marginal seed
+(probe k2967 .448 < .45; book k2961 -.0035 < -.003). Promotion decision left to Travis.
