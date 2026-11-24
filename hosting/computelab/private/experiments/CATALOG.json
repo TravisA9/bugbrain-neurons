@@ -1,0 +1,88 @@
+{
+  "note": "Every job type volunteer computers can be given, what it is for, and the recommended state. Retiring is config only (retire_job_types); nothing is deleted.",
+  "reviewed": "2026-11-24",
+  "types": [
+    {
+      "template": "sf-inverse-experiment",
+      "what": "Trains a small designer that proposes tiny frozen SNN circuits (3 hidden neurons) for synthetic tasks; shared champion + discoveries gallery.",
+      "chosenBy": "server auto-supply (inverse_gallery)",
+      "share": "Every BugBrain-side job TacoBell ran since Nov 9 was this type: 68,563 runs in its two worker logs (plus about 1,000 sf-propose runs before Nov 20). In the current log 6,274 of 11,307 ended in error, mostly 'Invalid shared inverse training assignment' (being fixed separately).",
+      "consumer": "discoveries page, inverse champion",
+      "useful": "low for the goal: synthetic tiny circuits, no growth, no memory, no link to BugBrain or R144",
+      "recommend": "keep at lower priority once experiments run (experiment jobs are offered first); retire when the gallery is finished"
+    },
+    {
+      "template": "sf-propose",
+      "what": "Legacy SpikeFoundry design search on synthetic curriculum tasks",
+      "chosenBy": "server auto-supply when inverse gallery is off",
+      "share": "last seen Nov 9-20",
+      "consumer": "design library / discoveries",
+      "useful": "stale (paused by pause_legacy_spikefoundry_search)",
+      "recommend": "retire"
+    },
+    {
+      "template": "sf-train",
+      "what": "Legacy design-model training",
+      "chosenBy": "owner only",
+      "consumer": "model checkpoint",
+      "useful": "stale",
+      "recommend": "retire"
+    },
+    {
+      "template": "sf-vision",
+      "what": "Synthetic 4x4 vision smoke check",
+      "chosenBy": "owner only",
+      "consumer": "none",
+      "useful": "no",
+      "recommend": "retire"
+    },
+    {
+      "template": "sf-sequence-experiment",
+      "what": "Capped SpikeFoundry sequence study (rounds with checkpoints)",
+      "chosenBy": "owner (queueSequenceStudy)",
+      "consumer": "owner sequence-experiment report",
+      "useful": "finished study; not on the R144 path",
+      "recommend": "leave (owner-only, nothing auto-queues it)"
+    },
+    {
+      "template": "bb-order3",
+      "what": "One order-3 growth with an old (pre-R135) variant via run/r42.js",
+      "chosenBy": "server auto-supply for the bugbrain project when its auto supply is on (no runs in TacoBell's logs since Nov 9)",
+      "consumer": "none: the worker reports only 'Template run/r42.js finished.' and drops the score",
+      "useful": "wasted: stale variant and the result never comes back",
+      "recommend": "retire (replaced by bb-experiment)"
+    },
+    {
+      "template": "bb-chunk-fables",
+      "what": "Old granFast chunking variant on fables via r42",
+      "chosenBy": "owner only",
+      "consumer": "none (score dropped, as bb-order3)",
+      "useful": "wasted",
+      "recommend": "retire"
+    },
+    {
+      "template": "bb-chunk-order3",
+      "what": "Old granFast chunking variant on order3 via r42",
+      "chosenBy": "owner only",
+      "consumer": "none (score dropped)",
+      "useful": "wasted",
+      "recommend": "retire"
+    },
+    {
+      "template": "bb-arena-pilot",
+      "what": "Paired arena mutation pilot, seeds 1-32 (mutation, targeted, memory studies)",
+      "chosenBy": "owner-seeded seeds 1-32",
+      "consumer": "owner arena-pilot report",
+      "useful": "study pilot; seeds are limited to 1-32 and none ran in TacoBell's logs since Nov 9",
+      "recommend": "leave (owner-seeded only); Bug learning work now runs on Travis's computer with Gemini"
+    },
+    {
+      "template": "bb-experiment",
+      "what": "Server-defined experiment run (private/experiments/*.json): one growth of one arm on one task and seed, metric sent back and aggregated",
+      "chosenBy": "server planner (extremes first, then bisect, then fresh-seed confirmation)",
+      "consumer": "experimentsReport (/experiments.json), BrainBot",
+      "useful": "yes: multi-seed evaluation of candidates against the R144 champion",
+      "recommend": "enable once worker protocol 1 is on the stable channel"
+    }
+  ]
+}

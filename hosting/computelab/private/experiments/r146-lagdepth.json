@@ -1,0 +1,82 @@
+{
+  "id": "r146-lagdepth",
+  "title": "How far back should the copy look-back reach? (R144 lagDepth 32; search 8..128)",
+  "status": "active",
+  "goal": "memory",
+  "priority": 3,
+  "why": "Longer context and memory is the main direction. R144 added a 32-step look-back (P.lagDepth=32). Extremes first (8 and 128), then bisect toward the better side, on 2 tuning seeds; the best point is confirmed against R144 on 16 fresh seeds.",
+  "runner": "run/exp.js",
+  "protocol": 1,
+  "plan": "deepURSx3",
+  "base": "pl.lr@cortex=0.2,P.granN=32000,P.granKmin=3,P.granK=4,P.granW=60,P.granLrT=100000,P.granLrLate=0.05,P.fastEngine=1,P.granUtility=2,P.granExact=1,P.granCo=1,P.granKal=1,P.granOneShot=0.03,P.lagHomeo=1e-9,P.relGrowth=1,P.pathBudget=1,P.rgDiv=2,P.trophic=16,P.recvBudget=2,P.postCapRel=1.5,P.anSelf=1,P.granTrace=1,P.granChunk=1,P.granChunkGate=2,P.granScale=2,sc.sizeF=4,P.lagDepth=32,P.lagBlur=1,P.lagGate=1,P.lagSurp=2",
+  "search": {
+    "param": "P.lagDepth",
+    "lo": 8,
+    "hi": 128,
+    "scale": "log2",
+    "integer": true,
+    "maxPoints": 6,
+    "minGap": 0.5
+  },
+  "tasks": [
+    {
+      "id": "book100k",
+      "tj": {
+        "env": "seq",
+        "params": {
+          "source": "book",
+          "nSyms": 100000,
+          "evalSyms": 2000
+        }
+      },
+      "metric": "heldAcc",
+      "primary": true
+    },
+    {
+      "id": "fables4000",
+      "tj": {
+        "env": "seq",
+        "params": {
+          "source": "fables",
+          "nSyms": 4000,
+          "readIn": 0.01
+        }
+      },
+      "metric": "accuracy",
+      "guard": {
+        "maxDrop": 0.005
+      }
+    },
+    {
+      "id": "text1000",
+      "tj": {
+        "env": "seq",
+        "params": {
+          "source": "text",
+          "nSyms": 1000,
+          "readIn": 0.01
+        }
+      },
+      "metric": "accuracy",
+      "guard": {
+        "maxDrop": 0.005
+      }
+    }
+  ],
+  "seeds": {
+    "tune": 2,
+    "confirm": 16
+  },
+  "pass": {
+    "meanDelta": 0.002,
+    "minT": 2.0,
+    "minWinFrac": 0.625,
+    "perSeedFloor": -0.005
+  },
+  "requires": {
+    "memGB": 7,
+    "heapMB": 7000,
+    "minutes": 70
+  },
+  "queueCap": 6
+}

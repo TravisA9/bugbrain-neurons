@@ -29,6 +29,15 @@ return [
     'inverse_composition' => false,
     'inverse_sequence' => false,
     'sequence_experiment' => ['rounds' => 6, 'cpuBudgetMs' => 1000, 'cap' => 3000],
+    /* Server-defined experiments (private/experiments/*.json, see EXPERIMENTS.md). Off by default. When on, the
+     * planner queues runs of every spec with status active and hands them only to computers whose worker reports
+     * experiment protocol >= the spec's and enough memory; their results are aggregated at /experiments.json. */
+    'experiments_enabled' => false,
+    'experiment_seed_start' => 5001,        // first seed of the fresh-seed ledger (box runs used up to ~2980)
+    'experiment_mem_reserve_gb' => 4,       // memory left to the volunteer before counting experiment slots
+    /* Job types never supplied or handed out (config only; rows are kept). Recommended once experiments run:
+     * ['bb-order3', 'bb-chunk-fables', 'bb-chunk-order3', 'sf-propose', 'sf-train', 'sf-vision'] */
+    'retire_job_types' => [],
     'login_per_minute' => 8,
     'api_per_minute' => 120,
     'design_per_minute' => 60,

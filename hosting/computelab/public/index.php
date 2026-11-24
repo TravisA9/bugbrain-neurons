@@ -374,6 +374,15 @@ try {
         coord_html(pageHome($app, coord_who($app, 'home'), coord_home_computers($app)));
         return;
     }
+    if ($path === '/experiments.json' && $method === 'GET') {
+        /* Server-defined experiments: plan state and aggregated results (no computer names). 404 while off. */
+        if (!$app->experimentsEnabled()) {
+            coord_json(404, ['error' => 'Not found.']);
+            return;
+        }
+        coord_json(200, $app->experimentsReport());
+        return;
+    }
     if ($path === '/status.json' && $method === 'GET') {
         $live = $app->liveStatus();
         $mine = [];

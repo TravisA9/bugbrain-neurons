@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/compat.php';
+require_once __DIR__ . '/Experiments.php';
 
 /** Coordinator for shared hosting. SQLite in tests, MySQL/MariaDB on Hostinger. */
 final class App
@@ -383,6 +384,29 @@ final class App
             created_at VARCHAR(40) NOT NULL
         )');
         $this->seedWorkerTotalsFromFile();
+        /* Server-defined experiments (config experiments_enabled, off by default): one row per planned run,
+         * and the seed ledger that keeps every experiment's seeds fresh (never used by another experiment). */
+        $this->db->exec('CREATE TABLE IF NOT EXISTS exp_runs (
+            id ' . $auto . ',
+            experiment_id VARCHAR(64) NOT NULL,
+            arm VARCHAR(32) NOT NULL,
+            task VARCHAR(32) NOT NULL,
+            seed INTEGER NOT NULL,
+            phase VARCHAR(16) NOT NULL,
+            job_id VARCHAR(191) NOT NULL,
+            status VARCHAR(16) NOT NULL,
+            metric DOUBLE PRECISION,
+            body_json TEXT,
+            worker_id VARCHAR(191),
+            created_at VARCHAR(40) NOT NULL,
+            done_at VARCHAR(40)
+        )');
+        $this->ensureIndexes('exp_runs', ['idx_exp_runs_exp' => 'experiment_id', 'idx_exp_runs_job' => 'job_id']);
+        $this->db->exec('CREATE TABLE IF NOT EXISTS exp_seed_ledger (
+            seed INTEGER PRIMARY KEY,
+            experiment_id VARCHAR(64) NOT NULL,
+            created_at VARCHAR(40) NOT NULL
+        )');
         $this->ensureIndexes('jobs', ['idx_jobs_seed' => 'seed']);
         $this->ensureColumn('results', 'seconds', 'INTEGER');
         $this->ensureColumn('design_records', 'arm', "VARCHAR(16) NOT NULL DEFAULT 'designer'");
@@ -1058,6 +1082,14 @@ final class App
                 $clean['health'] = $hl;
             }
         }
+        /* Experiment capability: the worker's experiment protocol and its memory, so the server only hands a
+         * server-defined experiment to a computer that can run it (see Experiments.php). */
+        if (isset($report['experiments']) && is_numeric($report['experiments'])) {
+            $clean['experiments'] = max(0, min(99, (int) $report['experiments']));
+        }
+        if (isset($report['memGB']) && is_numeric($report['memGB'])) {
+            $clean['memGB'] = max(0.0, min(4096.0, round((float) $report['memGB'], 1)));
+        }
         $clean['at'] = $this->now();
         $this->db->prepare('UPDATE workers SET runtime_json = ? WHERE id = ?')->execute([json_encode($clean), $workerId]);
     }
@@ -1119,9 +1151,9 @@ final class App
             return 0;
         }
         if ($projectId === null) {
-            $st = $this->db->query("SELECT project_id, spec_json FROM jobs WHERE status = 'queued'");
+            $st = $this->db->query("SELECT project_id, template_id, spec_json FROM jobs WHERE status = 'queued'");
         } else {
-            $st = $this->db->prepare("SELECT project_id, spec_json FROM jobs WHERE status = 'queued' AND project_id = ?");
+            $st = $this->db->prepare("SELECT project_id, template_id, spec_json FROM jobs WHERE status = 'queued' AND project_id = ?");
             $st->execute([$projectId]);
         }
         $paused = [];
@@ -1135,6 +1167,9 @@ final class App
             }
             $spec = json_decode((string) $job['spec_json'], true);
             if ($this->legacySearchPaused((string) $job['project_id'], $spec)) {
+                continue;
+            }
+            if (isset($job['template_id']) && ($this->jobTypeRetired((string) $job['template_id']) || $job['template_id'] === 'bb-experiment')) {
                 continue;
             }
             $task = is_array($spec) ? (string) ($spec['taskId'] ?? '') : '';
@@ -1174,6 +1209,7 @@ final class App
         try {
             $ranked = [];
             $arenaJobs = [];
+            $expJobs = [];
             $codeHash = (string) ($worker['code_hash'] ?? '');
             $findSql = 'SELECT * FROM jobs WHERE project_id = ? AND status = ? AND (not_before IS NULL OR not_before <= ?)';
             if ($codeHash !== '') {
@@ -1191,6 +1227,15 @@ final class App
                     $spec = json_decode((string) $job['spec_json'], true);
                     if (!is_array($spec)) {
                         $spec = [];
+                    }
+                    if ($this->jobTypeRetired((string) $job['template_id'])) {
+                        continue;
+                    }
+                    if ($job['template_id'] === 'bb-experiment') {
+                        if ($this->experimentFits($worker, $spec)) {
+                            $expJobs[] = ['job' => $job, 'spec' => $spec, 'shared' => false];
+                        }
+                        continue;
                     }
                     if (($spec['mode'] ?? '') === 'sequence-experiment'
                         && (!$sequenceExperiment || $studyVersion < (int) ($spec['experiment']['studyVersion'] ?? 1))) {
@@ -1232,7 +1277,7 @@ final class App
                     }
                 }
             }
-            $ranked = array_merge($arenaJobs, $ranked);
+            $ranked = array_merge($expJobs, $arenaJobs, $ranked);
             $hasOther = false;
             foreach ($ranked as $item) {
                 if ((string) ($item['job']['last_worker'] ?? '') !== (string) $worker['id']) {
@@ -1474,7 +1519,10 @@ final class App
                     }
                 }
             }
-            if (strlen($raw) > ($row['template_id'] === 'sf-sequence-experiment' || $isInverse ? 60000 : $maxBytes)) {
+            if ($status === 'done' && $row['template_id'] === 'bb-experiment') {
+                $this->checkExperimentResult($row, $body['research'] ?? null);
+            }
+            if (strlen($raw) > ($row['template_id'] === 'sf-sequence-experiment' || $isInverse || $row['template_id'] === 'bb-experiment' ? 60000 : $maxBytes)) {
                 throw new InvalidArgumentException('Result is too large.');
             }
             if ($row['project_id'] === 'spikefoundry' && empty($body['synthetic'])) {
@@ -1540,6 +1588,11 @@ final class App
                 $resultId = (int) $this->db->lastInsertId();
                 $this->db->prepare('REPLACE INTO sequence_study_results (job_id, seed, result_id) VALUES (?, ?, ?)')
                     ->execute([$jobId, (int) $row['seed'], $resultId]);
+            }
+            if ($status === 'done' && $row['template_id'] === 'bb-experiment') {
+                $research = $body['research'];
+                $this->db->prepare("UPDATE exp_runs SET status = 'done', metric = ?, body_json = ?, worker_id = ?, done_at = ? WHERE job_id = ?")
+                    ->execute([(float) $research['metrics'][$research['metric']], json_encode($research), $worker['id'], $this->now(), $jobId]);
             }
             if ($status === 'done') {
                 $this->db->prepare('UPDATE jobs SET status = ?, not_before = NULL WHERE id = ? AND status = ?')->execute(['done', $jobId, 'leased']);
@@ -4625,6 +4678,9 @@ final class App
             return 0;
         }
         $this->db->prepare('REPLACE INTO supply_state (id, ran_at, note) VALUES (?, ?, ?)')->execute(['global', $this->now(), 'running']);
+        if ($this->experimentsEnabled()) {
+            $this->replenishExperiments();
+        }
         if ($this->inverseGalleryEnabled()) {
             $this->trimInverseDiscoveries();
         }
@@ -4655,7 +4711,7 @@ final class App
         $topMemo = [];
         $projects = $this->activeProjects();
         foreach ($projects as $project) {
-            $inverse = $project['id'] === 'spikefoundry' && $this->inverseGalleryEnabled();
+            $inverse = $project['id'] === 'spikefoundry' && $this->inverseGalleryEnabled() && !$this->jobTypeRetired('sf-inverse-experiment');
             if (!$inverse && $this->legacySearchPaused((string) $project['id'], ['mode' => 'propose'])) {
                 continue;
             }
@@ -4663,7 +4719,7 @@ final class App
                 continue;
             }
             $template = $inverse ? 'sf-inverse-experiment' : $this->supplyTemplate((string) $project['id']);
-            if ($template === '') {
+            if ($template === '' || $this->jobTypeRetired($template)) {
                 continue;
             }
             $low = (int) $project['low_water'] > 0 ? (int) $project['low_water'] : max(1, $online);
@@ -4737,6 +4793,218 @@ final class App
             }
         }
         return $queuedAll;
+    }
+
+    /* ---- Server-defined experiments (Experiments.php; config experiments_enabled, off by default) ---- */
+
+    public function experimentsEnabled(): bool
+    {
+        return !empty($this->config['experiments_enabled']);
+    }
+
+    /** Job types the owner retired in config (retire_job_types): never supplied, never handed out. Default: none. */
+    public function jobTypeRetired(string $templateId): bool
+    {
+        $list = $this->config['retire_job_types'] ?? [];
+        return is_array($list) && in_array($templateId, $list, true);
+    }
+
+    public function experimentsDir(): string
+    {
+        return (string) ($this->config['experiments_dir'] ?? dirname(__DIR__) . '/experiments');
+    }
+
+    /** Can this computer run this experiment job now? Needs the worker's experiment protocol and enough memory. */
+    private function experimentFits(array $worker, array $spec): bool
+    {
+        if (!$this->experimentsEnabled()) {
+            return false;
+        }
+        $exp = $spec['experiment'] ?? null;
+        if (!is_array($exp)) {
+            return false;
+        }
+        $rt = json_decode((string) ($worker['runtime_json'] ?? ''), true);
+        $rt = is_array($rt) ? $rt : [];
+        if ((int) ($rt['experiments'] ?? 0) < (int) ($exp['protocol'] ?? 1)) {
+            return false;
+        }
+        $need = (float) ($exp['memGB'] ?? 0);
+        if ($need <= 0) {
+            return true;
+        }
+        $mem = (float) ($rt['memGB'] ?? 0);
+        $reserve = (float) ($this->config['experiment_mem_reserve_gb'] ?? 4);
+        $fit = (int) floor(($mem - $reserve) / $need);
+        if ($fit < 1) {
+            return false;
+        }
+        $st = $this->db->prepare("SELECT COUNT(*) FROM leases l JOIN jobs j ON j.id = l.job_id WHERE l.worker_id = ? AND j.template_id = 'bb-experiment'");
+        $st->execute([(string) $worker['id']]);
+        return (int) $st->fetchColumn() < $fit;
+    }
+
+    private function ensureExperimentTemplate(): void
+    {
+        $have = $this->db->query("SELECT id FROM templates WHERE id = 'bb-experiment'")->fetch();
+        if (!$have) {
+            $this->db->prepare('INSERT INTO templates (id, project_id, title, runner, spec_json, code_hash) VALUES (?, ?, ?, ?, ?, ?)')
+                ->execute(['bb-experiment', 'bugbrain', 'Server-defined experiment run', 'run/exp.js', '{}', $this->protocolHash()]);
+        }
+    }
+
+    /** The experiment's seed block (tune seeds, then confirmation seeds), allocated once from the ledger. */
+    public function experimentSeeds(array $spec): array
+    {
+        $id = (string) $spec['id'];
+        $want = (int) $spec['seeds']['tune'] + (int) $spec['seeds']['confirm'];
+        $st = $this->db->prepare('SELECT seed FROM exp_seed_ledger WHERE experiment_id = ? ORDER BY seed ASC');
+        $st->execute([$id]);
+        $seeds = array_map('intval', array_column($st->fetchAll(), 'seed'));
+        if (count($seeds) >= $want) {
+            return array_slice($seeds, 0, $want);
+        }
+        $start = max(1, (int) ($this->config['experiment_seed_start'] ?? 5001));
+        $max = (int) $this->db->query('SELECT MAX(seed) FROM exp_seed_ledger')->fetchColumn();
+        $next = max($start, $max + 1);
+        $ins = $this->db->prepare('INSERT INTO exp_seed_ledger (seed, experiment_id, created_at) VALUES (?, ?, ?)');
+        while (count($seeds) < $want) {
+            $ins->execute([$next, $id, $this->now()]);
+            $seeds[] = $next++;
+        }
+        return $seeds;
+    }
+
+    /** Runs of one experiment with their live state (queued/leased jobs count as running; failed jobs as failed). */
+    public function experimentRuns(string $id): array
+    {
+        $st = $this->db->prepare('SELECT r.arm, r.task, r.seed, r.status, r.metric, j.status AS job_status FROM exp_runs r
+            LEFT JOIN jobs j ON j.id = r.job_id WHERE r.experiment_id = ? ORDER BY r.id ASC');
+        $st->execute([$id]);
+        $out = [];
+        foreach ($st->fetchAll() as $row) {
+            $status = (string) $row['status'];
+            if ($status !== 'done') {
+                $js = (string) ($row['job_status'] ?? '');
+                $status = $js === 'failed' || $js === '' ? 'failed' : 'running';
+            }
+            $out[] = ['arm' => (string) $row['arm'], 'task' => (string) $row['task'], 'seed' => (int) $row['seed'],
+                'status' => $status, 'metric' => $row['metric'] === null ? null : (float) $row['metric']];
+        }
+        return $out;
+    }
+
+    /** Active experiment specs (status active), highest priority first. */
+    public function activeExperiments(): array
+    {
+        $loaded = Experiments::load($this->experimentsDir());
+        $on = array_filter($loaded['specs'], static fn ($s) => $s['status'] === 'active');
+        uasort($on, static fn ($a, $b) => ((int) ($b['priority'] ?? 3)) <=> ((int) ($a['priority'] ?? 3)) ?: strcmp($a['id'], $b['id']));
+        return $on;
+    }
+
+    /** Plan every active experiment and queue the runs it needs, up to its queue cap. Returns jobs created. */
+    public function replenishExperiments(): int
+    {
+        $this->ensureExperimentTemplate();
+        $made = 0;
+        foreach ($this->activeExperiments() as $spec) {
+            $plan = Experiments::plan($spec, $this->experimentSeeds($spec), $this->experimentRuns((string) $spec['id']));
+            $st = $this->db->prepare("SELECT COUNT(*) FROM exp_runs r JOIN jobs j ON j.id = r.job_id
+                WHERE r.experiment_id = ? AND j.status IN ('queued', 'leased')");
+            $st->execute([(string) $spec['id']]);
+            $open = (int) $st->fetchColumn();
+            $cap = max(1, min(64, (int) ($spec['queueCap'] ?? 8)));
+            foreach ($plan['need'] as $run) {
+                if ($open >= $cap) {
+                    break;
+                }
+                $this->createExperimentJob($spec, $run);
+                $open++;
+                $made++;
+            }
+        }
+        return $made;
+    }
+
+    private function createExperimentJob(array $spec, array $run): string
+    {
+        $task = null;
+        foreach ($spec['tasks'] as $t) {
+            if ($t['id'] === $run['task']) {
+                $task = $t;
+            }
+        }
+        $req = $spec['requires'] ?? [];
+        $jobSpec = [
+            'seed' => (int) $run['seed'],
+            'experiment' => [
+                'version' => Experiments::RESULT_VERSION,
+                'protocol' => (int) $spec['protocol'],
+                'id' => (string) $spec['id'],
+                'arm' => (string) $run['arm'],
+                'task' => (string) $run['task'],
+                'phase' => (string) $run['phase'],
+                'plan' => (string) $spec['plan'],
+                'tj' => $task['tj'],
+                'variant' => (string) $run['variant'],
+                'k' => (int) $run['seed'],
+                'metric' => (string) $task['metric'],
+                'heapMB' => (int) ($req['heapMB'] ?? 0),
+                'memGB' => (float) ($req['memGB'] ?? 0),
+                'strictFlags' => true,
+            ],
+        ];
+        $id = 'exp-' . substr((string) $spec['id'], 0, 40) . '-' . bin2hex(random_bytes(5));
+        $title = substr('Experiment ' . $spec['id'] . ': ' . $run['arm'] . ' ' . $run['task'] . ' k' . $run['seed'], 0, 120);
+        $priority = max(0, min(5, (int) ($spec['priority'] ?? 3)));
+        $this->db->prepare('INSERT INTO jobs (id, project_id, template_id, title, spec_json, code_hash, priority, status, created_at, seed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            ->execute([$id, 'bugbrain', 'bb-experiment', $title, json_encode($jobSpec), $this->protocolHash(), $priority, 'queued', $this->now(), (int) $run['seed']]);
+        $this->db->prepare('INSERT INTO exp_runs (experiment_id, arm, task, seed, phase, job_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+            ->execute([(string) $spec['id'], (string) $run['arm'], (string) $run['task'], (int) $run['seed'], (string) $run['phase'], $id, 'planned', $this->now()]);
+        return $id;
+    }
+
+    /** A done experiment result must be the run the job asked for, with a finite value for the job's metric. */
+    private function checkExperimentResult(array $row, $research): void
+    {
+        $spec = json_decode((string) $row['spec_json'], true);
+        $exp = is_array($spec) ? ($spec['experiment'] ?? []) : [];
+        if (!is_array($research) || ($research['version'] ?? '') !== Experiments::RESULT_VERSION
+            || ($research['id'] ?? null) !== ($exp['id'] ?? '') || ($research['arm'] ?? null) !== ($exp['arm'] ?? '')
+            || ($research['task'] ?? null) !== ($exp['task'] ?? '') || ($research['k'] ?? null) !== ($exp['k'] ?? -1)
+            || ($research['variant'] ?? null) !== ($exp['variant'] ?? '') || ($research['metric'] ?? null) !== ($exp['metric'] ?? '')
+            || !is_array($research['metrics'] ?? null)) {
+            throw new InvalidArgumentException('Experiment report does not match the job.');
+        }
+        $v = $research['metrics'][$exp['metric']] ?? null;
+        if (!(is_int($v) || is_float($v)) || !is_finite((float) $v)) {
+            throw new InvalidArgumentException('Experiment report is missing its metric.');
+        }
+    }
+
+    /** Aggregated state of every experiment spec (active or not), for the owner, BrainBot and the public page. */
+    public function experimentsReport(): array
+    {
+        $loaded = Experiments::load($this->experimentsDir());
+        $out = [];
+        foreach ($loaded['specs'] as $id => $spec) {
+            $runs = $this->experimentRuns($id);
+            if ($spec['status'] !== 'active' && $runs === []) {
+                $out[] = ['id' => $id, 'title' => (string) ($spec['title'] ?? $id), 'status' => $spec['status'], 'phase' => 'not started'];
+                continue;
+            }
+            $plan = Experiments::plan($spec, $this->experimentSeeds($spec), $runs);
+            $counts = ['done' => 0, 'running' => 0, 'failed' => 0];
+            foreach ($runs as $r) {
+                $counts[$r['status']] = ($counts[$r['status']] ?? 0) + 1;
+            }
+            $out[] = ['status' => $spec['status'], 'runs' => $counts, 'queuedNext' => count($plan['need'])] + $plan['report'];
+        }
+        $catalog = is_file($this->experimentsDir() . '/CATALOG.json') ? json_decode((string) file_get_contents($this->experimentsDir() . '/CATALOG.json'), true) : null;
+        return ['enabled' => $this->experimentsEnabled(), 'protocol' => Experiments::PROTOCOL, 'experiments' => $out,
+            'specErrors' => $loaded['errors'], 'retired' => array_values((array) ($this->config['retire_job_types'] ?? [])),
+            'catalog' => is_array($catalog) ? $catalog : null, 'at' => $this->now()];
     }
 
     private function legacySearchPaused(string $projectId, $spec): bool

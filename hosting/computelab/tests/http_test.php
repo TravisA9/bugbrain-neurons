@@ -170,6 +170,8 @@ $beatWith($rtFull);
 $status = http($base . '/status.json', 'GET', null, ['Cookie: lab_participant=' . $cookie]);
 $sj = json_decode($status['body'], true);
 $anon = json_decode(http($base . '/status.json')['body'], true);
+$expOff = http($base . '/experiments.json');
+check($expOff['status'] === 404, 'experiments.json is not served while experiments_enabled is off');
 check($status['status'] === 200 && isset($sj['online'], $sj['running'], $sj['queued'], $sj['done'], $sj['tasks']) && ($sj['mine'][0]['mode'] ?? '') === 'full' && isset($sj['mine'][0]['health']) && ($anon['mine'] ?? null) === [], 'status.json feeds the Right now box and only lists your own computers');
 $css = http($base . '/assets/computelab.css');
 check($css['status'] === 200 && str_contains($css['header'], 'text/css') && str_contains($css['body'], '--mint:#69e2b1') && str_contains($css['body'], '.tri') && str_contains($me['body'], '/computelab/assets/computelab.css?v='), 'every page loads the shared SpikeFoundry stylesheet');
