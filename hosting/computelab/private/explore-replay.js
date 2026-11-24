@@ -112,7 +112,7 @@
     var tk = el('p', 'rp-take'); s.appendChild(tk);
     var lo = Math.min.apply(null, d.perSeed), hi = Math.max.apply(null, d.perSeed);
     tk.textContent = d.seeds + ' brains · ' + pct(d.withLookBack) + ' right (each ' + pct(lo) + '–' + pct(hi) + ') · without the look-back ' + pct(d.without) + ' · guessing ' + pct(d.chance) +
-      ' · design ' + d.design + ' (still being tested)';
+      ' · design ' + d.design + (d.status === 'testing' ? ' (still being tested)' : '');
     return { strip: strip, cv: cv };
   }
   var COPYSEQ = (function () {   // an example stream for the illustration: symbol, 4-23 fillers, cue (not recorded answers)

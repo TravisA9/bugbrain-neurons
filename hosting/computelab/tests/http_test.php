@@ -618,10 +618,11 @@ check($designResp['status'] === 200 && ($designJson['schema'] ?? 0) === 2 && ($d
     && isset($designJson['text']['liveVariant']) && isset($designTag[1]) && str_contains($designResp['header'], 'Cache-Control: public, max-age=60')
     && http($base . '/explore/design.json', 'GET', null, ['If-None-Match: ' . $designTag[1]])['status'] === 304,
     'design.json serves the schema 2 manifest with the arena champion, a short max-age, and answers a matching ETag with 304');
+$shipV = (string) (json_decode((string) file_get_contents(dirname(__DIR__) . '/private/explore/design.json'), true)['version'] ?? '');   // the shipped top design
 $replayResp = http($base . '/explore/replay/read.json');
 preg_match('/ETag: ("[^"]+")/i', $replayResp['header'], $replayTag);
 check($replayResp['status'] === 200 && str_contains($replayResp['header'], 'Cache-Control: public') && isset($replayTag[1])
-    && str_contains($replayTag[1], 'R135-read-') && strlen((string) (json_decode($replayResp['body'], true)['hits'] ?? '')) > 1000
+    && $shipV !== '' && str_contains($replayTag[1], $shipV . '-read-') && strlen((string) (json_decode($replayResp['body'], true)['hits'] ?? '')) > 1000
     && http($base . '/explore/replay/read.json', 'GET', null, ['If-None-Match: ' . $replayTag[1]])['status'] === 304,
     'a replay is served with a cache header and a manifest-version ETag');
 $cond = static function (string $url, string $inm) use ($base): int { return http($base . $url, 'GET', null, ['If-None-Match: ' . $inm])['status']; };
@@ -629,7 +630,7 @@ check(isset($designTag[1], $replayTag[1])
     && $cond('/explore/design.json', 'W/' . $designTag[1]) === 304 && $cond('/explore/replay/read.json', 'W/' . $replayTag[1]) === 304
     && $cond('/explore/design.json', '"nope", W/' . $designTag[1]) === 304 && $cond('/explore/replay/read.json', '"nope" , ' . $replayTag[1]) === 304
     && $cond('/explore/design.json', '*') === 304
-    && $cond('/explore/design.json', '"nope", W/"also-nope"') === 200 && $cond('/explore/replay/read.json', 'W/"R135-read-0000000000000000"') === 200,
+    && $cond('/explore/design.json', '"nope", W/"also-nope"') === 200 && $cond('/explore/replay/read.json', 'W/"' . $shipV . '-read-0000000000000000"') === 200,
     'design.json and replays answer 304 to a weak tag or a list containing the tag, and 200 to a mismatch');
 $badReplay = true;
 foreach (['/explore/replay/evil.json', '/explore/replay/design.json', '/explore/replay/..%2Fdesign.json', '/explore/replay/READ.json', '/explore/replay/read.php'] as $u) {

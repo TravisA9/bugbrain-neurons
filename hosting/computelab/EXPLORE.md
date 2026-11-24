@@ -64,7 +64,7 @@ The list lives in one place: `exploreDemos()` in `private/src/pages.php`.
 
 1. A design passes the promotion gate.
 2. From the research checkout, run `tools/export_explore.js` with that design's version, commit, variant and finished
-   outputs (see `tools/export_explore_r135.sh` for the exact R135 export). It runs no brains.
+   outputs (see `tools/export_explore_r144.sh` for the current R144 export, `tools/export_explore_r135.sh` for the earlier R135 one). It runs no brains.
 3. If the engine changed, rebuild the bundle from the research commit and bump `?v=`.
 4. Commit `private/explore/` (and the bundle), run `tests/api_test.php` and `tests/http_test.php`, and hand the
    folder to the ComputeLab deploy. Only `private/explore/*` (and `private/bugbrain.js`) need uploading.

@@ -1320,12 +1320,20 @@ $shipped = dirname(__DIR__) . '/private/explore';
 foreach (glob($shipped . '/*.json') as $f) {
     copy($f, $exDir . '/' . basename($f));
 }
+$shipMan = json_decode((string) file_get_contents($shipped . '/design.json'), true);
+$shipV = (string) ($shipMan['version'] ?? '');
+$shipRead = (string) ($shipMan['replays']['read']['file'] ?? '');
 $exGood = $exApp->topDesign();
 $exReplay = $exApp->exploreReplay('read');
-check(($exGood['schema'] ?? 0) === 2 && $exGood['version'] === 'R135' && ($exGood['champion']['id'] ?? '') === 'v3h'
+check(($exGood['schema'] ?? 0) === 2 && $shipV !== '' && $exGood['version'] === $shipV && ($exGood['champion']['id'] ?? '') === 'v3h'
     && isset($exGood['replays']['read'], $exGood['replays']['name'], $exGood['replays']['copy'])
-    && $exReplay !== null && is_file($exReplay['path']) && strpos($exReplay['etag'], 'R135-read-') === 1,
+    && $exReplay !== null && is_file($exReplay['path']) && strpos($exReplay['etag'], $shipV . '-read-') === 1,
     'the shipped manifest validates, keeps the arena champion and names each replay with a version etag');
+check(array_reduce(array_keys((array) ($shipMan['replays'] ?? [])), static function ($ok, $id) use ($shipMan, $shipV) {
+        $r = $shipMan['replays'][$id];
+        return $ok && ($r['design'] ?? '') === $shipV && ($r['status'] ?? '') === 'top' && is_file(dirname(__DIR__) . '/private/explore/' . $r['file']);
+    }, count((array) ($shipMan['replays'] ?? [])) >= 3),
+    'every shipped replay (read, name, copy) belongs to the top design and is marked top, not "being tested"');
 $readData = json_decode((string) file_get_contents($exReplay['path']), true);
 check(is_array($readData) && strlen($readData['text']) === strlen($readData['hits']) && strlen($readData['hits']) > 1000
     && preg_match('/^[01]+$/', $readData['hits']) === 1,
@@ -1337,9 +1345,9 @@ $badCases = [
     'not json' => '{"schema":2,',
     'schema 3' => str_replace('"schema": 2', '"schema": 3', $goodManifest),
     'schema as string' => str_replace('"schema": 2', '"schema": "2"', $goodManifest),
-    'bad version' => str_replace('"version": "R135"', '"version": "R135<script>"', $goodManifest),
+    'bad version' => str_replace('"version": "' . $shipV . '"', '"version": "' . $shipV . '<script>"', $goodManifest),
     'unknown replay id' => str_replace('"read": {', '"evil": {', $goodManifest),
-    'path in file name' => str_replace('"file": "read-r135.json"', '"file": "../config.php"', $goodManifest),
+    'path in file name' => str_replace('"file": "' . $shipRead . '"', '"file": "../config.php"', $goodManifest),
     'bad hash' => preg_replace('/"sha256": "[0-9a-f]{64}"/', '"sha256": "zz"', $goodManifest, 1),
     'bad variant' => str_replace('"plan": "deepURSx3"', '"plan": "deep URS"', $goodManifest),
     'too large' => $goodManifest . str_repeat(' ', App::EXPLORE_MANIFEST_BYTES),
@@ -1355,7 +1363,7 @@ foreach ($badCases as $what => $text) {
 }
 check($allFallBack, 'a broken, oversized or tampered manifest falls back to the arena champion instead of failing');
 file_put_contents($exDir . '/design.json', $goodManifest);
-file_put_contents($exDir . '/read-r135.json', '{"changed":true}');
+file_put_contents($exDir . '/' . $shipRead, '{"changed":true}');
 check($exApp->exploreReplay('read') === null && $exApp->exploreReplay('name') !== null,
     'a replay whose bytes no longer match the manifest hash is not served');
 $tag = '"R135-read-0123456789abcdef"';
