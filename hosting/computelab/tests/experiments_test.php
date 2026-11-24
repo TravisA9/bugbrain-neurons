@@ -345,6 +345,28 @@ $rep = $st->experimentsReport();
 check(($rep['inverse']['stalled'] ?? null) === true && str_contains((string) ($rep['inverse']['note'] ?? ''), 'compute moved') && isset($rep['inverse']['champion']['auditPassed']),
     'the report shows the designer champion (promotion and audit scores) and the stall note');
 
+/* ---- R146 ships switched off; config experiments_enable turns it on ---- */
+$shipDir = dirname(__DIR__) . '/private/experiments';
+[$r0, $r0Db] = lab(['experiments_enabled' => true, 'experiments_dir' => $shipDir]);
+check($shipped['specs']['r146-lagdepth']['enabled'] === false && $r0->activeExperiments() === [] && $r0->replenishExperiments() === 0
+    && (int) $r0Db->query('SELECT COUNT(*) FROM exp_runs')->fetchColumn() === 0, 'R146 ships enabled:false: experiments_enabled alone queues nothing');
+[$r1, $r1Db] = lab(['experiments_enabled' => true, 'experiments_dir' => $shipDir, 'experiments_enable' => ['r146-lagdepth']]);
+$r1->replenishExperiments();
+$arms146 = array_column($r1Db->query("SELECT DISTINCT arm FROM exp_runs WHERE experiment_id = 'r146-lagdepth' ORDER BY arm")->fetchAll(), 'arm');
+$sp146 = json_decode((string) $r1Db->query("SELECT spec_json FROM jobs WHERE template_id = 'bb-experiment' AND id LIKE 'exp-r146-lagdepth-%' LIMIT 1")->fetchColumn(), true);
+check(array_keys($r1->activeExperiments()) === ['r146-lagdepth'] && $arms146 === ['control', 'p128', 'p8']
+    && (int) $r1Db->query("SELECT COUNT(*) FROM exp_runs WHERE experiment_id = 'r146-lagdepth'")->fetchColumn() === 6
+    && $sp146['experiment']['memGB'] === 7 && $sp146['experiment']['heapMB'] === 7000 && $sp146['experiment']['task'] === 'book100k',
+    'listed in experiments_enable: R146 queues control (32) and the extremes 8 and 128 on 2 tune seeds, book100k, 7 GB / 7000 MB');
+$smallT = $r1->enroll('small-pc', ['bugbrain'], 2, true)['token'];
+$r1->heartbeat($r1->workerByToken($smallT), ['runtime' => ['cores' => 8, 'slots' => 2, 'experiments' => 1, 'memGB' => 10]]);
+$bigT = $r1->enroll('big-pc', ['bugbrain'], 2, true)['token'];
+$r1->heartbeat($r1->workerByToken($bigT), ['runtime' => ['cores' => 8, 'slots' => 2, 'experiments' => 1, 'memGB' => 15.7]]);
+$gotSmall = $r1->claim($r1->workerByToken($smallT), 0);
+$gotBig = $r1->claim($r1->workerByToken($bigT), 0);
+check($gotSmall === null && str_starts_with((string) ($gotBig['id'] ?? ''), 'exp-r146-lagdepth-'),
+    'with the default 4 GB reserve a 10 GB computer never gets R146 (needs 7 GB free); a 15.7 GB one (TacoBell) does');
+
 /* ---- Discoveries dedupe (public gallery only) ---- */
 foreach ([false, true] as $dd) {
     [$dg, $dgDb] = lab(['inverse_gallery' => true, 'discoveries_dedupe' => $dd, 'discoveries_top_n' => 8]);

@@ -84,6 +84,8 @@ Not done here (needs worker code): auto-growing composition size/parts, and enla
 
 1. Deploy the coordinator (this branch, after Phase 1 `8e885e1d`). Leave `experiments_enabled` false. Run `upgrade.php` (new tables).
 2. Ship the worker branch to canary; check one canary computer reports `experiments: 1` and `memGB` in its runtime.
-3. Set `experiments_enabled => true`. The active spec queues its first runs; only protocol-1 computers with room take them.
+3. Set `experiments_enabled => true`. Nothing runs yet: R146 ships `"enabled": false`. Switch it on with
+   `'experiments_enable' => ['r146-lagdepth']` (pre-registration: `private/experiments/PREREG-r146-lagdepth.md`). Only
+   protocol-1 computers with room take runs (memGB minus `experiment_mem_reserve_gb`, default 4, must be >= 7).
 4. Optionally retire wasteful types: `retire_job_types => ['bb-order3', 'bb-chunk-fables', 'bb-chunk-order3', 'sf-propose', 'sf-train', 'sf-vision']`.
 5. Promote canary to stable.

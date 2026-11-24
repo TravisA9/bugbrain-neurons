@@ -5093,10 +5093,17 @@ final class App
     }
 
     /** Active experiment specs (status active), highest priority first. */
+    /** A spec with "enabled": false waits until its id is listed in config experiments_enable (no file edit needed). */
+    public function experimentSwitchedOn(array $spec): bool
+    {
+        return ($spec['enabled'] ?? true) !== false
+            || in_array((string) $spec['id'], array_map('strval', (array) ($this->config['experiments_enable'] ?? [])), true);
+    }
+
     public function activeExperiments(): array
     {
         $loaded = Experiments::load($this->experimentsDir());
-        $on = array_filter($loaded['specs'], static fn ($s) => $s['status'] === 'active');
+        $on = array_filter($loaded['specs'], fn ($s) => $s['status'] === 'active' && $this->experimentSwitchedOn($s));
         uasort($on, static fn ($a, $b) => ((int) ($b['priority'] ?? 3)) <=> ((int) ($a['priority'] ?? 3)) ?: strcmp($a['id'], $b['id']));
         return $on;
     }
@@ -5216,6 +5223,7 @@ final class App
         }
         return ['enabled' => $this->experimentsEnabled(), 'protocol' => Experiments::PROTOCOL, 'experiments' => $out, 'inverse' => $inverse,
             'specErrors' => $loaded['errors'], 'retired' => array_values((array) ($this->config['retire_job_types'] ?? [])),
+            'switchedOn' => array_values(array_map('strval', (array) ($this->config['experiments_enable'] ?? []))),
             'catalog' => is_array($catalog) ? $catalog : null, 'at' => $this->now()];
     }
 

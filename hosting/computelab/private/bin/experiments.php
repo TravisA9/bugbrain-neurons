@@ -11,7 +11,7 @@ if ($cmd === 'validate') {
     $dir = $argv[2] ?? ($private . '/experiments');
     $loaded = Experiments::load($dir);
     foreach ($loaded['specs'] as $id => $spec) {
-        echo 'ok   ' . $id . ' (' . $spec['status'] . ")\n";
+        echo 'ok   ' . $id . ' (' . $spec['status'] . (($spec['enabled'] ?? true) === false ? ", enabled:false - runs once listed in config experiments_enable" : '') . ")\n";
     }
     foreach ($loaded['errors'] as $id => $errs) {
         fwrite(STDERR, 'FAIL ' . $id . ': ' . implode('; ', $errs) . "\n");

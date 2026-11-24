@@ -2,6 +2,7 @@
   "id": "r146-lagdepth",
   "title": "How far back should the copy look-back reach? (R144 lagDepth 32; search 8..128)",
   "status": "active",
+  "enabled": false,
   "goal": "memory",
   "priority": 3,
   "why": "Longer context and memory is the main direction. R144 added a 32-step look-back (P.lagDepth=32). Extremes first (8 and 128), then bisect toward the better side, on 2 tuning seeds; the best point is confirmed against R144 on 16 fresh seeds.",
@@ -78,5 +79,6 @@
     "heapMB": 7000,
     "minutes": 70
   },
-  "queueCap": 6
+  "queueCap": 6,
+  "prereg": "private/experiments/PREREG-r146-lagdepth.md"
 }

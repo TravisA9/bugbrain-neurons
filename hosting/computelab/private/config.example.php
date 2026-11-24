@@ -33,6 +33,7 @@ return [
      * planner queues runs of every spec with status active and hands them only to computers whose worker reports
      * experiment protocol >= the spec's and enough memory; their results are aggregated at /experiments.json. */
     'experiments_enabled' => false,
+    'experiments_enable' => [],                // ids of specs shipped with "enabled": false to switch on, e.g. ['r146-lagdepth']
     'experiment_seed_start' => 5001,        // first seed of the fresh-seed ledger (box runs used up to ~2980)
     'experiment_mem_reserve_gb' => 4,       // memory left to the volunteer before counting experiment slots
     /* Job types never supplied or handed out (config only; rows are kept). Recommended once experiments run:

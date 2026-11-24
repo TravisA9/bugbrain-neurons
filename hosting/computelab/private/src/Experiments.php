@@ -63,6 +63,9 @@ final class Experiments
         if (!in_array($s['status'] ?? '', ['active', 'proposed', 'paused', 'retired'], true)) {
             $e[] = 'status: active, proposed, paused or retired';
         }
+        if (array_key_exists('enabled', $s) && !is_bool($s['enabled'])) {
+            $e[] = 'enabled: true or false (false = waits for config experiments_enable)';
+        }
         if (!in_array($s['runner'] ?? '', self::RUNNERS, true)) {
             $e[] = 'runner: one of ' . implode(', ', self::RUNNERS);
         }

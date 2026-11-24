@@ -84,5 +84,24 @@
       "useful": "yes: multi-seed evaluation of candidates against the R144 champion",
       "recommend": "enable once worker protocol 1 is on the stable channel"
     }
+  ],
+  "experiments": [
+    {
+      "id": "r146-lagdepth",
+      "spec": "r146-lagdepth.json",
+      "prereg": "PREREG-r146-lagdepth.md",
+      "status": "active",
+      "enabled": false,
+      "approved": "Travis, 2026-11-24 (relayed by DCB 13:18 CT)",
+      "switchOn": "config experiments_enable = ['r146-lagdepth'] (with experiments_enabled = true)",
+      "summary": "P.lagDepth 8..128 (log2) on the R144 champion; book100k heldAcc primary, fables4000 and text1000 accuracy guards (max drop 0.005); 2 tune seeds, 16 fresh confirm seeds; memGB>=7"
+    },
+    {
+      "id": "r146-size",
+      "spec": "r146-size.json",
+      "status": "proposed",
+      "enabled": true,
+      "summary": "sc.sizeF 1..8; needs 16 GB; not approved"
+    }
   ]
 }
