@@ -426,8 +426,9 @@ try {
         }
         return;
     }
-    if (($path === '/assets/explore-replay.js' || $path === '/assets/explore-live.js') && $method === 'GET') {
-        $asset = $private . ($path === '/assets/explore-replay.js' ? '/explore-replay.js' : '/explore-live.js');
+    $exploreAssets = ['/assets/explore-replay.js' => '/explore-replay.js', '/assets/explore-live.js' => '/explore-live.js', '/assets/explore-arena.js' => '/explore-arena.js'];
+    if (isset($exploreAssets[$path]) && $method === 'GET') {
+        $asset = $private . $exploreAssets[$path];
         if (!is_file($asset)) {
             http_response_code(404);
             return;

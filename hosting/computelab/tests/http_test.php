@@ -586,7 +586,7 @@ check(str_contains($sequencePoll ?? '', 'sf-inverse-experiment-2320') && ($seque
 
 /* Explore demos (kept late: these extra requests must not use up the earlier pages' rate-limit window). */
 $explore = http($base . '/explore');
-$demoIds = ['arena', 'read', 'name', 'copy', 'patterns'];
+$demoIds = ['arena', 'predator', 'read', 'name', 'copy', 'patterns'];
 $tabsOk = true;
 foreach ($demoIds as $demoId) {
     if (!str_contains($explore['body'], 'data-tab="' . $demoId . '"') || !str_contains($explore['body'], 'id="demo-' . $demoId . '"')
@@ -599,8 +599,8 @@ check($tabsOk, 'explore has a tab and a panel for every demo, and the header Exp
 check(str_contains($explore['body'], '<details class="cl-drop"><summary class="is-current" aria-current="page">Explore</summary>')
     && str_contains(http($base . '/discoveries')['body'], '<details class="cl-drop"><summary>Explore</summary>'),
     'Explore is one dropdown menu item on every page');
-check(str_contains($explore['body'], '/computelab/assets/bugbrain.js?v=8') && !str_contains($explore['body'], 'SOTA') && !str_contains($explore['body'], 'State-of-the-Art'),
-    'explore loads engine bundle v8 and makes no state-of-the-art claims');
+check(str_contains($explore['body'], '/computelab/assets/bugbrain.js?v=9') && !str_contains($explore['body'], 'SOTA') && !str_contains($explore['body'], 'State-of-the-Art'),
+    'explore loads engine bundle v9 and makes no state-of-the-art claims');
 $exploreCompare = http($base . '/explore?compare=1');
 check($exploreCompare['status'] === 200 && str_contains($exploreCompare['body'], 'id="bug-baseline"') && str_contains($exploreCompare['body'], 'data-compare="1"')
     && !str_contains($explore['body'], 'id="bug-baseline"'), 'explore?compare=1 still shows the two arenas side by side');
@@ -635,11 +635,20 @@ foreach (['/explore/replay/evil.json', '/explore/replay/design.json', '/explore/
 check($badReplay, 'unknown or crafted replay paths get 404');
 $replayJs = http($base . '/assets/explore-replay.js');
 $liveJs = http($base . '/assets/explore-live.js');
-$engineJs = http($base . '/assets/bugbrain.js?v=8');
+$engineJs = http($base . '/assets/bugbrain.js?v=9');
+$arenaJs = http($base . '/assets/explore-arena.js');
 check($replayJs['status'] === 200 && str_contains($replayJs['header'], 'application/javascript') && str_contains($replayJs['body'], 'ExploreDemos')
     && $liveJs['status'] === 200 && str_contains($liveJs['body'], 'importScripts')
     && $engineJs['status'] === 200 && str_contains($engineJs['body'], 'built by tools/build_bugbrain_bundle.js from commit') && strlen($engineJs['body']) <= 600 * 1024,
     'the demo scripts and the engine bundle (with its source commit, at most 600 KB) are served');
+check($arenaJs['status'] === 200 && str_contains($arenaJs['header'], 'application/javascript') && str_contains($arenaJs['body'], 'localStorage')
+    && str_contains($arenaJs['body'], "ExploreDemos[id] = makeArena") && !str_contains($engineJs['body'], 'makeArena('),
+    'the arena demos (long-running bug, predator) are a lazy script outside the engine bundle');
+check(str_contains($explore['body'], 'id="demo-predator"') && str_contains($explore['body'], 'data-task="hard"') && str_contains($explore['body'], 'data-task="flash"')
+    && str_contains($explore['body'], 'href="/computelab/explore#predator"') && str_contains($explore['body'], 'data-arena-js="/computelab/assets/explore-arena.js?v=')
+    && substr_count($explore['body'], 'data-needs="engine,arena"') === 2 && substr_count($explore['body'], '>Start fresh</button>') === 2
+    && !str_contains($explore['body'], '>New arena</button>'),
+    'explore has the predator arena tab and both arenas keep one bug with a Start fresh button');
 
 $arenaWorker = $app->enroll('arena-test', ['bugbrain'], 1, true);
 file_put_contents($researchToken, $arenaWorker['token']);

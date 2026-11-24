@@ -1,12 +1,13 @@
 # Explore tab
 
 `/computelab/explore` shows the lab's current best design in a few demos with few controls. The header's
-Explore item is a dropdown; each entry opens a tab: `/explore#arena`, `#read`, `#name`, `#copy`, `#patterns`.
+Explore item is a dropdown; each entry opens a tab: `/explore#arena`, `#predator`, `#read`, `#name`, `#copy`, `#patterns`.
 The list lives in one place: `exploreDemos()` in `private/src/pages.php`.
 
 | Tab | What it shows | How |
 |---|---|---|
-| `#arena` | BugBrain foraging arena (`?compare=1`: next to the original) | live in the browser: plan v3h + the audited champion edit from `/explore/bugbrain-champion.json` |
+| `#arena` | BugBrain foraging arena, flash task (`?compare=1`: next to the original). One bug keeps learning from round to round; an on-canvas panel shows its age and food / poison rates over its life (sparkline), poison share early vs lately, and time stuck on walls | live (`explore-arena.js` after the engine bundle): plan v3h + the audited champion edit from `/explore/bugbrain-champion.json` |
+| `#predator` | the same, in the core's `hard` task: drifting items and a predator that chases the bug (being caught costs 2). The panel adds "caught" per 1,000 steps, early vs lately | live (`explore-arena.js`) |
 | `#read` | next-letter guesses on held-out text, with a 5-letter pattern counter for comparison | replay of a recorded run |
 | `#name` | one-shot recall of an invented name | replay |
 | `#copy` | delayed copy across up to 30 steps (marked "Being tested" while its design is in the gate) | replay |
@@ -23,7 +24,22 @@ The list lives in one place: `exploreDemos()` in `private/src/pages.php`.
 - `private/bugbrain.js`: the engine bundle (js/core + js/envs from one commit, no book corpus) + `bugbrain-view.js`.
   Build: `node tools/build_bugbrain_bundle.js --ref <commit>`; the header names the commit and body sha256; cap 600 KB.
   `--check` verifies the committed file is reproducible. Bump `bugbrain.js?v=` in `pageBugArena()` when it changes.
-- `private/explore-replay.js`, `private/explore-live.js`: loaded only when their tab opens.
+- `private/explore-replay.js`, `private/explore-live.js`, `private/explore-arena.js`: loaded only when their tab opens.
+  `bugbrain-view.js` is now an empty stub, so the bundle is engine only (590 KB).
+
+## Long-running arenas (`explore-arena.js`)
+
+- When a round ends, only the arena is replaced (`agent.task = env.def.create(...)`); the `SpikingNet` and what it has learned carry over.
+- The learned state (every typed array and number the `SpikingNet` owns, about 70–90 KB of JSON) is saved to
+  `localStorage['computelab.bug.<arena|predator>.v1']` every 30 s, when the tab is hidden, and on `pagehide`. It is
+  restored only if the champion, task and engine URL match, and every array has the same type and length. Otherwise a new bug is grown.
+  "Start fresh" (click twice once the bug is older than 3,000 steps) clears it.
+- History: at most 96 bins of `[steps, food, poison, caught, wall-stuck]`. When it is full, neighbouring bins merge and
+  bins double in length, so memory stays flat however long the page stays open.
+- Hidden browser tab: no drawing; 15 steps per second on a 1 s timer (browsers throttle hidden timers anyway).
+  Another Explore tab open: the arena pauses.
+- Wall-stuck = touching a wall and moved less than 10 px over the last 30 steps (the same rule as `tools/bug_audit.js`).
+- Head-to-head audit of bugSOTA vs v3h: see `BUG_AUDIT.md` (pre-registered; run after R144).
 
 ## Updating to a new design
 

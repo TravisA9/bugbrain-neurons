@@ -468,8 +468,10 @@ function navLinks(string $base, array $nav): string
 function exploreDemos(): array
 {
     return [
-        ['id' => 'arena', 'title' => 'BugBrain arena', 'menu' => 'A grown bug brain looks for food', 'kind' => 'live', 'needs' => 'engine',
-            'blurb' => 'A small spiking brain, grown from its genes, steers a bug around a garden. Green apples are food and red ones are poison. They only flash into view now and then, so the bug has to remember where they were.'],
+        ['id' => 'arena', 'title' => 'BugBrain arena', 'menu' => 'A grown bug brain looks for food', 'kind' => 'live', 'needs' => 'engine,arena',
+            'blurb' => 'A small spiking brain, grown from its genes, steers a bug around a garden. Green apples are food and red ones are poison. They only flash into view now and then, so the bug has to remember where they were. The same bug keeps learning from round to round, and this browser remembers it, so you can come back and see how it has grown.'],
+        ['id' => 'predator', 'title' => 'Predator arena', 'menu' => 'Dodge a hunter while foraging', 'kind' => 'live', 'needs' => 'engine,arena',
+            'blurb' => 'The same kind of bug, but the apples drift and a red hunter chases it when it gets close. Being caught costs more than a poison apple. Leave it running and watch whether it gets caught less often.'],
         ['id' => 'read', 'title' => 'Watch it read', 'menu' => 'Next-letter guesses on a story', 'kind' => 'replay', 'needs' => 'replay',
             'blurb' => 'After reading about 98,000 letters of old books once, the brain reads a story it has never seen and guesses each next letter before it appears.'],
         ['id' => 'name', 'title' => 'Remember a name', 'menu' => 'Recall after seeing a word once', 'kind' => 'replay', 'needs' => 'replay',
@@ -921,19 +923,24 @@ function pageBugArena(string $base, array $nav, bool $compare = false, array $de
         $panels .= '<section class="ex-panel" id="demo-' . h($id) . '" data-demo="' . h($id) . '" data-needs="' . h($demo['needs']) . '"'
             . ($i === 0 ? '' : ' hidden') . ' aria-labelledby="demo-' . h($id) . '-title">'
             . '<div class="ex-panel-head"><div><h2 id="demo-' . h($id) . '-title">' . h($demo['title']) . ' ' . $badge . '</h2><p class="ex-blurb">' . h($demo['blurb']) . '</p></div>';
-        if ($id === 'arena') {
+        if ($demo['needs'] === 'engine,arena') {
+            /* The arena demos (#arena, #predator): one bug brain that keeps learning from round to round (explore-arena.js).
+             * The #arena ids are kept for older links and tests; the script finds everything through data-role. */
+            $p = $id === 'arena' ? 'bug' : 'pred';
+            $pair = $compare && $id === 'arena';
             $panels .= '<div class="head-actions">'
-                . '<button class="button small is-learning-on" id="bug-learning" type="button" aria-pressed="true" title="Turn the brain\'s learning on or off">Learning: On</button> '
-                . '<button class="button small" id="bug-pause" type="button" disabled>Pause</button> '
-                . '<button class="button small" id="bug-restart" type="button" disabled>New arena</button> '
-                . '<a class="button small" id="bug-compare-link" href="' . h($base . '/explore' . ($compare ? '' : '?compare=1')) . '#arena">'
-                . ($compare ? 'Single arena' : 'Compare brains') . '</a></div></div>'
-                . '<p id="bug-status" class="bug-status-bar" role="status">Loading the arena…</p>'
-                . ($compare ? '<div class="bug-pair"><div><h3 id="bug-left-heading">Current brain</h3><p id="bug-champion-score" class="ex-score"></p>' : '')
-                . '<canvas id="bug-arena" width="1120" height="700" aria-label="BugBrain foraging arena" data-champion="'
-                . h($base . '/explore/bugbrain-champion.json') . '"></canvas>'
-                . ($compare ? '</div><div><h3 id="bug-right-heading">Original BugBrain</h3><p id="bug-baseline-score" class="ex-score"></p>'
-                    . '<canvas id="bug-baseline" width="1120" height="700" aria-label="Original BugBrain foraging arena"></canvas></div></div>' : '');
+                . '<button class="button small is-learning-on" id="' . $p . '-learning" data-role="learning" type="button" aria-pressed="true" title="Turn the brain\'s learning on or off">Learning: On</button> '
+                . '<button class="button small" id="' . $p . '-pause" data-role="pause" type="button" disabled>Pause</button> '
+                . '<button class="button small" id="' . $p . '-restart" data-role="fresh" type="button" disabled title="Forget what this bug has learned and grow a new one">Start fresh</button>'
+                . ($id === 'arena' ? ' <a class="button small" id="bug-compare-link" href="' . h($base . '/explore' . ($compare ? '' : '?compare=1')) . '#arena">'
+                    . ($compare ? 'Single arena' : 'Compare brains') . '</a>' : '') . '</div></div>'
+                . '<p id="' . $p . '-status" data-role="status" class="bug-status-bar" role="status">Loading the arena…</p>'
+                . ($pair ? '<div class="bug-pair"><div><h3 id="bug-left-heading">Current brain</h3><p id="bug-champion-score" data-role="champ-score" class="ex-score"></p>' : '')
+                . '<canvas id="' . ($id === 'arena' ? 'bug-arena' : 'bug-predator') . '" class="bug-canvas" data-role="canvas" width="1120" height="700" aria-label="'
+                . ($id === 'arena' ? 'BugBrain foraging arena' : 'BugBrain arena with a predator') . '" data-champion="'
+                . h($base . '/explore/bugbrain-champion.json') . '" data-task="' . ($id === 'arena' ? 'flash' : 'hard') . '"></canvas>'
+                . ($pair ? '</div><div><h3 id="bug-right-heading">Original BugBrain</h3><p id="bug-baseline-score" data-role="base-score" class="ex-score"></p>'
+                    . '<canvas id="bug-baseline" data-role="baseline" width="1120" height="700" aria-label="Original BugBrain foraging arena"></canvas></div></div>' : '');
         } else {
             $panels .= '<div class="head-actions"><button class="button small primary" type="button" data-play="' . h($id) . '" disabled>Play</button></div></div>'
                 . '<div class="ex-stage" data-stage="' . h($id) . '"><p class="quiet">Loading…</p></div>';
@@ -944,8 +951,9 @@ function pageBugArena(string $base, array $nav, bool $compare = false, array $de
     $tag = $haveDesign
         ? 'Best design so far (reading and memory): <b>' . h($version) . '</b>' . (!empty($design['updated']) ? ' · updated ' . h((string) $design['updated']) : '')
         : 'Current best design';
-    $body = '<div class="ex" data-engine="' . h($base . '/assets/bugbrain.js?v=8') . '" data-replay-js="' . h($base . '/assets/explore-replay.js?v=' . $asset('explore-replay.js')) . '"'
-        . ' data-live-js="' . h($base . '/assets/explore-live.js?v=' . $asset('explore-live.js')) . '" data-design="' . h($base . '/explore/design.json') . '"'
+    $body = '<div class="ex" data-engine="' . h($base . '/assets/bugbrain.js?v=9') . '" data-replay-js="' . h($base . '/assets/explore-replay.js?v=' . $asset('explore-replay.js')) . '"'
+        . ' data-live-js="' . h($base . '/assets/explore-live.js?v=' . $asset('explore-live.js')) . '"'
+        . ' data-arena-js="' . h($base . '/assets/explore-arena.js?v=' . $asset('explore-arena.js')) . '" data-design="' . h($base . '/explore/design.json') . '"'
         . ' data-replay-base="' . h($base . '/explore/replay/') . '" data-version="' . h($version) . '"' . ($compare ? ' data-compare="1"' : '') . '>'
         . '<header class="ex-head"><div><h1 id="bug-title">Explore</h1><p class="quiet">Try the brain the lab is growing. Each demo shows one thing it can do today.</p></div>'
         . '<p class="ex-version">' . $tag . '</p></header>'
@@ -970,10 +978,12 @@ function pageBugArena(string $base, array $nav, bool $compare = false, array $de
         . '.bug-status-bar{margin:0 0 8px;font-family:var(--mono);font-size:12px;color:var(--mint)}'
         . '#bug-learning.is-learning-on{background:var(--mint);color:#061510;border-color:var(--mint);font-weight:700}'
         . '#bug-learning.is-learning-off{background:#2a1b1e;color:#ff9b9b;border-color:#6e343b}'
-        . '#bug-arena{display:block;margin:auto;width:min(100%,1120px,max(310px,calc((100vh - 300px)*1.6)));height:auto;background:#f4f1ea;border-radius:10px}'
-        . '@supports(height:100dvh){#bug-arena{width:min(100%,1120px,max(310px,calc((100dvh - 300px)*1.6)))}}'
+        . '.bug-canvas{display:block;margin:auto;width:min(100%,1120px,max(310px,calc((100vh - 300px)*1.6)));height:auto;background:#f4f1ea;border-radius:10px}'
+        . '@supports(height:100dvh){.bug-canvas{width:min(100%,1120px,max(310px,calc((100dvh - 300px)*1.6)))}}'
+        . '[data-role=learning].is-learning-on{background:var(--mint);color:#061510;border-color:var(--mint);font-weight:700}'
+        . '[data-role=learning].is-learning-off{background:#2a1b1e;color:#ff9b9b;border-color:#6e343b}'
         . '.bug-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.bug-pair h3,.bug-pair p{margin:0 0 6px}'
-        . '.bug-pair canvas,.bug-pair #bug-arena{display:block;width:100%;height:auto;background:#f4f1ea;border-radius:10px}'
+        . '.bug-pair canvas,.bug-pair .bug-canvas{display:block;width:100%;height:auto;background:#f4f1ea;border-radius:10px}'
         . '.showcase-donate-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-top:12px;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:#0f1720;font-size:13px}'
         . '@media(max-width:620px){.bug-pair{grid-template-columns:1fr}.bug-shell{padding:10px}.ex-panel{padding:12px}}</style>';
     return layout('Explore · Compute Lab', $body, $base, $nav, ['shell' => 'bug-shell', 'head' => $style]);
@@ -997,7 +1007,7 @@ function exploreRouterJs(): string
   }
   function scriptsFor(id) {
     var needs = (document.getElementById('demo-' + id).getAttribute('data-needs') || '').split(','), out = [];
-    needs.forEach(function (n) { if (n === 'engine') out.push(root.getAttribute('data-engine')); if (n === 'replay') out.push(root.getAttribute('data-replay-js')); if (n === 'live') out.push(root.getAttribute('data-live-js')); });
+    needs.forEach(function (n) { if (n === 'engine') out.push(root.getAttribute('data-engine')); if (n === 'replay') out.push(root.getAttribute('data-replay-js')); if (n === 'live') out.push(root.getAttribute('data-live-js')); if (n === 'arena') out.push(root.getAttribute('data-arena-js')); });
     return out;
   }
   function show(id) {
