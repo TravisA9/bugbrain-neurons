@@ -1283,6 +1283,33 @@ $autoSeed = is_array($seedClaimed) ? (int) ($seedClaimed['spec']['seed'] ?? 0) :
 check(!$seedClaimThrew && $seedClaimed && strpos((string) $seedClaimed['id'], 'sf-inverse-experiment-') === 0 && $autoSeed >= 6 && $autoSeed <= 20,
     'claim still creates an inverse job after every primary seed is already used');
 
+// Regression: seeds above the inverse designer's limit (1e9) failed with
+// "Invalid shared inverse training assignment". The extended range must stop at that limit,
+// even when config asks for more, and the limit must match the worker's own check.
+$designerSrc = (string) file_get_contents(dirname(__DIR__, 3) . '/spikefoundry/inverse_designer.js');
+$workerLimit = preg_match('/function sharedStudy\(seed, parent\) \{\s*if \(!Number\.isInteger\(seed\) \|\| seed < 1 \|\| seed > ([0-9e.]+)/', $designerSrc, $m)
+    ? (int) (float) $m[1] : 0;
+check($workerLimit > 0 && App::SEED_LIMIT <= $workerLimit, 'the coordinator seed limit is within what the worker accepts for shared inverse jobs');
+$capLab = labWith([
+    'inverse_gallery' => true,
+    'pause_legacy_spikefoundry_search' => true,
+    'seed_max' => 1,
+    'seed_max_extended' => 4000000000,
+]);
+$capLab['app']->createJob('sf-inverse-experiment', 'Taken 1', 1, 1, ['inverseGallery' => true]);
+$capHigh = 0;
+for ($i = 0; $i < 400; $i++) {
+    $capHigh = max($capHigh, $capLab['app']->freshSeed());
+}
+check($capHigh > 1 && $capHigh <= App::SEED_LIMIT, 'freshSeed never exceeds the inverse designer seed limit, even if config asks for 4e9');
+$capJs = 'const { sharedStudy } = require(' . var_export(dirname(__DIR__, 3) . '/spikefoundry/inverse_designer', true) . ');'
+    . 'const ok = s => { try { sharedStudy(s, { benchmark: "inverse-shared-1", generation: 0, checkpoint: null }); return "ran"; }'
+    . ' catch (e) { return e.message; } };'
+    . 'process.stdout.write(JSON.stringify([ok(' . (App::SEED_LIMIT + 1) . ')]));';
+$capOut = json_decode((string) shell_exec('node -e ' . escapeshellarg($capJs) . ' 2>/dev/null'), true);
+check(is_array($capOut) && $capOut[0] === 'Invalid shared inverse training assignment',
+    'the worker refuses a shared inverse seed one above the limit (the reported error reproduces)');
+
 $fullLab = labWith([
     'inverse_gallery' => true,
     'pause_legacy_spikefoundry_search' => true,
