@@ -455,6 +455,17 @@ final class App
             sealed TEXT NOT NULL,
             expires_at VARCHAR(40) NOT NULL
         )');
+        /* Code channels (Phase 1): each computer follows the stable or the canary worker
+         * commit, which the heartbeat reply names. Additive only: a new column with a
+         * default, a new table, and two seed rows written only when missing. */
+        $this->ensureColumn('workers', 'code_channel', "VARCHAR(16) NOT NULL DEFAULT 'stable'");
+        $this->db->exec('CREATE TABLE IF NOT EXISTS code_channels (
+            channel VARCHAR(16) PRIMARY KEY,
+            ref VARCHAR(64) NOT NULL,
+            updated_at VARCHAR(40) NOT NULL,
+            note TEXT
+        )');
+        $this->seedCodeChannels();
         $this->seed();
         $this->refreshProtocolPins();
         $this->purgePlaceholderDesigns();
@@ -1027,6 +1038,26 @@ final class App
         if (isset($report['pct']) && is_numeric($report['pct'])) {
             $clean['pct'] = max(0, min(100, (int) $report['pct']));
         }
+        if (isset($report['code']) && is_string($report['code']) && preg_match('/^[0-9a-f]{40}$/', $report['code'])) {
+            $clean['code'] = $report['code'];
+        }
+        if (isset($report['health']) && is_array($report['health'])) {
+            $hl = [];
+            foreach (['linger', 'maySleep'] as $k) {
+                if (isset($report['health'][$k]) && is_bool($report['health'][$k])) {
+                    $hl[$k] = $report['health'][$k];
+                }
+            }
+            if (isset($report['health']['legacyWorker']) && is_string($report['health']['legacyWorker'])) {
+                $lw = trim(preg_replace('/[^\x20-\x7E]/', '', $report['health']['legacyWorker']));
+                if ($lw !== '') {
+                    $hl['legacyWorker'] = substr($lw, 0, 80);
+                }
+            }
+            if ($hl !== []) {
+                $clean['health'] = $hl;
+            }
+        }
         $clean['at'] = $this->now();
         $this->db->prepare('UPDATE workers SET runtime_json = ? WHERE id = ?')->execute([json_encode($clean), $workerId]);
     }
@@ -1309,6 +1340,11 @@ final class App
             'revoked' => (int) $state['revoked'] === 1,
             'resources' => ['mode' => $resources['mode'], 'allowancePct' => $resources['allowancePct'], 'maxJobs' => $resources['maxJobs']],
         ];
+        /* Which worker commit this computer should run (stable or canary channel). */
+        $code = $this->codeFor($state);
+        if ($code !== null) {
+            $base['code'] = $code;
+        }
         /* A control check-in only reads settings. It does not renew any lease. */
         if (!empty($extra['control'])) {
             return $base + ['jobId' => null, 'leaseUntil' => null];
@@ -5240,6 +5276,208 @@ final class App
             $this->db->prepare('DELETE FROM worker_diagnostics WHERE worker_id = ? AND id < ?')->execute([$workerId, $cut]);
         }
         return ['ok' => true, 'stored' => $kind];
+    }
+
+    /* ---- Code channels (stable / canary) ----
+     * The heartbeat reply carries code { channel, ref }. ref is a full worker commit id, or ''
+     * for "follow the worker branch tip". Workers older than Phase 1 ignore the field; Phase 1
+     * workers only follow a commit that is on the worker branch and has channel support
+     * (run/codever.js), so a pin can always be moved again by the next promotion. */
+    public const CODE_CHANNELS = ['stable', 'canary'];
+    /* First stable commit: the Phase 1 worker (the first commit that can follow a channel).
+     * Phase 1 workers already run it, so seeding it changes nothing until a promotion. */
+    public const CODE_STABLE_SEED = 'e46d14b1d3a264dc5ee70a659748bb6f81850f0d';
+    private $codeChannelCache = null;
+
+    private function seedCodeChannels(): void
+    {
+        $have = [];
+        foreach ($this->db->query('SELECT channel FROM code_channels')->fetchAll() as $row) {
+            $have[(string) $row['channel']] = true;
+        }
+        $seed = ['stable' => [self::CODE_STABLE_SEED, 'Seeded: Phase 1 worker (first commit that follows a channel).'], 'canary' => ['', 'Seeded: follow the worker branch tip.']];
+        $ins = $this->db->prepare('INSERT INTO code_channels (channel, ref, updated_at, note) VALUES (?, ?, ?, ?)');
+        foreach ($seed as $channel => $row) {
+            if (!isset($have[$channel])) {
+                $ins->execute([$channel, $row[0], $this->now(), $row[1]]);
+            }
+        }
+        $this->codeChannelCache = null;
+    }
+
+    /** channel => ['ref' => string, 'updated_at' => string, 'note' => string]. */
+    public function codeChannels(): array
+    {
+        if ($this->codeChannelCache === null) {
+            $out = [];
+            foreach (self::CODE_CHANNELS as $c) {
+                $out[$c] = ['ref' => '', 'updated_at' => '', 'note' => ''];
+            }
+            foreach ($this->db->query('SELECT channel, ref, updated_at, note FROM code_channels')->fetchAll() as $row) {
+                $c = (string) $row['channel'];
+                if (isset($out[$c])) {
+                    $out[$c] = ['ref' => (string) $row['ref'], 'updated_at' => (string) $row['updated_at'], 'note' => (string) ($row['note'] ?? '')];
+                }
+            }
+            $this->codeChannelCache = $out;
+        }
+        return $this->codeChannelCache;
+    }
+
+    public static function channelOf(array $worker): string
+    {
+        $c = (string) ($worker['code_channel'] ?? 'stable');
+        return in_array($c, self::CODE_CHANNELS, true) ? $c : 'stable';
+    }
+
+    /** What the heartbeat reply tells this computer to run, or null when the table is not there yet. */
+    public function codeFor(array $worker): ?array
+    {
+        try {
+            $channels = $this->codeChannels();
+        } catch (Throwable $e) {
+            return null;
+        }
+        $c = self::channelOf($worker);
+        return ['channel' => $c, 'ref' => (string) $channels[$c]['ref']];
+    }
+
+    public function setCodeChannel(string $workerId, string $channel): void
+    {
+        if (!in_array($channel, self::CODE_CHANNELS, true)) {
+            throw new InvalidArgumentException('Choose stable or canary.');
+        }
+        $find = $this->db->prepare('SELECT id FROM workers WHERE id = ? AND removed_at IS NULL');
+        $find->execute([$workerId]);
+        if (!$find->fetch()) {
+            throw new InvalidArgumentException('Unknown computer.');
+        }
+        $this->db->prepare('UPDATE workers SET code_channel = ? WHERE id = ?')->execute([$channel, $workerId]);
+    }
+
+    /** Point a channel at a commit. Stable needs a full commit id; canary may be '' (branch tip). */
+    public function setCodeRef(string $channel, string $ref, string $note = ''): void
+    {
+        $ref = strtolower(trim($ref));
+        if (!in_array($channel, self::CODE_CHANNELS, true)) {
+            throw new InvalidArgumentException('Choose stable or canary.');
+        }
+        if ($ref !== '' && !preg_match('/^[0-9a-f]{40}$/', $ref)) {
+            throw new InvalidArgumentException('Use a full 40-character commit id' . ($channel === 'canary' ? ', or leave it empty to follow the branch tip.' : '.'));
+        }
+        if ($ref === '' && $channel === 'stable') {
+            throw new InvalidArgumentException('Stable needs a full commit id.');
+        }
+        $this->seedCodeChannels();
+        $this->db->prepare('UPDATE code_channels SET ref = ?, updated_at = ?, note = ? WHERE channel = ?')
+            ->execute([$ref, $this->now(), substr($note, 0, 200), $channel]);
+        $this->codeChannelCache = null;
+    }
+
+    /** The commit the canary computers run: the canary ref, or (when it follows the tip) the
+     * commit most canary computers reported in the last day. Null when none reported. */
+    public function canaryCommit(): ?string
+    {
+        $ref = (string) $this->codeChannels()['canary']['ref'];
+        if ($ref !== '') {
+            return $ref;
+        }
+        $since = gmdate('c', strtotime($this->now()) - 86400);
+        $q = $this->db->prepare("SELECT runtime_json, last_seen FROM workers WHERE code_channel = 'canary' AND revoked = 0 AND removed_at IS NULL AND last_seen >= ? ORDER BY last_seen DESC");
+        $q->execute([$since]);
+        $count = [];
+        foreach ($q->fetchAll() as $row) {
+            $rt = json_decode((string) ($row['runtime_json'] ?? ''), true);
+            $code = is_array($rt) ? (string) ($rt['code'] ?? '') : '';
+            if (preg_match('/^[0-9a-f]{40}$/', $code)) {
+                $count[$code] = ($count[$code] ?? 0) + 1;
+            }
+        }
+        if ($count === []) {
+            return null;
+        }
+        arsort($count);
+        return (string) array_key_first($count);
+    }
+
+    /** Promote: stable becomes the canary commit. Returns the commit. */
+    public function promoteCanary(): string
+    {
+        $sha = $this->canaryCommit();
+        if ($sha === null) {
+            throw new InvalidArgumentException('No canary computer has reported which commit it runs yet. Set a computer to canary and wait for its next check-in (about 1 minute), or type the commit id under Canary.');
+        }
+        $this->setCodeRef('stable', $sha, 'Promoted from canary.');
+        return $sha;
+    }
+
+    /** Friendly health chips for a computer card: [label, tone ok|warn|bad, hint]. */
+    public function healthChips(array $worker, ?array $diags = null): array
+    {
+        $chips = [];
+        $rt = json_decode((string) ($worker['runtime_json'] ?? ''), true);
+        $rt = is_array($rt) ? $rt : [];
+        $h = isset($rt['health']) && is_array($rt['health']) ? $rt['health'] : [];
+        $seen = !empty($worker['last_seen']) ? strtotime((string) $worker['last_seen']) : 0;
+        $now = strtotime($this->now());
+        $online = $seen && ($now - $seen) <= self::STALE_SECONDS;
+        $channel = self::channelOf($worker);
+        $code = isset($rt['code']) && is_string($rt['code']) ? $rt['code'] : '';
+        $chips[] = [$channel === 'canary' ? 'Canary' : 'Stable', $channel === 'canary' ? 'warn' : 'ok',
+            ($code !== '' ? 'Runs worker commit ' . substr($code, 0, 7) . '. ' : 'Has not said which commit it runs (older worker). ') . ($channel === 'canary' ? 'Gets new worker code first.' : 'Gets worker code after it is promoted.')];
+        $wd = isset($rt['watchdog']) ? (string) $rt['watchdog'] : '';
+        $wdWords = ['task-repeat' => 'Restarts itself (Windows task)', 'systemd-timer' => 'Restarts itself (systemd timer)', 'cron' => 'Restarts itself (cron)', 'launchd' => 'Restarts itself (launchd)'];
+        if ($wd !== '' && $wd !== 'none') {
+            $chips[] = [$wdWords[$wd] ?? ('Restarts itself (' . $wd . ')'), 'ok', 'Its watchdog starts the worker again within about 3 minutes if it stops.'];
+        } elseif ($wd === 'none') {
+            $chips[] = ['No watchdog', 'warn', 'It cannot restart by itself: run the setup command on it again.'];
+        }
+        if (array_key_exists('linger', $h) && $h['linger'] === false) {
+            $chips[] = ['Stops at logout', 'warn', 'Linux stops the worker when the user logs out. Fix once: sudo loginctl enable-linger <user>'];
+        }
+        if (!empty($h['maySleep'])) {
+            $chips[] = $online ? ['Sleeps when idle', 'warn', 'This computer is set to sleep when idle, which pauses the work. Set sleep to Never while plugged in.'] : ['Asleep?', 'warn', 'It is set to sleep when idle, so it is probably asleep. Wake it, or set sleep to Never while plugged in.'];
+        }
+        if (isset($h['legacyWorker']) && is_string($h['legacyWorker']) && $h['legacyWorker'] !== '') {
+            $chips[] = ['Old worker found', 'warn', 'Old GitHub-token worker service: ' . $h['legacyWorker']];
+        }
+        if ($diags === null) {
+            try {
+                $diags = $this->latestDiagnostics((string) $worker['id'], 30);
+            } catch (Throwable $e) {
+                $diags = [];
+            }
+        }
+        $day = $now - 86400;
+        $skips = 0;
+        $relink = false;
+        $noNode = false;
+        foreach ($diags as $d) {
+            $at = strtotime((string) $d['created_at']);
+            if ($at < $day) {
+                continue;
+            }
+            /* Re-link and missing Node.js only count when the worker has not checked in since. */
+            $after = !$seen || $at > $seen;
+            $sum = (string) $d['summary'];
+            if (strpos($sum, 'skipped a request the coordinator refused') !== false) {
+                $skips++;
+            } elseif (strpos($sum, 'Needs re-link') === 0) {
+                $relink = $relink || $after;
+            } elseif (strpos($sum, 'Node.js 18 or newer was not found') === 0) {
+                $noNode = $noNode || $after;
+            }
+        }
+        if ((int) ($worker['revoked'] ?? 0) === 1 || $relink) {
+            $chips[] = ['Needs re-link', 'bad', 'The site refused this computer\'s token. Make a new setup command and run it on the computer.'];
+        }
+        if ($noNode) {
+            $chips[] = ['Node.js missing', 'bad', 'The worker could not find Node.js 18 or newer. Install Node.js 20 LTS or run the setup command again.'];
+        }
+        if ($skips > 0) {
+            $chips[] = ['Skipped ' . $skips . ' refused request' . ($skips === 1 ? '' : 's'), 'warn', 'In the last day the site refused some requests; the worker skipped them and kept running.'];
+        }
+        return $chips;
     }
 
     public function latestDiagnostics(string $workerId, int $limit = 5): array

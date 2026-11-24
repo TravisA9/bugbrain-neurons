@@ -1419,5 +1419,72 @@ check($fnBody($brainJs, 'function genomeFor(') !== '' && $fnBody($brainJs, 'func
     && str_contains($brainJs, 'SA.growCell(this.genome, { seed: this.seed, spec: this.env.spec, record: true })') && strlen($brainJs) < 120 * 1024,
     'the brain view grows the champion the same way the arena does (same genome, same arena spec), with recording on');
 
+/* Phase 1: code channels (stable / canary), server-chosen worker version, health chips. */
+$cc = new App(new PDO('sqlite::memory:'), $config, static function () use (&$now): string { return $now; });
+$cc->migrate();
+$cc->migrate();
+$ccRows = $cc->db->query('SELECT channel, ref FROM code_channels ORDER BY channel')->fetchAll(PDO::FETCH_KEY_PAIR);
+check($ccRows === ['canary' => '', 'stable' => App::CODE_STABLE_SEED] && preg_match('/^[0-9a-f]{40}$/', App::CODE_STABLE_SEED) === 1,
+    'migration seeds stable = the Phase 1 worker commit and canary = branch tip, once (a second migrate adds nothing)');
+$cc->setCodeRef('canary', str_repeat('c', 40));
+$cc->migrate();
+check($cc->codeChannels()['canary']['ref'] === str_repeat('c', 40), 'a later migrate keeps the owner\'s channel refs');
+$cc->setCodeRef('canary', '');
+$ccA = $cc->enroll('chan-a', ['*'], 2, true);
+$ccB = $cc->enroll('chan-b', ['*'], 2, true);
+$beatA = $cc->heartbeat($cc->workerByToken($ccA['token']), ['control' => true]);
+check(($beatA['code'] ?? null) === ['channel' => 'stable', 'ref' => App::CODE_STABLE_SEED], 'a new computer is on stable and the control heartbeat names the stable commit');
+$cc->setCodeChannel($ccB['workerId'], 'canary');
+$tipB = str_repeat('b', 40);
+$beatB = $cc->heartbeat($cc->workerByToken($ccB['token']), ['control' => true, 'runtime' => ['code' => $tipB, 'watchdog' => 'task-repeat', 'health' => ['linger' => false, 'maySleep' => true, 'legacyWorker' => "kept (it is running)\x07", 'extra' => 'x'], 'junk' => 1]]);
+check(($beatB['code'] ?? null) === ['channel' => 'canary', 'ref' => ''], 'a canary computer is told to follow the branch tip');
+$rtB = json_decode((string) $cc->db->query("SELECT runtime_json FROM workers WHERE id = '" . $ccB['workerId'] . "'")->fetchColumn(), true);
+check(($rtB['code'] ?? '') === $tipB && ($rtB['health'] ?? null) === ['linger' => false, 'maySleep' => true, 'legacyWorker' => 'kept (it is running)'] && !isset($rtB['junk']),
+    'runtime keeps the running commit and the health fields (cleaned), and still drops unknown keys');
+$badCode = $cc->heartbeat($cc->workerByToken($ccA['token']), ['control' => true, 'runtime' => ['code' => 'not-a-sha', 'health' => ['linger' => 'yes']]]);
+$rtA = json_decode((string) $cc->db->query("SELECT runtime_json FROM workers WHERE id = '" . $ccA['workerId'] . "'")->fetchColumn(), true);
+check(!isset($rtA['code']) && !isset($rtA['health']), 'a malformed commit id or health value is not stored');
+$leaseBeat = $cc->heartbeat($cc->workerByToken($ccA['token']));
+check(($leaseBeat['code']['channel'] ?? '') === 'stable' && array_key_exists('jobId', $leaseBeat), 'job heartbeats carry the code target too');
+$threw = 0;
+foreach ([['stable', ''], ['stable', 'abc123'], ['beta', str_repeat('a', 40)], ['canary', 'main']] as $bad) {
+    try { $cc->setCodeRef($bad[0], $bad[1]); } catch (InvalidArgumentException $e) { $threw++; }
+}
+try { $cc->setCodeChannel($ccA['workerId'], 'beta'); } catch (InvalidArgumentException $e) { $threw++; }
+try { $cc->setCodeChannel('nope', 'canary'); } catch (InvalidArgumentException $e) { $threw++; }
+check($threw === 6 && $cc->codeChannels()['stable']['ref'] === App::CODE_STABLE_SEED, 'bad channels, short or empty stable refs and unknown computers are refused');
+check($cc->canaryCommit() === $tipB, 'with canary on the branch tip, the canary commit is what the canary computers report');
+$promoted = $cc->promoteCanary();
+$beatA2 = $cc->heartbeat($cc->workerByToken($ccA['token']), ['control' => true]);
+check($promoted === $tipB && ($beatA2['code']['ref'] ?? '') === $tipB, 'promote canary to stable: stable computers are told the canary commit on their next check-in');
+$cc->setCodeRef('canary', str_repeat('d', 40));
+check($cc->promoteCanary() === str_repeat('d', 40), 'a pinned canary commit is promoted as is');
+$cc->setCodeChannel($ccB['workerId'], 'stable');
+$cc->setCodeRef('canary', '');
+$threw = false;
+try { $cc->promoteCanary(); } catch (InvalidArgumentException $e) { $threw = true; }
+check($threw, 'promote refuses when no canary computer has reported its commit');
+$cc->setCodeChannel($ccB['workerId'], 'canary');
+$chipsB = array_column($cc->healthChips($cc->db->query("SELECT * FROM workers WHERE id = '" . $ccB['workerId'] . "'")->fetch()), 0);
+check(in_array('Canary', $chipsB, true) && in_array('Stops at logout', $chipsB, true) && in_array('Sleeps when idle', $chipsB, true) && in_array('Restarts itself (Windows task)', $chipsB, true) && in_array('Old worker found', $chipsB, true),
+    'card chips say Canary, Stops at logout, Sleeps when idle, the watchdog in plain words and the old worker');
+$now = gmdate('c', strtotime($now) + 3600);
+$cc->saveDiagnostics($ccB['workerId'], ['kind' => 'error', 'ok' => false, 'summary' => 'Needs re-link: the coordinator refused this token.'], $ccB['token']);
+$cc->saveDiagnostics($ccB['workerId'], ['kind' => 'error', 'ok' => false, 'summary' => 'Slot 0 skipped a request the coordinator refused (HTTP 400): bad'], $ccB['token']);
+$cc->saveDiagnostics($ccB['workerId'], ['kind' => 'error', 'ok' => false, 'summary' => 'Node.js 18 or newer was not found, so the worker cannot start'], $ccB['token']);
+$chipsB2 = array_column($cc->healthChips($cc->db->query("SELECT * FROM workers WHERE id = '" . $ccB['workerId'] . "'")->fetch()), 0);
+check(in_array('Asleep?', $chipsB2, true) && in_array('Needs re-link', $chipsB2, true) && in_array('Node.js missing', $chipsB2, true) && in_array('Skipped 1 refused request', $chipsB2, true),
+    'offline and set to sleep says Asleep?; re-link, missing Node.js and skipped requests show from the worker reports');
+$now = gmdate('c', strtotime($now) + 60);
+$cc->heartbeat($cc->workerByToken($ccB['token']), ['control' => true]);
+$chipsB3 = array_column($cc->healthChips($cc->db->query("SELECT * FROM workers WHERE id = '" . $ccB['workerId'] . "'")->fetch()), 0);
+check(!in_array('Needs re-link', $chipsB3, true) && !in_array('Node.js missing', $chipsB3, true) && in_array('Skipped 1 refused request', $chipsB3, true),
+    'after the computer checks in again, re-link and missing Node.js clear; the skip count stays for the day');
+$ownerCc = pageOwner($cc, 'csrf', []);
+check(str_contains($ownerCc, 'id="code-channels"') && str_contains($ownerCc, '/owner/code-promote') && str_contains($ownerCc, '/owner/code-ref') && substr_count($ownerCc, 'action="/computelab/owner/code-channel"') === 2
+    && str_contains($ownerCc, '>Make stable<') && str_contains($ownerCc, '>Make canary<') && str_contains($ownerCc, 'class="hchip'),
+    'owner console: Worker code panel with set/promote, a Make canary/stable button and health chips on each computer card');
+check(!str_contains(pageJoin($cc), 'name="project'), 'Join has no project or experiment field: volunteers only choose how much compute to lend');
+
 echo "$n checks\n";
 exit($fail === 0 ? 0 : 1);

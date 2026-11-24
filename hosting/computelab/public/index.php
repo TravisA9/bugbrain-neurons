@@ -897,6 +897,16 @@ try {
             $app->setGenomePublic((string) ($_POST['hash'] ?? ''), (string) ($_POST['shown'] ?? '0') === '1');
         } elseif ($path === '/owner/design-seed') {
             $app->seedJobFromDesigns((string) ($_POST['template'] ?? 'sf-vision'), (string) ($_POST['task'] ?? 'coincidence'), (int) ($_POST['count'] ?? 3), (int) ($_POST['seed'] ?? 7));
+        } elseif ($path === '/owner/code-channel') {
+            $app->setCodeChannel((string) ($_POST['id'] ?? ''), (string) ($_POST['channel'] ?? ''));
+        } elseif ($path === '/owner/code-ref') {
+            $app->setCodeRef((string) ($_POST['channel'] ?? ''), (string) ($_POST['ref'] ?? ''), 'Set by the owner.');
+            header('Location: ' . $base . '/owner#code-channels', true, 303);
+            return;
+        } elseif ($path === '/owner/code-promote') {
+            $app->promoteCanary();
+            header('Location: ' . $base . '/owner#code-channels', true, 303);
+            return;
         } elseif ($path === '/owner/pause') {
             $paused = (string) ($_POST['paused'] ?? '');
             if ($paused !== '0' && $paused !== '1') {
