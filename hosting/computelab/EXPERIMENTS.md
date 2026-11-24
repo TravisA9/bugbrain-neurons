@@ -80,6 +80,38 @@ them without looking at the audit set (likely overfitting). Config knobs, each t
 
 Not done here (needs worker code): auto-growing composition size/parts, and enlarging the gene grid / behaviour split.
 
+## Query cost (fix1, after the 2026-11-24 step-3 outage)
+
+Step 3 turned on `inverse_stall_jobs`; `inverseJobsSincePromotion()` was a `COUNT(*)` over `results JOIN jobs` with
+`spec_json NOT LIKE` (full scan of ~1M results, 60-120 s on the host) run by every supply pass, `/discoveries` and
+`/experiments.json`, and it counted all history (979k), so it would also have stopped inverse supply at once.
+
+Now no policy path reads a big table:
+- **Stall count**: a counter row `policy_state('inverse_since_promotion')`, tagged with the champion generation. +1 per finished
+  plain inverse result (only while `inverse_stall_jobs` > 0), set to 0 by a promotion; a different generation reads as 0.
+  Two primary-key reads. Counting starts when the flag is first turned on (history is not counted).
+- **Share cap**: `SELECT job_id FROM leases` then those jobs by primary key; online slots cached in `policy_state` for `supply_seconds`.
+- **Composition queue (>1)**: queued pilots tallied in the existing `claimableQueued()` pass, leased ones as above. Queue 1 (default) keeps the original query.
+- **/experiments.json** and the deduped gallery: `page_cache`, 30 s / 60 s; the report allocates no seeds for specs that are not switched on.
+
+Measured on MariaDB 11.8 with 1M jobs + 1M results (box, warm 1 GB buffer pool):
+
+| Query | EXPLAIN | Time |
+|---|---|---|
+| old stall count | results ALL 947k rows + jobs eq_ref | 7.8 s (returned 1,000,000) |
+| new stall count | policy_state / inverse_champion const (PK) | 0.0001 s each |
+| old share join | leases ALL 60 + jobs eq_ref | 0.002 s (MariaDB drove it from leases; SQLite drove it from jobs) |
+| new share | leases 60 rows; jobs PRIMARY range 60 rows | 0.0004 s |
+| fix0 composition COUNT | jobs ALL 1M | 1.2 s |
+| `/experiments.json` (fix0, stall on) | | 14.4 s |
+| `/experiments.json` (fix1) | | 0.001 s (then cached) |
+
+Pre-existing (not from this branch, same with every flag off): the claim's job finder and `claimableQueued()` filter
+`jobs.status` with no index: ALL 1M rows, 1.1-1.2 s each, a claim with a supply pass 2.4-3.6 s on the box. Optional fix:
+`php private/bin/job-indexes.php` (dry run) then `--apply`: one online index `idx_jobs_status_project (status(16), project_id(32))`,
+built in 2.2 s here (ALGORITHM=INPLACE, LOCK=NONE; reads and writes continue). After it: ref on the index, 200 rows,
+0.001-0.005 s; a full claim 0.004-0.007 s.
+
 ## Turning it on (after Travis approves each step)
 
 1. Deploy the coordinator (this branch, after Phase 1 `8e885e1d`). Leave `experiments_enabled` false. Run `upgrade.php` (new tables).

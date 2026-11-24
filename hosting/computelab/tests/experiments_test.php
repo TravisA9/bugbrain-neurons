@@ -137,12 +137,58 @@ $dir = sys_get_temp_dir() . '/exp-test-' . getmypid();
 file_put_contents($dir . '/test-lag.json', json_encode(spec()));
 $other = spec(['id' => 'test-two', 'status' => 'proposed']);
 file_put_contents($dir . '/test-two.json', json_encode($other));
-function lab(array $over): array
+/** PDO that records every statement it is given (query-count and EXPLAIN guards). */
+class RecPDO extends PDO
+{
+    public array $log = [];
+    public bool $rec = false;
+    public function prepare(string $query, array $options = []): PDOStatement|false
+    {
+        if ($this->rec) {
+            $this->log[] = $query;
+        }
+        return parent::prepare($query, $options);
+    }
+    public function query(string $query, ?int $fetchMode = null, mixed ...$args): PDOStatement|false
+    {
+        if ($this->rec) {
+            $this->log[] = $query;
+        }
+        return $fetchMode === null ? parent::query($query) : parent::query($query, $fetchMode, ...$args);
+    }
+    public function exec(string $statement): int|false
+    {
+        if ($this->rec) {
+            $this->log[] = $statement;
+        }
+        return parent::exec($statement);
+    }
+    /** Full-table scans in the recorded statements, from SQLite's EXPLAIN QUERY PLAN ("SCAN x" without an index). */
+    public function scans(): array
+    {
+        $out = [];
+        foreach ($this->log as $sql) {
+            if (!preg_match('/^\s*(SELECT|UPDATE|DELETE)/i', $sql)) {
+                continue;
+            }
+            $st = parent::prepare('EXPLAIN QUERY PLAN ' . $sql);
+            $st->execute(array_fill(0, substr_count($sql, '?'), null));
+            foreach ($st->fetchAll() as $row) {
+                if (preg_match('/^SCAN (\w+)(?! USING (COVERING )?INDEX)/', (string) $row['detail'], $m)) {
+                    $out[] = $m[1] . ' <- ' . preg_replace('/\s+/', ' ', trim($sql));
+                }
+            }
+        }
+        return $out;
+    }
+}
+
+function lab(array $over, bool $record = false): array
 {
     global $config;
     $box = new stdClass();
     $box->t = '2026-11-24T18:00:00+00:00';
-    $db = new PDO('sqlite::memory:');
+    $db = $record ? new RecPDO('sqlite::memory:') : new PDO('sqlite::memory:');
     $app = new App($db, $over + $config, static function () use ($box): string { return $box->t; });
     $app->migrate();
     return [$app, $db, $box];
@@ -344,6 +390,100 @@ check((int) $co1Db->query("SELECT COUNT(*) FROM jobs WHERE spec_json LIKE '%inve
 $rep = $st->experimentsReport();
 check(($rep['inverse']['stalled'] ?? null) === true && str_contains((string) ($rep['inverse']['note'] ?? ''), 'compute moved') && isset($rep['inverse']['champion']['auditPassed']),
     'the report shows the designer champion (promotion and audit scores) and the stall note');
+
+/* ---- fix1: the stall count is a counter since the last promotion; per-request paths add no big-table scans ---- */
+function seedHistory(PDO $db, int $n): void
+{
+    $db->beginTransaction();
+    $j = $db->prepare("INSERT INTO jobs (id, project_id, template_id, title, spec_json, code_hash, priority, status, created_at, seed) VALUES (?, 'spikefoundry', 'sf-inverse-experiment', 'old', ?, 'x', 1, 'done', '2026-11-01T00:00:00+00:00', ?)");
+    $r = $db->prepare("INSERT INTO results (job_id, worker_id, status, summary, body_json, created_at) VALUES (?, 'w-old', 'done', '', '{}', '2026-11-01T00:00:00+00:00')");
+    for ($i = 0; $i < $n; $i++) {
+        $j->execute(['old-' . $i, json_encode(['mode' => 'inverse-experiment', 'seed' => 900000 + $i, 'pad' => str_repeat('x', 200)]), 900000 + $i]);
+        $r->execute(['old-' . $i]);
+    }
+    $db->commit();
+}
+[$sp, $spDb] = lab(['inverse_gallery' => true, 'inverse_shared_training' => true, 'inverse_stall_jobs' => 3]);
+seedHistory($spDb, 3000);
+check($sp->inverseJobsSincePromotion() === 0 && !$sp->inverseStalled(),
+    'first enable: 3000 finished inverse jobs of history count as 0 (counting starts now; supply does not stop at once)');
+$spw = $sp->workerByToken($sp->enroll('since-pc', ['spikefoundry'], 2, true)['token']);
+for ($sd = 700; $sd < 706; $sd++) {
+    $sp->createJob('sf-inverse-experiment', 'Shared', 1, $sd, ['inverseGallery' => true]);
+}
+sharedSubmit($sp, $spw, $sp->claim($spw, 0, false, 1, true, true, true), $p12, null, 12, null);
+check($sp->inverseJobsSincePromotion() === 0, 'the promoting job itself is not counted');
+for ($i = 0; $i < 3; $i++) {
+    sharedSubmit($sp, $spw, $sp->claim($spw, 0, false, 1, true, true, true), $p12, $p12, 12, 12);
+}
+check($sp->inverseJobsSincePromotion() === 3 && $sp->inverseStalled(), 'three non-promoting jobs since the promotion: count 3, stalled at inverse_stall_jobs 3');
+$spDb->exec('UPDATE inverse_champion SET generation = generation + 1');
+check($sp->inverseJobsSincePromotion() === 0 && !$sp->inverseStalled(), 'a newer champion generation (promotion) reads as 0 even before any job reports');
+[$spOff, $spOffDb] = lab(['inverse_gallery' => true, 'inverse_shared_training' => true]);
+$spOffW = $spOff->workerByToken($spOff->enroll('off-pc', ['spikefoundry'], 2, true)['token']);
+$spOff->createJob('sf-inverse-experiment', 'Shared', 1, 720, ['inverseGallery' => true]);
+$spOff->createJob('sf-inverse-experiment', 'Shared', 1, 721, ['inverseGallery' => true]);
+sharedSubmit($spOff, $spOffW, $spOff->claim($spOffW, 0, false, 1, true, true, true), $p12, null, 12, null);
+sharedSubmit($spOff, $spOffW, $spOff->claim($spOffW, 0, false, 1, true, true, true), $p12, $p12, 12, 12);
+check((int) $spOffDb->query('SELECT COUNT(*) FROM policy_state')->fetchColumn() === 0, 'with inverse_stall_jobs off nothing is counted or written');
+
+/* The claim path (supply pass included) with every inverse policy flag on vs all off, on 3000 rows of history. */
+$policyOn = ['inverse_stall_jobs' => 300, 'inverse_share_max' => 0.1, 'inverse_composition_queue' => 4, 'inverse_composition_first' => true,
+    'inverse_promotion_audit_gate' => true, 'retire_job_types' => ['bb-order3'], 'discoveries_dedupe' => true];
+$runs = [];
+foreach (['off' => [], 'on' => $policyOn] as $mode => $flags) {
+    [$qa, $qdb, $qc] = lab(['inverse_gallery' => true, 'inverse_shared_training' => true, 'inverse_composition' => true] + $flags, true);
+    seedHistory($qdb, 3000);
+    $qa->saveSupply('spikefoundry', true, 1, 4, 0);
+    $qt = $qa->enroll('q-pc', ['spikefoundry'], 2, true)['token'];
+    $qa->heartbeat($qa->workerByToken($qt), ['runtime' => ['cores' => 8, 'slots' => 2]]);
+    $qa->createJob('sf-inverse-experiment', 'Shared', 1, 730, ['inverseGallery' => true]);
+    $qa->claim($qa->workerByToken($qt), 0, false, 1, true, true, true); // warm-up (first supply pass, caches)
+    $qc->t = '2026-11-24T18:05:00+00:00';
+    $qdb->prepare("REPLACE INTO supply_state (id, ran_at, note) VALUES ('global', '2000-01-01T00:00:00+00:00', 'x')")->execute();
+    $qdb->exec("DELETE FROM policy_state WHERE name = 'online_slots'");
+    $qw = $qa->workerByToken($qt);
+    $qdb->log = [];
+    $qdb->rec = true;
+    $qa->claim($qw, 1, false, 1, true, true, true);
+    $qdb->rec = false;
+    $runs[$mode] = ['n' => count($qdb->log), 'scans' => $qdb->scans(), 'app' => $qa, 'db' => $qdb];
+}
+$newScans = array_values(array_diff(array_unique(array_map(static fn ($x) => explode(' <- ', $x)[1], $runs['on']['scans'])),
+    array_unique(array_map(static fn ($x) => explode(' <- ', $x)[1], $runs['off']['scans']))));
+$bad = array_values(array_filter($newScans, static fn ($sql) => preg_match('/\b(FROM|JOIN) (jobs|results)\b/', $sql)));
+check($bad === [], 'claim with every policy flag on adds no full scan of jobs or results (new reads: leases, jobs by primary key, the cached workers pass)'
+    . ($bad ? ': ' . implode(' | ', $bad) : ''));
+check($runs['on']['n'] - $runs['off']['n'] <= 8, 'claim with every policy flag on issues at most 8 more statements than with them off (' . $runs['off']['n'] . ' vs ' . $runs['on']['n'] . ')');
+$qdb = $runs['on']['db'];
+$qdb->log = [];
+$qdb->rec = true;
+$runs['on']['app']->inverseStalled();
+$runs['on']['app']->inverseJobsSincePromotion();
+$qdb->rec = false;
+check(count($qdb->log) <= 4 && $qdb->scans() === [], 'the stall check is two primary-key reads, no scans (' . count($qdb->log) . ' statements for two calls)');
+$qa = $runs['on']['app'];
+$qa->experimentsReport();
+$qa->cached('experiments-report-v1', 30, static fn () => $qa->experimentsReport());
+$qa->inverseDiscoveriesDeduped();
+$qdb->log = [];
+$qdb->rec = true;
+$qa->cached('experiments-report-v1', 30, static fn () => $qa->experimentsReport());
+$qa->inverseDiscoveriesDeduped();
+$qdb->rec = false;
+check(count($qdb->log) === 2, '/experiments.json and the deduped gallery are served from page_cache: one read each while fresh');
+
+/* Optional jobs(status, project_id) index: dry run changes nothing; applied, the existing claim query stops scanning jobs. */
+[$ix, $ixDb] = lab([], true);
+seedHistory($ixDb, 500);
+$dry = $ix->jobStatusIndex(false);
+$find = "SELECT * FROM jobs WHERE project_id = ? AND status = ? AND (not_before IS NULL OR not_before <= ?) ORDER BY priority DESC, attempts ASC, id ASC";
+$ixDb->log = [$find];
+$before = $ixDb->scans();
+$done = $ix->jobStatusIndex(true);
+$after = $ixDb->scans();
+check(!$dry['existed'] && !$dry['applied'] && $before !== [] && $done['applied'] && $after === [] && $ix->jobStatusIndex(true)['existed'],
+    'job-indexes.php: dry run adds nothing; --apply adds idx_jobs_status_project and the claim query uses it; running again is a no-op');
 
 /* ---- R146 ships switched off; config experiments_enable turns it on ---- */
 $shipDir = dirname(__DIR__) . '/private/experiments';
