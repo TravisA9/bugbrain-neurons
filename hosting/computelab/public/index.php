@@ -84,9 +84,28 @@ function coord_db(array $config): PDO
     /* The host allows a limited number of new MySQL connections per second for the whole account. A refused
      * connection used to escape as an uncaught PDOException (HTTP 500). Bursts last well under a second, so a
      * few short jittered retries get nearly every request through; App::connectWithRetry rethrows otherwise. */
+    /* Any failure to connect is retried: the host's refusal does not always carry a "too many connections"
+     * code. The first failure of each request is logged (redacted) so the real cause shows up in db-errors.log. */
     return App::connectWithRetry(coord_connector(static function () use ($dsn, $m): PDO {
         return new PDO($dsn, (string) $m['user'], (string) $m['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    }));
+    }), 4, null, true, static function (Throwable $e, int $attempt) use ($config): void {
+        if ($attempt === 1) {
+            coord_log_db_error($config, 'connect', $e);
+        }
+    });
+}
+
+/** One redacted line per database error in private/db-errors.log (not served: private/ is denied by .htaccess).
+ * Quoted strings and long hex are removed so no credentials or tokens can land in it. Stops growing at 2 MB. */
+function coord_log_db_error(array $config, string $where, Throwable $e): void
+{
+    $file = (string) ($config['db_error_log'] ?? (coord_private_root() . '/db-errors.log'));
+    if ($file === '' || (is_file($file) && (int) @filesize($file) > 2000000)) {
+        return;
+    }
+    $msg = preg_replace(["/'[^']*'/", '/"[^"]*"/', '/[0-9a-fA-F]{32,}/'], ["'[s]'", '"[s]"', '[hex]'], $e->getMessage());
+    $line = gmdate('c') . ' ' . $where . ' ' . get_class($e) . ' code=' . (string) $e->getCode() . ' ' . substr((string) $msg, 0, 300);
+    @file_put_contents($file, str_replace(["\r", "\n"], ' ', $line) . "\n", FILE_APPEND | LOCK_EX);
 }
 
 /** Test hook (environment only, never request input): COORD_TEST_DB_REFUSE=N refuses the first N connection
@@ -475,9 +494,6 @@ if (coord_static($path, $method, $config, $private, $base)) {
 try {
     $db = coord_db($config);
 } catch (PDOException $e) {
-    if (!App::isConnectionLimit($e)) {
-        throw $e;
-    }
     coord_busy($path);
     return;
 }
@@ -1145,6 +1161,20 @@ try {
     }
     http_response_code(404);
     echo 'Not found.';
+} catch (PDOException $e) {
+    /* A deadlock, lock wait timeout or dropped connection used to surface as a bare HTTP 500. Log it and, when it
+     * goes away on its own, answer a retryable 503 (workers back off and claim again). */
+    coord_log_db_error($app->config, $method . ' ' . $path, $e);
+    if (!App::isTransientDbError($e)) {
+        throw $e;
+    }
+    try {
+        if ($app->db->inTransaction()) {
+            $app->db->rollBack();
+        }
+    } catch (Throwable $ignored) {
+    }
+    coord_busy($path);
 } catch (InvalidArgumentException $e) {
     if (str_starts_with($path, '/api/')) {
         coord_json(400, ['error' => $e->getMessage()]);

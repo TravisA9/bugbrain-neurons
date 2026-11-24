@@ -56,7 +56,7 @@ final class App
      * @param callable():PDO $connect
      * @param callable(int):void|null $sleep receives microseconds (tests pass a recorder)
      */
-    public static function connectWithRetry(callable $connect, int $attempts = 4, ?callable $sleep = null): PDO
+    public static function connectWithRetry(callable $connect, int $attempts = 4, ?callable $sleep = null, bool $anyError = false, ?callable $onError = null): PDO
     {
         $sleep = $sleep ?? static function (int $us): void {
             usleep($us);
@@ -65,12 +65,35 @@ final class App
             try {
                 return $connect();
             } catch (PDOException $e) {
-                if ($i >= $attempts || !self::isConnectionLimit($e)) {
+                if ($onError !== null) {
+                    $onError($e, $i);
+                }
+                if ($i >= $attempts || !($anyError || self::isConnectionLimit($e))) {
                     throw $e;
                 }
                 $sleep(self::connectBackoffUs($i));
             }
         }
+    }
+
+    /** A database error that goes away on its own: a connection refusal, a deadlock (1213), a lock wait
+     * timeout (1205) or a dropped connection (2006, 2013). The request can answer 503 and the client retries. */
+    public static function isTransientDbError(Throwable $e): bool
+    {
+        if (self::isConnectionLimit($e)) {
+            return true;
+        }
+        $msg = $e->getMessage();
+        $codes = [(string) $e->getCode()];
+        if ($e instanceof PDOException && is_array($e->errorInfo) && isset($e->errorInfo[1])) {
+            $codes[] = (string) $e->errorInfo[1];
+        }
+        foreach (['1213', '1205', '2006', '2013'] as $n) {
+            if (in_array($n, $codes, true) || strpos($msg, ': ' . $n . ' ') !== false || strpos($msg, '[' . $n . ']') !== false) {
+                return true;
+            }
+        }
+        return (bool) preg_match('/deadlock|lock wait timeout|server has gone away|lost connection/i', $msg);
     }
 
     public function now(): string
