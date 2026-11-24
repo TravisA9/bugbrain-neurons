@@ -746,3 +746,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 19:40 phase C pair 1: k2960 S2-cand +.0060. Book job ~57 min, ~1.7 GB RSS; MemAvail 4.6 GB (browser on box) -> gate holds at 2 jobs. ETA ~Tue 10:00-12:00 CT awake time.
 - 19:44 MemAvail fell to 2.7 GB with 3 book jobs (browser/playwright on box use ~4 GB) -> back to GATE_MAX=2 (driver PID 331929); S2 k2962 killed 3 min in and requeued.
 - 20:22 arena done -> gate restarted GATE_MAX=3 GATE_MEMGB=5 (PID 358292); 3 book jobs (S2 2961, cand 2962, S2 2962); MemAvail 9 GB before the 3rd.
+- 20:38 phase C pair 2: k2961 -.0035 (< -.003 per-seed bar -> the pre-registered book rule 'every seed >= -.003' is already not met). Running mean +.0012 (n=2). Gate continues to completion per Travis.
