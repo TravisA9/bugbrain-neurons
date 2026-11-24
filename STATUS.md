@@ -769,3 +769,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 03:16 phase C 13/16 pairs: +2973 +.0125. Mean +.0038, 1 below -.003. 0 failures.
 - 03:53 resumed: gate alive, 13/16 pairs, 3 running, 0 failures; ETA ~05:00 CT.
 - 04:10 phase C 14/16 pairs: +2974 +.0090. Mean +.0042, 1 below -.003. 0 failures; last jobs running (cand 2975, S2 2975, cand 2976), S2 2976 queued; ETA ~05:10 CT.
+- 04:44 resumed: gate alive, 14/16 pairs, last 3 jobs running (S2 2975, cand+S2 2976), 0 failures; ETA ~05:10 CT.
