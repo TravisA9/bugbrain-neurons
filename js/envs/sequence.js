@@ -65,6 +65,14 @@ function makeRule(P, rng) {
     return { first: seqNext(), next: () => seqNext(), optAcc: 1, optBits: 0, firstOrderAcc: acc(1), secondOrderAcc: acc(2), desc: `third-order pattern ${pat.map(i => NAMES[i]).join('')} (order-2 limit ${(100 * acc(2)).toFixed(0)}%)`, order3: true }; }
   // R60 (I66) real corpus: stream TRAIN from a random start (any length; wraps only after 3.3 M symbols); with evalSyms > 0 the last
   // evalSyms symbols of the life come from HELD (book endings never in TRAIN, random start) and the fitness is the accuracy there.
+  // R140 long-context probe (copy after delay): segments X f1 .. fd ? X: payload X (one of the first K/3 symbols), d random fillers
+  // (d uniform in [dMin, dMax], default 4..30), the cue (last symbol), then X again, then gap (default dMax) fillers, so no other payload
+  // letter lies within dMax + 5 letters of the cue (the copy is unambiguous). The letter after the cue is set by the letter d+1 back;
+  // every other next letter is random (fillers, next payload). Probe accuracy = accuracy on the letter after the cue (chance 1 / #payloads).
+  if (P.source === 'delaycopy') { const pay = Math.max(2, Math.floor(K / 3)), cue = K - 1, nf = K - 1 - pay, dMin = P.dMin > 0 ? P.dMin | 0 : 4, dMax = P.dMax > 0 ? P.dMax | 0 : 30, gap = P.gap >= 0 && P.gap != null ? P.gap | 0 : dMax, q = [];
+    const seg = () => { const X = (rng() * pay) | 0; q.push(X); const d = dMin + ((rng() * (dMax - dMin + 1)) | 0); for (let i = 0; i < d; i++) q.push(pay + ((rng() * nf) | 0)); q.push(cue, X); for (let i = 0; i < gap; i++) q.push(pay + ((rng() * nf) | 0)); };
+    const nx = () => { if (!q.length) seg(); return q.shift(); };
+    return { first: nx(), next: () => nx(), optAcc: 1, optBits: 0, firstOrderAcc: 0, delaycopy: { pay, cue, dMin, dMax }, desc: `copy after delay ${dMin}-${dMax} (${pay} payloads, ${nf} fillers, cue)` }; }
   if (P.source === 'book') { const B = BOOK(), C = B.TRAIN, H = B.HELD, A = B.ALPHA, IDX = new Map(A.map((c, i) => [c, i])), bg = B.bigram();
     const nTr = P.evalSyms > 0 ? Math.max(1, P.nSyms - P.evalSyms) : Infinity; let pos = (rng() * C.length) | 0, i = 0, hp = -1;
     const next = () => { i++; if (i <= nTr) return IDX.get(C[(++pos) % C.length]); if (hp < 0) hp = (rng() * H.length) | 0; return IDX.get(H[(hp++) % H.length]); };

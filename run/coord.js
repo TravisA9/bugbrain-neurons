@@ -20,7 +20,16 @@ function args(argv) {
   }
   return a;
 }
-const ALLOWED = new Set(['spikefoundry/run.js', 'run/r42.js', 'run/gen.js', 'run/arena-pilot.js']);
+const ALLOWED = new Set(['spikefoundry/run.js', 'run/r42.js', 'run/gen.js', 'run/arena-pilot.js', 'run/exp.js']);
+// Server-defined experiments (run/exp.js): the protocol this worker speaks, reported in the heartbeat runtime with its memory, so the
+// coordinator only hands an experiment to a computer that can run it. Bump with run/exp.js when the job format changes.
+const EXP_PROTOCOL = require('./exp.js').PROTOCOL;
+function expHeapArgs(spec) {
+  const want = Math.floor(+((spec && spec.experiment && spec.experiment.heapMB) || 0));
+  if (!(want > 0)) return [];
+  const cap = Math.floor(require('os').totalmem() / 1048576 * 0.8);
+  return ['--max-old-space-size=' + Math.max(512, Math.min(want, cap, 32000))];
+}
 
 function normalizeProtocol(text) {
   return String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -245,6 +254,12 @@ function runnerArgs(job, out) {
   if (job.runner === 'run/arena-pilot.js') {
     return [path.join(ROOT, job.runner), String(spec.seed), path.join(out, 'arena-report.json')];
   }
+  if (job.runner === 'run/exp.js') {
+    if (!spec.experiment || typeof spec.experiment !== 'object') throw new Error('Experiment job is missing its experiment object.');
+    const file = path.join(out, 'job.json');
+    fs.writeFileSync(file, JSON.stringify(spec.experiment));
+    return expHeapArgs(spec).concat([path.join(ROOT, 'run', 'exp.js'), '--job', file, '--out', out]);
+  }
   if (job.runner === 'spikefoundry/run.js') {
     const file = path.join(out, 'job.json');
     fs.writeFileSync(file, JSON.stringify(Object.assign({
@@ -373,6 +388,14 @@ async function runSpec(job, opts) {
     result = { status: 'done', summary: text, synthetic: false, digest: require('crypto').createHash('sha256').update(text).digest('hex') };
     if (job.runner === 'run/arena-pilot.js') {
       result.research = JSON.parse(fs.readFileSync(path.join(out, 'arena-report.json'), 'utf8'));
+    }
+    if (job.runner === 'run/exp.js') {
+      const research = JSON.parse(fs.readFileSync(path.join(out, 'result.json'), 'utf8'));
+      const e = job.spec.experiment, v = research.metrics && research.metrics[e.metric];
+      const line = ('Experiment ' + e.id + ' ' + e.arm + ' ' + e.task + ' k' + e.k + ': ' + e.metric + ' ' + v).slice(0, 500);
+      result.summary = line;
+      result.digest = require('crypto').createHash('sha256').update(line).digest('hex');
+      result.research = research;
     }
   }
   result.pauseAfter = !!beats.state.pauseAfter;
@@ -610,7 +633,7 @@ async function multi(a, base, token, hash) {
   const watchdog = () => { try { return require('./watchdog.js').kind(); } catch (e) { return 'none'; } };
   const healthNow = () => { try { return require('./watchdog.js').healthSummary(); } catch (e) { return null; } };
   const codeSha = (() => { try { return require('./diag.js').gitHead() || ''; } catch (e) { return ''; } })();
-  const runtime = () => ({ code: codeSha, cores: cores, slots: plan.slots, running: running.size, duty: plan.duty, mode: plan.mode, pct: plan.pct, maxJobs: plan.want || 0, priority: plan.priority, platform: process.platform, watchdog: watchdog(), health: healthNow() });
+  const runtime = () => ({ experiments: EXP_PROTOCOL, memGB: +(require('os').totalmem() / 1073741824).toFixed(1), code: codeSha, cores: cores, slots: plan.slots, running: running.size, duty: plan.duty, mode: plan.mode, pct: plan.pct, maxJobs: plan.want || 0, priority: plan.priority, platform: process.platform, watchdog: watchdog(), health: healthNow() });
   const adopt = next => {
     if (samePlan(plan, next)) return;
     plan = next;
@@ -844,4 +867,4 @@ async function main() {
   }
 }
 if (require.main === module) main().then(() => { if (process.exitCode === RELINK_EXIT) process.exit(RELINK_EXIT); }, e => { console.error(e.message || e); process.exit(1); });
-module.exports = { RELINK_EXIT, isSkippable, relinkWait, clearStaleStop, withDigest, timeoutSignal, resourcePlan, samePlan, settingsFrom, applyPriority, osPriority, logicalCores, writeThrottle, ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isSeedConflict, isRetryable, decideRetry, stopChild, readProgress, shouldWait, packUploadBatches, uploadDesigns, cleanupJobDir, cleanupStaleCoordDirs, retryAfterMs };
+module.exports = { EXP_PROTOCOL, expHeapArgs, runnerArgs, RELINK_EXIT, isSkippable, relinkWait, clearStaleStop, withDigest, timeoutSignal, resourcePlan, samePlan, settingsFrom, applyPriority, osPriority, logicalCores, writeThrottle, ALLOWED, protocolHash, hashText, assertProtocol, runSpec, startLeaseHeartbeat, nextBackoff, isSeedConflict, isRetryable, decideRetry, stopChild, readProgress, shouldWait, packUploadBatches, uploadDesigns, cleanupJobDir, cleanupStaleCoordDirs, retryAfterMs };
