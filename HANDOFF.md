@@ -84,7 +84,7 @@ Synthetic pilots (Sections 7–13) follow the same two stages: screen on 8 paire
 | Branch | Owner | State (Nov 23, 2026) |
 |---|---|---|
 | `travis/sunday-wip` @ `1bf24be6` | Codex | Pilots in Sections 6–13 (`run/*_pilot.js`). v47 default; priorities end at R116. |
-| `cursor/relgrowth` | Grok Bot (BrainBot) | Origin at `7e20a207` (R135). Later commits are kept on the box (`/workspace/sweep`, branch `relgrowth`) and reach origin by git bundle through TacoBell (`relgrowth.bundle`). |
+| `cursor/relgrowth` | Grok Bot (BrainBot) | Origin at the R144 promotion (`46445869`, pushed Nov 24, 2026; earlier pushes: `7e20a207` R135, `b0e789cc`) or the handoff commit right after it. Later commits are kept on the box (`/workspace/sweep`, branch `relgrowth`) and reach origin by git bundle through TacoBell (`relgrowth.bundle`). |
 
 Local `cursor/relgrowth` commits after `7e20a207` (main ones; plus result/STATUS commits):
 
