@@ -748,3 +748,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
 - 20:22 arena done -> gate restarted GATE_MAX=3 GATE_MEMGB=5 (PID 358292); 3 book jobs (S2 2961, cand 2962, S2 2962); MemAvail 9 GB before the 3rd.
 - 20:38 phase C pair 2: k2961 -.0035 (< -.003 per-seed bar -> the pre-registered book rule 'every seed >= -.003' is already not met). Running mean +.0012 (n=2). Gate continues to completion per Travis.
 - 21:12 phase C: 2/16 pairs done (+ cand k2962 alone); running S2 2962, cand+S2 2963; gate PID 358292 alive, MemAvail 7 GB.
+- 21:23 phase C 3/16 pairs: 2960 +.0060, 2961 -.0035, 2962 -.0030 (= bar, .568 vs .571; meets >= -.003). Mean -.0002.
