@@ -203,6 +203,22 @@ check(in_array($activeOff['status'], [303, 302], true) && str_contains($ownerAct
 $activeOn = http($base . '/owner/active-projects', 'POST', http_build_query(['csrf' => $csrf[1] ?? '', 'active' => ['spikefoundry', 'bugbrain', 'evening-vision']]), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')]);
 check(in_array($activeOn['status'], [303, 302], true), 'the owner can turn the projects back on');
 
+/* Phase 1: code channels from the owner console; participants cannot change them. */
+$oh = ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_owner=' . ($oc[1] ?? '')];
+preg_match('/action="[^"]*\/owner\/code-channel"><input type="hidden" name="csrf" value="[a-f0-9]+"><input type="hidden" name="id" value="([a-f0-9]+)"><input type="hidden" name="channel" value="canary">/', $ownerActive['body'], $chId);
+$toCanary = http($base . '/owner/code-channel', 'POST', http_build_query(['csrf' => $csrf[1] ?? '', 'id' => $chId[1] ?? '', 'channel' => 'canary']), $oh);
+$partCanary = http($base . '/owner/code-channel', 'POST', http_build_query(['csrf' => $csrf[1] ?? '', 'id' => $chId[1] ?? '', 'channel' => 'stable']), ['Content-Type: application/x-www-form-urlencoded', 'Cookie: lab_participant=' . $cookie]);
+$noCsrf = http($base . '/owner/code-ref', 'POST', http_build_query(['csrf' => 'bad', 'channel' => 'canary', 'ref' => str_repeat('a', 40)]), $oh);
+$setRef = http($base . '/owner/code-ref', 'POST', http_build_query(['csrf' => $csrf[1] ?? '', 'channel' => 'canary', 'ref' => str_repeat('a', 40)]), $oh);
+$promote = http($base . '/owner/code-promote', 'POST', http_build_query(['csrf' => $csrf[1] ?? '']), $oh);
+$ownerCode = http($base . '/owner', 'GET', null, ['Cookie: lab_owner=' . ($oc[1] ?? '')]);
+check(isset($chId[1]) && in_array($toCanary['status'], [303, 302], true) && $partCanary['status'] === 403 && $noCsrf['status'] !== 303
+    && in_array($setRef['status'], [303, 302], true) && in_array($promote['status'], [303, 302], true)
+    && str_contains($ownerCode['body'], '>Make stable<') && substr_count($ownerCode['body'], 'title="' . str_repeat('a', 40) . '">aaaaaaa</code>') === 2,
+    'the owner can make a computer canary, set the canary commit and promote it to stable; participants and bad CSRF cannot');
+$resetRef = http($base . '/owner/code-ref', 'POST', http_build_query(['csrf' => $csrf[1] ?? '', 'channel' => 'canary', 'ref' => '']), $oh);
+check(in_array($resetRef['status'], [303, 302], true), 'canary can go back to following the branch tip');
+
 $hash = trim((string) shell_exec('php -r ' . escapeshellarg('echo hash("sha256", file_get_contents(' . var_export(dirname(__DIR__) . '/PROTOCOL.txt', true) . '));')));
 $genomeJson = '{"decay":0.4,"topology":"parallel"}';
 $designBody = json_encode(['codeHash' => $hash, 'records' => [[

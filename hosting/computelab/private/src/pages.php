@@ -151,6 +151,65 @@ function ownerJobsLine(array $state): string
     return $n === 1 ? 'Running 1 job at once' : 'Running ' . $n . ' jobs at once';
 }
 
+/* Health chips on a computer card: channel, watchdog, and the Phase 0 health the worker reports. */
+function healthChipsHtml(array $chips): string
+{
+    if ($chips === []) {
+        return '';
+    }
+    $out = '';
+    foreach ($chips as $c) {
+        $out .= '<span class="hchip is-' . h((string) $c[1]) . '" title="' . h((string) $c[2]) . '">' . h((string) $c[0]) . '</span>';
+    }
+    return '<p class="health-chips" data-health-chips>' . $out . '</p>';
+}
+
+function shortSha(string $ref): string
+{
+    return $ref === '' ? 'branch tip' : substr($ref, 0, 7);
+}
+
+/* Owner console: which worker commit the stable and canary computers run, and promotion. */
+function codeChannelsPanel(App $app, string $csrf, string $base, array $workers): string
+{
+    try {
+        $ch = $app->codeChannels();
+    } catch (Throwable $e) {
+        return '';
+    }
+    $canaryNames = [];
+    foreach ($workers as $w) {
+        if ((int) $w['revoked'] !== 1 && App::channelOf($w) === 'canary') {
+            $canaryNames[] = (string) $w['name'];
+        }
+    }
+    $canaryRuns = null;
+    try {
+        $canaryRuns = $app->canaryCommit();
+    } catch (Throwable $e) {
+    }
+    $hidden = '<input type="hidden" name="csrf" value="' . h($csrf) . '">';
+    $row = function (string $c, string $title, string $about) use ($ch, $base, $hidden) {
+        $ref = (string) $ch[$c]['ref'];
+        $when = (string) $ch[$c]['updated_at'];
+        return '<div class="code-channel"><div><strong>' . h($title) . '</strong> <code title="' . h($ref) . '">' . h(shortSha($ref)) . '</code>'
+            . ($when !== '' ? ' <span class="quiet">set <time datetime="' . h($when) . '" data-clock>' . h(gmdate('M j, H:i', strtotime($when)) . ' UTC') . '</time></span>' : '')
+            . ((string) $ch[$c]['note'] !== '' ? ' <span class="quiet">· ' . h((string) $ch[$c]['note']) . '</span>' : '') . '</div>'
+            . '<p class="quiet">' . h($about) . '</p>'
+            . '<form method="post" action="' . h($base) . '/owner/code-ref" class="code-ref-form">' . $hidden . '<input type="hidden" name="channel" value="' . h($c) . '">'
+            . '<input name="ref" value="' . h($ref) . '" placeholder="' . ($c === 'canary' ? 'empty = follow the branch tip' : 'full 40-character commit id') . '" pattern="[0-9a-fA-F]{40}' . ($c === 'canary' ? '|' : '') . '" spellcheck="false" autocomplete="off">'
+            . '<button class="button small" type="submit">Set ' . h(strtolower($title)) . '</button></form></div>';
+    };
+    $promote = $canaryRuns !== null
+        ? '<form method="post" action="' . h($base) . '/owner/code-promote" onsubmit="return confirm(\'Promote commit ' . h(substr($canaryRuns, 0, 7)) . ' to stable? Every stable computer switches to it after its current jobs.\')">' . $hidden . '<button class="button small primary" type="submit">Promote canary to stable (' . h(substr($canaryRuns, 0, 7)) . ')</button></form>'
+        : '<p class="quiet">Promote appears once a canary computer reports which commit it runs.</p>';
+    return '<section class="panel code-channels" id="code-channels"><div class="panelhead"><div class="paneltitle">Worker code</div><span class="subtag">STABLE / CANARY</span></div><div class="panelbody">'
+        . '<p class="quiet">Each computer runs the worker commit of its channel and switches after its current jobs finish. Make one computer canary, watch it, then promote. To roll back, set stable to an earlier commit (it must include channel support).</p>'
+        . $row('stable', 'Stable', 'Most computers. Changes only when you promote or set it.')
+        . $row('canary', 'Canary', 'Canary computers: ' . ($canaryNames !== [] ? implode(', ', $canaryNames) : 'none yet (use "Make canary" on a computer)') . '.')
+        . $promote . '</div></section>';
+}
+
 /* Problems only: the owner list drops the "Healthy" badge so rows stay dense. */
 function ownerHealthNote(array $health): string
 {
@@ -688,6 +747,14 @@ input[type=range]{width:100%;max-width:none;accent-color:var(--mint);height:4px;
 .owner-computers .computer-jobs{font:500 14px/1.3 var(--display);color:var(--text)}
 .owner-computers .owner-meta{margin:0 0 6px}
 .owner-computers .owner-health{margin:0 0 6px;flex-wrap:wrap}
+.health-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+.hchip{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;line-height:18px;color:var(--muted);cursor:help}
+.hchip.is-warn{border-color:#6a5a2a;color:var(--amber)}
+.hchip.is-bad{border-color:#6a2a32;color:var(--red)}
+.code-channels .code-channel{margin:0 0 12px}
+.code-channels .code-channel p{margin:4px 0 6px}
+.code-ref-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.code-ref-form input{flex:1 1 320px;min-width:0;font-family:var(--mono,monospace)}
 .owner-computers .owner-health-hint{font-weight:400;color:var(--muted);margin-left:6px}
 .owner-computers .resources.compact{margin:6px 0 8px;padding:8px 10px}
 .owner-computers .resources.compact .res-head{margin-bottom:6px}
@@ -1249,7 +1316,6 @@ function pageJoin(App $app, string $error = '', array $nav = []): string
     $body = '<section class="heading"><div><div class="eyebrow">Join · one download</div><h1>Join with this computer</h1><p>This does not share a GitHub token or the owner password. A background program on your computer does the work. This browser tab is not the worker.</p></div></section>'
         . $err
         . '<section class="panel"><div class="panelhead"><div class="paneltitle">Your computer</div><span class="subtag">STARTS AT 50% ALLOWANCE</span></div><div class="panelbody"><form method="post" action="' . h($base) . '/join"><label>Computer name <input name="name" required maxlength="32" autocomplete="off" placeholder="kitchen-pc"></label>'
-        . '<input type="hidden" name="project[]" value="*">'
         . '<label><input type="checkbox" name="consent" value="1" required> I agree this computer may run Compute Lab experiments and tests in the background according to my compute allowance setting.</label>'
         . '<p class="quiet">This computer will run whatever projects the owner has made active. You only choose how much compute to donate, any time on Home (Off, Allowance %, or Full blast)—job selection and length are handled automatically.</p>'
         . '<p class="quiet">Running setup again on a computer that is already added is safe: it keeps that computer\'s entry, updates and restarts its worker, and does not add a duplicate.</p>'
@@ -2004,11 +2070,13 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
             $controls = resourceControl($base . '/owner/resources', $csrf, $w, $state, $base, true)
                 . '<div class="head-actions"><form method="post" action="' . h($base) . '/owner/revoke" onsubmit="return confirm(\'Revoke this computer\\\'s token?\')"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><button class="button small stop" type="submit">Revoke</button></form>'
                 . newSetupForm($base . '/owner/setup-command', $csrf, (string) $w['id'])
-                . '<form method="post" action="' . h($base) . '/owner/owner-home"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><input type="hidden" name="shown" value="' . ((int) ($w['owner_home'] ?? 0) === 1 ? '0' : '1') . '"><button class="button small" type="submit">' . ((int) ($w['owner_home'] ?? 0) === 1 ? 'Hide from My computer' : 'Show on My computer') . '</button></form></div>';
+                . '<form method="post" action="' . h($base) . '/owner/owner-home"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><input type="hidden" name="shown" value="' . ((int) ($w['owner_home'] ?? 0) === 1 ? '0' : '1') . '"><button class="button small" type="submit">' . ((int) ($w['owner_home'] ?? 0) === 1 ? 'Hide from My computer' : 'Show on My computer') . '</button></form>'
+                . '<form method="post" action="' . h($base) . '/owner/code-channel"><input type="hidden" name="csrf" value="' . h($csrf) . '"><input type="hidden" name="id" value="' . h((string) $w['id']) . '"><input type="hidden" name="channel" value="' . (App::channelOf($w) === 'canary' ? 'stable' : 'canary') . '"><button class="button small" type="submit" data-code-channel>' . (App::channelOf($w) === 'canary' ? 'Make stable' : 'Make canary') . '</button></form></div>';
         }
         $tone = ownerTone($state);
         $people .= '<div class="computer" data-computer="' . h((string) $w['id']) . '"><div class="computer-top"><span class="computer-name is-' . h($tone) . '" data-tone>' . h((string) $w['name']) . '</span><span class="computer-jobs" data-jobs-now>' . h(ownerJobsLine($state)) . '</span></div>'
             . ownerHealthNote($health)
+            . healthChipsHtml($app->healthChips($w))
             . '<p class="quiet owner-meta"><span data-seen>' . ($state['ago'] !== '' ? 'Last seen ' . h($state['ago']) : 'Not seen yet') . '</span> · ' . h((string) $done['done']) . ' jobs done</p>'
             . $controls . diagnosticsPanel($app, (string) $w['id']) . '</div>';
     }
@@ -2100,6 +2168,7 @@ function pageOwner(App $app, string $csrf, array $nav = [], string $error = '', 
         . ($revokedRows !== '' ? '<details class="revoked-list"><summary>Revoked (' . substr_count($revokedRows, '<li ') . ') — remove to clean up this list</summary><ul>' . $revokedRows . '</ul></details>' : '')
         . ($removedCount > 0 ? '<p class="quiet removed-note">' . h((string) $removedCount) . ' removed ' . ($removedCount === 1 ? 'computer is' : 'computers are') . ' hidden here; ' . ($removedCount === 1 ? 'its' : 'their') . ' discoveries and credit stay.</p>' : '')
         . '</div></section>'
+        . codeChannelsPanel($app, $csrf, $base, $workers)
         . '<div class="grid2"><div class="stack">'
         . '<section class="panel"><div class="panelhead"><div class="paneltitle">Jobs</div></div><div class="panelbody">' . $filterHtml . '<table><thead><tr><th>Job</th><th>Project</th><th>Status</th><th>Attempts</th><th>Last error</th></tr></thead><tbody>' . $rows . '</tbody></table>' . $pager . '</div></section>'
         . '</div><div class="stack">' . $health . designLibrarySection($app, $csrf, $base) . '</div></div>'
