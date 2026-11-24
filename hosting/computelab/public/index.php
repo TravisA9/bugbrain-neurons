@@ -447,7 +447,7 @@ try {
         $design = $app->topDesign();
         $etag = '"design-' . substr(sha1((string) json_encode($design)), 0, 16) . '"';
         header('ETag: ' . $etag);
-        if (trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? '')) === $etag) {
+        if (App::etagMatches((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''), $etag)) {
             http_response_code(304);
             header('Cache-Control: no-cache');
             return;
@@ -466,7 +466,7 @@ try {
         }
         header('ETag: ' . $replay['etag']);
         header('Cache-Control: public, max-age=300');
-        if (trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? '')) === $replay['etag']) {
+        if (App::etagMatches((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''), $replay['etag'])) {
             http_response_code(304);
             return;
         }

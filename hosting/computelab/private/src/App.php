@@ -1995,6 +1995,29 @@ final class App
     public const EXPLORE_MANIFEST_BYTES = 65536;
     public const EXPLORE_REPLAY_BYTES = 524288;
 
+    /* True when an If-None-Match header matches $etag: a comma-separated list, each tag trimmed, a leading W/
+     * (weak, as a CDN may rewrite it) ignored, and '*' matching anything. */
+    public static function etagMatches(string $header, string $etag): bool
+    {
+        $want = $etag;
+        if (strncmp($want, 'W/', 2) === 0) {
+            $want = substr($want, 2);
+        }
+        foreach (explode(',', $header) as $tag) {
+            $tag = trim($tag);
+            if ($tag === '*') {
+                return true;
+            }
+            if (strncmp($tag, 'W/', 2) === 0) {
+                $tag = substr($tag, 2);
+            }
+            if ($tag !== '' && $tag === $want) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function exploreDir(): string
     {
         return (string) ($this->config['explore_dir'] ?? dirname(__DIR__) . '/explore');

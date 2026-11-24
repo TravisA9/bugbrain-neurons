@@ -1358,6 +1358,13 @@ file_put_contents($exDir . '/design.json', $goodManifest);
 file_put_contents($exDir . '/read-r135.json', '{"changed":true}');
 check($exApp->exploreReplay('read') === null && $exApp->exploreReplay('name') !== null,
     'a replay whose bytes no longer match the manifest hash is not served');
+$tag = '"R135-read-0123456789abcdef"';
+check(App::etagMatches($tag, $tag) && App::etagMatches('W/' . $tag, $tag) && App::etagMatches(' "x", W/' . $tag . ' ,"y"', $tag)
+    && App::etagMatches('*', $tag) && App::etagMatches($tag, 'W/' . $tag),
+    'If-None-Match matches an exact tag, a weak W/ tag, a tag inside a list, and *');
+check(!App::etagMatches('', $tag) && !App::etagMatches('"R135-read-0000000000000000"', $tag) && !App::etagMatches('W/"other", "x"', $tag)
+    && !App::etagMatches('R135-read-0123456789abcdef', $tag) && !App::etagMatches(',,', $tag),
+    'If-None-Match does not match an empty header, a different tag, a list without it, or an unquoted tag');
 array_map('unlink', glob($exDir . '/*'));
 rmdir($exDir);
 

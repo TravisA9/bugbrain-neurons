@@ -617,6 +617,13 @@ check($replayResp['status'] === 200 && str_contains($replayResp['header'], 'Cach
     && str_contains($replayTag[1], 'R135-read-') && strlen((string) (json_decode($replayResp['body'], true)['hits'] ?? '')) > 1000
     && http($base . '/explore/replay/read.json', 'GET', null, ['If-None-Match: ' . $replayTag[1]])['status'] === 304,
     'a replay is served with a cache header and a manifest-version ETag');
+$cond = static function (string $url, string $inm) use ($base): int { return http($base . $url, 'GET', null, ['If-None-Match: ' . $inm])['status']; };
+check(isset($designTag[1], $replayTag[1])
+    && $cond('/explore/design.json', 'W/' . $designTag[1]) === 304 && $cond('/explore/replay/read.json', 'W/' . $replayTag[1]) === 304
+    && $cond('/explore/design.json', '"nope", W/' . $designTag[1]) === 304 && $cond('/explore/replay/read.json', '"nope" , ' . $replayTag[1]) === 304
+    && $cond('/explore/design.json', '*') === 304
+    && $cond('/explore/design.json', '"nope", W/"also-nope"') === 200 && $cond('/explore/replay/read.json', 'W/"R135-read-0000000000000000"') === 200,
+    'design.json and replays answer 304 to a weak tag or a list containing the tag, and 200 to a mismatch');
 $badReplay = true;
 foreach (['/explore/replay/evil.json', '/explore/replay/design.json', '/explore/replay/..%2Fdesign.json', '/explore/replay/READ.json', '/explore/replay/read.php'] as $u) {
     $r = http($base . $u);
