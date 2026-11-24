@@ -5040,3 +5040,7 @@ short): the pre-registered "every seed >= .45" is not met; the memory is present
 Mean >= 0 met; every seed >= -.003 missed by one seed (-.0035). **R144 summary:** clear mean gain on long text and on the delay-copy memory (probe .517 vs ~.22
 off), early-text accuracy cost capped (fables -.0028, text1000 -.0021), other tasks identical; the strict per-seed bars each fail on one marginal seed
 (probe k2967 .448 < .45; book k2961 -.0035 < -.003). Promotion decision left to Travis.
+**Decision (Travis, Nov 24 05:40 CT): R144 PROMOTED.** The strict pre-registered rule failed on two per-seed bars (probe k2967 .448 < .45; book100k
+k2961 -.0035 < -.003); Travis promoted it because the misses are small and the means are clearly positive. R144 (R140 S2 look-back on the R135
+candidate, 4x) is the standing champion setting: `run/champion.txt` (see `run/CHAMPION.md`). Engine defaults unchanged; every part remains an
+opt-in flag.

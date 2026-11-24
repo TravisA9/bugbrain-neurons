@@ -778,3 +778,9 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   Pre-registered book rule: mean >= 0 MET; every seed >= -.003 NOT MET (1/16: k2961 -.0035; k2962 = -.0030 exactly, meets). Prediction (+.003..+.006, 1-4 seeds
   below -.003) held. Overall R144 vs pre-reg: tasks / fables / text1000 within caps (Travis decisions); probe 15/16 >= .45 (k2967 .448); book 15/16 >= -.003.
   Strict verdict: FAIL on two per-seed bars (one seed each, both marginal); mean effects clearly positive. Decision is Travis's.
+
+# R144 PROMOTED (Travis, 05:40 CT Tue Nov 24): "the misses are small and the means are clearly positive"
+- Strict pre-registered rule FAILED on two per-seed bars (probe k2967 .448 < .45; book100k k2961 -.0035 < -.003); all means positive
+  (book100k +.0041, probe .517, other tasks identical, fables/text costs inside Travis's cap). Travis promoted R144 (S2) on the positive means.
+- Standing champion = run/champion.txt (R144 S2, 4x; run/champion_base.txt without size; notes run/CHAMPION.md). Engine defaults unchanged
+  (v47 / DV 40); all parts remain opt-in flags (off = bit-identical). New rounds use run/champion.txt as the control arm.

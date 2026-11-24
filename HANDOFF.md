@@ -23,7 +23,7 @@ Shared coordination protocol for all AI agents (Codex, Gemini, Grok Bot / BrainB
 - **Defaults:** v47 / `DEFAULTS_VERSION` 40 is still the default on both branches. Everything below is opt-in flags.
 - **Optimized dynamic kernel** (`worker/js/core/net.js`): gFast0 evaluation is conditionally gated to `g1 - g0 <= 2048 || params.granFast === 2`. About 5× execution speedup at 32k neurons; 64k runs 3.1× faster than historical 32k baselines.
 - **Composition limits** (`worker/spikefoundry/composition.js`): standard limits for `chain()` and `parallel()` extended from the original caps (4,096 neurons / 32,768 edges) to 262,144 neurons / 4,194,304 edges / 8,192 tail. Verified stable up to 8,320 neurons and 70,460 edges within a 50 ms tick window.
-- **Best known single setting (BrainBot, branch `cursor/relgrowth`, not yet default):** relGrowth + pathBudget + rgDiv 2 + trophic 16 + recvBudget 2 + postCapRel 1.5 + anSelf 1, granule readout with granExact / granKal / granOneShot 0.03 / granTrace, plus word chunks (granChunk 1 + granChunkGate 2 + granScale 2 → 64k pool at 4×). Full argument string: `run/r140/cand_base.txt`.
+- **Standing champion (BrainBot, branch `cursor/relgrowth`, promoted Nov 24, 2026 by Travis; not an engine default):** **R144** = the R135 candidate (relGrowth + pathBudget + rgDiv 2 + trophic 16 + recvBudget 2 + postCapRel 1.5 + anSelf 1, granule readout with granExact / granKal / granOneShot 0.03 / granTrace, word chunks granChunk 1 + granChunkGate 2 + granScale 2 → 64k pool at 4×) **+ R140 long look-back** (lagDepth 32 + lagBlur 1 + lagGate 1 + lagSurp 2), at 4×. Full argument string: `run/champion.txt` (size-free: `run/champion_base.txt`; notes and gate record: `run/CHAMPION.md`). New rounds use it as the control arm. Previous standing setting: `run/r140/cand_base.txt` (R135).
 
 ### R123–R140 results (BrainBot, Nov 17–20; details in `RESULTS.md` / `STATUS.md`)
 
@@ -41,6 +41,9 @@ Scores are held-out next-letter accuracy (heldAcc, 2,000 held letters) on the bo
 | R136–R138 | phrase units, learned word categories, pool grown on demand, separate level-2 pool | **Negative.** Second-level keys recur too rarely to help at book100k; in a shared pool they crowd out chunks (−.007 to −.0145). A grown pool lacks the born random-claw tuple coverage of a fixed pool. All flags off. |
 | R139 | 8× vs 4× with a 128k pool, book100k, 3 seeds | **8× = 4× + 128k pool on every seed** (.530/.5215/.5255 vs .5295/.5215/.5255; +.0028 over 4×/64k). Brain size beyond 4× adds nothing beyond the pool. Not promoted. |
 | R140 | Long look-back: `P.lagDepth`, `lagBlur`, `lagCtx`, `lagGate`, `lagPrune`, `lagSurp` | **Winner: lagDepth 32 + lagBlur 1 + lagGate 1 + lagSurp 2** (far-back copy detectors drive the readout only when the short-context prediction is uncertain, Laplace-smoothed). Delay-copy probe .530/.508/.569/.515 on 4 seeds vs ~.21 off; book30k +.0005/−.001/+.006/+.0075 (no loss). Cross-task: order2, cycle, order3, K4, text unchanged; **fables4000 −.043 fitness (acc .4397→.4363), worse on 3/3 seeds** (inside the −.05 bound, under diagnosis in R141). book100k confirmation running. D32 exact (no blur/gate) costs book −.04; lagPrune refuted. |
+| R141–R142 | Fables-cost diagnosis and fixes (`P.lagEvid`, `P.lagMarg`) | The fables accuracy cost (−.003) is carried by the same copy votes that hold the long-delay memory; every rule that removes it removes the memory (lagMarg 4: probe .24). Flags off. |
+| R143 | fables at 16k letters; prose name-recall probe (`sw/nameprobe.js`); `P.granWord` (untested, off) | Fables cost halves with more text (−.0017, ~0 in the last quarter). One-shot names in prose: letters 2+ recalled .63–.72 at the 2nd mention vs ~.12 at the 1st, every gap 5–127, both arms (one-shot exact-tuple granules; the look-back adds nothing for names seen once). |
+| R144 | **Promotion gate for R140 S2**, 16 fresh seeds (k2960–2971, 2973–2976), paired vs the R135 candidate at 4× | book100k **+.0041** (t 3.4, 13+/3−; worst −.0035); delay-copy probe **.517** mean (15/16 ≥ .45, worst .448); fables4000 acc −.0028, text1000 acc −.0021 (early-text cost of the copy votes, capped); order3 / K4 / seqchoice identical. Strict rule failed on two per-seed bars by one seed each; **promoted by Travis Nov 24 05:40 CT** on the positive means → standing champion (`run/champion.txt`). |
 
 ### Known dead ends (do not re-test unchanged)
 
@@ -58,7 +61,7 @@ A 1×–4× grown developmental sheet (`scaleInvariant=1` / relGrowth + rgDiv) p
 
 ### Key open targets
 
-- **Long context / memory:** turn the R140 look-back into a promoted setting (fix the fables loss, confirm on book100k), then move from software word keys toward grown slower regions that learn event sequences.
+- **Long context / memory:** ~~turn the R140 look-back into a promoted setting~~ done (R144 champion). Next: move from software word keys and the symbol-level delay register toward grown slower regions that learn event sequences; reduce the early-text cost of the copy votes without losing the memory.
 - **Plasticity probe gap:** narrow the gap between the optimal linear readout probe (~0.40 on standard book) and the unassisted local plastic rules (~0.35).
 - ~~Generation trajectories: resolve greedy generation loops (y242, y243).~~ **Solved in R122** with genTemp sampling; greedy argmax decoding is a limit cycle by construction.
 
@@ -353,4 +356,23 @@ Run with --density-control pickup.json. Only 6.58% of decisions received pickup-
 * **Immediate Next Step:**
   * [ ] R141: fables4000 diagnosis (G / S1 / D8S2 × k2951–2953) and book100k S2 confirm (k2951/k2953/k2954 vs .523/.519/.5265) — running on the box.
   * [ ] Push local `cursor/relgrowth` commits through the TacoBell bundle.
+  * [ ] Merge plan with Codex's `travis/sunday-wip` (Section 2b).
+
+### Session Handoff Log — Grok Bot (BrainBot)
+
+* **Agent & Timestamp:** Grok Bot (BrainBot) | Nov 24, 2026, ~6 AM CT
+* **Workspace / Commit / Branch:** `/workspace/sweep` | Commit: this file's commit (after `2b02df76`) | Branch: `cursor/relgrowth`
+* **Objective & Hypothesis:**
+  * *Objective:* R141–R144: fix or bound the fables cost of the R140 look-back, then run the full promotion gate.
+  * *Hypothesis (R144, pre-registered 13:20 CT Nov 23):* book100k paired mean ≥ 0 with every seed ≥ −.003; probe ≥ .45 every seed; other tasks fitness d ≥ −.05; fables within the stop rule.
+* **Exact Files Modified or Created:** `js/core/net.js`, `base.js` (P.lagEvid, P.lagMarg, P.granWord; off = bit-identical), `test_core.js`, `sw/nameprobe.js`, `run/r141`–`run/r144`, `run/champion.txt`, `run/champion_base.txt`, `run/CHAMPION.md`, `RESULTS.md`, `STATUS.md`, this file.
+* **Commands Run & Verified Results:**
+  * `node test_core.js` -> ALL OK (Nov 24, champion commit)
+  * `node spikefoundry/scenario_test.js` -> PASSED
+  * R144: 96 task runs + 16 probes + 32 book100k runs, 0 failures (see Section 2 table / `RESULTS.md`).
+* **Critiques, Surprises & Open Questions:**
+  * *Failures & Anomaly Analysis:* The early-text cost (fables −.0028, text1000 −.0021, first quarter only) is the copy votes themselves (silencing them restores the candidate exactly on text1000).
+  * *Verification Requests:* Per-seed spread of the probe (.448–.574) and of book100k (−.0035 to +.0125) — a larger or slower memory region should tighten it.
+* **Immediate Next Step:**
+  * [ ] New rounds use `run/champion.txt` as the control arm.
   * [ ] Merge plan with Codex's `travis/sunday-wip` (Section 2b).
