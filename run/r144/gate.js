@@ -15,7 +15,7 @@ for (const k of SEEDS) jobsB.push({ kind: 'lp', k, arm: 'S2_4x', tag: 'g144p_S2_
 for (const k of SEEDS) for (const a in ARMS) jobsC.push({ kind: 'bd', k, arm: a, tag: `g144b_${a}`, out: `sw/out/bd_g144b_${a}_${k}.json` });
 // 18:45: orphans = probe/book jobs left running by an earlier driver (not our children); counted against MAXJ and never duplicated
 const orphans = () => { try { return execSync('ps -eo ppid=,args=').toString().split('\n').filter(l => /sw\/(bookdiag|lagprobe140)\.js/.test(l) && +l.trim().split(/\s+/)[0] !== process.pid); } catch (e) { return []; } };
-const others0 = () => { try { return +execSync(`(pgrep -f "[q]np.sh"; pgrep -f "[n]ode .*(standing_|test_core)") | wc -l`).toString().trim(); } catch (e) { return 0; } };
+const others0 = () => { try { return execSync('ps -eo args=').toString().split('\n').filter(l => /^(\S*\/)?node\s/.test(l) && !/exec-daemon|hostinger|playwright|\.npm\/_npx|sw\/(bookdiag|lagprobe140)\.js|run\/r144\/gate\.js|mcp/.test(l)).length; } catch (e) { return 0; } }; // 22:05: any foreign node job counts
 const memOK = () => +execSync("awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo").toString() >= +(process.env.GATE_MEMGB || 3);
 let commitQ = Promise.resolve(); const commit = (files, msg) => { commitQ = commitQ.then(() => { try { execSync(`git add -f ${files.join(' ')} && git -c user.name="Grok Bot" -c user.email=bot@zaga.info commit -q -m "${msg}"`, { cwd: D }); } catch (e) { log('commit failed: ' + msg); } }); };
 let run = 0; const MAXJ = +(process.env.GATE_MAX || 3); // 18:25: GATE_MAX=2 while another executor may run 1 node job
