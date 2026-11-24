@@ -38,6 +38,14 @@ return [
     /* Job types never supplied or handed out (config only; rows are kept). Recommended once experiments run:
      * ['bb-order3', 'bb-chunk-fables', 'bb-chunk-order3', 'sf-propose', 'sf-train', 'sf-vision'] */
     'retire_job_types' => [],
+    /* Inverse designer compute policy (all off by default = behaviour as before). Suggested once experiments run:
+     * gate 1, margin 1, stall 300, share 0.1, composition queue 4, composition first. */
+    'inverse_promotion_audit_gate' => false,   // also require the held-back audit score to improve before promoting
+    'inverse_promotion_audit_margin' => 1,     // audit trials (of 36) the candidate must gain over the champion
+    'inverse_stall_jobs' => 0,                 // N finished plain inverse jobs with no promotion -> stop plain inverse supply
+    'inverse_share_max' => 0,                  // 0..1: share of online slots plain inverse may hold while other work waits
+    'inverse_composition_queue' => 1,          // composition pilots kept in flight
+    'inverse_composition_first' => false,      // hand out composition pilots before plain inverse jobs
     'login_per_minute' => 8,
     'api_per_minute' => 120,
     'design_per_minute' => 60,

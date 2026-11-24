@@ -65,6 +65,21 @@ Branch `cursor/worker-experiments` (based on `e46d14b1`, the Phase 1 worker), fo
   `result.json` as `research`; heartbeat runtime adds `experiments: 1` and `memGB`.
 - The R144 engine (`js/core/*`, `js/envs/sequence.js` from relgrowth 46445869). Every R144 flag is opt-in, off = bit-identical.
 
+## Inverse designer compute policy (second commit; all off by default)
+
+DCB found the shared inverse designer takes ~99% of volunteer jobs, re-solves the same 12 promotion behaviours, and promotes on
+them without looking at the audit set (likely overfitting). Config knobs, each tested on and off:
+
+| Config | Effect |
+|---|---|
+| `inverse_promotion_audit_gate`, `inverse_promotion_audit_margin` | Promotion also needs audit passes >= champion audit + margin; otherwise outcome `audit-not-better`. |
+| `inverse_stall_jobs` | After N finished plain inverse jobs with no promotion, plain inverse supply stops (composition and other work go on); a promotion restarts the count. `/experiments.json` shows `inverse.stalled` and a note. |
+| `inverse_share_max` | Once plain inverse jobs hold this share of online slots, a claim skips them whenever other work is queued (no idling when nothing else exists). |
+| `inverse_composition_queue`, `inverse_composition_first` | More composition pilots in flight, handed out first. |
+
+Not done here (needs worker or page work): auto-growing composition size/parts, enlarging the gene grid / behaviour split,
+and de-duplicating the Discoveries page.
+
 ## Turning it on (after Travis approves each step)
 
 1. Deploy the coordinator (this branch, after Phase 1 `8e885e1d`). Leave `experiments_enabled` false. Run `upgrade.php` (new tables).

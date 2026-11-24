@@ -375,8 +375,8 @@ try {
         return;
     }
     if ($path === '/experiments.json' && $method === 'GET') {
-        /* Server-defined experiments: plan state and aggregated results (no computer names). 404 while off. */
-        if (!$app->experimentsEnabled()) {
+        /* Server-defined experiments: plan state and aggregated results (no computer names). 404 while experiments and the inverse policy are all off. */
+        if (!$app->experimentsReportOn()) {
             coord_json(404, ['error' => 'Not found.']);
             return;
         }

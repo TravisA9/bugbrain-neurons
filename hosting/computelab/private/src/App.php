@@ -1277,6 +1277,7 @@ final class App
                     }
                 }
             }
+            $ranked = $this->rebalanceInverse($ranked, $expJobs !== [] || $arenaJobs !== []);
             $ranked = array_merge($expJobs, $arenaJobs, $ranked);
             $hasOther = false;
             foreach ($ranked as $item) {
@@ -1864,6 +1865,12 @@ final class App
             }
             if ($passes - array_sum($baseline) < 3 || $improvedTasks < 2) {
                 return 'below-margin';
+            }
+            /* Optional (inverse_promotion_audit_gate): the promotion set is fixed and re-solved by every job, so a gain there
+             * can be overfitting. Also require the held-back audit set to improve by inverse_promotion_audit_margin. */
+            if (!empty($this->config['inverse_promotion_audit_gate']) && $champion['auditPassed'] !== null
+                && $audit < $champion['auditPassed'] + max(0, (int) ($this->config['inverse_promotion_audit_margin'] ?? 1))) {
+                return 'audit-not-better';
             }
         }
         $bytes = @gzdecode(base64_decode($checkpoint['payload'], true), 38065);
@@ -4731,9 +4738,11 @@ final class App
             $low = (int) $project['low_water'] > 0 ? (int) $project['low_water'] : max(1, $online);
             $cap = (int) $project['queue_cap'] > 0 ? (int) $project['queue_cap'] : 8;
             $queued = $this->claimableQueued((string) $project['id']);
-            if ($inverse && !empty($this->config['inverse_composition']) && $queuedAll < $globalCap
-                && !$this->db->query("SELECT 1 FROM jobs WHERE template_id = 'sf-inverse-experiment'
-                    AND status IN ('queued','leased') AND spec_json LIKE '%inverseComposition%' LIMIT 1")->fetchColumn()) {
+            /* Composition pilots in flight: at most inverse_composition_queue (default 1, as before). */
+            $compWant = max(1, min(32, (int) ($this->config['inverse_composition_queue'] ?? 1)));
+            $compOpen = $inverse && !empty($this->config['inverse_composition']) ? (int) $this->db->query("SELECT COUNT(*) FROM jobs WHERE template_id = 'sf-inverse-experiment'
+                    AND status IN ('queued','leased') AND spec_json LIKE '%inverseComposition%'")->fetchColumn() : $compWant;
+            for ($ci = $compOpen; $ci < $compWant && $queuedAll < $globalCap; $ci++) {
                 $created = $this->createJobWithFreshSeed($template, 0.7, function ($seed) {
                     $sequence = !empty($this->config['inverse_sequence']) && $seed % 2 === 0;
                     return [
@@ -4748,7 +4757,8 @@ final class App
                 }
             }
             $guard = 0;
-            while ($queued < $low && $queued < $cap && $queuedAll < $globalCap && $guard < 20) {
+            $plainStalled = $inverse && $this->inverseStalled();
+            while (!$plainStalled && $queued < $low && $queued < $cap && $queuedAll < $globalCap && $guard < 20) {
                 $task = $inverse ? 'inverse design' : $this->supplyTask((string) $project['id']);
                 if ($task === '') {
                     break;
@@ -4801,11 +4811,85 @@ final class App
         return $queuedAll;
     }
 
+    /* ---- Inverse designer compute policy (all off by default) ---- */
+
+    /** Slots of computers seen in the last 3 minutes (a computer running four jobs at once counts four). */
+    private function onlineSlots(): int
+    {
+        $online = 0;
+        foreach ($this->db->query('SELECT last_seen, revoked, paused, runtime_json FROM workers')->fetchAll() as $row) {
+            if ((int) $row['revoked'] === 1 || empty($row['last_seen']) || (int) $row['paused'] === 1
+                || (strtotime($this->now()) - strtotime((string) $row['last_seen'])) > 180) {
+                continue;
+            }
+            $rt = json_decode((string) ($row['runtime_json'] ?? ''), true);
+            $online += max(1, min(16, is_array($rt) && isset($rt['slots']) ? (int) $rt['slots'] : 1));
+        }
+        return $online;
+    }
+
+    private static function plainInverse(array $entry): bool
+    {
+        return ($entry['spec']['mode'] ?? '') === 'inverse-experiment' && empty($entry['spec']['inverseComposition']);
+    }
+
+    /* inverse_composition_first: composition pilots before plain inverse jobs.
+     * inverse_share_max (0..1): once plain inverse jobs hold that share of the online slots, a claim skips them whenever
+     * any other work is available (with nothing else to run the computer still gets one, so nobody idles). */
+    private function rebalanceInverse(array $ranked, bool $otherWork): array
+    {
+        if (!empty($this->config['inverse_composition_first'])) {
+            $first = array_values(array_filter($ranked, static fn ($e) => !self::plainInverse($e) && !empty($e['spec']['inverseComposition'])));
+            $rest = array_values(array_filter($ranked, static fn ($e) => self::plainInverse($e) || empty($e['spec']['inverseComposition'])));
+            $ranked = array_merge($first, $rest);
+        }
+        $share = (float) ($this->config['inverse_share_max'] ?? 0);
+        if ($share <= 0 || $share >= 1) {
+            return $ranked;
+        }
+        $others = array_values(array_filter($ranked, static fn ($e) => !self::plainInverse($e)));
+        if ($others === [] && !$otherWork) {
+            return $ranked;
+        }
+        $leased = (int) $this->db->query("SELECT COUNT(*) FROM leases l JOIN jobs j ON j.id = l.job_id
+            WHERE j.template_id = 'sf-inverse-experiment' AND j.spec_json NOT LIKE '%inverseComposition%'")->fetchColumn();
+        $allowed = max(1, (int) ceil($share * max(1, $this->onlineSlots())));
+        return $leased >= $allowed ? $others : $ranked;
+    }
+
+    /** inverse_stall_jobs = N (0 = off): after N finished inverse jobs with no champion promotion, plain inverse supply stops
+     * (composition pilots and other work go on); a promotion starts the count again. Shown in /experiments.json. */
+    public function inverseStalled(): bool
+    {
+        $n = (int) ($this->config['inverse_stall_jobs'] ?? 0);
+        return $n > 0 && $this->inverseJobsSincePromotion() >= $n;
+    }
+
+    public function inverseJobsSincePromotion(): int
+    {
+        try {
+            $since = (string) ($this->inverseChampion()['promotedAt'] ?? '');
+        } catch (RuntimeException $e) {
+            $since = '';
+        }
+        $st = $this->db->prepare("SELECT COUNT(*) FROM results r JOIN jobs j ON j.id = r.job_id
+            WHERE j.template_id = 'sf-inverse-experiment' AND r.status = 'done' AND j.spec_json NOT LIKE '%inverseComposition%' AND r.created_at > ?");
+        $st->execute([$since]);
+        return (int) $st->fetchColumn();
+    }
+
     /* ---- Server-defined experiments (Experiments.php; config experiments_enabled, off by default) ---- */
 
     public function experimentsEnabled(): bool
     {
         return !empty($this->config['experiments_enabled']);
+    }
+
+    /** /experiments.json is served when experiments or any inverse compute policy is on. */
+    public function experimentsReportOn(): bool
+    {
+        return $this->experimentsEnabled() || !empty($this->config['inverse_promotion_audit_gate'])
+            || (int) ($this->config['inverse_stall_jobs'] ?? 0) > 0 || (float) ($this->config['inverse_share_max'] ?? 0) > 0;
     }
 
     /** Job types the owner retired in config (retire_job_types): never supplied, never handed out. Default: none. */
@@ -5008,7 +5092,21 @@ final class App
             $out[] = ['status' => $spec['status'], 'runs' => $counts, 'queuedNext' => count($plan['need'])] + $plan['report'];
         }
         $catalog = is_file($this->experimentsDir() . '/CATALOG.json') ? json_decode((string) file_get_contents($this->experimentsDir() . '/CATALOG.json'), true) : null;
-        return ['enabled' => $this->experimentsEnabled(), 'protocol' => Experiments::PROTOCOL, 'experiments' => $out,
+        $stallN = (int) ($this->config['inverse_stall_jobs'] ?? 0);
+        $inverse = ['jobsSincePromotion' => $this->inverseJobsSincePromotion(), 'stallAfter' => $stallN ?: null,
+            'stalled' => $this->inverseStalled(), 'shareMax' => (float) ($this->config['inverse_share_max'] ?? 0) ?: null,
+            'auditGate' => !empty($this->config['inverse_promotion_audit_gate'])];
+        try {
+            $ch = $this->inverseChampion();
+            $inverse['champion'] = ['generation' => $ch['generation'], 'promotionPassed' => is_array($ch['passes']) ? array_sum($ch['passes']) : null,
+                'auditPassed' => $ch['auditPassed'], 'of' => 36, 'promotedAt' => $ch['promotedAt']];
+        } catch (RuntimeException $e) {
+            $inverse['champion'] = null;
+        }
+        if ($inverse['stalled']) {
+            $inverse['note'] = 'The shared inverse designer has not been promoted in ' . $inverse['jobsSincePromotion'] . ' jobs, so its compute moved to other work.';
+        }
+        return ['enabled' => $this->experimentsEnabled(), 'protocol' => Experiments::PROTOCOL, 'experiments' => $out, 'inverse' => $inverse,
             'specErrors' => $loaded['errors'], 'retired' => array_values((array) ($this->config['retire_job_types'] ?? [])),
             'catalog' => is_array($catalog) ? $catalog : null, 'at' => $this->now()];
     }

@@ -239,6 +239,111 @@ $keep->createJob('bb-order3', 'old', 1, 77);
 $kw = $keep->enroll('k-pc', ['spikefoundry', 'bugbrain'], 2, true);
 check(($keep->claim($keep->workerByToken($kw['token']))['id'] ?? '') !== '', 'with the default (empty) retire list the same job is handed out as before');
 
+/* ---- Inverse designer compute policy (inverse_promotion_audit_gate, inverse_stall_jobs, inverse_share_max, composition) ---- */
+$candidate = ['genes' => [1, 2, 0, 0, 0, 0, 0], 'freshCount' => 192, 'replay' => [[0, 0], [2, 1]]];
+$ckpt = ['version' => 'inverse-designer-1', 'encoding' => 'f32le-gzip', 'payload' => base64_encode(gzencode(str_repeat("\0", 38064)))];
+function sharedSubmit(App $a, array $w, array $job, array $cand, ?array $inc, int $audit, ?int $incAudit): string
+{
+    global $candidate, $ckpt;
+    $as = $job['spec']['inverseShared'];
+    $a->submitResult($w, $job['id'], ['status' => 'done', 'synthetic' => true, 'research' => [
+        'version' => 'inverse-designer-1', 'seed' => $job['spec']['seed'], 'checkpoint' => $ckpt,
+        'discoveries' => [$candidate + ['accuracy' => 0.6, 'recall' => 0.8, 'specificity' => 0.4, 'demoAccuracy' => 0.6]],
+        'promotion' => ['benchmark' => $as['benchmark'], 'parentGeneration' => $as['generation'], 'candidate' => $cand, 'incumbent' => $inc,
+            'auditPassed' => $audit, 'auditTrials' => 36, 'incumbentAuditPassed' => $incAudit]]]);
+    return $a->inverseExperimentReport($job['spec']['seed'])['research']['promotion']['outcome'];
+}
+$p12 = array_merge(array_fill(0, 12, 1), array_fill(0, 24, 0));
+$p15 = $p12;
+$p15[12] = $p15[13] = $p15[15] = 1;
+foreach ([false, true] as $gate) {
+    [$ia] = lab(['inverse_gallery' => true, 'inverse_shared_training' => true, 'inverse_promotion_audit_gate' => $gate]);
+    $iw = $ia->workerByToken($ia->enroll('inv-pc', ['spikefoundry'], 2, true)['token']);
+    for ($sd = 300; $sd < 303; $sd++) {
+        $ia->createJob('sf-inverse-experiment', 'Shared', 1, $sd, ['inverseGallery' => true]);
+    }
+    $j0 = $ia->claim($iw, 0, false, 1, true, true, true);
+    sharedSubmit($ia, $iw, $j0, $p12, null, 12, null);
+    $j1 = $ia->claim($iw, 0, false, 1, true, true, true);
+    $out = sharedSubmit($ia, $iw, $j1, $p15, $p12, 12, 12);
+    check($gate ? $out === 'audit-not-better' : $out === 'promoted',
+        $gate ? 'audit gate on: a promotion-set gain with no audit gain is not promoted' : 'audit gate off: the same report promotes, as before');
+    if ($gate) {
+        $j2 = $ia->claim($iw, 0, false, 1, true, true, true);
+        check(sharedSubmit($ia, $iw, $j2, $p15, $p12, 13, 12) === 'promoted', 'audit gate on: the same gain with a better audit score promotes');
+    }
+}
+[$st, , $stClock] = lab(['inverse_gallery' => true, 'inverse_shared_training' => true, 'inverse_stall_jobs' => 2]);
+$sw = $st->workerByToken($st->enroll('stall-pc', ['spikefoundry'], 2, true)['token']);
+for ($sd = 400; $sd < 404; $sd++) {
+    $st->createJob('sf-inverse-experiment', 'Shared', 1, $sd, ['inverseGallery' => true]);
+}
+$a0 = $st->claim($sw, 0, false, 1, true, true, true);
+sharedSubmit($st, $sw, $a0, $p12, null, 12, null);
+check(!$st->inverseStalled() && $st->inverseJobsSincePromotion() === 0, 'a promotion resets the stall count');
+$stClock->t = '2026-11-24T18:01:00+00:00';
+for ($i = 0; $i < 2; $i++) {
+    $b = $st->claim($sw, 0, false, 1, true, true, true);
+    sharedSubmit($st, $sw, $b, $p12, $p12, 12, 12);
+}
+check($st->inverseStalled() && $st->inverseJobsSincePromotion() === 2, 'two jobs with no promotion mark the shared designer stalled (inverse_stall_jobs 2)');
+$st->db->exec("DELETE FROM jobs WHERE status = 'queued'");
+$st->db->prepare("REPLACE INTO supply_state (id, ran_at, note) VALUES ('global', '2000-01-01T00:00:00+00:00', 'x')")->execute();
+$st->db->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute(['2026-11-24T18:01:00+00:00', $sw['id']]);
+$st->saveSupply('spikefoundry', true, 1, 4, 0);
+$st->replenishJobs();
+check((int) $st->db->query("SELECT COUNT(*) FROM jobs WHERE status = 'queued' AND template_id = 'sf-inverse-experiment'")->fetchColumn() === 0,
+    'a stalled shared designer gets no new plain inverse jobs');
+[$st2] = lab(['inverse_gallery' => true, 'inverse_shared_training' => true]);
+$st2w = $st2->workerByToken($st2->enroll('nostall-pc', ['spikefoundry'], 2, true)['token']);
+$st2->db->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute(['2026-11-24T18:00:00+00:00', $st2w['id']]);
+$st2->saveSupply('spikefoundry', true, 1, 4, 0);
+$st2->replenishJobs();
+check((int) $st2->db->query("SELECT COUNT(*) FROM jobs WHERE status = 'queued' AND template_id = 'sf-inverse-experiment'")->fetchColumn() > 0,
+    'with inverse_stall_jobs off, supply fills plain inverse jobs as before');
+
+/* share cap: experiment work wins once plain inverse holds its share; with nothing else the computer still gets inverse */
+[$sh, $shDb] = lab(['inverse_gallery' => true, 'inverse_share_max' => 0.1, 'experiments_enabled' => true, 'experiments_dir' => $dir]);
+$shA = $sh->enroll('share-a', ['*'], 2, true);
+$sh->heartbeat($sh->workerByToken($shA['token']), ['runtime' => ['slots' => 4]]);
+for ($sd = 500; $sd < 504; $sd++) {
+    $sh->createJob('sf-inverse-experiment', 'Plain', 1, $sd, ['inverseGallery' => true]);
+}
+$g1 = $sh->claim($sh->workerByToken($shA['token']), 0, false, 1, true, true);
+$g2 = $sh->claim($sh->workerByToken($shA['token']), 1, false, 1, true, true);
+check($g1 !== null && $g2 !== null, 'share cap with no other work: the computer still gets inverse jobs (no idling)');
+$sh->createJob('sf-vision', 'Other work', 0.1, 77);
+$g3 = $sh->claim($sh->workerByToken($shA['token']), 2, false, 1, true, true);
+check(($g3['spec']['scenario'] ?? '') === 'vision', 'share cap reached (2 of ceil(0.1 x 4) = 1): other work is handed out before more inverse');
+[$ns] = lab(['inverse_gallery' => true]);
+$nsA = $ns->enroll('noshare', ['*'], 2, true);
+for ($sd = 500; $sd < 503; $sd++) {
+    $ns->createJob('sf-inverse-experiment', 'Plain', 1, $sd, ['inverseGallery' => true]);
+}
+$ns->createJob('sf-vision', 'Other work', 0.1, 77);
+$ns->claim($ns->workerByToken($nsA['token']), 0, false, 1, true, true);
+$n2 = $ns->claim($ns->workerByToken($nsA['token']), 1, false, 1, true, true);
+check(($n2['spec']['mode'] ?? '') === 'inverse-experiment', 'without inverse_share_max the queue order is unchanged');
+
+/* composition: more pilots in flight and first in line */
+[$co, $coDb] = lab(['inverse_gallery' => true, 'inverse_composition' => true, 'inverse_composition_queue' => 3, 'inverse_composition_first' => true]);
+$coW = $co->enroll('comp-pc', ['*'], 2, true);
+$coDb->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute(['2026-11-24T18:00:00+00:00', $coW['workerId']]);
+$co->saveSupply('spikefoundry', true, 1, 8, 0);
+$co->replenishJobs();
+check((int) $coDb->query("SELECT COUNT(*) FROM jobs WHERE spec_json LIKE '%inverseComposition%'")->fetchColumn() === 3, 'inverse_composition_queue 3 keeps three composition pilots in flight');
+$cj = $co->claim($co->workerByToken($coW['token']), 0, false, 1, true, true, true, true, true);
+check(!empty($cj['spec']['inverseComposition']), 'inverse_composition_first hands out a composition pilot before plain inverse jobs');
+[$co1, $co1Db] = lab(['inverse_gallery' => true, 'inverse_composition' => true]);
+$co1W = $co1->enroll('comp1-pc', ['*'], 2, true);
+$co1Db->prepare('UPDATE workers SET last_seen = ? WHERE id = ?')->execute(['2026-11-24T18:00:00+00:00', $co1W['workerId']]);
+$co1->saveSupply('spikefoundry', true, 1, 8, 0);
+$co1->replenishJobs();
+check((int) $co1Db->query("SELECT COUNT(*) FROM jobs WHERE spec_json LIKE '%inverseComposition%'")->fetchColumn() === 1, 'by default one composition pilot is in flight, as before');
+$rep = $st->experimentsReport();
+check(($rep['inverse']['stalled'] ?? null) === true && str_contains((string) ($rep['inverse']['note'] ?? ''), 'compute moved') && isset($rep['inverse']['champion']['auditPassed']),
+    'the report shows the designer champion (promotion and audit scores) and the stall note');
+
 foreach (glob($dir . '/*') ?: [] as $f) {
     unlink($f);
 }
