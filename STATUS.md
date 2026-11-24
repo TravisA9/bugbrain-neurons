@@ -743,3 +743,4 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   Phase C (book100k both arms x16) started 18:39 with GATE_MAX=2 (driver PID 290841). ~2 jobs per ~70+ min -> ETA ~Tue 13:00-15:00 CT awake time.
 - 18:42 Explore executor finished -> gate restarted with GATE_MAX=3 (driver PID 293272; orphan-aware: the 2 running k2960 book jobs counted and not duplicated). watch.sh commits bd JSONs and prints pairs (run/r144/csum.py).
 - 19:32 arena executor may run 1 light node job: gate restarted (PID 323772) with GATE_MAX=3 but a 3rd job only spawns if >= 5 GB available (GATE_MEMGB=5); running k2960 x2 + k2961 cand continue as orphans (counted, not duplicated). MemAvail 6 GB with 3 book jobs.
+- 19:40 phase C pair 1: k2960 S2-cand +.0060. Book job ~57 min, ~1.7 GB RSS; MemAvail 4.6 GB (browser on box) -> gate holds at 2 jobs. ETA ~Tue 10:00-12:00 CT awake time.
