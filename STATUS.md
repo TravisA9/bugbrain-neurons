@@ -780,6 +780,9 @@ Running sw/jobs_r136a.txt P=3: b100full (grow3+phrase) k2951/k2953, b100phr (sca
   Strict verdict: FAIL on two per-seed bars (one seed each, both marginal); mean effects clearly positive. Decision is Travis's.
 
 # R144 PROMOTED (Travis, 05:40 CT Tue Nov 24): "the misses are small and the means are clearly positive"
+
+Pushed Tue Nov 24 ~06:05 CT (bundle → TacoBell temp clone, deleted after): origin cursor/relgrowth b0e789cc → 1365dc7b (champion commit 46445869); cursor/explore-demos bfc1195e → e287003b (Explore top design R144, not deployed). ls-remote verified; spikefoundry-designer-22bf untouched (2a8c4a79).
+
 - Strict pre-registered rule FAILED on two per-seed bars (probe k2967 .448 < .45; book100k k2961 -.0035 < -.003); all means positive
   (book100k +.0041, probe .517, other tasks identical, fables/text costs inside Travis's cap). Travis promoted R144 (S2) on the positive means.
 - Standing champion = run/champion.txt (R144 S2, 4x; run/champion_base.txt without size; notes run/CHAMPION.md). Engine defaults unchanged
