@@ -469,7 +469,10 @@ if (fs.existsSync(V8)) { const O = require(V8)(), N8 = load(); let n = 0;
       console.log(`R142b lagMarg: off bit-identical; 1 blocks ${m1.st.lagNoFlip || 0} (fires ${m1.st.lagFired || 0} vs ${e0.st.lagFired || 0}), 2 blocks ${m2.st.lagNoFlip || 0}, 3 defers ${m3.st.lagDefer || 0}, 4 defers ${m4.st.lagDefer || 0}: ok`); }
     { const w0 = run(Object.assign({ granWord: 0 }, G2)), w1 = run(Object.assign({ granWord: 1 }, G2));
       assert.ok(x2.s === w0.s && x2.spk === w0.spk && x2.w.every((v, i) => v === w0.w[i]) && (w1.st.wordRec || 0) > 0 && w1.kb.some(k => k != null && k[0] === 'W') && w1.s > 1 / w1.K, `R143 granWord: 0 bit-identical to unset; 1: ${w1.st.wordRec || 0} word-start recruits, ${w1.st.wordFired || 0} fires`);
-      console.log(`R143 granWord: off bit-identical; on ${w1.st.wordRec || 0} word-start recruits, ${w1.st.wordFired || 0} fires, score ${w1.s.toFixed(3)}: ok`); }
+      console.log(`R143 granWord: off bit-identical; on ${w1.st.wordRec || 0} word-start recruits, ${w1.st.wordFired || 0} fires, score ${w1.s.toFixed(3)}: ok`);
+      const w2 = run(Object.assign({ granWord: 2 }, G2));   // wordunit: word keys replace the previous-word chunk keys
+      assert.ok(!w2.kb.some(k => k != null && k[0] === 'C') && w2.kb.some(k => k != null && k[0] === 'W') && !(w2.st.chunkRec > 0) && w2.s > 1 / w2.K, `wordunit granWord 2: C keys ${w2.kb.filter(k => k != null && k[0] === 'C').length}, W keys ${w2.kb.filter(k => k != null && k[0] === 'W').length}`);
+      console.log(`wordunit granWord 2: no chunk keys, ${w2.kb.filter(k => k != null && k[0] === 'W').length} word keys, ${w2.st.wordFired || 0} fires, score ${w2.s.toFixed(3)}: ok`); }
     console.log(`R140 lagDepth: off bit-identical; D16 ${ld.st.lagRec} recruits ${ld.st.lagFired} fires score ${ld.s.toFixed(3)}; blur ${lb.st.lagRec} recruits ${lb.st.lagFired} fires score ${lb.s.toFixed(3)}: ok`); } }
 // 9. R131 anSize (exploration noise x sqrt(sizeF); off = bit-identical, 1x unchanged)
 { const run = (ex, f) => { const S = require('./js/node_load.js')(); Object.assign(S.params, ex || {});

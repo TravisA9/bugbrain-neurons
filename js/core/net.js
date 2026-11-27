@@ -959,6 +959,7 @@ class SpikingNet {
     C.cnt[c0]++; if (C.delim < 0 || C.cnt[c0] > C.cnt[C.delim]) C.delim = c0;
     const key = 'C' + C.w + '|' + C.p + '|' + c0, j0 = gu.owned.get(key);
     if (j0 != null && gu.keyBy[j0] === key) { if (mt) mt[j0] += 1; }
+    else if (params.granWord === 2) { }   // wordunit: granWord 2 = word units REPLACE the previous-word chunk keys (no C key is ever recruited; the chunk state is still kept for the W keys)
     else if (params.granChunkGate === 2) { if (C.w !== '') { const seen = this.guChunkSeen(key); if (params.plasticity && this.learning && yTgt < 0.85 && this.guRecruit(key, 0, yTgt, !seen)) gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; } }   // R135 gate 2: first sighting recruits only into a free (never-matched) slot
     else if (C.w !== '' && (!(params.granChunkGate > 0) || this.guChunkSeen(key)) && params.plasticity && this.learning && yTgt < 0.85) { gu.st.chunkRec = (gu.st.chunkRec || 0) + 1; this.guRecruit(key, 0, yTgt); }
     if (params.granWord > 0 && C.p !== '') { const kW = 'W' + C.p + '|' + c0, jW = gu.owned.get(kW);   // R143 granWord: word-start key (partial word, letter) WITHOUT the previous word, so a word seen once (an invented name) is recognised again after any other word

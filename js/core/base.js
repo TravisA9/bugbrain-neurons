@@ -97,7 +97,7 @@ const params = {
   granChunkGate: 0,
   granScale: 0,
   // R136: granPhrase 1 = second-level phrase detectors (word before last, last word, partial, letter); granGrow f > 1 = pool cap f x granN, grown on demand by the pressure gate (granChunkGate 2); 0 = off, bit-identical
-  granPhrase: 0, granWord: 0,   // R143 granWord: word-start chunk keys without the previous word (net.js guChunkEvent)
+  granPhrase: 0, granWord: 0,   // R143 granWord: word-start chunk keys without the previous word (net.js guChunkEvent); 2 = word keys only (no previous-word chunk keys)
 
   granGrow: 0,
   // R137 granCat f > 0: second level of learned word categories (competitive prototypes of continuation profiles), Kmax = f x pool / 1000; 0 = off, bit-identical
