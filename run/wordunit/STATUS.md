@@ -1,0 +1,21 @@
+# Word-unit diagnostic (BRA wordunit) status
+- Worktree /workspace/wordunit-wt, branch cursor/wordunit (from cursor/xray 594cbdaa). Flag: P.granWord (R143 already had 1 = add word keys; new 2 = word keys replace previous-word chunk keys).
+- Scripts: /workspace/wordunit/{tests.sh,job.sh,queue.sh}; outputs sw/out/xray_<tag>_<arm>_<k>.json in the worktree; logs /workspace/wordunit/logs.
+- 15:31 CT: tests.sh started (test_core + sf, flags off + granWord 2 unit test)
+- 15:32 CT: PREREG.md written (before any word-unit run)
+- 15:32 CT: tune queue started (P=2 while tests run; 6 jobs: base/w1/w2 x k2977/k2978, 30k)
+- 15:53 CT: tests finished: test_core ALL OK exit 0 ; sf 10/10 PASS
+- 15:54 CT: done t30_base k2977 exit 0
+- 15:54 CT: done t30_w2 k2977 exit 0
+- 16:00 CT: committed e998963c; base k2977 hits identical to sweep x30 (bit-identical off). w2 k2977 held .505 vs .4935, new .3605 vs .3503, word share .96
+- 16:00 CT: confirm base queue started (k3001-3016, P=1). Headroom (WB interpolation) on new contexts: k2977 .374 vs counter .364; k2978 .383 vs .360
+- 16:19 CT: box did NOT restart (queues alive: w1 k2977, w2 k2978, base k3001 running). User machine offline. chain.sh (setsid) started: tune->pick->arm confirm->RESULT.md->x100
+- 16:19 CT: reworked: base-only queue stopped (its k3001 job keeps running); job.sh now enforces <=3 xray jobs box-wide + skips running jobs; chain.sh restarted (setsid)
+- 16:19 CT: committed 4f1b44e0 (local only: TacoBell offline, push pending)
+- 16:20 CT: done t30_w2 k2978 exit 0
+- 16:21 CT: done t30_w1 k2977 exit 0
+- 16:34 CT: done c30_base k3001 exit 0
+- 16:55 CT: done t30_w1 k2978 exit 0
+- 16:55 CT: done t30_base k2978 exit 0
+- 16:55 CT: queue jobs_tune.txt finished
+- 16:56 CT: tune done; chosen arm by PREREG rule: w1. Starting confirm queue (base+w1 interleaved, P=3)
