@@ -514,7 +514,7 @@ try {
             coord_json(404, ['error' => 'Not found.']);
             return;
         }
-        coord_json(200, $app->cached('experiments-report-v1', 30, static fn () => $app->experimentsReport()));
+        coord_json(200, $app->cached('experiments-report-v1', 30, static fn () => $app->experimentsReport(), 120));
         return;
     }
     if ($path === '/status.json' && $method === 'GET') {

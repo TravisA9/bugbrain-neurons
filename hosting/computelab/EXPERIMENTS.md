@@ -112,6 +112,18 @@ Pre-existing (not from this branch, same with every flag off): the claim's job f
 built in 2.2 s here (ALGORITHM=INPLACE, LOCK=NONE; reads and writes continue). After it: ref on the index, 200 rows,
 0.001-0.005 s; a full claim 0.004-0.007 s.
 
+## Run lifecycle (fix2)
+
+- A run's lease is renewed by the worker's check-ins; with no check-in for `lease_seconds` it expires, the job is re-queued
+  and any capable computer takes it again (results are recorded from whoever holds the lease).
+- A run whose worker keeps checking in but never reports loses its lease after `experiment_max_minutes`
+  (default 3 x the spec's `requires.minutes`, R146: 210 min; else 360) and goes through the normal retry path.
+- A job that used up `max_attempts` is `held`; the planner now counts it as a failed run and re-plans it (twice at most, then `blocked`).
+  Before, a held run showed as `running` for ever and the experiment never finished.
+- Per computer: `floor((memGB - experiment_mem_reserve_gb) / requires.memGB)` runs at once, where memGB is the computer's total
+  memory; `experiment_max_per_worker` (default 0 = off) caps it further.
+- `/experiments.json` is never served more than 120 s old (`at` is when it was built); `runs` shows `leased`, `oldestLeaseMin`, `maxMinutes`.
+
 ## Turning it on (after Travis approves each step)
 
 1. Deploy the coordinator (this branch, after Phase 1 `8e885e1d`). Leave `experiments_enabled` false. Run `upgrade.php` (new tables).

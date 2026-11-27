@@ -1177,6 +1177,7 @@ final class App
     public function expireLeases(): void
     {
         $now = $this->now();
+        $this->expireLongExperimentRuns();
         $st = $this->db->prepare('SELECT job_id, worker_id FROM leases WHERE until_at < ?');
         $st->execute([$now]);
         $rows = $st->fetchAll();
@@ -2130,7 +2131,7 @@ final class App
     public function inverseDiscoveriesDeduped(): array
     {
         /* Cached for a minute (page_cache, one builder at a time) so concurrent page views do not each run the 12 gallery queries. */
-        return $this->cached('discoveries-dedupe-v1', 60, fn () => $this->buildInverseDiscoveriesDeduped());
+        return $this->cached('discoveries-dedupe-v1', 60, fn () => $this->buildInverseDiscoveriesDeduped(), 600);
     }
 
     private function buildInverseDiscoveriesDeduped(): array
@@ -3557,13 +3558,18 @@ final class App
         return $ttl > 0 ? $this->cached('discoveries-v3', $ttl, $build) : $build();
     }
 
-    public function cached(string $key, int $ttl, callable $build): array
+    /* $maxStale (seconds, 0 = no limit, as before): a copy older than that is never served; it is rebuilt now.
+     * Without a limit the first visitor after a quiet spell gets whatever was built last, however old. */
+    public function cached(string $key, int $ttl, callable $build, int $maxStale = 0): array
     {
         $now = strtotime($this->now());
         $st = $this->db->prepare('SELECT body, built_at, building_until FROM page_cache WHERE k = ?');
         $st->execute([$key]);
         $row = $st->fetch();
         $old = $row ? json_decode((string) $row['body'], true) : null;
+        if ($maxStale > 0 && $row && $now - (int) $row['built_at'] > $maxStale) {
+            $old = null;
+        }
         if (is_array($old) && $now - (int) $row['built_at'] < $ttl) {
             return $old;
         }
@@ -5194,12 +5200,62 @@ final class App
         $mem = (float) ($rt['memGB'] ?? 0);
         $reserve = (float) ($this->config['experiment_mem_reserve_gb'] ?? 4);
         $fit = (int) floor(($mem - $reserve) / $need);
+        /* memGB is the computer's total memory (os.totalmem), not what is free, so a big machine running other
+         * jobs too can be over-filled; experiment_max_per_worker (default 0 = no extra cap) bounds it. */
+        $cap = (int) ($this->config['experiment_max_per_worker'] ?? 0);
+        if ($cap > 0) {
+            $fit = min($fit, $cap);
+        }
         if ($fit < 1) {
             return false;
         }
         $st = $this->db->prepare("SELECT COUNT(*) FROM leases l JOIN jobs j ON j.id = l.job_id WHERE l.worker_id = ? AND j.template_id = 'bb-experiment'");
         $st->execute([(string) $worker['id']]);
         return (int) $st->fetchColumn() < $fit;
+    }
+
+    /* An experiment run whose worker keeps checking in but never reports (hung or far too slow) would hold its lease
+     * for ever. After its time limit the lease is dropped and the run goes back through the normal retry path
+     * (re-queued, held after max_attempts; the planner treats a held run as failed and re-plans it up to twice).
+     * Limit: config experiment_max_minutes, else 3 x the spec's requires.minutes, else 360. Reads only the
+     * leases table (one row per running job) and the matching jobs by primary key. */
+    private function expireLongExperimentRuns(): void
+    {
+        $rows = $this->db->query("SELECT job_id, worker_id, started_at FROM leases WHERE job_id LIKE 'exp-%'")->fetchAll();
+        if ($rows === []) {
+            return;
+        }
+        $specs = null;
+        $now = strtotime($this->now());
+        foreach ($rows as $row) {
+            $st = $this->db->prepare("SELECT spec_json FROM jobs WHERE id = ? AND template_id = 'bb-experiment'");
+            $st->execute([(string) $row['job_id']]);
+            $job = json_decode((string) $st->fetchColumn(), true);
+            $exp = is_array($job) ? ($job['experiment'] ?? null) : null;
+            if (!is_array($exp) || empty($row['started_at'])) {
+                continue;
+            }
+            if ($specs === null) {
+                $specs = Experiments::load($this->experimentsDir())['specs'];
+            }
+            $limit = $this->experimentMaxMinutes($specs[(string) ($exp['id'] ?? '')] ?? null);
+            $age = ($now - strtotime((string) $row['started_at'])) / 60;
+            if ($age <= $limit) {
+                continue;
+            }
+            $this->noteFailure((string) $row['job_id'], (string) $row['worker_id'], 'Experiment run passed its ' . $limit . ' min limit without a result.', true);
+            $this->db->prepare('DELETE FROM leases WHERE job_id = ? AND worker_id = ?')->execute([(string) $row['job_id'], (string) $row['worker_id']]);
+        }
+    }
+
+    public function experimentMaxMinutes(?array $spec): int
+    {
+        $cfg = (int) ($this->config['experiment_max_minutes'] ?? 0);
+        if ($cfg > 0) {
+            return $cfg;
+        }
+        $m = (int) ($spec['requires']['minutes'] ?? 0);
+        return $m > 0 ? 3 * $m : 360;
     }
 
     private function ensureExperimentTemplate(): void
@@ -5244,7 +5300,9 @@ final class App
             $status = (string) $row['status'];
             if ($status !== 'done') {
                 $js = (string) ($row['job_status'] ?? '');
-                $status = $js === 'failed' || $js === '' ? 'failed' : 'running';
+                /* A job that used up its attempts is 'held', not 'failed': count it as a failed run so the planner
+                 * re-plans it (or blocks), instead of waiting on it for ever as 'running'. */
+                $status = in_array($js, ['failed', 'held', ''], true) ? 'failed' : 'running';
             }
             $out[] = ['arm' => (string) $row['arm'], 'task' => (string) $row['task'], 'seed' => (int) $row['seed'],
                 'status' => $status, 'metric' => $row['metric'] === null ? null : (float) $row['metric']];
@@ -5365,6 +5423,13 @@ final class App
             foreach ($runs as $r) {
                 $counts[$r['status']] = ($counts[$r['status']] ?? 0) + 1;
             }
+            /* Live leases of this experiment's runs (leases is one row per running job): how many and the oldest, in minutes. */
+            $ls = $this->db->prepare('SELECT started_at FROM leases WHERE job_id LIKE ?');
+            $ls->execute(['exp-' . substr((string) $id, 0, 40) . '-%']);
+            $starts = array_filter(array_map('strtotime', $ls->fetchAll(PDO::FETCH_COLUMN)));
+            $counts['leased'] = count($starts);
+            $counts['oldestLeaseMin'] = $starts === [] ? null : (int) round((strtotime($this->now()) - min($starts)) / 60);
+            $counts['maxMinutes'] = $this->experimentMaxMinutes($spec);
             $out[] = ['status' => $spec['status'], 'runs' => $counts, 'queuedNext' => count($plan['need'])] + $plan['report'];
         }
         $catalog = is_file($this->experimentsDir() . '/CATALOG.json') ? json_decode((string) file_get_contents($this->experimentsDir() . '/CATALOG.json'), true) : null;

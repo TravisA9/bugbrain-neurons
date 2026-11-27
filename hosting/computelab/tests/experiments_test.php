@@ -485,6 +485,86 @@ $after = $ixDb->scans();
 check(!$dry['existed'] && !$dry['applied'] && $before !== [] && $done['applied'] && $after === [] && $ix->jobStatusIndex(true)['existed'],
     'job-indexes.php: dry run adds nothing; --apply adds idx_jobs_status_project and the claim query uses it; running again is a no-op');
 
+/* ---- fix2: experiment runs survive dead or hung workers; per-computer cap; no stale report ---- */
+function expGood(array $job, float $v): array
+{
+    $e = $job['spec']['experiment'];
+    return ['status' => 'done', 'summary' => 's', 'research' => ['version' => 'bb-exp-1', 'id' => $e['id'], 'arm' => $e['arm'], 'task' => $e['task'],
+        'k' => $e['k'], 'variant' => $e['variant'], 'metric' => $e['metric'], 'metrics' => [$e['metric'] => $v], 'engine' => ['defaults' => 40]]];
+}
+function expWorker(App $a, string $name, float $mem): string
+{
+    $t = $a->enroll($name, ['bugbrain'], 2, true)['token'];
+    $a->heartbeat($a->workerByToken($t), ['runtime' => ['cores' => 16, 'slots' => 8, 'experiments' => 1, 'memGB' => $mem]]);
+    return $t;
+}
+[$lx, $lxDb, $lxc] = lab(['experiments_enabled' => true, 'experiments_dir' => $dir]);
+$deadT = expWorker($lx, 'dead-pc', 15.7);
+$aliveT = expWorker($lx, 'alive-pc', 15.7);
+$lost = $lx->claim($lx->workerByToken($deadT), 0);
+check(str_starts_with((string) ($lost['id'] ?? ''), 'exp-'), 'a run is leased');
+$lxc->t = '2026-11-24T18:11:00+00:00'; // 11 min later: the 600 s lease ran out with no check-in
+$lx->heartbeat($lx->workerByToken($aliveT), ['runtime' => ['cores' => 16, 'slots' => 8, 'experiments' => 1, 'memGB' => 15.7]]);
+$again = null;
+for ($i = 0; $i < 8 && ($again['id'] ?? '') !== $lost['id']; $i++) {
+    $c = $lx->claim($lx->workerByToken($aliveT), 0);
+    if ($c !== null && $c['id'] !== $lost['id']) {
+        $lx->submitResult($lx->workerByToken($aliveT), $c['id'], expGood($c, 0.5));
+        continue;
+    }
+    $again = $c;
+}
+check(($again['id'] ?? '') === $lost['id'], 'a dead worker\'s lease expires and the same run is leased to another capable computer');
+$lx->submitResult($lx->workerByToken($aliveT), $again['id'], expGood($again, 0.61));
+check((float) $lxDb->query('SELECT metric FROM exp_runs WHERE job_id = ' . $lxDb->quote($lost['id']))->fetchColumn() === 0.61
+    && $lxDb->query('SELECT status FROM exp_runs WHERE job_id = ' . $lxDb->quote($lost['id']))->fetchColumn() === 'done',
+    'the re-leased run\'s result is recorded on the run');
+$lx->replenishExperiments();
+$hung = $lx->claim($lx->workerByToken($aliveT), 0);
+$lxr = array_values(array_filter($lx->experimentsReport()['experiments'], static fn ($e) => $e['id'] === 'test-lag'))[0]['runs'];
+check($hung !== null && $lxr['leased'] === 1 && $lxr['oldestLeaseMin'] === 0 && $lxr['maxMinutes'] === 360,
+    'another run is leased; the report shows live leases, the oldest lease age and the time limit');
+for ($m = 1; $m <= 7; $m++) { // the worker checks in every hour for 7 hours, so the lease never expires
+    $lxc->t = gmdate('c', strtotime('2026-11-24T18:11:00+00:00') + 3600 * $m);
+    $lx->heartbeat($lx->workerByToken($aliveT), ['jobId' => $hung['id']]);
+    $lx->expireLeases();
+}
+$st = $lxDb->query('SELECT status, last_error FROM jobs WHERE id = ' . $lxDb->quote($hung['id']))->fetch();
+check($st['status'] === 'queued' && str_contains((string) $st['last_error'], '360 min limit')
+    && !$lxDb->query('SELECT 1 FROM leases WHERE job_id = ' . $lxDb->quote($hung['id']))->fetch(),
+    'a run that keeps checking in but never reports loses its lease after 360 min (3 x requires.minutes when set) and is re-queued');
+check($lx->experimentMaxMinutes(['requires' => ['minutes' => 70]]) === 210 && $lx->experimentMaxMinutes(null) === 360,
+    'time limit: 3 x requires.minutes (R146: 210 min), else 360');
+$lxDb->prepare("UPDATE jobs SET status = 'held' WHERE id = ?")->execute([$hung['id']]);
+$hr = array_values(array_filter($lx->experimentRuns('test-lag'), static fn ($r) => $r['status'] === 'failed'));
+$lx->replenishExperiments();
+check(count($hr) === 1 && (int) $lxDb->query("SELECT COUNT(*) FROM exp_runs r JOIN jobs j ON j.id = r.job_id WHERE j.status = 'queued' AND r.arm = "
+    . $lxDb->quote((string) $hr[0]['arm']) . ' AND r.seed = ' . (int) $hr[0]['seed'] . ' AND r.task = ' . $lxDb->quote((string) $hr[0]['task']))->fetchColumn() === 1,
+    'a run whose job is held (attempts used up) counts as failed and the planner queues it again (it used to show as running for ever)');
+
+foreach ([0 => 6, 2 => 2] as $capCfg => $want) {
+    [$cp] = lab(['experiments_enabled' => true, 'experiments_dir' => $dir, 'experiment_max_per_worker' => $capCfg]);
+    $ct = expWorker($cp, 'ana-like', 62.7);
+    $got = 0;
+    for ($slot = 0; $slot < 10; $slot++) {
+        $c = $cp->claim($cp->workerByToken($ct), $slot);
+        $got += $c !== null && str_starts_with((string) $c['id'], 'exp-') ? 1 : 0;
+    }
+    check($got === $want, $capCfg === 0 ? 'a 62.7 GB computer takes all 6 queued tuning runs at once (memory rule allows floor((62.7 - 4) / 7) = 8; memGB is total memory)'
+        : 'experiment_max_per_worker 2 caps the same computer at 2');
+}
+
+[$sc, , $scc] = lab([]);
+$built = 0;
+$mk = static function () use (&$built, $scc): array { $built++; return ['at' => $scc->t]; };
+$sc->cached('k', 30, $mk, 120);
+$scc->t = '2026-11-27T14:56:44+00:00'; // 2.5 days of nobody asking
+$first = $sc->cached('k', 30, $mk, 120);
+check($first['at'] === '2026-11-27T14:56:44+00:00' && $built === 2, 'a cached report older than its limit is rebuilt for the first visitor, not served 2.5 days old');
+$scc->t = '2026-11-27T14:57:30+00:00';
+$second = $sc->cached('k', 30, $mk, 120);
+check(strtotime('2026-11-27T14:57:30+00:00') - strtotime($second['at']) <= 120, 'inside the limit a copy at most 120 s old may be served while it is rebuilt');
+
 /* ---- R146 ships switched off; config experiments_enable turns it on ---- */
 $shipDir = dirname(__DIR__) . '/private/experiments';
 [$r0, $r0Db] = lab(['experiments_enabled' => true, 'experiments_dir' => $shipDir]);

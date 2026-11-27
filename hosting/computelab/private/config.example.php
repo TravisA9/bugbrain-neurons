@@ -36,6 +36,8 @@ return [
     'experiments_enable' => [],                // ids of specs shipped with "enabled": false to switch on, e.g. ['r146-lagdepth']
     'experiment_seed_start' => 5001,        // first seed of the fresh-seed ledger (box runs used up to ~2980)
     'experiment_mem_reserve_gb' => 4,       // memory left to the volunteer before counting experiment slots
+    'experiment_max_per_worker' => 0,          // extra cap on experiment runs per computer (0 = memory rule only: floor((memGB - reserve) / spec memGB))
+    'experiment_max_minutes' => 0,             // an experiment run with no result after this long loses its lease (0 = 3 x spec requires.minutes, else 360)
     /* Job types never supplied or handed out (config only; rows are kept). Recommended once experiments run:
      * ['bb-order3', 'bb-chunk-fables', 'bb-chunk-order3', 'sf-propose', 'sf-train', 'sf-vision'] */
     'retire_job_types' => [],
