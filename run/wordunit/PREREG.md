@@ -1,4 +1,4 @@
-# PRE-REGISTRATION: word-unit diagnostic (written Fri Nov 27 2026 ~3:55 PM CT, before any word-unit run)
+# PRE-REGISTRATION: word-unit diagnostic (written Fri Nov 27 2026 3:32 PM CT, before any word-unit run; queue started right after)
 
 Purpose (Travis t190u): find the missing / failing mechanism, not tune. The X-ray showed R144 ~= a letter counter, word-chunk units never
 reused across contexts (their key includes the previous word), and flat accuracy on never-seen 4-letter contexts.
